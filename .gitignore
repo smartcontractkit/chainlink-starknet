@@ -1,5 +1,7 @@
 .direnv
 artifacts/
+accounts.json
+node.json
 
 .DS_Store
 .temp/
