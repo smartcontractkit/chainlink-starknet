@@ -5,6 +5,8 @@ pkgs.mkShell {
     pkgs.python39
     pkgs.python39Packages.venvShellHook
     gmp
+    nodejs
+    nodePackages.npm
   ];
 
   venvDir = "./.venv";
