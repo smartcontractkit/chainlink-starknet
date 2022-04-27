@@ -1,0 +1,5 @@
+[[language]]
+name = "cairo"
+language-server = { command = "node", args = ["node_modules/cairo-ls/out/server.js", "--stdio"] }
+[language.config]
+cairols = { venvCommand = ". .venv/bin/activate" }
