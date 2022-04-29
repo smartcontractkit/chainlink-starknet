@@ -188,14 +188,11 @@ func set_config{
     
     # TODO: pay out existing oracles
 
-    # reset epoch & round
-    latest_epoch_and_round_.write(0)
-    
     # remove old signers/transmitters
     let (len) = oracles_len_.read()
     remove_oracles(len)
 
-    # add new oracles
+    # add new oracles (also sets oracle_len_)
     add_oracles(oracles, 0, oracles_len)
 
     f_.write(f)
@@ -219,6 +216,9 @@ func set_config{
         offchain_config
     )
     latest_config_digest_.write(digest)
+
+    # reset epoch & round
+    latest_epoch_and_round_.write(0)
     
     # TODO: emit set_config event
 
@@ -253,17 +253,37 @@ func transmit{
 ):
     alloc_locals
     # TODO: parse report context and validate
-    
-    # TODO: validate transmitter
+
+    # TODO: validate epoch_and_round < latest_epoch_and_round_
+
+    # validate transmitter
     let (caller) = get_caller_address()
+    let (oracle_idx) = transmitters_.read(caller)
+    assert_not_equal(oracle_idx, 0) # 0 index = uninitialized
+    # ERROR: caller seems to be the account contract address, not the underlying transmitter key
+
+    # TODO: validate config digest matches latest_config_digest
+
+    let (f) = f_.read()
+    with_attr error_message("wrong number of signatures"):
+        assert signatures_len = f + 1
+    end
 
     let (msg) = hash_report(report_context, observers, observations_len, observations)
     # TODO: validate signers unique
     verify_signatures(msg, signatures, signatures_len)
-    
+
     # report():
+
+    assert_nn_le(observations_len, MAX_ORACLES) # len <= MAX_ORACLES
+    assert_lt(f, observations_len) # f < len
+
+    # TODO: write latest epoch & round
+
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
+
+    # TODO: validate median in min-max range
 
     let (round_id) = latest_aggregator_round_id_.read()
     let round_id = round_id + 1
@@ -279,10 +299,12 @@ func transmit{
         observation_timestamp=1, # TODO:
         transmission_timestamp=timestamp,
     ))
-    
+
+    # TODO: validate via validator
+
     # TODO: calculate reimbursement
     # end report()
-    
+
     # TODO: emit transmission event
 
     # pay transmitter
@@ -419,8 +441,7 @@ func verify_signatures{
     # Validate the signer key actually belongs to an oracle
     let (index) = signers_.read(signature.public_key)
     with_attr error_message("invalid signer {signature.public_key}"):
-        # 0 index = uninitialized
-        assert_not_equal(index, 0)
+        assert_not_equal(index, 0) # 0 index = uninitialized
     end
 
     verify_ecdsa_signature(
