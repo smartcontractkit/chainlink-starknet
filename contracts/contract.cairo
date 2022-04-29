@@ -6,7 +6,7 @@ from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
 from starkware.cairo.common.signature import verify_ecdsa_signature
-from starkware.cairo.common.math import assert_not_zero, assert_lt, assert_nn_le, assert_nn, unsigned_div_rem
+from starkware.cairo.common.math import assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, unsigned_div_rem
 # from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.starknet.common.syscalls import (
@@ -259,7 +259,6 @@ func transmit{
 
     let (msg) = hash_report(report_context, observers, observations_len, observations)
     # TODO: validate signers unique
-    # TODO: validate signers present on config
     verify_signatures(msg, signatures, signatures_len)
     
     # report():
@@ -400,6 +399,7 @@ func hash_report{
 end
 
 func verify_signatures{
+    syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     ecdsa_ptr : SignatureBuiltin*,
     range_check_ptr
@@ -415,6 +415,13 @@ func verify_signatures{
     end
 
     let signature = signatures[0]
+
+    # Validate the signer key actually belongs to an oracle
+    let (index) = signers_.read(signature.public_key)
+    with_attr error_message("invalid signer {signature.public_key}"):
+        # 0 index = uninitialized
+        assert_not_equal(index, 0)
+    end
 
     verify_ecdsa_signature(
         message=msg,
