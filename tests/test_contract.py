@@ -91,11 +91,11 @@ async def test_transmit(token_factory):
     )
 
     # Deploy an account for each oracle
-    # for oracle in oracles:
-    #     await starknet.deploy(
-    #         contract_path("account.cairo"),
-    #         constructor_calldata=[oracle.public_key]
-    #     )
+    for oracle in oracles:
+        oracle['account'] = await starknet.deploy(
+            contract_path("account.cairo"),
+            constructor_calldata=[oracle['transmitter'].public_key]
+        )
     
     # Call set_config
     
@@ -109,7 +109,7 @@ async def test_transmit(token_factory):
     await contract.set_config(
         oracles=[(
             oracle['signer'].public_key,
-            oracle['transmitter'].public_key
+            oracle['account'].contract_address
         ) for oracle in oracles],
         # TODO: dict was supposed to be ok but it asks for a tuple
         # oracles=[{
@@ -124,15 +124,10 @@ async def test_transmit(token_factory):
 
     oracle = oracles[0]
     # transmitter = Signer(123456789987654321)
-    
-    account = await starknet.deploy(
-        contract_path("account.cairo"),
-        constructor_calldata=[oracle['transmitter'].public_key]
-    )
-    
+
     report_context = bytes([0x0])
-    observers = bytes([0x0])
-    observations = [99]
+    observers = bytes([i for i in range(len(oracles))])
+    observations = [99 for _ in range(len(oracles))]
     
     msg = compute_hash_on_elements([
         int.from_bytes(report_context, "big"),
@@ -141,26 +136,34 @@ async def test_transmit(token_factory):
         *observations,
     ])
     
-    # Sign with a single oracle
-    sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
+    n = f + 1
+
+    signatures = []
     
-    signatures = [
-        sig_r, # r
-        sig_s, # s
-        oracle['signer'].public_key  # public_key
-    ]
+    for oracle in oracles[:n]:
+        # Sign with a single oracle
+        sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
     
+        signature = [
+            sig_r, # r
+            sig_s, # s
+            oracle['signer'].public_key  # public_key
+        ]
+        signatures.extend(signature)
+
     calldata = [
         int.from_bytes(report_context, "big"),
         int.from_bytes(observers, "big"),
         len(observations),
         *observations,
-        1, # len signatures
+        n, # len signatures
         *signatures # TODO: how to convert objects to calldata? using array for now
     ]
     
+    print(calldata)
+    
     await oracle['transmitter'].send_transaction(
-        account,
+        oracle['account'],
         contract.contract_address,
         'transmit',
         calldata
