@@ -98,7 +98,7 @@ async def test_transmit(token_factory):
         )
     
     # Call set_config
-    
+
     f = 1
     # onchain_config = []
     onchain_config = 1
@@ -106,7 +106,7 @@ async def test_transmit(token_factory):
     offchain_config = [1]
     
     # TODO: need to call via owner
-    await contract.set_config(
+    execution_info = await contract.set_config(
         oracles=[(
             oracle['signer'].public_key,
             oracle['account'].contract_address
@@ -122,18 +122,31 @@ async def test_transmit(token_factory):
         offchain_config=offchain_config
     ).invoke()
 
+    digest = execution_info.result.digest
+
+    print(f"digest = {digest}")
+
     oracle = oracles[0]
     # transmitter = Signer(123456789987654321)
 
-    report_context = bytes([0x0])
+    # TODO:
+    epoch_and_round = 1
+    extra_hash = 1
+    report_context = [digest, epoch_and_round, extra_hash]
+    # int.from_bytes(report_context, "big"),
+
     observers = bytes([i for i in range(len(oracles))])
     observations = [99 for _ in range(len(oracles))]
     
-    msg = compute_hash_on_elements([
-        int.from_bytes(report_context, "big"),
+    raw_report = [
         int.from_bytes(observers, "big"),
         len(observations),
         *observations,
+    ]
+    
+    msg = compute_hash_on_elements([
+        *report_context,
+        *raw_report
     ])
     
     n = f + 1
@@ -152,10 +165,8 @@ async def test_transmit(token_factory):
         signatures.extend(signature)
 
     calldata = [
-        int.from_bytes(report_context, "big"),
-        int.from_bytes(observers, "big"),
-        len(observations),
-        *observations,
+        *report_context,
+        *raw_report,
         n, # len signatures
         *signatures # TODO: how to convert objects to calldata? using array for now
     ]
