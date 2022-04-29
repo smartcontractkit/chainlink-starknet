@@ -6,7 +6,7 @@ from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
 from starkware.cairo.common.signature import verify_ecdsa_signature
-from starkware.cairo.common.math import assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, unsigned_div_rem
+from starkware.cairo.common.math import assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
 # from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.starknet.common.syscalls import (
@@ -138,7 +138,8 @@ func constructor{
     Ownable_initializer(owner)
     link_token_.write(link)
     billing_access_controller_.write(billing_access_controller)
-    # TODO: validate min/max range, and max >= min
+
+    assert_lt(min_answer, max_answer)
     answer_range_.write((min_answer, max_answer))
 
     with_attr error_message("decimals exceed 2^8"):
@@ -295,7 +296,9 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
-    # TODO: validate median in min-max range
+    # Validate median in min-max range
+    let (answer_range) = answer_range_.read()
+    assert_in_range(median, answer_range[0], answer_range[1])
 
     let (round_id) = latest_aggregator_round_id_.read()
     let round_id = round_id + 1
