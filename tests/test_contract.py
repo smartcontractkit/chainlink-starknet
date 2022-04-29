@@ -142,12 +142,12 @@ async def test_transmit(token_factory):
     ])
     
     # Sign with a single oracle
-    sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['transmitter'].private_key)
+    sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
     
     signatures = [
         sig_r, # r
         sig_s, # s
-        oracle['transmitter'].public_key  # public_key
+        oracle['signer'].public_key  # public_key
     ]
     
     calldata = [
