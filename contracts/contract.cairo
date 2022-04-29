@@ -233,6 +233,12 @@ struct Signature:
     member public_key: felt
 end
 
+struct ReportContext:
+    member config_digest : felt
+    member epoch_and_round : felt
+    member extra_hash : felt
+end
+
 # TODO we can base64 encode inputs, but we could also pre-split the inputs (so instead of a binary report,
 # it's already split into observers, len and observations). Encoding would shrink the input size since each observation
 # wouldn't have to be felt-sized.
@@ -244,7 +250,7 @@ func transmit{
     range_check_ptr
 }(
     # TODO: timestamp & juels_per_fee_coin
-    report_context: felt,
+    report_context: ReportContext,
     observers: felt,
     observations_len: felt,
     observations: felt*,
@@ -252,9 +258,11 @@ func transmit{
     signatures: Signature*,
 ):
     alloc_locals
-    # TODO: parse report context and validate
 
-    # TODO: validate epoch_and_round < latest_epoch_and_round_
+    let (epoch_and_round) = latest_epoch_and_round_.read()
+    with_attr error_message("stale report"):
+        assert_lt(epoch_and_round, report_context.epoch_and_round)
+    end
 
     # validate transmitter
     let (caller) = get_caller_address()
@@ -262,11 +270,15 @@ func transmit{
     assert_not_equal(oracle_idx, 0) # 0 index = uninitialized
     # ERROR: caller seems to be the account contract address, not the underlying transmitter key
 
-    # TODO: validate config digest matches latest_config_digest
+    # Validate config digest matches latest_config_digest
+    let (config_digest) = latest_config_digest_.read()
+    with_attr error_message("config digest mismatch"):
+        assert report_context.config_digest = config_digest
+    end
 
     let (f) = f_.read()
-    with_attr error_message("wrong number of signatures"):
-        assert signatures_len = f + 1
+    with_attr error_message("wrong number of signatures f={f}"):
+        assert signatures_len = (f + 1)
     end
 
     let (msg) = hash_report(report_context, observers, observations_len, observations)
@@ -278,7 +290,7 @@ func transmit{
     assert_nn_le(observations_len, MAX_ORACLES) # len <= MAX_ORACLES
     assert_lt(f, observations_len) # f < len
 
-    # TODO: write latest epoch & round
+    latest_epoch_and_round_.write(report_context.epoch_and_round)
 
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
@@ -399,7 +411,7 @@ end
 func hash_report{
     pedersen_ptr : HashBuiltin*,
 }(
-    report_context: felt,
+    report_context: ReportContext,
     observers: felt,
     observations_len: felt,
     observations: felt*,
@@ -409,7 +421,10 @@ func hash_report{
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context)
+        # TODO: does hash_update(hash_state_ptr, cast(report_context, felt), ReportContext.SIZE) work?
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.config_digest)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.epoch_and_round)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.extra_hash)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, observers)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, observations_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, observations, observations_len)
