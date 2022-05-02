@@ -152,6 +152,10 @@ async def test_transmit(token_factory):
 
     signatures = []
     
+    # TODO: test with duplicate signers
+    # for o in oracles[:n]:
+    #     oracle = oracles[0]
+
     for oracle in oracles[:n]:
         # Sign with a single oracle
         sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
