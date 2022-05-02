@@ -112,7 +112,6 @@ struct Transmission:
     member block_num: felt
     member observation_timestamp: felt
     member transmission_timestamp: felt
-    
 end
 
 @storage_var
@@ -161,6 +160,39 @@ end
 
 # ---
 
+@event
+func config_set(
+    previous_config_block_number: felt,
+    latest_config_digest: felt,
+    config_count: felt,
+    oracles_len: felt,
+    oracles: OracleConfig*,
+    f: felt,
+    onchain_config: felt, # TODO
+    offchain_config_version: felt,
+    offchain_config_len: felt,
+    offchain_config: felt*,
+):
+end
+
+@event
+func new_transmission(
+    round_id: felt,
+    answer: felt,
+    transmitter: felt,
+    observations_timestamp: felt,
+    observers: felt,
+    observations_len: felt,
+    observations: felt*,
+    juels_per_fee_coin: felt,
+    config_digest: felt,
+    epoch_and_round: felt, # TODO: split?
+    reimbursement: felt,
+):
+end
+
+# ---
+
 struct OracleConfig:
     member signer: felt
     member transmitter: felt
@@ -168,7 +200,7 @@ end
 
 @external
 func set_config{
-    syscall_ptr : felt*, 
+    syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr
 }(
@@ -186,7 +218,7 @@ func set_config{
     assert_nn_le(oracles_len, MAX_ORACLES) # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
     assert_nn(f) # f is positive
-    
+ 
     # TODO: pay out existing oracles
 
     # remove old signers/transmitters
@@ -198,6 +230,7 @@ func set_config{
 
     f_.write(f)
     let (block_num : felt) = get_block_number()
+    let (prev_block_num) = latest_config_block_number_.read()
     latest_config_block_number_.write(block_num)
     # update config count
     let (config_count) = config_count_.read()
@@ -220,12 +253,23 @@ func set_config{
 
     # reset epoch & round
     latest_epoch_and_round_.write(0)
-    
-    # TODO: emit set_config event
+ 
+    config_set.emit(
+        previous_config_block_number=prev_block_num,
+        latest_config_digest=digest,
+        config_count=config_count,
+        oracles_len=oracles_len,
+        oracles=oracles,
+        f=f,
+        onchain_config=onchain_config,
+        offchain_config_version=offchain_config_version,
+        offchain_config_len=offchain_config_len,
+        offchain_config=offchain_config,
+    )
 
     return (digest)
 end
-    
+ 
 struct Signature:
     member r : felt
     member s : felt
@@ -318,9 +362,23 @@ func transmit{
     # TODO: validate via validator
 
     # TODO: calculate reimbursement
+    let reimbursement = 0
+
     # end report()
 
-    # TODO: emit transmission event
+    new_transmission.emit(
+        round_id=round_id,
+        answer=median,
+        transmitter=caller,
+        observations_timestamp=1, # TODO:
+        observers=observers,
+        observations_len=observations_len,
+        observations=observations,
+        juels_per_fee_coin=1, # TODO
+        config_digest=report_context.config_digest,
+        epoch_and_round=report_context.epoch_and_round,
+        reimbursement=reimbursement,
+    )
 
     # pay transmitter
 
@@ -366,7 +424,7 @@ func add_oracles{
     end
 
     let index = index + 1
-    
+ 
     signers_.write(oracles.signer, index)
     signers_list_.write(index, oracles.signer)
 
@@ -404,7 +462,7 @@ func config_digest_from_data{
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_version)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
-        
+     
         let (hash) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
         return (hash=hash)
@@ -449,7 +507,7 @@ func verify_signatures{
     signatures_len: felt
 ):
     alloc_locals
-    
+ 
     if signatures_len == 0:
         return ()
     end
@@ -468,7 +526,7 @@ func verify_signatures{
         signature_r=signature.r,
         signature_s=signature.s
     )
-    
+
     return verify_signatures(
         msg,
         signatures + Signature.SIZE,

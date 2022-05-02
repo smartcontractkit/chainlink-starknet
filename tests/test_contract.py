@@ -127,7 +127,6 @@ async def test_transmit(token_factory):
     print(f"digest = {digest}")
 
     oracle = oracles[0]
-    # transmitter = Signer(123456789987654321)
 
     # TODO:
     epoch_and_round = 1
