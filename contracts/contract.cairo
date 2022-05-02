@@ -1,12 +1,14 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
+from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
 )
 from starkware.cairo.common.signature import verify_ecdsa_signature
+from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.math import assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
+from starkware.cairo.common.pow import pow
 # from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.starknet.common.syscalls import (
@@ -292,6 +294,7 @@ func transmit{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     ecdsa_ptr : SignatureBuiltin*,
+    bitwise_ptr : BitwiseBuiltin*,
     range_check_ptr
 }(
     # TODO: timestamp & juels_per_fee_coin
@@ -328,7 +331,7 @@ func transmit{
 
     let (msg) = hash_report(report_context, observers, observations_len, observations)
     # TODO: validate signers unique
-    verify_signatures(msg, signatures, signatures_len)
+    verify_signatures(msg, signatures, signatures_len, signed_count=0)
 
     # report():
 
@@ -500,15 +503,25 @@ func verify_signatures{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     ecdsa_ptr : SignatureBuiltin*,
-    range_check_ptr
+    bitwise_ptr : BitwiseBuiltin*,
+    range_check_ptr,
 }(
     msg: felt,
     signatures: Signature*,
-    signatures_len: felt
+    signatures_len: felt,
+    signed_count: felt # used for tracking duplicate signatures
 ):
     alloc_locals
  
     if signatures_len == 0:
+        # Check all signatures are unique (we only saw each pubkey once)
+        let (masked) = bitwise_and(
+            signed_count,
+            0x01010101010101010101010101010101010101010101010101010101010101            
+        )
+        with_attr error_message("duplicate signer"):
+            assert signed_count = masked
+        end
         return ()
     end
 
@@ -527,9 +540,16 @@ func verify_signatures{
         signature_s=signature.s
     )
 
+    # TODO: Using shifts here might be expensive due to pow()?
+
+    # signed_count + 1 << (8 * index)
+    let (shift) = pow(2, 8 * index)
+    let signed_count = signed_count + shift
+
     return verify_signatures(
         msg,
         signatures + Signature.SIZE,
-        signatures_len - 1
+        signatures_len - 1,
+        signed_count
     )
 end
