@@ -24,7 +24,8 @@ from contracts.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
-    Ownable_transfer_ownership
+    Ownable_transfer_ownership,
+    Ownable_accept_ownership
 )
 
 # ---
@@ -194,6 +195,22 @@ func new_transmission(
 end
 
 # ---
+
+func transfer_ownership{
+    syscall_ptr : felt*, 
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr
+}(new_owner: felt) -> ():
+    return Ownable_transfer_ownership(new_owner)
+end
+
+func accept_ownership{
+    syscall_ptr : felt*, 
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr
+}() -> (new_owner: felt):
+    return Ownable_accept_ownership()
+end
 
 struct OracleConfig:
     member signer: felt
