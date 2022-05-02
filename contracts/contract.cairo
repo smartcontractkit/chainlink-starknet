@@ -40,6 +40,43 @@ end
 func billing_access_controller_() -> (access_controller: felt):
 end
 
+
+@contract_interface
+namespace IValidator:
+    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt):
+    end
+end
+
+# TODO: can't set gas limit
+@storage_var
+func validator_() -> (validator: felt):
+end
+
+@view
+func validator_config{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (validator: felt):
+    let (validator) = validator_.read()
+    return (validator)
+end
+
+@external
+func set_validator_config{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(validator: felt):
+    Ownable_only_owner()
+    # TODO: use openzeppelin's ERC165 to validate
+    validator_.write(validator)
+
+    # TODO: emit event
+
+    return ()
+end
+
 # Maximum number of faulty oracles
 @storage_var
 func f_() -> (f: felt):
@@ -360,12 +397,14 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
+    # TODO: assert inside i192 range
+
     # Validate median in min-max range
     let (answer_range) = answer_range_.read()
     assert_in_range(median, answer_range[0], answer_range[1])
 
-    let (round_id) = latest_aggregator_round_id_.read()
-    let round_id = round_id + 1
+    let (prev_round_id) = latest_aggregator_round_id_.read()
+    let round_id = prev_round_id + 1
     latest_aggregator_round_id_.write(round_id)
 
     let (timestamp : felt) = get_block_timestamp()
@@ -379,7 +418,28 @@ func transmit{
         transmission_timestamp=timestamp,
     ))
 
-    # TODO: validate via validator
+    # validate via validator
+    let (validator) = validator_.read()
+
+    if validator != 0:
+        let (prev_transmission) = transmissions_.read(prev_round_id)
+        IValidator.validate(
+            contract_address=validator,
+            prev_round_id=prev_round_id,
+            prev_answer=prev_transmission.answer,
+            round_id=round_id,
+            answer=median
+        )
+
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
+    tempvar pedersen_ptr = pedersen_ptr # TODO: ??? compilation seems to fail without this follow-up
 
     # TODO: calculate reimbursement
     let reimbursement = 0
