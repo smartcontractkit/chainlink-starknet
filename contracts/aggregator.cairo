@@ -384,7 +384,6 @@ func transmit{
     end
 
     let (msg) = hash_report(report_context, observers, observations_len, observations)
-    # TODO: validate signers unique
     verify_signatures(msg, signatures, signatures_len, signed_count=0)
 
     # report():

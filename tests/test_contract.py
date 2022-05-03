@@ -1,4 +1,4 @@
-"""contract.cairo test file."""
+"""aggregator.cairo test file."""
 import os
 
 import pytest
@@ -51,7 +51,7 @@ async def token_factory():
 
 #     # Deploy the contract.
 #     contract = await starknet.deploy(
-#         source=contract_path("contract.cairo"),
+#         source=contract_path("aggregator.cairo"),
 #         constructor_calldata=[
 #             owner.contract_address,
 #             token.contract_address,
@@ -78,7 +78,7 @@ async def test_transmit(token_factory):
 
     # Deploy the contract.
     contract = await starknet.deploy(
-        source=contract_path("contract.cairo"),
+        source=contract_path("aggregator.cairo"),
         constructor_calldata=[
             owner.contract_address,
             token.contract_address,
