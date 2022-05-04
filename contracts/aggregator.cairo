@@ -1,6 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
@@ -391,6 +392,56 @@ func config_digest_from_data{
         let pedersen_ptr = hash_ptr
         return (hash=hash)
     end
+end
+
+@view
+func latest_config_details{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (
+    config_count: felt,
+    block_number: felt,
+    config_digest: felt
+):
+    let (config_count) = config_count_.read()
+    let (block_number) = latest_config_block_number_.read()
+    let (config_digest) = latest_config_digest_.read()
+    return(config_count=config_count, block_number=block_number, config_digest=config_digest)
+end
+
+@view
+func transmitters{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (transmitters_len: felt, transmitters: felt*):
+    alloc_locals
+
+    let (result: felt*) = alloc()
+    let (len) = oracles_len_.read()
+
+    transmitters_inner(len, 0, result)
+
+    return (transmitters_len=len, transmitters=result)
+end
+
+# unroll transmitter list into a continuous array
+func transmitters_inner{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(len: felt, index: felt, result: felt*):
+    if len == 0:
+        return ()
+    end
+
+    let index = index + 1
+
+    let (transmitter) = transmitters_list_.read(index)
+    assert result[0] = transmitter
+
+    return transmitters_inner(len, index, result + 1)
 end
 
 # --- Transmission ---
