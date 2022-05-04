@@ -12,6 +12,9 @@ from starkware.cairo.common.math import (
     assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
 )
 from starkware.cairo.common.pow import pow
+from starkware.cairo.common.uint256 import (
+    Uint256,
+)
 # from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.starknet.common.syscalls import (
@@ -39,10 +42,6 @@ const MAX_ORACLES = 31
 func link_token_() -> (token: felt):
 end
 
-@storage_var
-func billing_access_controller_() -> (access_controller: felt):
-end
-
 # Maximum number of faulty oracles
 @storage_var
 func f_() -> (f: felt):
@@ -65,7 +64,7 @@ func decimals_() -> (decimals: felt):
 end
 
 @storage_var
-func description_() -> (decimals: felt):
+func description_() -> (description: felt):
 end
 
 #
@@ -166,7 +165,7 @@ end
 
 @external
 func transfer_ownership{
-    syscall_ptr : felt*, 
+    syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr
 }(new_owner: felt) -> ():
@@ -175,7 +174,7 @@ end
 
 @external
 func accept_ownership{
-    syscall_ptr : felt*, 
+    syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr
 }() -> (new_owner: felt):
@@ -263,8 +262,9 @@ func set_config{
     assert_nn_le(oracles_len, MAX_ORACLES) # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
     assert_nn(f) # f is positive
- 
-    # TODO: pay out existing oracles
+
+    # pay out existing oracles
+    pay_oracles()
 
     # remove old signers/transmitters
     let (len) = oracles_len_.read()
@@ -298,7 +298,7 @@ func set_config{
 
     # reset epoch & round
     latest_epoch_and_round_.write(0)
- 
+
     config_set.emit(
         previous_config_block_number=prev_block_num,
         latest_config_digest=digest,
@@ -352,7 +352,7 @@ func add_oracles{
     end
 
     let index = index + 1
- 
+
     signers_.write(oracles.signer, index)
     signers_list_.write(index, oracles.signer)
 
@@ -387,7 +387,7 @@ func config_digest_from_data{
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_version)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
-     
+
         let (hash) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
         return (hash=hash)
@@ -638,12 +638,12 @@ func verify_signatures{
     signed_count: felt # used for tracking duplicate signatures
 ):
     alloc_locals
- 
+
     if signatures_len == 0:
         # Check all signatures are unique (we only saw each pubkey once)
         let (masked) = bitwise_and(
             signed_count,
-            0x01010101010101010101010101010101010101010101010101010101010101            
+            0x01010101010101010101010101010101010101010101010101010101010101
         )
         with_attr error_message("duplicate signer"):
             assert signed_count = masked
@@ -685,9 +685,218 @@ end
 # --- Queries
 
 # --- Set LINK Token
+
 # --- Billing Access Controller
+
+@storage_var
+func billing_access_controller_() -> (access_controller: felt):
+end
+
+@external
+func set_billing_access_controller{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(access_controller: felt):
+    Ownable_only_owner()
+
+    let (old_controller) = billing_access_controller_.read()
+    if access_controller != old_controller:
+        billing_access_controller_.write(access_controller)
+        # TODO: emit event
+
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
+
+    return ()
+end
+
+@view
+func billing_access_controller{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (access_controller: felt):
+    let (access_controller) = billing_access_controller_.read()
+    return (access_controller)
+end
+
 # --- Billing Config
 
+struct Billing:
+    # TODO: use a single felt we (observation_payment, transmission_payment) = split_felt()?
+    member observation_payment_gjuels : felt
+    member transmission_payment_gjuels : felt
+end
+
+# TODO: use billing access controller
+
+@storage_var
+func billing_() -> (config: Billing):
+end
+
+@view
+func billing{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (config: Billing):
+    let (config: Billing) = billing_.read()
+    return (config)
+end
+
+@external
+func set_billing{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(config: Billing):
+    # TODO: check billing admin too
+    Ownable_only_owner()
+
+    # Pay out oracles using existing settings for rounds up to now
+    pay_oracles()
+
+    # TODO: check payment value ranges within bounds (u32?)
+
+    billing_.write(config)
+
+    # TODO: emit event
+
+    return ()
+end
+
 # --- Payments and Withdrawals
+
+@external
+func withdraw_payment{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(transmitter: felt):
+    # TODO: assert caller == receiver
+    pay_oracle(transmitter)
+    return ()
+end
+
+@external
+func owed_payment{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(transmitter: felt) -> (amount: Uint256):
+    # TODO:
+    let amount = Uint256(0, 0)
+    return (amount)
+end
+
+@event
+func oracle_paid(
+    transmitter: felt,
+    payee: felt,
+    amount: Uint256,
+    link_token: felt,
+):
+end
+
+func pay_oracle{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(transmitter: felt):
+    # TODO:
+    return ()
+end
+
+func pay_oracles{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}():
+    # TODO:
+    return ()
+end
+
 # --- Transmitter Payment
+
+func calculate_reimbursement() -> (amount: Uint256):
+    # TODO:
+    let amount = Uint256(0,0)
+    return (amount)
+end
+
 # --- Payee Management
+
+@storage_var
+func payees_(transmitter: felt) -> (payment_address: felt):
+end
+
+@storage_var
+func proposed_payees_(transmitter: felt) -> (payment_address: felt):
+end
+
+struct PayeeConfig:
+    member transmitter: felt
+    member payee: felt
+end
+
+@external
+func set_payees{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr
+}(payees_len: felt, payees: PayeeConfig*):
+    Ownable_only_owner()
+
+    # TODO:
+
+    return()
+end
+
+@external
+func transfer_payeeship{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(transmitter: felt, proposed: felt):
+    let (caller) = get_caller_address()
+    let (payee) = payees_.read(transmitter)
+    with_attr error_message("only current payee can update"):
+        assert caller = payee
+    end
+    with_attr error_message("cannot transfer to self"):
+        assert_not_equal(caller, proposed)
+    end
+
+    proposed_payees_.write(transmitter, proposed)
+
+    # TODO: emit event
+
+    return ()
+end
+
+@external
+func accept_payeeship{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(transmitter: felt):
+    let (caller) = get_caller_address()
+    let (proposed) = proposed_payees_.read(transmitter)
+    with_attr error_message("only proposed payee can accept"):
+        assert caller = proposed
+    end
+
+    payees_.write(transmitter, caller)
+    proposed_payees_.write(transmitter, 0)
+
+    # TODO: emit event
+
+    return ()
+end
