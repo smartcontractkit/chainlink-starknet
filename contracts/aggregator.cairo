@@ -40,43 +40,6 @@ end
 func billing_access_controller_() -> (access_controller: felt):
 end
 
-
-@contract_interface
-namespace IValidator:
-    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt):
-    end
-end
-
-# TODO: can't set gas limit
-@storage_var
-func validator_() -> (validator: felt):
-end
-
-@view
-func validator_config{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}() -> (validator: felt):
-    let (validator) = validator_.read()
-    return (validator)
-end
-
-@external
-func set_validator_config{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}(validator: felt):
-    Ownable_only_owner()
-    # TODO: use openzeppelin's ERC165 to validate
-    validator_.write(validator)
-
-    # TODO: emit event
-
-    return ()
-end
-
 # Maximum number of faulty oracles
 @storage_var
 func f_() -> (f: felt):
@@ -190,7 +153,7 @@ func constructor{
     return ()
 end
 
-# ---
+# --- Ownership ---
 
 @view
 func owner{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}() -> (owner : felt):
@@ -198,7 +161,63 @@ func owner{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}() 
     return (owner=owner)
 end
 
-# ---
+@external
+func transfer_ownership{
+    syscall_ptr : felt*, 
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr
+}(new_owner: felt) -> ():
+    return Ownable_transfer_ownership(new_owner)
+end
+
+@external
+func accept_ownership{
+    syscall_ptr : felt*, 
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr
+}() -> (new_owner: felt):
+    return Ownable_accept_ownership()
+end
+
+# --- Validation ---
+
+@contract_interface
+namespace IValidator:
+    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt):
+    end
+end
+
+# TODO: can't set gas limit
+@storage_var
+func validator_() -> (validator: felt):
+end
+
+@view
+func validator_config{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (validator: felt):
+    let (validator) = validator_.read()
+    return (validator)
+end
+
+@external
+func set_validator_config{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(validator: felt):
+    Ownable_only_owner()
+    # TODO: use openzeppelin's ERC165 to validate
+    validator_.write(validator)
+
+    # TODO: emit event
+
+    return ()
+end
+
+# --- Configuration
 
 @event
 func config_set(
@@ -215,39 +234,6 @@ func config_set(
 ):
 end
 
-@event
-func new_transmission(
-    round_id: felt,
-    answer: felt,
-    transmitter: felt,
-    observations_timestamp: felt,
-    observers: felt,
-    observations_len: felt,
-    observations: felt*,
-    juels_per_fee_coin: felt,
-    config_digest: felt,
-    epoch_and_round: felt, # TODO: split?
-    reimbursement: felt,
-):
-end
-
-# ---
-
-func transfer_ownership{
-    syscall_ptr : felt*, 
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr
-}(new_owner: felt) -> ():
-    return Ownable_transfer_ownership(new_owner)
-end
-
-func accept_ownership{
-    syscall_ptr : felt*, 
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr
-}() -> (new_owner: felt):
-    return Ownable_accept_ownership()
-end
 
 struct OracleConfig:
     member signer: felt
@@ -325,6 +311,106 @@ func set_config{
 
     return (digest)
 end
+
+func remove_oracles{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(n: felt):
+    alloc_locals
+
+    if n == 0:
+        oracles_len_.write(0)
+        return ()
+    end
+
+    # delete oracle from all maps
+    let (signer) = signers_list_.read(n)
+    signers_.write(signer, 0)
+
+    let (transmitter) = transmitters_list_.read(n)
+    transmitters_.write(transmitter, 0)
+
+    return remove_oracles(n - 1)
+end
+
+# NOTE: index should start with 1 here because storage is 0-initialized.
+# That way signers(pkey) => 0 indicates "not present"
+func add_oracles{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(oracles: OracleConfig*, index: felt, len: felt):
+    alloc_locals
+
+    if len == 0:
+        oracles_len_.write(index)
+        return ()
+    end
+
+    let index = index + 1
+ 
+    signers_.write(oracles.signer, index)
+    signers_list_.write(index, oracles.signer)
+
+    transmitters_.write(oracles.transmitter, index)
+    transmitters_list_.write(index, oracles.transmitter)
+
+    return add_oracles(oracles + OracleConfig.SIZE, index, len - 1)
+end
+
+func config_digest_from_data{
+    pedersen_ptr : HashBuiltin*,
+}(
+    contract_address: felt,
+    config_count: felt,
+    oracles_len: felt,
+    oracles: OracleConfig*,
+    f: felt,
+    onchain_config: felt, # TODO
+    offchain_config_version: felt,
+    offchain_config_len: felt,
+    offchain_config: felt*,
+) -> (hash: felt):
+    alloc_locals
+
+    let hash_ptr = pedersen_ptr
+    with hash_ptr:
+        let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, contract_address)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, config_count)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, oracles_len)
+        let (hash_state_ptr) = hash_update(hash_state_ptr, oracles, oracles_len * OracleConfig.SIZE)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, f)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, onchain_config)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_version)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_len)
+        let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
+     
+        let (hash) = hash_finalize(hash_state_ptr)
+        let pedersen_ptr = hash_ptr
+        return (hash=hash)
+    end
+end
+
+# --- Transmission ---
+
+@event
+func new_transmission(
+    round_id: felt,
+    answer: felt,
+    transmitter: felt,
+    observations_timestamp: felt,
+    observers: felt,
+    observations_len: felt,
+    observations: felt*,
+    juels_per_fee_coin: felt,
+    config_digest: felt,
+    epoch_and_round: felt, # TODO: split?
+    reimbursement: felt,
+):
+end
+
  
 struct Signature:
     member r : felt
@@ -464,90 +550,6 @@ func transmit{
     return ()
 end
 
-# ---
-
-func remove_oracles{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}(n: felt):
-    alloc_locals
-
-    if n == 0:
-        oracles_len_.write(0)
-        return ()
-    end
-
-    # delete oracle from all maps
-    let (signer) = signers_list_.read(n)
-    signers_.write(signer, 0)
-
-    let (transmitter) = transmitters_list_.read(n)
-    transmitters_.write(transmitter, 0)
-
-    return remove_oracles(n - 1)
-end
-
-# NOTE: index should start with 1 here because storage is 0-initialized.
-# That way signers(pkey) => 0 indicates "not present"
-func add_oracles{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}(oracles: OracleConfig*, index: felt, len: felt):
-    alloc_locals
-
-    if len == 0:
-        oracles_len_.write(index)
-        return ()
-    end
-
-    let index = index + 1
- 
-    signers_.write(oracles.signer, index)
-    signers_list_.write(index, oracles.signer)
-
-    transmitters_.write(oracles.transmitter, index)
-    transmitters_list_.write(index, oracles.transmitter)
-
-    return add_oracles(oracles + OracleConfig.SIZE, index, len - 1)
-end
-# ---
-
-func config_digest_from_data{
-    pedersen_ptr : HashBuiltin*,
-}(
-    contract_address: felt,
-    config_count: felt,
-    oracles_len: felt,
-    oracles: OracleConfig*,
-    f: felt,
-    onchain_config: felt, # TODO
-    offchain_config_version: felt,
-    offchain_config_len: felt,
-    offchain_config: felt*,
-) -> (hash: felt):
-    alloc_locals
-
-    let hash_ptr = pedersen_ptr
-    with hash_ptr:
-        let (hash_state_ptr) = hash_init()
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, contract_address)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, config_count)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, oracles_len)
-        let (hash_state_ptr) = hash_update(hash_state_ptr, oracles, oracles_len * OracleConfig.SIZE)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, f)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, onchain_config)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_version)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_len)
-        let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
-     
-        let (hash) = hash_finalize(hash_state_ptr)
-        let pedersen_ptr = hash_ptr
-        return (hash=hash)
-    end
-end
-
 func hash_report{
     pedersen_ptr : HashBuiltin*,
 }(
@@ -629,3 +631,15 @@ func verify_signatures{
         signed_count
     )
 end
+
+# --- RequestNewRound
+
+# --- Queries
+
+# --- Set LINK Token
+# --- Billing Access Controller
+# --- Billing Config
+
+# --- Payments and Withdrawals
+# --- Transmitter Payment
+# --- Payee Management
