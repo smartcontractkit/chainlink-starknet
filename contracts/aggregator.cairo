@@ -684,6 +684,74 @@ end
 
 # --- Queries
 
+@view
+func description{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (description: felt):
+    let (description) = description_.read()
+    return (description)
+end
+
+@view
+func decimals{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (decimals: felt):
+    let (decimals) = decimals_.read()
+    return (decimals)
+end
+
+struct Round:
+    member round_id: felt
+    member answer: felt
+    member block_num: felt
+    member observation_timestamp: felt
+    member transmission_timestamp: felt
+end
+
+@view
+func round_data{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(round_id: felt) -> (round: Round):
+    # TODO: assert round_id fits in u32
+
+    let (transmission: Transmission) = transmissions_.read(round_id)
+
+    let round = Round(
+        round_id=round_id,
+        answer=transmission.answer,
+        block_num=transmission.block_num,
+        observation_timestamp=transmission.observation_timestamp,
+        transmission_timestamp=transmission.transmission_timestamp,
+    )
+    return (round)
+end
+
+@view
+func latest_round_data{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (round: Round):
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (transmission: Transmission) = transmissions_.read(latest_round_id)
+
+    let round = Round(
+        round_id=latest_round_id,
+        answer=transmission.answer,
+        block_num=transmission.block_num,
+        observation_timestamp=transmission.observation_timestamp,
+        transmission_timestamp=transmission.transmission_timestamp,
+    )
+    return (round)
+end
+
+
 # --- Set LINK Token
 
 # --- Billing Access Controller
@@ -730,12 +798,10 @@ end
 # --- Billing Config
 
 struct Billing:
-    # TODO: use a single felt we (observation_payment, transmission_payment) = split_felt()?
+    # TODO: use a single felt via (observation_payment, transmission_payment) = split_felt()?
     member observation_payment_gjuels : felt
     member transmission_payment_gjuels : felt
 end
-
-# TODO: use billing access controller
 
 @storage_var
 func billing_() -> (config: Billing):
@@ -757,7 +823,7 @@ func set_billing{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(config: Billing):
-    # TODO: check billing admin too
+    # TODO: use billing access controller too
     Ownable_only_owner()
 
     # Pay out oracles using existing settings for rounds up to now
