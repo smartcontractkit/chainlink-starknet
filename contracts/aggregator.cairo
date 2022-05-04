@@ -7,7 +7,9 @@ from starkware.cairo.common.hash_state import (
 )
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.bitwise import bitwise_and
-from starkware.cairo.common.math import assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
+from starkware.cairo.common.math import (
+    assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
+)
 from starkware.cairo.common.pow import pow
 # from starkware.cairo.common.bool import TRUE, FALSE
 
@@ -79,17 +81,17 @@ end
 func latest_config_digest_() -> (digest: felt):
 end
 
-struct Oracle:
-  # TODO: payment amount, from_round_id
-end
+# struct Oracle:
+#   # TODO: payment amount, from_round_id
+# end
 
 @storage_var
 func oracles_len_() -> (len: felt):
 end
 
-@storage_var
-func oracles_(index: felt) -> (oracle: Oracle):
-end
+# @storage_var
+# func oracles_(index: felt) -> (oracle: Oracle):
+# end
 
 # TODO: also store payment here?
 @storage_var
@@ -372,8 +374,6 @@ func config_digest_from_data{
     offchain_config_len: felt,
     offchain_config: felt*,
 ) -> (hash: felt):
-    alloc_locals
-
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
@@ -411,7 +411,6 @@ func new_transmission(
 ):
 end
 
- 
 struct Signature:
     member r : felt
     member s : felt
@@ -558,8 +557,6 @@ func hash_report{
     observations_len: felt,
     observations: felt*,
 ) -> (hash: felt):
-    alloc_locals
-
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
