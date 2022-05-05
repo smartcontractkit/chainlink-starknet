@@ -9,13 +9,17 @@ from starkware.cairo.common.hash_state import (
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.math import (
+    split_felt,
     assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
+)
+from starkware.cairo.common.math_cmp import (
+    is_not_zero,
 )
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.uint256 import (
     Uint256,
 )
-# from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
@@ -25,6 +29,8 @@ from starkware.starknet.common.syscalls import (
 )
 
 from openzeppelin.utils.constants import UINT8_MAX
+
+from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
 
 from contracts.ownable import (
     Ownable_initializer,
@@ -37,6 +43,11 @@ from contracts.ownable import (
 # ---
 
 const MAX_ORACLES = 31
+
+func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
+    let (high, low) = split_felt(x)
+    return (Uint256(low=low, high=high))
+end
 
 @storage_var
 func link_token_() -> (token: felt):
@@ -108,6 +119,10 @@ end
 
 @storage_var
 func transmitters_list_(index: felt) -> (pkey: felt):
+end
+
+@storage_var
+func reward_from_aggregator_round_id_(index: felt) -> (round_id: felt):
 end
 
 # ---
@@ -270,8 +285,10 @@ func set_config{
     let (len) = oracles_len_.read()
     remove_oracles(len)
 
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+
     # add new oracles (also sets oracle_len_)
-    add_oracles(oracles, 0, oracles_len)
+    add_oracles(oracles, 0, oracles_len, latest_round_id)
 
     f_.write(f)
     let (block_num : felt) = get_block_number()
@@ -343,7 +360,7 @@ func add_oracles{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(oracles: OracleConfig*, index: felt, len: felt):
+}(oracles: OracleConfig*, index: felt, len: felt, latest_round_id: felt):
     alloc_locals
 
     if len == 0:
@@ -359,7 +376,9 @@ func add_oracles{
     transmitters_.write(oracles.transmitter, index)
     transmitters_list_.write(index, oracles.transmitter)
 
-    return add_oracles(oracles + OracleConfig.SIZE, index, len - 1)
+    reward_from_aggregator_round_id_.write(index, latest_round_id)
+
+    return add_oracles(oracles + OracleConfig.SIZE, index, len - 1, latest_round_id)
 end
 
 func config_digest_from_data{
@@ -458,7 +477,7 @@ func new_transmission(
     juels_per_fee_coin: felt,
     config_digest: felt,
     epoch_and_round: felt, # TODO: split?
-    reimbursement: felt,
+    reimbursement: Uint256,
 ):
 end
 
@@ -574,10 +593,12 @@ func transmit{
         tempvar range_check_ptr = range_check_ptr
         tempvar pedersen_ptr = pedersen_ptr
     end
+    tempvar syscall_ptr = syscall_ptr
+    tempvar range_check_ptr = range_check_ptr
     tempvar pedersen_ptr = pedersen_ptr # TODO: ??? compilation seems to fail without this follow-up
 
     # TODO: calculate reimbursement
-    let reimbursement = 0
+    let (reimbursement) = calculate_reimbursement()
 
     # end report()
 
@@ -856,9 +877,25 @@ func owed_payment{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(transmitter: felt) -> (amount: Uint256):
-    # TODO:
-    let amount = Uint256(0, 0)
+}(transmitter: felt) -> (amount: felt):
+    let (index) = transmitters_.read(transmitter)
+
+    if index == 0:
+        # let zero = Uint256(0, 0)
+        return (0)
+    end
+
+    let (billing: Billing) = billing_.read()
+
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
+    let rounds = latest_round_id - from_round_id
+
+    # TODO: convert to juels
+    let amount = rounds * billing.observation_payment_gjuels
+    # TODO: add transmitter.payment
+
+    # TODO: is felt enough here? or use Uint256
     return (amount)
 end
 
@@ -876,7 +913,37 @@ func pay_oracle{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(transmitter: felt):
-    # TODO:
+    alloc_locals
+
+    let (index) = transmitters_.read(transmitter)
+
+    if index == 0:
+        return ()
+    end
+
+    let (amount_: felt) = owed_payment(transmitter)
+    assert_nn(amount_)
+
+    # if zero, fastpath return to avoid empty transfers
+    let (not_zero) = is_not_zero(amount_)
+    if not_zero == FALSE:
+        return ()
+    end
+
+    let (amount: Uint256) = felt_to_uint256(amount_)
+    let (payee) = payees_.read(transmitter)
+
+    let (link_token) = link_token_.read()
+
+    # TODO: do something with the return value?
+    IERC20.transfer(
+        contract_address=link_token,
+        recipient=payee,
+        amount=amount,
+    )
+
+    # TODO: emit event
+
     return ()
 end
 
@@ -885,7 +952,9 @@ func pay_oracles{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }():
-    # TODO:
+    # TODO: share link_token & last_round_id between pay_oracle calls
+
+    # TODO: iter over transmitters_list_ and call pay_oracle
     return ()
 end
 
