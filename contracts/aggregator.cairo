@@ -614,7 +614,7 @@ func transmit{
         reimbursement=reimbursement,
     )
 
-    # pay transmitter
+    # TODO: pay transmitter
 
     return ()
 end
@@ -1091,9 +1091,35 @@ func set_payees{
 }(payees_len: felt, payees: PayeeConfig*):
     Ownable_only_owner()
 
-    # TODO:
+    set_payee(payees, payees_len)
 
-    return()
+    return ()
+end
+
+func set_payee{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr
+}(payees: PayeeConfig*, len: felt):
+    if len == 0:
+        return ()
+    end
+
+    let (current_payee) = payees_.read(payees.transmitter)
+
+    # a more convoluted way of saying
+    # require(current_payee == 0 || current_payee == payee, "payee already set")
+    let (not_zero) = is_not_zero(current_payee)
+    let (not_same) = is_not_zero(current_payee - payees.payee)
+    with_attr error_message("payee already set"):
+        assert_not_zero((not_zero - 1) * (not_same - 1))
+    end
+
+    payees_.write(payees.transmitter, payees.payee)
+
+    # TODO: emit event
+
+    return set_payee(payees + PayeeConfig.SIZE, len - 1)
 end
 
 @external
