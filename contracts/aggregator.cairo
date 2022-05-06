@@ -18,6 +18,7 @@ from starkware.cairo.common.math_cmp import (
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.uint256 import (
     Uint256,
+    uint256_sub
 )
 from starkware.cairo.common.bool import TRUE, FALSE
 
@@ -1027,10 +1028,25 @@ func pay_oracles{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }():
-    # TODO: share link_token & last_round_id between pay_oracle calls
-
-    # TODO: iter over transmitters_list_ and call pay_oracle
+    let (len) = oracles_len_.read()
+    pay_oracles_(len)
     return ()
+end
+
+func pay_oracles_{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(index: felt):
+    if index == 0:
+        return ()
+    end
+    
+    # TODO: share link_token & last_round_id between pay_oracle calls
+    let (transmitter) = transmitters_list_.read(index)
+    pay_oracle(transmitter)
+
+    return pay_oracles_(index - 1)
 end
 
 @external
@@ -1055,8 +1071,17 @@ func link_available_for_payment{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }() -> (available: Uint256):
-    # TODO: amount: balance - due
-    let amount = Uint256(0,0)
+    let (link_token) = link_token_.read()
+    let (contract_address) = get_contract_address()
+
+    # TODO: cast this to felt since `balance - due` can go negative?
+    let (balance: Uint256) = IERC20.balanceOf(
+        contract_address=link_token,
+        account=contract_address,
+    )
+
+    let due = Uint256(0,0)
+    let (amount) = uint256_sub(balance, due)
     return (amount)
 end
 
