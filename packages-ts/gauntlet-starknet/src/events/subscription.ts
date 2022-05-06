@@ -1,6 +1,7 @@
 // TODO: Use starknet WS client
 type WSClient = any
 
+// TODO: Adapt to Starknet client
 export abstract class EventSubscription<Event> {
   abstract parseEvent: (event: any) => Event
 

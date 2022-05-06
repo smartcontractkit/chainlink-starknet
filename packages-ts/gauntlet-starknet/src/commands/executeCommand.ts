@@ -1,9 +1,9 @@
 import { Result, WriteCommand } from '@chainlink/gauntlet-core'
 import { RawCalldata, CompiledContract, Contract } from 'starknet'
 import { Dependencies } from '../dependencies'
-import { IStarknetProvider } from '../provider'
+import { IStarknetProvider, wrapResponse } from '../provider'
 import { TransactionResponse } from '../transaction'
-import { IWallet } from '../wallet'
+import { IStarknetWallet } from '../wallet'
 import { Validation } from './command'
 
 export interface ExecuteCommandConfig<UI, CI> {
@@ -36,7 +36,7 @@ const makeCommandId = (category: string, fn: string, suffixes?: string[]): strin
 
 export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (deps: Dependencies) => {
   return class ExecuteCommand extends WriteCommand<TransactionResponse> implements ExecuteCommandInstance {
-    wallet: IWallet
+    wallet: IStarknetWallet
     provider: IStarknetProvider
     contractAddress: string
 
@@ -91,7 +91,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return Array.from(Buffer.from(''))
     }
 
-    deployContract = async () => {
+    deployContract = async (): Promise<TransactionResponse> => {
       deps.logger.info(`Deploying contract ${config.ux.category}`)
       await deps.prompt('Continue?')
 
@@ -102,7 +102,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
-    executeFn = async () => {
+    executeFn = async (): Promise<TransactionResponse> => {
       const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
       deps.logger.info(
         `Executing function ${config.ux.function} of contract ${config.ux.category} at ${this.contractAddress}`,
@@ -111,8 +111,11 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
 
       const tx = await contract[config.ux.function](...(this.input.contract as any))
-
-      console.log(tx)
+      const response = wrapResponse(this.provider, tx, this.contractAddress)
+      deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
+      await response.wait()
+      deps.logger.success(`Function executed on ${response.hash}`)
+      return response
     }
 
     execute = async () => {
@@ -120,7 +123,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       if (config.ux.function === 'deploy') {
         tx = await this.deployContract()
       } else {
-        await this.executeFn()
+        tx = await this.executeFn()
       }
 
       return {
