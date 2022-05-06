@@ -794,13 +794,7 @@ func set_billing_access_controller{
         billing_access_controller_.write(access_controller)
         # TODO: emit event
 
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    else:
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
+        return ()
     end
 
     return ()
