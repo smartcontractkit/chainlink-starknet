@@ -460,7 +460,7 @@ func transmitters_inner{
     let (transmitter) = transmitters_list_.read(index)
     assert result[0] = transmitter
 
-    return transmitters_inner(len, index, result + 1)
+    return transmitters_inner(len - 1, index, result + 1)
 end
 
 # --- Transmission ---
