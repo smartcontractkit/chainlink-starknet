@@ -32,6 +32,8 @@ from openzeppelin.utils.constants import UINT8_MAX
 
 from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
 
+from contracts.interfaces.IAccessController import IAccessController
+
 from contracts.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
@@ -476,7 +478,7 @@ func new_transmission(
     observations: felt*,
     juels_per_fee_coin: felt,
     config_digest: felt,
-    epoch_and_round: felt, # TODO: split?
+    epoch_and_round: felt,
     reimbursement: Uint256,
 ):
 end
@@ -838,8 +840,7 @@ func set_billing{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(config: Billing):
-    # TODO: use billing access controller too
-    Ownable_only_owner()
+    has_billing_access()
 
     # Pay out oracles using existing settings for rounds up to now
     pay_oracles()
@@ -851,6 +852,28 @@ func set_billing{
     # TODO: emit event
 
     return ()
+end
+
+func has_billing_access{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (bool: felt):
+    let (caller) = get_caller_address()
+    let (owner) = Ownable_get_owner()
+
+    # owner always has access
+    if caller == owner:
+        return (TRUE)
+    end
+
+    let (access_controller) = billing_access_controller_.read()
+
+    let (has_access: felt) = IAccessController.has_access(
+        contract_address=access_controller,
+        address=caller
+    )
+    return (has_access)
 end
 
 # --- Payments and Withdrawals
@@ -956,6 +979,33 @@ func pay_oracles{
 
     # TODO: iter over transmitters_list_ and call pay_oracle
     return ()
+end
+
+@external
+func withdraw_funds{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(recipient: felt, amount: Uint256):
+    has_billing_access()
+
+    return ()
+end
+
+func total_link_due() -> (due: Uint256):
+    let amount = Uint256(0,0)
+    return (amount)
+end
+
+@view
+func link_available_for_payment{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (available: Uint256):
+    # TODO: amount: balance - due
+    let amount = Uint256(0,0)
+    return (amount)
 end
 
 # --- Transmitter Payment

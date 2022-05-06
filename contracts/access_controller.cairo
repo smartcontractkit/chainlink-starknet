@@ -34,7 +34,7 @@ func has_access{
 }(
     address: felt
 ) -> (bool: felt):
-    let bool = access_list_.read(address)
+    let (bool) = access_list_.read(address)
     return (bool)
 end
 
@@ -47,7 +47,7 @@ func check_access{
 }(
     address: felt
 ):
-    let bool = access_list_.read(address)
+    let (bool) = access_list_.read(address)
     with_attr error_message("AccessController: address does not have access"):
         assert bool = TRUE
     end
