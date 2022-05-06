@@ -14,22 +14,33 @@ export const makeProvider = (url: string): IProvider<StarknetProvider> => {
   return new Provider(url)
 }
 
+export const wrapResponse = (
+  provider: IStarknetProvider,
+  response: AddTransactionResponse,
+  address?: string,
+): TransactionResponse => {
+  const txResponse = {
+    hash: response.transaction_hash,
+    address: address || response.address,
+    wait: async () => {
+      // Success if does not throw
+      const success = (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+      const status = await provider.provider.getTransactionStatus(response.transaction_hash)
+      txResponse.tx.code = status.tx_status as any // For some reason, starknet does not consider any other status than "TRANSACTION_RECEIVED"
+      return {
+        success,
+      }
+    },
+    tx: response,
+  }
+  return txResponse
+}
+
 class Provider implements IStarknetProvider {
   provider: StarknetProvider
 
   constructor(baseUrl: string) {
     this.provider = new StarknetProvider({ baseUrl })
-  }
-
-  private wrapResponse = (response: AddTransactionResponse): TransactionResponse => {
-    return {
-      hash: response.transaction_hash,
-      address: response.address,
-      wait: async () => ({
-        success: (await this.provider.waitForTransaction(response.transaction_hash)) === undefined,
-      }),
-      tx: response,
-    }
   }
 
   send = async () => {
@@ -42,7 +53,7 @@ class Provider implements IStarknetProvider {
       contract,
     })
 
-    const response = this.wrapResponse(tx)
+    const response = wrapResponse(this, tx)
 
     if (!wait) return response
     await response.wait()
