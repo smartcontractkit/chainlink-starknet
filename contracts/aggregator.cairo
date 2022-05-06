@@ -51,10 +51,6 @@ func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     return (Uint256(low=low, high=high))
 end
 
-@storage_var
-func link_token_() -> (token: felt):
-end
-
 # Maximum number of faulty oracles
 @storage_var
 func f_() -> (f: felt):
@@ -776,6 +772,62 @@ end
 
 
 # --- Set LINK Token
+
+@storage_var
+func link_token_() -> (token: felt):
+end
+
+@external
+func set_link_token{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(link_token: felt, recipient: felt):
+    alloc_locals
+    Ownable_only_owner()
+
+    let (old_token) = link_token_.read()
+    if link_token == old_token:
+        return ()
+    end
+
+    let (contract_address) = get_contract_address()
+
+    # call balanceOf as a sanity check to confirm we're talking to a token
+    IERC20.balanceOf(
+        contract_address=link_token,
+        account=contract_address,
+    )
+
+    pay_oracles()
+
+    # transfer remaining balance to recipient
+    let (amount: Uint256) = IERC20.balanceOf(
+        contract_address=link_token,
+        account=contract_address,
+    )
+    IERC20.transfer(
+        contract_address=old_token,
+        recipient=recipient,
+        amount=amount,
+    )
+
+    link_token_.write(link_token)
+
+    # TODO: emit event
+
+    return ()
+end
+
+@view
+func link_token{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (link_token: felt):
+    let (link_token) = link_token_.read()
+    return (link_token)
+end
 
 # --- Billing Access Controller
 
