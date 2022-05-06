@@ -18,7 +18,7 @@ from starkware.cairo.common.math_cmp import (
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.uint256 import (
     Uint256,
-    uint256_sub
+    uint256_sub,
 )
 from starkware.cairo.common.bool import TRUE, FALSE
 
@@ -46,6 +46,8 @@ from contracts.ownable import (
 # ---
 
 const MAX_ORACLES = 31
+
+const GIGA = 10 ** 9
 
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     let (high, low) = split_felt(x)
@@ -91,21 +93,20 @@ end
 func latest_config_digest_() -> (digest: felt):
 end
 
-# struct Oracle:
-#   # TODO: payment amount, from_round_id
-# end
-
 @storage_var
 func oracles_len_() -> (len: felt):
 end
 
-# @storage_var
-# func oracles_(index: felt) -> (oracle: Oracle):
-# end
+# TODO: should we pack into (index, payment) = split_felt()? index is u8, payment is u128
+struct Oracle:
+    member index: felt
 
-# TODO: also store payment here?
+    # entire supply of LINK always fits into u96, so felt is safe to use
+    member payment_juels: felt
+end
+
 @storage_var
-func transmitters_(pkey: felt) -> (index: felt):
+func transmitters_(pkey: felt) -> (index: Oracle):
 end
 
 @storage_var
@@ -348,7 +349,7 @@ func remove_oracles{
     signers_.write(signer, 0)
 
     let (transmitter) = transmitters_list_.read(n)
-    transmitters_.write(transmitter, 0)
+    transmitters_.write(transmitter, Oracle(index=0, payment_juels=0))
 
     return remove_oracles(n - 1)
 end
@@ -372,7 +373,7 @@ func add_oracles{
     signers_.write(oracles.signer, index)
     signers_list_.write(index, oracles.signer)
 
-    transmitters_.write(oracles.transmitter, index)
+    transmitters_.write(oracles.transmitter, Oracle(index=index, payment_juels=0))
     transmitters_list_.write(index, oracles.transmitter)
 
     reward_from_aggregator_round_id_.write(index, latest_round_id)
@@ -476,7 +477,7 @@ func new_transmission(
     juels_per_fee_coin: felt,
     config_digest: felt,
     epoch_and_round: felt,
-    reimbursement: Uint256,
+    reimbursement: felt,
 ):
 end
 
@@ -522,8 +523,8 @@ func transmit{
 
     # validate transmitter
     let (caller) = get_caller_address()
-    let (oracle_idx) = transmitters_.read(caller)
-    assert_not_equal(oracle_idx, 0) # 0 index = uninitialized
+    let (oracle: Oracle) = transmitters_.read(caller)
+    assert_not_equal(oracle.index, 0) # 0 index = uninitialized
     # ERROR: caller seems to be the account contract address, not the underlying transmitter key
 
     # Validate config digest matches latest_config_digest
@@ -556,7 +557,8 @@ func transmit{
     let (answer_range) = answer_range_.read()
     assert_in_range(median, answer_range[0], answer_range[1])
 
-    let (prev_round_id) = latest_aggregator_round_id_.read()
+    let (local prev_round_id) = latest_aggregator_round_id_.read()
+    # let (prev_round_id) = latest_aggregator_round_id_.read()
     let round_id = prev_round_id + 1
     latest_aggregator_round_id_.write(round_id)
 
@@ -597,7 +599,7 @@ func transmit{
     tempvar pedersen_ptr = pedersen_ptr # TODO: ??? compilation seems to fail without this follow-up
 
     # TODO: calculate reimbursement
-    let (reimbursement) = calculate_reimbursement()
+    let (reimbursement_juels) = calculate_reimbursement()
 
     # end report()
 
@@ -612,10 +614,18 @@ func transmit{
         juels_per_fee_coin=1, # TODO
         config_digest=report_context.config_digest,
         epoch_and_round=report_context.epoch_and_round,
-        reimbursement=reimbursement,
+        reimbursement=reimbursement_juels,
     )
 
-    # TODO: pay transmitter
+    # pay transmitter
+    let (billing: Billing) = billing_.read()
+    let payment = reimbursement_juels + (billing.transmission_payment_gjuels * GIGA)
+    # TODO: check overflow
+
+    transmitters_.write(caller, Oracle(
+        index=oracle.index,
+        payment_juels=oracle.payment_juels + payment
+    ))
 
     return ()
 end
@@ -954,10 +964,9 @@ func owed_payment{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(transmitter: felt) -> (amount: felt):
-    let (index) = transmitters_.read(transmitter)
+    let (oracle: Oracle) = transmitters_.read(transmitter)
 
-    if index == 0:
-        # let zero = Uint256(0, 0)
+    if oracle.index == 0:
         return (0)
     end
 
@@ -967,11 +976,7 @@ func owed_payment{
     let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
     let rounds = latest_round_id - from_round_id
 
-    # TODO: convert to juels
-    let amount = rounds * billing.observation_payment_gjuels
-    # TODO: add transmitter.payment
-
-    # TODO: is felt enough here? or use Uint256
+    let amount = (rounds * billing.observation_payment_gjuels * GIGA) + oracle.payment_juels
     return (amount)
 end
 
@@ -991,9 +996,9 @@ func pay_oracle{
 }(transmitter: felt):
     alloc_locals
 
-    let (index) = transmitters_.read(transmitter)
+    let (oracle: Oracle) = transmitters_.read(transmitter)
 
-    if index == 0:
+    if oracle.index == 0:
         return ()
     end
 
@@ -1087,9 +1092,9 @@ end
 
 # --- Transmitter Payment
 
-func calculate_reimbursement() -> (amount: Uint256):
+func calculate_reimbursement() -> (amount: felt):
     # TODO:
-    let amount = Uint256(0,0)
+    let amount = 0
     return (amount)
 end
 
