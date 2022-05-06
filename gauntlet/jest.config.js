@@ -23,5 +23,16 @@ module.exports = {
         },
       },
     },
+    {
+      displayName: 'starknet-sdk',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/packages/starknet-sdk/**/*.test.ts'],
+      globals: {
+        'ts-jest': {
+          tsconfig: '<rootDir>/packages/starknet-sdk/tsconfig.json',
+        },
+      },
+    },
   ],
 }
