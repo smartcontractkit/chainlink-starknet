@@ -140,6 +140,7 @@ func is_valid{
     let (local ratio_sign) = is_le(2 ** 127, ratio.high)
     local range_check_ptr = range_check_ptr
     let (local ratio) = uint256_cond_neg(ratio, should_neg=ratio_sign)
+    # TODO: can it be simplified via sign()?
 
     let (threshold_felt) = threshold_.read()
     let (threshold: Uint256) = felt_to_uint256(threshold_felt)
