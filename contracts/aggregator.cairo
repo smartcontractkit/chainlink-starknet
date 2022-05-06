@@ -10,6 +10,7 @@ from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.math import (
     split_felt,
+    assert_lt_felt,
     assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
 )
 from starkware.cairo.common.math_cmp import (
@@ -52,6 +53,11 @@ const GIGA = 10 ** 9
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     let (high, low) = split_felt(x)
     return (Uint256(low=low, high=high))
+end
+
+func uint256_to_felt{range_check_ptr}(value : Uint256) -> (value : felt):
+    assert_lt_felt(value.high, 2 ** 123)
+    return (value.high * (2 ** 128) + value.low)
 end
 
 # Maximum number of faulty oracles
@@ -1065,8 +1071,8 @@ func withdraw_funds{
     return ()
 end
 
-func total_link_due() -> (due: Uint256):
-    let amount = Uint256(0,0)
+func total_link_due() -> (due: felt):
+    let amount = 0
     return (amount)
 end
 
@@ -1075,19 +1081,21 @@ func link_available_for_payment{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}() -> (available: Uint256):
+}() -> (available: felt):
     let (link_token) = link_token_.read()
     let (contract_address) = get_contract_address()
 
-    # TODO: cast this to felt since `balance - due` can go negative?
-    let (balance: Uint256) = IERC20.balanceOf(
+    let (balance_: Uint256) = IERC20.balanceOf(
         contract_address=link_token,
         account=contract_address,
     )
+    # entire link supply fits into u96 so this should not fail
+    let (balance) = uint256_to_felt(balance_)
 
-    let due = Uint256(0,0)
-    let (amount) = uint256_sub(balance, due)
-    return (amount)
+    let (due) = total_link_due()
+    let amount = balance - due
+
+    return (available=amount)
 end
 
 # --- Transmitter Payment
