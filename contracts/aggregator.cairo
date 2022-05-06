@@ -632,7 +632,6 @@ func hash_report{
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
-        # TODO: does hash_update(hash_state_ptr, cast(report_context, felt), ReportContext.SIZE) work?
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.config_digest)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.epoch_and_round)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.extra_hash)
@@ -688,6 +687,7 @@ func verify_signatures{
     )
 
     # TODO: Using shifts here might be expensive due to pow()?
+    # evaluate using alloc() to allocate a signed_count[oracles_len] instead
 
     # signed_count + 1 << (8 * index)
     let (shift) = pow(2, 8 * index)
@@ -861,7 +861,13 @@ func withdraw_payment{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(transmitter: felt):
-    # TODO: assert caller == receiver
+    alloc_locals
+    let (caller) = get_caller_address()
+    let (payee) = payees_.read(transmitter)
+    with_attr error_message("only payee can withdraw"):
+        assert caller = payee
+    end
+
     pay_oracle(transmitter)
     return ()
 end
