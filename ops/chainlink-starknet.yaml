@@ -1,0 +1,30 @@
+namespace_prefix: chainlink-stark
+charts:
+  geth:
+    index: 1
+  starknet:
+    path: ./ops/charts/starknet
+    index: 1
+    values:
+#       false = stark-devnet
+#       true = pathfinder, must provide goerli or mainnet url in "url_http_L1" env var
+#       uncomment
+#      real_node: true
+#      url_http_L1: "some goerli url"
+#       or
+      real_node: false
+#     you can also override image vars
+#     repository: ""
+#     tag: ""
+  mockserver-config:
+    index: 1
+  mockserver:
+    index: 2
+  chainlink:
+    index: 2
+    values:
+      replicas: 5
+      chainlink:
+        image:
+          image: "public.ecr.aws/chainlink/chainlink"
+          version: "latest"
