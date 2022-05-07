@@ -6,14 +6,14 @@ on:
       cl_branch_ref:
         description: Chainlink repo branch to integrate with
         required: true
-        default: update_custom_build
+        default: develop
         type: string
 
 jobs:
   e2e_custom_build_custom_chainlink_image:
     name: E2E Custom Build Custom CL Image
     # target branch can't be set as var, it's from where we getting pipeline code
-    uses: smartcontractkit/chainlink/.github/workflows/build-custom.yml@update_custom_build
+    uses: smartcontractkit/chainlink/.github/workflows/build-custom.yml@develop
     with:
       cl_repo: smartcontractkit/chainlink
       cl_ref: ${{ github.event.inputs.cl_branch_ref }}
