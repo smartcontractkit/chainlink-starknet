@@ -27,7 +27,8 @@ from starkware.starknet.common.syscalls import (
     get_caller_address,
     get_contract_address,
     get_block_timestamp,
-    get_block_number
+    get_block_number,
+    get_tx_info,
 )
 
 from openzeppelin.utils.constants import UINT8_MAX
@@ -306,7 +307,9 @@ func set_config{
     config_count_.write(config_count)
     # calculate and store config digest
     let (contract_address) = get_contract_address()
+    let (tx_info) = get_tx_info()
     let (digest) = config_digest_from_data(
+        tx_info.chain_id,
         contract_address,
         config_count,
         oracles_len,
@@ -390,6 +393,7 @@ end
 func config_digest_from_data{
     pedersen_ptr : HashBuiltin*,
 }(
+    chain_id: felt,
     contract_address: felt,
     config_count: felt,
     oracles_len: felt,
@@ -403,6 +407,7 @@ func config_digest_from_data{
     let hash_ptr = pedersen_ptr
     with hash_ptr:
         let (hash_state_ptr) = hash_init()
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, chain_id)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, contract_address)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, config_count)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, oracles_len)
