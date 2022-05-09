@@ -12,6 +12,6 @@ pkgs.mkShell {
   venvDir = "./.venv";
 
   postShellHook = ''
-    pip install -r requirements.txt -c constraints.txt
+    pip install -r contracts/requirements.txt -c contracts/constraints.txt
   '';
 }

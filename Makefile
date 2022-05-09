@@ -18,10 +18,6 @@ else
 	endif
 endif
 
-# Build and test
-build :; nile compile
-test  :; pytest tests/
-
 .PHONY: install
 install:
 ifeq ($(OSFLAG),$(WINDOWS))

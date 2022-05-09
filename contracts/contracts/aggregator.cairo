@@ -208,6 +208,9 @@ end
 
 # --- Validation ---
 
+# TODO: disable validation + flags in the initial release
+# TODO: document decision in repo/docs/contracts/ocr2
+
 @contract_interface
 namespace IValidator:
     func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt):
@@ -366,8 +369,6 @@ func remove_oracles{
     return remove_oracles(n - 1)
 end
 
-# NOTE: index should start with 1 here because storage is 0-initialized.
-# That way signers(pkey) => 0 indicates "not present"
 func add_oracles{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
@@ -380,6 +381,8 @@ func add_oracles{
         return ()
     end
 
+    # NOTE: index should start with 1 here because storage is 0-initialized.
+    # That way signers(pkey) => 0 indicates "not present"
     let index = index + 1
 
     signers_.write(oracles.signer, index)
@@ -484,7 +487,7 @@ func new_transmission(
     round_id: felt,
     answer: felt,
     transmitter: felt,
-    observations_timestamp: felt,
+    observation_timestamp: felt,
     observers: felt,
     observations_len: felt,
     observations: felt*,
@@ -520,7 +523,6 @@ func transmit{
     bitwise_ptr : BitwiseBuiltin*,
     range_check_ptr
 }(
-    # TODO: timestamp & juels_per_fee_coin
     report_context: ReportContext,
     observers: felt,
     observations_len: felt,
@@ -529,6 +531,10 @@ func transmit{
     signatures: Signature*,
 ):
     alloc_locals
+    
+    # TODO: timestamp & juels_per_fee_coin
+    let observation_timestamp = 1
+    let juels_per_fee_coin = 1
 
     let (epoch_and_round) = latest_epoch_and_round_.read()
     with_attr error_message("stale report"):
@@ -584,7 +590,7 @@ func transmit{
     transmissions_.write(round_id, Transmission(
         answer=median,
         block_num=block_num,
-        observation_timestamp=1, # TODO:
+        observation_timestamp=observation_timestamp,
         transmission_timestamp=timestamp,
     ))
 
@@ -611,9 +617,8 @@ func transmit{
     end
     tempvar syscall_ptr = syscall_ptr
     tempvar range_check_ptr = range_check_ptr
-    tempvar pedersen_ptr = pedersen_ptr # TODO: ??? compilation seems to fail without this follow-up
+    tempvar pedersen_ptr = pedersen_ptr
 
-    # TODO: calculate reimbursement
     let (reimbursement_juels) = calculate_reimbursement()
 
     # end report()
@@ -622,11 +627,11 @@ func transmit{
         round_id=round_id,
         answer=median,
         transmitter=caller,
-        observations_timestamp=1, # TODO:
+        observation_timestamp=observation_timestamp,
         observers=observers,
         observations_len=observations_len,
         observations=observations,
-        juels_per_fee_coin=1, # TODO
+        juels_per_fee_coin=juels_per_fee_coin,
         config_digest=report_context.config_digest,
         epoch_and_round=report_context.epoch_and_round,
         reimbursement=reimbursement_juels,
