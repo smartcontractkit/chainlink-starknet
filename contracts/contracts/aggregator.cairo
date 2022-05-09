@@ -813,6 +813,14 @@ end
 func link_token_() -> (token: felt):
 end
 
+@event
+func link_token_set(
+    old_link_token: felt,
+    new_link_token: felt
+):
+end
+
+
 @external
 func set_link_token{
     syscall_ptr : felt*,
@@ -850,7 +858,10 @@ func set_link_token{
 
     link_token_.write(link_token)
 
-    # TODO: emit event
+    link_token_set.emit(
+        old_link_token=old_token,
+        new_link_token=link_token,
+    )
 
     return ()
 end
@@ -871,6 +882,13 @@ end
 func billing_access_controller_() -> (access_controller: felt):
 end
 
+@event
+func billing_access_controller_set(
+    old_controller: felt,
+    new_controller: felt,
+):
+end
+
 @external
 func set_billing_access_controller{
     syscall_ptr : felt*,
@@ -882,7 +900,11 @@ func set_billing_access_controller{
     let (old_controller) = billing_access_controller_.read()
     if access_controller != old_controller:
         billing_access_controller_.write(access_controller)
-        # TODO: emit event
+
+        billing_access_controller_set.emit(
+            old_controller=old_controller,
+            new_controller=access_controller,
+        )
 
         return ()
     end
@@ -922,6 +944,12 @@ func billing{
     return (config)
 end
 
+@event
+func billing_set(
+    config: Billing,
+):
+end
+
 @external
 func set_billing{
     syscall_ptr : felt*,
@@ -939,7 +967,7 @@ func set_billing{
 
     billing_.write(config)
 
-    # TODO: emit event
+    billing_set.emit(config=config)
 
     return ()
 end
@@ -967,6 +995,15 @@ func has_billing_access{
 end
 
 # --- Payments and Withdrawals
+
+@event
+func oracle_paid(
+    transmitter: felt,
+    payee: felt,
+    amount: Uint256,
+    link_token: felt,
+):
+end
 
 @external
 func withdraw_payment{
@@ -1007,15 +1044,6 @@ func owed_payment{
     return (amount)
 end
 
-@event
-func oracle_paid(
-    transmitter: felt,
-    payee: felt,
-    amount: Uint256,
-    link_token: felt,
-):
-end
-
 func pay_oracle{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
@@ -1050,7 +1078,12 @@ func pay_oracle{
         amount=amount,
     )
 
-    # TODO: emit event
+    oracle_paid.emit(
+        transmitter=transmitter,
+        payee=payee,
+        amount=amount,
+        link_token=link_token
+    )
 
     return ()
 end
@@ -1169,6 +1202,22 @@ end
 func proposed_payees_(transmitter: felt) -> (payment_address: felt):
 end
 
+@event
+func payeeship_transfer_requested(
+    transmitter: felt,
+    current: felt,
+    proposed: felt,
+):
+end
+
+@event
+func payeeship_transferred(
+    transmitter: felt,
+    previous: felt,
+    current: felt,
+):
+end
+
 struct PayeeConfig:
     member transmitter: felt
     member payee: felt
@@ -1208,7 +1257,11 @@ func set_payee{
 
     payees_.write(payees.transmitter, payees.payee)
 
-    # TODO: emit event
+    payeeship_transferred.emit(
+        transmitter=payees.transmitter,
+        previous=current_payee,
+        current=payees.payee
+    )
 
     return set_payee(payees + PayeeConfig.SIZE, len - 1)
 end
@@ -1230,7 +1283,11 @@ func transfer_payeeship{
 
     proposed_payees_.write(transmitter, proposed)
 
-    # TODO: emit event
+    payeeship_transfer_requested.emit(
+        transmitter=transmitter,
+        current=payee,
+        proposed=proposed
+    )
 
     return ()
 end
@@ -1247,10 +1304,15 @@ func accept_payeeship{
         assert caller = proposed
     end
 
+    let (previous) = payees_.read(transmitter)
     payees_.write(transmitter, caller)
     proposed_payees_.write(transmitter, 0)
 
-    # TODO: emit event
+    payeeship_transferred.emit(
+        transmitter=transmitter,
+        previous=previous,
+        current=caller
+    )
 
     return ()
 end
