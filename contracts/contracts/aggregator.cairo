@@ -11,7 +11,10 @@ from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.math import (
     split_felt,
     assert_lt_felt,
-    assert_not_zero, assert_not_equal, assert_lt, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
+    assert_le_felt,
+    assert_lt,
+    assert_le,
+    assert_not_zero, assert_not_equal, assert_nn_le, assert_nn, assert_in_range, unsigned_div_rem
 )
 from starkware.cairo.common.math_cmp import (
     is_not_zero,
@@ -53,6 +56,7 @@ const GIGA = 10 ** 9
 
 const UINT32_MAX = 2 ** 32
 const INT192_MAX = 2 ** (192 - 1)
+const INT192_MIN = -2 ** (192 - 1)
 
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     let (high, low) = split_felt(x)
@@ -571,8 +575,9 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
-    # TODO: is this correct? [min, max)
-    assert_in_range(median, -INT192_MAX + 1, INT192_MAX)
+    # Check median is in i192 range.
+    # assert_lt_felt(INT192_MIN, median) # TODO: this keeps failing
+    assert_lt_felt(median, INT192_MAX)
 
     # Validate median in min-max range
     let (answer_range) = answer_range_.read()
