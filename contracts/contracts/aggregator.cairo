@@ -9,6 +9,7 @@ from starkware.cairo.common.hash_state import (
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.math import (
+    abs_value,
     split_felt,
     assert_lt_felt,
     assert_le_felt,
@@ -575,9 +576,12 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
-    # Check median is in i192 range.
-    # assert_lt_felt(INT192_MIN, median) # TODO: this keeps failing
-    assert_lt_felt(median, INT192_MAX)
+    # Check abs(median) is in i192 range.
+    # NOTE: (assert_lt_felt(-i192::MAX, median) doesn't work correctly so we have to use abs!)
+    let (value) = abs_value(median)
+    with_attr error_message("value not in int192 range: {median}"):
+        assert_lt_felt(value, INT192_MAX)
+    end
 
     # Validate median in min-max range
     let (answer_range) = answer_range_.read()
