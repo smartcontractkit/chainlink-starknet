@@ -1076,9 +1076,40 @@ func withdraw_funds{
     return ()
 end
 
-func total_link_due() -> (due: felt):
-    let amount = 0
+func total_link_due{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (due: felt):
+    let (len) = oracles_len_.read()
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+
+    let (amount) = total_link_due_(len, latest_round_id, 0, 0)
     return (amount)
+end
+
+func total_link_due_{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(index: felt, latest_round_id: felt, total_rounds: felt, payments_juels: felt) -> (due: felt):
+    if index == 0:
+        let (billing: Billing) = billing_.read()
+        let amount = (total_rounds * billing.observation_payment_gjuels * GIGA) + payments_juels
+        return (amount)
+    end
+
+    let (transmitter) = transmitters_list_.read(index)
+    let (oracle: Oracle) = transmitters_.read(transmitter)
+    assert_not_zero(oracle.index) # 0 == undefined
+
+    let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
+    let rounds = latest_round_id - from_round_id
+
+    let total_rounds = total_rounds + rounds
+    let payments_juels = payments_juels + oracle.payment_juels
+
+    return total_link_due_(index - 1, latest_round_id, total_rounds, payments_juels)
 end
 
 @view
@@ -1087,6 +1118,7 @@ func link_available_for_payment{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }() -> (available: felt):
+    alloc_locals
     let (link_token) = link_token_.read()
     let (contract_address) = get_contract_address()
 
