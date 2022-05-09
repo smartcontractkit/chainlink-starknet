@@ -51,6 +51,9 @@ const MAX_ORACLES = 31
 
 const GIGA = 10 ** 9
 
+const UINT32_MAX = 2 ** 32
+const INT192_MAX = 2 ** (192 - 1)
+
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     let (high, low) = split_felt(x)
     return (Uint256(low=low, high=high))
@@ -562,7 +565,8 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
-    # TODO: assert inside i192 range
+    # TODO: is this correct? [min, max)
+    assert_in_range(median, -INT192_MAX + 1, INT192_MAX)
 
     # Validate median in min-max range
     let (answer_range) = answer_range_.read()
@@ -919,7 +923,9 @@ func set_billing{
     # Pay out oracles using existing settings for rounds up to now
     pay_oracles()
 
-    # TODO: check payment value ranges within bounds (u32?)
+    # check payment value ranges within u32 bounds
+    assert_nn_le(config.observation_payment_gjuels, UINT32_MAX)
+    assert_nn_le(config.transmission_payment_gjuels, UINT32_MAX)
 
     billing_.write(config)
 
