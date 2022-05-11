@@ -1,5 +1,10 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
-import { Validation } from '@chainlink/gauntlet-starknet/dist/commands/command'
+import {
+  ExecuteCommandConfig,
+  makeExecuteCommand,
+  Validation,
+  BeforeExecute,
+  AfterExecute,
+} from '@chainlink/gauntlet-starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContract } from '../../lib/contracts'
 
@@ -21,8 +26,19 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 }
 
 const validate: Validation<UserInput> = async (input) => {
-  console.log('validating token example input')
   return true
+}
+
+// This is a custom beforeExecute hook executed right before the command action is executed
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async (signer) => {
+  deps.logger.info('About to deploy a Sample Contract')
+  await deps.prompt('Continue?')
+}
+// This is a custom afterExecute hook executed right after the command action is executed
+const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (result) => {
+  deps.logger.info(
+    `Contract deployed with address: ${result.responses[0].tx.address} at tx hash: ${result.responses[0].tx.hash}`,
+  )
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
@@ -35,6 +51,10 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   makeContractInput,
   validations: [validate],
   contract: tokenContract,
+  hooks: {
+    beforeExecute,
+    afterExecute,
+  },
 }
 
 export default makeExecuteCommand(commandConfig)
