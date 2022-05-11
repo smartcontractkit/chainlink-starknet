@@ -6,6 +6,31 @@ import { TransactionResponse } from '../transaction'
 import { IStarknetWallet } from '../wallet'
 import { Validation } from './command'
 
+export interface ExecutionContext {
+  id: string
+  contract: string
+  wallet: IStarknetWallet
+  provider: IStarknetProvider
+  flags: any
+}
+
+export interface Input<UI, CI> {
+  user: UI
+  contract: CI
+}
+
+export type BeforeExecute<UI, CI> = (
+  context: ExecutionContext,
+  input: Input<UI, CI>,
+  deps: Pick<Dependencies, 'logger' | 'prompt'>,
+) => (signer: string) => Promise<void>
+
+export type AfterExecute<UI, CI> = (
+  context: ExecutionContext,
+  input: Input<UI, CI>,
+  deps: Pick<Dependencies, 'logger' | 'prompt'>,
+) => (result: Result<TransactionResponse>) => Promise<any>
+
 export interface ExecuteCommandConfig<UI, CI> {
   ux: {
     category: string
@@ -14,8 +39,8 @@ export interface ExecuteCommandConfig<UI, CI> {
     examples: string[]
   }
   hooks?: {
-    beforeExecute: (context) => any
-    afterExecute: (context) => any
+    beforeExecute: BeforeExecute<UI, CI>
+    afterExecute: AfterExecute<UI, CI>
   }
   makeUserInput: (flags, args) => Promise<UI>
   makeContractInput: (userInput: UI) => Promise<CI>
@@ -39,11 +64,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     wallet: IStarknetWallet
     provider: IStarknetProvider
     contractAddress: string
+    executionContext: ExecutionContext
 
-    input: {
-      user: UI
-      contract: CI
-    }
+    input: Input<UI, CI>
+
+    beforeExecute: (signer: string) => Promise<void>
+    afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 
     static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
     static category = config.ux.category
@@ -58,7 +84,26 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.wallet = deps.makeWallet(env.pk)
       c.contractAddress = args[0]
 
-      await c.buildCommand(flags, args)
+      c.executionContext = {
+        provider: c.provider,
+        wallet: c.wallet,
+        id: makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes),
+        contract: c.contractAddress,
+        flags: flags,
+      }
+
+      const input = await c.buildCommandInput(flags, args)
+
+      c.input = input
+
+      c.beforeExecute = config.hooks.beforeExecute
+        ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
+        : c.defaultBeforeExecute(c.executionContext, c.input)
+
+      c.afterExecute = config.hooks.afterExecute
+        ? config.hooks.afterExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
+        : c.afterExecute
+
       return c
     }
 
@@ -67,7 +112,19 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return result
     }
 
-    buildCommand = async (flags, args): Promise<ExecuteCommandInstance> => {
+    defaultBeforeExecute = <UserInput, ContractInput>(
+      context: ExecutionContext,
+      input: Input<UserInput, ContractInput>,
+    ) => async () => {
+      deps.logger.loading(`Executing ${context.id} from contract ${context.contract}`)
+      deps.logger.log('Input Params:', input.contract)
+    }
+
+    defaultAfterExecute = () => async (response: Result<TransactionResponse>): Promise<any> => {
+      deps.logger.success(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
+    }
+
+    buildCommandInput = async (flags, args): Promise<Input<UI, CI>> => {
       const userInput = await config.makeUserInput(flags, args)
 
       // Validation
@@ -77,12 +134,10 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       const contractInput = await config.makeContractInput(userInput)
 
-      this.input = {
+      return {
         user: userInput,
         contract: contractInput,
       }
-
-      return this
     }
 
     simulate = () => true
@@ -120,13 +175,17 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     execute = async () => {
       let tx: TransactionResponse
+
+      const wallet = await this.wallet.wallet.getPubKey()
+      await this.beforeExecute(wallet.toString())
+
       if (config.ux.function === 'deploy') {
         tx = await this.deployContract()
       } else {
         tx = await this.executeFn()
       }
 
-      return {
+      let result = {
         responses: [
           {
             tx,
@@ -134,6 +193,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
           },
         ],
       }
+      const data = await this.afterExecute(result)
+
+      return !!data ? { ...result, data: { ...data } } : result
     }
   }
 }

@@ -1,1 +1,1 @@
-# Gauntlet Starknet Commands for Chainlink OCR2 Protocol
+# Gauntlet Starknet Commands for a Sample Contract
