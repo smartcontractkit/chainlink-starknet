@@ -1,10 +1,11 @@
 import { Result, WriteCommand } from '@chainlink/gauntlet-core'
 import { RawCalldata, CompiledContract, Contract } from 'starknet'
-import { Dependencies } from '../dependencies'
-import { IStarknetProvider, wrapResponse } from '../provider'
-import { TransactionResponse } from '../transaction'
-import { IStarknetWallet } from '../wallet'
-import { Validation } from './command'
+import { CommandCtor } from '.'
+import { Dependencies } from '../../dependencies'
+import { IStarknetProvider, wrapResponse } from '../../provider'
+import { TransactionResponse } from '../../transaction'
+import { IStarknetWallet } from '../../wallet'
+import { makeCommandId, Validation, Input } from './command'
 
 export interface ExecutionContext {
   id: string
@@ -12,11 +13,6 @@ export interface ExecutionContext {
   wallet: IStarknetWallet
   provider: IStarknetProvider
   flags: any
-}
-
-export interface Input<UI, CI> {
-  user: UI
-  contract: CI
 }
 
 export type BeforeExecute<UI, CI> = (
@@ -49,18 +45,15 @@ export interface ExecuteCommandConfig<UI, CI> {
 }
 
 export interface ExecuteCommandInstance {
-  makeMessage: (signer: string) => RawCalldata
+  makeMessage: (signer: string) => Promise<RawCalldata>
   execute: () => Promise<Result<TransactionResponse>>
   simulate?: () => boolean
 }
 
-const makeCommandId = (category: string, fn: string, suffixes?: string[]): string => {
-  const base = `${category}:${fn}`
-  return suffixes?.length > 0 ? `${base}:${suffixes.join(':')}` : base
-}
-
 export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (deps: Dependencies) => {
-  return class ExecuteCommand extends WriteCommand<TransactionResponse> implements ExecuteCommandInstance {
+  const command: CommandCtor<ExecuteCommandInstance> = class ExecuteCommand
+    extends WriteCommand<TransactionResponse>
+    implements ExecuteCommandInstance {
     wallet: IStarknetWallet
     provider: IStarknetProvider
     contractAddress: string
@@ -92,17 +85,15 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         flags: flags,
       }
 
-      const input = await c.buildCommandInput(flags, args)
+      c.input = await c.buildCommandInput(flags, args)
 
-      c.input = input
-
-      c.beforeExecute = config.hooks.beforeExecute
+      c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
         : c.defaultBeforeExecute(c.executionContext, c.input)
 
-      c.afterExecute = config.hooks.afterExecute
+      c.afterExecute = config.hooks?.afterExecute
         ? config.hooks.afterExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
-        : c.afterExecute
+        : c.defaultAfterExecute()
 
       return c
     }
@@ -117,11 +108,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       input: Input<UserInput, ContractInput>,
     ) => async () => {
       deps.logger.loading(`Executing ${context.id} from contract ${context.contract}`)
-      deps.logger.log('Input Params:', input.contract)
+      deps.logger.log('Contract Input Params:', input.contract)
+      deps.prompt('Continue?')
     }
 
     defaultAfterExecute = () => async (response: Result<TransactionResponse>): Promise<any> => {
-      deps.logger.success(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
+      deps.logger.info(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
     }
 
     buildCommandInput = async (flags, args): Promise<Input<UI, CI>> => {
@@ -142,8 +134,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     simulate = () => true
 
-    makeMessage = (signer) => {
-      return Array.from(Buffer.from(''))
+    // TODO: This will be required for Multisig
+    makeMessage = async (signer) => {
+      const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
+      const invocation = await contract.populate(config.ux.function, this.input.contract as any)
+
+      return invocation.calldata
     }
 
     deployContract = async (): Promise<TransactionResponse> => {
@@ -152,32 +148,29 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       const tx = await this.provider.deployContract(config.contract, false)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
-      await tx.wait()
+      const response = await tx.wait()
+      if (!response.success) {
+        deps.logger.error(`Contract was not deployed: ${tx.errorMessage}`)
+        return tx
+      }
       deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
       return tx
     }
 
+    // TODO: The execute fn should be a combination of: generate message, sign and send.
     executeFn = async (): Promise<TransactionResponse> => {
       const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
-      deps.logger.info(
-        `Executing function ${config.ux.function} of contract ${config.ux.category} at ${this.contractAddress}`,
-      )
-      deps.logger.log('Contract Input:', this.input.contract)
-      await deps.prompt('Continue?')
-
       const tx = await contract[config.ux.function](...(this.input.contract as any))
       const response = wrapResponse(this.provider, tx, this.contractAddress)
       deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
       await response.wait()
-      deps.logger.success(`Function executed on ${response.hash}`)
       return response
     }
 
     execute = async () => {
       let tx: TransactionResponse
 
-      const wallet = await this.wallet.wallet.getPubKey()
-      await this.beforeExecute(wallet.toString())
+      // await this.beforeExecute()
 
       if (config.ux.function === 'deploy') {
         tx = await this.deployContract()
@@ -198,4 +191,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return !!data ? { ...result, data: { ...data } } : result
     }
   }
+
+  return command
 }

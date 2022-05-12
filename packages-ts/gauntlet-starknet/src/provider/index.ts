@@ -19,18 +19,25 @@ export const wrapResponse = (
   response: AddTransactionResponse,
   address?: string,
 ): TransactionResponse => {
-  const txResponse = {
+  const txResponse: TransactionResponse = {
     hash: response.transaction_hash,
     address: address || response.address,
     wait: async () => {
       // Success if does not throw
-      const success = (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+      let success: boolean
+      try {
+        success = (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+        txResponse.status = 'ACCEPTED'
+      } catch (e) {
+        txResponse.status = 'REJECTED'
+        txResponse.errorMessage = e.message
+        success = false
+      }
       const status = await provider.provider.getTransactionStatus(response.transaction_hash)
       txResponse.tx.code = status.tx_status as any // For some reason, starknet does not consider any other status than "TRANSACTION_RECEIVED"
-      return {
-        success,
-      }
+      return { success }
     },
+    status: 'PENDING',
     tx: response,
   }
   return txResponse
