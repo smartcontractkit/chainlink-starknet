@@ -13,6 +13,17 @@ module.exports = {
       },
     },
     {
+      displayName: 'gauntlet-starknet-account',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/packages-ts/gauntlet-starknet-account/**/*.test.ts'],
+      globals: {
+        'ts-jest': {
+          tsconfig: '<rootDir>/packages-ts/gauntlet-starknet-account/tsconfig.json',
+        },
+      },
+    },
+    {
       displayName: 'gauntlet-starknet-ocr2',
       preset: 'ts-jest',
       testEnvironment: 'node',

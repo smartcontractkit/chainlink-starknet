@@ -1,12 +1,13 @@
 import OCR2Commands from '@chainlink/gauntlet-starknet-ocr2'
 import ExampleCommands from '@chainlink/gauntlet-starknet-example'
+import AccountCommands from '@chainlink/gauntlet-starknet-account'
 import { executeCLI } from '@chainlink/gauntlet-core'
 import { existsSync } from 'fs'
 import path from 'path'
 import { io } from '@chainlink/gauntlet-core/dist/utils'
 
 const commands = {
-  custom: [...OCR2Commands, ...ExampleCommands],
+  custom: [...OCR2Commands, ...ExampleCommands, ...AccountCommands],
   loadDefaultFlags: () => ({}),
   abstract: {
     findPolymorphic: () => undefined,
@@ -26,6 +27,7 @@ const commands = {
     }
     process.exit(0)
   } catch (e) {
+    console.log(e)
     console.log('Starknet Command execution error', e.message)
     process.exitCode = 1
   }

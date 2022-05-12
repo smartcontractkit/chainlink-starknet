@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet",
+  "name": "@chainlink/gauntlet-starknet-account",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet",
+  "description": "Gauntlet Starknet Account",
   "keywords": [
     "typescript",
     "cli"
@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.2.0",
+    "@chainlink/gauntlet-starknet": "*",
     "starknet": "^3.11.0"
   }
 }

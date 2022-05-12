@@ -5,4 +5,6 @@ export type TransactionResponse = {
   address?: string
   wait: () => Promise<{ success: boolean }>
   tx?: AddTransactionResponse
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
+  errorMessage?: string
 }

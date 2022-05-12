@@ -17,6 +17,7 @@ class Wallet implements IStarknetWallet {
     this.wallet = new Signer(keypair)
   }
 
+  // A wallet is a contract. If the pkey is not provided, we cannot generate a random one withouth deploying the acc contract
   static create = (keypair?: KeyPair) => {
     if (!keypair) {
       const pk = stark.randomAddress()

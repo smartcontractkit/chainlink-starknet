@@ -1,5 +1,4 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
-import { Validation } from '@chainlink/gauntlet-starknet/dist/commands/command'
+import { ExecuteCommandConfig, makeExecuteCommand, Validation } from '@chainlink/gauntlet-starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContract } from '../../lib/contracts'
 
