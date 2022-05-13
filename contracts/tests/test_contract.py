@@ -129,8 +129,10 @@ async def test_transmit(token_factory):
     oracle = oracles[0]
 
     # TODO:
+    observation_timestamp = 1
     epoch_and_round = 1
     extra_hash = 1
+    juels_per_fee_coin = 1
     report_context = [digest, epoch_and_round, extra_hash]
     # int.from_bytes(report_context, "big"),
 
@@ -138,9 +140,11 @@ async def test_transmit(token_factory):
     observations = [99 for _ in range(len(oracles))]
     
     raw_report = [
+        observation_timestamp,
         int.from_bytes(observers, "big"),
         len(observations),
         *observations,
+        juels_per_fee_coin,
     ]
     
     msg = compute_hash_on_elements([
