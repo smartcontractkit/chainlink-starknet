@@ -1,6 +1,6 @@
 import { ExecuteCommandConfig, makeExecuteCommand, Validation } from '@chainlink/gauntlet-starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { tokenContract } from '../../lib/contracts'
+import { tokenContractLoader } from '../../lib/contracts'
 
 type UserInput = {
   balance: number
@@ -25,14 +25,14 @@ const validate: Validation<UserInput> = async (input) => {
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
-    category: CATEGORIES.TOKEN,
+    category: CATEGORIES.EXAMPLE,
     function: 'increase_balance',
     examples: ['token:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>'],
   },
   makeUserInput,
   makeContractInput,
   validations: [validate],
-  contract: tokenContract,
+  loadContract: tokenContractLoader,
 }
 
 export default makeExecuteCommand(commandConfig)

@@ -1,5 +1,5 @@
 import { CONTRACT_LIST } from './contracts'
 
 export const CATEGORIES = {
-  TOKEN: CONTRACT_LIST.TOKEN,
+  EXAMPLE: CONTRACT_LIST.EXAMPLE,
 }

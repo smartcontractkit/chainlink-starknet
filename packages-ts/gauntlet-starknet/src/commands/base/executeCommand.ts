@@ -41,7 +41,7 @@ export interface ExecuteCommandConfig<UI, CI> {
   makeUserInput: (flags, args) => Promise<UI>
   makeContractInput: (userInput: UI) => Promise<CI>
   validations: Validation<UI>[]
-  contract: CompiledContract
+  loadContract: () => CompiledContract
 }
 
 export interface ExecuteCommandInstance {
@@ -59,6 +59,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     contractAddress: string
     account: string
     executionContext: ExecutionContext
+    contract: CompiledContract
 
     input: Input<UI, CI>
 
@@ -88,6 +89,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       }
 
       c.input = await c.buildCommandInput(flags, args)
+      c.contract = config.loadContract()
 
       c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
@@ -138,7 +140,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
-      const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
+      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
       const invocation = await contract.populate(config.ux.function, this.input.contract as any)
 
       return [invocation]
@@ -148,7 +150,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       deps.logger.info(`Deploying contract ${config.ux.category}`)
       await deps.prompt('Continue?')
 
-      const tx = await this.provider.deployContract(config.contract, this.input.contract, false)
+      const tx = await this.provider.deployContract(this.contract, this.input.contract, false)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
       if (!response.success) {
@@ -161,7 +163,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     // TODO: The execute fn should be a combination of: generate message, sign and send.
     executeFn = async (): Promise<TransactionResponse> => {
-      const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
+      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
       const tx = await contract[config.ux.function](...(this.input.contract as any))
       const response = wrapResponse(this.provider, tx, this.contractAddress)
       deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)

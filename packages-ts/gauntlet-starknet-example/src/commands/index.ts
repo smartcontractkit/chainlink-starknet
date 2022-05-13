@@ -1,3 +1,3 @@
-import Token from './token'
+import Example from './example'
 
-export default [...Token]
+export default [...Example]

@@ -9,4 +9,4 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(fs.readFileSync(`${__dirname}/../../artifacts/abi/${name}.json`).toString('ascii'))
 }
 
-export const accountContract = loadContract(CONTRACT_LIST.ACCOUNT)
+export const accountContractLoader = () => loadContract(CONTRACT_LIST.ACCOUNT)
