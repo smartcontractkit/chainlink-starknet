@@ -1,6 +1,9 @@
 package ops
 
-import "github.com/smartcontractkit/helmenv/environment"
+import (
+	"github.com/smartcontractkit/chainlink-testing-framework/config"
+	"github.com/smartcontractkit/helmenv/environment"
+)
 
 func DefaultStarkNETEnv() *environment.Config {
 	return &environment.Config{
@@ -19,13 +22,8 @@ func DefaultStarkNETEnv() *environment.Config {
 			"chainlink": {
 				Index: 2,
 				Values: map[string]interface{}{
-					"replicas": 5,
-					"chainlink": map[string]interface{}{
-						"image": map[string]interface{}{
-							"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-							"version": "latest.ff4e8e66be38bfb623a40589efd8668382af7cf1",
-						},
-					},
+					"replicas":  5,
+					"chainlink": config.ChainlinkVals(),
 					"env": map[string]interface{}{
 						"EVM_ENABLED":                 "true",
 						"EVM_RPC_ENABLED":             "true",
