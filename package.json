@@ -10,8 +10,8 @@
     "typescript",
     "cli"
   ],
-  "main": "packages/gauntlet-starknet-cli/dist/index.js",
-  "bin": "packages/gauntlet-starknet-cli/dist/index.js",
+  "main": "packages-ts/gauntlet-starknet-cli/dist/index.js",
+  "bin": "packages-ts/gauntlet-starknet-cli/dist/index.js",
   "scripts": {
     "gauntlet": "yarn build && node ./packages-ts/gauntlet-starknet-cli/dist/index.js",
     "lint": "tsc -b ./tsconfig.json",
@@ -22,12 +22,12 @@
     "format": "yarn prettier --write .",
     "clean": "tsc -b --clean ./tsconfig.json",
     "build": "yarn clean && tsc -b ./tsconfig.json",
-    "bundle": "yarn build && pkg .",
+    "bundle": "yarn build && pkg . --no-native-build",
     "release": "yarn changeset publish"
   },
   "pkg": {
     "scripts": [
-      "packages/gauntlet-starknet-cli/dist/index.js"
+      "packages-ts/gauntlet-starknet-cli/dist/index.js"
     ],
     "targets": [
       "linux",
@@ -35,7 +35,8 @@
     ],
     "outputPath": "bin",
     "assets": [
-      "node_modules/usb/prebuilds"
+      "packages-ts/*/contract_artifacts/**/*",
+      "packages-ts/gauntlet-starknet-cli/networks/"
     ]
   },
   "dependencies": {

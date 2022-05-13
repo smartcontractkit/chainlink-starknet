@@ -54,7 +54,7 @@ export interface InspectCommandConfig<UI, CI, CompareInput, QueryResult> {
     message: string
     resultType: 'success' | 'failed'
   }[]
-  contract: CompiledContract
+  loadContract: () => CompiledContract
 }
 
 export interface InspectCommandInstance<QueryResult> {
@@ -73,6 +73,8 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
 
     input: Input<InspectUserInput<UI, CompareInput>, CI>
 
+    contract: CompiledContract
+
     // UX
     static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
     static category = config.ux.category
@@ -87,6 +89,7 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
       c.contractAddress = args[0]
 
       c.input = await c.buildCommandInput(flags, args)
+      c.contract = config.loadContract()
 
       return c
     }
@@ -106,7 +109,7 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
 
     runQueries = async (functions: string[], contractInputs: CI | CI[]): Promise<any[]> => {
       const inputs = Array.isArray(contractInputs) ? contractInputs : [contractInputs]
-      const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
+      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
       const results = await Promise.all(
         functions.map((func, i) => {
           deps.logger.loading(`Fetching ${func} of contract ${this.contractAddress}...`)

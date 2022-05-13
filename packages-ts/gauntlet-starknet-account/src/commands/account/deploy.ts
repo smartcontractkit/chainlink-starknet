@@ -7,7 +7,7 @@ import {
 } from '@chainlink/gauntlet-starknet'
 import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContract } from '../../lib/contracts'
+import { accountContractLoader } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
@@ -64,7 +64,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   makeUserInput,
   makeContractInput,
   validations: [validate],
-  contract: accountContract,
+  loadContract: accountContractLoader,
   hooks: {
     beforeExecute,
     afterExecute,

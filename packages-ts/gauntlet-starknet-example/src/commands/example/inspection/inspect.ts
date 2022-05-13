@@ -1,7 +1,7 @@
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { InspectCommandConfig, IStarknetProvider, makeInspectionCommand } from '@chainlink/gauntlet-starknet'
 import { CATEGORIES } from '../../../lib/categories'
-import { tokenContract } from '../../../lib/contracts'
+import { tokenContractLoader } from '../../../lib/contracts'
 
 type QueryResult = {
   balance: string
@@ -26,13 +26,13 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
 
 const commandConfig: InspectCommandConfig<null, null, null, QueryResult> = {
   ux: {
-    category: CATEGORIES.TOKEN,
+    category: CATEGORIES.EXAMPLE,
     function: 'inspect',
     examples: ['yarn gauntlet token:inspect --network=<NETWORK>'],
   },
   queries: ['get_balance'],
   makeComparisionData,
-  contract: tokenContract,
+  loadContract: tokenContractLoader,
 }
 
 export default makeInspectionCommand(commandConfig)
