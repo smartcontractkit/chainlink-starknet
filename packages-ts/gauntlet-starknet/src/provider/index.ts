@@ -70,14 +70,14 @@ class Provider implements IStarknetProvider {
     return response
   }
 
-  signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[]) => {
+  signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[], wait = false) => {
     const account = new Account(this.provider, accountAddress, wallet.wallet)
 
     const tx = await account.execute(calls)
 
-    console.log('Transaction at', tx.transaction_hash)
     const response = wrapResponse(this, tx)
-    console.log('Waiting for tx...')
+    if (!wait) return response
+
     await response.wait()
     return response
   }
