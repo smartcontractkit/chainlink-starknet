@@ -82,8 +82,10 @@ end
 func latest_aggregator_round_id_() -> (round_id: felt):
 end
 
+using Range = (min: felt, max: felt)
+
 @storage_var
-func answer_range_() -> (range: (felt, felt)):
+func answer_range_() -> (range: Range):
 end
 
 @storage_var
@@ -174,7 +176,8 @@ func constructor{
     billing_access_controller_.write(billing_access_controller)
 
     assert_lt(min_answer, max_answer)
-    answer_range_.write((min_answer, max_answer))
+    let range : Range = (min=min_answer, max=max_answer)
+    answer_range_.write(range)
 
     with_attr error_message("decimals exceed 2^8"):
         assert_lt(decimals, UINT8_MAX)
@@ -584,8 +587,9 @@ func transmit{
     end
 
     # Validate median in min-max range
-    let (answer_range) = answer_range_.read()
-    assert_in_range(median, answer_range[0], answer_range[1])
+    let (answer_range : Range) = answer_range_.read()
+    assert_in_range(median, answer_range.min, answer_range.max)
+    # TODO: needs to handle negative values correctly, add test
 
     let (local prev_round_id) = latest_aggregator_round_id_.read()
     # let (prev_round_id) = latest_aggregator_round_id_.read()
