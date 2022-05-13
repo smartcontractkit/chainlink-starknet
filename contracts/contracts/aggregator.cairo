@@ -532,18 +532,16 @@ func transmit{
     range_check_ptr
 }(
     report_context: ReportContext,
+    observation_timestamp: felt,
     observers: felt,
     observations_len: felt,
     observations: felt*,
+    juels_per_fee_coin: felt,
     signatures_len: felt,
     signatures: Signature*,
 ):
     alloc_locals
     
-    # TODO: timestamp & juels_per_fee_coin
-    let observation_timestamp = 1
-    let juels_per_fee_coin = 1
-
     let (epoch_and_round) = latest_epoch_and_round_.read()
     with_attr error_message("stale report"):
         assert_lt(epoch_and_round, report_context.epoch_and_round)
@@ -566,7 +564,14 @@ func transmit{
         assert signatures_len = (f + 1)
     end
 
-    let (msg) = hash_report(report_context, observers, observations_len, observations)
+    let (msg) = hash_report(
+        report_context,
+        observation_timestamp,
+        observers,
+        observations_len,
+        observations,
+        juels_per_fee_coin
+    )
     verify_signatures(msg, signatures, signatures_len, signed_count=0)
 
     # report():
@@ -667,9 +672,11 @@ func hash_report{
     pedersen_ptr : HashBuiltin*,
 }(
     report_context: ReportContext,
+    observation_timestamp: felt,
     observers: felt,
     observations_len: felt,
     observations: felt*,
+    juels_per_fee_coin: felt,
 ) -> (hash: felt):
     let hash_ptr = pedersen_ptr
     with hash_ptr:
@@ -677,9 +684,11 @@ func hash_report{
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.config_digest)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.epoch_and_round)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, report_context.extra_hash)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, observation_timestamp)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, observers)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, observations_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, observations, observations_len)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, juels_per_fee_coin)
 
         let (hash) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
