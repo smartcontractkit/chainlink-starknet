@@ -6,7 +6,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
 	github.com/smartcontractkit/chainlink-starknet v0.0.0-00010101000000-000000000000
-	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
+	github.com/smartcontractkit/chainlink-testing-framework v1.1.21
 	github.com/smartcontractkit/helmenv v1.0.71
 )
 
