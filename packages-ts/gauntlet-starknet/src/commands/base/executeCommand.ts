@@ -75,7 +75,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const env = deps.makeEnv(flags)
 
       c.provider = deps.makeProvider(env.providerUrl)
-      console.log('with env:', env)
       c.wallet = deps.makeWallet(env.pk)
       c.contractAddress = args[0]
       c.account = env.account
@@ -181,8 +180,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       if (config.ux.function === 'deploy') {
         tx = await this.deployContract()
       } else {
-        const messages = await this.makeMessage()
-        tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+        if (this.flags.noWallet) {
+          tx = await this.executeFn()
+        } else {
+          const messages = await this.makeMessage()
+          tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+        }
       }
 
       let result = {

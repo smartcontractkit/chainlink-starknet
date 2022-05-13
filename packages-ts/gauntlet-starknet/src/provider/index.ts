@@ -60,7 +60,7 @@ class Provider implements IStarknetProvider {
   deployContract = async (contract: CompiledContract, input: any = [], wait = true) => {
     const tx = await this.provider.deployContract({
       contract,
-      constructorCalldata: input,
+      ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
     const response = wrapResponse(this, tx)
