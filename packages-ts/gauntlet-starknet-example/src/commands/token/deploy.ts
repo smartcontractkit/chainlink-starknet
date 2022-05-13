@@ -30,7 +30,7 @@ const validate: Validation<UserInput> = async (input) => {
 }
 
 // This is a custom beforeExecute hook executed right before the command action is executed
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async (signer) => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info('About to deploy a Sample Contract')
   await deps.prompt('Continue?')
 }

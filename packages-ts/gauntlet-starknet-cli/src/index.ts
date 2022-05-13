@@ -17,7 +17,7 @@ const commands = {
 
 ;(async () => {
   try {
-    const networkPossiblePaths = ['./packages/gauntlet-cli/networks']
+    const networkPossiblePaths = ['./packages-ts/gauntlet-starknet-cli/networks']
     const networkPath = networkPossiblePaths.filter((networkPath) =>
       existsSync(path.join(process.cwd(), networkPath)),
     )[0]
