@@ -16,7 +16,8 @@ const registerExecuteCommand = (registerCommand: (deps: Dependencies) => Command
     makeEnv: (flags) => {
       return {
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
-        pk: process.env.ACCOUNT,
+        pk: process.env.PRIVATE_KEY,
+        account: process.env.ACCOUNT,
       }
     },
     makeProvider: makeProvider,

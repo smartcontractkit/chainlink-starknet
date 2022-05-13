@@ -1,5 +1,5 @@
 import { Result, WriteCommand } from '@chainlink/gauntlet-core'
-import { RawCalldata, CompiledContract, Contract } from 'starknet'
+import { CompiledContract, Contract, Call } from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies } from '../../dependencies'
 import { IStarknetProvider, wrapResponse } from '../../provider'
@@ -19,7 +19,7 @@ export type BeforeExecute<UI, CI> = (
   context: ExecutionContext,
   input: Input<UI, CI>,
   deps: Pick<Dependencies, 'logger' | 'prompt'>,
-) => (signer: string) => Promise<void>
+) => () => Promise<void>
 
 export type AfterExecute<UI, CI> = (
   context: ExecutionContext,
@@ -35,8 +35,8 @@ export interface ExecuteCommandConfig<UI, CI> {
     examples: string[]
   }
   hooks?: {
-    beforeExecute: BeforeExecute<UI, CI>
-    afterExecute: AfterExecute<UI, CI>
+    beforeExecute?: BeforeExecute<UI, CI>
+    afterExecute?: AfterExecute<UI, CI>
   }
   makeUserInput: (flags, args) => Promise<UI>
   makeContractInput: (userInput: UI) => Promise<CI>
@@ -45,7 +45,7 @@ export interface ExecuteCommandConfig<UI, CI> {
 }
 
 export interface ExecuteCommandInstance {
-  makeMessage: (signer: string) => Promise<RawCalldata>
+  makeMessage: () => Promise<Call[]>
   execute: () => Promise<Result<TransactionResponse>>
   simulate?: () => boolean
 }
@@ -57,11 +57,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     wallet: IStarknetWallet
     provider: IStarknetProvider
     contractAddress: string
+    account: string
     executionContext: ExecutionContext
 
     input: Input<UI, CI>
 
-    beforeExecute: (signer: string) => Promise<void>
+    beforeExecute: () => Promise<void>
     afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 
     static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
@@ -74,8 +75,10 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const env = deps.makeEnv(flags)
 
       c.provider = deps.makeProvider(env.providerUrl)
+      console.log('with env:', env)
       c.wallet = deps.makeWallet(env.pk)
       c.contractAddress = args[0]
+      c.account = env.account
 
       c.executionContext = {
         provider: c.provider,
@@ -109,7 +112,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     ) => async () => {
       deps.logger.loading(`Executing ${context.id} from contract ${context.contract}`)
       deps.logger.log('Contract Input Params:', input.contract)
-      deps.prompt('Continue?')
+      await deps.prompt('Continue?')
     }
 
     defaultAfterExecute = () => async (response: Result<TransactionResponse>): Promise<any> => {
@@ -135,18 +138,18 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     simulate = () => true
 
     // TODO: This will be required for Multisig
-    makeMessage = async (signer) => {
+    makeMessage = async (): Promise<Call[]> => {
       const contract = new Contract(config.contract.abi, this.contractAddress, this.provider.provider)
       const invocation = await contract.populate(config.ux.function, this.input.contract as any)
 
-      return invocation.calldata
+      return [invocation]
     }
 
     deployContract = async (): Promise<TransactionResponse> => {
       deps.logger.info(`Deploying contract ${config.ux.category}`)
       await deps.prompt('Continue?')
 
-      const tx = await this.provider.deployContract(config.contract, false)
+      const tx = await this.provider.deployContract(config.contract, this.input.contract, false)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
       if (!response.success) {
@@ -170,12 +173,16 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     execute = async () => {
       let tx: TransactionResponse
 
-      // await this.beforeExecute()
+      const pubkey = await this.wallet.getPublicKey()
+      deps.logger.info(`Using wallet: ${pubkey}`)
+
+      await this.beforeExecute()
 
       if (config.ux.function === 'deploy') {
         tx = await this.deployContract()
       } else {
-        tx = await this.executeFn()
+        const messages = await this.makeMessage()
+        tx = await this.provider.signAndSend(this.account, this.wallet, messages)
       }
 
       let result = {

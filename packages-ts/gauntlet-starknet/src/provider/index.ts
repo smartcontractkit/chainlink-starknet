@@ -1,11 +1,13 @@
 import { TransactionResponse } from '../transaction'
-import { Provider as StarknetProvider, AddTransactionResponse, CompiledContract } from 'starknet'
+import { Provider as StarknetProvider, AddTransactionResponse, CompiledContract, Account, Call } from 'starknet'
+import { IStarknetWallet } from '../wallet'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
   provider: P
   send: () => Promise<TransactionResponse>
-  deployContract: (contract: CompiledContract, wait?: boolean) => Promise<TransactionResponse>
+  deployContract: (contract: CompiledContract, input: any, wait?: boolean) => Promise<TransactionResponse>
+  signAndSend: (accountAddress: string, wallet: IStarknetWallet, calls: Call[]) => Promise<TransactionResponse>
 }
 
 export interface IStarknetProvider extends IProvider<StarknetProvider> {}
@@ -55,14 +57,27 @@ class Provider implements IStarknetProvider {
     return {} as TransactionResponse
   }
 
-  deployContract = async (contract: CompiledContract, wait = true) => {
+  deployContract = async (contract: CompiledContract, input: any = [], wait = true) => {
     const tx = await this.provider.deployContract({
       contract,
+      constructorCalldata: input,
     })
 
     const response = wrapResponse(this, tx)
 
     if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[]) => {
+    const account = new Account(this.provider, accountAddress, wallet.wallet)
+
+    const tx = await account.execute(calls)
+
+    console.log('Transaction at', tx.transaction_hash)
+    const response = wrapResponse(this, tx)
+    console.log('Waiting for tx...')
     await response.wait()
     return response
   }
