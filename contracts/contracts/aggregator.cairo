@@ -221,7 +221,7 @@ end
 
 @contract_interface
 namespace IValidator:
-    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt):
+    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt) -> (valid: felt):
     end
 end
 
