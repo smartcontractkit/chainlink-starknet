@@ -161,6 +161,19 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
+    executeWithMsg = async (): Promise<TransactionResponse> => {
+      const messages = await this.makeMessage()
+      const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+      const response = await tx.wait()
+      if (!response.success) {
+        deps.logger.error(`Tx was not successful: ${tx.errorMessage}`)
+        return tx
+      }
+      deps.logger.success(`Tx executed at ${tx.hash}`)
+      return tx
+    }
+
     // TODO: The execute fn should be a combination of: generate message, sign and send.
     executeFn = async (): Promise<TransactionResponse> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
@@ -185,8 +198,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         if (this.flags.noWallet) {
           tx = await this.executeFn()
         } else {
-          const messages = await this.makeMessage()
-          tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+          tx = await this.executeWithMsg()
         }
       }
 

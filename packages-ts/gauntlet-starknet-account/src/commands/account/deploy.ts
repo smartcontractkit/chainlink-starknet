@@ -53,6 +53,10 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 
 const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (result) => {
   deps.logger.success(`Account contract located at ${result.responses[0].tx.address}`)
+  return {
+    publicKey: input.user.publicKey,
+    privateKey: input.user.privateKey,
+  }
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
