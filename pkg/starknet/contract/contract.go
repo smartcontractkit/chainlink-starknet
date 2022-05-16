@@ -16,15 +16,16 @@ import (
 type Tracker interface {
 	services.ServiceCtx
 
-	ReadState() (State, error)
+	ReadCCFromCache() (ContractConfig, error)
+	updateConfig(context.Context) error
 }
 
 var _ Tracker = (*ContractTracker)(nil)
 
 type ContractTracker struct {
-	state     State
-	stateLock *sync.RWMutex
-	stateTime time.Time
+	contractConfig ContractConfig
+	ccLock         *sync.RWMutex
+	ccTime         time.Time
 
 	reader client.Reader
 	cfg    config.Config
@@ -35,19 +36,31 @@ type ContractTracker struct {
 
 func NewTracker(spec OCR2Spec, cfg config.Config, reader client.Reader, lggr logger.Logger) *ContractTracker {
 	return &ContractTracker{
-		reader:    reader,
-		cfg:       cfg,
-		lggr:      lggr,
-		stateLock: &sync.RWMutex{},
+		reader: reader,
+		cfg:    cfg,
+		lggr:   lggr,
+		ccLock: &sync.RWMutex{},
 	}
 }
 
-func (c *ContractTracker) ReadState() (State, error) {
-	c.stateLock.RLock()
-	defer c.stateLock.RUnlock()
+func (c *ContractTracker) ReadCCFromCache() (ContractConfig, error) {
+	c.ccLock.RLock()
+	defer c.ccLock.RUnlock()
 
-	// todo: assert state is not stale (if necessary)
-	return c.state, nil
+	// todo: assert cache is not stale (if necessary)
+	return c.contractConfig, nil
+}
+
+func (c *ContractTracker) updateConfig(ctx context.Context) error {
+	// todo: read latest config through the reader
+	// todo: assert reading was successful, return error otherwise
+	newConfig := ContractConfig{}
+
+	c.ccLock.Lock()
+	c.contractConfig = newConfig
+	c.ccLock.Unlock()
+
+	return nil
 }
 
 func (c *ContractTracker) Start(ctx context.Context) error {
