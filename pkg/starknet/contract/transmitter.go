@@ -25,8 +25,8 @@ func (c *ContractTracker) LatestConfigDigestAndEpoch(
 	epoch uint32,
 	err error,
 ) {
-	state, err := c.ReadState()
-	return state.Config.LatestConfigDigest, state.Config.Epoch, err
+	// todo: implement
+	return types.ConfigDigest{}, 0, err
 }
 
 func (c *ContractTracker) FromAccount() types.Account {

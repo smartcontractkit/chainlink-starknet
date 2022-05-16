@@ -34,6 +34,6 @@ func (c *ContractTracker) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	state, err := c.ReadState()
-	return state.Config.LatestConfigDigest, 0, 0, err
+	// todo: implement
+	return types.ConfigDigest{}, 0, 0, err
 }

@@ -13,16 +13,16 @@ func (c *ContractTracker) Notify() <-chan struct{} {
 }
 
 func (c *ContractTracker) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
-	state, err := c.ReadState()
-	return state.Config.LatestConfigBlockNumber, state.Config.LatestConfigDigest, err
+	cfg, err := c.ReadCCFromCache()
+	return cfg.configBlock, cfg.config.ConfigDigest, err
 }
 
 func (c *ContractTracker) LatestConfig(ctx context.Context, changedInBlock uint64) (types.ContractConfig, error) {
-	state, err := c.ReadState()
+	cfg, err := c.ReadCCFromCache()
 	if err != nil {
 		return types.ContractConfig{}, err
 	}
-	return ConfigFromState(state)
+	return cfg.config, nil
 }
 
 func (c *ContractTracker) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
