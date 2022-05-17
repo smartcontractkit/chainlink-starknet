@@ -6,7 +6,7 @@ import {
   Validation,
 } from '@chainlink/gauntlet-starknet'
 import { ec } from 'starknet'
-import { CATEGORIES } from '../../lib/categories'
+import { CATEGORIES } from '@chainlink/gauntlet-core'
 import { accountContractLoader } from '../../lib/contracts'
 
 type UserInput = {
@@ -60,9 +60,11 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: 'account',
+  category: CATEGORIES.ACCOUNT,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.ACCOUNT,
-    function: 'deploy',
+    description: 'deploys a starknet account contract (creates an account)',
     examples: [`${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
   },
   makeUserInput,

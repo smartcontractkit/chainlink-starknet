@@ -3,6 +3,7 @@ import { CompiledContract, json } from 'starknet'
 
 export enum CONTRACT_LIST {
   ACCOUNT = 'account',
+  OCR2 = 'OCR2',
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
@@ -10,3 +11,4 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
 }
 
 export const accountContractLoader = () => loadContract(CONTRACT_LIST.ACCOUNT)
+export const ocr2ContractLoader = () => loadContract(CONTRACT_LIST.OCR2)

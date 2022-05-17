@@ -5,7 +5,7 @@ import {
   BeforeExecute,
   AfterExecute,
 } from '@chainlink/gauntlet-starknet'
-import { CATEGORIES } from '../../lib/categories'
+import { CATEGORIES } from '@chainlink/gauntlet-core'
 import { tokenContractLoader } from '../../lib/contracts'
 
 type UserInput = {
@@ -42,9 +42,11 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: 'exmaple',
+  category: CATEGORIES.EXAMPLE,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.EXAMPLE,
-    function: 'deploy',
+    description: 'A sample contract deployment command',
     examples: [`${CATEGORIES.EXAMPLE}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
   },
   makeUserInput,

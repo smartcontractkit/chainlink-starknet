@@ -1,4 +1,5 @@
-import { Result, WriteCommand } from '@chainlink/gauntlet-core'
+import { Result, WriteCommand, Config } from '@chainlink/gauntlet-core'
+import { DeployLink } from '@chainlink/gauntlet-contracts-link'
 import { CompiledContract, Contract, Call } from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies } from '../../dependencies'
@@ -27,20 +28,11 @@ export type AfterExecute<UI, CI> = (
   deps: Pick<Dependencies, 'logger' | 'prompt'>,
 ) => (result: Result<TransactionResponse>) => Promise<any>
 
-export interface ExecuteCommandConfig<UI, CI> {
-  ux: {
-    category: string
-    function: string
-    suffixes?: string[]
-    examples: string[]
-  }
+export interface ExecuteCommandConfig<UI, CI> extends Config<UI, CI> {
   hooks?: {
-    beforeExecute?: BeforeExecute<UI, CI>
-    afterExecute?: AfterExecute<UI, CI>
+    beforeExecute: BeforeExecute<UI, CI>
+    afterExecute: AfterExecute<UI, CI>
   }
-  makeUserInput: (flags, args) => Promise<UI>
-  makeContractInput: (userInput: UI) => Promise<CI>
-  validations: Validation<UI>[]
   loadContract: () => CompiledContract
 }
 
@@ -66,8 +58,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     beforeExecute: () => Promise<void>
     afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 
-    static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
-    static category = config.ux.category
+    static id = makeCommandId(config.category, config.action, config.suffixes)
+    static category = config.category
     static examples = config.ux.examples
 
     static create = async (flags, args) => {
@@ -83,7 +75,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.executionContext = {
         provider: c.provider,
         wallet: c.wallet,
-        id: makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes),
+        id: makeCommandId(config.category, config.action, config.suffixes),
         contract: c.contractAddress,
         flags: flags,
       }
@@ -141,13 +133,13 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = await contract.populate(config.ux.function, this.input.contract as any)
+      const invocation = await contract.populate(config.action, this.input.contract as any)
 
       return [invocation]
     }
 
     deployContract = async (): Promise<TransactionResponse> => {
-      deps.logger.info(`Deploying contract ${config.ux.category}`)
+      deps.logger.info(`Deploying contract ${config.category}`)
       await deps.prompt('Continue?')
 
       const tx = await this.provider.deployContract(this.contract, this.input.contract, false)
@@ -177,7 +169,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: The execute fn should be a combination of: generate message, sign and send.
     executeFn = async (): Promise<TransactionResponse> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const tx = await contract[config.ux.function](...(this.input.contract as any))
+      const tx = await contract[config.action](...(this.input.contract as any))
       const response = wrapResponse(this.provider, tx, this.contractAddress)
       deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
       await response.wait()
@@ -192,7 +184,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       await this.beforeExecute()
 
-      if (config.ux.function === 'deploy') {
+      if (config.action === 'deploy') {
         tx = await this.deployContract()
       } else {
         if (this.flags.noWallet) {
