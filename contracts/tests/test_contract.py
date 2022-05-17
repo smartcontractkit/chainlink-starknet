@@ -7,6 +7,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.crypto.signature.signature import (
     pedersen_hash, private_to_stark_key, sign)
 from starkware.cairo.common.hash_state import compute_hash_on_elements
+from starkware.starknet.utils.api_utils import cast_to_felts
 
 from utils import (
     Signer, to_uint, add_uint, sub_uint, str_to_felt, MAX_UINT256, ZERO_ADDRESS, INVALID_UINT256,
@@ -77,17 +78,22 @@ async def test_transmit(token_factory):
     starknet, token, owner = token_factory    
 
     # Deploy the contract.
+    min_answer = -10
+    max_answer = 1000000000
+
     contract = await starknet.deploy(
         source=contract_path("aggregator.cairo"),
-        constructor_calldata=[
+        constructor_calldata=cast_to_felts([
             owner.contract_address,
             token.contract_address,
-            0,
-            1000000000,
+            *cast_to_felts(values=[
+                min_answer,
+                max_answer
+            ]),
             0, # TODO: billing AC
             8, # decimals
             str_to_felt("ETH/BTC")
-        ]
+        ])
     )
 
     # Deploy an account for each oracle
@@ -128,62 +134,69 @@ async def test_transmit(token_factory):
 
     oracle = oracles[0]
 
-    # TODO:
-    observation_timestamp = 1
-    epoch_and_round = 1
-    extra_hash = 1
-    juels_per_fee_coin = 1
-    report_context = [digest, epoch_and_round, extra_hash]
-    # int.from_bytes(report_context, "big"),
-
-    observers = bytes([i for i in range(len(oracles))])
-    observations = [99 for _ in range(len(oracles))]
-    
-    raw_report = [
-        observation_timestamp,
-        int.from_bytes(observers, "big"),
-        len(observations),
-        *observations,
-        juels_per_fee_coin,
-    ]
-    
-    msg = compute_hash_on_elements([
-        *report_context,
-        *raw_report
-    ])
-    
     n = f + 1
-
-    signatures = []
     
-    # TODO: test with duplicate signers
-    # for o in oracles[:n]:
-    #     oracle = oracles[0]
+    def transmit(
+        epoch_and_round, # TODO: split into two values
+        answer
+    ):
+        # TODO:
+        observation_timestamp = 1
+        extra_hash = 1
+        juels_per_fee_coin = 1
+        report_context = [digest, epoch_and_round, extra_hash]
+        # int.from_bytes(report_context, "big"),
 
-    for oracle in oracles[:n]:
-        # Sign with a single oracle
-        sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
+        observers = bytes([i for i in range(len(oracles))])
+        observations = [answer for _ in range(len(oracles))]
     
-        signature = [
-            sig_r, # r
-            sig_s, # s
-            oracle['signer'].public_key  # public_key
+
+        raw_report = [
+            observation_timestamp,
+            int.from_bytes(observers, "big"),
+            len(observations),
+            *cast_to_felts(observations), # convert negative numbers to valid felts
+            juels_per_fee_coin,
         ]
-        signatures.extend(signature)
+    
+        msg = compute_hash_on_elements([
+            *report_context,
+            *raw_report
+        ])
 
-    calldata = [
-        *report_context,
-        *raw_report,
-        n, # len signatures
-        *signatures # TODO: how to convert objects to calldata? using array for now
-    ]
+        signatures = []
     
-    print(calldata)
+        # TODO: test with duplicate signers
+        # for o in oracles[:n]:
+        #     oracle = oracles[0]
+
+        for oracle in oracles[:n]:
+            # Sign with a single oracle
+            sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
     
-    await oracle['transmitter'].send_transaction(
-        oracle['account'],
-        contract.contract_address,
-        'transmit',
-        calldata
-    )
+            signature = [
+                sig_r, # r
+                sig_s, # s
+                oracle['signer'].public_key  # public_key
+            ]
+            signatures.extend(signature)
+
+        calldata = [
+            *report_context,
+            *raw_report,
+            n, # len signatures
+            *signatures # TODO: how to convert objects to calldata? using array for now
+        ]
+    
+        print(calldata)
+    
+        return oracle['transmitter'].send_transaction(
+            oracle['account'],
+            contract.contract_address,
+            'transmit',
+            calldata
+        )
+
+    await transmit(epoch_and_round=1, answer=99)
+    await transmit(epoch_and_round=2, answer=-1)
     
