@@ -10,7 +10,9 @@ import {
 
 import Commands from './commands'
 
-const registerExecuteCommand = (registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance>) => {
+const registerExecuteCommand = <UI, CI>(
+  registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
+) => {
   const deps: Dependencies = {
     logger: logger,
     prompt: prompt,

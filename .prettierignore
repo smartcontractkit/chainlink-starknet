@@ -6,6 +6,5 @@ packages-rs
 relay
 target
 *.json
-*.md
 dist
 *.yml

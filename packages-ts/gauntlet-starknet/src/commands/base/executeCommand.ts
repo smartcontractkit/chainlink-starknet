@@ -44,16 +44,25 @@ export interface ExecuteCommandConfig<UI, CI> {
   loadContract: () => CompiledContract
 }
 
-export interface ExecuteCommandInstance {
+export interface ExecuteCommandInstance<UI, CI> {
+  wallet: IStarknetWallet
+  provider: IStarknetProvider
+  contractAddress: string
+  account: string
+  executionContext: ExecutionContext
+  contract: CompiledContract
+
+  input: Input<UI, CI>
+
   makeMessage: () => Promise<Call[]>
   execute: () => Promise<Result<TransactionResponse>>
   simulate?: () => boolean
 }
 
 export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (deps: Dependencies) => {
-  const command: CommandCtor<ExecuteCommandInstance> = class ExecuteCommand
+  const command: CommandCtor<ExecuteCommandInstance<UI, CI>> = class ExecuteCommand
     extends WriteCommand<TransactionResponse>
-    implements ExecuteCommandInstance {
+    implements ExecuteCommandInstance<UI, CI> {
     wallet: IStarknetWallet
     provider: IStarknetProvider
     contractAddress: string
@@ -161,7 +170,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
-    executeWithMsg = async (): Promise<TransactionResponse> => {
+    executeWithSigner = async (): Promise<TransactionResponse> => {
       const messages = await this.makeMessage()
       const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
@@ -174,8 +183,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
-    // TODO: The execute fn should be a combination of: generate message, sign and send.
-    executeFn = async (): Promise<TransactionResponse> => {
+    executeWithoutSigner = async (): Promise<TransactionResponse> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
       const tx = await contract[config.ux.function](...(this.input.contract as any))
       const response = wrapResponse(this.provider, tx, this.contractAddress)
@@ -196,9 +204,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         tx = await this.deployContract()
       } else {
         if (this.flags.noWallet) {
-          tx = await this.executeFn()
+          tx = await this.executeWithoutSigner()
         } else {
-          tx = await this.executeWithMsg()
+          tx = await this.executeWithSigner()
         }
       }
 
