@@ -1,17 +1,5 @@
 
-## Table of Contents
-
-
-* Use Gauntlet
-  * [Local Install](#setup)
-  * [Binary](#binary)
-  * [Basic Setup](#basic-setup)
-  * [CLI](../../packages-ts/gauntlet-starknet-cli/README.md)
-  * [Example Contract](../../packages-ts/gauntlet-starknet-example/README.md)
-  * [Account Contract](../../packages-ts/gauntlet-starknet-account/README.md)
-  * [OCR2 Contracts](../../packages-ts/gauntlet-starknet-ocr2/README.md)
-* Contribute
-
+# Getting started
 
 ## Setup
 

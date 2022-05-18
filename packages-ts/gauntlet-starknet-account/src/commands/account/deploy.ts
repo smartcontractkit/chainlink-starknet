@@ -30,7 +30,6 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  // If address is provided, deployContract should use that as adressSalt
   return [input.publicKey]
 }
 
