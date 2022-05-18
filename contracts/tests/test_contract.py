@@ -72,9 +72,7 @@ async def token_factory():
 #     execution_info = await contract.owner().call()
 #     assert execution_info.result == (owner.contract_address,)
 
-@pytest.mark.asyncio
-async def test_transmit(token_factory):
-    """Test constructor method."""
+async def setup(token_factory):
     starknet, token, owner = token_factory    
 
     # Deploy the contract.
@@ -130,11 +128,26 @@ async def test_transmit(token_factory):
 
     digest = execution_info.result.digest
 
-    print(f"digest = {digest}")
+    return {
+        "starknet": starknet,
+        "token": token,
+        "owner": owner,
+        "contract": contract,
+        "f": f,
+        "digest": digest,
+        "oracles": oracles
+    }
 
-    oracle = oracles[0]
 
-    n = f + 1
+@pytest.mark.asyncio
+async def test_transmit(token_factory):
+    """Test transmit method."""
+    env = await setup(token_factory)
+    print(f"digest = {env['digest']}")
+
+    oracle = env["oracles"][0]
+
+    n = env["f"] + 1
     
     def transmit(
         epoch_and_round, # TODO: split into two values
@@ -144,11 +157,12 @@ async def test_transmit(token_factory):
         observation_timestamp = 1
         extra_hash = 1
         juels_per_fee_coin = 1
-        report_context = [digest, epoch_and_round, extra_hash]
+        report_context = [env["digest"], epoch_and_round, extra_hash]
         # int.from_bytes(report_context, "big"),
 
-        observers = bytes([i for i in range(len(oracles))])
-        observations = [answer for _ in range(len(oracles))]
+        l = len(env["oracles"])
+        observers = bytes([i for i in range(l)])
+        observations = [answer for _ in range(l)]
     
 
         raw_report = [
@@ -170,7 +184,7 @@ async def test_transmit(token_factory):
         # for o in oracles[:n]:
         #     oracle = oracles[0]
 
-        for oracle in oracles[:n]:
+        for oracle in env["oracles"][:n]:
             # Sign with a single oracle
             sig_r, sig_s = sign(msg_hash=msg, priv_key=oracle['signer'].private_key)
     
@@ -192,7 +206,7 @@ async def test_transmit(token_factory):
     
         return oracle['transmitter'].send_transaction(
             oracle['account'],
-            contract.contract_address,
+            env["contract"].contract_address,
             'transmit',
             calldata
         )
