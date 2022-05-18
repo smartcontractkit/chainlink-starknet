@@ -1,13 +1,13 @@
-
 # Getting started
 
 ## Setup
 
 Make sure you have Node and Yarn installed
 
-Node: https://nodejs.org/es/download/  
+Node: https://nodejs.org/es/download/
 
 Yarn:
+
 ```
 npm install --global yarn
 ```
@@ -21,6 +21,7 @@ yarn
 ### Run
 
 To see the available commands, run:
+
 ```
 yarn gauntlet
 ```
@@ -28,6 +29,7 @@ yarn gauntlet
 ## Binary
 
 To easily use Gauntlet, we recommend to use the binary. To generate it, run:
+
 ```
 yarn bundle
 ```
@@ -55,13 +57,13 @@ account:
      --network                              The network to connect to
 ```
 
-
 ## Basic Setup
 
 To deploy or query contracts you do not need any configuration. If you want to execute some contract method, you will need a wallet configured. The details should be added into a `.env` file in the root of the project.
+
 ```bash
 ## Public key of the account contract
-ACCOUNT=0x... 
+ACCOUNT=0x...
 ## Private key of the wallet configured on the account contract
 PRIVATE_KEY=0x...
 ```
