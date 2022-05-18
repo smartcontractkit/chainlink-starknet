@@ -1,4 +1,4 @@
-import { Result, WriteCommand, Config } from '@chainlink/gauntlet-core'
+import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
 import { DeployLink } from '@chainlink/gauntlet-contracts-link'
 import { CompiledContract, Contract, Call } from 'starknet'
 import { CommandCtor } from '.'
@@ -28,7 +28,7 @@ export type AfterExecute<UI, CI> = (
   deps: Pick<Dependencies, 'logger' | 'prompt'>,
 ) => (result: Result<TransactionResponse>) => Promise<any>
 
-export interface ExecuteCommandConfig<UI, CI> extends Config<UI, CI> {
+export interface ExecuteCommandConfig<UI, CI> extends BaseConfig<UI, CI> {
   hooks?: {
     beforeExecute: BeforeExecute<UI, CI>
     afterExecute: AfterExecute<UI, CI>
