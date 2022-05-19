@@ -39,18 +39,13 @@
       "packages-ts/gauntlet-starknet-cli/networks/"
     ]
   },
-  "dependencies": {
-    "cairo-ls": "^0.0.4"
-  },
   "devDependencies": {
     "@types/chai": "^4.2.22",
     "@types/jest": "^26.0.15",
     "@types/node": "^14.11.2",
-    "@types/secp256k1": "^4.0.3",
     "jest": "^26.6.3",
     "pkg": "^5.2.1",
     "prettier": "2.1.1",
-    "secp256k1": "^4.0.2",
     "ts-jest": "^26.4.3",
     "ts-node": "^8.3.0",
     "typescript": "4.3.5"
