@@ -1253,6 +1253,16 @@ func set_payees{
     return ()
 end
 
+
+# Returns 1 if value == 0. Returns 1 otherwise.
+func is_zero(value) -> (res):
+    if value == 0:
+        return (res=1)
+    end
+
+    return (res=0)
+end
+
 func set_payee{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
@@ -1266,10 +1276,10 @@ func set_payee{
 
     # a more convoluted way of saying
     # require(current_payee == 0 || current_payee == payee, "payee already set")
-    let (not_zero) = is_not_zero(current_payee)
-    let (not_same) = is_not_zero(current_payee - payees.payee)
+    let (is_unset) = is_zero(current_payee)
+    let (is_same) = is_zero(current_payee - payees.payee)
     with_attr error_message("payee already set"):
-        assert_not_zero((not_zero - 1) * (not_same - 1))
+        assert (is_unset - 1) * (is_same - 1) = 0
     end
 
     payees_.write(payees.transmitter, payees.payee)
