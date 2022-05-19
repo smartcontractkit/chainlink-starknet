@@ -2,9 +2,10 @@ package starknet
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/report"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -52,8 +53,7 @@ func (r *Relayer) Healthy() error {
 }
 
 func (r *Relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
-	configProvider, err := NewConfigProvider(r.ctx, r.lggr, r.chainSet, args)
-
+	configProvider, err := newConfigProvider(r.ctx, r.lggr, r.chainSet, args)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +62,43 @@ func (r *Relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 }
 
 func (r *Relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MedianProvider, error) {
-	configProvider, err := NewConfigProvider(r.ctx, r.lggr, r.chainSet, rargs)
-
+	configProvider, err := newConfigProvider(r.ctx, r.lggr, r.chainSet, rargs)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MedianProvider{
-		ConfigProvider: configProvider,
-		reportCodec:    report.ReportCodec{},
-	}, nil
+	// todo: use pargs for median provider
+
+	medianProvider, err := ocr2.NewMedianProvider(configProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	return medianProvider, nil
+}
+
+func newConfigProvider(ctx context.Context, lggr logger.Logger, chainSet ChainSet, args relaytypes.RelayArgs) (*ocr2.ConfigProvider, error) {
+	var relayConfig RelayConfig
+
+	err := json.Unmarshal(args.RelayConfig, &relayConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	chain, err := chainSet.Chain(ctx, relayConfig.ChainID)
+	if err != nil {
+		return nil, err
+	}
+
+	chainReader, err := chain.Reader()
+	if err != nil {
+		return nil, err
+	}
+
+	configProvider, err := ocr2.NewConfigProvider(chainReader, lggr)
+	if err != nil {
+		return nil, err
+	}
+
+	return configProvider, nil
 }

@@ -3,9 +3,6 @@ package starknet
 import (
 	"context"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/client"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
-
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
 )
@@ -20,7 +17,7 @@ type Chain interface {
 	types.Service
 
 	ID() string
-	Config() ocr2.Config
+	Config() Config
 	UpdateConfig(*db.ChainCfg)
-	Reader() (client.Reader, error)
+	Reader() (Reader, error)
 }

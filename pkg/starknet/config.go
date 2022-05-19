@@ -1,4 +1,4 @@
-package ocr2
+package starknet
 
 import (
 	"sync"
