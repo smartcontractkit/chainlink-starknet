@@ -1,4 +1,4 @@
-package report
+package ocr2
 
 import (
 	"math/big"

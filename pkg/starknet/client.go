@@ -1,10 +1,13 @@
-package client
+package starknet
 
 import (
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
 type Reader interface {
+	ocr2.Reader
 	// RPC read interface
 }
 

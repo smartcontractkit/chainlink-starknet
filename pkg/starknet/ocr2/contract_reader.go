@@ -2,11 +2,10 @@ package ocr2
 
 import (
 	"context"
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"math/big"
 	"time"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/client"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -15,11 +14,11 @@ var _ types.ContractConfigTracker = (*ContractReader)(nil)
 var _ median.MedianContract = (*ContractReader)(nil)
 
 type ContractReader struct {
-	chainReader client.Reader
+	chainReader Reader
 	lggr        logger.Logger
 }
 
-func NewContractReader(chainReader client.Reader, lggr logger.Logger) *ContractReader {
+func NewContractReader(chainReader Reader, lggr logger.Logger) *ContractReader {
 	return &ContractReader{
 		chainReader: chainReader,
 		lggr:        lggr,
