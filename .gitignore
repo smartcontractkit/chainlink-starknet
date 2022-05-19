@@ -8,6 +8,7 @@ flow-report.json
 .env
 report.json
 bin
+**/tsconfig.tsbuildinfo
 
 .DS_Store
 .temp/
