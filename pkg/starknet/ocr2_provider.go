@@ -2,55 +2,101 @@ package starknet
 
 import (
 	"context"
+	"encoding/json"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/contract"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/report"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
 
-	relaytypes "github.com/smartcontractkit/chainlink/core/services/relay/types"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
+	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ relaytypes.OCR2ProviderCtx = (*Ocr2Provider)(nil)
+var _ relaytypes.ConfigProvider = (*ConfigProvider)(nil)
 
-type Ocr2Provider struct {
-	offchainConfigDigester contract.OffchainConfigDigester
-	reportCodec            report.ReportCodec
-	tracker                *contract.ContractTracker
+type ConfigProvider struct {
+	utils.StartStopOnce
+
+	chain       Chain
+	reader      *ocr2.ContractReader
+	cache       *ocr2.ContractCache
+	digester    types.OffchainConfigDigester
+	transmitter types.ContractTransmitter
+
+	lggr logger.Logger
 }
 
-func (p Ocr2Provider) Start(ctx context.Context) error {
-	return p.tracker.Start(ctx)
+func NewConfigProvider(ctx context.Context, lggr logger.Logger, chainSet ChainSet, args relaytypes.RelayArgs) (*ConfigProvider, error) {
+	var relayConfig RelayConfig
+
+	err := json.Unmarshal(args.RelayConfig, &relayConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	chain, err := chainSet.Chain(ctx, relayConfig.ChainID)
+	if err != nil {
+		return nil, err
+	}
+
+	chainReader, err := chain.Reader()
+	if err != nil {
+		return nil, err
+	}
+
+	reader := ocr2.NewContractReader(chainReader, lggr)
+	cache := ocr2.NewContractCache(reader, lggr)
+	digester := ocr2.NewOffchainConfigDigester()
+	transmitter := ocr2.NewContractTransmitter(reader)
+
+	return &ConfigProvider{
+		chain:       chain,
+		reader:      reader,
+		cache:       cache,
+		digester:    digester,
+		transmitter: transmitter,
+		lggr:        lggr,
+	}, nil
 }
 
-func (p Ocr2Provider) Close() error {
-	return p.tracker.Close()
+func (p *ConfigProvider) Start(context.Context) error {
+	return p.StartOnce("Relay", func() error {
+		p.lggr.Debugf("Relay starting")
+		return p.cache.Start()
+	})
 }
 
-func (p Ocr2Provider) Ready() error {
-	return p.tracker.Ready()
+func (p *ConfigProvider) Close() error {
+	return p.StopOnce("Relay", func() error {
+		p.lggr.Debugf("Relay stopping")
+		return p.cache.Close()
+	})
 }
 
-func (p Ocr2Provider) Healthy() error {
-	return p.tracker.Healthy()
+func (p *ConfigProvider) ContractConfigTracker() types.ContractConfigTracker {
+	return p.reader
 }
 
-func (p Ocr2Provider) ContractTransmitter() types.ContractTransmitter {
-	return p.tracker
+func (p *ConfigProvider) OffchainConfigDigester() types.OffchainConfigDigester {
+	return p.digester
 }
 
-func (p Ocr2Provider) ContractConfigTracker() types.ContractConfigTracker {
-	return p.tracker
+var _ relaytypes.MedianProvider = (*MedianProvider)(nil)
+
+type MedianProvider struct {
+	*ConfigProvider
+	reportCodec median.ReportCodec
 }
 
-func (p Ocr2Provider) OffchainConfigDigester() types.OffchainConfigDigester {
-	return p.offchainConfigDigester
+func (p *MedianProvider) ContractTransmitter() types.ContractTransmitter {
+	return p.transmitter
 }
 
-func (p Ocr2Provider) ReportCodec() median.ReportCodec {
+func (p *MedianProvider) ReportCodec() median.ReportCodec {
 	return p.reportCodec
 }
 
-func (p Ocr2Provider) MedianContract() median.MedianContract {
-	return p.tracker
+func (p *MedianProvider) MedianContract() median.MedianContract {
+	return p.cache
 }

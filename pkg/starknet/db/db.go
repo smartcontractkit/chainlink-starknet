@@ -7,7 +7,7 @@ import (
 	// "github.com/smartcontractkit/chainlink/core/chains"
 )
 
-// todo: uncomment when interface released
+// todo: uncomment when interface is decoupled from core
 // var _ chains.Config = (*ChainCfg)(nil)
 
 type ChainCfg struct {
