@@ -42,7 +42,7 @@ networks:
     name: 'StarkNet dev simulator'
     chain_id: 2020
     type: l2_starknet_dev
-    l1_bridge_addr: "0x83D76591560d9CD02CE16c060c92118d19F996b3"
+    l1_bridge_addr: '0x83D76591560d9CD02CE16c060c92118d19F996b3'
   ethereum_kovan: &common_ethereum_testnet
     name: 'Ethereum Kovan'
     chain_id: 42
