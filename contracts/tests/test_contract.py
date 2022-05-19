@@ -1,6 +1,7 @@
 """aggregator.cairo test file."""
 import os
 
+import asyncio
 import pytest
 import pytest_asyncio
 from starkware.starknet.testing.starknet import Starknet
@@ -23,17 +24,28 @@ oracles = [
     { 'signer': Signer(123456789987654324), 'transmitter': Signer(987654321123456786) },
 ]
 
+
+@pytest.fixture(scope='module')
+def contract_defs():
+    aggregator_def = get_contract_def('aggregator.cairo')
+    account_def = get_contract_def('account.cairo')
+    erc20_def = get_contract_def('token.cairo')
+    return aggregator_def, account_def, erc20_def
+
 @pytest_asyncio.fixture(scope='module')
-async def token_factory():
+async def token_factory(contract_defs):
+    _aggregator_def, account_def, erc20_def = contract_defs
+
     # Create a new Starknet class that simulates the StarkNet system.
     starknet = await Starknet.empty()
+
     owner = await starknet.deploy(
-        contract_path("account.cairo"),
+        contract_def=account_def,
         constructor_calldata=[signer.public_key]
     )
 
     token = await starknet.deploy(
-        contract_path("token.cairo"),
+        contract_def=erc20_def,
         constructor_calldata=[
             str_to_felt("LINK Token"),
             str_to_felt("LINK"),
@@ -72,15 +84,18 @@ async def token_factory():
 #     execution_info = await contract.owner().call()
 #     assert execution_info.result == (owner.contract_address,)
 
-async def setup(token_factory):
-    starknet, token, owner = token_factory    
+# TODO: module scope won't work, need to wrap with a state copy
+@pytest_asyncio.fixture(scope='module')
+async def setup(token_factory, contract_defs):
+    starknet, token, owner = token_factory
+    aggregator_def, account_def, _erc20_def = contract_defs
 
     # Deploy the contract.
     min_answer = -10
     max_answer = 1000000000
 
     contract = await starknet.deploy(
-        source=contract_path("aggregator.cairo"),
+        contract_def=aggregator_def,
         constructor_calldata=cast_to_felts([
             owner.contract_address,
             token.contract_address,
@@ -95,11 +110,14 @@ async def setup(token_factory):
     )
 
     # Deploy an account for each oracle
-    for oracle in oracles:
-        oracle['account'] = await starknet.deploy(
-            contract_path("account.cairo"),
+    accounts = await asyncio.gather(*[
+        starknet.deploy(
+            contract_def=account_def,
             constructor_calldata=[oracle['transmitter'].public_key]
-        )
+        ) for oracle in oracles
+    ])
+    for i in range(len(accounts)):
+        oracles[i]['account'] = accounts[i]
     
     # Call set_config
 
@@ -138,11 +156,31 @@ async def setup(token_factory):
         "oracles": oracles
     }
 
+@pytest.fixture
+def aggregator_factory(contract_defs, setup):
+    aggregator_def, account_def, erc20_def = contract_defs
+    env = setup
+    _state = env["starknet"].state.copy()
+    token = cached_contract(_state, erc20_def, env["token"])
+    owner = cached_contract(_state, account_def, env["owner"])
+    contract = cached_contract(_state, aggregator_def, env["contract"])
+    
+    # TODO: need to replace all oracles with cache too?
+
+    return {
+        "token": token,
+        "owner": owner,
+        "contract": contract,
+        "f": env["f"],
+        "digest": env["digest"],
+        "oracles": env["oracles"]
+    }
+
 
 @pytest.mark.asyncio
-async def test_transmit(token_factory):
+async def test_transmit(aggregator_factory):
     """Test transmit method."""
-    env = await setup(token_factory)
+    env = aggregator_factory
     print(f"digest = {env['digest']}")
 
     oracle = env["oracles"][0]
@@ -199,7 +237,7 @@ async def test_transmit(token_factory):
             *report_context,
             *raw_report,
             n, # len signatures
-            *signatures # TODO: how to convert objects to calldata? using array for now
+            *signatures
         ]
     
         print(calldata)
@@ -212,5 +250,52 @@ async def test_transmit(token_factory):
         )
 
     await transmit(epoch_and_round=1, answer=99)
+    # TODO: test latest_round_data, round_data
     await transmit(epoch_and_round=2, answer=-1)
     
+@pytest.mark.asyncio
+async def test_payees(aggregator_factory):
+    """Test payee related functionality."""
+    env = aggregator_factory
+    
+    payees = []
+
+    for oracle in env["oracles"]:
+        payees.extend([
+            oracle['transmitter'].public_key,
+            oracle['transmitter'].public_key # reusing transmitter accounts as payees for simplicity
+        ])
+
+    calldata = [
+        len(env["oracles"]),
+        *payees
+    ]
+
+    # should succeed because all payees are zero
+    execution_info = await signer.send_transaction(
+        env['owner'],
+        env["contract"].contract_address,
+        'set_payees',
+        calldata
+    )
+    
+    # should succeed because all payees equal current payees
+    execution_info = await signer.send_transaction(
+        env['owner'],
+        env["contract"].contract_address,
+        'set_payees',
+        calldata
+    )
+
+    # can't transfer to self
+    assert_revert(signer.send_transaction(
+        env['owner'],
+        env["contract"].contract_address,
+        'transfer_payeeship',
+        [transmitter, proposed]
+    ))
+    # only payee can transfer
+    # successful transfer
+    # only proposed payee can accept
+    # successful accept
+
