@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./packages-ts/gauntlet-starknet"
+    },
+    {
+      "path": "./packages-ts/gauntlet-starknet-example"
+    },
+    {
+      "path": "./packages-ts/gauntlet-starknet-account"
+    },
+    {
+      "path": "./packages-ts/gauntlet-starknet-ocr2"
+    },
+    {
+      "path": "./packages-ts/gauntlet-starknet-cli"
+    }
+  ]
+}
