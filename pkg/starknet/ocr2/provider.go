@@ -1,10 +1,7 @@
-package starknet
+package ocr2
 
 import (
 	"context"
-	"encoding/json"
-
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -18,40 +15,21 @@ var _ relaytypes.ConfigProvider = (*ConfigProvider)(nil)
 type ConfigProvider struct {
 	utils.StartStopOnce
 
-	chain       Chain
-	reader      *ocr2.ContractReader
-	cache       *ocr2.ContractCache
+	reader      *ContractReader
+	cache       *ContractCache
 	digester    types.OffchainConfigDigester
 	transmitter types.ContractTransmitter
 
 	lggr logger.Logger
 }
 
-func NewConfigProvider(ctx context.Context, lggr logger.Logger, chainSet ChainSet, args relaytypes.RelayArgs) (*ConfigProvider, error) {
-	var relayConfig RelayConfig
-
-	err := json.Unmarshal(args.RelayConfig, &relayConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	chain, err := chainSet.Chain(ctx, relayConfig.ChainID)
-	if err != nil {
-		return nil, err
-	}
-
-	chainReader, err := chain.Reader()
-	if err != nil {
-		return nil, err
-	}
-
-	reader := ocr2.NewContractReader(chainReader, lggr)
-	cache := ocr2.NewContractCache(reader, lggr)
-	digester := ocr2.NewOffchainConfigDigester()
-	transmitter := ocr2.NewContractTransmitter(reader)
+func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*ConfigProvider, error) {
+	reader := NewContractReader(chainReader, lggr)
+	cache := NewContractCache(reader, lggr)
+	digester := NewOffchainConfigDigester()
+	transmitter := NewContractTransmitter(reader)
 
 	return &ConfigProvider{
-		chain:       chain,
 		reader:      reader,
 		cache:       cache,
 		digester:    digester,
@@ -87,6 +65,13 @@ var _ relaytypes.MedianProvider = (*MedianProvider)(nil)
 type MedianProvider struct {
 	*ConfigProvider
 	reportCodec median.ReportCodec
+}
+
+func NewMedianProvider(configProvider *ConfigProvider) (*MedianProvider, error) {
+	return &MedianProvider{
+		ConfigProvider: configProvider,
+		reportCodec:    ReportCodec{},
+	}, nil
 }
 
 func (p *MedianProvider) ContractTransmitter() types.ContractTransmitter {

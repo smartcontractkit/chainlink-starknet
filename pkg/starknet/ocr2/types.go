@@ -25,3 +25,11 @@ type OCR2Spec struct {
 	ID      int32
 	ChainID string
 }
+
+type Reader interface {
+	// todo: add ocr2 specific chain read funcs
+}
+
+type Config interface {
+	// todo: add ocr2 specific config read func
+}
