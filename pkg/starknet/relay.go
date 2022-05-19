@@ -3,16 +3,14 @@ package starknet
 import (
 	"context"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/contract"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/logger"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/report"
 
-	relaytypes "github.com/smartcontractkit/chainlink/core/services/relay/types"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 )
 
-var _ relaytypes.RelayerCtx = (*Relayer)(nil)
+var _ relaytypes.Relayer = (*Relayer)(nil)
 
 type Relayer struct {
 	chainSet ChainSet
@@ -53,32 +51,25 @@ func (r *Relayer) Healthy() error {
 	return r.chainSet.Healthy()
 }
 
-func (r *Relayer) NewOCR2Provider(externalJobID uuid.UUID, s interface{}) (relaytypes.OCR2ProviderCtx, error) {
-	var provider Ocr2Provider
+func (r *Relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
+	configProvider, err := NewConfigProvider(r.ctx, r.lggr, r.chainSet, args)
 
-	spec, ok := s.(contract.OCR2Spec)
-	if !ok {
-		return &provider, errors.New("unsuccessful cast to OCR2Spec in NewOCR2Provider")
-	}
-
-	// todo: insert digester values from spec
-	configDigester := contract.OffchainConfigDigester{}
-
-	chain, err := r.chainSet.Chain(r.ctx, spec.ChainID)
 	if err != nil {
-		return nil, errors.Wrap(err, "error initializing Chain in NewOCR2Provider")
+		return nil, err
 	}
 
-	reader, err := chain.Reader()
+	return configProvider, nil
+}
+
+func (r *Relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MedianProvider, error) {
+	configProvider, err := NewConfigProvider(r.ctx, r.lggr, r.chainSet, rargs)
+
 	if err != nil {
-		return nil, errors.Wrap(err, "error initializing Reader in NewOCR2Provider")
+		return nil, err
 	}
 
-	contractTracker := contract.NewTracker(spec, chain.Config(), reader, r.lggr)
-
-	return &Ocr2Provider{
-		offchainConfigDigester: configDigester,
-		reportCodec:            report.ReportCodec{},
-		tracker:                contractTracker,
+	return &MedianProvider{
+		ConfigProvider: configProvider,
+		reportCodec:    report.ReportCodec{},
 	}, nil
 }

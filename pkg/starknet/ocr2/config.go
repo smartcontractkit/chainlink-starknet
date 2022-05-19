@@ -1,10 +1,10 @@
-package config
+package ocr2
 
 import (
 	"sync"
 
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/logger"
 )
 
 var DefaultConfigSet = ConfigSet{

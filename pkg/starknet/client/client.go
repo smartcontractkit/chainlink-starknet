@@ -1,8 +1,7 @@
 package client
 
 import (
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/config"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/logger"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
 type Reader interface {
@@ -23,15 +22,13 @@ var _ ReaderWriter = (*Client)(nil)
 
 type Client struct {
 	rpc  *interface{} // todo: replace with RPC client
-	cfg  config.Config
 	lggr logger.Logger
 }
 
-func NewClient(endpoint string, cfg config.Config, lggr logger.Logger) (*Client, error) {
+func NewClient(endpoint string, lggr logger.Logger) (*Client, error) {
 	var rpc interface{}
 	return &Client{
 		rpc:  &rpc,
-		cfg:  cfg,
 		lggr: lggr,
 	}, nil
 }
