@@ -29,6 +29,14 @@ class Wallet implements IStarknetWallet {
 
   sign = () => {}
 
+<<<<<<< HEAD
   getPublicKey = async () => await this.wallet.getPubKey()
   getAccountPublicKey = () => this.account
+=======
+  getPublicKey = async () => {
+    console.log('Getting public key')
+    console.log(this.wallet)
+    return await this.wallet.getPubKey()
+  }
+>>>>>>> 6e8176b (working branch changes)
 }

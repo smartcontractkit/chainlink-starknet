@@ -6,7 +6,7 @@ export enum CONTRACT_LIST {
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
-  return json.parse(fs.readFileSync(`${__dirname}/../../artifacts/abi/${name}.json`).toString('ascii'))
+  return json.parse(fs.readFileSync(`./contracts/${name}_compiled.json`).toString('ascii'))
 }
 
 export const accountContractLoader = () => loadContract(CONTRACT_LIST.ACCOUNT)
