@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { starknet } from "hardhat";
-import { ec, encode, hash, number, stark, KeyPair } from "starknet";
+import { constants, ec, encode, hash, number, stark, KeyPair } from "starknet";
+import { BigNumberish } from "starknet/utils/number";
 import {
   Account,
   StarknetContract,
@@ -11,6 +12,12 @@ import { TIMEOUT } from "./constants";
 interface Oracle {
   signer: KeyPair,
   transmitter: Account,
+}
+
+// Required to convert negative values into [0, PRIME) range
+function toFelt(int: number | BigNumberish): BigNumberish {
+  let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME));
+  return number.toBN(int).umod(prime)
 }
 
 describe("aggregator.cairo", function () {
@@ -54,8 +61,8 @@ describe("aggregator.cairo", function () {
     aggregator = await aggregatorContractFactory.deploy({
       owner: BigInt(owner.starknetContract.address),
       link: BigInt(token.address),
-      min_answer: minAnswer,
-      max_answer: maxAnswer,
+      min_answer: toFelt(minAnswer),
+      max_answer: toFelt(maxAnswer),
       billing_access_controller: 0, // TODO: billing AC
       decimals: 8,
       description: starknet.shortStringToBigInt("FOO/BAR")
@@ -99,7 +106,7 @@ describe("aggregator.cairo", function () {
   
   let transmit = async (
     epoch_and_round: number,
-    answer: number
+    answer: BigNumberish
   ): Promise<any> => {
     
     let extra_hash = 1
@@ -155,8 +162,70 @@ describe("aggregator.cairo", function () {
 
   it("sets up the environment", async() => {
       await transmit(1, 99)
-      await transmit(2, -10)
-      await transmit(3, -100)
+
+      await transmit(2, toFelt(-10))
+      try {
+        await transmit(3, -100)
+        expect.fail()
+      } catch(err: any) {
+      }
+
   });
+
+  it("payees", async() => {
+    let payees = oracles.map((oracle) => ({
+      transmitter: oracle.transmitter.starknetContract.address,
+      payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
+    }))
+    // call set_payees, should succeed because all payees are zero
+    await owner.invoke(aggregator, "set_payees", { payees })
+    // call set_payees, should succeed because values are unchanged
+    await owner.invoke(aggregator, "set_payees", { payees })
+
+    let oracle = oracles[0].transmitter;
+    let transmitter = oracle.starknetContract.address
+    let payee = transmitter
+
+    let proposed_oracle = oracles[1].transmitter
+    let proposed_transmitter = proposed_oracle.starknetContract.address
+    let proposed_payee = proposed_transmitter
+
+    // can't transfer to self
+    try {
+      await oracle.invoke(aggregator, "transfer_payeeship", {
+        transmitter,
+        proposed: payee,
+      })
+      expect.fail()
+    } catch(err: any) {
+      // TODO: expect(err.message).to.contain("");
+    }
+
+    // only payee can transfer
+    try {
+      await proposed_oracle.invoke(aggregator, "transfer_payeeship", {
+        transmitter,
+        proposed: proposed_payee,
+      })
+      expect.fail()
+    } catch(err: any) {
+    }
+
+    // successful transfer
+    await oracle.invoke(aggregator, "transfer_payeeship", {
+      transmitter,
+      proposed: proposed_payee,
+    })
+
+    // only proposed payee can accept
+    try {
+      await oracle.invoke(aggregator, "accept_payeeship", { transmitter })
+      expect.fail()
+    } catch(err: any) {
+    }
+
+    // successful accept
+    await proposed_oracle.invoke(aggregator, "accept_payeeship", { transmitter })
+  })
 
 })
