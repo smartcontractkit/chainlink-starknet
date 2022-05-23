@@ -48,6 +48,11 @@
     "prettier": "2.1.1",
     "ts-jest": "^26.4.3",
     "ts-node": "^8.3.0",
-    "typescript": "4.3.5"
+    "typescript": "4.3.5",
+    "elliptic": "6.5.4"
+  },
+  "dependencies": {
+    "cairo-lang": "^1.0.1",
+    "starknet": "^3.9.0"
   }
 }
