@@ -1035,7 +1035,8 @@ func withdraw_payment{
         assert caller = payee
     end
 
-    pay_oracle(transmitter)
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    pay_oracle(transmitter, latest_round_id)
     return ()
 end
 
@@ -1065,7 +1066,7 @@ func pay_oracle{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(transmitter: felt):
+}(transmitter: felt, latest_round_id: felt):
     alloc_locals
 
     let (oracle: Oracle) = transmitters_.read(transmitter)
@@ -1094,6 +1095,10 @@ func pay_oracle{
         recipient=payee,
         amount=amount,
     )
+
+    # Reset payment
+    reward_from_aggregator_round_id_.write(transmitter, latest_round_id)
+    transmitters_.write(transmitter, Oracle(index=oracle.index, payment_juels=0))
 
     oracle_paid.emit(
         transmitter=transmitter,
@@ -1124,9 +1129,10 @@ func pay_oracles_{
         return ()
     end
     
-    # TODO: share link_token & last_round_id between pay_oracle calls
+    # TODO: share link_token between pay_oracle calls
     let (transmitter) = transmitters_list_.read(index)
-    pay_oracle(transmitter)
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    pay_oracle(transmitter, latest_round_id)
 
     return pay_oracles_(index - 1)
 end
