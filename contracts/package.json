@@ -10,17 +10,17 @@
   "license": "ISC",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@shardlabs/starknet-hardhat-plugin": "0.5.4",
-    "starknet": "3.9.0",
+    "@shardlabs/starknet-hardhat-plugin": "^0.5.4",
     "@types/chai": "^4.2.22",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.11.10",
+    "cairo-ls": "^0.0.4",
     "chai": "^4.3.4",
     "ethers": "^5.4.6",
+    "starknet": "3.9.0",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.2",
-    "cairo-ls": "^0.0.4"
+    "typescript": "^4.5.2"
   },
   "dependencies": {
     "@toruslabs/starkware-crypto": "^1.0.0",
