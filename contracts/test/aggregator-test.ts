@@ -1,6 +1,6 @@
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { starknet } from "hardhat";
-import { constants, ec, encode, hash, number, stark, KeyPair } from "starknet";
+import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from "starknet";
 import { BigNumberish } from "starknet/utils/number";
 import {
   Account,
@@ -53,7 +53,7 @@ describe("aggregator.cairo", function () {
       name: starknet.shortStringToBigInt("LINK Token"),
       symbol: starknet.shortStringToBigInt("LINK"),
       decimals: 18,
-      initial_supply: { high: 0n, low: 1000n },
+      initial_supply: { high: 1n, low: 0n },
       recipient: BigInt(owner.starknetContract.address),
       owner: BigInt(owner.starknetContract.address),
     })
@@ -160,7 +160,17 @@ describe("aggregator.cairo", function () {
     })
   }
 
-  it("sets up the environment", async() => {
+  it("billing config", async() => {
+    await owner.invoke(aggregator, "set_billing", {
+      config: {
+        observation_payment_gjuels: 1,
+        transmission_payment_gjuels: 5,
+      }
+    })
+  })
+
+
+  it("transmission", async() => {
       await transmit(1, 99)
 
       await transmit(2, toFelt(-10))
@@ -172,7 +182,7 @@ describe("aggregator.cairo", function () {
 
   });
 
-  it("payees", async() => {
+  it("payee management", async() => {
     let payees = oracles.map((oracle) => ({
       transmitter: oracle.transmitter.starknetContract.address,
       payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
@@ -226,6 +236,51 @@ describe("aggregator.cairo", function () {
 
     // successful accept
     await proposed_oracle.invoke(aggregator, "accept_payeeship", { transmitter })
+  })
+
+  it("payments and withdrawals", async() => {
+    let oracle = oracles[0];
+    // NOTE: previous test changed oracle0's payee to oracle1
+    let payee = oracles[1].transmitter
+
+    let { amount: owed } = await payee.call(aggregator, "owed_payment", {
+      transmitter: oracle.transmitter.starknetContract.address
+    })
+    // several rounds happened so we are owed payment
+    assert.ok(owed > 0)
+
+    // no funds on contract, so no LINK available for payment
+    let { available } = await aggregator.call("link_available_for_payment")
+    assert.ok(available < 0) // should be negative: we owe payments
+
+    // deposit LINK to contract
+    await owner.invoke(token, "transfer", {
+      recipient: aggregator.address,
+      amount: uint256.bnToUint256(100_000_000_000)
+    })
+
+    // we have enough funds available now
+    available = (await aggregator.call("link_available_for_payment")).available
+    assert.ok(available > 0)
+
+    // attempt to withdraw the payment
+    await payee.invoke(aggregator, "withdraw_payment", {
+      transmitter: oracle.transmitter.starknetContract.address
+    })
+    
+    // balance as transferred to payee
+    let { balance } = await token.call("balanceOf", {
+      account: payee.starknetContract.address
+    })
+    
+    assert.ok(number.toBN(owed).eq(uint256.uint256ToBN(balance)))
+
+    // owed payment is now zero
+    owed = (await payee.call(aggregator, "owed_payment", {
+      transmitter: oracle.transmitter.starknetContract.address
+    })).amount
+    assert.ok(owed == 0)
+    
   })
 
 })
