@@ -8,7 +8,12 @@ type UserInput = {
   transmissionPaymentGjuels: number
 }
 
-type ContractInput = {}
+type ContractInput = [
+  {
+    observation_payment_gjuels: number
+    transmission_payment_gjuels: number
+  },
+]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput

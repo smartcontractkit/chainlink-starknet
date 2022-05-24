@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.0",
-    "starknet": "3.9.0"
+    "starknet": "^3.11.0"
   }
 }

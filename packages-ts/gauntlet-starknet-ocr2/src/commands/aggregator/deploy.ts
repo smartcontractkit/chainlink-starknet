@@ -13,15 +13,15 @@ type UserInput = {
   minAnswer: number
 }
 
-type ContractInput = {
-  // owner: string
-  // link: string
-  // min_answer: string
-  // max_answer: string
-  // billing_access_controller: string
-  // decimals: string
-  // description: string
-}
+type ContractInput = [
+  owner: string,
+  link: string,
+  min_answer: number,
+  max_answer: number,
+  billing_access_controller: string,
+  decimals: number,
+  description: string,
+]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -39,10 +39,10 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [
     process.env.PUBLIC_KEY,
     process.env.LINK,
-    new BN(input.minAnswer),
-    new BN(input.maxAnswer),
+    new BN(input.minAnswer).toNumber(),
+    new BN(input.maxAnswer).toNumber(),
     input.billingAccessController,
-    new BN(input.decimals),
+    new BN(input.decimals).toNumber(),
     input.description,
   ]
 }
