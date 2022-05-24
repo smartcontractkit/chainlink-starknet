@@ -14,14 +14,14 @@ var _ types.ContractConfigTracker = (*ContractReader)(nil)
 var _ median.MedianContract = (*ContractReader)(nil)
 
 type ContractReader struct {
-	chainReader Reader
-	lggr        logger.Logger
+	reader Reader
+	lggr   logger.Logger
 }
 
 func NewContractReader(chainReader Reader, lggr logger.Logger) *ContractReader {
 	return &ContractReader{
-		chainReader: chainReader,
-		lggr:        lggr,
+		reader: chainReader,
+		lggr:   lggr,
 	}
 }
 
