@@ -509,8 +509,6 @@ end
 struct Signature:
     member r : felt
     member s : felt
-    # TODO: can further compress by using signer index instead of pubkey?
-    # TODO: observers[i] = n => signers[n] => public_key
     member public_key: felt
 end
 
@@ -520,9 +518,6 @@ struct ReportContext:
     member extra_hash : felt
 end
 
-# TODO we can base64 encode inputs, but we could also pre-split the inputs (so instead of a binary report,
-# it's already split into observers, len and observations). Encoding would shrink the input size since each observation
-# wouldn't have to be felt-sized.
 @external
 func transmit{
     syscall_ptr : felt*,
@@ -594,7 +589,6 @@ func transmit{
     # Validate median in min-max range
     let (answer_range : Range) = answer_range_.read()
     assert_in_range(median, answer_range.min, answer_range.max)
-    # TODO: needs to handle negative values correctly, add test
 
     let (local prev_round_id) = latest_aggregator_round_id_.read()
     # let (prev_round_id) = latest_aggregator_round_id_.read()
@@ -1089,7 +1083,6 @@ func pay_oracle{
 
     let (link_token) = link_token_.read()
 
-    # TODO: do something with the return value?
     IERC20.transfer(
         contract_address=link_token,
         recipient=payee,
