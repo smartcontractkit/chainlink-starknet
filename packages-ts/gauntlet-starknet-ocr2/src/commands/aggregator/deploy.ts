@@ -2,23 +2,25 @@ import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-st
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'
+import { number } from 'starknet'
 
 type UserInput = {
   billingAccessController: string
   linkToken: string
   decimals: number
   description: string
-  maxAnswer: string
-  minAnswer: string
+  maxAnswer: number
+  minAnswer: number
 }
 
 type ContractInput = {
-  link: string
-  min_answer: number
-  max_answer: number
-  billing_access_controller: string
-  decimals: number
-  description: string
+  // owner: string
+  // link: string
+  // min_answer: string
+  // max_answer: string
+  // billing_access_controller: string
+  // decimals: string
+  // description: string
 }
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
@@ -34,14 +36,15 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return {
-    min_answer: new BN(input.minAnswer).toNumber(),
-    max_answer: new BN(input.maxAnswer).toNumber(),
-    decimals: new BN(input.decimals).toNumber(),
-    billing_access_controller: input.billingAccessController,
-    description: input.description,
-    link: input.linkToken,
-  }
+  return [
+    process.env.PUBLIC_KEY,
+    process.env.LINK,
+    new BN(input.minAnswer),
+    new BN(input.maxAnswer),
+    input.billingAccessController,
+    new BN(input.decimals),
+    input.description,
+  ]
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {

@@ -8,12 +8,7 @@ type UserInput = {
   transmissionPaymentGjuels: number
 }
 
-type ContractInput = {
-  config: {
-    observation_payment_gjuels: number
-    transmission_payment_gjuels: number
-  }
-}
+type ContractInput = {}
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -24,12 +19,12 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return {
-    config: {
+  return [
+    {
       observation_payment_gjuels: new BN(input.observationPaymentGjuels).toNumber(),
       transmission_payment_gjuels: new BN(input.transmissionPaymentGjuels).toNumber(),
     },
-  }
+  ]
 }
 
 const validateInput = async (input: UserInput): Promise<boolean> => {
@@ -57,7 +52,7 @@ const validateInput = async (input: UserInput): Promise<boolean> => {
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     category: CATEGORIES.OCR2,
-    function: 'deploy',
+    function: 'set_billing',
     examples: [`${CATEGORIES.OCR2}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
   },
   makeUserInput,
