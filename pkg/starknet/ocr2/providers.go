@@ -15,10 +15,10 @@ var _ relaytypes.ConfigProvider = (*ConfigProvider)(nil)
 type ConfigProvider struct {
 	utils.StartStopOnce
 
-	reader      *ContractReader
-	cache       *ContractCache
-	digester    types.OffchainConfigDigester
-	transmitter types.ContractTransmitter
+	reader        *ContractReader
+	contractCache *ContractCache
+	digester      types.OffchainConfigDigester
+	transmitter   types.ContractTransmitter
 
 	lggr logger.Logger
 }
@@ -30,25 +30,25 @@ func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*ConfigProvider,
 	transmitter := NewContractTransmitter(reader)
 
 	return &ConfigProvider{
-		reader:      reader,
-		cache:       cache,
-		digester:    digester,
-		transmitter: transmitter,
-		lggr:        lggr,
+		reader:        reader,
+		contractCache: cache,
+		digester:      digester,
+		transmitter:   transmitter,
+		lggr:          lggr,
 	}, nil
 }
 
 func (p *ConfigProvider) Start(context.Context) error {
-	return p.StartOnce("Relay", func() error {
-		p.lggr.Debugf("Relay starting")
-		return p.cache.Start()
+	return p.StartOnce("ConfigProvider", func() error {
+		p.lggr.Debugf("Config provider starting")
+		return p.contractCache.Start()
 	})
 }
 
 func (p *ConfigProvider) Close() error {
-	return p.StopOnce("Relay", func() error {
-		p.lggr.Debugf("Relay stopping")
-		return p.cache.Close()
+	return p.StopOnce("ConfigProvider", func() error {
+		p.lggr.Debugf("Config provider stopping")
+		return p.contractCache.Close()
 	})
 }
 
@@ -64,14 +64,32 @@ var _ relaytypes.MedianProvider = (*MedianProvider)(nil)
 
 type MedianProvider struct {
 	*ConfigProvider
-	reportCodec median.ReportCodec
+	transmissionsCache *TransmissionsCache
+	reportCodec        median.ReportCodec
 }
 
 func NewMedianProvider(configProvider *ConfigProvider) (*MedianProvider, error) {
+	cache := NewTransmissionsCache(configProvider.reader, configProvider.lggr)
+
 	return &MedianProvider{
-		ConfigProvider: configProvider,
-		reportCodec:    ReportCodec{},
+		ConfigProvider:     configProvider,
+		transmissionsCache: cache,
+		reportCodec:        ReportCodec{},
 	}, nil
+}
+
+func (p *MedianProvider) Start(context.Context) error {
+	return p.StartOnce("MedianProvider", func() error {
+		p.lggr.Debugf("Median provider starting")
+		return p.transmissionsCache.Start()
+	})
+}
+
+func (p *MedianProvider) Close() error {
+	return p.StopOnce("MedianProvider", func() error {
+		p.lggr.Debugf("Median provider stopping")
+		return p.transmissionsCache.Close()
+	})
 }
 
 func (p *MedianProvider) ContractTransmitter() types.ContractTransmitter {
@@ -83,5 +101,5 @@ func (p *MedianProvider) ReportCodec() median.ReportCodec {
 }
 
 func (p *MedianProvider) MedianContract() median.MedianContract {
-	return p.cache
+	return p.transmissionsCache
 }
