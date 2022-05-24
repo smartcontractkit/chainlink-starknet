@@ -293,7 +293,7 @@ func set_config{
     offchain_config: felt*,
 ) -> (digest: felt):
     alloc_locals
-    # Ownable_only_owner() TODO: reenable
+    Ownable_only_owner()
 
     assert_nn_le(oracles_len, MAX_ORACLES) # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
