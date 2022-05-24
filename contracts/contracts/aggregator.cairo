@@ -219,41 +219,41 @@ end
 # TODO: disable validation + flags in the initial release
 # TODO: document decision in repo/docs/contracts/ocr2
 
-@contract_interface
-namespace IValidator:
-    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt) -> (valid: felt):
-    end
-end
+# @contract_interface
+# namespace IValidator:
+#     func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt) -> (valid: felt):
+#     end
+# end
 
-# TODO: can't set gas limit
-@storage_var
-func validator_() -> (validator: felt):
-end
+# # TODO: can't set gas limit
+# @storage_var
+# func validator_() -> (validator: felt):
+# end
 
-@view
-func validator_config{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}() -> (validator: felt):
-    let (validator) = validator_.read()
-    return (validator)
-end
+# @view
+# func validator_config{
+#     syscall_ptr : felt*,
+#     pedersen_ptr : HashBuiltin*,
+#     range_check_ptr,
+# }() -> (validator: felt):
+#     let (validator) = validator_.read()
+#     return (validator)
+# end
 
-@external
-func set_validator_config{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}(validator: felt):
-    Ownable_only_owner()
-    # TODO: use openzeppelin's ERC165 to validate
-    validator_.write(validator)
-
-    # TODO: emit event
-
-    return ()
-end
+# @external
+# func set_validator_config{
+#     syscall_ptr : felt*,
+#     pedersen_ptr : HashBuiltin*,
+#     range_check_ptr,
+# }(validator: felt):
+#     Ownable_only_owner()
+#     # TODO: use openzeppelin's ERC165 to validate
+#     validator_.write(validator)
+#
+#     # TODO: emit event
+#
+#     return ()
+# end
 
 # --- Configuration
 
@@ -606,30 +606,29 @@ func transmit{
         transmission_timestamp=timestamp,
     ))
 
+    # NOTE: disabled 
     # validate via validator
-    let (validator) = validator_.read()
-
-    if validator != 0:
-        let (prev_transmission) = transmissions_.read(prev_round_id)
-        IValidator.validate(
-            contract_address=validator,
-            prev_round_id=prev_round_id,
-            prev_answer=prev_transmission.answer,
-            round_id=round_id,
-            answer=median
-        )
-
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    else:
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    end
-    tempvar syscall_ptr = syscall_ptr
-    tempvar range_check_ptr = range_check_ptr
-    tempvar pedersen_ptr = pedersen_ptr
+    # let (validator) = validator_.read()
+    # if validator != 0:
+    #     let (prev_transmission) = transmissions_.read(prev_round_id)
+    #     IValidator.validate(
+    #         contract_address=validator,
+    #         prev_round_id=prev_round_id,
+    #         prev_answer=prev_transmission.answer,
+    #         round_id=round_id,
+    #         answer=median
+    #     )
+    #     tempvar syscall_ptr = syscall_ptr
+    #     tempvar range_check_ptr = range_check_ptr
+    #     tempvar pedersen_ptr = pedersen_ptr
+    # else:
+    #     tempvar syscall_ptr = syscall_ptr
+    #     tempvar range_check_ptr = range_check_ptr
+    #     tempvar pedersen_ptr = pedersen_ptr
+    # end
+    # tempvar syscall_ptr = syscall_ptr
+    # tempvar range_check_ptr = range_check_ptr
+    # tempvar pedersen_ptr = pedersen_ptr
 
     let (reimbursement_juels) = calculate_reimbursement()
 
