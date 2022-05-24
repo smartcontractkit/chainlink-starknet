@@ -171,13 +171,23 @@ describe("aggregator.cairo", function () {
 
 
   it("transmission", async() => {
-      await transmit(1, 99)
+      await transmit(1, 99);
+      let { round } = await aggregator.call("latest_round_data")
+      assert.equal(round.round_id, 1)
+      assert.equal(round.answer, 99)
 
-      await transmit(2, toFelt(-10))
+      await transmit(2, toFelt(-10));
+      ({ round } = await aggregator.call("latest_round_data"))
+      assert.equal(round.round_id, 2)
+      assert.equal(round.answer, -10)
+
       try {
         await transmit(3, -100)
         expect.fail()
       } catch(err: any) {
+        // Round should be unchanged
+        let { round: new_round } = await aggregator.call("latest_round_data")
+        assert.deepEqual(round, new_round)
       }
 
   });
@@ -273,7 +283,7 @@ describe("aggregator.cairo", function () {
       account: payee.starknetContract.address
     })
     
-    assert.ok(number.toBN(owed).eq(uint256.uint256ToBN(balance)))
+    assert.ok(number.toBN(owed).eq(uint256.uint256ToBN(balance)));
 
     // owed payment is now zero
     owed = (await payee.call(aggregator, "owed_payment", {
