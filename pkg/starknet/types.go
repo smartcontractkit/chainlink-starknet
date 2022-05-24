@@ -1,7 +1,7 @@
 package starknet
 
-// CL Core OCR2 job spec RelayConfig member
+// [relayConfig] member of Chainlink's job spec v2 (OCR2 only currently)
 type RelayConfig struct {
-	// todo: add params
-	ChainID string `json:"chainID"`
+	ChainID  string `json:"chainID"`
+	NodeName string `json:"nodeName"` // optional, defaults to random node with 'chainID'
 }
