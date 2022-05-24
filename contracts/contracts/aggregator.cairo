@@ -1055,7 +1055,7 @@ func owed_payment{
     let (billing: Billing) = billing_.read()
 
     let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
+    let (from_round_id) = reward_from_aggregator_round_id_.read(oracle.index)
     let rounds = latest_round_id - from_round_id
 
     let amount = (rounds * billing.observation_payment_gjuels * GIGA) + oracle.payment_juels
@@ -1075,12 +1075,12 @@ func pay_oracle{
         return ()
     end
 
+    # TODO: reuse oracle passed into owed_payment
     let (amount_: felt) = owed_payment(transmitter)
     assert_nn(amount_)
 
     # if zero, fastpath return to avoid empty transfers
-    let (not_zero) = is_not_zero(amount_)
-    if not_zero == FALSE:
+    if amount_ == 0:
         return ()
     end
 
@@ -1097,7 +1097,7 @@ func pay_oracle{
     )
 
     # Reset payment
-    reward_from_aggregator_round_id_.write(transmitter, latest_round_id)
+    reward_from_aggregator_round_id_.write(oracle.index, latest_round_id)
     transmitters_.write(transmitter, Oracle(index=oracle.index, payment_juels=0))
 
     oracle_paid.emit(
@@ -1175,7 +1175,7 @@ func total_link_due_{
     let (oracle: Oracle) = transmitters_.read(transmitter)
     assert_not_zero(oracle.index) # 0 == undefined
 
-    let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
+    let (from_round_id) = reward_from_aggregator_round_id_.read(oracle.index)
     let rounds = latest_round_id - from_round_id
 
     let total_rounds = total_rounds + rounds
