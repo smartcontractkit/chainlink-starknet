@@ -11,7 +11,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [process.env.ACCOUNT]
+  return [process.env.PUBLIC_KEY]
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
