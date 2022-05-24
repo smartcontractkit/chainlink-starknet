@@ -14,7 +14,7 @@ type UserInput = {
   privateKey?: string
 }
 
-type ContractInput = {}
+type ContractInput = [publicKey: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput

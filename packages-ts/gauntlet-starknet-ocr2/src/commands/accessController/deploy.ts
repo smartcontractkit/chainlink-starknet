@@ -4,7 +4,7 @@ import { accessControllerContractLoader } from '../../lib/contracts'
 
 type UserInput = {}
 
-type ContractInput = {}
+type ContractInput = [owner: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   return {}

@@ -1,7 +1,6 @@
 // import AccessController from './accessController'
 
-import DeployAggregator from './aggregator/deploy'
-import DeployAccessController from './accessController/deploy'
-import SetBilling from './aggregator/setBilling'
+import AccessController from './accessController'
+import Aggregator from './aggregator'
 
-export default [DeployAggregator, DeployAccessController, SetBilling]
+export default [...AccessController, ...Aggregator]
