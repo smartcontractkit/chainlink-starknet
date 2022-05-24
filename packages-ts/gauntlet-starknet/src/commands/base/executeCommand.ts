@@ -39,7 +39,7 @@ export interface ExecuteCommandConfig<UI, CI> {
     afterExecute?: AfterExecute<UI, CI>
   }
   makeUserInput: (flags, args) => Promise<UI>
-  makeContractInput: (userInput: UI) => Promise<CI>
+  makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
   validations: Validation<UI>[]
   loadContract: () => CompiledContract
 }
@@ -85,7 +85,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const env = deps.makeEnv(flags)
 
       c.provider = deps.makeProvider(env.providerUrl)
-      c.wallet = deps.makeWallet(env.pk)
+      c.wallet = deps.makeWallet(env.pk, env.account)
       c.contractAddress = args[0]
       c.account = env.account
 
@@ -137,7 +137,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         await this.runValidations(config.validations, userInput)
       }
 
-      const contractInput = await config.makeContractInput(userInput)
+      const contractInput = await config.makeContractInput(userInput, this.executionContext)
 
       return {
         user: userInput,

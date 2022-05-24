@@ -13,6 +13,9 @@
       "path": "./packages-ts/gauntlet-starknet-account"
     },
     {
+      "path": "./packages-ts/gauntlet-starknet-oz-erc20"
+    },
+    {
       "path": "./packages-ts/gauntlet-starknet-ocr2"
     },
     {
