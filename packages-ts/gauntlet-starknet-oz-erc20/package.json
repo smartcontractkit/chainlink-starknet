@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-cli",
+  "name": "@chainlink/gauntlet-starknet-oz-erc20",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet CLI",
+  "description": "Gauntlet Starknet OpenZeppelin ERC20",
   "keywords": [
     "typescript",
     "cli"
@@ -26,9 +26,7 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.0",
-    "@chainlink/gauntlet-starknet-account": "*",
-    "@chainlink/gauntlet-starknet-example": "*",
-    "@chainlink/gauntlet-starknet-ocr2": "*",
-    "@chainlink/gauntlet-starknet-oz-erc20": "*"
+    "@chainlink/gauntlet-starknet": "*",
+    "starknet": "^3.11.0"
   }
 }

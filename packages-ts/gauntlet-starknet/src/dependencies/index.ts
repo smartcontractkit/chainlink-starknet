@@ -12,6 +12,6 @@ export interface Dependencies {
   logger: typeof logger
   prompt: typeof prompt
   makeProvider: (url: string) => IStarknetProvider
-  makeWallet: (pk: string) => IStarknetWallet
+  makeWallet: (pk: string, account?: string) => IStarknetWallet
   makeEnv: (flags: Record<string, string>) => Env
 }
