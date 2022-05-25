@@ -1,5 +1,5 @@
 {
-  "name": "chainlink-starknet",
+  "name": "@chainlink/starknet-contracts",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
