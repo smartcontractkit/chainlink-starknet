@@ -7,21 +7,21 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ median.ReportCodec = (*ReportCodec)(nil)
+var _ median.ReportCodec = (*reportCodec)(nil)
 
-type ReportCodec struct{}
+type reportCodec struct{}
 
-func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types.Report, error) {
+func (c reportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types.Report, error) {
 	// todo: implement
 	return types.Report{}, nil
 }
 
-func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
+func (c reportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	// todo: implement
 	return nil, nil
 }
 
-func (c ReportCodec) MaxReportLength(n int) int {
+func (c reportCodec) MaxReportLength(n int) int {
 	// todo: implement
 	return 0
 }

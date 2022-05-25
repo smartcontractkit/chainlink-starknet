@@ -4,22 +4,22 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ types.OffchainConfigDigester = (*OffchainConfigDigester)(nil)
+var _ types.OffchainConfigDigester = (*offchainConfigDigester)(nil)
 
-type OffchainConfigDigester struct {
+type offchainConfigDigester struct {
 	// todo: add params
 }
 
-func NewOffchainConfigDigester() OffchainConfigDigester {
-	return OffchainConfigDigester{}
+func NewOffchainConfigDigester() offchainConfigDigester {
+	return offchainConfigDigester{}
 }
 
-func (d OffchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
+func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	// todo: implement
 	return types.ConfigDigest{}, nil
 }
 
-func (OffchainConfigDigester) ConfigDigestPrefix() types.ConfigDigestPrefix {
+func (offchainConfigDigester) ConfigDigestPrefix() types.ConfigDigestPrefix {
 	// todo: implement
 	return 0
 }

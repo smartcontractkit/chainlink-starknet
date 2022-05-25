@@ -6,22 +6,22 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ types.ContractTransmitter = (*ContractTransmitter)(nil)
+var _ types.ContractTransmitter = (*contractTransmitter)(nil)
 
-type ContractTransmitter struct {
-	*ContractReader
+type contractTransmitter struct {
+	*contractReader
 	// todo: add params
 }
 
 func NewContractTransmitter(
-	reader *ContractReader,
-) *ContractTransmitter {
-	return &ContractTransmitter{
-		ContractReader: reader,
+	reader *contractReader,
+) *contractTransmitter {
+	return &contractTransmitter{
+		contractReader: reader,
 	}
 }
 
-func (c *ContractTransmitter) Transmit(
+func (c *contractTransmitter) Transmit(
 	ctx context.Context,
 	reportCtx types.ReportContext,
 	report types.Report,
@@ -31,7 +31,7 @@ func (c *ContractTransmitter) Transmit(
 	return nil
 }
 
-func (c *ContractTransmitter) LatestConfigDigestAndEpoch(
+func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 	ctx context.Context,
 ) (
 	configDigest types.ConfigDigest,
@@ -42,7 +42,7 @@ func (c *ContractTransmitter) LatestConfigDigestAndEpoch(
 	return types.ConfigDigest{}, 0, err
 }
 
-func (c *ContractTransmitter) FromAccount() types.Account {
+func (c *contractTransmitter) FromAccount() types.Account {
 	// todo: implement
 	return ""
 }

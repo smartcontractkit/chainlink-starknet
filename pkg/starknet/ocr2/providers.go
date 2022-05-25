@@ -10,26 +10,26 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ relaytypes.ConfigProvider = (*ConfigProvider)(nil)
+var _ relaytypes.ConfigProvider = (*configProvider)(nil)
 
-type ConfigProvider struct {
+type configProvider struct {
 	utils.StartStopOnce
 
-	reader        *ContractReader
-	contractCache *ContractCache
+	reader        *contractReader
+	contractCache *contractCache
 	digester      types.OffchainConfigDigester
 	transmitter   types.ContractTransmitter
 
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*ConfigProvider, error) {
+func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*configProvider, error) {
 	reader := NewContractReader(chainReader, lggr)
 	cache := NewContractCache(reader, lggr)
 	digester := NewOffchainConfigDigester()
 	transmitter := NewContractTransmitter(reader)
 
-	return &ConfigProvider{
+	return &configProvider{
 		reader:        reader,
 		contractCache: cache,
 		digester:      digester,
@@ -38,68 +38,73 @@ func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*ConfigProvider,
 	}, nil
 }
 
-func (p *ConfigProvider) Start(context.Context) error {
+func (p *configProvider) Start(context.Context) error {
 	return p.StartOnce("ConfigProvider", func() error {
 		p.lggr.Debugf("Config provider starting")
 		return p.contractCache.Start()
 	})
 }
 
-func (p *ConfigProvider) Close() error {
+func (p *configProvider) Close() error {
 	return p.StopOnce("ConfigProvider", func() error {
 		p.lggr.Debugf("Config provider stopping")
 		return p.contractCache.Close()
 	})
 }
 
-func (p *ConfigProvider) ContractConfigTracker() types.ContractConfigTracker {
+func (p *configProvider) ContractConfigTracker() types.ContractConfigTracker {
 	return p.reader
 }
 
-func (p *ConfigProvider) OffchainConfigDigester() types.OffchainConfigDigester {
+func (p *configProvider) OffchainConfigDigester() types.OffchainConfigDigester {
 	return p.digester
 }
 
-var _ relaytypes.MedianProvider = (*MedianProvider)(nil)
+var _ relaytypes.MedianProvider = (*medianProvider)(nil)
 
-type MedianProvider struct {
-	*ConfigProvider
-	transmissionsCache *TransmissionsCache
+type medianProvider struct {
+	*configProvider
+	transmissionsCache *transmissionsCache
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(configProvider *ConfigProvider) (*MedianProvider, error) {
+func NewMedianProvider(chainReader Reader, lggr logger.Logger) (*medianProvider, error) {
+	configProvider, err := NewConfigProvider(chainReader, lggr)
+	if err != nil {
+		return nil, err
+	}
+
 	cache := NewTransmissionsCache(configProvider.reader, configProvider.lggr)
 
-	return &MedianProvider{
-		ConfigProvider:     configProvider,
+	return &medianProvider{
+		configProvider:     configProvider,
 		transmissionsCache: cache,
-		reportCodec:        ReportCodec{},
+		reportCodec:        reportCodec{},
 	}, nil
 }
 
-func (p *MedianProvider) Start(context.Context) error {
+func (p *medianProvider) Start(context.Context) error {
 	return p.StartOnce("MedianProvider", func() error {
 		p.lggr.Debugf("Median provider starting")
 		return p.transmissionsCache.Start()
 	})
 }
 
-func (p *MedianProvider) Close() error {
+func (p *medianProvider) Close() error {
 	return p.StopOnce("MedianProvider", func() error {
 		p.lggr.Debugf("Median provider stopping")
 		return p.transmissionsCache.Close()
 	})
 }
 
-func (p *MedianProvider) ContractTransmitter() types.ContractTransmitter {
+func (p *medianProvider) ContractTransmitter() types.ContractTransmitter {
 	return p.transmitter
 }
 
-func (p *MedianProvider) ReportCodec() median.ReportCodec {
+func (p *medianProvider) ReportCodec() median.ReportCodec {
 	return p.reportCodec
 }
 
-func (p *MedianProvider) MedianContract() median.MedianContract {
+func (p *medianProvider) MedianContract() median.MedianContract {
 	return p.transmissionsCache
 }
