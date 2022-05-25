@@ -86,6 +86,11 @@ func NewMedianProvider(chainReader Reader, lggr logger.Logger) (*medianProvider,
 func (p *medianProvider) Start(context.Context) error {
 	return p.StartOnce("MedianProvider", func() error {
 		p.lggr.Debugf("Median provider starting")
+		// starting both cache services here
+		// todo: find a better way
+		if err := p.configProvider.contractCache.Start(); err != nil {
+			return err
+		}
 		return p.transmissionsCache.Start()
 	})
 }
@@ -93,6 +98,11 @@ func (p *medianProvider) Start(context.Context) error {
 func (p *medianProvider) Close() error {
 	return p.StopOnce("MedianProvider", func() error {
 		p.lggr.Debugf("Median provider stopping")
+		// stopping both cache services here
+		// todo: find a better way
+		if err := p.configProvider.contractCache.Close(); err != nil {
+			return err
+		}
 		return p.transmissionsCache.Close()
 	})
 }
