@@ -41,8 +41,8 @@ func (c *TransmissionsCache) updateTransmission(ctx context.Context) error {
 	transmissionDetails := TransmissionDetails{}
 
 	c.tdLock.Lock()
+	defer c.tdLock.Unlock()
 	c.transmissionDetails = transmissionDetails
-	c.tdLock.Unlock()
 
 	return nil
 }
@@ -94,12 +94,12 @@ func (c *TransmissionsCache) LatestTransmissionDetails(
 	err error,
 ) {
 	c.tdLock.RLock()
+	defer c.tdLock.RUnlock()
 	configDigest = c.transmissionDetails.digest
 	epoch = c.transmissionDetails.epoch
 	round = c.transmissionDetails.round
 	latestAnswer = c.transmissionDetails.latestAnswer
 	latestTimestamp = c.transmissionDetails.latestTimestamp
-	c.tdLock.RUnlock()
 	return
 }
 

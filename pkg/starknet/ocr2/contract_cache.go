@@ -45,8 +45,8 @@ func (c *ContractCache) updateConfig(ctx context.Context) error {
 	newConfig := ContractConfig{}
 
 	c.ccLock.Lock()
+	defer c.ccLock.Unlock()
 	c.contractConfig = newConfig
-	c.ccLock.Unlock()
 
 	return nil
 }
@@ -93,16 +93,16 @@ func (c *ContractCache) Notify() <-chan struct{} {
 
 func (c *ContractCache) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
 	c.ccLock.RLock()
+	defer c.ccLock.RUnlock()
 	changedInBlock = c.contractConfig.configBlock
 	configDigest = c.contractConfig.config.ConfigDigest
-	c.ccLock.RUnlock()
 	return
 }
 
 func (c *ContractCache) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
 	c.ccLock.RLock()
+	defer c.ccLock.RUnlock()
 	config = c.contractConfig.config
-	c.ccLock.RUnlock()
 	return
 }
 
