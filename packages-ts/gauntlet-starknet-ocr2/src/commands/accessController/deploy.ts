@@ -2,16 +2,20 @@ import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-st
 import { CATEGORIES } from '../../lib/categories'
 import { accessControllerContractLoader } from '../../lib/contracts'
 
-type UserInput = {}
+type UserInput = {
+  owner: string
+}
 
 type ContractInput = [owner: string]
 
-const makeUserInput = async (flags, args): Promise<UserInput> => {
-  return {}
+const makeUserInput = async (flags, args, env): Promise<UserInput> => {
+  return {
+    owner: flags.owner || env.account,
+  }
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [process.env.PUBLIC_KEY]
+  return [input.owner]
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {

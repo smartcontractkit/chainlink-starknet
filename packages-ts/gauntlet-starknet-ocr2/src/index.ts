@@ -20,6 +20,8 @@ const registerExecuteCommand = <UI, CI>(
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
         pk: process.env.PRIVATE_KEY,
         account: process.env.ACCOUNT,
+        billingAccessController: process.env.BILLING_ACCESS_CONTROLLER,
+        link: process.env.LINK,
       }
     },
     makeProvider: makeProvider,

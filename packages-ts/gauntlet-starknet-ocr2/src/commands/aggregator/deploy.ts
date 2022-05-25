@@ -5,6 +5,7 @@ import { ocr2ContractLoader } from '../../lib/contracts'
 import { shortString } from 'starknet'
 
 type UserInput = {
+  owner: string
   billingAccessController: string
   linkToken: string
   decimals: number
@@ -23,22 +24,23 @@ type ContractInput = [
   description: string,
 ]
 
-const makeUserInput = async (flags, args): Promise<UserInput> => {
+const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
   return {
+    owner: flags.owner || env.account,
     maxAnswer: flags.maxSubmissionValue,
     minAnswer: flags.minSubmissionValue,
     decimals: flags.decimals,
     description: flags.name,
-    billingAccessController: process.env.BILLING_ACCESS_CONTROLLER || '',
-    linkToken: process.env.LINK || '',
+    billingAccessController: flags.billingAccessController || env.billingAccessController,
+    linkToken: flags.link || env.link,
   }
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [
-    process.env.PUBLIC_KEY,
-    process.env.LINK,
+    input.owner,
+    input.linkToken,
     new BN(input.minAnswer).toNumber(),
     new BN(input.maxAnswer).toNumber(),
     input.billingAccessController,
