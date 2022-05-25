@@ -2,7 +2,7 @@ import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-st
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'
-import { number } from 'starknet'
+import { shortString } from 'starknet'
 
 type UserInput = {
   billingAccessController: string
@@ -43,7 +43,7 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
     new BN(input.maxAnswer).toNumber(),
     input.billingAccessController,
     new BN(input.decimals).toNumber(),
-    input.description,
+    shortString.encodeShortString(input.description),
   ]
 }
 
