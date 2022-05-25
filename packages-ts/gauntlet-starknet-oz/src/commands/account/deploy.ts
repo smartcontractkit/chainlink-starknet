@@ -16,16 +16,16 @@ type UserInput = {
 
 type ContractInput = [publicKey: string]
 
-const makeUserInput = async (flags, args): Promise<UserInput> => {
+const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   // If public key is not provided, generate a new address
   const keypair = ec.genKeyPair()
   const generatedPK = '0x' + keypair.getPrivate('hex')
-  const pubkey = flags.publicKey || ec.getStarkKey(ec.getKeyPair(generatedPK))
+  const pubkey = flags.publicKey || env.account || ec.getStarkKey(ec.getKeyPair(generatedPK))
   return {
     publicKey: pubkey,
-    privateKey: !flags.publicKey && generatedPK,
+    privateKey: (!flags.publicKey || !env.account) && generatedPK,
   }
 }
 
