@@ -20,12 +20,6 @@ type TransmissionDetails struct {
 	latestTimestamp time.Time
 }
 
-type OCR2Spec struct {
-	// todo: add spec
-	ID      int32
-	ChainID string
-}
-
 type Reader interface {
 	// todo: add ocr2 specific chain read funcs
 }

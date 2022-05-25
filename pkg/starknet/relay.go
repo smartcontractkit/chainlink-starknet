@@ -11,9 +11,9 @@ import (
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 )
 
-var _ relaytypes.Relayer = (*Relayer)(nil)
+var _ relaytypes.Relayer = (*relayer)(nil)
 
-type Relayer struct {
+type relayer struct {
 	chainSet ChainSet
 	ctx      context.Context
 
@@ -22,9 +22,9 @@ type Relayer struct {
 	cancel func()
 }
 
-func NewRelayer(lggr logger.Logger, chainSet ChainSet) *Relayer {
+func NewRelayer(lggr logger.Logger, chainSet ChainSet) *relayer {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Relayer{
+	return &relayer{
 		chainSet: chainSet,
 		ctx:      ctx,
 		lggr:     lggr,
@@ -32,28 +32,33 @@ func NewRelayer(lggr logger.Logger, chainSet ChainSet) *Relayer {
 	}
 }
 
-func (r *Relayer) Start(context.Context) error {
+func (r *relayer) Start(context.Context) error {
 	if r.chainSet == nil {
 		return errors.New("chain unavailable")
 	}
 	return nil
 }
 
-func (r *Relayer) Close() error {
+func (r *relayer) Close() error {
 	r.cancel()
 	return nil
 }
 
-func (r *Relayer) Ready() error {
+func (r *relayer) Ready() error {
 	return r.chainSet.Ready()
 }
 
-func (r *Relayer) Healthy() error {
+func (r *relayer) Healthy() error {
 	return r.chainSet.Healthy()
 }
 
-func (r *Relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
-	configProvider, err := newConfigProvider(r.ctx, r.lggr, r.chainSet, args)
+func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
+	chainReader, err := r.newChainReader(args)
+	if err != nil {
+		return nil, err
+	}
+
+	configProvider, err := ocr2.NewConfigProvider(chainReader, r.lggr)
 	if err != nil {
 		return nil, err
 	}
@@ -61,15 +66,15 @@ func (r *Relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 	return configProvider, nil
 }
 
-func (r *Relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MedianProvider, error) {
-	configProvider, err := newConfigProvider(r.ctx, r.lggr, r.chainSet, rargs)
+func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MedianProvider, error) {
+	chainReader, err := r.newChainReader(rargs)
 	if err != nil {
 		return nil, err
 	}
 
 	// todo: use pargs for median provider
 
-	medianProvider, err := ocr2.NewMedianProvider(configProvider)
+	medianProvider, err := ocr2.NewMedianProvider(chainReader, r.lggr)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func (r *Relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	return medianProvider, nil
 }
 
-func newConfigProvider(ctx context.Context, lggr logger.Logger, chainSet ChainSet, args relaytypes.RelayArgs) (*ocr2.ConfigProvider, error) {
+func (r *relayer) newChainReader(args relaytypes.RelayArgs) (Reader, error) {
 	var relayConfig RelayConfig
 
 	err := json.Unmarshal(args.RelayConfig, &relayConfig)
@@ -85,7 +90,7 @@ func newConfigProvider(ctx context.Context, lggr logger.Logger, chainSet ChainSe
 		return nil, err
 	}
 
-	chain, err := chainSet.Chain(ctx, relayConfig.ChainID)
+	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +100,5 @@ func newConfigProvider(ctx context.Context, lggr logger.Logger, chainSet ChainSe
 		return nil, err
 	}
 
-	configProvider, err := ocr2.NewConfigProvider(chainReader, lggr)
-	if err != nil {
-		return nil, err
-	}
-
-	return configProvider, nil
+	return chainReader, nil
 }

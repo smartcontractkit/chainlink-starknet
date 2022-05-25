@@ -10,41 +10,41 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ types.ContractConfigTracker = (*ContractReader)(nil)
-var _ median.MedianContract = (*ContractReader)(nil)
+var _ types.ContractConfigTracker = (*contractReader)(nil)
+var _ median.MedianContract = (*contractReader)(nil)
 
-type ContractReader struct {
+type contractReader struct {
 	reader Reader
 	lggr   logger.Logger
 }
 
-func NewContractReader(chainReader Reader, lggr logger.Logger) *ContractReader {
-	return &ContractReader{
+func NewContractReader(chainReader Reader, lggr logger.Logger) *contractReader {
+	return &contractReader{
 		reader: chainReader,
 		lggr:   lggr,
 	}
 }
 
-func (c *ContractReader) Notify() <-chan struct{} {
+func (c *contractReader) Notify() <-chan struct{} {
 	return nil
 }
 
-func (c *ContractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
+func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
 	// todo: implement
 	return 0, types.ConfigDigest{}, nil
 }
 
-func (c *ContractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (types.ContractConfig, error) {
+func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (types.ContractConfig, error) {
 	// todo: implement
 	return types.ContractConfig{}, nil
 }
 
-func (c *ContractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
+func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
 	// todo: implement
 	return 0, nil
 }
 
-func (c *ContractReader) LatestTransmissionDetails(
+func (c *contractReader) LatestTransmissionDetails(
 	ctx context.Context,
 ) (
 	configDigest types.ConfigDigest,
@@ -58,7 +58,7 @@ func (c *ContractReader) LatestTransmissionDetails(
 	return types.ConfigDigest{}, 0, 0, nil, time.Now(), nil
 }
 
-func (c *ContractReader) LatestRoundRequested(
+func (c *contractReader) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,
 ) (

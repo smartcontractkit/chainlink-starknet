@@ -16,22 +16,22 @@ type Tracker interface {
 	poll()
 }
 
-var _ Tracker = (*ContractCache)(nil)
-var _ types.ContractConfigTracker = (*ContractCache)(nil)
+var _ Tracker = (*contractCache)(nil)
+var _ types.ContractConfigTracker = (*contractCache)(nil)
 
-type ContractCache struct {
+type contractCache struct {
 	contractConfig ContractConfig
 	ccLock         sync.RWMutex
 	ccTime         time.Time
 
 	stop, done chan struct{}
 
-	reader *ContractReader
+	reader *contractReader
 	lggr   logger.Logger
 }
 
-func NewContractCache(reader *ContractReader, lggr logger.Logger) *ContractCache {
-	return &ContractCache{
+func NewContractCache(reader *contractReader, lggr logger.Logger) *contractCache {
+	return &contractCache{
 		reader: reader,
 		lggr:   lggr,
 		stop:   make(chan struct{}),
@@ -39,7 +39,7 @@ func NewContractCache(reader *ContractReader, lggr logger.Logger) *ContractCache
 	}
 }
 
-func (c *ContractCache) updateConfig(ctx context.Context) error {
+func (c *contractCache) updateConfig(ctx context.Context) error {
 	// todo: update config with the reader
 	// todo: assert reading was successful, return error otherwise
 	newConfig := ContractConfig{}
@@ -51,7 +51,7 @@ func (c *ContractCache) updateConfig(ctx context.Context) error {
 	return nil
 }
 
-func (c *ContractCache) Start() error {
+func (c *contractCache) Start() error {
 	ctx, cancel := utils.ContextFromChan(c.stop)
 	defer cancel()
 	if err := c.updateConfig(ctx); err != nil {
@@ -61,12 +61,12 @@ func (c *ContractCache) Start() error {
 	return nil
 }
 
-func (c *ContractCache) Close() error {
+func (c *contractCache) Close() error {
 	close(c.stop)
 	return nil
 }
 
-func (c *ContractCache) poll() {
+func (c *contractCache) poll() {
 	defer close(c.done)
 	tick := time.After(0)
 	for {
@@ -87,11 +87,11 @@ func (c *ContractCache) poll() {
 	}
 }
 
-func (c *ContractCache) Notify() <-chan struct{} {
+func (c *contractCache) Notify() <-chan struct{} {
 	return nil
 }
 
-func (c *ContractCache) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
+func (c *contractCache) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
 	changedInBlock = c.contractConfig.configBlock
@@ -99,14 +99,14 @@ func (c *ContractCache) LatestConfigDetails(ctx context.Context) (changedInBlock
 	return
 }
 
-func (c *ContractCache) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
+func (c *contractCache) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
 	config = c.contractConfig.config
 	return
 }
 
-func (c *ContractCache) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
+func (c *contractCache) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
 	// todo: implement
 	return 0, nil
 }
