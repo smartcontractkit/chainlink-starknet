@@ -12,22 +12,22 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ Tracker = (*TransmissionsCache)(nil)
-var _ median.MedianContract = (*TransmissionsCache)(nil)
+var _ Tracker = (*transmissionsCache)(nil)
+var _ median.MedianContract = (*transmissionsCache)(nil)
 
-type TransmissionsCache struct {
+type transmissionsCache struct {
 	transmissionDetails TransmissionDetails
 	tdLock              sync.RWMutex
 	tdTime              time.Time
 
 	stop, done chan struct{}
 
-	reader *ContractReader
+	reader *contractReader
 	lggr   logger.Logger
 }
 
-func NewTransmissionsCache(reader *ContractReader, lggr logger.Logger) *TransmissionsCache {
-	return &TransmissionsCache{
+func NewTransmissionsCache(reader *contractReader, lggr logger.Logger) *transmissionsCache {
+	return &transmissionsCache{
 		reader: reader,
 		lggr:   lggr,
 		stop:   make(chan struct{}),
@@ -35,7 +35,7 @@ func NewTransmissionsCache(reader *ContractReader, lggr logger.Logger) *Transmis
 	}
 }
 
-func (c *TransmissionsCache) updateTransmission(ctx context.Context) error {
+func (c *transmissionsCache) updateTransmission(ctx context.Context) error {
 	// todo: update transmission details with the reader
 	// todo: assert reading was successful, return error otherwise
 	transmissionDetails := TransmissionDetails{}
@@ -47,7 +47,7 @@ func (c *TransmissionsCache) updateTransmission(ctx context.Context) error {
 	return nil
 }
 
-func (c *TransmissionsCache) Start() error {
+func (c *transmissionsCache) Start() error {
 	ctx, cancel := utils.ContextFromChan(c.stop)
 	defer cancel()
 	if err := c.updateTransmission(ctx); err != nil {
@@ -57,12 +57,12 @@ func (c *TransmissionsCache) Start() error {
 	return nil
 }
 
-func (c *TransmissionsCache) Close() error {
+func (c *transmissionsCache) Close() error {
 	close(c.stop)
 	return nil
 }
 
-func (c *TransmissionsCache) poll() {
+func (c *transmissionsCache) poll() {
 	defer close(c.done)
 	tick := time.After(0)
 	for {
@@ -83,7 +83,7 @@ func (c *TransmissionsCache) poll() {
 	}
 }
 
-func (c *TransmissionsCache) LatestTransmissionDetails(
+func (c *transmissionsCache) LatestTransmissionDetails(
 	ctx context.Context,
 ) (
 	configDigest types.ConfigDigest,
@@ -103,7 +103,7 @@ func (c *TransmissionsCache) LatestTransmissionDetails(
 	return
 }
 
-func (c *TransmissionsCache) LatestRoundRequested(
+func (c *transmissionsCache) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,
 ) (
