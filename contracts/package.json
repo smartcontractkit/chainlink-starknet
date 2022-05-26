@@ -1,5 +1,30 @@
 {
+  "name": "@chainlink/starknet-contracts-ocr2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat --network localhost test"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@shardlabs/starknet-hardhat-plugin": "^0.5.4",
+    "@types/chai": "^4.2.22",
+    "@types/elliptic": "^6.4.14",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.10",
+    "cairo-ls": "^0.0.4",
+    "chai": "^4.3.4",
+    "ethers": "^5.4.6",
+    "starknet": "3.9.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.2"
+  },
   "dependencies": {
-    "cairo-ls": "^0.0.4"
+    "@toruslabs/starkware-crypto": "^1.0.0",
+    "axios": "^0.24.0",
+    "hardhat": "2.9.3"
   }
 }
