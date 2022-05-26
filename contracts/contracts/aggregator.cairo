@@ -219,41 +219,41 @@ end
 # TODO: disable validation + flags in the initial release
 # TODO: document decision in repo/docs/contracts/ocr2
 
-@contract_interface
-namespace IValidator:
-    func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt) -> (valid: felt):
-    end
-end
+# @contract_interface
+# namespace IValidator:
+#     func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt) -> (valid: felt):
+#     end
+# end
 
-# TODO: can't set gas limit
-@storage_var
-func validator_() -> (validator: felt):
-end
+# # TODO: can't set gas limit
+# @storage_var
+# func validator_() -> (validator: felt):
+# end
 
-@view
-func validator_config{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}() -> (validator: felt):
-    let (validator) = validator_.read()
-    return (validator)
-end
+# @view
+# func validator_config{
+#     syscall_ptr : felt*,
+#     pedersen_ptr : HashBuiltin*,
+#     range_check_ptr,
+# }() -> (validator: felt):
+#     let (validator) = validator_.read()
+#     return (validator)
+# end
 
-@external
-func set_validator_config{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-}(validator: felt):
-    Ownable_only_owner()
-    # TODO: use openzeppelin's ERC165 to validate
-    validator_.write(validator)
-
-    # TODO: emit event
-
-    return ()
-end
+# @external
+# func set_validator_config{
+#     syscall_ptr : felt*,
+#     pedersen_ptr : HashBuiltin*,
+#     range_check_ptr,
+# }(validator: felt):
+#     Ownable_only_owner()
+#     # TODO: use openzeppelin's ERC165 to validate
+#     validator_.write(validator)
+#
+#     # TODO: emit event
+#
+#     return ()
+# end
 
 # --- Configuration
 
@@ -293,7 +293,7 @@ func set_config{
     offchain_config: felt*,
 ) -> (digest: felt):
     alloc_locals
-    # Ownable_only_owner() TODO: reenable
+    Ownable_only_owner()
 
     assert_nn_le(oracles_len, MAX_ORACLES) # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
@@ -509,8 +509,6 @@ end
 struct Signature:
     member r : felt
     member s : felt
-    # TODO: can further compress by using signer index instead of pubkey?
-    # TODO: observers[i] = n => signers[n] => public_key
     member public_key: felt
 end
 
@@ -520,9 +518,6 @@ struct ReportContext:
     member extra_hash : felt
 end
 
-# TODO we can base64 encode inputs, but we could also pre-split the inputs (so instead of a binary report,
-# it's already split into observers, len and observations). Encoding would shrink the input size since each observation
-# wouldn't have to be felt-sized.
 @external
 func transmit{
     syscall_ptr : felt*,
@@ -594,7 +589,6 @@ func transmit{
     # Validate median in min-max range
     let (answer_range : Range) = answer_range_.read()
     assert_in_range(median, answer_range.min, answer_range.max)
-    # TODO: needs to handle negative values correctly, add test
 
     let (local prev_round_id) = latest_aggregator_round_id_.read()
     # let (prev_round_id) = latest_aggregator_round_id_.read()
@@ -612,30 +606,29 @@ func transmit{
         transmission_timestamp=timestamp,
     ))
 
+    # NOTE: disabled 
     # validate via validator
-    let (validator) = validator_.read()
-
-    if validator != 0:
-        let (prev_transmission) = transmissions_.read(prev_round_id)
-        IValidator.validate(
-            contract_address=validator,
-            prev_round_id=prev_round_id,
-            prev_answer=prev_transmission.answer,
-            round_id=round_id,
-            answer=median
-        )
-
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    else:
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    end
-    tempvar syscall_ptr = syscall_ptr
-    tempvar range_check_ptr = range_check_ptr
-    tempvar pedersen_ptr = pedersen_ptr
+    # let (validator) = validator_.read()
+    # if validator != 0:
+    #     let (prev_transmission) = transmissions_.read(prev_round_id)
+    #     IValidator.validate(
+    #         contract_address=validator,
+    #         prev_round_id=prev_round_id,
+    #         prev_answer=prev_transmission.answer,
+    #         round_id=round_id,
+    #         answer=median
+    #     )
+    #     tempvar syscall_ptr = syscall_ptr
+    #     tempvar range_check_ptr = range_check_ptr
+    #     tempvar pedersen_ptr = pedersen_ptr
+    # else:
+    #     tempvar syscall_ptr = syscall_ptr
+    #     tempvar range_check_ptr = range_check_ptr
+    #     tempvar pedersen_ptr = pedersen_ptr
+    # end
+    # tempvar syscall_ptr = syscall_ptr
+    # tempvar range_check_ptr = range_check_ptr
+    # tempvar pedersen_ptr = pedersen_ptr
 
     let (reimbursement_juels) = calculate_reimbursement()
 
@@ -1035,7 +1028,8 @@ func withdraw_payment{
         assert caller = payee
     end
 
-    pay_oracle(transmitter)
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    pay_oracle(transmitter, latest_round_id)
     return ()
 end
 
@@ -1054,7 +1048,7 @@ func owed_payment{
     let (billing: Billing) = billing_.read()
 
     let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
+    let (from_round_id) = reward_from_aggregator_round_id_.read(oracle.index)
     let rounds = latest_round_id - from_round_id
 
     let amount = (rounds * billing.observation_payment_gjuels * GIGA) + oracle.payment_juels
@@ -1065,7 +1059,7 @@ func pay_oracle{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(transmitter: felt):
+}(transmitter: felt, latest_round_id: felt):
     alloc_locals
 
     let (oracle: Oracle) = transmitters_.read(transmitter)
@@ -1074,12 +1068,12 @@ func pay_oracle{
         return ()
     end
 
+    # TODO: reuse oracle passed into owed_payment
     let (amount_: felt) = owed_payment(transmitter)
     assert_nn(amount_)
 
     # if zero, fastpath return to avoid empty transfers
-    let (not_zero) = is_not_zero(amount_)
-    if not_zero == FALSE:
+    if amount_ == 0:
         return ()
     end
 
@@ -1088,12 +1082,15 @@ func pay_oracle{
 
     let (link_token) = link_token_.read()
 
-    # TODO: do something with the return value?
     IERC20.transfer(
         contract_address=link_token,
         recipient=payee,
         amount=amount,
     )
+
+    # Reset payment
+    reward_from_aggregator_round_id_.write(oracle.index, latest_round_id)
+    transmitters_.write(transmitter, Oracle(index=oracle.index, payment_juels=0))
 
     oracle_paid.emit(
         transmitter=transmitter,
@@ -1124,9 +1121,10 @@ func pay_oracles_{
         return ()
     end
     
-    # TODO: share link_token & last_round_id between pay_oracle calls
+    # TODO: share link_token between pay_oracle calls
     let (transmitter) = transmitters_list_.read(index)
-    pay_oracle(transmitter)
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    pay_oracle(transmitter, latest_round_id)
 
     return pay_oracles_(index - 1)
 end
@@ -1169,7 +1167,7 @@ func total_link_due_{
     let (oracle: Oracle) = transmitters_.read(transmitter)
     assert_not_zero(oracle.index) # 0 == undefined
 
-    let (from_round_id) = reward_from_aggregator_round_id_.read(transmitter)
+    let (from_round_id) = reward_from_aggregator_round_id_.read(oracle.index)
     let rounds = latest_round_id - from_round_id
 
     let total_rounds = total_rounds + rounds

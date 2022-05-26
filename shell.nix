@@ -2,10 +2,13 @@
 
 pkgs.mkShell {
   buildInputs = with pkgs; [
-    pkgs.python39
-    pkgs.python39Packages.venvShellHook
+    python39
+    python39Packages.venvShellHook
     gmp
-    nodejs
+    nodejs-16_x
+    (yarn.override { nodejs = nodejs-16_x; })
+    nodePackages.typescript
+    nodePackages.typescript-language-server
     nodePackages.npm
   ];
 
