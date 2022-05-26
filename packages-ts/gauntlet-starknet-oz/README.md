@@ -2,7 +2,7 @@
 
 ## Account
 
-Run the following command:
+### Deploy
 
 ```bash
 yarn gauntlet account:deploy --network=<NETWORK>
