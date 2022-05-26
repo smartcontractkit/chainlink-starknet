@@ -10,10 +10,13 @@
       "path": "./packages-ts/gauntlet-starknet-example"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-account"
+      "path": "./packages-ts/gauntlet-starknet-oz"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-oz-erc20"
+      "path": "./packages-ts/gauntlet-starknet-starkgate"
+    },
+    {
+      "path": "./packages-ts/gauntlet-starknet-argent"
     },
     {
       "path": "./packages-ts/gauntlet-starknet-ocr2"

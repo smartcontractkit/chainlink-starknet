@@ -1,6 +1,6 @@
-# Gauntlet Starknet Commands for the Account Contract
+# Gauntlet Starknet Commands for the Open Zeppelin Contracts
 
-## Setup an account
+## Account
 
 Run the following command:
 

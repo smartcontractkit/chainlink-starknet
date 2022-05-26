@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-oz-erc20",
+  "name": "@chainlink/gauntlet-starknet-argent",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet OpenZeppelin ERC20",
+  "description": "Gauntlet Starknet Argent contracts",
   "keywords": [
     "typescript",
     "cli"

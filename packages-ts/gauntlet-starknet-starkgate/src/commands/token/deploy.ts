@@ -15,19 +15,10 @@ type UserInput = {
   name: string
   symbol: string
   decimals: string
-  initialSupply: string
-  recipient?: string
-  owner?: string
+  minter?: string
 }
 
-type ContractInput = [
-  name: string,
-  symbol: string,
-  decimals: string,
-  initial_supply: string,
-  recipient: string,
-  owner: string,
-]
+type ContractInput = [name: string, symbol: string, decimals: string, minter: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -37,7 +28,6 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
       name: 'Chainlink LINK Token',
       symbol: 'LINK',
       decimals: '18',
-      initialSupply: '10000000',
     }
   }
 
@@ -45,9 +35,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
     name: flags.name,
     symbol: flags.symbol,
     decimals: flags.decimals,
-    initialSupply: flags.initialSupply,
-    recipient: flags.recipient,
-    owner: flags.owner,
+    minter: flags.minter,
   }
 }
 
@@ -57,14 +45,11 @@ const makeContractInput = async (input: UserInput, context: ExecutionContext): P
     shortString.encodeShortString(input.name),
     shortString.encodeShortString(input.symbol),
     input.decimals,
-    new BN(input.initialSupply).toString(),
-    input.recipient || defaultWallet,
-    input.owner || defaultWallet,
+    input.minter || defaultWallet,
   ]
 }
 
 const validate: Validation<UserInput> = async (input) => {
-  // todo: validate every fiels exists
   return true
 }
 
