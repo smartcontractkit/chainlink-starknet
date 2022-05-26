@@ -2,7 +2,7 @@
 
 ## Account
 
-Deploy the contract:
+### Deploy
 
 ```
 yarn gauntlet argent_account:deploy --network=<NETWORK>
@@ -10,7 +10,7 @@ yarn gauntlet argent_account:deploy --network=<NETWORK>
 
 Note the contract address. The contract is not configured yet. A signer needs to be specified in it:
 
-Initialize the contract:
+### Initialize
 
 ```bash
 yarn gauntlet argent_account:initialize --network=<NETWORK> <CONTRACT_ADDRESS>

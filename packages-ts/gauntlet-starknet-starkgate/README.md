@@ -2,7 +2,7 @@
 
 ## ERC20
 
-### Deploy the contract:
+### Deploy the contract
 
 ```bash
 yarn gauntlet starkgate_erc20:deploy --network=<NETWORK> --name=<NAME> --symbol=<SYMBOL> --decimals=<DECIMALS> "--minter=<MINTER_ADDRESS>"
