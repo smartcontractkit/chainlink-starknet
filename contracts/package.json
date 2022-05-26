@@ -1,5 +1,5 @@
 {
-  "name": "@chainlink/starknet-contracts",
+  "name": "@chainlink/starknet-contracts-ocr2",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,7 +7,7 @@
     "test": "npx hardhat --network localhost test"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@shardlabs/starknet-hardhat-plugin": "^0.5.4",
