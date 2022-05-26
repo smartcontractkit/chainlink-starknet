@@ -2,7 +2,7 @@ import fs from 'fs'
 import { CompiledContract, json } from 'starknet'
 
 export enum CONTRACT_LIST {
-  ACCOUNT = 'account',
+  ACCOUNT = 'oz_account',
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {

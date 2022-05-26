@@ -38,6 +38,7 @@ export interface ExecuteCommandConfig<UI, CI> {
     beforeExecute?: BeforeExecute<UI, CI>
     afterExecute?: AfterExecute<UI, CI>
   }
+  internalFunction?: string
   makeUserInput: (flags, args) => Promise<UI>
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
   validations: Validation<UI>[]
@@ -150,7 +151,10 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = await contract.populate(config.ux.function, this.input.contract as any)
+      const invocation = await contract.populate(
+        config.internalFunction || config.ux.function,
+        this.input.contract as any,
+      )
 
       return [invocation]
     }
@@ -158,6 +162,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     deployContract = async (): Promise<TransactionResponse> => {
       deps.logger.info(`Deploying contract ${config.ux.category}`)
       await deps.prompt('Continue?')
+      deps.logger.loading(`Sending transaction...`)
 
       const tx = await this.provider.deployContract(this.contract, this.input.contract, false)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
@@ -172,6 +177,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     executeWithSigner = async (): Promise<TransactionResponse> => {
       const messages = await this.makeMessage()
+      await deps.prompt(`Continue?`)
+      deps.logger.loading(`Signing and sending transaction...`)
       const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
@@ -185,7 +192,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     executeWithoutSigner = async (): Promise<TransactionResponse> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const tx = await contract[config.ux.function](...(this.input.contract as any))
+      await deps.prompt(`Continue?`)
+      deps.logger.loading(`Sending transaction...`)
+      const tx = await contract[config.internalFunction || config.ux.function](...(this.input.contract as any))
       const response = wrapResponse(this.provider, tx, this.contractAddress)
       deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
       await response.wait()

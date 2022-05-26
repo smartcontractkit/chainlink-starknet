@@ -1,7 +1,8 @@
 import OCR2Commands from '@chainlink/gauntlet-starknet-ocr2'
 import ExampleCommands from '@chainlink/gauntlet-starknet-example'
-import AccountCommands from '@chainlink/gauntlet-starknet-account'
-import ERC20Commands from '@chainlink/gauntlet-starknet-oz-erc20'
+import OZCommands from '@chainlink/gauntlet-starknet-oz'
+import StarkgateCommands from '@chainlink/gauntlet-starknet-starkgate'
+import ArgentCommands from '@chainlink/gauntlet-starknet-argent'
 
 import { executeCLI } from '@chainlink/gauntlet-core'
 import { existsSync } from 'fs'
@@ -9,7 +10,7 @@ import path from 'path'
 import { io } from '@chainlink/gauntlet-core/dist/utils'
 
 const commands = {
-  custom: [...OCR2Commands, ...ExampleCommands, ...AccountCommands, ...ERC20Commands],
+  custom: [...OCR2Commands, ...ExampleCommands, ...OZCommands, ...StarkgateCommands, ...ArgentCommands],
   loadDefaultFlags: () => ({}),
   abstract: {
     findPolymorphic: () => undefined,
