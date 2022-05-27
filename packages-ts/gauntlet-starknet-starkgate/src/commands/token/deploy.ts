@@ -49,10 +49,6 @@ const makeContractInput = async (input: UserInput, context: ExecutionContext): P
   ]
 }
 
-const validate: Validation<UserInput> = async (input) => {
-  return true
-}
-
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info(`About to deploy an ERC20 Token Contract with the following details:
     ${input.contract}
@@ -70,7 +66,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validate],
+  validations: [],
   loadContract: contractLoader,
   hooks: {
     beforeExecute,
