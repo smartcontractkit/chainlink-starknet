@@ -54,7 +54,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
     category: CATEGORIES.OCR2,
     function: 'deploy',
     examples: [
-      `${CATEGORIES.OCR2}:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --link=<TOKEN_CONTRACT> --minSubmissionValue=1 --maxSubmissionValue=2 --decimals=3 --name="some feed name"`,
+      `${CATEGORIES.OCR2}:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT>"`,
     ],
   },
   makeUserInput,
