@@ -8,11 +8,10 @@ Make sure you have your account details set up in your `.env` file
 # .env
 PRIVATE_KEY=0x...
 ACCOUNT=0x...
+LINK=0x...
 ```
 
-## Deploy a Token Contract
-
-[WIP]
+Note: The token contract should only be deployed once and the same contract should be used for very aggregator
 
 ## Deploy an Access Controller Contract
 
@@ -43,13 +42,3 @@ yarn gauntlet ocr2:set_billing --observationPaymentGjuels=1 --transmissionPaymen
 ```
 
 This Should set the billing details for this feed on contract address
-
-## Miscellaneous
-
-- To show available methods:
-
-```
-yarn gauntlet ocr2:help
-```
-
-It will show every method available in the contract, with their needed parameters and their types, if any
