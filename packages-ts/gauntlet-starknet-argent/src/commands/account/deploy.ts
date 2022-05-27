@@ -18,10 +18,6 @@ const makeContractInput = async (input: UserInput, context: ExecutionContext): P
   return []
 }
 
-const validate: Validation<UserInput> = async (input) => {
-  return true
-}
-
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info(`About to deploy an Argent Account Contract`)
 }
@@ -34,7 +30,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validate],
+  validations: [],
   loadContract: accountContractLoader,
   hooks: {
     beforeExecute,

@@ -24,10 +24,6 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.recipient, bnToUint256(input.amount)]
 }
 
-const validate: Validation<UserInput> = async (input) => {
-  return true
-}
-
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info(`About to mint an ERC20 Token Contract with the following details:
     ${input.contract}
@@ -46,7 +42,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   internalFunction: 'permissionedMint',
   makeUserInput,
   makeContractInput,
-  validations: [validate],
+  validations: [],
   loadContract: contractLoader,
   hooks: {
     beforeExecute,
