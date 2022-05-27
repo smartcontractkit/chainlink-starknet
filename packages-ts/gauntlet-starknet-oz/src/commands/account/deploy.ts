@@ -22,7 +22,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   // If public key is not provided, generate a new address
   const keypair = ec.genKeyPair()
   const generatedPK = '0x' + keypair.getPrivate('hex')
-  const pubkey = flags.publicKey || env.account || ec.getStarkKey(ec.getKeyPair(generatedPK))
+  const pubkey = flags.publicKey || env.publicKey || ec.getStarkKey(ec.getKeyPair(generatedPK))
   return {
     publicKey: pubkey,
     privateKey: (!flags.publicKey || !env.account) && generatedPK,

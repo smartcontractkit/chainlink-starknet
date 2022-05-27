@@ -53,7 +53,9 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     category: CATEGORIES.OCR2,
     function: 'deploy',
-    examples: [`${CATEGORIES.OCR2}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
+    examples: [
+      `${CATEGORIES.OCR2}:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --link=<TOKEN_CONTRACT> --minSubmissionValue=1 --maxSubmissionValue=2 --decimals=3 --name="some feed name"`,
+    ],
   },
   makeUserInput,
   makeContractInput,

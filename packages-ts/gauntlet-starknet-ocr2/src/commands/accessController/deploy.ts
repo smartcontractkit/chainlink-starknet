@@ -9,6 +9,7 @@ type UserInput = {
 type ContractInput = [owner: string]
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
+  if (flags.input) return flags.input as UserInput
   return {
     owner: flags.owner || env.account,
   }
@@ -22,7 +23,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     category: CATEGORIES.ACCESS_CONTROLLER,
     function: 'deploy',
-    examples: [`${CATEGORIES.ACCESS_CONTROLLER}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
+    examples: [`${CATEGORIES.ACCESS_CONTROLLER}:deploy --network=<NETWORK>`],
   },
   makeUserInput,
   makeContractInput,
