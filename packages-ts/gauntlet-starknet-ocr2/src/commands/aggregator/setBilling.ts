@@ -58,7 +58,9 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     category: CATEGORIES.OCR2,
     function: 'set_billing',
-    examples: [`${CATEGORIES.OCR2}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
+    examples: [
+      `${CATEGORIES.OCR2}:set_billing --network=<NETWORK> --observationPaymentGjuels=1 --transmissionPaymentGjuels=2 <CONTRACT_ADDRESS>`,
+    ],
   },
   makeUserInput,
   makeContractInput,

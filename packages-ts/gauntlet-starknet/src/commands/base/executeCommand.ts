@@ -1,7 +1,7 @@
 import { Result, WriteCommand } from '@chainlink/gauntlet-core'
 import { CompiledContract, Contract, Call } from 'starknet'
 import { CommandCtor } from '.'
-import { Dependencies } from '../../dependencies'
+import { Dependencies, Env } from '../../dependencies'
 import { IStarknetProvider, wrapResponse } from '../../provider'
 import { TransactionResponse } from '../../transaction'
 import { IStarknetWallet } from '../../wallet'
@@ -39,7 +39,7 @@ export interface ExecuteCommandConfig<UI, CI> {
     afterExecute?: AfterExecute<UI, CI>
   }
   internalFunction?: string
-  makeUserInput: (flags, args, env) => Promise<UI>
+  makeUserInput: (flags, args, env: Env) => Promise<UI>
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
   validations: Validation<UI>[]
   loadContract: () => CompiledContract
@@ -204,7 +204,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     execute = async () => {
       let tx: TransactionResponse
 
-      if (ExecuteCommand.category != 'account') {
+      if (config.ux.category != 'account') {
         const pubkey = await this.wallet.getPublicKey()
         deps.logger.info(`Using wallet: ${pubkey}`)
       }

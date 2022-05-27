@@ -1,3 +1,55 @@
 # Gauntlet Starknet Commands for Chainlink OCR2 Protocol
 
+## Set up
+
+Make sure you have your account details set up in your `.env` file
+
+```bash
+# .env
+PRIVATE_KEY=0x...
+ACCOUNT=0x...
+```
+
+## Deploy a Token Contract
+
 [WIP]
+
+## Deploy an Access Controller Contract
+
+Run the following command:
+
+```bash
+yarn gauntlet access_controller:deploy --network=<NETWORK>
+```
+
+This command will generate a new Access Controller address and will give the details during the deployment. You can then add this contract address in your `.env` files as `BILLING_ACCESS_CONTROLLER`, or pass it into the command directly (as shown below)
+
+## Deploy an OCR2 Contract
+
+Run the following command substituting in the contract address you received in the previous step:
+
+```bash
+yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=1 --maxSubmissionValue=2 --decimals=3 --name="some feed name" --link=<TOKEN_CONTRACT>
+```
+
+This command will generate a new OCR2 address and will give the details during the deployment
+
+## Set the Billing Details on OCR2 Contract
+
+Run the following command substituting in the contract address you received in the previous step:
+
+```
+yarn gauntlet ocr2:set_billing --observationPaymentGjuels=1 --transmissionPaymentGjuels=2 <CONTRACT_ADDRESS>
+```
+
+This Should set the billing details for this feed on contract address
+
+## Miscellaneous
+
+- To show available methods:
+
+```
+yarn gauntlet ocr2:help
+```
+
+It will show every method available in the contract, with their needed parameters and their types, if any
