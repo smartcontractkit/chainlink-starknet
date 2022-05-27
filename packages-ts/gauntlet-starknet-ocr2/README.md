@@ -28,7 +28,7 @@ This command will generate a new Access Controller address and will give the det
 Run the following command substituting in the contract address you received in the previous step:
 
 ```bash
-yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=1 --maxSubmissionValue=2 --decimals=3 --name="some feed name" --link=<TOKEN_CONTRACT>
+yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT>
 ```
 
 This command will generate a new OCR2 address and will give the details during the deployment
