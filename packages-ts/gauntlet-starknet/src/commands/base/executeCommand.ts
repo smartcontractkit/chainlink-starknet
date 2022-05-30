@@ -176,6 +176,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     }
 
     executeWithSigner = async (): Promise<TransactionResponse> => {
+      const pubkey = await this.wallet.getPublicKey()
+      deps.logger.info(`Using wallet: ${pubkey}`)
       const messages = await this.makeMessage()
       await deps.prompt(`Continue?`)
       deps.logger.loading(`Signing and sending transaction...`)
@@ -203,9 +205,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     execute = async () => {
       let tx: TransactionResponse
-
-      const pubkey = await this.wallet.getPublicKey()
-      deps.logger.info(`Using wallet: ${pubkey}`)
 
       await this.beforeExecute()
 

@@ -8,7 +8,7 @@ export const loadContract = (name: string): CompiledContract => {
 
 export const loadExampleContract = () => loadContract('example')
 
-const noop = () => {}
+export const noop = () => {}
 
 export const noopLogger: typeof logger = {
   table: noop,
