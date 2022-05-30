@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-cli",
+  "name": "@chainlink/gauntlet-starknet-oz",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet CLI",
+  "description": "Gauntlet Starknet Open Zeppelin Contracts",
   "keywords": [
     "typescript",
     "cli"
@@ -26,10 +26,7 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.0",
-    "@chainlink/gauntlet-starknet-oz": "*",
-    "@chainlink/gauntlet-starknet-argent": "*",
-    "@chainlink/gauntlet-starknet-example": "*",
-    "@chainlink/gauntlet-starknet-ocr2": "*",
-    "@chainlink/gauntlet-starknet-starkgate": "*"
+    "@chainlink/gauntlet-starknet": "*",
+    "starknet": "^3.11.0"
   }
 }
