@@ -60,6 +60,6 @@ jobs:
         with:
           node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
       - name: Install
-        run: yarn install --frozen-lockfile
+        run: nix develop -c yarn install --frozen-lockfile
       - name: Test
-        run: yarn test
+        run: nix develop -c yarn test
