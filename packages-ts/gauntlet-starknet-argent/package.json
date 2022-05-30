@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-account",
+  "name": "@chainlink/gauntlet-starknet-argent",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet Account",
+  "description": "Gauntlet Starknet Argent contracts",
   "keywords": [
     "typescript",
     "cli"
