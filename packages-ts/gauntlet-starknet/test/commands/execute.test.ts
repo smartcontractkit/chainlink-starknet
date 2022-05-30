@@ -127,7 +127,6 @@ describe('Execute with network', () => {
     TIMEOUT,
   )
 
-  // Exectition with no wallet succeeds
   it(
     'Command no wallet execution',
     async () => {
