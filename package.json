@@ -15,7 +15,7 @@
   "scripts": {
     "gauntlet": "yarn build && node ./packages-ts/gauntlet-starknet-cli/dist/index.js",
     "lint": "tsc -b ./tsconfig.json",
-    "test": "yarn build && SKIP_PROMPTS=true jest --runInBand ./packages",
+    "test": "yarn build && SKIP_PROMPTS=true jest --runInBand ./packages-ts",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
     "lint:format": "yarn prettier --check .",
