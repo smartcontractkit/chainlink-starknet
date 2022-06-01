@@ -433,6 +433,7 @@ func config_digest_from_data{
         let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
 
         let (hash) = hash_finalize(hash_state_ptr)
+        # TODO: need to clamp the first two bytes with the config digest prefix
         let pedersen_ptr = hash_ptr
         return (hash=hash)
     end

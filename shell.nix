@@ -10,6 +10,12 @@ pkgs.mkShell {
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
+
+    go_1_18
+    gopls
+    delve
+    golangci-lint
+    gotools
   ];
 
   venvDir = "./.venv";
