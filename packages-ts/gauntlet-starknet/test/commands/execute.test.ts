@@ -9,8 +9,8 @@ import {
   ExecuteCommandConfig,
   makeExecuteCommand,
 } from '../../src/index'
-import { loadExampleContract, noop, noopLogger, noopPrompt } from '../utils'
-import { IntegratedDevnet, startNetwork } from '../utils/network'
+import { loadExampleContract, noopLogger, noopPrompt } from '../utils'
+import { IntegratedDevnet, startNetwork } from '../../src/utils/network'
 
 const TIMEOUT = 20000
 const LOCAL_URL = 'http://127.0.0.1:5050/'
@@ -91,7 +91,7 @@ describe('Execute with network', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 4000)
+  }, 5000)
 
   it(
     'Command deploy execution',
