@@ -39,9 +39,9 @@ from openzeppelin.utils.constants import UINT8_MAX
 
 from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
 
-from contracts.interfaces.IAccessController import IAccessController
+from contracts.ocr2.interfaces.IAccessController import IAccessController
 
-from contracts.ownable import (
+from contracts.ocr2.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,

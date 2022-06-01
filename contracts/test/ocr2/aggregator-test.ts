@@ -7,7 +7,7 @@ import {
   StarknetContract,
   StarknetContractFactory,
 } from "hardhat/types/runtime";
-import { TIMEOUT } from "./constants";
+import { TIMEOUT } from "../constants";
 
 interface Oracle {
   signer: KeyPair,
@@ -41,8 +41,8 @@ describe("aggregator.cairo", function () {
 
   before(async function() {
     // assumes contract.cairo and events.cairo has been compiled
-    aggregatorContractFactory = await starknet.getContractFactory("aggregator");
-    tokenContractFactory = await starknet.getContractFactory("token");
+    aggregatorContractFactory = await starknet.getContractFactory("ocr2/aggregator");
+    tokenContractFactory = await starknet.getContractFactory("ocr2/token");
 
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
