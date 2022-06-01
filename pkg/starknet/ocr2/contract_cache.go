@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -20,9 +22,9 @@ var _ Tracker = (*contractCache)(nil)
 var _ types.ContractConfigTracker = (*contractCache)(nil)
 
 type contractCache struct {
-	contractConfig ContractConfig
-	ccLock         sync.RWMutex
-	ccTime         time.Time
+	contractConfig  ContractConfig
+	ccLock          sync.RWMutex
+	ccLastCheckedAt time.Time
 
 	stop, done chan struct{}
 
@@ -40,13 +42,36 @@ func NewContractCache(reader *contractReader, lggr logger.Logger) *contractCache
 }
 
 func (c *contractCache) updateConfig(ctx context.Context) error {
-	// todo: update config with the reader
-	// todo: assert reading was successful, return error otherwise
-	newConfig := ContractConfig{}
+	configBlock, configDigest, err := c.reader.LatestConfigDetails(ctx)
+	if err != nil {
+		return errors.Wrap(err, "fetch latest config details")
+	}
+
+	isSameConfig := c.contractConfig.configBlock == configBlock && c.contractConfig.config.ConfigDigest == configDigest
+	if isSameConfig {
+		now := time.Now()
+		c.ccLock.Lock()
+		defer c.ccLock.Unlock()
+
+		if c.ccLastCheckedAt.Before(now) {
+			c.ccLastCheckedAt = now
+		}
+
+		return nil
+	}
+
+	newConfig, err := c.reader.LatestConfig(ctx, configBlock)
+	if err != nil {
+		return errors.Wrap(err, "fetch latest config")
+	}
 
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
-	c.contractConfig = newConfig
+	c.contractConfig = ContractConfig{
+		config:      newConfig,
+		configBlock: configBlock,
+	}
+	c.ccLastCheckedAt = time.Now()
 
 	return nil
 }

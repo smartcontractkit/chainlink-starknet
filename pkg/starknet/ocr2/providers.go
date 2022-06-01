@@ -24,7 +24,8 @@ type configProvider struct {
 }
 
 func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*configProvider, error) {
-	reader := NewContractReader(chainReader, lggr)
+	// todo: add address from config
+	reader := NewContractReader("", chainReader, lggr)
 	cache := NewContractCache(reader, lggr)
 	digester := NewOffchainConfigDigester("chain_id", "contract_address") // TODO
 	transmitter := NewContractTransmitter(reader)
