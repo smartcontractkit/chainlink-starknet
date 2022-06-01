@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout this repository
+      - name: Checkout Repo
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+        with:
+          # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
+          fetch-depth: 0
+      # Set up Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node-version }}
+      # Install dependencies using yarn
+      - name: Install Dependencies
+        run: yarn
+      # Create PR that will update versions or trigger publish
+      - name: Create Release Pull Request
+        uses: changesets/action@master
+        id: changesets
+        with:
+          publish: yarn release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ONLY PROCEED IF PUBLISHED
+
+      # Build gauntlet binary
+      - name: Build Gauntlet
+        if: steps.changesets.outputs.published == 'true'
+        run: yarn bundle
+      # Store gauntlet-cli version
+      - name: Set Env Variables
+        if: steps.changesets.outputs.published == 'true'
+        run: echo "GAUNTLET_STARKNET_CLI=$(npm info @chainlink/gauntlet-starknet-cli version)" >> $GITHUB_ENV
+      # Upload gauntlet binary to gauntlet-cli release
+      - name: Upload Gauntlet Binary
+        if: steps.changesets.outputs.published == 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: bin/chainlink-starknet-*
+          file_glob: true
+          tag: |
+            @chainlink/gauntlet-starknet-cli@${{env.GAUNTLET_STARKNET_CLI}}
+          overwrite: false

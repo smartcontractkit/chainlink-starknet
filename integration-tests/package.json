@@ -1,0 +1,8 @@
+{
+    "name": "@chainlink/starknet-integration-tests",
+    "version": "0.0.1",
+    "author": "Kyle Martin <kylesmartin19@gmail.com>",
+    "license": "MIT",
+    "dependencies": {},
+    "devDependencies": {}
+}
