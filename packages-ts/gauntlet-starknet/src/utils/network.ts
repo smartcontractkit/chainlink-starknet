@@ -21,7 +21,7 @@ export abstract class IntegratedDevnet {
     this.childProcess = await this.spawnChildProcess()
 
     return new Promise((resolve, reject) => {
-      setTimeout(resolve, 3000)
+      setTimeout(resolve, 4000)
 
       this.childProcess.on('error', (error) => {
         reject(error)
