@@ -3,7 +3,6 @@ import { expect } from 'chai'
 import { StarknetContract, ArgentAccount } from "hardhat/types/runtime";
 import BN from 'bn.js';
 import { toBN } from 'starknet/utils/number';
-import { loadStarkgateContract } from "../utils"
 
 const NAME = starknet.shortStringToBigInt("LINK")
 const SYMBOL = starknet.shortStringToBigInt("LINKTOKEN")
@@ -23,8 +22,7 @@ describe('ContractTests', function () {
     before(async () => {
         accountMinter = (await starknet.deployAccount("Argent")) as ArgentAccount;
         console.log("accountMinter: ", accountMinter.starknetContract.address)
-        // const starkGateContractToTest = loadStarkgateContract('ERC20')
-        // console.log("starkgateContract", starkGateContractToTest.abi)
+
         let ERC20Factory = await starknet.getContractFactory("ERC20.cairo")
         ERC20Contract = await ERC20Factory.deploy({name: NAME, symbol: SYMBOL, decimals: DECIMALS, minter_address: accountMinter.starknetContract.address })
         console.log("ERC20Contract: ", ERC20Contract.address)
@@ -138,10 +136,8 @@ describe('ContractTests', function () {
                 await accountUser1.invoke(ERC20Contract, 'transfer', {recipient: accountUser2.starknetContract.address, amount: { low: 17n, high: 0n } })
             } catch (error) {
                 console.log("ERROR INSUFFICIENT BALANCE")
-            }
-            
+            } 
         }
-
     });
     it('Test transferFrom', async () => {
         await new Promise((resolve) => setTimeout(resolve,30000))
@@ -180,7 +176,6 @@ describe('ContractTests', function () {
             } catch (error) {
                 console.log("ERROR INSUFFICIENT BALANCE")
             }
-            
         }
 
     });
@@ -235,9 +230,7 @@ describe('ContractTests', function () {
                 await accountMinter.invoke(ERC20Contract, 'transferFrom', {sender: accountUser1.starknetContract.address, recipient: accountUser2.starknetContract.address, amount: { low: 4n, high: 0n } })
             } catch (error) {
                 console.log("ERROR INSUFFICIENT BALANCE")
-            }
-            
+            }  
         }
     });
-
 });
