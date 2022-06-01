@@ -47,6 +47,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/dontpanicdao/caigo v0.2.1-0.20220517132056-e34006317632 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/ethereum/go-ethereum v1.10.17 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
@@ -71,6 +72,7 @@ require (
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
