@@ -3,6 +3,7 @@ import ExampleCommands from '@chainlink/gauntlet-starknet-example'
 import OZCommands from '@chainlink/gauntlet-starknet-oz'
 import StarkgateCommands from '@chainlink/gauntlet-starknet-starkgate'
 import ArgentCommands from '@chainlink/gauntlet-starknet-argent'
+import MultisigCommands from '@chainlink/gauntlet-starknet-multisig'
 
 import { executeCLI } from '@chainlink/gauntlet-core'
 import { existsSync } from 'fs'
@@ -10,7 +11,14 @@ import path from 'path'
 import { io } from '@chainlink/gauntlet-core/dist/utils'
 
 const commands = {
-  custom: [...OCR2Commands, ...ExampleCommands, ...OZCommands, ...StarkgateCommands, ...ArgentCommands],
+  custom: [
+    ...OCR2Commands,
+    ...ExampleCommands,
+    ...OZCommands,
+    ...StarkgateCommands,
+    ...ArgentCommands,
+    ...MultisigCommands,
+  ],
   loadDefaultFlags: () => ({}),
   abstract: {
     findPolymorphic: () => undefined,
