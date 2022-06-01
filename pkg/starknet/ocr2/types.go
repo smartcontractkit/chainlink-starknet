@@ -1,11 +1,17 @@
 package ocr2
 
 import (
+	"context"
 	"math/big"
 	"time"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
+
+type ContractConfigDetails struct {
+	Block  uint64
+	Digest types.ConfigDigest
+}
 
 type ContractConfig struct {
 	config      types.ContractConfig
@@ -21,7 +27,7 @@ type TransmissionDetails struct {
 }
 
 type Reader interface {
-	// todo: add ocr2 specific chain read funcs
+	OCR2ReadLatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
 }
 
 type Config interface {
