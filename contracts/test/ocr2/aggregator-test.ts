@@ -1,10 +1,9 @@
 import { assert, expect } from 'chai'
-import BN from 'bn.js'
 import { starknet } from 'hardhat'
 import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
-import { TIMEOUT } from '../constants'
+import { TIMEOUT } from './constants'
 
 interface Oracle {
   signer: KeyPair
@@ -15,42 +14,6 @@ interface Oracle {
 function toFelt(int: number | BigNumberish): BigNumberish {
   let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
   return number.toBN(int).umod(prime)
-}
-
-const CHUNK_SIZE = 31
-
-function encodeBytes(data: Uint8Array): BN[] {
-  let felts = []
-
-  // prefix with len
-  let len = data.byteLength
-  felts.push(number.toBN(len))
-
-  // chunk every 31 bytes
-  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-    const chunk = data.slice(i, i + CHUNK_SIZE)
-    // cast to int
-    felts.push(new BN(chunk, 'be'))
-  }
-  return felts
-}
-
-function decodeBytes(felts: BN[]): Uint8Array {
-  let data = []
-
-  // TODO: validate len > 1
-
-  // TODO: validate it fits into 54 bits
-  let length = felts.shift()?.toNumber()!
-
-  for (const felt of felts) {
-    let chunk = felt.toArray('be', Math.min(CHUNK_SIZE, length))
-    data.push(...chunk)
-
-    length -= chunk.length
-  }
-
-  return new Uint8Array(data)
 }
 
 describe('aggregator.cairo', function () {
@@ -74,8 +37,8 @@ describe('aggregator.cairo', function () {
 
   before(async function () {
     // assumes contract.cairo and events.cairo has been compiled
-    aggregatorContractFactory = await starknet.getContractFactory('ocr2/aggregator')
-    tokenContractFactory = await starknet.getContractFactory('ocr2/token')
+    aggregatorContractFactory = await starknet.getContractFactory('aggregator')
+    tokenContractFactory = await starknet.getContractFactory('token')
 
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
@@ -101,8 +64,6 @@ describe('aggregator.cairo', function () {
       description: starknet.shortStringToBigInt('FOO/BAR'),
     })
 
-    console.log(`contract_address: ${aggregator.address}`)
-
     let futures = []
     let generateOracle = async () => {
       let transmitter = await starknet.deployAccount('OpenZeppelin')
@@ -119,11 +80,9 @@ describe('aggregator.cairo', function () {
 
     let onchain_config = 1
     let offchain_config_version = 2 // TODO: assert == 2 in contract
-    let offchain_config = new Uint8Array([1])
+    let offchain_config = [1]
 
-    console.log(encodeBytes(offchain_config))
-
-    let config = {
+    await owner.invoke(aggregator, 'set_config', {
       oracles: oracles.map((oracle) => {
         return {
           signer: number.toBN(ec.getStarkKey(oracle.signer)),
@@ -133,17 +92,11 @@ describe('aggregator.cairo', function () {
       f,
       onchain_config,
       offchain_config_version,
-      offchain_config: encodeBytes(offchain_config),
-    }
-
-    console.log(config)
-
-    await owner.invoke(aggregator, 'set_config', config)
+      offchain_config,
+    })
 
     let result = await aggregator.call('latest_config_details')
     config_digest = result.config_digest
-
-    console.log(`config_digest: ${config_digest.toString(16)}`)
   })
 
   let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
