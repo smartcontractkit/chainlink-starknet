@@ -1,3 +1,6 @@
 // import AccessController from './accessController'
 
-export default []
+import AccessController from './accessController'
+import Aggregator from './ocr2'
+
+export default [...AccessController, ...Aggregator]
