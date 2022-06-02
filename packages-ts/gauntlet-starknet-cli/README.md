@@ -21,3 +21,19 @@ NODE_URL=http://127.0.0.1:5000
 ```bash
 NODE_URL=https://alpha4.starknet.io
 ```
+
+## Miscellaneous
+
+- To show available methods for all contracts:
+
+```
+yarn gauntlet -h
+```
+
+-To show available methods for a single contract:
+
+```
+yarn gauntlet ocr2:deploy -h
+```
+
+It will show details for the specificed function with their needed parameters and their types, if any

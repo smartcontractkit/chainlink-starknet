@@ -1,7 +1,7 @@
 import { Result, WriteCommand } from '@chainlink/gauntlet-core'
 import { CompiledContract, Contract, Call } from 'starknet'
 import { CommandCtor } from '.'
-import { Dependencies } from '../../dependencies'
+import { Dependencies, Env } from '../../dependencies'
 import { IStarknetProvider, wrapResponse } from '../../provider'
 import { TransactionResponse } from '../../transaction'
 import { IStarknetWallet } from '../../wallet'
@@ -39,7 +39,7 @@ export interface ExecuteCommandConfig<UI, CI> {
     afterExecute?: AfterExecute<UI, CI>
   }
   internalFunction?: string
-  makeUserInput: (flags, args) => Promise<UI>
+  makeUserInput: (flags, args, env: Env) => Promise<UI>
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
   validations: Validation<UI>[]
   loadContract: () => CompiledContract
@@ -98,7 +98,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         flags: flags,
       }
 
-      c.input = await c.buildCommandInput(flags, args)
+      c.input = await c.buildCommandInput(flags, args, env)
       c.contract = config.loadContract()
 
       c.beforeExecute = config.hooks?.beforeExecute
@@ -130,8 +130,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       deps.logger.info(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
     }
 
-    buildCommandInput = async (flags, args): Promise<Input<UI, CI>> => {
-      const userInput = await config.makeUserInput(flags, args)
+    buildCommandInput = async (flags, args, env): Promise<Input<UI, CI>> => {
+      const userInput = await config.makeUserInput(flags, args, env)
 
       // Validation
       if (config.validations.length > 0) {

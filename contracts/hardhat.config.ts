@@ -1,6 +1,6 @@
-import { HardhatUserConfig } from "hardhat/types";
-import "@shardlabs/starknet-hardhat-plugin";
-import "@nomiclabs/hardhat-ethers";
+import { HardhatUserConfig } from 'hardhat/types'
+import '@shardlabs/starknet-hardhat-plugin'
+import '@nomiclabs/hardhat-ethers'
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -13,27 +13,27 @@ const config: HardhatUserConfig = {
     // venv: "../.venv",
 
     // uses the currently active Python environment (hopefully with available Starknet commands!)
-    venv: "active",
+    venv: 'active',
     // network: "alpha",
-    network: "integrated-devnet",
+    network: 'integrated-devnet',
     wallets: {
       OpenZeppelin: {
-        accountName: "OpenZeppelin",
-        modulePath: "starkware.starknet.wallets.open_zeppelin.OpenZeppelinAccount",
-        accountPath: "~/.starknet_accounts"
-      }
-    }
+        accountName: 'OpenZeppelin',
+        modulePath: 'starkware.starknet.wallets.open_zeppelin.OpenZeppelinAccount',
+        accountPath: '~/.starknet_accounts',
+      },
+    },
   },
   networks: {
     devnet: {
-      url: "http://127.0.0.1:5050"
+      url: 'http://127.0.0.1:5050',
     },
     integratedDevnet: {
-      url: "http://127.0.0.1:5050",
-      venv: "active",
+      url: 'http://127.0.0.1:5050',
+      venv: 'active',
       // dockerizedVersion: "0.2.0"
-    }
+    },
   },
-};
+}
 
-export default config;
+export default config
