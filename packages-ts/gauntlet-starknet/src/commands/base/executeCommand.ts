@@ -204,10 +204,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     execute = async () => {
       let tx: TransactionResponse
 
-      if (config.ux.category != 'account') {
-        const pubkey = await this.wallet.getPublicKey()
-        deps.logger.info(`Using wallet: ${pubkey}`)
-      }
+      const pubkey = await this.wallet.getPublicKey()
+      deps.logger.info(`Using wallet: ${pubkey}`)
 
       await this.beforeExecute()
 

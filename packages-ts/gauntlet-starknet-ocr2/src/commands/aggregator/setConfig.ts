@@ -28,17 +28,42 @@ type UserInput = {
 }
 
 type ContractInput = [
-  {
-    oracles: Oracle[]
-    f: number
-    onchain_config: string
-    offchain_config_version: number
-    offchain_config: string
-  },
+  // oracles_len: any,
+  oracles: Oracle[],
+  f: number,
+  onchain_config: string,
+  offchain_config_version: number,
+  offchain_config: string,
 ]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
+
+  if (flags.default) {
+    let f = 1
+    let onchain_config = 1
+    let offchain_config_version = 2
+    let offchain_config = [1]
+
+    return {
+      f: f,
+      signers: [
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+      ],
+      transmitters: [
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+      ],
+      onchainConfig: onchain_config,
+      offchainConfig: offchain_config,
+      offchainConfigVersion: offchain_config_version,
+    }
+  }
 
   return {
     f: flags.f,
@@ -52,18 +77,11 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   const oracles: Oracle[] = input.signers.map((o, i) => ({
-    signer: number.toBN(ec.getStarkKey(o)),
+    // signer: number.toBN(ec.getStarkKey(o)),
+    signer: input.signers[i],
     transmitter: input.transmitters[i],
   }))
-  return [
-    {
-      oracles: oracles,
-      f: new BN(input.f).toNumber(),
-      onchain_config: input.onchainConfig.toString('base64'),
-      offchain_config_version: 2,
-      offchain_config: input.offchainConfig.toString('base64'),
-    },
-  ]
+  return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, input.offchainConfig]
 }
 
 const validateInput = async (input: UserInput): Promise<boolean> => {
