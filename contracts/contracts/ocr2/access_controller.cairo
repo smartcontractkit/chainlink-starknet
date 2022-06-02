@@ -7,7 +7,7 @@ from starkware.cairo.common.bool import TRUE, FALSE
 func access_list_(address: felt) -> (bool: felt):
 end
 
-from contracts.ownable import (
+from contracts.ocr2.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
