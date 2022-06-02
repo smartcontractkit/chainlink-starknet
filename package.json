@@ -6,7 +6,8 @@
   "workspaces": [
     "packages-ts/*",
     "contracts",
-    "integration-tests"
+    "integration-tests",
+    "pkg/starknet"
   ],
   "keywords": [
     "typescript",
