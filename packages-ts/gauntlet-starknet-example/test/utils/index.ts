@@ -34,7 +34,7 @@ export const noopLogger: typeof logger = {
 
 export const noopPrompt: typeof prompt = async () => {}
 
-export const TIMEOUT = 50000
+export const TIMEOUT = 20000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 export const registerExecuteCommand = <UI, CI>(
