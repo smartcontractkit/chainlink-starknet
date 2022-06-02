@@ -77,7 +77,6 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   const oracles: Oracle[] = input.signers.map((o, i) => ({
-    // signer: number.toBN(ec.getStarkKey(o)),
     signer: input.signers[i],
     transmitter: input.transmitters[i],
   }))
