@@ -11,7 +11,7 @@ ACCOUNT=0x...
 LINK=0x...
 ```
 
-Note: The token contract should only be deployed once and the same contract should be used for very aggregator
+Note: The [token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/gauntlet-starknet-starkgate) should only be deployed once and the same contract should be used for very aggregator
 
 ## Deploy an Access Controller Contract
 
@@ -42,3 +42,13 @@ yarn gauntlet ocr2:set_billing --observationPaymentGjuels=<AMOUNT> --transmissio
 ```
 
 This Should set the billing details for this feed on contract address
+
+## Set the Config Details on OCR2 Contract
+
+Run the following command substituting in the contract address you received in the previous step:
+
+```
+yarn gauntlet ocr2:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS> --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <CONTRACT_ADDRESS>
+```
+
+This Should set the config for this feed on contract address

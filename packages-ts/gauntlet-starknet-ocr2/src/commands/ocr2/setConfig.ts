@@ -40,28 +40,29 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   if (flags.default) {
+    // TODO: Remove this at some point and replace with some
     let f = 1
-    let onchain_config = 1
-    let offchain_config_version = 2
-    let offchain_config = [1]
+    let onchainConfig = 1
+    let offchainConfigVersion = 2
+    let offchainConfig = [1]
 
     return {
       f: f,
       signers: [
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733',
       ],
       transmitters: [
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a860373f',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733',
       ],
-      onchainConfig: onchain_config,
-      offchainConfig: offchain_config,
-      offchainConfigVersion: offchain_config_version,
+      onchainConfig: onchainConfig,
+      offchainConfig: offchainConfig,
+      offchainConfigVersion: offchainConfigVersion,
     }
   }
 
@@ -98,7 +99,9 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     category: CATEGORIES.OCR2,
     function: 'set_config',
-    examples: [`${CATEGORIES.OCR2}:set_config --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
+    examples: [
+      `${CATEGORIES.OCR2}:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <CONTRACT_ADDRESS>`,
+    ],
   },
   makeUserInput,
   makeContractInput,
