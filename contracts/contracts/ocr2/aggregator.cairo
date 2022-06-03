@@ -282,6 +282,7 @@ end
 func set_config{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
+    bitwise_ptr : BitwiseBuiltin*,
     range_check_ptr
 }(
     oracles_len: felt,
@@ -404,8 +405,13 @@ func add_oracles{
     return add_oracles(oracles + OracleConfig.SIZE, index, len - 1, latest_round_id)
 end
 
+
+const DIGEST_MASK = 2 ** (252 - 12) - 1
+const PREFIX = 4 * 2 ** (252 - 12)
+
 func config_digest_from_data{
     pedersen_ptr : HashBuiltin*,
+    bitwise_ptr : BitwiseBuiltin*,
 }(
     chain_id: felt,
     contract_address: felt,
@@ -433,7 +439,11 @@ func config_digest_from_data{
         let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
 
         let (hash) = hash_finalize(hash_state_ptr)
-        # TODO: need to clamp the first two bytes with the config digest prefix
+
+        # clamp the first two bytes with the config digest prefix
+        let (masked) = bitwise_and(hash, DIGEST_MASK)
+        let hash = masked + PREFIX
+
         let pedersen_ptr = hash_ptr
         return (hash=hash)
     end
