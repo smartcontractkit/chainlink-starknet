@@ -6,7 +6,7 @@ import {
   Validation,
 } from '@chainlink/gauntlet-starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader } from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {}
 
@@ -23,9 +23,11 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.ACCOUNT,
+  category: CATEGORIES.ACCOUNT,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.ACCOUNT,
-    function: 'deploy',
+    description: 'Deploys an Argent Labs Account contract',
     examples: [`${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK>`],
   },
   makeUserInput,

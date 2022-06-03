@@ -7,7 +7,7 @@ import {
 } from '@chainlink/gauntlet-starknet'
 import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader } from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
@@ -55,9 +55,11 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.ACCOUNT,
+  category: CATEGORIES.ACCOUNT,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.ACCOUNT,
-    function: 'deploy',
+    description: 'Deploys an OpenZeppelin Account contract',
     examples: [`${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
   },
   makeUserInput,
