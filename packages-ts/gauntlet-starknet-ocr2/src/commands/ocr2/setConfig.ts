@@ -1,30 +1,11 @@
-import {
-  ExecuteCommandConfig,
-  makeExecuteCommand,
-  Validation,
-  BeforeExecute,
-  AfterExecute,
-} from '@chainlink/gauntlet-starknet'
+import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'
-import { ec, number } from 'starknet'
-
-type OnchainConfig = any // TODO: Define more clearly
-type OffchainConfig = any // TODO: Define more clearly
+import { SetConfig, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
 
 type Oracle = {
   signer: string
   transmitter: string
-}
-
-type UserInput = {
-  f: number
-  signers: string[]
-  transmitters: string[]
-  onchainConfig: OnchainConfig
-  offchainConfig: OffchainConfig
-  offchainConfigVersion: number
 }
 
 type ContractInput = [
@@ -36,8 +17,8 @@ type ContractInput = [
   offchain_config: string,
 ]
 
-const makeUserInput = async (flags, args): Promise<UserInput> => {
-  if (flags.input) return flags.input as UserInput
+const makeUserInput = async (flags, args): Promise<SetConfigInput> => {
+  if (flags.input) return flags.input as SetConfigInput
 
   if (flags.default) {
     // TODO: Remove this at some point and replace with some
@@ -76,7 +57,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   }
 }
 
-const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
+const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {
   const oracles: Oracle[] = input.signers.map((o, i) => ({
     signer: input.signers[i],
     transmitter: input.transmitters[i],
@@ -84,28 +65,10 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, input.offchainConfig]
 }
 
-const validateInput = async (input: UserInput): Promise<boolean> => {
-  if (3 * input.f >= input.signers.length)
-    throw new Error(`Signers length needs to be higher than 3 * f (${3 * input.f}). Currently ${input.signers.length}`)
-
-  if (input.signers.length !== input.transmitters.length)
-    throw new Error(`Signers and Trasmitters length are different`)
-
-  // TODO: Add validations for offchain config
-  return true
-}
-
-const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  ux: {
-    category: CATEGORIES.OCR2,
-    function: 'set_config',
-    examples: [
-      `${CATEGORIES.OCR2}:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <CONTRACT_ADDRESS>`,
-    ],
-  },
-  makeUserInput,
-  makeContractInput,
-  validations: [validateInput],
+const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
+  ...SetConfig,
+  makeUserInput: makeUserInput,
+  makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
 }
 

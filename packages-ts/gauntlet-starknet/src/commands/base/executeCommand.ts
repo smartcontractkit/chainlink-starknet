@@ -6,6 +6,7 @@ import { IStarknetProvider, wrapResponse } from '../../provider'
 import { TransactionResponse } from '../../transaction'
 import { IStarknetWallet } from '../../wallet'
 import { makeCommandId, Validation, Input } from './command'
+import { BaseConfig } from '@chainlink/gauntlet-core'
 
 export interface ExecutionContext {
   id: string
@@ -28,21 +29,13 @@ export type AfterExecute<UI, CI> = (
   deps: Pick<Dependencies, 'logger' | 'prompt'>,
 ) => (result: Result<TransactionResponse>) => Promise<any>
 
-export interface ExecuteCommandConfig<UI, CI> {
-  ux: {
-    category: string
-    function: string
-    suffixes?: string[]
-    examples: string[]
-  }
+export interface ExecuteCommandConfig<UI, CI> extends BaseConfig<UI> {
   hooks?: {
     beforeExecute?: BeforeExecute<UI, CI>
     afterExecute?: AfterExecute<UI, CI>
   }
   internalFunction?: string
-  makeUserInput: (flags, args, env: Env) => Promise<UI>
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
-  validations: Validation<UI, ExecutionContext>[]
   loadContract: () => CompiledContract
 }
 
@@ -80,8 +73,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     beforeExecute: () => Promise<void>
     afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 
-    static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
-    static category = config.ux.category
+    static id = makeCommandId(config.category, config.action, config.suffixes)
+    static category = config.category
     static examples = config.ux.examples
 
     static create = async (flags, args) => {
@@ -98,7 +91,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.executionContext = {
         provider: c.provider,
         wallet: c.wallet,
-        id: makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes),
+        id: makeCommandId(config.category, config.action, config.suffixes),
         contractAddress: c.contractAddress,
         flags: flags,
         contract: new Contract(c.contract.abi, c.contractAddress, c.provider.provider),
@@ -156,16 +149,13 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = await contract.populate(
-        config.internalFunction || config.ux.function,
-        this.input.contract as any,
-      )
+      const invocation = await contract.populate(config.internalFunction || config.action, this.input.contract as any)
 
       return [invocation]
     }
 
     deployContract = async (): Promise<TransactionResponse> => {
-      deps.logger.info(`Deploying contract ${config.ux.category}`)
+      deps.logger.info(`Deploying contract ${config.category}`)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
@@ -201,7 +191,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
       await deps.prompt(`Continue?`)
       deps.logger.loading(`Sending transaction...`)
-      const tx = await contract[config.internalFunction || config.ux.function](...(this.input.contract as any))
+      const tx = await contract[config.internalFunction || config.action](...(this.input.contract as any))
       const response = wrapResponse(this.provider, tx, this.contractAddress)
       deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
       await response.wait()
@@ -213,7 +203,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       await this.beforeExecute()
 
-      if (config.ux.function === 'deploy') {
+      if (config.action === 'deploy') {
         tx = await this.deployContract()
       } else {
         if (this.flags.noWallet) {
