@@ -45,11 +45,21 @@ jobs:
       - uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
       - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
         id: tool-versions
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v14
+        with:
+          install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
+          install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup Node ${{ steps.tool-versions.outputs.nodejs_version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
       - name: Install
-        run: yarn install --frozen-lockfile
-      - name: test:ci
-        run: yarn test:ci
+        run: nix develop -c yarn install --frozen-lockfile
+      - name: Test
+        run: nix develop -c yarn test
