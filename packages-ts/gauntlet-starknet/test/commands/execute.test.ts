@@ -1,4 +1,5 @@
-import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
+import { BN } from '@chainlink/gauntlet-core/dist/utils'
+import { Contract } from 'starknet'
 import {
   Dependencies,
   CommandCtor,
@@ -9,18 +10,22 @@ import {
   makeExecuteCommand,
 } from '../../src/index'
 import { loadExampleContract, noopLogger, noopPrompt } from '../utils'
+import { IntegratedDevnet, startNetwork } from '../../src/utils/network'
+
+const TIMEOUT = 20000
+const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
 ) => {
   const deps: Dependencies = {
-    logger: logger,
-    prompt: prompt,
+    logger: noopLogger,
+    prompt: noopPrompt,
     makeEnv: (flags) => {
       return {
-        providerUrl: 'http://127.0.0.1:5000',
-        pk: '',
-        account: '',
+        providerUrl: LOCAL_URL,
+        pk: flags.pk,
+        account: flags.account,
       }
     },
     makeProvider: makeProvider,
@@ -78,19 +83,88 @@ describe('Execute Command', () => {
     expect(commandInstance.input.user).toEqual({ a: 'a', b: 20 })
     expect(commandInstance.input.contract).toEqual(['a', 20])
   })
+})
 
-  // Deployment succeeds
-  it('Command deploy execution', async () => {
-    const commandInstance = await command.create({ a: 'a', b: '20' }, [])
-  })
+describe('Execute with network', () => {
+  let network: IntegratedDevnet
+  let contractAddress: string
 
-  // Exectition with no wallet succeeds
-  it('Command no wallet execution', async () => {
-    const commandInstance = await command.create({ a: 'a', b: '20' }, [])
-  })
+  beforeAll(async () => {
+    network = await startNetwork()
+  }, 5000)
 
-  // Execution with account wallet succeeds
-  it('Command account execution', async () => {
-    const commandInstance = await command.create({ a: 'a', b: '20' }, [])
+  it(
+    'Command deploy execution',
+    async () => {
+      const makeUserInput = async (flags, args) => {
+        return
+      }
+
+      const makeContractInput = async (userInput) => {
+        return {}
+      }
+
+      const deployCommandConfig: ExecuteCommandConfig<any, any> = {
+        ux: {
+          category: 'example',
+          function: 'deploy',
+          examples: [],
+        },
+        makeUserInput,
+        makeContractInput,
+        validations: [],
+        loadContract: loadExampleContract,
+      }
+
+      const command = registerExecuteCommand(makeExecuteCommand(deployCommandConfig))
+
+      const commandInstance = await command.create({}, [])
+      const report = await commandInstance.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      contractAddress = report.responses[0].contract
+    },
+    TIMEOUT,
+  )
+
+  it(
+    'Command no wallet execution',
+    async () => {
+      const makeUserInput = async (flags, args) => {
+        return
+      }
+
+      const makeContractInput = async (userInput) => {
+        return [100]
+      }
+
+      const increaseCommandConfig: ExecuteCommandConfig<any, any> = {
+        ux: {
+          category: 'example',
+          function: 'increase_balance',
+          examples: [],
+        },
+        makeUserInput,
+        makeContractInput,
+        validations: [],
+        loadContract: loadExampleContract,
+      }
+
+      const command = registerExecuteCommand(makeExecuteCommand(increaseCommandConfig))
+
+      const commandInstance = await command.create({ noWallet: true }, [contractAddress])
+      const report = await commandInstance.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      const contract = new Contract(loadExampleContract().abi, contractAddress, makeProvider(LOCAL_URL).provider)
+      const balance = await contract.get_balance()
+
+      expect(new BN(balance.res).toString()).toEqual('100')
+    },
+    TIMEOUT,
+  )
+
+  afterAll(() => {
+    network.stop()
   })
 })

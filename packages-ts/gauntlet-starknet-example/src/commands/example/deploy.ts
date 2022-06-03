@@ -8,26 +8,15 @@ import {
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContractLoader } from '../../lib/contracts'
 
-type UserInput = {
-  address: string
-}
+type UserInput = {}
 
 type ContractInput = {}
 
-const makeUserInput = async (flags, args, env): Promise<UserInput> => {
-  if (flags.input) return flags.input as UserInput
-  return {
-    address: flags.address,
-  }
-}
+const makeUserInput = async (flags, args): Promise<UserInput> => ({})
 
-const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return {}
-}
+const makeContractInput = async (input: UserInput): Promise<ContractInput> => ({})
 
-const validate: Validation<UserInput> = async (input) => {
-  return true
-}
+const validate: Validation<UserInput> = async (input) => true
 
 // This is a custom beforeExecute hook executed right before the command action is executed
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
