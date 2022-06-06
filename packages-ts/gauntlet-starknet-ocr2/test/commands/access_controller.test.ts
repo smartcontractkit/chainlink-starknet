@@ -4,7 +4,6 @@ import { registerExecuteCommand, TIMEOUT } from '@chainlink/gauntlet-starknet-ex
 
 describe('Access Controller Contract', () => {
   let network: IntegratedDevnet
-  let contractAddress: string
 
   beforeAll(async () => {
     network = await startNetwork()
