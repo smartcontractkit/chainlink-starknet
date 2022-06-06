@@ -12,7 +12,6 @@ import { compressProgram } from 'starknet/dist/utils/stark'
 describe('Token Contract', () => {
   let network: IntegratedDevnet
   let account: string
-  let publicKey: string
   let privateKey: string
   let tokenContractAddress: string
 
@@ -23,14 +22,13 @@ describe('Token Contract', () => {
   it(
     'Deploy OZ Account',
     async () => {
-        const command = await registerExecuteCommand(deployOZCommand).create({}, [])
+      const command = await registerExecuteCommand(deployOZCommand).create({}, [])
 
-        const report = await command.execute()
-        expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+      const report = await command.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-        account = report.responses[0].contract
-        publicKey = report.data.publicKey
-        privateKey = report.data.privateKey
+      account = report.responses[0].contract
+      privateKey = report.data.privateKey
     },
     TIMEOUT,
   )
@@ -38,11 +36,14 @@ describe('Token Contract', () => {
   it(
     'Deploy Token',
     async () => {
-      const command = await registerExecuteCommand(deployCommand).create({
-        link: true,
-        account: account,
-        pk: privateKey,
-      }, [])
+      const command = await registerExecuteCommand(deployCommand).create(
+        {
+          link: true,
+          account: account,
+          pk: privateKey,
+        },
+        [],
+      )
 
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
@@ -52,35 +53,9 @@ describe('Token Contract', () => {
     TIMEOUT,
   )
 
-  it(
-    'Mint',
-    async () => {
-      const command = await registerExecuteCommand(mintCommand).create(
-        {
-          link: true,
-          recipient: account,
-          amount: 1000,
-          account: account,
-          pk: privateKey,
-        },
-        [tokenContractAddress],
-      )
+  // TODO: Test mint
 
-      const report = await command.execute()
-      console.log(report.responses[0])
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      /*
-      const ocr2 = loadContract(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await ocr2Contract['billing']()
-      const billing = response[0]
-      expect(billing.observation_payment_gjuels.toNumber()).toEqual(1)
-      expect(billing.transmission_payment_gjuels.toNumber()).toEqual(1)
-      */
-    },
-    TIMEOUT,
-  )
+  // TODO: Test transfer
 
   afterAll(() => {
     network.stop()
