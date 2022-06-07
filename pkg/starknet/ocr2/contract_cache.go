@@ -47,7 +47,7 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 		return errors.Wrap(err, "fetch latest config details")
 	}
 
-	isSameConfig := c.contractConfig.configBlock == configBlock && c.contractConfig.config.ConfigDigest == configDigest
+	isSameConfig := c.contractConfig.ConfigBlock == configBlock && c.contractConfig.Config.ConfigDigest == configDigest
 	if isSameConfig {
 		now := time.Now()
 		c.ccLock.Lock()
@@ -68,8 +68,8 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
 	c.contractConfig = ContractConfig{
-		config:      newConfig,
-		configBlock: configBlock,
+		Config:      newConfig,
+		ConfigBlock: configBlock,
 	}
 	c.ccLastCheckedAt = time.Now()
 
@@ -119,15 +119,15 @@ func (c *contractCache) Notify() <-chan struct{} {
 func (c *contractCache) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
-	changedInBlock = c.contractConfig.configBlock
-	configDigest = c.contractConfig.config.ConfigDigest
+	changedInBlock = c.contractConfig.ConfigBlock
+	configDigest = c.contractConfig.Config.ConfigDigest
 	return
 }
 
 func (c *contractCache) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
-	config = c.contractConfig.config
+	config = c.contractConfig.Config
 	return
 }
 
