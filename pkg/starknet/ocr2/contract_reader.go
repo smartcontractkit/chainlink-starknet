@@ -32,7 +32,7 @@ func (c *contractReader) Notify() <-chan struct{} {
 }
 
 func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
-	resp, err := c.reader.OCR2ReadLatestConfigDetails(ctx, c.address)
+	resp, err := c.reader.OCR2LatestConfigDetails(ctx, c.address)
 	if err != nil {
 		return
 	}
@@ -43,14 +43,20 @@ func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBloc
 	return
 }
 
-func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (types.ContractConfig, error) {
-	// todo: implement
-	return types.ContractConfig{}, nil
+func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
+	resp, err := c.reader.OCR2LatestConfig(ctx, c.address, changedInBlock)
+	if err != nil {
+		return
+	}
+
+	config = resp.Config
+
+	return
 }
 
 func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
-	// todo: implement
-	return 0, nil
+	blockHeight, err = c.reader.LatestBlockHeight(ctx)
+	return
 }
 
 func (c *contractReader) LatestTransmissionDetails(
