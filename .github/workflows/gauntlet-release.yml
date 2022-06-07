@@ -1,0 +1,31 @@
+name: Gauntlet Release
+
+on:
+  push:
+    tags:
+      - "@chainlink/gauntlet-starknet-cli@[0-9]+.[0-9]+.[0-9]"
+
+jobs:
+  gauntlet-release:
+    name: Release Gauntlet
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout this repository
+      - name: Checkout Repo
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+      # Build gauntlet binary
+      - name: Build Gauntlet
+        run: yarn bundle
+      # Store gauntlet-cli version
+      - name: Set Env Variables
+        run: echo "GAUNTLET_STARKNET_CLI=$(npm info @chainlink/gauntlet-starknet-cli version)" >> $GITHUB_ENV
+      # Upload gauntlet binary to gauntlet-cli release
+      - name: Upload Gauntlet Binary
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: bin/chainlink-starknet-*
+          file_glob: true
+          tag: |
+            @chainlink/gauntlet-starknet-cli@${{ env.GAUNTLET_STARKNET_CLI }}
+          overwrite: false
