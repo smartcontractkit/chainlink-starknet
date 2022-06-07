@@ -54,12 +54,13 @@ func EncodeBytes(data []byte) (felts []*big.Int) {
 	return felts
 }
 
-func DecodeBytes(felts []*big.Int) []byte {
-	// TODO: validate len > 1
+func DecodeBytes(felts []*big.Int) ([]byte, error) {
+	if len(felts) == 0 {
+		return nil, errors.New("invalid length: expected at least one felt")
+	}
 
 	data := []byte{}
 	buf := make([]byte, chunkSize)
-	// TODO: validate it fits into int64
 	length := int(felts[0].Int64())
 
 	for _, felt := range felts[1:] {
@@ -71,23 +72,29 @@ func DecodeBytes(felts []*big.Int) []byte {
 		length -= len(buf)
 	}
 
-	return data
+	if length != 0 {
+		return nil, errors.New("invalid: contained less bytes than the specified length")
+	}
+
+	return data, nil
 }
 
 // TODO: ConfigDigest is byte[32] but what we really want here is a felt
 func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
-	// TODO: validate contract_address fits into a felt
-
-	// TODO: probably everything needs to be constructed via felt.Felt so it's proper reduced
-
 	contract_address, valid := new(big.Int).SetString(string(d.contract), 16)
 	if !valid {
 		return configDigest, errors.New("invalid contract address")
 	}
 
-	// TODO: assert len(signers) == len(transmitters)
+	if len(d.chainID) > 31 {
+		return configDigest, errors.New("chainID exceeds max length")
+	}
+
+	if len(cfg.Signers) != len(cfg.Transmitters) {
+		return configDigest, errors.New("must have equal number of signers and transmitters")
+	}
 
 	oracles := []*big.Int{}
 	for i := range cfg.Signers {
