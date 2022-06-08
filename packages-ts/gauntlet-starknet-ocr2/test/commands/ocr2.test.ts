@@ -77,7 +77,7 @@ describe('OCR2 Contract', () => {
 
       const ocr2 = loadContract(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await ocr2Contract['transmitters']()
+      const response = await ocr2Contract.transmitters()
       const transmitters = response[0]
       const expected = [
         '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
