@@ -1,4 +1,4 @@
-// import { Commands as OCR2Commands } from '@chainlink/gauntlet-starknet-ocr2'
+import { executeCommands as OCR2ExecuteCommands } from '@chainlink/gauntlet-starknet-ocr2'
 import {
   executeCommands as ExampleExecuteCommands,
   inspectionCommands as ExampleInspectionsCommands,
@@ -39,8 +39,11 @@ const registerExecuteCommand = <UI, CI>(
       const env: Env = {
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
         pk: process.env.PRIVATE_KEY,
+        publicKey: process.env.PUBLIC_KEY,
         account: process.env.ACCOUNT,
         multisig: process.env.MULTISIG,
+        billingAccessController: process.env.BILLING_ACCESS_CONTROLLER,
+        link: process.env.LINK,
       }
       return env
     },
@@ -68,7 +71,7 @@ const registerInspectionCommand = <QueryResult>(
 }
 
 const executeCommands = [
-  // ...OCR2Commands,
+  ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
   ...OZCommands,
   ...StarkgateCommands,
