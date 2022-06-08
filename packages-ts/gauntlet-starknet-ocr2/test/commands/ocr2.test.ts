@@ -53,7 +53,7 @@ describe('OCR2 Contract', () => {
 
       const ocr2 = loadContract(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await ocr2Contract['billing']()
+      const response = await ocr2Contract.billing()
       const billing = response[0]
       expect(billing.observation_payment_gjuels.toNumber()).toEqual(1)
       expect(billing.transmission_payment_gjuels.toNumber()).toEqual(1)
