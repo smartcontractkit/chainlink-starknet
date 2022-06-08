@@ -292,6 +292,21 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@chainlink-dev/starkgate-contracts@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-contracts/-/starkgate-contracts-0.0.3.tgz#915008fec43fbb15a3c87f686e74c06f3e55ca4d"
+  integrity sha512-QqL+2w+WWCGg6Tw885wij/6ZWkJwGFeO+QUHg5ow9bQmgG600QpnTL5EdItvmlbUIjwNFrKkh0zyyDnwRVGhRQ==
+
+"@chainlink-dev/starkgate-open-zeppelin@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-open-zeppelin/-/starkgate-open-zeppelin-0.0.1.tgz#a0c8a6d224aebf148b43d0f937b11ca71b37adc5"
+  integrity sha512-h2TlqjPENkS7vQNz4ChX0x9a3uTTpQl6kKLvhXA+ex9nVldN5Bsg37uq91hR2htr8/BMXTgeFMamvQJeLkBf1Q==
+
+"@chainlink-dev/starknet-contracts-ocr2@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@chainlink-dev/starknet-contracts-ocr2/-/starknet-contracts-ocr2-0.0.1.tgz#b0135fa41d8369b15696f2eba9537e12af7c6b93"
+  integrity sha512-lSCddJVEhrDT3YUsBPxfS3dcpSsk5AgBnmp8uAk4ORv9GgPkWLHWLD/Tva7BTOje3TBF9RnCpC8DlT97naASmQ==
+
 "@chainlink/gauntlet-core@0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-core/-/gauntlet-core-0.3.0.tgz#58822788deb027a28bfa9b224cc8486270dae576"
