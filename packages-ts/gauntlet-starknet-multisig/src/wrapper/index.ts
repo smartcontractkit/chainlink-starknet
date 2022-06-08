@@ -1,4 +1,5 @@
 import { Result, WriteCommand } from '@chainlink/gauntlet-core'
+import { isDeepEqual } from '@chainlink/gauntlet-core/dist/utils/assertions'
 import {
   CommandCtor,
   Dependencies,
@@ -46,7 +47,7 @@ export const wrapCommand = <UI, CI>(
 
     command: ExecuteCommandInstance<UI, CI>
     multisigAddress: string
-    state: State
+    initialState: State
     multisigContract: Contract
 
     static id = id
@@ -85,7 +86,7 @@ export const wrapCommand = <UI, CI>(
 
       c.command = await registeredCommand.create(flags, [c.contractAddress])
 
-      c.state = await c.fetchMultisigState(c.multisigAddress, c.input.user.proposalId)
+      c.initialState = await c.fetchMultisigState(c.multisigAddress, c.input.user.proposalId)
 
       return c
     }
@@ -109,7 +110,11 @@ export const wrapCommand = <UI, CI>(
         proposal: {
           id: proposalId,
           approvers: proposal.tx.num_confirmations,
-          data: proposal.tx_calldata,
+          data: {
+            contractAddress: `0x${toBN(proposal.tx.to).toString('hex')}`,
+            entrypoint: `0x${toBN(proposal.tx.function_selector).toString('hex')}`,
+            calldata: proposal.tx_calldata.map((v) => toBN(v).toString()),
+          },
           nextAction:
             toBN(proposal.tx.executed).toNumber() !== 0
               ? Action.NONE
@@ -118,6 +123,13 @@ export const wrapCommand = <UI, CI>(
               : Action.APPROVE,
         },
       }
+    }
+
+    isSameProposal = (local: Call, onchain: Call): boolean => {
+      if (local.contractAddress !== onchain.contractAddress) return false
+      if (getSelectorFromName(local.entrypoint) !== onchain.entrypoint) return false
+      if (!isDeepEqual(local.calldata, onchain.calldata)) return false
+      return true
     }
 
     makeProposeMessage: ProposalAction = (message) => {
@@ -148,32 +160,56 @@ export const wrapCommand = <UI, CI>(
         },
       }
       const message = await this.command.makeMessage()
-      if (!this.state.proposal) return [this.makeProposeMessage(message[0])]
+      if (!this.initialState.proposal) return [this.makeProposeMessage(message[0])]
 
-      return [operations[this.state.proposal.nextAction](message[0], this.state.proposal.id)]
+      if (!this.isSameProposal(message[0], this.initialState.proposal.data)) {
+        throw new Error('The transaction generated is different from the proposal provided')
+      }
+
+      return [operations[this.initialState.proposal.nextAction](message[0], this.initialState.proposal.id)]
     }
 
     beforeExecute = async () => {
-      console.log('Prompt what step we are and we are doing')
+      if (!this.initialState.proposal) deps.logger.info('About to CREATE a new multisig proposal')
+      else
+        deps.logger.info(
+          `About to ${
+            this.initialState.proposal.nextAction === Action.APPROVE ? 'APPROVE' : 'EXECUTE'
+          } the multisig proposal with ID: ${this.initialState.proposal.id}`,
+        )
       await deps.prompt('Continue?')
     }
 
-    afterExecute = async (result) => {
-      console.log('Next steps')
+    afterExecute = async (result: Result<TransactionResponse>, proposalId?: number) => {
+      if (!proposalId) deps.logger.warn('Proposal ID not found')
+      const state = await this.fetchMultisigState(this.multisigAddress, proposalId)
+      if (!state.proposal) {
+        deps.logger.error(`Multisig proposal ${proposalId} not found`)
+        return
+      }
+      const approvalsLeft = state.multisig.threshold - state.proposal.approvers
+      const messages = {
+        [Action.EXECUTE]: `The multisig proposal reached the threshold and can be executed. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
+        [Action.APPROVE]: `The multisig proposal needs ${approvalsLeft} more approvals. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
+        [Action.NONE]: `The multisig proposal has been executed. No more actions needed`,
+      }
+      deps.logger.line()
+      deps.logger.info(`${messages[state.proposal.nextAction]}`)
+      deps.logger.line()
       return {}
     }
 
     execute = async () => {
       deps.logger.info(`Multisig State:
-        - Address: ${this.state.multisig.address}
-        - Owners: ${this.state.multisig.owners}
-        - Threshold: ${this.state.multisig.threshold}
+        - Address: ${this.initialState.multisig.address}
+        - Owners: ${this.initialState.multisig.owners}
+        - Threshold: ${this.initialState.multisig.threshold}
       `)
-      if (this.state.proposal) {
+      if (this.initialState.proposal) {
         deps.logger.info(`Proposal State:
-        - ID: ${this.state.proposal.id}
-        - Appovals: ${this.state.proposal.approvers}
-        - Next action: ${this.state.proposal.nextAction}
+        - ID: ${this.initialState.proposal.id}
+        - Appovals: ${this.initialState.proposal.approvers}
+        - Next action: ${this.initialState.proposal.nextAction}
       `)
       }
       const message = await this.makeMessage()
@@ -201,7 +237,8 @@ export const wrapCommand = <UI, CI>(
           },
         ],
       }
-      const data = await this.afterExecute(result)
+      // TODO: The multisig contract needs to return the proposal id on creation. Fix when ready
+      const data = await this.afterExecute(result, this.input.user.proposalId)
 
       return !!data ? { ...result, data: { ...data } } : result
     }
