@@ -90,6 +90,52 @@ describe('OCR2 Contract', () => {
     TIMEOUT,
   )
 
+  it(
+    'Set config using --input with no wallet',
+    async () => {
+      const command = await registerExecuteCommand(setConfigCommand).create(
+        {
+          noWallet: true,
+          input: {
+            f: 1,
+            signers: [
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603734',
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603735',
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603736',
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603737',
+            ],
+            transmitters: [
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603734',
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603735',
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603736',
+              '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603737',
+            ],
+            onchainConfig: 1,
+            offchainConfig: [1],
+            offchainConfigVersion: 2,
+          },
+        },
+        [contractAddress],
+      )
+
+      const report = await command.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      const ocr2 = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
+      const response = await ocr2Contract.transmitters()
+      const transmitters = response[0]
+      const expected = [
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603734',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603735',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603736',
+        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603737',
+      ]
+      expect(transmitters).toEqual(expected.map((transmitter) => new BN(transmitter.split('x')[1], 16)))
+    },
+    TIMEOUT,
+  )
+
   afterAll(() => {
     network.stop()
   })
