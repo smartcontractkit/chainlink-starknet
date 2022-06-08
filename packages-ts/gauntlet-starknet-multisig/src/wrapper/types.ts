@@ -1,3 +1,5 @@
+import { Call } from 'starknet'
+
 export enum Action {
   APPROVE = 'approve',
   EXECUTE = 'execute',
@@ -13,7 +15,7 @@ export type State = {
   proposal?: {
     id: number
     nextAction: Action
-    data: any[]
+    data: Call
     approvers: number
   }
 }
