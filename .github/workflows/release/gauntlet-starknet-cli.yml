@@ -1,4 +1,4 @@
-name: Gauntlet Release
+name: Gauntlet Starknet CLI Release
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - "@chainlink/gauntlet-starknet-cli@[0-9]+.[0-9]+.[0-9]"
 
 jobs:
-  gauntlet-release:
-    name: Release Gauntlet
+  gauntlet-starknet-cli-release:
+    name: Release Gauntlet Starknet CLI
     runs-on: ubuntu-latest
     steps:
       # Checkout this repository

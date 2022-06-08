@@ -1,4 +1,4 @@
-name: Core Release
+name: Starknet Release
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - "@chainlink/starknet@[0-9]+.[0-9]+.[0-9]"
 
 jobs:
-  gauntlet-release:
-    name: Release Core
+  starknet-release:
+    name: Release Starknet
     runs-on: ubuntu-latest
     steps:
       # Checkout this repository
