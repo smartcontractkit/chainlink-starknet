@@ -57,28 +57,24 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
-	digest := pedersen.ArrayDigest(
-		// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
-		append(
-			append(
-				append(
-					[]*big.Int{
-						new(big.Int).SetBytes([]byte(d.chainID)),       // chain_id
-						contract_address,                               // contract_address
-						new(big.Int).SetUint64(cfg.ConfigCount),        // config_count
-						new(big.Int).SetInt64(int64(len(cfg.Signers))), // oracles_len
-					},
-					oracles...,
-				),
-				big.NewInt(int64(cfg.F)), // f
-				big.NewInt(1),            // TODO: onchain_config
-				new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
-				big.NewInt(int64(len(offchainConfig))),            // offchain_config_len
-			),
-			offchainConfig..., // offchain_config
-		)...,
+	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
+	msg := []*big.Int{
+		new(big.Int).SetBytes([]byte(d.chainID)),       // chain_id
+		contract_address,                               // contract_address
+		new(big.Int).SetUint64(cfg.ConfigCount),        // config_count
+		new(big.Int).SetInt64(int64(len(cfg.Signers))), // oracles_len
+	}
+	msg = append(msg, oracles...)
+	msg = append(
+		msg,
+		big.NewInt(int64(cfg.F)), // f
+		big.NewInt(1),            // TODO: onchain_config
+		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
+		big.NewInt(int64(len(offchainConfig))),            // offchain_config_len
 	)
+	msg = append(msg, offchainConfig...) // offchain_config
 
+	digest := pedersen.ArrayDigest(msg...)
 	digest.FillBytes(configDigest[:])
 
 	// set first two bytes to the digest prefix
