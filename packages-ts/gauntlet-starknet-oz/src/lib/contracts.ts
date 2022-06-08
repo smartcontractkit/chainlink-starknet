@@ -2,11 +2,17 @@ import fs from 'fs'
 import { CompiledContract, json } from 'starknet'
 
 export enum CONTRACT_LIST {
-  ACCOUNT = 'oz_account',
+  ACCOUNT = 'Account',
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
-  return json.parse(fs.readFileSync(`${__dirname}/../../artifacts/abi/${name}.json`).toString('ascii'))
+  return json.parse(
+    fs
+      .readFileSync(
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.1.0/${name}.cairo/${name}.json`,
+      )
+      .toString('ascii'),
+  )
 }
 
 export const accountContractLoader = () => loadContract(CONTRACT_LIST.ACCOUNT)
