@@ -7,7 +7,13 @@ export enum CONTRACT_LIST {
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
-  return json.parse(fs.readFileSync(`${__dirname}/../../artifacts/abi/${name}.json`).toString('ascii'))
+  return json.parse(
+    fs
+      .readFileSync(
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starknet-contracts-ocr2/artifacts/${name}.cairo/${name}.json`,
+      )
+      .toString('ascii'),
+  )
 }
 
 export const ocr2ContractLoader = () => loadContract(CONTRACT_LIST.OCR2)

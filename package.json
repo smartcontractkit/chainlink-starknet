@@ -35,6 +35,7 @@
     ],
     "outputPath": "bin",
     "assets": [
+      "node_modules/@chainlink-dev",
       "packages-ts/*/contract_artifacts/**/*",
       "packages-ts/gauntlet-starknet-cli/networks/"
     ]
