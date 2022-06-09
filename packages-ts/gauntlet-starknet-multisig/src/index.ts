@@ -8,7 +8,8 @@ import {
   Env,
 } from '@chainlink/gauntlet-starknet'
 
-import Commands from './commands'
+import { executeCommands, inspectionCommands } from './commands'
+import { wrapCommand } from './wrapper'
 
 const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
@@ -30,7 +31,7 @@ const registerExecuteCommand = <UI, CI>(
   return registerCommand(deps)
 }
 
-const registeredCommands = Commands.map(registerExecuteCommand)
+const registeredCommands = executeCommands.map(registerExecuteCommand)
 
-export { Commands }
+export { executeCommands, inspectionCommands, wrapCommand }
 export default [...registeredCommands]

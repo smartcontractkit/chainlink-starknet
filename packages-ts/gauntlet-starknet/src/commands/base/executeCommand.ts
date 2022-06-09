@@ -58,6 +58,9 @@ export interface ExecuteCommandInstance<UI, CI> {
   makeMessage: () => Promise<Call[]>
   execute: () => Promise<Result<TransactionResponse>>
   simulate?: () => boolean
+
+  beforeExecute: () => Promise<void>
+  afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 }
 
 export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (deps: Dependencies) => {

@@ -1,4 +1,5 @@
 import Deploy from './deploy'
 import Inspection from './inspection'
 
-export default [Deploy, ...Inspection]
+export const executeCommands = [Deploy]
+export const inspectionCommands = [...Inspection]
