@@ -26,7 +26,7 @@ type configProvider struct {
 func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*configProvider, error) {
 	reader := NewContractReader(chainReader, lggr)
 	cache := NewContractCache(reader, lggr)
-	digester := NewOffchainConfigDigester()
+	digester := NewOffchainConfigDigester("chain_id", "contract_address") // TODO
 	transmitter := NewContractTransmitter(reader)
 
 	return &configProvider{
