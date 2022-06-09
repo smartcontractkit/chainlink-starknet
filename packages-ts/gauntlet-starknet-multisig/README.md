@@ -1,1 +1,1 @@
-# Gauntlet Starknet Commands for Multisig Contract 
+# Gauntlet Starknet Commands for Multisig Contract

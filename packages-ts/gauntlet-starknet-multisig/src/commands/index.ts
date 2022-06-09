@@ -1,3 +1,1 @@
-import Multisig from './multisig'
-
-export default [...Multisig]
+export { executeCommands, inspectionCommands } from './multisig'
