@@ -19,10 +19,6 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [Number(input.balance)]
 }
 
-const validate: Validation<UserInput> = async (input) => {
-  return true
-}
-
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     category: CATEGORIES.EXAMPLE,
@@ -31,7 +27,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validate],
+  validations: [],
   loadContract: tokenContractLoader,
 }
 
