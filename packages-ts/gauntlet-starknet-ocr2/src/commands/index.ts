@@ -1,6 +1,6 @@
 // import AccessController from './accessController'
 
-import AccessController from './accessController'
-import Aggregator from './ocr2'
+import { executeCommands as acExecuteCommands } from './accessController'
+import { executeCommands as ocr2ExecuteCommands } from './ocr2'
 
-export default [...AccessController, ...Aggregator]
+export const executeCommands = [...acExecuteCommands, ...ocr2ExecuteCommands]

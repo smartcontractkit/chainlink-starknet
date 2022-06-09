@@ -7,16 +7,20 @@
       "path": "./packages-ts/gauntlet-starknet"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-example"
-    },
-    {
       "path": "./packages-ts/gauntlet-starknet-oz"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-starkgate"
+      "path": "./packages-ts/gauntlet-starknet-argent"
+    },
+
+    {
+      "path": "./packages-ts/gauntlet-starknet-multisig"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-argent"
+      "path": "./packages-ts/gauntlet-starknet-example"
+    },
+    {
+      "path": "./packages-ts/gauntlet-starknet-starkgate"
     },
     {
       "path": "./packages-ts/gauntlet-starknet-ocr2"

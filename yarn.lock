@@ -307,6 +307,11 @@
   resolved "https://registry.yarnpkg.com/@chainlink-dev/starknet-contracts-ocr2/-/starknet-contracts-ocr2-0.0.1.tgz#b0135fa41d8369b15696f2eba9537e12af7c6b93"
   integrity sha512-lSCddJVEhrDT3YUsBPxfS3dcpSsk5AgBnmp8uAk4ORv9GgPkWLHWLD/Tva7BTOje3TBF9RnCpC8DlT97naASmQ==
 
+"@chainlink-dev/starknet-multisig@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@chainlink-dev/starknet-multisig/-/starknet-multisig-0.0.1.tgz#dfdb593b147358e3ac97baa27935a38a92bb164d"
+  integrity sha512-Rg9b/hxLR3GSJEkQAkm/rWKtDk5ZqzuWLbIpJv4tH4JMoc9mwl93fJ54fFPn7g/F1jrkqWGK0DzHD4Q175ZgZQ==
+
 "@chainlink/gauntlet-core@0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-core/-/gauntlet-core-0.3.0.tgz#58822788deb027a28bfa9b224cc8486270dae576"

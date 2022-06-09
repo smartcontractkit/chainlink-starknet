@@ -33,10 +33,6 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.publicKey]
 }
 
-const validate: Validation<UserInput> = async (input) => {
-  return true
-}
-
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info(`About to deploy an Account Contract with public key ${input.contract[0]}`)
   if (input.user.privateKey) {
@@ -66,7 +62,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validate],
+  validations: [],
   loadContract: accountContractLoader,
   hooks: {
     beforeExecute,
