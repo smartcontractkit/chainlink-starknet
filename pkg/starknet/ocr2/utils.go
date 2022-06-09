@@ -3,9 +3,11 @@ package ocr2
 import (
 	"errors"
 	"math/big"
+
+	"golang.org/x/exp/constraints"
 )
 
-func min(a, b int) int {
+func Min[T constraints.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}
@@ -22,7 +24,7 @@ func EncodeBytes(data []byte) (felts []*big.Int) {
 
 	// chunk every 31 bytes
 	for i := 0; i < len(data); i += chunkSize {
-		chunk := data[i:min(i+chunkSize, len(data))]
+		chunk := data[i:Min(i+chunkSize, len(data))]
 		// cast to int
 		felt := new(big.Int).SetBytes(chunk)
 		felts = append(felts, felt)
@@ -41,7 +43,7 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	length := int(felts[0].Int64())
 
 	for _, felt := range felts[1:] {
-		buf := buf[:min(chunkSize, length)]
+		buf := buf[:Min(chunkSize, length)]
 
 		felt.FillBytes(buf)
 		data = append(data, buf...)
