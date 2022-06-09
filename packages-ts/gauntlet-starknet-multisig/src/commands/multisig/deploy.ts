@@ -4,7 +4,6 @@ import {
   ExecutionContext,
   isValidAddress,
   makeExecuteCommand,
-  Validation,
 } from '@chainlink/gauntlet-starknet'
 import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
@@ -26,7 +25,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   }
 }
 
-const validateThreshold: Validation<UserInput> = async (input) => {
+export const validateThreshold = async (input: UserInput) => {
   const threshold = Number(input.threshold)
   if (isNaN(threshold)) throw new Error('Threshold is not a number')
   if (threshold > input.owners.length)
@@ -34,7 +33,7 @@ const validateThreshold: Validation<UserInput> = async (input) => {
   return true
 }
 
-const validateOwners: Validation<UserInput> = async (input) => {
+export const validateOwners = async (input) => {
   const areValid = input.owners.every(isValidAddress)
   if (!areValid) throw new Error('Owners are not valid accounts')
   if (new Set(input.owners).size !== input.owners.length) throw new Error('Owners are not unique')

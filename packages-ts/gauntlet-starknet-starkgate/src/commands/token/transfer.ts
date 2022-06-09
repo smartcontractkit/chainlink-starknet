@@ -30,12 +30,12 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.recipient, bnToUint256(input.amount)]
 }
 
-const validateRecipient: Validation<UserInput> = async (input) => {
+const validateRecipient = async (input) => {
   if (!isValidAddress(input.recipient)) throw new Error(`Invalid recipient address: ${input.recipient}`)
   return true
 }
 
-const validateAmount: Validation<UserInput> = async (input) => {
+const validateAmount = async (input) => {
   if (isNaN(Number(input.amount))) throw new Error(`Invalid amount: ${input.amount}`)
   return true
 }

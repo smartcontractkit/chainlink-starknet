@@ -9,10 +9,11 @@ import { makeCommandId, Validation, Input } from './command'
 
 export interface ExecutionContext {
   id: string
-  contract: string
+  contractAddress: string
   wallet: IStarknetWallet
   provider: IStarknetProvider
   flags: any
+  contract: Contract
 }
 
 export type BeforeExecute<UI, CI> = (
@@ -41,7 +42,7 @@ export interface ExecuteCommandConfig<UI, CI> {
   internalFunction?: string
   makeUserInput: (flags, args, env: Env) => Promise<UI>
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
-  validations: Validation<UI>[]
+  validations: Validation<UI, ExecutionContext>[]
   loadContract: () => CompiledContract
 }
 
@@ -92,17 +93,18 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.wallet = deps.makeWallet(env.pk, env.account)
       c.contractAddress = args[0]
       c.account = env.account
+      c.contract = config.loadContract()
 
       c.executionContext = {
         provider: c.provider,
         wallet: c.wallet,
         id: makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes),
-        contract: c.contractAddress,
+        contractAddress: c.contractAddress,
         flags: flags,
+        contract: new Contract(c.contract.abi, c.contractAddress, c.provider.provider),
       }
 
       c.input = await c.buildCommandInput(flags, args, env)
-      c.contract = config.loadContract()
 
       c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
@@ -115,8 +117,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return c
     }
 
-    runValidations = async (validations: Validation<UI>[], input: UI) => {
-      const result = await Promise.all(validations.map((validation) => validation(input)))
+    runValidations = async (validations: Validation<UI, ExecutionContext>[], input: UI) => {
+      const result = await Promise.all(validations.map((validation) => validation(input, this.executionContext)))
       return result
     }
 
@@ -124,7 +126,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       context: ExecutionContext,
       input: Input<UserInput, ContractInput>,
     ) => async () => {
-      deps.logger.loading(`Executing ${context.id} from contract ${context.contract}`)
+      deps.logger.loading(`Executing ${context.id} from contract ${context.contractAddress}`)
       deps.logger.log('Contract Input Params:', input.contract)
       await deps.prompt('Continue?')
     }

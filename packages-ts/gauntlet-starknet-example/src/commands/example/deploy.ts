@@ -16,8 +16,6 @@ const makeUserInput = async (flags, args): Promise<UserInput> => ({})
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => ({})
 
-const validate: Validation<UserInput> = async (input) => true
-
 // This is a custom beforeExecute hook executed right before the command action is executed
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info('About to deploy a Sample Contract')
@@ -38,7 +36,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validate],
+  validations: [],
   loadContract: tokenContractLoader,
   hooks: {
     beforeExecute,

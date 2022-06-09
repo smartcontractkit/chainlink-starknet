@@ -10,7 +10,8 @@ import {
   IStarknetWallet,
 } from '@chainlink/gauntlet-starknet'
 import { TransactionResponse } from '@chainlink/gauntlet-starknet/dist/transaction'
-import { Call, CompiledContract, Contract } from 'starknet'
+import { Call, CompiledContract, Contract, addAddressPadding } from 'starknet'
+import { addHexPrefix } from 'starknet/dist/utils/encode'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { toBN, toHex } from 'starknet/dist/utils/number'
 import { contractLoader } from '../lib/contracts'
@@ -48,7 +49,6 @@ export const wrapCommand = <UI, CI>(
     command: ExecuteCommandInstance<UI, CI>
     multisigAddress: string
     initialState: State
-    multisigContract: Contract
 
     static id = id
     static category = registeredCommand.category
@@ -69,14 +69,14 @@ export const wrapCommand = <UI, CI>(
       c.account = env.account
       c.multisigAddress = env.multisig
       c.contract = contractLoader()
-      c.multisigContract = new Contract(c.contract.abi, c.multisigAddress, c.provider.provider)
 
       c.executionContext = {
         provider: c.provider,
         wallet: c.wallet,
         id,
-        contract: c.contractAddress,
+        contractAddress: c.contractAddress,
         flags: flags,
+        contract: new Contract(c.contract.abi, c.multisigAddress, c.provider.provider),
       }
 
       c.input = {
@@ -94,7 +94,7 @@ export const wrapCommand = <UI, CI>(
     fetchMultisigState = async (address: string, proposalId?: number): Promise<State> => {
       const [owners, threshold] = await Promise.all(
         ['get_owners', 'get_confirmations_required'].map((func) => {
-          return this.multisigContract[func]()
+          return this.executionContext.contract[func]()
         }),
       )
       const multisig = {
@@ -104,15 +104,15 @@ export const wrapCommand = <UI, CI>(
       }
 
       if (isNaN(proposalId)) return { multisig }
-      const proposal = await this.multisigContract.get_transaction(proposalId)
+      const proposal = await this.executionContext.contract.get_transaction(proposalId)
       return {
         multisig,
         proposal: {
           id: proposalId,
           approvers: proposal.tx.num_confirmations,
           data: {
-            contractAddress: `0x${toBN(proposal.tx.to).toString('hex')}`,
-            entrypoint: `0x${toBN(proposal.tx.function_selector).toString('hex')}`,
+            contractAddress: addAddressPadding(proposal.tx.to),
+            entrypoint: addHexPrefix(toBN(proposal.tx.function_selector).toString('hex')),
             calldata: proposal.tx_calldata.map((v) => toBN(v).toString()),
           },
           nextAction:
@@ -133,7 +133,7 @@ export const wrapCommand = <UI, CI>(
     }
 
     makeProposeMessage: ProposalAction = (message) => {
-      const invocation = this.multisigContract.populate('submit_transaction', [
+      const invocation = this.executionContext.contract.populate('submit_transaction', [
         this.contractAddress,
         toBN(getSelectorFromName(message.entrypoint)),
         message.calldata,
@@ -142,12 +142,12 @@ export const wrapCommand = <UI, CI>(
     }
 
     makeAcceptMessage: ProposalAction = (_, proposalId) => {
-      const invocation = this.multisigContract.populate('confirm_transaction', [proposalId])
+      const invocation = this.executionContext.contract.populate('confirm_transaction', [proposalId])
       return invocation
     }
 
     makeExecuteMessage: ProposalAction = (_, proposalId) => {
-      const invocation = this.multisigContract.populate('execute_transaction', [proposalId])
+      const invocation = this.executionContext.contract.populate('execute_transaction', [proposalId])
       return invocation
     }
 
@@ -166,6 +166,8 @@ export const wrapCommand = <UI, CI>(
         throw new Error('The transaction generated is different from the proposal provided')
       }
 
+      deps.logger.success('Generated proposal matches with the one provided')
+
       return [operations[this.initialState.proposal.nextAction](message[0], this.initialState.proposal.id)]
     }
 
@@ -182,6 +184,7 @@ export const wrapCommand = <UI, CI>(
 
     afterExecute = async (result: Result<TransactionResponse>, proposalId?: number) => {
       if (!proposalId) deps.logger.warn('Proposal ID not found')
+      deps.logger.loading('Fetching latest multisig and proposal state...')
       const state = await this.fetchMultisigState(this.multisigAddress, proposalId)
       if (!state.proposal) {
         deps.logger.error(`Multisig proposal ${proposalId} not found`)
