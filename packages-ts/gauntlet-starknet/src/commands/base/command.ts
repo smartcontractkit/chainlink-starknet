@@ -5,7 +5,7 @@ export interface CommandCtor<CommandInstance> {
   create: (flags, args) => Promise<CommandInstance>
 }
 
-export type Validation<UI> = (input: UI) => Promise<boolean>
+export type Validation<UI, ExecutionContext> = (input: UI, executionContext: ExecutionContext) => Promise<boolean>
 
 export interface CommandUX {
   category: string

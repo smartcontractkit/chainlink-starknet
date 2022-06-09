@@ -10,4 +10,5 @@
   - [Starkgate Contracts](../../packages-ts/gauntlet-starknet-starkgate/README.md)
   - [Argent Contracts](../../packages-ts/gauntlet-starknet-argent/README.md)
   - [OCR2 Contracts](../../packages-ts/gauntlet-starknet-ocr2/README.md)
+  - [Multisig Contracts](../../packages-ts/gauntlet-starknet-multisig/README.md)
 - Contribute
