@@ -4,12 +4,12 @@ This repository adheres to [Semantic Versioning](http://semver.org/).
 Chainlink-Starknet contains a number of projects, all individually versioned and released. Please consult the following changelogs for more information:
 
 * [@chainlink/starknet](/)
-* [@chainlink/starknet-gauntlet](/packages-ts/gauntlet-starknet/)
-* [@chainlink/starknet-gauntlet-cli](/packages-ts/starknet-gauntlet-cli/)
-* [@chainlink/starknet-gauntlet-ocr2](/packages-ts/starknet-gauntlet-ocr2/)
-* [@chainlink/starknet-gauntlet-oz](/packages-ts/starknet-gauntlet-oz/)
-* [@chainlink/starknet-gauntlet-argent](/packages-ts/starknet-gauntlet-argent/)
-* [@chainlink/starknet-gauntlet-starkgate](/packages-ts/starknet-gauntlet-starkgate/)
+* [@chainlink/gauntlet-starknet](/packages-ts/gauntlet-starknet/)
+* [@chainlink/gauntlet-starknet-cli](/packages-ts/gauntlet-starknet-cli//)
+* [@chainlink/gauntlet-starknet-ocr2](/packages-ts/gauntlet-starknet-ocr2/)
+* [@chainlink/gauntlet-starknet-oz](/packages-ts/gauntlet-starknet-oz/)
+* [@chainlink/gauntlet-starknet-argent](/packages-ts/gauntlet-starknet-argent/)
+* [@chainlink/gauntlet-starknet-starkgate](/packages-ts/gauntlet-starknet-starkgate/)
 * [@chainlink/starknet-contracts](/contracts/)
 * [@chainlink/starknet-integration-tests](/integration-tests/)
 
