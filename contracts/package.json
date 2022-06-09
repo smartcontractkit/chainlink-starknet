@@ -20,7 +20,8 @@
     "ethers": "^5.4.6",
     "starknet": "3.9.0",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.2"
+    "typescript": "^4.5.2",
+    "bn.js": "^5.2.0"
   },
   "dependencies": {
     "@toruslabs/starkware-crypto": "^1.0.0",
