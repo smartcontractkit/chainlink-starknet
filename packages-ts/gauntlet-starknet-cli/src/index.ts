@@ -1,16 +1,92 @@
-import OCR2Commands from '@chainlink/gauntlet-starknet-ocr2'
-import ExampleCommands from '@chainlink/gauntlet-starknet-example'
-import OZCommands from '@chainlink/gauntlet-starknet-oz'
-import StarkgateCommands from '@chainlink/gauntlet-starknet-starkgate'
-import ArgentCommands from '@chainlink/gauntlet-starknet-argent'
+import { executeCommands as OCR2ExecuteCommands } from '@chainlink/gauntlet-starknet-ocr2'
+import {
+  executeCommands as ExampleExecuteCommands,
+  inspectionCommands as ExampleInspectionsCommands,
+} from '@chainlink/gauntlet-starknet-example'
+import { Commands as OZCommands } from '@chainlink/gauntlet-starknet-oz'
+import { Commands as StarkgateCommands } from '@chainlink/gauntlet-starknet-starkgate'
+import { Commands as ArgentCommands } from '@chainlink/gauntlet-starknet-argent'
+import {
+  executeCommands as MultisigExecuteCommands,
+  inspectionCommands as MultisigInspectionCommands,
+  wrapCommand as multisigWrapCommand,
+} from '@chainlink/gauntlet-starknet-multisig'
 
 import { executeCLI } from '@chainlink/gauntlet-core'
 import { existsSync } from 'fs'
 import path from 'path'
-import { io } from '@chainlink/gauntlet-core/dist/utils'
+import { io, logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
+import {
+  CommandCtor,
+  Dependencies,
+  Env,
+  ExecuteCommandInstance,
+  InspectCommandInstance,
+  makeProvider,
+  makeWallet,
+} from '@chainlink/gauntlet-starknet'
+
+export const noopPrompt: typeof prompt = async () => {}
+
+const registerExecuteCommand = <UI, CI>(
+  registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
+  emptyPrompt = false,
+) => {
+  const deps: Dependencies | Omit<Dependencies, 'makeWallet'> = {
+    logger: logger,
+    prompt: emptyPrompt ? noopPrompt : prompt,
+    makeEnv: (flags) => {
+      const env: Env = {
+        providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
+        pk: process.env.PRIVATE_KEY,
+        publicKey: process.env.PUBLIC_KEY,
+        account: process.env.ACCOUNT,
+        multisig: process.env.MULTISIG,
+        billingAccessController: process.env.BILLING_ACCESS_CONTROLLER,
+        link: process.env.LINK,
+      }
+      return env
+    },
+    makeProvider: makeProvider,
+    makeWallet: makeWallet,
+  }
+  return registerCommand(deps)
+}
+
+const registerInspectionCommand = <QueryResult>(
+  registerCommand: (deps: Omit<Dependencies, 'makeWallet'>) => CommandCtor<InspectCommandInstance<QueryResult>>,
+) => {
+  const deps: Omit<Dependencies, 'makeWallet'> = {
+    logger: logger,
+    prompt: prompt,
+    makeEnv: (flags) => {
+      const env: Env = {
+        providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
+      }
+      return env
+    },
+    makeProvider: makeProvider,
+  }
+  return registerCommand(deps)
+}
+
+const executeCommands = [
+  ...OCR2ExecuteCommands,
+  ...ExampleExecuteCommands,
+  ...OZCommands,
+  ...StarkgateCommands,
+  ...ArgentCommands,
+  ...MultisigExecuteCommands,
+]
+const msigCommands = executeCommands.map((c) => registerExecuteCommand(c, true)).map(multisigWrapCommand)
+const unregistedInspectionCommands = [...ExampleInspectionsCommands, ...MultisigInspectionCommands]
 
 const commands = {
-  custom: [...OCR2Commands, ...ExampleCommands, ...OZCommands, ...StarkgateCommands, ...ArgentCommands],
+  custom: [
+    ...executeCommands.map((c) => registerExecuteCommand(c)),
+    ...msigCommands.map((c) => registerExecuteCommand(c)),
+    ...unregistedInspectionCommands.map(registerInspectionCommand),
+  ],
   loadDefaultFlags: () => ({}),
   abstract: {
     findPolymorphic: () => undefined,

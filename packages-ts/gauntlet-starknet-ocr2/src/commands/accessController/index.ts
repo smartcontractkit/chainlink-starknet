@@ -1,2 +1,3 @@
 import Deploy from './deploy'
-export default [Deploy]
+
+export const executeCommands = [Deploy]
