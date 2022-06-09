@@ -6,6 +6,7 @@ export interface Env {
   providerUrl: string
   pk?: string
   account?: string
+  [key: string]: string // Custom env
 }
 
 export interface Dependencies {
@@ -15,3 +16,5 @@ export interface Dependencies {
   makeWallet: (pk: string, account?: string) => IStarknetWallet
   makeEnv: (flags: Record<string, string>) => Env
 }
+
+export type InspectionDependencies = Omit<Dependencies, 'makeWallet'>

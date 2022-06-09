@@ -1,7 +1,7 @@
 import BaseCommand from '@chainlink/gauntlet-core/dist/commands/internal/base'
 import { CompiledContract, Contract } from 'starknet'
 import { CommandCtor, Input } from '.'
-import { Dependencies } from '../../dependencies'
+import { InspectionDependencies } from '../../dependencies'
 import { IStarknetProvider } from '../../provider'
 import { CommandUX, makeCommandId } from './command'
 
@@ -63,7 +63,7 @@ export interface InspectCommandInstance<QueryResult> {
 
 export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
   config: InspectCommandConfig<UI, CI, CompareInput, QueryResult>,
-) => (deps: Omit<Dependencies, 'makeWallet'>) => {
+) => (deps: InspectionDependencies) => {
   const command: CommandCtor<InspectCommandInstance<QueryResult>> = class InspectionCommand
     extends BaseCommand
     implements InspectCommandInstance<QueryResult> {
