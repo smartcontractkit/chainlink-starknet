@@ -394,6 +394,17 @@ func add_oracles{
     # That way signers(pkey) => 0 indicates "not present"
     let index = index + 1
 
+    # Check for duplicates
+    let (existing_signer) = signers_.read(oracles.signer)
+    with_attr error_message("repeated signer"):
+        assert existing_signer = 0
+    end
+
+    let (existing_transmitter: Oracle) = transmitters_.read(oracles.transmitter)
+    with_attr error_message("repeated transmitter"):
+        assert existing_transmitter.index = 0
+    end
+
     signers_.write(oracles.signer, index)
     signers_list_.write(index, oracles.signer)
 
