@@ -46,6 +46,17 @@ module.exports = {
       },
     },
     {
+      displayName: 'starknet-gauntlet-multisig',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/packages-ts/starknet-gauntlet-multisig/**/*.test.ts'],
+      globals: {
+        'ts-jest': {
+          tsconfig: '<rootDir>/packages-ts/starknet-gauntlet-multisig/tsconfig.json',
+        },
+      },
+    },
+    {
       displayName: 'starknet-gauntlet-starkgate',
       preset: 'ts-jest',
       testEnvironment: 'node',
