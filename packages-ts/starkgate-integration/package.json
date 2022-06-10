@@ -1,7 +1,7 @@
 {
-  "name": "contracts",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@chainlink/starknet-integration-tests-starkgate",
+  "version": "0.1.0",
+  "description": "StarkGate token bridge integration",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -12,17 +12,17 @@
     "@types/jest": "^27.5.1",
     "@types/mocha": "^9.1.1",
     "bn.js": "^5.2.1",
+    "chai": "^4.3.6",
     "hardhat": "^2.9.6",
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2"
   },
   "scripts": {
-    "test": "npx hardhat test --starknet-network devnet ./test/test_token.ts",
-    "compile": "CAIRO_PATH='../src' npx hardhat starknet-compile ../src/starkware/starknet/apps/starkgate/cairo"
+    "test": "npx hardhat test --starknet-network devnet"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@chainlink-dev/starkgate-contracts": "^0.0.3"
   }

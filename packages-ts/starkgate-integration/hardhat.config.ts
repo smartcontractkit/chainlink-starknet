@@ -3,7 +3,7 @@ import "@shardlabs/starknet-hardhat-plugin";
 import { HardhatUserConfig} from "hardhat/types";
 
 const config: HardhatUserConfig = {
-  solidity: '0.6.12',
+  solidity: '0.8.14',
   starknet: {
     venv: "active",
     wallets: {
@@ -15,8 +15,6 @@ const config: HardhatUserConfig = {
     }
   },
   paths: {
-    // starknetSources: __dirname + "/src/starkware/starknet/apps/starkgate/cairo",
-    // cairoPaths: ["../"]
     starknetArtifacts: "node_modules/@chainlink-dev/starkgate-contracts/artifacts"
   },
   networks: {
