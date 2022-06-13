@@ -1,11 +1,12 @@
-package starknet
+package relay
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -14,7 +15,7 @@ import (
 var _ relaytypes.Relayer = (*relayer)(nil)
 
 type relayer struct {
-	chainSet ChainSet
+	chainSet starknet.ChainSet
 	ctx      context.Context
 
 	lggr logger.Logger
@@ -22,7 +23,7 @@ type relayer struct {
 	cancel func()
 }
 
-func NewRelayer(lggr logger.Logger, chainSet ChainSet) *relayer {
+func NewRelayer(lggr logger.Logger, chainSet starknet.ChainSet) *relayer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relayer{
 		chainSet: chainSet,
@@ -53,7 +54,7 @@ func (r *relayer) Healthy() error {
 }
 
 func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
-	chainReader, err := r.newChainReader(args)
+	chainReader, err := r.newOCR2Reader(args)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 }
 
 func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MedianProvider, error) {
-	chainReader, err := r.newChainReader(rargs)
+	chainReader, err := r.newOCR2Reader(rargs)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	return medianProvider, nil
 }
 
-func (r *relayer) newChainReader(args relaytypes.RelayArgs) (Reader, error) {
+func (r *relayer) newOCR2Reader(args relaytypes.RelayArgs) (ocr2.OCR2Reader, error) {
 	var relayConfig RelayConfig
 
 	err := json.Unmarshal(args.RelayConfig, &relayConfig)
@@ -90,12 +91,12 @@ func (r *relayer) newChainReader(args relaytypes.RelayArgs) (Reader, error) {
 		return nil, err
 	}
 
-	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
+	logger, err := logger.New()
 	if err != nil {
 		return nil, err
 	}
 
-	chainReader, err := chain.Reader()
+	chainReader, err := ocr2.NewClient(relayConfig.ChainID, logger)
 	if err != nil {
 		return nil, err
 	}
