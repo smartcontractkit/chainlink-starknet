@@ -4,7 +4,7 @@ This repository adheres to [Semantic Versioning](http://semver.org/).
 
 Chainlink-Starknet contains a number of projects, all individually versioned and released. Please consult the following changelogs for more information:
 
-- @chainlink/starknet
+- [@chainlink/starknet-relayer](/relayer/)
 - [@chainlink/gauntlet-starknet](/packages-ts/gauntlet-starknet/)
 - [@chainlink/gauntlet-starknet-cli](/packages-ts/gauntlet-starknet-cli//)
 - [@chainlink/gauntlet-starknet-ocr2](/packages-ts/gauntlet-starknet-ocr2/)

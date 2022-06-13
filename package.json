@@ -7,7 +7,7 @@
     "packages-ts/*",
     "contracts",
     "integration-tests",
-    "pkg/starknet"
+    "relayer"
   ],
   "keywords": [
     "typescript",
