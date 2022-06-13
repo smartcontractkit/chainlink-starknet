@@ -1,4 +1,4 @@
-package starknet
+package relay
 
 // [relayConfig] member of Chainlink's job spec v2 (OCR2 only currently)
 type RelayConfig struct {

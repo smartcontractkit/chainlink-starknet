@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet/db"
 )
 
 type ChainSet interface {
@@ -19,5 +19,4 @@ type Chain interface {
 	ID() string
 	Config() Config
 	UpdateConfig(*db.ChainCfg)
-	Reader() (Reader, error)
 }

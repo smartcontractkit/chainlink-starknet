@@ -1,7 +1,6 @@
 package ocr2
 
 import (
-	"context"
 	"errors"
 	"math/big"
 	"time"
@@ -69,12 +68,4 @@ func NewBillingDetails(observationPaymentFelt string, transmissionPaymentFelt st
 		observationPaymentGJuels:  observationPaymentGJuels.Uint64(),
 		transmissionPaymentGJuels: transmissionPaymentGJuels.Uint64(),
 	}, nil
-}
-
-type Reader interface {
-	OCR2LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
-	OCR2LatestConfig(context.Context, string, uint64) (ContractConfig, error)
-	OCR2BillingDetails(context.Context, string) (BillingDetails, error)
-
-	LatestBlockHeight(context.Context) (uint64, error)
 }
