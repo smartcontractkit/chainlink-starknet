@@ -2,10 +2,12 @@ package ocr2
 
 import (
 	"context"
+	"fmt"
+	"github.com/pkg/errors"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -29,6 +31,7 @@ type contractCache struct {
 	stop, done chan struct{}
 
 	reader *contractReader
+	cfg    starknet.Config
 	lggr   logger.Logger
 }
 
@@ -44,34 +47,30 @@ func NewContractCache(reader *contractReader, lggr logger.Logger) *contractCache
 func (c *contractCache) updateConfig(ctx context.Context) error {
 	configBlock, configDigest, err := c.reader.LatestConfigDetails(ctx)
 	if err != nil {
-		return errors.Wrap(err, "fetch latest config details")
+		return errors.Wrap(err, "couldn't fetch latest config details")
 	}
 
+	c.ccLock.RLock()
 	isSameConfig := c.contractConfig.ConfigBlock == configBlock && c.contractConfig.Config.ConfigDigest == configDigest
-	if isSameConfig {
-		now := time.Now()
-		c.ccLock.Lock()
-		defer c.ccLock.Unlock()
+	c.ccLock.RUnlock()
 
-		if c.ccLastCheckedAt.Before(now) {
-			c.ccLastCheckedAt = now
+	var newConfig types.ContractConfig
+	if !isSameConfig {
+		newConfig, err = c.reader.LatestConfig(ctx, configBlock)
+		if err != nil {
+			return errors.Wrap(err, "couldn't fetch latest config")
 		}
-
-		return nil
-	}
-
-	newConfig, err := c.reader.LatestConfig(ctx, configBlock)
-	if err != nil {
-		return errors.Wrap(err, "fetch latest config")
 	}
 
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
-	c.contractConfig = ContractConfig{
-		Config:      newConfig,
-		ConfigBlock: configBlock,
-	}
 	c.ccLastCheckedAt = time.Now()
+	if !isSameConfig {
+		c.contractConfig = ContractConfig{
+			Config:      newConfig,
+			ConfigBlock: configBlock,
+		}
+	}
 
 	return nil
 }
@@ -80,7 +79,7 @@ func (c *contractCache) Start() error {
 	ctx, cancel := utils.ContextFromChan(c.stop)
 	defer cancel()
 	if err := c.updateConfig(ctx); err != nil {
-		c.lggr.Warnf("failed to populate initial config: %v", err)
+		c.lggr.Warnf("Failed to populate initial config: %v", err)
 	}
 	go c.poll()
 	return nil
@@ -106,8 +105,7 @@ func (c *contractCache) poll() {
 			}
 			cancel()
 
-			// todo: adjust tick with values from config
-			tick = time.After(utils.WithJitter(0))
+			tick = time.After(utils.WithJitter(c.cfg.OCR2CachePollPeriod()))
 		}
 	}
 }
@@ -121,6 +119,7 @@ func (c *contractCache) LatestConfigDetails(ctx context.Context) (changedInBlock
 	defer c.ccLock.RUnlock()
 	changedInBlock = c.contractConfig.ConfigBlock
 	configDigest = c.contractConfig.Config.ConfigDigest
+	err = c.assertConfigNotStale()
 	return
 }
 
@@ -128,10 +127,23 @@ func (c *contractCache) LatestConfig(ctx context.Context, changedInBlock uint64)
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
 	config = c.contractConfig.Config
+	err = c.assertConfigNotStale()
 	return
 }
 
 func (c *contractCache) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
 	// todo: implement
 	return 0, nil
+}
+
+func (c *contractCache) assertConfigNotStale() error {
+	if c.ccLastCheckedAt.IsZero() {
+		return errors.New("contract config cache not yet initialized")
+	}
+
+	if since := time.Since(c.ccLastCheckedAt); since > c.cfg.OCR2CacheTTL() {
+		return fmt.Errorf("contract config cache expired: checked last %s ago", since)
+	}
+
+	return nil
 }
