@@ -10,7 +10,7 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
-func TestGatewayClient(t *testing.T) {
+func TestOCR2Client(t *testing.T) {
 	// todo: adjust for e2e tests
 	chainID := gateway.GOERLI_ID
 	ocr2ContractAddress := "0x756ce9ca3dff7ee1037e712fb9662be13b5dcfc0660b97d266298733e1196b"
