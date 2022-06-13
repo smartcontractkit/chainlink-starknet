@@ -15,7 +15,7 @@ type Reader interface {
 	LatestBlockHeight(context.Context) (uint64, error)
 	BlockByNumber(context.Context, uint64) (*caigogw.Block, error)
 
-	CallContract(context.Context, string, string, ...string) ([]string, error)
+	CallContract(context.Context, CallOps) ([]string, error)
 }
 
 type Writer interface {
@@ -40,11 +40,11 @@ func NewClient(chainID string, lggr logger.Logger) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) CallContract(ctx context.Context, address string, method string, params ...string) (res []string, err error) {
+func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, err error) {
 	tx := caigotypes.Transaction{
-		ContractAddress:    address,
-		EntryPointSelector: method,
-		Calldata:           params,
+		ContractAddress:    ops.ContractAddress,
+		EntryPointSelector: ops.Selector,
+		Calldata:           ops.Calldata,
 	}
 
 	res, err = c.gw.Call(ctx, tx, nil)
