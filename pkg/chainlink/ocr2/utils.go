@@ -141,7 +141,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	// todo: get rid of caigoToJuno workaround
 	offchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(offchainConfigFelts))
 	if err != nil {
-		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
+		return types.ContractConfig{}, err
 	}
 
 	return types.ContractConfig{
