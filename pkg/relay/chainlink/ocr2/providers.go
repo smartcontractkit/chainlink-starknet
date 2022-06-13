@@ -3,6 +3,9 @@ package ocr2
 import (
 	"context"
 
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet"
+	junorpc "github.com/NethermindEth/juno/pkg/rpc"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -23,11 +26,15 @@ type configProvider struct {
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainReader OCR2Reader, lggr logger.Logger) (*configProvider, error) {
-	// todo: add address from config
-	reader := NewContractReader("", chainReader, lggr)
-	cache := NewContractCache(reader, lggr)
-	digester := NewOffchainConfigDigester("chain_id", "contract_address") // TODO
+func NewConfigProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
+	chainReader, err := NewClient(chainID, lggr)
+	if err != nil {
+		return nil, err
+	}
+
+	reader := NewContractReader(contractAddress, chainReader, lggr)
+	cache := NewContractCache(cfg, reader, lggr)
+	digester := NewOffchainConfigDigester(junorpc.ChainID(chainID), junorpc.Address(contractAddress))
 	transmitter := NewContractTransmitter(reader)
 
 	return &configProvider{
@@ -69,8 +76,8 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainReader OCR2Reader, lggr logger.Logger) (*medianProvider, error) {
-	configProvider, err := NewConfigProvider(chainReader, lggr)
+func NewMedianProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
+	configProvider, err := NewConfigProvider(chainID, contractAddress, cfg, lggr)
 	if err != nil {
 		return nil, err
 	}
