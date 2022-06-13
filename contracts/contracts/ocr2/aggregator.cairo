@@ -1363,3 +1363,9 @@ func accept_payeeship{
 
     return ()
 end
+
+
+@view
+func type_and_version() -> (meta: felt):
+    return ('ocr2/aggregator.cairo 1.0.0')
+end

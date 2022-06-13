@@ -79,3 +79,8 @@ func remove_access{
     access_list_.write(address, FALSE)
     return ()
 end
+
+@view
+func type_and_version() -> (meta: felt):
+    return ('access_controller.cairo 1.0.0')
+end
