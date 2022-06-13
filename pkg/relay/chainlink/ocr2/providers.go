@@ -23,7 +23,7 @@ type configProvider struct {
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*configProvider, error) {
+func NewConfigProvider(chainReader OCR2Reader, lggr logger.Logger) (*configProvider, error) {
 	// todo: add address from config
 	reader := NewContractReader("", chainReader, lggr)
 	cache := NewContractCache(reader, lggr)
@@ -69,7 +69,7 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainReader Reader, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainReader OCR2Reader, lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainReader, lggr)
 	if err != nil {
 		return nil, err

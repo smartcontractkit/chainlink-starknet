@@ -15,11 +15,11 @@ var _ median.MedianContract = (*contractReader)(nil)
 
 type contractReader struct {
 	address string
-	reader  Reader
+	reader  OCR2Reader
 	lggr    logger.Logger
 }
 
-func NewContractReader(address string, chainReader Reader, lggr logger.Logger) *contractReader {
+func NewContractReader(address string, chainReader OCR2Reader, lggr logger.Logger) *contractReader {
 	return &contractReader{
 		address: address,
 		reader:  chainReader,
