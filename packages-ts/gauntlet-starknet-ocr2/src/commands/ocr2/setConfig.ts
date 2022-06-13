@@ -44,7 +44,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
     let f = 1
     let onchainConfig = 1
     let offchainConfigVersion = 2
-    let offchainConfig = [1]
+    let offchainConfig = [93, 11111, 22222, 33333]
 
     return {
       f: f,
