@@ -54,12 +54,19 @@ func (r *relayer) Healthy() error {
 }
 
 func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
-	chainReader, err := r.newOCR2Reader(args)
+	var relayConfig RelayConfig
+
+	err := json.Unmarshal(args.RelayConfig, &relayConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	configProvider, err := ocr2.NewConfigProvider(chainReader, r.lggr)
+	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
+	if err != nil {
+		return nil, err
+	}
+
+	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, chain.Config(), r.lggr)
 	if err != nil {
 		return nil, err
 	}
@@ -68,38 +75,24 @@ func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 }
 
 func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MedianProvider, error) {
-	chainReader, err := r.newOCR2Reader(rargs)
+	var relayConfig RelayConfig
+
+	err := json.Unmarshal(rargs.RelayConfig, &relayConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
 	if err != nil {
 		return nil, err
 	}
 
 	// todo: use pargs for median provider
 
-	medianProvider, err := ocr2.NewMedianProvider(chainReader, r.lggr)
+	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, chain.Config(), r.lggr)
 	if err != nil {
 		return nil, err
 	}
 
 	return medianProvider, nil
-}
-
-func (r *relayer) newOCR2Reader(args relaytypes.RelayArgs) (ocr2.OCR2Reader, error) {
-	var relayConfig RelayConfig
-
-	err := json.Unmarshal(args.RelayConfig, &relayConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	logger, err := logger.New()
-	if err != nil {
-		return nil, err
-	}
-
-	chainReader, err := ocr2.NewClient(relayConfig.ChainID, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	return chainReader, nil
 }

@@ -16,7 +16,6 @@ type ChainSet interface {
 type Chain interface {
 	types.Service
 
-	ID() string
 	Config() Config
 	UpdateConfig(*db.ChainCfg)
 }
