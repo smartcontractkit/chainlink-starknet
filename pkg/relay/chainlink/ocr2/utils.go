@@ -62,6 +62,14 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
+func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
+	for _, felt := range cFelts {
+		jFelts = append(jFelts, felt.Int)
+	}
+
+	return jFelts
+}
+
 func isSetConfigEventFromContract(event *caigotypes.Event, address string) bool {
 	if event.FromAddress != address {
 		return false
@@ -130,9 +138,10 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	// offchain_config
 	index += 1
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
-	var offchainConfig []byte
-	for _, ocFelt := range offchainConfigFelts {
-		offchainConfig = append(offchainConfig, ocFelt.Bytes()...)
+	// todo: get rid of caigoToJuno workaround
+	offchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(offchainConfigFelts))
+	if err != nil {
+		return types.ContractConfig{}, err
 	}
 
 	return types.ContractConfig{
