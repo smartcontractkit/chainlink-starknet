@@ -35,8 +35,9 @@ type contractCache struct {
 	lggr   logger.Logger
 }
 
-func NewContractCache(reader *contractReader, lggr logger.Logger) *contractCache {
+func NewContractCache(cfg starknet.Config, reader *contractReader, lggr logger.Logger) *contractCache {
 	return &contractCache{
+		cfg: cfg,
 		reader: reader,
 		lggr:   lggr,
 		stop:   make(chan struct{}),
