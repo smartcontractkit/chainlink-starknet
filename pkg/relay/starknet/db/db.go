@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
+	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	// "github.com/smartcontractkit/chainlink/core/chains"
 )
 
@@ -11,7 +13,8 @@ import (
 // var _ chains.Config = (*ChainCfg)(nil)
 
 type ChainCfg struct {
-	// chain configuration values in db
+	OCR2CachePollPeriod   *utils.Duration
+	OCR2CacheTTL          *utils.Duration
 }
 
 func (c *ChainCfg) Scan(value interface{}) error {

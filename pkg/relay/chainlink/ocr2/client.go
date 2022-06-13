@@ -44,7 +44,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
 func (c *Client) OCR2BillingDetails(ctx context.Context, address string) (bd BillingDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector: "billing",
+		Selector:        "billing",
 	}
 
 	res, err := c.starknetClient.CallContract(ctx, ops)
@@ -63,9 +63,9 @@ func (c *Client) OCR2BillingDetails(ctx context.Context, address string) (bd Bil
 func (c *Client) OCR2LatestConfigDetails(ctx context.Context, address string) (ccd ContractConfigDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector: "latest_config_details",
+		Selector:        "latest_config_details",
 	}
-	
+
 	res, err := c.starknetClient.CallContract(ctx, ops)
 	if err != nil {
 		return
