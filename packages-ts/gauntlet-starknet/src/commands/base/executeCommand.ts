@@ -1,4 +1,4 @@
-import { Result, WriteCommand } from '@chainlink/gauntlet-core'
+import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
 import { CompiledContract, Contract, Call } from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies, Env } from '../../dependencies'
@@ -6,7 +6,6 @@ import { IStarknetProvider, wrapResponse } from '../../provider'
 import { TransactionResponse } from '../../transaction'
 import { IStarknetWallet } from '../../wallet'
 import { makeCommandId, Validation, Input } from './command'
-import { BaseConfig } from '@chainlink/gauntlet-core'
 
 export interface ExecutionContext {
   id: string

@@ -31,10 +31,12 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
-    category: CATEGORIES.MULTISIG,
-    function: 'set_owners',
+    description: 'Set owners of the multisig account',
     examples: [`${CATEGORIES.MULTISIG}:set_owners --network=<NETWORK> --owners=[OWNERS_LIST]`],
   },
+  category: CATEGORIES.MULTISIG,
+  action: 'set_owners',
+  contractId: CATEGORIES.MULTISIG,
   makeUserInput,
   makeContractInput,
   validations: [validateOwners],
