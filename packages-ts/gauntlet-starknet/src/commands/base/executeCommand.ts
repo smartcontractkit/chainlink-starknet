@@ -64,178 +64,182 @@ export interface ExecuteCommandInstance<UI, CI> {
   afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 }
 
-export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (deps: Dependencies) => {
-  const command: CommandCtor<ExecuteCommandInstance<UI, CI>> = class ExecuteCommand
-    extends WriteCommand<TransactionResponse>
-    implements ExecuteCommandInstance<UI, CI> {
-    wallet: IStarknetWallet
-    provider: IStarknetProvider
-    contractAddress: string
-    account: string
-    executionContext: ExecutionContext
-    contract: CompiledContract
+export const makeExecuteCommand =
+  <UI, CI>(config: ExecuteCommandConfig<UI, CI>) =>
+  (deps: Dependencies) => {
+    const command: CommandCtor<ExecuteCommandInstance<UI, CI>> = class ExecuteCommand
+      extends WriteCommand<TransactionResponse>
+      implements ExecuteCommandInstance<UI, CI>
+    {
+      wallet: IStarknetWallet
+      provider: IStarknetProvider
+      contractAddress: string
+      account: string
+      executionContext: ExecutionContext
+      contract: CompiledContract
 
-    input: Input<UI, CI>
+      input: Input<UI, CI>
 
-    beforeExecute: () => Promise<void>
-    afterExecute: (response: Result<TransactionResponse>) => Promise<any>
+      beforeExecute: () => Promise<void>
+      afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 
-    static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
-    static category = config.ux.category
-    static examples = config.ux.examples
+      static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
+      static category = config.ux.category
+      static examples = config.ux.examples
 
-    static create = async (flags, args) => {
-      const c = new ExecuteCommand(flags, args)
+      static create = async (flags, args) => {
+        const c = new ExecuteCommand(flags, args)
 
-      const env = deps.makeEnv(flags)
+        const env = deps.makeEnv(flags)
 
-      c.provider = deps.makeProvider(env.providerUrl)
-      c.wallet = deps.makeWallet(env.pk, env.account)
-      c.contractAddress = args[0]
-      c.account = env.account
-      c.contract = config.loadContract()
+        c.provider = deps.makeProvider(env.providerUrl)
+        c.wallet = deps.makeWallet(env.pk, env.account)
+        c.contractAddress = args[0]
+        c.account = env.account
+        c.contract = config.loadContract()
 
-      c.executionContext = {
-        provider: c.provider,
-        wallet: c.wallet,
-        id: makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes),
-        contractAddress: c.contractAddress,
-        flags: flags,
-        contract: new Contract(c.contract.abi, c.contractAddress, c.provider.provider),
+        c.executionContext = {
+          provider: c.provider,
+          wallet: c.wallet,
+          id: makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes),
+          contractAddress: c.contractAddress,
+          flags: flags,
+          contract: new Contract(c.contract.abi, c.contractAddress, c.provider.provider),
+        }
+
+        c.input = await c.buildCommandInput(flags, args, env)
+
+        c.beforeExecute = config.hooks?.beforeExecute
+          ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
+          : c.defaultBeforeExecute(c.executionContext, c.input)
+
+        c.afterExecute = config.hooks?.afterExecute
+          ? config.hooks.afterExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
+          : c.defaultAfterExecute()
+
+        return c
       }
 
-      c.input = await c.buildCommandInput(flags, args, env)
-
-      c.beforeExecute = config.hooks?.beforeExecute
-        ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
-        : c.defaultBeforeExecute(c.executionContext, c.input)
-
-      c.afterExecute = config.hooks?.afterExecute
-        ? config.hooks.afterExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
-        : c.defaultAfterExecute()
-
-      return c
-    }
-
-    runValidations = async (validations: Validation<UI, ExecutionContext>[], input: UI) => {
-      const result = await Promise.all(validations.map((validation) => validation(input, this.executionContext)))
-      return result
-    }
-
-    defaultBeforeExecute = <UserInput, ContractInput>(
-      context: ExecutionContext,
-      input: Input<UserInput, ContractInput>,
-    ) => async () => {
-      deps.logger.loading(`Executing ${context.id} from contract ${context.contractAddress}`)
-      deps.logger.log('Contract Input Params:', input.contract)
-      await deps.prompt('Continue?')
-    }
-
-    defaultAfterExecute = () => async (response: Result<TransactionResponse>): Promise<any> => {
-      deps.logger.info(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
-    }
-
-    buildCommandInput = async (flags, args, env): Promise<Input<UI, CI>> => {
-      const userInput = await config.makeUserInput(flags, args, env)
-
-      // Validation
-      if (config.validations.length > 0) {
-        await this.runValidations(config.validations, userInput)
+      runValidations = async (validations: Validation<UI, ExecutionContext>[], input: UI) => {
+        const result = await Promise.all(validations.map((validation) => validation(input, this.executionContext)))
+        return result
       }
 
-      const contractInput = await config.makeContractInput(userInput, this.executionContext)
+      defaultBeforeExecute =
+        <UserInput, ContractInput>(context: ExecutionContext, input: Input<UserInput, ContractInput>) =>
+        async () => {
+          deps.logger.loading(`Executing ${context.id} from contract ${context.contractAddress}`)
+          deps.logger.log('Contract Input Params:', input.contract)
+          await deps.prompt('Continue?')
+        }
 
-      return {
-        user: userInput,
-        contract: contractInput,
-      }
-    }
+      defaultAfterExecute =
+        () =>
+        async (response: Result<TransactionResponse>): Promise<any> => {
+          deps.logger.info(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
+        }
 
-    simulate = () => true
+      buildCommandInput = async (flags, args, env): Promise<Input<UI, CI>> => {
+        const userInput = await config.makeUserInput(flags, args, env)
 
-    // TODO: This will be required for Multisig
-    makeMessage = async (): Promise<Call[]> => {
-      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = await contract.populate(
-        config.internalFunction || config.ux.function,
-        this.input.contract as any,
-      )
+        // Validation
+        if (config.validations.length > 0) {
+          await this.runValidations(config.validations, userInput)
+        }
 
-      return [invocation]
-    }
+        const contractInput = await config.makeContractInput(userInput, this.executionContext)
 
-    deployContract = async (): Promise<TransactionResponse> => {
-      deps.logger.info(`Deploying contract ${config.ux.category}`)
-      await deps.prompt('Continue?')
-      deps.logger.loading(`Sending transaction...`)
-
-      const tx = await this.provider.deployContract(this.contract, this.input.contract, false)
-      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
-      const response = await tx.wait()
-      if (!response.success) {
-        deps.logger.error(`Contract was not deployed: ${tx.errorMessage}`)
-        return tx
-      }
-      deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
-      return tx
-    }
-
-    executeWithSigner = async (): Promise<TransactionResponse> => {
-      const pubkey = await this.wallet.getPublicKey()
-      deps.logger.info(`Using wallet: ${pubkey}`)
-      const messages = await this.makeMessage()
-      await deps.prompt(`Continue?`)
-      deps.logger.loading(`Signing and sending transaction...`)
-      const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
-      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
-      const response = await tx.wait()
-      if (!response.success) {
-        deps.logger.error(`Tx was not successful: ${tx.errorMessage}`)
-        return tx
-      }
-      deps.logger.success(`Tx executed at ${tx.hash}`)
-      return tx
-    }
-
-    executeWithoutSigner = async (): Promise<TransactionResponse> => {
-      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      await deps.prompt(`Continue?`)
-      deps.logger.loading(`Sending transaction...`)
-      const tx = await contract[config.internalFunction || config.ux.function](...(this.input.contract as any))
-      const response = wrapResponse(this.provider, tx, this.contractAddress)
-      deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
-      await response.wait()
-      return response
-    }
-
-    execute = async () => {
-      let tx: TransactionResponse
-
-      await this.beforeExecute()
-
-      if (config.ux.function === 'deploy') {
-        tx = await this.deployContract()
-      } else {
-        if (this.flags.noWallet) {
-          tx = await this.executeWithoutSigner()
-        } else {
-          tx = await this.executeWithSigner()
+        return {
+          user: userInput,
+          contract: contractInput,
         }
       }
 
-      let result = {
-        responses: [
-          {
-            tx,
-            contract: tx.address,
-          },
-        ],
+      simulate = () => true
+
+      // TODO: This will be required for Multisig
+      makeMessage = async (): Promise<Call[]> => {
+        const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
+        const invocation = await contract.populate(
+          config.internalFunction || config.ux.function,
+          this.input.contract as any,
+        )
+
+        return [invocation]
       }
-      const data = await this.afterExecute(result)
 
-      return !!data ? { ...result, data: { ...data } } : result
+      deployContract = async (): Promise<TransactionResponse> => {
+        deps.logger.info(`Deploying contract ${config.ux.category}`)
+        await deps.prompt('Continue?')
+        deps.logger.loading(`Sending transaction...`)
+
+        const tx = await this.provider.deployContract(this.contract, this.input.contract, false)
+        deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+        const response = await tx.wait()
+        if (!response.success) {
+          deps.logger.error(`Contract was not deployed: ${tx.errorMessage}`)
+          return tx
+        }
+        deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
+        return tx
+      }
+
+      executeWithSigner = async (): Promise<TransactionResponse> => {
+        const pubkey = await this.wallet.getPublicKey()
+        deps.logger.info(`Using wallet: ${pubkey}`)
+        const messages = await this.makeMessage()
+        await deps.prompt(`Continue?`)
+        deps.logger.loading(`Signing and sending transaction...`)
+        const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+        deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+        const response = await tx.wait()
+        if (!response.success) {
+          deps.logger.error(`Tx was not successful: ${tx.errorMessage}`)
+          return tx
+        }
+        deps.logger.success(`Tx executed at ${tx.hash}`)
+        return tx
+      }
+
+      executeWithoutSigner = async (): Promise<TransactionResponse> => {
+        const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
+        await deps.prompt(`Continue?`)
+        deps.logger.loading(`Sending transaction...`)
+        const tx = await contract[config.internalFunction || config.ux.function](...(this.input.contract as any))
+        const response = wrapResponse(this.provider, tx, this.contractAddress)
+        deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
+        await response.wait()
+        return response
+      }
+
+      execute = async () => {
+        let tx: TransactionResponse
+
+        await this.beforeExecute()
+
+        if (config.ux.function === 'deploy') {
+          tx = await this.deployContract()
+        } else {
+          if (this.flags.noWallet) {
+            tx = await this.executeWithoutSigner()
+          } else {
+            tx = await this.executeWithSigner()
+          }
+        }
+
+        let result = {
+          responses: [
+            {
+              tx,
+              contract: tx.address,
+            },
+          ],
+        }
+        const data = await this.afterExecute(result)
+
+        return !!data ? { ...result, data: { ...data } } : result
+      }
     }
-  }
 
-  return command
-}
+    return command
+  }
