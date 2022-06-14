@@ -1,7 +1,0 @@
-{
-    "name": "@chainlink/starknet-relayer",
-    "version": "0.0.1",
-    "license": "MIT",
-    "dependencies": {},
-    "devDependencies": {}
-}

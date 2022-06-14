@@ -13,8 +13,13 @@ import (
 // var _ chains.Config = (*ChainCfg)(nil)
 
 type ChainCfg struct {
+<<<<<<< HEAD
 	OCR2CachePollPeriod *utils.Duration
 	OCR2CacheTTL        *utils.Duration
+=======
+	OCR2CachePollPeriod   *utils.Duration
+	OCR2CacheTTL          *utils.Duration
+>>>>>>> af017e4 (Revert /relayer subdirectory)
 }
 
 func (c *ChainCfg) Scan(value interface{}) error {

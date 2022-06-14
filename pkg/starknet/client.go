@@ -1,16 +1,21 @@
 package starknet
 
 import (
+<<<<<<< HEAD
 	"context"
 	"github.com/pkg/errors"
 
 	caigogw "github.com/dontpanicdao/caigo/gateway"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+=======
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/ocr2"
+>>>>>>> af017e4 (Revert /relayer subdirectory)
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
 type Reader interface {
+<<<<<<< HEAD
 	ChainID(context.Context) (string, error)
 	LatestBlockHeight(context.Context) (uint64, error)
 	BlockByNumber(context.Context, uint64) (*caigogw.Block, error)
@@ -19,6 +24,14 @@ type Reader interface {
 }
 
 type Writer interface {
+=======
+	ocr2.Reader
+	// RPC read interface
+}
+
+type Writer interface {
+	// RPC write interface
+>>>>>>> af017e4 (Revert /relayer subdirectory)
 }
 
 type ReaderWriter interface {
@@ -26,6 +39,7 @@ type ReaderWriter interface {
 	Writer
 }
 
+<<<<<<< HEAD
 var _ ReaderWriter = (*Client)(nil)
 
 type Client struct {
@@ -83,3 +97,20 @@ func (c *Client) BlockByNumber(ctx context.Context, blockNum uint64) (block *cai
 
 	return block, nil
 }
+=======
+// verify Client implements ReaderWriter
+var _ ReaderWriter = (*Client)(nil)
+
+type Client struct {
+	rpc  *interface{} // todo: replace with RPC client
+	lggr logger.Logger
+}
+
+func NewClient(endpoint string, lggr logger.Logger) (*Client, error) {
+	var rpc interface{}
+	return &Client{
+		rpc:  &rpc,
+		lggr: lggr,
+	}, nil
+}
+>>>>>>> af017e4 (Revert /relayer subdirectory)
