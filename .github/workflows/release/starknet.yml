@@ -20,4 +20,5 @@ jobs:
       - name: Release Code
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: relayer/v${{env.STARKNET}}
+          tag_name: relayer/v${{ env.STARKNET }}
+          token: ${{ secrets.GITHUB_TOKEN }}
