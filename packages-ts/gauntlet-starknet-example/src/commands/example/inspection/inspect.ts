@@ -7,24 +7,22 @@ type QueryResult = {
   balance: string
 }
 
-const makeComparisionData =
-  (provider: IStarknetProvider) =>
-  async (
-    results: any[],
-    input: null,
-    contractAddress: string,
-  ): Promise<{
-    toCompare: null
-    result: QueryResult
-  }> => {
-    const [balance] = results
-    return {
-      toCompare: null,
-      result: {
-        balance: new BN(balance.res).toString(),
-      },
-    }
+const makeComparisionData = (provider: IStarknetProvider) => async (
+  results: any[],
+  input: null,
+  contractAddress: string,
+): Promise<{
+  toCompare: null
+  result: QueryResult
+}> => {
+  const [balance] = results
+  return {
+    toCompare: null,
+    result: {
+      balance: new BN(balance.res).toString(),
+    },
   }
+}
 
 const commandConfig: InspectCommandConfig<null, null, null, QueryResult> = {
   ux: {

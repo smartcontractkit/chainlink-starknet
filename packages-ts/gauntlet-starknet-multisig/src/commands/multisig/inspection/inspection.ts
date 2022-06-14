@@ -8,25 +8,23 @@ type QueryResult = {
   threshold: number
 }
 
-const makeComparisionData =
-  (provider: IStarknetProvider) =>
-  async (
-    results: any[],
-    input: null,
-    contractAddress: string,
-  ): Promise<{
-    toCompare: null
-    result: QueryResult
-  }> => {
-    const [owners, threshold] = results
-    return {
-      toCompare: null,
-      result: {
-        owners: owners.owners.map((o) => toHex(o)),
-        threshold: toBN(threshold.confirmations_required).toNumber(),
-      },
-    }
+const makeComparisionData = (provider: IStarknetProvider) => async (
+  results: any[],
+  input: null,
+  contractAddress: string,
+): Promise<{
+  toCompare: null
+  result: QueryResult
+}> => {
+  const [owners, threshold] = results
+  return {
+    toCompare: null,
+    result: {
+      owners: owners.owners.map((o) => toHex(o)),
+      threshold: toBN(threshold.confirmations_required).toNumber(),
+    },
   }
+}
 
 const commandConfig: InspectCommandConfig<null, null, null, QueryResult> = {
   ux: {
