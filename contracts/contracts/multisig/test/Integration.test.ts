@@ -5,7 +5,6 @@ import {
     StarknetContractFactory,
     Account,
 } from "hardhat/types/runtime";
-import { number, stark } from "starknet";
 import { getSelectorFromName } from "starknet/dist/utils/hash";
 
 describe("Multisig integration tests", function () {
