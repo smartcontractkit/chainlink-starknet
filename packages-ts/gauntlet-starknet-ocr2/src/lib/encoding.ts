@@ -4,7 +4,7 @@ import { BN } from '@chainlink/gauntlet-core/dist/utils'
 const CHUNK_SIZE = 31
 
 export function bytesToFelts(data: Uint8Array): BN[] {
-  let felts = []
+  let felts: BN[] = []
 
   // prefix with len
   let len = data.byteLength
