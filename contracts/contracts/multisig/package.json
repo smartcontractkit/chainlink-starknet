@@ -1,0 +1,30 @@
+{
+  "name": "starknet_multisig",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Equilibrium",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "compile": "npx hardhat starknet-compile contracts/multisig",
+    "test": "npx hardhat test"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@chainlink-dev/starknet-multisig": "^0.0.1",
+    "@shardlabs/starknet-hardhat-plugin": "0.5.5",
+    "@types/chai": "^4.3.1",
+    "@types/elliptic": "^6.4.14",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.10",
+    "chai": "^4.3.4",
+    "ethers": "^5.6.8",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.7.2"
+  },
+  "dependencies": {
+    "@toruslabs/starkware-crypto": "^1.0.0",
+    "hardhat": "2.9.6",
+    "starknet": "^3.9.0"
+  }
+}
