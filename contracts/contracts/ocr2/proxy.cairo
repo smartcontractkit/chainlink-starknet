@@ -99,7 +99,8 @@ func latest_round_data{
     let (phase: Phase) = current_phase_.read()
     let (round: Round) = IAggregator.latest_round_data(contract_address=phase.aggregator)
 
-    # TODO: add phase_id to round_id
+    # Add phase_id to the high bits of round_id
+    round.id = round.id + phase.id * SHIFT
     return (round)
 end
 
@@ -113,7 +114,9 @@ func round_data{
     let (address) = phases_.read(phase)
     assert_not_zero(address)
 
-    # TODO: mix in phase_id into id
+    # Add phase_id to the high bits of round_id
+    round.id = round.id + phase.id * SHIFT
+
     let (round: Round) = IAggregator.round_data(contract_address=address, round_id=round_id)
     return (round)
 end
@@ -129,7 +132,6 @@ func proposed_latest_round_data{
     # alloc_locals
     let (aggregator) = proposed_aggregator_.read()
     let (round: Round) = IAggregator.latest_round_data(contract_address=aggregator)
-    # TODO: add phase_id to round_id
     return (round)
 end
 
