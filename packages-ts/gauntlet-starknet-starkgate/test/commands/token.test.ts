@@ -1,13 +1,12 @@
-import { startNetwork, IntegratedDevnet, makeProvider } from '@chainlink/gauntlet-starknet'
+// TODO: Import from package
 import deployOZCommand from '../../../gauntlet-starknet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/token/deploy'
-import mintCommand from '../../src/commands/token/mint'
-import transferCommand from '../../src/commands/token/transfer'
-import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/gauntlet-starknet-example/test/utils'
-import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
-import { Contract } from 'starknet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { compressProgram } from 'starknet/dist/utils/stark'
+import {
+  registerExecuteCommand,
+  TIMEOUT,
+  startNetwork,
+  IntegratedDevnet,
+} from '@chainlink/gauntlet-starknet/test/utils'
 
 describe('Token Contract', () => {
   let network: IntegratedDevnet

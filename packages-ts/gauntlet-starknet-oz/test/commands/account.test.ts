@@ -1,6 +1,12 @@
-import { startNetwork, IntegratedDevnet, makeProvider } from '@chainlink/gauntlet-starknet'
+import { makeProvider } from '@chainlink/gauntlet-starknet'
 import deployCommand from '../../src/commands/account/deploy'
-import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/gauntlet-starknet-example/test/utils'
+import {
+  registerExecuteCommand,
+  TIMEOUT,
+  LOCAL_URL,
+  startNetwork,
+  IntegratedDevnet,
+} from '@chainlink/gauntlet-starknet/test/utils'
 import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
