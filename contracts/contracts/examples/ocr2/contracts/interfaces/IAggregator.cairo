@@ -12,4 +12,7 @@ end
 namespace IAggregator:
     func latest_round_data() -> (round: Round):
     end
+    
+    func decimals() -> (decimals: felt):
+    end
 end
