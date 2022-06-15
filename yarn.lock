@@ -312,10 +312,27 @@
   resolved "https://registry.yarnpkg.com/@chainlink-dev/starknet-multisig/-/starknet-multisig-0.0.1.tgz#dfdb593b147358e3ac97baa27935a38a92bb164d"
   integrity sha512-Rg9b/hxLR3GSJEkQAkm/rWKtDk5ZqzuWLbIpJv4tH4JMoc9mwl93fJ54fFPn7g/F1jrkqWGK0DzHD4Q175ZgZQ==
 
-"@chainlink/gauntlet-core@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-core/-/gauntlet-core-0.3.0.tgz#58822788deb027a28bfa9b224cc8486270dae576"
-  integrity sha512-h89rRzJcGdHIDU8Ey/UyKSKM+/YpgicxrcAJRhI6bcNe6eVvgCIZFFD8LklOeMssbYFRbZXe3XuMBWyXwstWKA==
+"@chainlink/gauntlet-contracts-example@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-contracts-example/-/gauntlet-contracts-example-0.1.1.tgz#bf7827460dcb404ba3683245cec1df61ee5ee5c5"
+  integrity sha512-7qAg0504cQYJIiQY3QxWW/wvfAJzGokIk6qpn94Em3fOYpPFYJ+WH665B+lxwtjZLUef6DyK04Tiu55amPpCWQ==
+  dependencies:
+    "@chainlink/gauntlet-core" "*"
+
+"@chainlink/gauntlet-contracts-ocr2@0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-contracts-ocr2/-/gauntlet-contracts-ocr2-0.2.0.tgz#dd10d2b29f647691fc258c6f1ea74df6e209efaf"
+  integrity sha512-dvIVL0S6cpGJv5K7CeoK1vqLU9nRwOy1ppqrRye4MyQELsjMd0rqggip54Ww8KvEbtgByTRJUQc+YzqMIRf6vw==
+  dependencies:
+    "@chainlink/gauntlet-core" "*"
+    "@ethersproject/keccak256" "^5.5.0"
+    bn.js "^5.2.0"
+    protobufjs "^6.11.2"
+
+"@chainlink/gauntlet-core@*", "@chainlink/gauntlet-core@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-core/-/gauntlet-core-0.3.1.tgz#27badd597ef6a2db8cfdb56367b9ea5ca0866976"
+  integrity sha512-T/L3zswTw62r5oKpDkvg8xR8JhBNItGkfaoGL8h/B1+4HN4mRcl4L5iIY21CF53rHx9PootZoxUEKAorhBxOqA==
   dependencies:
     "@ethersproject/keccak256" "^5.5.0"
     axios "^0.24.0"
