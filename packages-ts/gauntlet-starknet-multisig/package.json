@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-multisig",
+  "name": "@chainlink/starknet-gauntlet-multisig",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet Multisig",
+  "description": "Starknet Gauntlet Multisig",
   "keywords": [
     "typescript",
     "cli"
@@ -27,7 +27,7 @@
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.0",
     "@chainlink-dev/starknet-multisig": "0.0.1",
-    "@chainlink/gauntlet-starknet": "*",
+    "@chainlink/starknet-gauntlet": "*",
     "starknet": "^3.11.0"
   }
 }

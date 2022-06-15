@@ -4,7 +4,7 @@ import {
   makeExecuteCommand,
   Validation,
   isValidAddress,
-} from '@chainlink/gauntlet-starknet'
+} from '@chainlink/starknet-gauntlet'
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
 import { CATEGORIES } from '../../lib/categories'

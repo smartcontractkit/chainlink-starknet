@@ -1,4 +1,4 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
+import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'

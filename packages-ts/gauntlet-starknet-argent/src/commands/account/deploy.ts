@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   makeExecuteCommand,
   Validation,
-} from '@chainlink/gauntlet-starknet'
+} from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { accountContractLoader } from '../../lib/contracts'
 

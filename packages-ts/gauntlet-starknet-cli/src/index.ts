@@ -1,16 +1,16 @@
-import { executeCommands as OCR2ExecuteCommands } from '@chainlink/gauntlet-starknet-ocr2'
+import { executeCommands as OCR2ExecuteCommands } from '@chainlink/starknet-gauntlet-ocr2'
 import {
   executeCommands as ExampleExecuteCommands,
   inspectionCommands as ExampleInspectionsCommands,
-} from '@chainlink/gauntlet-starknet-example'
-import { Commands as OZCommands } from '@chainlink/gauntlet-starknet-oz'
-import { Commands as StarkgateCommands } from '@chainlink/gauntlet-starknet-starkgate'
-import { Commands as ArgentCommands } from '@chainlink/gauntlet-starknet-argent'
+} from '@chainlink/starknet-gauntlet-example'
+import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
+import { Commands as StarkgateCommands } from '@chainlink/starknet-gauntlet-starkgate'
+import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
   executeCommands as MultisigExecuteCommands,
   inspectionCommands as MultisigInspectionCommands,
   wrapCommand as multisigWrapCommand,
-} from '@chainlink/gauntlet-starknet-multisig'
+} from '@chainlink/starknet-gauntlet-multisig'
 
 import { executeCLI } from '@chainlink/gauntlet-core'
 import { existsSync } from 'fs'
@@ -24,7 +24,7 @@ import {
   InspectCommandInstance,
   makeProvider,
   makeWallet,
-} from '@chainlink/gauntlet-starknet'
+} from '@chainlink/starknet-gauntlet'
 
 export const noopPrompt: typeof prompt = async () => {}
 

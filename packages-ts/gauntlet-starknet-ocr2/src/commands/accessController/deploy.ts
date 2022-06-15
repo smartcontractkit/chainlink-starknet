@@ -1,4 +1,4 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
+import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { accessControllerContractLoader } from '../../lib/contracts'
 

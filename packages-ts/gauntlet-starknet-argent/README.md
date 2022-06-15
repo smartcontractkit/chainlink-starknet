@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for Argent Contracts
+# Starknet Gauntlet Commands for Argent Contracts
 
 ## Account
 

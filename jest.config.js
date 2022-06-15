@@ -2,7 +2,7 @@ module.exports = {
   rootDir: '.',
   projects: [
     {
-      displayName: 'gauntlet-starknet',
+      displayName: 'starknet-gauntlet',
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/packages-ts/gauntlet-starknet/**/*.test.ts'],
@@ -13,7 +13,7 @@ module.exports = {
       },
     },
     {
-      displayName: 'gauntlet-starknet-example',
+      displayName: 'starknet-gauntlet-example',
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/packages-ts/gauntlet-starknet-example/**/*.test.ts'],
@@ -24,7 +24,7 @@ module.exports = {
       },
     },
     {
-      displayName: 'gauntlet-starknet-ocr2',
+      displayName: 'starknet-gauntlet-ocr2',
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/packages-ts/gauntlet-starknet-ocr2/**/*.test.ts'],
@@ -35,7 +35,7 @@ module.exports = {
       },
     },
     {
-      displayName: 'gauntlet-starknet-oz',
+      displayName: 'starknet-gauntlet-oz',
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/packages-ts/gauntlet-starknet-oz/**/*.test.ts'],
@@ -46,7 +46,7 @@ module.exports = {
       },
     },
     {
-      displayName: 'gauntlet-starknet-starkgate',
+      displayName: 'starknet-gauntlet-starkgate',
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/packages-ts/gauntlet-starknet-starkgate/**/*.test.ts'],
@@ -57,7 +57,7 @@ module.exports = {
       },
     },
     {
-      displayName: 'gauntlet-starknet-argent',
+      displayName: 'starknet-gauntlet-argent',
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/packages-ts/gauntlet-starknet-argent/**/*.test.ts'],

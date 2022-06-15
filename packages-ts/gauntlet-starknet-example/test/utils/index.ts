@@ -8,7 +8,7 @@ import {
   InspectCommandInstance,
   makeProvider,
   makeWallet,
-} from '@chainlink/gauntlet-starknet'
+} from '@chainlink/starknet-gauntlet'
 
 export const loadContract = (name: string): CompiledContract => {
   return json.parse(fs.readFileSync(`${__dirname}/../../contract_artifacts/abi/${name}.json`).toString('ascii'))

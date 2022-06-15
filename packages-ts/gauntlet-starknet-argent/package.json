@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-argent",
+  "name": "@chainlink/starknet-gauntlet-argent",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet Argent contracts",
+  "description": "Starknet Gauntlet Argent contracts",
   "keywords": [
     "typescript",
     "cli"
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.0",
-    "@chainlink/gauntlet-starknet": "*",
+    "@chainlink/starknet-gauntlet": "*",
     "starknet": "^3.11.0"
   }
 }

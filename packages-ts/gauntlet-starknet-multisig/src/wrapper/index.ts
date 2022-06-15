@@ -8,8 +8,8 @@ import {
   Input,
   IStarknetProvider,
   IStarknetWallet,
-} from '@chainlink/gauntlet-starknet'
-import { TransactionResponse } from '@chainlink/gauntlet-starknet/dist/transaction'
+} from '@chainlink/starknet-gauntlet'
+import { TransactionResponse } from '@chainlink/starknet-gauntlet/dist/transaction'
 import { Call, CompiledContract, Contract, addAddressPadding } from 'starknet'
 import { addHexPrefix } from 'starknet/dist/utils/encode'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'

@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-ocr2",
+  "name": "@chainlink/starknet-gauntlet-ocr2",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet OCR2",
+  "description": "Starknet Gauntlet OCR2",
   "keywords": [
     "typescript",
     "cli"
@@ -27,7 +27,7 @@
   "dependencies": {
     "@chainlink-dev/starknet-contracts-ocr2": "^0.0.1",
     "@chainlink/gauntlet-core": "0.3.0",
-    "@chainlink/gauntlet-starknet": "*",
+    "@chainlink/starknet-gauntlet": "*",
     "starknet": "^3.11.0"
   }
 }

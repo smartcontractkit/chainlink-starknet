@@ -1,13 +1,13 @@
-name: Gauntlet Starknet CLI Release
+name: Starknet Gauntlet CLI Release
 
 on:
   push:
     tags:
-      - "@chainlink/gauntlet-starknet-cli@[0-9]+.[0-9]+.[0-9]"
+      - "@chainlink/starknet-gauntlet-cli@[0-9]+.[0-9]+.[0-9]"
 
 jobs:
-  gauntlet-starknet-cli-release:
-    name: Gauntlet Starknet CLI Release
+  starknet-gauntlet-cli-release:
+    name: Starknet Gauntlet CLI Release
     runs-on: ubuntu-latest
     steps:
       # Checkout this repository
@@ -39,7 +39,7 @@ jobs:
         run: nix develop -c yarn bundle
       # Store gauntlet-cli version
       - name: Set Env Variables
-        run: echo "GAUNTLET_STARKNET_CLI=$(npm info @chainlink/gauntlet-starknet-cli version)" >> $GITHUB_ENV
+        run: echo "STARKNET_GAUNTLET_CLI=$(npm info @chainlink/starknet-gauntlet-cli version)" >> $GITHUB_ENV
       # Upload gauntlet binary to gauntlet-cli release
       - name: Upload Gauntlet Binary
         uses: svenstaro/upload-release-action@v2
@@ -48,5 +48,5 @@ jobs:
           file: bin/chainlink-starknet-*
           file_glob: true
           tag: |
-            @chainlink/gauntlet-starknet-cli@${{ env.GAUNTLET_STARKNET_CLI }}
+            @chainlink/starknet-gauntlet-cli@${{ env.STARKNET_GAUNTLET_CLI }}
           overwrite: false

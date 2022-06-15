@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for Starkgate Contracts
+# Starknet Gauntlet Commands for Starkgate Contracts
 
 ## ERC20
 

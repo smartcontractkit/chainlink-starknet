@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for Chainlink OCR2 Protocol
+# Starknet Gauntlet Commands for Chainlink OCR2 Protocol
 
 ## Set up
 

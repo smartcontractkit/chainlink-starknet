@@ -1,5 +1,5 @@
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { startNetwork, IntegratedDevnet, makeProvider } from '@chainlink/gauntlet-starknet'
+import { startNetwork, IntegratedDevnet, makeProvider } from '@chainlink/starknet-gauntlet'
 import { Contract } from 'starknet'
 import deployCommand from '../../src/commands/example/deploy'
 import increaseBalanceCommand from '../../src/commands/example/increaseBalance'

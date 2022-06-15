@@ -1,4 +1,4 @@
-import { InspectCommandConfig, IStarknetProvider, makeInspectionCommand } from '@chainlink/gauntlet-starknet'
+import { InspectCommandConfig, IStarknetProvider, makeInspectionCommand } from '@chainlink/starknet-gauntlet'
 import { toBN, toHex } from 'starknet/dist/utils/number'
 import { CATEGORIES } from '../../../lib/categories'
 import { contractLoader } from '../../../lib/contracts'

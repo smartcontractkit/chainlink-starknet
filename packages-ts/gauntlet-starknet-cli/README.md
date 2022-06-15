@@ -1,10 +1,10 @@
-# Gauntlet Starknet CLI
+# Starknet Gauntlet CLI
 
 This packages expose the commands to be used as a CLI of the following packages:
 
-- @chainlink/gauntlet-starknet-example
-- @chainlink/gauntlet-starknet-account
-- @chainlink/gauntlet-starknet-ocr2
+- @chainlink/starknet-gauntlet-example
+- @chainlink/starknet-gauntlet-account
+- @chainlink/starknet-gauntlet-ocr2
 
 ## Setup
 

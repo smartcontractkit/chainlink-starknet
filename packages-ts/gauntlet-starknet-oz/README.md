@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for the Open Zeppelin Contracts
+# Starknet Gauntlet Commands for the Open Zeppelin Contracts
 
 ## Account
 

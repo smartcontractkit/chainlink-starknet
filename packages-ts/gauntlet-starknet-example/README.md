@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for a Sample Contract
+# Starknet Gauntlet Commands for a Sample Contract
 
 This package contains some commands to serve as an example on how to use Gauntlet with Starknet. The contract can be found on the [Cairo Docs](https://www.cairo-lang.org/docs/hello_starknet/intro.html#your-first-contract)
 

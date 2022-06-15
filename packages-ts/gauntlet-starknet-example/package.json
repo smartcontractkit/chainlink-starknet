@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/gauntlet-starknet-example",
+  "name": "@chainlink/starknet-gauntlet-example",
   "version": "0.0.1",
-  "description": "Gauntlet Starknet Example",
+  "description": "Starknet Gauntlet Example",
   "keywords": [
     "typescript",
     "cli"
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.0",
-    "@chainlink/gauntlet-starknet": "*",
+    "@chainlink/starknet-gauntlet": "*",
     "starknet": "^3.11.0"
   }
 }

@@ -1,5 +1,5 @@
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { InspectCommandConfig, IStarknetProvider, makeInspectionCommand } from '@chainlink/gauntlet-starknet'
+import { InspectCommandConfig, IStarknetProvider, makeInspectionCommand } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../../lib/categories'
 import { tokenContractLoader } from '../../../lib/contracts'
 

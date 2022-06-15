@@ -6,7 +6,7 @@ import {
   makeProvider,
   Dependencies,
   Env,
-} from '@chainlink/gauntlet-starknet'
+} from '@chainlink/starknet-gauntlet'
 
 import Commands from './commands'
 

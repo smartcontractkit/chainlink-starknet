@@ -1,1 +1,1 @@
-# Gauntlet Starknet
+# Starknet Gauntlet

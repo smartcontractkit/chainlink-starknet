@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for Multisig Contract
+# Starknet Gauntlet Commands for Multisig Contract
 
 ## Multisig
 
@@ -63,7 +63,7 @@ Once approvals have reached the threshold, the proposal can be executed.
 yarn gauntlet <CATEGORY>:<FUNCTION>:multisig --network=<NETWORK> (...<INPUT NEEDED FOR COMMAND>) --multisigProposal=<PROPOSAL_ID> <CONTRACT_ADDRESS>
 ```
 
-If you are running these commands from the `gauntlet-starknet-cli`, you'll want to add to your environment the Multisig address:
+If you are running these commands from the `starknet-gauntlet-cli`, you'll want to add to your environment the Multisig address:
 
 ```bash
 # .env

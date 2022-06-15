@@ -5,7 +5,7 @@ import {
   makeWallet,
   makeProvider,
   Dependencies,
-} from '@chainlink/gauntlet-starknet'
+} from '@chainlink/starknet-gauntlet'
 
 import { executeCommands } from './commands'
 
