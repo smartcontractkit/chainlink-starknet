@@ -37,7 +37,7 @@ type contractCache struct {
 
 func NewContractCache(cfg starknet.Config, reader *contractReader, lggr logger.Logger) *contractCache {
 	return &contractCache{
-		cfg: cfg,
+		cfg:    cfg,
 		reader: reader,
 		lggr:   lggr,
 		stop:   make(chan struct{}),
