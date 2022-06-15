@@ -13,8 +13,8 @@ import (
 // var _ chains.Config = (*ChainCfg)(nil)
 
 type ChainCfg struct {
-	OCR2CachePollPeriod   *utils.Duration
-	OCR2CacheTTL          *utils.Duration
+	OCR2CachePollPeriod *utils.Duration
+	OCR2CacheTTL        *utils.Duration
 }
 
 func (c *ChainCfg) Scan(value interface{}) error {

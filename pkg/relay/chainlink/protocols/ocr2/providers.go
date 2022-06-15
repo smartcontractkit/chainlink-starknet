@@ -3,8 +3,8 @@ package ocr2
 import (
 	"context"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet"
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
