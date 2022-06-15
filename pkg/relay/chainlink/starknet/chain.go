@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet/db"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet/db"
 )
 
 type ChainSet interface {

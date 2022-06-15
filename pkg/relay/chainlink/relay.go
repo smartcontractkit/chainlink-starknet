@@ -1,12 +1,12 @@
-package relay
+package chainlink
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/protocols/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"

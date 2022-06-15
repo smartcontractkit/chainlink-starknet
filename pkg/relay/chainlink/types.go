@@ -1,4 +1,4 @@
-package relay
+package chainlink
 
 // [relayConfig] member of Chainlink's job spec v2 (OCR2 only currently)
 type RelayConfig struct {

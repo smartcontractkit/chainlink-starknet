@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
