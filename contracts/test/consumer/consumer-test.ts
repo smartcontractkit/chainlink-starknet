@@ -35,7 +35,7 @@ describe('ContractTests', function () {
       link: BigInt(token.address),
       min_answer: toFelt(minAnswer),
       max_answer: toFelt(maxAnswer),
-      billing_access_controller: 0, // TODO: billing AC
+      billing_access_controller: 0,
       decimals: 8,
       description: starknet.shortStringToBigInt('FOO/BAR'),
     })
