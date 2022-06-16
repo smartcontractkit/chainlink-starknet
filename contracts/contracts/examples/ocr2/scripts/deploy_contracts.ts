@@ -17,7 +17,7 @@ async function main() {
 
   const consumerDeploy = await defaultProvider.deployContract({
     contract: OCR2Artifact,
-    constructorCalldata: [mockDeploy.address],
+    constructorCalldata: [mockDeploy.address as string],
   })
 
   fs.appendFile(__dirname + '/.env', '\nCONSUMER=' + consumerDeploy.address, function (err) {
