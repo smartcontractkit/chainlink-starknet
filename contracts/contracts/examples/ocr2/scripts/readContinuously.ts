@@ -16,55 +16,29 @@ async function main() {
   const OCR2Artifact = loadContract(CONTRACT_NAME)
 
   consumer = new Contract(OCR2Artifact.abi, process.env.CONSUMER as string)
-  callFunction()
+  setInterval(callFunction, 30000)
 }
 
 async function callFunction() {
-  while (1) {
-    let transaction = await account.execute(
-      {
-        contractAddress: consumer.address,
-        entrypoint: 'storeLatestRound',
-        calldata: [],
-      },
-      [consumer.abi],
-      { maxFee: 30000000000000 },
-    )
-    console.log('Waiting for Tx to be Accepted on Starknet...storeLatestRound')
-    await defaultProvider.waitForTransaction(transaction.transaction_hash)
+  const latestRound = await account.callContract({
+    contractAddress: consumer.address,
+    entrypoint: 'readLatestRound',
+    calldata: [],
+  })
 
-    transaction = await account.execute(
-      {
-        contractAddress: consumer.address,
-        entrypoint: 'storeDecimals',
-        calldata: [],
-      },
-      [consumer.abi],
-      { maxFee: 30000000000000 },
-    )
-    console.log('Waiting for Tx to be Accepted on Starknet...storeDecimal')
-    await defaultProvider.waitForTransaction(transaction.transaction_hash)
-
-    const latestRound = await account.callContract({
-      contractAddress: consumer.address,
-      entrypoint: 'readStoredRound',
-      calldata: [],
-    })
-
-    const decimals = await account.callContract({
-      contractAddress: consumer.address,
-      entrypoint: 'readDecimals',
-      calldata: [],
-    })
-    printResult(latestRound, decimals)
-  }
+  const decimals = await account.callContract({
+    contractAddress: consumer.address,
+    entrypoint: 'readDecimals',
+    calldata: [],
+  })
+  printResult(latestRound, decimals)
 }
 
 function printResult(latestRound: CallContractResponse, decimals: CallContractResponse) {
-  console.log('answer= ', parseInt(latestRound.result[0], 16))
-  console.log('block_num= ', parseInt(latestRound.result[1], 16))
-  console.log('observation_timestamp= ', parseInt(latestRound.result[2], 16))
-  console.log('transmission_timestamp= ', parseInt(latestRound.result[3], 16))
+  console.log('\nanswer= ', parseInt(latestRound.result[1], 16))
+  console.log('block_num= ', parseInt(latestRound.result[2], 16))
+  console.log('observation_timestamp= ', parseInt(latestRound.result[3], 16))
+  console.log('transmission_timestamp= ', parseInt(latestRound.result[4], 16))
   console.log('decimals= ', parseInt(decimals.result[0], 16))
 }
 

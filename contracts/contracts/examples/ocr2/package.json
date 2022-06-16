@@ -1,6 +1,6 @@
 {
   "name": "@chainlink/starknet-ocr2-consumer",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@shardlabs/starknet-hardhat-plugin": "^0.5.5",
     "@types/chai": "^4.3.1",
