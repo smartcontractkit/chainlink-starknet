@@ -25,6 +25,7 @@ async function main() {
 }
 
 function printResult(latestRound: CallContractResponse) {
+  console.log('\nround_id= ', parseInt(latestRound.result[0], 16))
   console.log('answer= ', parseInt(latestRound.result[1], 16))
   console.log('block_num= ', parseInt(latestRound.result[2], 16))
   console.log('observation_timestamp= ', parseInt(latestRound.result[3], 16))
