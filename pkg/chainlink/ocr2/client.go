@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
