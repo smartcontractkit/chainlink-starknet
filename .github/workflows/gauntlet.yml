@@ -16,7 +16,10 @@ jobs:
         with:
           node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
       - name: Install
-        run: yarn install --frozen-lockfile
+        run: |
+          yarn config set registry https://registry.npmjs.org
+          rm yarn.lock
+          yarn
       - name: Build
         run: yarn build
       - name: Run Gauntlet
