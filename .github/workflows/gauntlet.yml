@@ -55,6 +55,19 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set Up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Set up virtual environment
+        run: |
+          pip install --upgrade pip
+          python3.7 -m venv cairo_venv
+          source cairo_venv/bin/activate
+          pip3 install ecdsa fastecdsa sympy
+          sudo apt install -y libgmp3-dev
+          pip3 install cairo-lang
+          
       - name: Setup Node ${{ steps.tool-versions.outputs.nodejs_version }}
         uses: actions/setup-node@v2
         with:
