@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/juno/pkg/rpc"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/test-go/testify/assert"
 	"github.com/test-go/testify/require"

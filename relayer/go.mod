@@ -1,4 +1,4 @@
-module github.com/smartcontractkit/chainlink-starknet
+module github.com/smartcontractkit/chainlink-starknet/relayer
 
 go 1.18
 

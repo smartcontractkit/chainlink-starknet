@@ -3,11 +3,12 @@ package ocr2
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"sync"
 	"time"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
+	"github.com/pkg/errors"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"

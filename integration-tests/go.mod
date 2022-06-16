@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
-	github.com/smartcontractkit/chainlink-starknet v0.0.0-00010101000000-000000000000
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-00010101000000-000000000000
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
 	github.com/smartcontractkit/helmenv v1.0.71
 )
@@ -192,4 +192,4 @@ require (
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/smartcontractkit/chainlink-starknet => ../../chainlink-starknet
+replace github.com/smartcontractkit/chainlink-starknet/relayer => ../../chainlink-starknet/relayer

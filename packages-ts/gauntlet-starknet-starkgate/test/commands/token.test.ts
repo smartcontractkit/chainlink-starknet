@@ -1,5 +1,5 @@
 import { startNetwork, IntegratedDevnet, makeProvider } from '@chainlink/starknet-gauntlet'
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
+import deployOZCommand from '../../../gauntlet-starknet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/token/deploy'
 import mintCommand from '../../src/commands/token/mint'
 import transferCommand from '../../src/commands/token/transfer'

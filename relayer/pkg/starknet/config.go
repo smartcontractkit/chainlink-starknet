@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/db"
 )
 
 var DefaultConfigSet = ConfigSet{

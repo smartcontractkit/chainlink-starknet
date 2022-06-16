@@ -4,7 +4,7 @@ import (
 	"context"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
