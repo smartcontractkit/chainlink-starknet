@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/protocols/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/relay/chainlink/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
