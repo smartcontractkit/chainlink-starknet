@@ -1,12 +1,7 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'
-
-type UserInput = {
-  observationPaymentGjuels: number
-  transmissionPaymentGjuels: number
-}
+import { SetBilling, SetBillingInput } from '@chainlink/gauntlet-contracts-ocr2'
 
 type ContractInput = [
   {
@@ -15,15 +10,7 @@ type ContractInput = [
   },
 ]
 
-const makeUserInput = async (flags, args): Promise<UserInput> => {
-  if (flags.input) return flags.input as UserInput
-  return {
-    observationPaymentGjuels: flags.observationPaymentGjuels,
-    transmissionPaymentGjuels: flags.transmissionPaymentGjuels,
-  }
-}
-
-const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
+const makeContractInput = async (input: SetBillingInput): Promise<ContractInput> => {
   return [
     {
       observation_payment_gjuels: new BN(input.observationPaymentGjuels).toNumber(),
@@ -32,39 +19,9 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   ]
 }
 
-const validateInput = async (input: UserInput): Promise<boolean> => {
-  let observationPayment: BN
-  let transmissionPayment: BN
-
-  try {
-    observationPayment = new BN(input.observationPaymentGjuels)
-    transmissionPayment = new BN(input.transmissionPaymentGjuels) // parse as integers
-  } catch {
-    throw new Error(
-      `observationPaymentGjuels=${input.observationPaymentGjuels} and ` +
-        `transmissionPaymentGjuels=${input.transmissionPaymentGjuels} must both be integers`,
-    )
-  }
-  if (observationPayment.isNeg() || transmissionPayment.isNeg()) {
-    throw new Error(
-      `observationPaymentGjuels=${input.observationPaymentGjuels} and ` +
-        `transmissionPaymentGjuels=${input.transmissionPaymentGjuels} cannot be negative`,
-    )
-  }
-  return true
-}
-
-const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  ux: {
-    category: CATEGORIES.OCR2,
-    function: 'set_billing',
-    examples: [
-      `${CATEGORIES.OCR2}:set_billing --network=<NETWORK> --observationPaymentGjuels=<AMOUNT> --transmissionPaymentGjuels=<AMOUNT> <CONTRACT_ADDRESS>`,
-    ],
-  },
-  makeUserInput,
-  makeContractInput,
-  validations: [validateInput],
+const commandConfig: ExecuteCommandConfig<SetBillingInput, ContractInput> = {
+  ...SetBilling,
+  makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
 }
 

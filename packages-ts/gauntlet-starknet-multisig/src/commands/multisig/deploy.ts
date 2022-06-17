@@ -56,9 +56,11 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CATEGORIES.MULTISIG,
+  category: CATEGORIES.MULTISIG,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.MULTISIG,
-    function: 'deploy',
+    description: 'Deploys Multisig Wallet',
     examples: [`${CATEGORIES.MULTISIG}:deploy --network=<NETWORK> --threshold=<MIN_APPROVALS> --owners=[OWNERS_LIST]`],
   },
   makeUserInput,
