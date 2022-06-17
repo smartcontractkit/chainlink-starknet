@@ -1,8 +1,9 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
+from starkware.cairo.common.math import split_felt, assert_not_zero
 
-from contracts.ocr2.interfaces.IAggregator import IAggregator
+from contracts.ocr2.interfaces.IAggregator import IAggregator, Round
 
 from contracts.ocr2.ownable import (
     Ownable_initializer,
@@ -100,7 +101,8 @@ func latest_round_data{
     let (round: Round) = IAggregator.latest_round_data(contract_address=phase.aggregator)
 
     # Add phase_id to the high bits of round_id
-    round.id = round.id + phase.id * SHIFT
+    let round_id = round.round_id + (phase.id * SHIFT)
+    round.round_id = round_id
     return (round)
 end
 
@@ -110,14 +112,14 @@ func round_data{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(round_id: felt) -> (round: Round):
-    let (phase, round_id) = split_felt(round_id)
-    let (address) = phases_.read(phase)
+    let (phase_id, round_id) = split_felt(round_id)
+    let (address) = phases_.read(phase_id)
     assert_not_zero(address)
 
-    # Add phase_id to the high bits of round_id
-    round.id = round.id + phase.id * SHIFT
-
     let (round: Round) = IAggregator.round_data(contract_address=address, round_id=round_id)
+    # Add phase_id to the high bits of round_id
+    let round_id = round.round_id + (phase_id * SHIFT)
+    round.round_id = round_id
     return (round)
 end
 
@@ -142,7 +144,7 @@ func proposed_round_data{
     range_check_ptr,
 }(round_id: felt) -> (round: Round):
     let (aggregator) = proposed_aggregator_.read()
-    let (round: Round) = IAggregator.round_data(contract_address=address, round_id=round_id)
+    let (round: Round) = IAggregator.round_data(contract_address=aggregator, round_id=round_id)
     return (round)
 end
 
