@@ -46,20 +46,26 @@ jobs:
       - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
         id: tool-versions
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v14
-        with:
-          install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
-          install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup Node ${{ steps.tool-versions.outputs.nodejs_version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
+
       - name: Install
-        run: nix develop -c yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
       - name: Test
-        run: nix develop -c yarn test
+        run: |
+          pip install --upgrade pip
+          python3.7 -m venv env
+          source env/bin/activate
+          echo "VIRTUAL ENV:" $VIRTUAL_ENV
+          pip3 install ecdsa fastecdsa sympy
+          sudo apt install -y libgmp3-dev
+          pip3 install cairo-lang
+          yarn test
