@@ -6,7 +6,7 @@ Chainlink-Starknet contains a number of projects, all individually versioned and
 
 - [@chainlink/starknet-relayer](/relayer/)
 - [@chainlink/starknet-gauntlet](/packages-ts/gauntlet-starknet/)
-- [@chainlink/starknet-gauntlet-cli](/packages-ts/gauntlet-starknet-cli//)
+- [@chainlink/starknet-gauntlet-cli](/packages-ts/gauntlet-starknet-cli/)
 - [@chainlink/starknet-gauntlet-ocr2](/packages-ts/gauntlet-starknet-ocr2/)
 - [@chainlink/starknet-gauntlet-oz](/packages-ts/gauntlet-starknet-oz/)
 - [@chainlink/starknet-gauntlet-argent](/packages-ts/gauntlet-starknet-argent/)
