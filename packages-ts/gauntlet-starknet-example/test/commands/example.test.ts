@@ -1,10 +1,18 @@
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { startNetwork, IntegratedDevnet, makeProvider } from '@chainlink/gauntlet-starknet'
+import { makeProvider } from '@chainlink/gauntlet-starknet'
 import { Contract } from 'starknet'
 import deployCommand from '../../src/commands/example/deploy'
 import increaseBalanceCommand from '../../src/commands/example/increaseBalance'
 import inspectionCommand from '../../src/commands/example/inspection/inspect'
-import { loadExampleContract, LOCAL_URL, registerExecuteCommand, TIMEOUT, registerInspectCommand } from '../utils'
+import {
+  LOCAL_URL,
+  registerExecuteCommand,
+  TIMEOUT,
+  registerInspectCommand,
+  startNetwork,
+  IntegratedDevnet,
+} from '@chainlink/gauntlet-starknet/test/utils'
+import { loadExampleContract } from '../utils'
 
 const getBalance = async (address: string) => {
   const contract = new Contract(loadExampleContract().abi, address, makeProvider(LOCAL_URL).provider)

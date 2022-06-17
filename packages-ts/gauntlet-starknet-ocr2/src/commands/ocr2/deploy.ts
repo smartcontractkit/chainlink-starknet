@@ -1,17 +1,11 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/gauntlet-starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { shortString } from 'starknet'
+import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
 
-type UserInput = {
+export interface UserInput extends DeployOCR2Input {
   owner: string
-  billingAccessController: string
-  linkToken: string
-  decimals: number
-  description: string
-  maxAnswer: number
-  minAnswer: number
 }
 
 type ContractInput = [
@@ -27,14 +21,9 @@ type ContractInput = [
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
   return {
+    ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
-    maxAnswer: flags.maxSubmissionValue,
-    minAnswer: flags.minSubmissionValue,
-    decimals: flags.decimals,
-    description: flags.name,
-    billingAccessController: flags.billingAccessController || env.billingAccessController,
-    linkToken: flags.link || env.link,
-  }
+  } as UserInput
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
@@ -50,16 +39,9 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  ux: {
-    category: CATEGORIES.OCR2,
-    function: 'deploy',
-    examples: [
-      `${CATEGORIES.OCR2}:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT>"`,
-    ],
-  },
-  makeUserInput,
-  makeContractInput,
-  validations: [],
+  ...DeployOCR2,
+  makeUserInput: makeUserInput,
+  makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
 }
 

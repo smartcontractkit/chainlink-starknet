@@ -36,12 +36,14 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
-    category: CATEGORIES.MULTISIG,
-    function: 'set_threshold',
+    description: 'Set threshold of the multisig account',
     examples: [
       `${CATEGORIES.MULTISIG}:set_threshold --network=<NETWORK> --threshold=<MIN_APPROVALS> <MULTISIG_ADDRESS>`,
     ],
   },
+  category: CATEGORIES.MULTISIG,
+  contractId: CATEGORIES.MULTISIG,
+  action: 'set_threshold',
   internalFunction: 'set_confirmations_required',
   makeUserInput,
   makeContractInput,

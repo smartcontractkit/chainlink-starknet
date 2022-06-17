@@ -10,7 +10,7 @@ import {
   makeExecuteCommand,
 } from '../../src/index'
 import { loadExampleContract, noopLogger, noopPrompt } from '../utils'
-import { IntegratedDevnet, startNetwork } from '../../src/utils/network'
+import { IntegratedDevnet, startNetwork } from '../utils/network'
 
 const TIMEOUT = 20000
 const LOCAL_URL = 'http://127.0.0.1:5050/'
@@ -54,9 +54,11 @@ describe('Execute Command', () => {
   }
 
   const simpleCommandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+    contractId: '',
+    category: 'example',
+    action: 'action',
     ux: {
-      category: 'example',
-      function: 'action',
+      description: '',
       examples: [],
     },
     makeUserInput,
@@ -67,7 +69,7 @@ describe('Execute Command', () => {
 
   const commandConfigWithSuffixes = {
     ...simpleCommandConfig,
-    ...{ ux: { category: 'example', function: 'action', suffixes: ['send', 'bob'], examples: [] } },
+    ...{ suffixes: ['send', 'bob'] },
   }
 
   const command = registerExecuteCommand(makeExecuteCommand(simpleCommandConfig))
@@ -105,9 +107,11 @@ describe('Execute with network', () => {
       }
 
       const deployCommandConfig: ExecuteCommandConfig<any, any> = {
+        contractId: '',
+        category: 'example',
+        action: 'deploy',
         ux: {
-          category: 'example',
-          function: 'deploy',
+          description: '',
           examples: [],
         },
         makeUserInput,
@@ -139,9 +143,11 @@ describe('Execute with network', () => {
       }
 
       const increaseCommandConfig: ExecuteCommandConfig<any, any> = {
+        contractId: '',
+        category: 'example',
+        action: 'increase_balance',
         ux: {
-          category: 'example',
-          function: 'increase_balance',
+          description: '',
           examples: [],
         },
         makeUserInput,
