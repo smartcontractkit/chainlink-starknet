@@ -52,11 +52,11 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 	}
 
 	c.ccLock.RLock()
-	isSameConfig := c.contractConfig.ConfigBlock == configBlock && c.contractConfig.Config.ConfigDigest == configDigest
+	isSame := c.contractConfig.ConfigBlock == configBlock && c.contractConfig.Config.ConfigDigest == configDigest
 	c.ccLock.RUnlock()
 
 	var newConfig types.ContractConfig
-	if !isSameConfig {
+	if !isSame {
 		newConfig, err = c.reader.LatestConfig(ctx, configBlock)
 		if err != nil {
 			return errors.Wrap(err, "couldn't fetch latest config")
@@ -66,7 +66,7 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
 	c.ccLastCheckedAt = time.Now()
-	if !isSameConfig {
+	if !isSame {
 		c.contractConfig = ContractConfig{
 			Config:      newConfig,
 			ConfigBlock: configBlock,
