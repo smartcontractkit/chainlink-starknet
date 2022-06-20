@@ -12,10 +12,11 @@ import (
 )
 
 type OCR2Reader interface {
-	OCR2LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
-	OCR2LatestConfig(context.Context, string, uint64) (ContractConfig, error)
-	OCR2BillingDetails(context.Context, string) (BillingDetails, error)
-	LatestBlockHeight(context.Context) (uint64, error)
+	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
+	LatestConfig(context.Context, string, uint64) (ContractConfig, error)
+	BillingDetails(context.Context, string) (BillingDetails, error)
+
+	BaseClient() *starknet.Client
 }
 
 var _ OCR2Reader = (*Client)(nil)
@@ -37,11 +38,11 @@ func NewClient(chainID string, lggr logger.Logger) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
-	return c.starknetClient.LatestBlockHeight(ctx)
+func (c *Client) BaseClient() *starknet.Client {
+	return c.starknetClient
 }
 
-func (c *Client) OCR2BillingDetails(ctx context.Context, address string) (bd BillingDetails, err error) {
+func (c *Client) BillingDetails(ctx context.Context, address string) (bd BillingDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "billing",
@@ -64,7 +65,7 @@ func (c *Client) OCR2BillingDetails(ctx context.Context, address string) (bd Bil
 	return
 }
 
-func (c *Client) OCR2LatestConfigDetails(ctx context.Context, address string) (ccd ContractConfigDetails, err error) {
+func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd ContractConfigDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "latest_config_details",
@@ -88,7 +89,7 @@ func (c *Client) OCR2LatestConfigDetails(ctx context.Context, address string) (c
 	return
 }
 
-func (c *Client) OCR2LatestConfig(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+func (c *Client) LatestConfig(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
 	block, err := c.starknetClient.BlockByNumber(ctx, blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
