@@ -33,7 +33,7 @@ func (c *contractReader) Notify() <-chan struct{} {
 }
 
 func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
-	resp, err := c.reader.OCR2LatestConfigDetails(ctx, c.address)
+	resp, err := c.reader.LatestConfigDetails(ctx, c.address)
 	if err != nil {
 		return changedInBlock, configDigest, errors.Wrap(err, "couldn't get latest config details")
 	}
@@ -45,7 +45,7 @@ func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBloc
 }
 
 func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
-	resp, err := c.reader.OCR2LatestConfig(ctx, c.address, changedInBlock)
+	resp, err := c.reader.LatestConfig(ctx, c.address, changedInBlock)
 	if err != nil {
 		return config, errors.Wrap(err, "couldn't get latest config")
 	}
@@ -56,7 +56,7 @@ func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64
 }
 
 func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
-	blockHeight, err = c.reader.LatestBlockHeight(ctx)
+	blockHeight, err = c.reader.BaseClient().LatestBlockHeight(ctx)
 	if err != nil {
 		return blockHeight, errors.Wrap(err, "couldn't get latest block height")
 	}
