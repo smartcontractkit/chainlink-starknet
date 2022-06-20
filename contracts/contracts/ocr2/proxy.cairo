@@ -102,8 +102,13 @@ func latest_round_data{
 
     # Add phase_id to the high bits of round_id
     let round_id = round.round_id + (phase.id * SHIFT)
-    round.round_id = round_id
-    return (round)
+    return (Round(
+        round_id=round_id,
+        answer=round.answer,
+        block_num=round.block_num,
+        observation_timestamp=round.observation_timestamp,
+        transmission_timestamp=round.transmission_timestamp,
+    ))
 end
 
 @view
@@ -119,8 +124,13 @@ func round_data{
     let (round: Round) = IAggregator.round_data(contract_address=address, round_id=round_id)
     # Add phase_id to the high bits of round_id
     let round_id = round.round_id + (phase_id * SHIFT)
-    round.round_id = round_id
-    return (round)
+    return (Round(
+        round_id=round_id,
+        answer=round.answer,
+        block_num=round.block_num,
+        observation_timestamp=round.observation_timestamp,
+        transmission_timestamp=round.transmission_timestamp,
+    ))
 end
 
 # These read from the proposed aggregator as a way to test the aggregator before making setting it live.
@@ -175,7 +185,7 @@ func description{
     range_check_ptr,
 }() -> (description: felt):
     let (phase: Phase) = current_phase_.read()
-    let (description) = IAggregator.description(contract_address=phase.address)
+    let (description) = IAggregator.description(contract_address=phase.aggregator)
     return (description)
 end
 
@@ -186,7 +196,7 @@ func decimals{
     range_check_ptr,
 }() -> (decimals: felt):
     let (phase: Phase) = current_phase_.read()
-    let (decimals) = IAggregator.decimals(contract_address=phase.address)
+    let (decimals) = IAggregator.decimals(contract_address=phase.aggregator)
     return (decimals)
 end
 
@@ -197,6 +207,6 @@ func type_and_version{
     range_check_ptr,
 }() -> (meta: felt):
     let (phase: Phase) = current_phase_.read()
-    let (meta) = IAggregator.type_and_version(contract_address=phase.address)
+    let (meta) = IAggregator.type_and_version(contract_address=phase.aggregator)
     return (meta)
 end
