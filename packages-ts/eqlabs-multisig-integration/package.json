@@ -1,10 +1,11 @@
 {
-  "name": "starknet_multisig",
+  "name": "@chainlink/starknet-integration-tests-eqlabs-multisig",
   "version": "1.0.0",
+  "description": "Multisig integration test",
   "main": "index.js",
-  "author": "Equilibrium",
-  "license": "MIT",
-  "private": false,
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "compile": "npx hardhat starknet-compile contracts/multisig",
     "test": "npx hardhat test"

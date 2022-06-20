@@ -6,6 +6,7 @@ import {
     Account,
 } from "hardhat/types/runtime";
 import { getSelectorFromName } from "starknet/dist/utils/hash";
+import { number } from "starknet";
 
 describe("Multisig integration tests", function () {
     this.timeout(300_000);
@@ -30,9 +31,8 @@ describe("Multisig integration tests", function () {
         expect(multisig).to.be.ok;
     })
 
-    it('quick multisig test', async () => {
+    it('should submit & confirm transaction', async () => {
         txIndex++;
-
         const selector = getSelectorFromName("get_owners");
         const payload = {
             to: multisig.address,
@@ -41,19 +41,18 @@ describe("Multisig integration tests", function () {
         }
 
         const res = await account.invoke(multisig, "submit_transaction", payload);
-
-        console.log(res);
         const txReciept = await starknet.getTransactionReceipt(res);
-        console.log(txReciept);
-        console.log(txReciept.l2_to_l1_messages, txReciept.l2_to_l1_messages.length);
-        console.log(await starknet.getTransaction(res));
+
+        expect(txReciept.events.length).to.equal(1);
+        expect(txReciept.events[0].data.length).to.equal(3);
+        expect(txReciept.events[0].data[1]).to.equal(number.toHex(number.toBN(txIndex, "hex")));
 
         await account.invoke(multisig, 'confirm_transaction', {
             tx_index: txIndex
         });
 
-        console.log(await account.invoke(multisig, 'execute_transaction', {
+        await account.invoke(multisig, 'execute_transaction', {
             tx_index: txIndex
-        }));
+        });
     })
 })
