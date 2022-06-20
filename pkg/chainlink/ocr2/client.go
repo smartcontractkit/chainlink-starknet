@@ -13,7 +13,7 @@ import (
 
 type OCR2Reader interface {
 	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
-	LatestConfig(context.Context, string, uint64) (ContractConfig, error)
+	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
 	BaseClient() *starknet.Client
@@ -89,7 +89,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 	return
 }
 
-func (c *Client) LatestConfig(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
 	block, err := c.starknetClient.BlockByNumber(ctx, blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")

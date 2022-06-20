@@ -45,7 +45,7 @@ func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBloc
 }
 
 func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
-	resp, err := c.reader.LatestConfig(ctx, c.address, changedInBlock)
+	resp, err := c.reader.ConfigFromEventAt(ctx, c.address, changedInBlock)
 	if err != nil {
 		return config, errors.Wrap(err, "couldn't get latest config")
 	}
