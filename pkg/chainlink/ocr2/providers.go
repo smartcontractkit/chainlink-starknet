@@ -62,7 +62,7 @@ func (p *configProvider) Close() error {
 }
 
 func (p *configProvider) ContractConfigTracker() types.ContractConfigTracker {
-	return p.reader
+	return p.contractCache
 }
 
 func (p *configProvider) OffchainConfigDigester() types.OffchainConfigDigester {

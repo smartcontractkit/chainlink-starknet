@@ -20,10 +20,10 @@ type contractReader struct {
 	lggr    logger.Logger
 }
 
-func NewContractReader(address string, chainReader OCR2Reader, lggr logger.Logger) *contractReader {
+func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) *contractReader {
 	return &contractReader{
 		address: address,
-		reader:  chainReader,
+		reader:  reader,
 		lggr:    lggr,
 	}
 }
