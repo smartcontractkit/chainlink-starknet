@@ -1,7 +1,7 @@
 package ocr2
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"math/big"
 
 	"golang.org/x/exp/constraints"
@@ -95,7 +95,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	index += 1
 	digest, err := types.BytesToConfigDigest(eventData[index].Bytes())
 	if err != nil {
-		return types.ContractConfig{}, err
+		return types.ContractConfig{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
 	}
 
 	// config_count
@@ -141,7 +141,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	// todo: get rid of caigoToJuno workaround
 	offchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(offchainConfigFelts))
 	if err != nil {
-		return types.ContractConfig{}, err
+		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}
 
 	return types.ContractConfig{
