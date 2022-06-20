@@ -184,7 +184,6 @@ func constructor{
     end
     decimals_.write(decimals)
     description_.write(description)
-    # TODO: initialize vars to defaults
     return ()
 end
 
@@ -1051,7 +1050,8 @@ func withdraw_payment{
     end
 
     let (latest_round_id) = latest_aggregator_round_id_.read()
-    pay_oracle(transmitter, latest_round_id)
+    let (link_token) = link_token_.read()
+    pay_oracle(transmitter, latest_round_id, link_token)
     return ()
 end
 
@@ -1081,7 +1081,7 @@ func pay_oracle{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(transmitter: felt, latest_round_id: felt):
+}(transmitter: felt, latest_round_id: felt, link_token: felt):
     alloc_locals
 
     let (oracle: Oracle) = transmitters_.read(transmitter)
@@ -1090,7 +1090,7 @@ func pay_oracle{
         return ()
     end
 
-    # TODO: reuse oracle passed into owed_payment
+    # TODO: reuse oracle passed into owed_payment to avoid reading twice
     let (amount_: felt) = owed_payment(transmitter)
     assert_nn(amount_)
 
@@ -1101,8 +1101,6 @@ func pay_oracle{
 
     let (amount: Uint256) = felt_to_uint256(amount_)
     let (payee) = payees_.read(transmitter)
-
-    let (link_token) = link_token_.read()
 
     IERC20.transfer(
         contract_address=link_token,
@@ -1130,7 +1128,9 @@ func pay_oracles{
     range_check_ptr,
 }():
     let (len) = oracles_len_.read()
-    pay_oracles_(len)
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (link_token) = link_token_.read()
+    pay_oracles_(len, latest_round_id, link_token)
     return ()
 end
 
@@ -1138,17 +1138,15 @@ func pay_oracles_{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(index: felt):
+}(index: felt, latest_round_id: felt, link_token: felt):
     if index == 0:
         return ()
     end
     
-    # TODO: share link_token between pay_oracle calls
     let (transmitter) = transmitters_list_.read(index)
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    pay_oracle(transmitter, latest_round_id)
+    pay_oracle(transmitter, latest_round_id, link_token)
 
-    return pay_oracles_(index - 1)
+    return pay_oracles_(index - 1, latest_round_id, link_token)
 end
 
 @external
