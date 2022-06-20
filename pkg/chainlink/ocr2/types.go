@@ -1,7 +1,7 @@
 package ocr2
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"math/big"
 	"time"
 
@@ -26,7 +26,7 @@ func NewContractConfigDetails(blockFelt string, digestFelt string) (ccd Contract
 
 	digestBytes, err := types.BytesToConfigDigest(digest.Bytes())
 	if err != nil {
-		return
+		return ccd, errors.Wrap(err, "couldn't decode config digest")
 	}
 
 	return ContractConfigDetails{

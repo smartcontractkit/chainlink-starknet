@@ -49,7 +49,7 @@ func (c *Client) OCR2BillingDetails(ctx context.Context, address string) (bd Bil
 
 	res, err := c.starknetClient.CallContract(ctx, ops)
 	if err != nil {
-		return
+		return bd, errors.Wrap(err, "couldn't call the contract")
 	}
 
 	if len(res) != 2 {
@@ -57,6 +57,10 @@ func (c *Client) OCR2BillingDetails(ctx context.Context, address string) (bd Bil
 	}
 
 	bd, err = NewBillingDetails(res[0], res[1])
+	if err != nil {
+		return bd, errors.Wrap(err, "couldn't initialize billing details")
+	}
+
 	return
 }
 
@@ -68,7 +72,7 @@ func (c *Client) OCR2LatestConfigDetails(ctx context.Context, address string) (c
 
 	res, err := c.starknetClient.CallContract(ctx, ops)
 	if err != nil {
-		return
+		return ccd, errors.Wrap(err, "couldn't call the contract")
 	}
 
 	// [0] - config count, [1] - block number, [2] - config digest
@@ -77,13 +81,17 @@ func (c *Client) OCR2LatestConfigDetails(ctx context.Context, address string) (c
 	}
 
 	ccd, err = NewContractConfigDetails(res[1], res[2])
+	if err != nil {
+		return ccd, errors.Wrap(err, "couldn't initialize config details")
+	}
+
 	return
 }
 
 func (c *Client) OCR2LatestConfig(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
 	block, err := c.starknetClient.BlockByNumber(ctx, blockNum)
 	if err != nil {
-		return
+		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}
 
 	for _, txReceipt := range block.TransactionReceipts {

@@ -58,17 +58,17 @@ func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 
 	err := json.Unmarshal(args.RelayConfig, &relayConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't unmarshal RelayConfig")
 	}
 
 	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't initilize Chain")
 	}
 
 	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, chain.Config(), r.lggr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "coudln't initialize ConfigProvider")
 	}
 
 	return configProvider, nil
@@ -79,19 +79,19 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 
 	err := json.Unmarshal(rargs.RelayConfig, &relayConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't unmarshal RelayConfig")
 	}
 
 	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't initilize Chain")
 	}
 
 	// todo: use pargs for median provider
 
 	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, chain.Config(), r.lggr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't initilize MedianProvider")
 	}
 
 	return medianProvider, nil
