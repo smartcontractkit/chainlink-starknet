@@ -20,15 +20,15 @@ func TestOCR2Client(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("get billing details", func(t *testing.T) {
-		_, err := client.OCR2BillingDetails(context.Background(), ocr2ContractAddress)
+		_, err := client.BillingDetails(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 	})
 
 	t.Run("get latest config details", func(t *testing.T) {
-		details, err := client.OCR2LatestConfigDetails(context.Background(), ocr2ContractAddress)
+		details, err := client.LatestConfigDetails(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 
-		_, err = client.OCR2LatestConfig(context.Background(), ocr2ContractAddress, details.Block)
+		_, err = client.ConfigFromEventAt(context.Background(), ocr2ContractAddress, details.Block)
 		assert.NoError(t, err)
 	})
 }
