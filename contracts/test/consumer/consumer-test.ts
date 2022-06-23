@@ -1,9 +1,8 @@
 import { starknet } from 'hardhat'
-import { StarknetContract, ArgentAccount } from 'hardhat/types'
-import { constants, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
+import { StarknetContract } from 'hardhat/types'
+import { constants, encode, number } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
-import dotenv from 'dotenv'
-
+$
 const OCR2_ADDRESS = 42
 const ACCOUNT_ADD = '0x046057141187f7ce7f6477c5f6df0f65c28a4a62dfb4504bac72d164f9f6af73'
 

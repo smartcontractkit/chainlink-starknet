@@ -1,6 +1,6 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
-import { StarknetContract, ArgentAccount, Account } from 'hardhat/types/runtime'
+import { StarknetContract, Account } from 'hardhat/types/runtime'
 
 const DECIMALS = 18
 
@@ -13,7 +13,7 @@ describe('ContractTestsMock', function () {
   before(async () => {
     account = await starknet.deployAccount('OpenZeppelin')
 
-    let MockFactory = await starknet.getContractFactory('Mock_OCR2.cairo')
+    let MockFactory = await starknet.getContractFactory('Mock_Aggregator.cairo')
     MockContract = await MockFactory.deploy({ decimals: DECIMALS })
     console.log('MockContract: ', MockContract.address)
 
