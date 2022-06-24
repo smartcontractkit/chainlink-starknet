@@ -13,10 +13,10 @@ describe('ContractTestsMock', function () {
   before(async () => {
     account = await starknet.deployAccount('OpenZeppelin')
 
-    let MockFactory = await starknet.getContractFactory('examples/contracts/Mock_Aggregator.cairo')
+    let MockFactory = await starknet.getContractFactory('examples/contracts/Mock_Aggregator')
     MockContract = await MockFactory.deploy({ decimals: DECIMALS })
 
-    let ConsumerFactory = await starknet.getContractFactory('examples/contracts/OCR2_consumer.cairo')
+    let ConsumerFactory = await starknet.getContractFactory('examples/contracts/OCR2_consumer')
     ConsumerContract = await ConsumerFactory.deploy({ address: MockContract.address })
   })
 
