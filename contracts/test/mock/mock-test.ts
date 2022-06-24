@@ -13,13 +13,11 @@ describe('ContractTestsMock', function () {
   before(async () => {
     account = await starknet.deployAccount('OpenZeppelin')
 
-    let MockFactory = await starknet.getContractFactory('Mock_Aggregator.cairo')
+    let MockFactory = await starknet.getContractFactory('examples/contracts/Mock_Aggregator.cairo')
     MockContract = await MockFactory.deploy({ decimals: DECIMALS })
-    console.log('MockContract: ', MockContract.address)
 
-    let ConsumerFactory = await starknet.getContractFactory('OCR2_consumer.cairo')
+    let ConsumerFactory = await starknet.getContractFactory('examples/contracts/OCR2_consumer.cairo')
     ConsumerContract = await ConsumerFactory.deploy({ address: MockContract.address })
-    console.log('ConsumerContract: ', ConsumerContract.address)
   })
 
   it('should set and read latest round data successfully', async () => {
@@ -33,8 +31,6 @@ describe('ContractTestsMock', function () {
       })
 
       const { round: round } = await ConsumerContract.call('readLatestRound', {})
-      console.log(round)
-      console.log(round.answer)
       assert.equal(round.answer, 12)
       assert.equal(round.block_num, 1)
       assert.equal(round.observation_timestamp, 14325)
