@@ -84,7 +84,7 @@ describe('OCR2 Contract', () => {
 
     const report = await command.execute()
     accessController = report.responses[0].contract
-  }, 20000)
+  }, TIMEOUT)
 
   it(
     'Deployment',
