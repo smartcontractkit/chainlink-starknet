@@ -33,6 +33,15 @@ end
 const SHIFT = 2 ** 128
 const MAX_ID = SHIFT - 1
 
+
+@event
+func aggregator_proposed(current: felt, proposed: felt):
+end
+
+@event
+func aggregator_confirmed(previous: felt, latest: felt):
+end
+
 @constructor
 func constructor{
     syscall_ptr : felt*,
@@ -73,6 +82,10 @@ func propose_aggregator{
     Ownable_only_owner()
 
     proposed_aggregator_.write(address)
+
+    # emit event
+    let (phase: Phase) = current_phase_.read()
+    aggregator_proposed.emit(current=phase.aggregator, proposed=address)
     return ()
 end
 
@@ -86,10 +99,16 @@ func confirm_aggregator{
 ):
     Ownable_only_owner()
 
+    let (phase: Phase) = current_phase_.read()
+    let previous = phase.aggregator
+
     let (proposed_aggregator) = proposed_aggregator_.read()
     assert proposed_aggregator = address
     proposed_aggregator_.write(0)
     set_aggregator(proposed_aggregator)
+
+    # emit event
+    aggregator_confirmed.emit(previous=previous, latest=address)
     return ()
 end
 
