@@ -8,7 +8,7 @@ require (
 	github.com/smartcontractkit/chainlink-relay v0.0.0-20220516224734-c4759cac049a
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
 	github.com/smartcontractkit/helmenv v1.0.71
-	github.com/smartcontractkit/libocr v0.0.0-20220414173908-cdfa6bef133a
+	github.com/smartcontractkit/libocr v0.0.0-20220623210256-b7ae1e1c66f6
 	github.com/test-go/testify v1.1.4
 )
 
