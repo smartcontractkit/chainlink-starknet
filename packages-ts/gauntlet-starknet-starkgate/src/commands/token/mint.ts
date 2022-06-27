@@ -2,7 +2,7 @@ import { BeforeExecute, ExecuteCommandConfig, makeExecuteCommand, Validation } f
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
 import { CATEGORIES } from '../../lib/categories'
-import { contractLoader } from '../../lib/contracts'
+import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   recipient: string
@@ -31,9 +31,11 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.TOKEN,
+  category: CATEGORIES.TOKEN,
+  action: 'mint',
   ux: {
-    category: CATEGORIES.TOKEN,
-    function: 'mint',
+    description: 'Mints a set amount of tokens from contract to recipient',
     examples: [
       `${CATEGORIES.TOKEN}:mint --network=<NETWORK> --link`,
       `${CATEGORIES.TOKEN}:mint --network=<NETWORK> --link`,

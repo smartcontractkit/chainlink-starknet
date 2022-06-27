@@ -8,7 +8,7 @@ import {
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
 import { CATEGORIES } from '../../lib/categories'
-import { contractLoader } from '../../lib/contracts'
+import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   recipient: string
@@ -45,9 +45,11 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.TOKEN,
+  category: CATEGORIES.TOKEN,
+  action: 'transfer',
   ux: {
-    category: CATEGORIES.TOKEN,
-    function: 'transfer',
+    description: 'Transfers a set amount of tokens from caller to recipient',
     examples: [
       `${CATEGORIES.TOKEN}:transfer --network=<NETWORK> --recipient=<RECIPIENT> --amount=<AMOUNT> <CONTRACT_ADDRESS>`,
     ],

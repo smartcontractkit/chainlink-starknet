@@ -25,7 +25,7 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "@chainlink/gauntlet-core": "0.3.0",
+    "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/starknet-gauntlet-oz": "*",
     "@chainlink/starknet-gauntlet-argent": "*",
     "@chainlink/starknet-gauntlet-example": "*",

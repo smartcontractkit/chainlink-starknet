@@ -7,7 +7,7 @@ import {
   Dependencies,
 } from '@chainlink/starknet-gauntlet'
 
-import { executeCommands } from './commands'
+import { executeCommands, inspectionCommands } from './commands'
 
 const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
@@ -33,5 +33,5 @@ const registerExecuteCommand = <UI, CI>(
 
 const registeredCommands = executeCommands.map(registerExecuteCommand)
 
-export { executeCommands }
+export { executeCommands, inspectionCommands }
 export default [...registeredCommands]

@@ -7,7 +7,7 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader } from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
@@ -55,9 +55,11 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.ACCOUNT,
+  category: CATEGORIES.ACCOUNT,
+  action: 'initialize',
   ux: {
-    category: CATEGORIES.ACCOUNT,
-    function: 'initialize',
+    description: 'Initializes an Argent Account Contract (Generates a public/private key for account)',
     examples: [`${CATEGORIES.ACCOUNT}:initialize --network=<NETWORK> --publicKey=<ADDRESS> <CONTRACT_ADDRESS>`],
   },
   makeUserInput,

@@ -9,7 +9,7 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { shortString } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { contractLoader } from '../../lib/contracts'
+import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   name: string
@@ -56,9 +56,11 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.TOKEN,
+  category: CATEGORIES.TOKEN,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.TOKEN,
-    function: 'deploy',
+    description: 'Deploys an ERC20 Token contract',
     examples: [
       `${CATEGORIES.TOKEN}:deploy --network=<NETWORK> --link`,
       `${CATEGORIES.TOKEN}:deploy --network=<NETWORK> --link`,

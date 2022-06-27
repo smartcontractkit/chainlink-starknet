@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"math/big"
 	"time"
 
@@ -19,10 +20,10 @@ type contractReader struct {
 	lggr    logger.Logger
 }
 
-func NewContractReader(address string, chainReader OCR2Reader, lggr logger.Logger) *contractReader {
+func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) *contractReader {
 	return &contractReader{
 		address: address,
-		reader:  chainReader,
+		reader:  reader,
 		lggr:    lggr,
 	}
 }
@@ -32,9 +33,9 @@ func (c *contractReader) Notify() <-chan struct{} {
 }
 
 func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
-	resp, err := c.reader.OCR2LatestConfigDetails(ctx, c.address)
+	resp, err := c.reader.LatestConfigDetails(ctx, c.address)
 	if err != nil {
-		return
+		return changedInBlock, configDigest, errors.Wrap(err, "couldn't get latest config details")
 	}
 
 	changedInBlock = resp.Block
@@ -44,9 +45,9 @@ func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBloc
 }
 
 func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
-	resp, err := c.reader.OCR2LatestConfig(ctx, c.address, changedInBlock)
+	resp, err := c.reader.ConfigFromEventAt(ctx, c.address, changedInBlock)
 	if err != nil {
-		return
+		return config, errors.Wrap(err, "couldn't get latest config")
 	}
 
 	config = resp.Config
@@ -55,7 +56,11 @@ func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64
 }
 
 func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
-	blockHeight, err = c.reader.LatestBlockHeight(ctx)
+	blockHeight, err = c.reader.BaseClient().LatestBlockHeight(ctx)
+	if err != nil {
+		return blockHeight, errors.Wrap(err, "couldn't get latest block height")
+	}
+
 	return
 }
 

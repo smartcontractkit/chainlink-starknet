@@ -1,6 +1,6 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
-import { accessControllerContractLoader } from '../../lib/contracts'
+import { accessControllerContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   owner: string
@@ -20,9 +20,11 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+  contractId: CONTRACT_LIST.ACCESS_CONTROLLER,
+  category: CATEGORIES.ACCESS_CONTROLLER,
+  action: 'deploy',
   ux: {
-    category: CATEGORIES.ACCESS_CONTROLLER,
-    function: 'deploy',
+    description: 'Deploys an Access Controller Contract',
     examples: [`${CATEGORIES.ACCESS_CONTROLLER}:deploy --network=<NETWORK>`],
   },
   makeUserInput,

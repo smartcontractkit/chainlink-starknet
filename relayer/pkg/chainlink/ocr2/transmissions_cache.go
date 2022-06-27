@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
@@ -23,11 +25,13 @@ type transmissionsCache struct {
 	stop, done chan struct{}
 
 	reader *contractReader
+	cfg    starknet.Config
 	lggr   logger.Logger
 }
 
-func NewTransmissionsCache(reader *contractReader, lggr logger.Logger) *transmissionsCache {
+func NewTransmissionsCache(cfg starknet.Config, reader *contractReader, lggr logger.Logger) *transmissionsCache {
 	return &transmissionsCache{
+		cfg:    cfg,
 		reader: reader,
 		lggr:   lggr,
 		stop:   make(chan struct{}),
@@ -77,8 +81,7 @@ func (c *transmissionsCache) poll() {
 			}
 			cancel()
 
-			// todo: adjust tick with values from config
-			tick = time.After(utils.WithJitter(0))
+			tick = time.After(utils.WithJitter(c.cfg.OCR2CachePollPeriod()))
 		}
 	}
 }

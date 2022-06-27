@@ -1,4 +1,7 @@
-import { executeCommands as OCR2ExecuteCommands } from '@chainlink/starknet-gauntlet-ocr2'
+import {
+  executeCommands as OCR2ExecuteCommands,
+  inspectionCommands as OCR2InspectionCommands,
+} from '@chainlink/starknet-gauntlet-ocr2'
 import {
   executeCommands as ExampleExecuteCommands,
   inspectionCommands as ExampleInspectionsCommands,
@@ -44,6 +47,7 @@ const registerExecuteCommand = <UI, CI>(
         multisig: process.env.MULTISIG,
         billingAccessController: process.env.BILLING_ACCESS_CONTROLLER,
         link: process.env.LINK,
+        secret: flags.secret || process.env.SECRET,
       }
       return env
     },
@@ -79,7 +83,11 @@ const executeCommands = [
   ...MultisigExecuteCommands,
 ]
 const msigCommands = executeCommands.map((c) => registerExecuteCommand(c, true)).map(multisigWrapCommand)
-const unregistedInspectionCommands = [...ExampleInspectionsCommands, ...MultisigInspectionCommands]
+const unregistedInspectionCommands = [
+  ...ExampleInspectionsCommands,
+  ...MultisigInspectionCommands,
+  ...OCR2InspectionCommands,
+]
 
 const commands = {
   custom: [

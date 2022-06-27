@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"context"
+	"github.com/pkg/errors"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -29,7 +30,7 @@ type configProvider struct {
 func NewConfigProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
 	chainReader, err := NewClient(chainID, lggr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't initialize chain client")
 	}
 
 	reader := NewContractReader(contractAddress, chainReader, lggr)
@@ -61,7 +62,7 @@ func (p *configProvider) Close() error {
 }
 
 func (p *configProvider) ContractConfigTracker() types.ContractConfigTracker {
-	return p.reader
+	return p.contractCache
 }
 
 func (p *configProvider) OffchainConfigDigester() types.OffchainConfigDigester {
@@ -79,10 +80,10 @@ type medianProvider struct {
 func NewMedianProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainID, contractAddress, cfg, lggr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}
 
-	cache := NewTransmissionsCache(configProvider.reader, configProvider.lggr)
+	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
 
 	return &medianProvider{
 		configProvider:     configProvider,
@@ -97,7 +98,7 @@ func (p *medianProvider) Start(context.Context) error {
 		// starting both cache services here
 		// todo: find a better way
 		if err := p.configProvider.contractCache.Start(); err != nil {
-			return err
+			return errors.Wrap(err, "couldn't start contractCache")
 		}
 		return p.transmissionsCache.Start()
 	})
@@ -109,7 +110,7 @@ func (p *medianProvider) Close() error {
 		// stopping both cache services here
 		// todo: find a better way
 		if err := p.configProvider.contractCache.Close(); err != nil {
-			return err
+			return errors.Wrap(err, "coulnd't stop contractCache")
 		}
 		return p.transmissionsCache.Close()
 	})

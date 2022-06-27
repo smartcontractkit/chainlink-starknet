@@ -1,112 +1,55 @@
-import {
-  ExecuteCommandConfig,
-  makeExecuteCommand,
-  Validation,
-  BeforeExecute,
-  AfterExecute,
-} from '@chainlink/starknet-gauntlet'
+import { AfterExecute, ExecuteCommandConfig, makeExecuteCommand, BeforeExecute } from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { CATEGORIES } from '../../lib/categories'
 import { ocr2ContractLoader } from '../../lib/contracts'
-import { ec, number } from 'starknet'
-
-type OnchainConfig = any // TODO: Define more clearly
-type OffchainConfig = any // TODO: Define more clearly
+import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
+import { bytesToFelts, decodeOffchainConfigFromEventData } from '../../lib/encoding'
+import assert from 'assert'
 
 type Oracle = {
   signer: string
   transmitter: string
 }
 
-type UserInput = {
-  f: number
-  signers: string[]
-  transmitters: string[]
-  onchainConfig: OnchainConfig
-  offchainConfig: OffchainConfig
-  offchainConfigVersion: number
-}
-
 type ContractInput = [
-  // oracles_len: any,
   oracles: Oracle[],
   f: number,
   onchain_config: string,
   offchain_config_version: number,
-  offchain_config: string,
+  offchain_config: BN[],
 ]
 
-const makeUserInput = async (flags, args): Promise<UserInput> => {
-  if (flags.input) return flags.input as UserInput
-
-  if (flags.default) {
-    // TODO: Remove this at some point and replace with some
-    let f = 1
-    let onchainConfig = 1
-    let offchainConfigVersion = 2
-    let offchainConfig = [93, 11111, 22222, 33333]
-
-    return {
-      f: f,
-      signers: [
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733',
-      ],
-      transmitters: [
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732',
-        '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733',
-      ],
-      onchainConfig: onchainConfig,
-      offchainConfig: offchainConfig,
-      offchainConfigVersion: offchainConfigVersion,
-    }
-  }
-
-  return {
-    f: flags.f,
-    signers: flags.signers,
-    transmitters: flags.transmitters,
-    onchainConfig: flags.onchainConfig || 1,
-    offchainConfig: flags.offchainConfig || [1],
-    offchainConfigVersion: flags.offchainConfigVersion || 2,
-  }
-}
-
-const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
+const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {
   const oracles: Oracle[] = input.signers.map((o, i) => ({
     signer: input.signers[i],
     transmitter: input.transmitters[i],
   }))
-  return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, input.offchainConfig]
+  const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
+  return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
-const validateInput = async (input: UserInput): Promise<boolean> => {
-  if (3 * input.f >= input.signers.length)
-    throw new Error(`Signers length needs to be higher than 3 * f (${3 * input.f}). Currently ${input.signers.length}`)
-
-  if (input.signers.length !== input.transmitters.length)
-    throw new Error(`Signers and Trasmitters length are different`)
-
-  // TODO: Add validations for offchain config
-  return true
+const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (result) => {
+  const txHash = result.responses[0].tx.hash
+  const txInfo = await context.provider.provider.getTransactionReceipt(txHash)
+  const eventData = (txInfo.events[0] as any).data
+  const offchainConfig = decodeOffchainConfigFromEventData(eventData)
+  try {
+    assert.deepStrictEqual(offchainConfig, input.user.offchainConfig)
+    deps.logger.success('Configuration was successfully set')
+    return { successfulConfiguration: true }
+  } catch (e) {
+    deps.logger.error('Configuration set is different than provided')
+    deps.logger.log(offchainConfig)
+    return { successfulConfiguration: false }
+  }
 }
 
-const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  ux: {
-    category: CATEGORIES.OCR2,
-    function: 'set_config',
-    examples: [
-      `${CATEGORIES.OCR2}:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <CONTRACT_ADDRESS>`,
-    ],
-  },
-  makeUserInput,
-  makeContractInput,
-  validations: [validateInput],
+const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
+  ...SetConfig,
+  makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
+  hooks: {
+    afterExecute,
+  },
 }
 
 export default makeExecuteCommand(commandConfig)

@@ -1,6 +1,10 @@
-import { startNetwork, IntegratedDevnet } from '@chainlink/starknet-gauntlet'
 import deployCommand from '../../src/commands/accessController/deploy'
-import { registerExecuteCommand, TIMEOUT } from '@chainlink/starknet-gauntlet-example/test/utils'
+import {
+  registerExecuteCommand,
+  TIMEOUT,
+  startNetwork,
+  IntegratedDevnet,
+} from '@chainlink/starknet-gauntlet/test/utils'
 
 describe('Access Controller Contract', () => {
   let network: IntegratedDevnet
