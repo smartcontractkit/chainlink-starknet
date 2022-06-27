@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from interfaces.IAggregator import IAggregator, Round
+from contracts.ocr2.interfaces.IAggregator import IAggregator, Round
 
 @storage_var
 func ocr_address_() -> (address : felt):
