@@ -6,7 +6,7 @@ import '@nomiclabs/hardhat-ethers'
  * @type import('hardhat/config').HardhatUserConfig
  */
 const config: HardhatUserConfig = {
-  solidity: '0.6.12',
+  solidity: '0.8.14',
   starknet: {
     // dockerizedVersion: "0.8.1", // alternatively choose one of the two venv options below
     // uses (my-venv) defined by `python -m venv path/to/my-venv`
