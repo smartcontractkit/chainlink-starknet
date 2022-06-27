@@ -6,6 +6,7 @@ const config: HardhatUserConfig = {
   solidity: '0.8.14',
   starknet: {
     venv: 'active',
+    network: 'integrated-devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
@@ -17,6 +18,11 @@ const config: HardhatUserConfig = {
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050',
+    },
+    integratedDevnet: {
+      url: 'http://127.0.0.1:5050',
+      venv: 'active',
+      // dockerizedVersion: "0.2.0"
     },
   },
 }
