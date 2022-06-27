@@ -47,6 +47,7 @@ func constructor{
     return ()
 end
 
+@external
 func set_aggregator{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
@@ -61,6 +62,7 @@ func set_aggregator{
     return ()
 end
 
+@external
 func propose_aggregator{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
@@ -74,6 +76,7 @@ func propose_aggregator{
     return ()
 end
 
+@external
 func confirm_aggregator{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
