@@ -78,6 +78,7 @@ describe('OCR2 Contract', () => {
   let accessController: string
 
   beforeAll(async () => {
+    jest.setTimeout(60000) // set 60s timeout to wait for starknet-devnet to boot on CI
     network = await startNetwork()
 
     const command = await registerExecuteCommand(deployACCommand).create({}, [])
