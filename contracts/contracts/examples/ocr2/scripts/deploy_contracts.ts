@@ -3,7 +3,7 @@ import { loadContract } from './index'
 import fs from 'fs'
 
 const CONSUMER_NAME = 'OCR2_consumer'
-const MOCK_NAME = 'Mock_OCR2'
+const MOCK_NAME = 'Mock_Aggregator'
 const DECIMALS = 18
 
 async function main() {
