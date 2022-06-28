@@ -2,7 +2,7 @@ package txm
 
 import (
 	"context"
-	"math/big"
+	"strconv"
 	"sync"
 	"time"
 
@@ -10,6 +10,7 @@ import (
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -37,8 +38,8 @@ type starktxm struct {
 	queue   chan types.Transaction
 
 	// TODO: use lazy loaded client
-	client    *gateway.Gateway
-	getClient func() *gateway.Gateway
+	client    *gateway.GatewayProvider
+	getClient func(...gateway.Option) *gateway.GatewayProvider
 }
 
 // TODO: pass in
@@ -50,7 +51,7 @@ func New(lggr logger.Logger) StarkTXM {
 		lggr:      lggr,
 		queue:     make(chan types.Transaction, MaxQueueLen),
 		stop:      make(chan struct{}),
-		getClient: gateway.NewClient,
+		getClient: gateway.NewProvider,
 	}
 }
 
@@ -64,6 +65,11 @@ func (txm *starktxm) Start(ctx context.Context) error {
 
 func (txm *starktxm) run() {
 	defer txm.done.Done()
+
+	curve, err := caigo.SC(caigo.WithConstants())
+	if err != nil {
+		txm.lggr.Errorw("failed to build curve", "error", err)
+	}
 
 	// TODO: func not available without importing core
 	// ctx, cancel := utils.ContextFromChan(txm.stop)
@@ -79,56 +85,31 @@ func (txm *starktxm) run() {
 				txm.client = txm.getClient()
 			}
 
+			// create new account
+			privKey := "0"
+			address := "PLACEHOLDER"
+			account, err := caigo.NewAccount(&curve, privKey, address, txm.client)
+			if err != nil {
+				txm.lggr.Errorw("failed to create new account", "error", err)
+				continue
+			}
+
 			// get fee for tx
 			// TODO: move ctx construction into Reader/Writer client
 			feeCtx, feeCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
 			defer feeCancel()
-			fee, err := txm.client.EstimateFee(feeCtx, tx)
+			fee, err := account.EstimateFee(feeCtx, []types.Transaction{tx})
 			if err != nil {
 				txm.lggr.Errorw("failed to estimate fee", "error", err, "transaction", tx)
 				continue // exit loop
 			}
 
-			// build (add fee to transaction)
-			// TODO: doesn't exist in Caigo yet?
-
+			// TODO: move ctx construction into Reader/Writer client
 			// TODO: nonce management => batching?
-			address := "PLACEHOLDER"
-			nonceCtx, nonceCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
-			defer nonceCancel()
-			nonce, err := txm.client.AccountNonce(nonceCtx, address)
-			if err != nil {
-				txm.lggr.Errorw("failed to fetch nonce", "error", err, "transaction", tx)
-				continue // exit loop
-			}
-
-			// hash tx
-			curve, err := caigo.SC(caigo.WithConstants())
-			if err != nil {
-				txm.lggr.Errorw("failed to build curve", "error", err)
-				continue // exit loop
-			}
-			// TODO: chainID should be passed in not retrieved
-			chainID, err := txm.client.ChainID(ctx)
-			if err != nil {
-				txm.lggr.Errorw("failed to fetch chainID", "error", err, "transaction", tx)
-				continue // exit loop
-			}
-			hash, err := curve.HashMulticall(address, nonce, fee.Amount, chainID, []types.Transaction{tx})
-			if err != nil {
-				txm.lggr.Errorw("failed to hash tx", "error", err, "transaction", tx)
-				continue // exit loop
-			}
-
-			// sign tx
-			privKey := big.NewInt(0)
-			r, s, err := curve.Sign(hash, privKey)
-
-			// TODO: investigate handling multi-call (batching)
-			tx.Signature = []string{r.String(), s.String()}
-
-			// broadcast transaction
-			res, err := txm.client.Invoke(ctx, tx)
+			// transmit txs
+			execCtx, execCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
+			defer execCancel()
+			res, err := account.Execute(execCtx, types.StrToFelt(strconv.Itoa(int(fee.Amount))), []types.Transaction{tx})
 			if err != nil {
 				txm.lggr.Errorw("failed to invoke tx", "error", err, "transaction", tx)
 				continue
