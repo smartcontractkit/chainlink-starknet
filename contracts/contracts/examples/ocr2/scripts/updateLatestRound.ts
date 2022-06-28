@@ -9,7 +9,7 @@ interface Transmission {
   transmission_timestamp: number
 }
 
-const CONTRACT_NAME = 'Mock_OCR2'
+const CONTRACT_NAME = 'Mock_Aggregator'
 let account: Account
 let mock: Contract
 let transmission: Transmission
