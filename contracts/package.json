@@ -21,11 +21,11 @@
     "starknet": "3.9.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.2",
-    "bn.js": "^5.2.0"
+    "bn.js": "^5.2.0",
+    "hardhat": "^2.9.9"
   },
   "dependencies": {
     "@toruslabs/starkware-crypto": "^1.0.0",
-    "axios": "^0.24.0",
-    "hardhat": "2.9.3"
+    "axios": "^0.24.0"
   }
 }
