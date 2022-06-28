@@ -12,7 +12,7 @@ import {
 import { loadExampleContract, noopLogger, noopPrompt } from '../utils'
 import { IntegratedDevnet, startNetwork } from '../utils/network'
 
-const TIMEOUT = 20000
+const TIMEOUT = 100000
 const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 const registerExecuteCommand = <UI, CI>(

@@ -28,6 +28,6 @@
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink-dev/starknet-multisig": "0.0.1",
     "@chainlink/starknet-gauntlet": "*",
-    "starknet": "^3.11.0"
+    "starknet": "^3.15.0"
   }
 }
