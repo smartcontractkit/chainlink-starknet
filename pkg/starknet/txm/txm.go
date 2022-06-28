@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	MaxQueueLen    = 1000
-	DefaultTimeout = 1 //s TODO: move to config
+	MaxQueueLen     = 1000
+	DefaultTimeout  = 1 //s TODO: move to config
+	TxSendFrequency = 1 //s TODO: move to config
 )
 
 type TxManager interface {
@@ -36,6 +37,7 @@ type starktxm struct {
 	done    sync.WaitGroup
 	stop    chan struct{}
 	queue   chan types.Transaction
+	curve   *caigo.StarkCurve
 
 	// TODO: use lazy loaded client
 	client    *gateway.GatewayProvider
@@ -46,13 +48,18 @@ type starktxm struct {
 // - method to fetch client
 // - signer for signing tx
 // - logger
-func New(lggr logger.Logger) StarkTXM {
+func New(lggr logger.Logger) (StarkTXM, error) {
+	curve, err := caigo.SC(caigo.WithConstants())
+	if err != nil {
+		return nil, errors.Errorf("failed to build curve: %s", err)
+	}
 	return &starktxm{
 		lggr:      lggr,
 		queue:     make(chan types.Transaction, MaxQueueLen),
 		stop:      make(chan struct{}),
 		getClient: gateway.NewProvider,
-	}
+		curve:     &curve,
+	}, nil
 }
 
 func (txm *starktxm) Start(ctx context.Context) error {
@@ -66,66 +73,76 @@ func (txm *starktxm) Start(ctx context.Context) error {
 func (txm *starktxm) run() {
 	defer txm.done.Done()
 
-	curve, err := caigo.SC(caigo.WithConstants())
-	if err != nil {
-		txm.lggr.Errorw("failed to build curve", "error", err)
-	}
-
 	// TODO: func not available without importing core
 	// ctx, cancel := utils.ContextFromChan(txm.stop)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	tick := time.After(0)
+
 	for {
 		select {
-		case tx := <-txm.queue: // process + broadcast transactions
+		case <-tick:
+			start := time.Now()
+			tx := <-txm.queue // process + broadcast transactions
+
+			txs := []types.Transaction{tx}
 
 			// fetch client
 			if txm.client == nil {
 				txm.client = txm.getClient()
 			}
 
-			// create new account
+			// fetch key matching tx.SenderAddress
 			privKey := "0"
-			address := "PLACEHOLDER"
-			account, err := caigo.NewAccount(&curve, privKey, address, txm.client)
+
+			hash, err := txm.broadcastBatch(ctx, privKey, tx.SenderAddress, txs)
 			if err != nil {
-				txm.lggr.Errorw("failed to create new account", "error", err)
+				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
 				continue
 			}
+			txm.lggr.Infow("transaction broadcast", "txhash", hash)
 
-			// get fee for tx
-			// TODO: move ctx construction into Reader/Writer client
-			feeCtx, feeCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
-			defer feeCancel()
-			fee, err := account.EstimateFee(feeCtx, []types.Transaction{tx})
-			if err != nil {
-				txm.lggr.Errorw("failed to estimate fee", "error", err, "transaction", tx)
-				continue // exit loop
-			}
-
-			// TODO: move ctx construction into Reader/Writer client
-			// TODO: nonce management => batching?
-			// transmit txs
-			execCtx, execCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
-			defer execCancel()
-			res, err := account.Execute(execCtx, types.StrToFelt(strconv.Itoa(int(fee.Amount))), []types.Transaction{tx})
-			if err != nil {
-				txm.lggr.Errorw("failed to invoke tx", "error", err, "transaction", tx)
-				continue
-			}
-
-			// handle nil pointer
-			if res == nil {
-				txm.lggr.Warnw("invoke response is nil", "tx", tx)
-				continue
-			}
-
-			txm.lggr.Infow("transaction broadcast", "txhash", res.TransactionHash)
+			tick = time.After(utils.WithJitter(TxSendFrequency) - time.Since(start))
 		case <-txm.stop:
 			return
 		}
 	}
+}
+
+func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string, txs []types.Transaction) (txhash string, err error) {
+	// create new account
+	account, err := caigo.NewAccount(txm.curve, privKey, sender, txm.client)
+	if err != nil {
+		return txhash, errors.Errorf("failed to create new account:", err)
+	}
+
+	// get fee for txm
+	// TODO: move ctx construction into Reader/Writer client
+	feeCtx, feeCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
+	defer feeCancel()
+	fee, err := account.EstimateFee(feeCtx, txs)
+	if err != nil {
+		return txhash, errors.Errorf("failed to estimate fee: %s", err)
+
+	}
+
+	// TODO: move ctx construction into Reader/Writer client
+	// TODO: investigate if nonce management is needed
+	// transmit txs
+	execCtx, execCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
+	defer execCancel()
+	res, err := account.Execute(execCtx, types.StrToFelt(strconv.Itoa(int(fee.Amount))), txs)
+	if err != nil {
+		return txhash, errors.Errorf("failed to invoke tx: %s", err)
+	}
+
+	// handle nil pointer
+	if res == nil {
+		return txhash, errors.Errorf("execute response and error are nil")
+	}
+
+	return res.TransactionHash, nil
 }
 
 func (txm *starktxm) Close() error {
