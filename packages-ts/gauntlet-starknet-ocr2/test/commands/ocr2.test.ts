@@ -84,7 +84,7 @@ describe('OCR2 Contract', () => {
 
     const report = await command.execute()
     accessController = report.responses[0].contract
-  }, 20000)
+  }, TIMEOUT)
 
   it(
     'Deployment',
@@ -98,7 +98,6 @@ describe('OCR2 Contract', () => {
             description: 'Test Feed',
             billingAccessController: accessController,
             linkToken: '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
-            owner: '0x026e10005e67c478b373658755749a60f2f31bc955a6a2311eb456b20b8913e9',
           },
         },
         [],
