@@ -1,5 +1,5 @@
 import { number } from 'starknet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
+import BN from 'bn.js'
 import { encoding } from '@chainlink/gauntlet-contracts-ocr2'
 
 const CHUNK_SIZE = 31
