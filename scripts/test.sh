@@ -7,5 +7,5 @@ yarn install
 npx hardhat starknet-compile
 yarn test
 # Example tests
-cd contracts/examples/ocr2
-yarn test
+cd examples/ocr2
+yarn compile && yarn test
