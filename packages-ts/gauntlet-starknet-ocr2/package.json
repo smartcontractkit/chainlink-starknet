@@ -29,6 +29,6 @@
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/gauntlet-contracts-ocr2": "0.2.1",
     "@chainlink/gauntlet-starknet": "*",
-    "starknet": "^3.11.0"
+    "starknet": "3.15.0"
   }
 }
