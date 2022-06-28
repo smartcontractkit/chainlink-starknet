@@ -1,6 +1,5 @@
-import '@shardlabs/starknet-hardhat-plugin'
-
 import { HardhatUserConfig } from 'hardhat/types'
+import '@shardlabs/starknet-hardhat-plugin'
 
 const config: HardhatUserConfig = {
   solidity: '0.8.14',
