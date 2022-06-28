@@ -1,0 +1,51 @@
+{
+    "f": 1,
+    "signers": [
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730",
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731",
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732",
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733"
+    ],
+    "transmitters": [
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730",
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731",
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732",
+      "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733"
+    ],
+    "onchainConfig": "",
+    "offchainConfig": {
+      "deltaProgressNanoseconds": 8000000000,
+      "deltaResendNanoseconds": 30000000000,
+      "deltaRoundNanoseconds": 3000000000,
+      "deltaGraceNanoseconds": 500000000,
+      "deltaStageNanoseconds": 20000000000,
+      "rMax": 5,
+      "s": [1,2],
+      "offchainPublicKeys": [
+        "af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852090",
+        "af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852091",
+        "af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852092",
+        "af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852093"
+      ],
+      "peerIds": [
+        "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730",
+        "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731",
+        "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732",
+        "0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733"
+      ],
+      "reportingPluginConfig": {
+        "alphaReportInfinite": false,
+        "alphaReportPpb": 0,
+        "alphaAcceptInfinite": false,
+        "alphaAcceptPpb": 0,
+        "deltaCNanoseconds": 0
+      },
+      "maxDurationQueryNanoseconds": 0,
+      "maxDurationObservationNanoseconds": 1000000000,
+      "maxDurationReportNanoseconds": 200000000,
+      "maxDurationShouldAcceptFinalizedReportNanoseconds": 200000000,
+      "maxDurationShouldTransmitAcceptedReportNanoseconds": 200000000
+    },
+    "offchainConfigVersion": 2,
+    "secret": "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire"
+  }
