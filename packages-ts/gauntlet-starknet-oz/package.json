@@ -28,6 +28,6 @@
     "@chainlink-dev/starkgate-open-zeppelin": "^0.0.1",
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/gauntlet-starknet": "*",
-    "starknet": "^3.11.0"
+    "starknet": "^3.15.0"
   }
 }
