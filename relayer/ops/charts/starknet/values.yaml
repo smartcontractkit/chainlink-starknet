@@ -14,3 +14,4 @@ resources:
     memory: 1024Mi
 url_http_L1: ""
 real_node: false
+seed: 123
