@@ -12,7 +12,7 @@ func DefaultStarkNETEnv() *environment.Config {
 			"geth": {Index: 1},
 			"starknet": {
 				Index: 1,
-				Path:  "../../ops/charts/starknet",
+				Path:  "../../relayer/ops/charts/starknet",
 				Values: map[string]interface{}{
 					"real_node": false,
 				},
