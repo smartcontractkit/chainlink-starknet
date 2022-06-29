@@ -136,7 +136,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string,
 	// create new account
 	account, err := caigo.NewAccount(txm.curve, privKey, sender, txm.client)
 	if err != nil {
-		return txhash, errors.Errorf("failed to create new account:", err)
+		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
 
 	// get fee for txm
