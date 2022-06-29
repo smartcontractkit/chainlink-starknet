@@ -18,8 +18,9 @@ import (
 
 const (
 	MaxQueueLen     = 1000
-	DefaultTimeout  = 1 //s TODO: move to config
-	TxSendFrequency = 1 //s TODO: move to config
+	DefaultTimeout  = 1   //s TODO: move to config
+	TxSendFrequency = 1   //s TODO: move to config
+	MaxTxsPerBatch  = 100 // TODO: move to config
 )
 
 type TxManager interface {
@@ -84,24 +85,45 @@ func (txm *starktxm) run() {
 		select {
 		case <-tick:
 			start := time.Now()
-			tx := <-txm.queue // process + broadcast transactions
 
-			txs := []types.Transaction{tx}
+			// calculate total txs to process
+			txLen := len(txm.queue)
+			if txLen > MaxTxsPerBatch {
+				txLen = MaxTxsPerBatch
+			}
 
-			// fetch client
+			// fetch batch and split by sender
+			txsBySender := map[string][]types.Transaction{}
+			for i := 0; i < txLen; i++ {
+				tx := <-txm.queue
+				txsBySender[tx.SenderAddress] = append(txsBySender[tx.SenderAddress], tx)
+			}
+
+			// fetch client if needed
 			if txm.client == nil {
-				txm.client = txm.getClient()
+				txm.client = txm.getClient() // TODO: chains + nodes config for proper endpoint
 			}
 
-			// fetch key matching tx.SenderAddress
-			privKey := "0"
+			// async process of tx batches
+			var wg sync.WaitGroup
+			wg.Add(len(txsBySender))
+			for sender, txs := range txsBySender {
+				go func(sender string, txs []types.Transaction) {
 
-			hash, err := txm.broadcastBatch(ctx, privKey, tx.SenderAddress, txs)
-			if err != nil {
-				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
-				continue
+					// TODO: fetch key matching sender address
+					privKey := "0"
+
+					// broadcast batch based on sender
+					hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
+					if err != nil {
+						txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
+					} else {
+						txm.lggr.Infow("transaction broadcast", "txhash", hash)
+					}
+					wg.Done()
+				}(sender, txs)
 			}
-			txm.lggr.Infow("transaction broadcast", "txhash", hash)
+			wg.Wait()
 
 			tick = time.After(utils.WithJitter(TxSendFrequency) - time.Since(start))
 		case <-txm.stop:
@@ -124,11 +146,10 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string,
 	fee, err := account.EstimateFee(feeCtx, txs)
 	if err != nil {
 		return txhash, errors.Errorf("failed to estimate fee: %s", err)
-
 	}
 
 	// TODO: move ctx construction into Reader/Writer client
-	// TODO: investigate if nonce management is needed
+	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
 	// transmit txs
 	execCtx, execCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
 	defer execCancel()
