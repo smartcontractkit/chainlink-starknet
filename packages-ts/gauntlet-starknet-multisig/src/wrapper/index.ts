@@ -126,7 +126,7 @@ export const wrapCommand = <UI, CI>(
     }
 
     isSameProposal = (local: Call, onchain: Call): boolean => {
-      if (local.contractAddress !== onchain.contractAddress) return false
+      if (local.contractAddress.replace('0x', '0x0') !== onchain.contractAddress) return false
       if (getSelectorFromName(local.entrypoint) !== onchain.entrypoint) return false
       if (!isDeepEqual(local.calldata, onchain.calldata)) return false
       return true
@@ -241,7 +241,13 @@ export const wrapCommand = <UI, CI>(
         ],
       }
       // TODO: The multisig contract needs to return the proposal id on creation. Fix when ready
-      const data = await this.afterExecute(result, this.input.user.proposalId)
+      let proposalId = this.input.user.proposalId
+      if (!this.initialState.proposal) {
+        const txInfo = await this.provider.provider.getTransactionReceipt(tx.hash)
+        proposalId = (txInfo.events[0] as any).data[1].replace('0x', '')
+      }
+
+      const data = await this.afterExecute(result, proposalId)
 
       return !!data ? { ...result, data: { ...data } } : result
     }
