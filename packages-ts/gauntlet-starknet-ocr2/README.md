@@ -25,7 +25,10 @@ This command will generate a new Access Controller address and will give the det
 
 ## Deploy an OCR2 Contract
 
-Run the following command substituting in the contract address you received in the previous step:
+Run the following command substituting the following attributes:
+
+1. <TOKEN_CONTRACT> with the [deployed token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/gauntlet-starknet-starkgate)
+2. <ACCESS_CONTROLLER_CONTRACT> with the access controller contract you deployed in the previous section
 
 ```bash
 yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT>
@@ -35,7 +38,7 @@ This command will generate a new OCR2 address and will give the details during t
 
 ## Set the Billing Details on OCR2 Contract
 
-Run the following command substituting in the contract address you received in the previous step:
+Run the following command substituting <OCR_CONTRACT_ADDRESS> with the OCR2 contract address you received in the deploy step:
 
 ```
 yarn gauntlet ocr2:set_billing --observationPaymentGjuels=<AMOUNT> --transmissionPaymentGjuels=<AMOUNT> <CONTRACT_ADDRESS>
@@ -45,10 +48,10 @@ This Should set the billing details for this feed on contract address
 
 ## Set the Config Details on OCR2 Contract
 
-Run the following command substituting in the contract address you received in the previous step:
+Run the following command substituting <OCR_CONTRACT_ADDRESS> with the OCR2 contract address you received in the deploy step:
 
 ```
-yarn gauntlet ocr2:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <CONTRACT_ADDRESS>
+yarn gauntlet ocr2:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <OCR_CONTRACT_ADDRESS>
 ```
 
 This Should set the config for this feed on contract address. Note that in order to run this command with the `--noWallet` option, the contract deployment must also be ran with the `noWallet` option. Otherwise, an owner will be set and `set_config` will fail the contract ownership validation.
