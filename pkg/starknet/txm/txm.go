@@ -24,10 +24,6 @@ const (
 	MaxTxsPerBatch  = 100 // TODO: move to config
 )
 
-type Keystore interface {
-	Get(id string) (keys.Key, error)
-}
-
 type TxManager interface {
 	Enqueue(types.Transaction) error
 }
@@ -44,7 +40,7 @@ type starktxm struct {
 	stop    chan struct{}
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
-	ks      Keystore
+	ks      keys.Keystore
 
 	// TODO: use lazy loaded client
 	client    *gateway.GatewayProvider
@@ -53,7 +49,7 @@ type starktxm struct {
 
 // TODO: pass in
 // - method to fetch client
-func New(lggr logger.Logger, keystore Keystore) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
