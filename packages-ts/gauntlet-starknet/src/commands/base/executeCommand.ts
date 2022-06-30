@@ -120,7 +120,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     ) => async () => {
       deps.logger.loading(`Executing ${context.id} from contract ${context.contractAddress}`)
       deps.logger.log('Contract Input Params:', input.contract)
-      await deps.prompt('Continue?')
     }
 
     defaultAfterExecute = () => async (response: Result<TransactionResponse>): Promise<any> => {
@@ -175,7 +174,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const messages = await this.makeMessage()
       await deps.prompt(`Continue?`)
       deps.logger.loading(`Signing and sending transaction...`)
+      console.log(messages)
       const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+      console.log(tx)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
       if (!response.success) {

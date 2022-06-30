@@ -51,4 +51,4 @@ Run the following command substituting in the contract address you received in t
 yarn gauntlet ocr2:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <CONTRACT_ADDRESS>
 ```
 
-This Should set the config for this feed on contract address
+This Should set the config for this feed on contract address. Note that in order to run this command with the `--noWallet` option, the contract deployment must also be ran with the `noWallet` option. Otherwise, an owner will be set and `set_config` will fail the contract ownership validation.
