@@ -11,7 +11,6 @@ const makeContractInput = async (input: DeployExampleInput): Promise<ContractInp
 // This is a custom beforeExecute hook executed right before the command action is executed
 const beforeExecute: BeforeExecute<DeployExampleInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info('About to deploy a Sample Contract')
-  await deps.prompt('Continue?')
 }
 // This is a custom afterExecute hook executed right after the command action is executed
 const afterExecute: AfterExecute<DeployExampleInput, ContractInput> = (context, input, deps) => async (result) => {
