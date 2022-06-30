@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
 )
 
 const (
@@ -22,6 +23,10 @@ const (
 	TxSendFrequency = 1   //s TODO: move to config
 	MaxTxsPerBatch  = 100 // TODO: move to config
 )
+
+type Keystore interface {
+	Get(id string) (keys.Key, error)
+}
 
 type TxManager interface {
 	Enqueue(types.Transaction) error
@@ -39,6 +44,7 @@ type starktxm struct {
 	stop    chan struct{}
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
+	ks      Keystore
 
 	// TODO: use lazy loaded client
 	client    *gateway.GatewayProvider
@@ -47,9 +53,7 @@ type starktxm struct {
 
 // TODO: pass in
 // - method to fetch client
-// - signer for signing tx
-// - logger
-func New(lggr logger.Logger) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore Keystore) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
@@ -60,6 +64,7 @@ func New(lggr logger.Logger) (StarkTXM, error) {
 		stop:      make(chan struct{}),
 		getClient: gateway.NewProvider,
 		curve:     &curve,
+		ks:        keystore,
 	}, nil
 }
 
@@ -98,6 +103,8 @@ func (txm *starktxm) run() {
 				tx := <-txm.queue
 				txsBySender[tx.SenderAddress] = append(txsBySender[tx.SenderAddress], tx)
 			}
+			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
+			txm.lggr.Debugw("batch details", "batches", txsBySender)
 
 			// fetch client if needed
 			if txm.client == nil {
@@ -110,22 +117,29 @@ func (txm *starktxm) run() {
 			for sender, txs := range txsBySender {
 				go func(sender string, txs []types.Transaction) {
 
-					// TODO: fetch key matching sender address
-					privKey := "0"
-
-					// broadcast batch based on sender
-					hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
+					// fetch key matching sender address
+					key, err := txm.ks.Get(sender)
 					if err != nil {
-						txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
+						txm.lggr.Errorw("failed to retrieve key", "id", sender, "error", err)
 					} else {
-						txm.lggr.Infow("transaction broadcast", "txhash", hash)
+						// parse key to expected format
+						privKeyBytes := key.Raw()
+						privKey := caigo.BigToHex(caigo.BytesToBig(privKeyBytes))
+
+						// broadcast batch based on sender
+						hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
+						if err != nil {
+							txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
+						} else {
+							txm.lggr.Infow("transaction broadcast", "txhash", hash)
+						}
 					}
 					wg.Done()
 				}(sender, txs)
 			}
 			wg.Wait()
 
-			tick = time.After(utils.WithJitter(TxSendFrequency) - time.Since(start))
+			tick = time.After(utils.WithJitter(TxSendFrequency*time.Second) - time.Since(start))
 		case <-txm.stop:
 			return
 		}
@@ -176,12 +190,11 @@ func (txm *starktxm) Close() error {
 
 func (txm *starktxm) Healthy() error {
 	// TODO
-	return nil
+	return txm.starter.Healthy()
 }
 
 func (txm *starktxm) Ready() error {
-	// TODO
-	return nil
+	return txm.starter.Ready()
 }
 
 func (txm *starktxm) Enqueue(tx types.Transaction) error {
