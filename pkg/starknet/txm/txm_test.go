@@ -23,7 +23,10 @@ func TestTxm(t *testing.T) {
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
-	txm, err := New(lggr, ks)
+	txm, err := New(lggr, ks, NodeConfig{
+		ChainID: "devnet",
+		URL:     "http://localhost:5050",
+	})
 	require.NoError(t, err)
 
 	// ready fail if start not called
@@ -34,9 +37,11 @@ func TestTxm(t *testing.T) {
 	require.NoError(t, txm.Healthy())
 	require.NoError(t, txm.Ready())
 
-	require.NoError(t, txm.Enqueue(types.Transaction{
-		SenderAddress: key.PublicKeyStr(),
-	}))
+	for i := 0; i < 5; i++ {
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress: key.PublicKeyStr(),
+		}))
+	}
 	time.Sleep(5 * time.Second)
 
 	// stop txm

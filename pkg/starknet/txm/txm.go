@@ -2,6 +2,7 @@ package txm
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -33,6 +34,11 @@ type StarkTXM interface {
 	TxManager
 }
 
+type NodeConfig struct {
+	ChainID string
+	URL     string
+}
+
 type starktxm struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
@@ -45,11 +51,12 @@ type starktxm struct {
 	// TODO: use lazy loaded client
 	client    *gateway.GatewayProvider
 	getClient func(...gateway.Option) *gateway.GatewayProvider
+
+	// TODO: use nodes/chains config
+	nodeCfg NodeConfig
 }
 
-// TODO: pass in
-// - method to fetch client
-func New(lggr logger.Logger, keystore keys.Keystore) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, nodeConfig NodeConfig) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
@@ -61,6 +68,7 @@ func New(lggr logger.Logger, keystore keys.Keystore) (StarkTXM, error) {
 		getClient: gateway.NewProvider,
 		curve:     &curve,
 		ks:        keystore,
+		nodeCfg:   nodeConfig,
 	}, nil
 }
 
@@ -104,8 +112,10 @@ func (txm *starktxm) run() {
 
 			// fetch client if needed
 			if txm.client == nil {
-				txm.client = txm.getClient() // TODO: chains + nodes config for proper endpoint
+				txm.client = txm.getClient(gateway.WithChain(txm.nodeCfg.ChainID)) // TODO: chains + nodes config for proper endpoint
 			}
+			txm.setClientURL(txm.nodeCfg.URL) // temp solution to override default URLs
+			fmt.Println(txm.client.Gateway)
 
 			// async process of tx batches
 			var wg sync.WaitGroup
@@ -140,6 +150,16 @@ func (txm *starktxm) run() {
 			return
 		}
 	}
+}
+
+func (txm *starktxm) setClientURL(baseURL string) {
+	if baseURL == "" {
+		return // if empty, use default from caigo
+	}
+
+	txm.client.Gateway.Base = baseURL
+	txm.client.Gateway.Feeder = baseURL + "/feeder_gateway"
+	txm.client.Gateway.Gateway = baseURL + "/gateway"
 }
 
 func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string, txs []types.Transaction) (txhash string, err error) {
