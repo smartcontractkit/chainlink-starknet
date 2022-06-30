@@ -360,8 +360,6 @@ func remove_oracles{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(n: felt):
-    alloc_locals
-
     if n == 0:
         oracles_len_.write(0)
         return ()
@@ -382,8 +380,6 @@ func add_oracles{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(oracles: OracleConfig*, index: felt, len: felt, latest_round_id: felt):
-    alloc_locals
-
     if len == 0:
         oracles_len_.write(index)
         return ()
