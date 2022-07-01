@@ -264,7 +264,8 @@ func config_set(
     oracles_len: felt,
     oracles: OracleConfig*,
     f: felt,
-    onchain_config: felt, # TODO
+    onchain_config_len: felt,
+    onchain_config: felt*,
     offchain_config_version: felt,
     offchain_config_len: felt,
     offchain_config: felt*,
@@ -287,7 +288,8 @@ func set_config{
     oracles_len: felt,
     oracles: OracleConfig*,
     f: felt,
-    onchain_config: felt, # TODO
+    onchain_config_len: felt,
+    onchain_config: felt*,
     offchain_config_version: felt,
     offchain_config_len: felt,
     offchain_config: felt*,
@@ -298,6 +300,7 @@ func set_config{
     assert_nn_le(oracles_len, MAX_ORACLES) # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
     assert_nn(f) # f is positive
+    assert onchain_config_len = 0 # empty onchain config provided
 
     # pay out existing oracles
     pay_oracles()
@@ -329,6 +332,7 @@ func set_config{
         oracles_len,
         oracles,
         f,
+        onchain_config_len,
         onchain_config,
         offchain_config_version,
         offchain_config_len,
@@ -346,6 +350,7 @@ func set_config{
         oracles_len=oracles_len,
         oracles=oracles,
         f=f,
+        onchain_config_len=onchain_config_len,
         onchain_config=onchain_config,
         offchain_config_version=offchain_config_version,
         offchain_config_len=offchain_config_len,
@@ -425,7 +430,8 @@ func config_digest_from_data{
     oracles_len: felt,
     oracles: OracleConfig*,
     f: felt,
-    onchain_config: felt, # TODO
+    onchain_config_len: felt,
+    onchain_config: felt*,
     offchain_config_version: felt,
     offchain_config_len: felt,
     offchain_config: felt*,
@@ -439,7 +445,8 @@ func config_digest_from_data{
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, oracles_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, oracles, oracles_len * OracleConfig.SIZE)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, f)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, onchain_config)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, onchain_config_len)
+        let (hash_state_ptr) = hash_update(hash_state_ptr, onchain_config, onchain_config_len)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_version)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
