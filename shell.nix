@@ -1,6 +1,7 @@
 { stdenv, pkgs, lib }:
 
-pkgs.mkShell {
+# juno requires building with clang, not gcc
+(pkgs.mkShell.override { stdenv = pkgs.clangStdenv; }) {
   buildInputs = with pkgs; [
     python39
     python39Packages.venvShellHook
