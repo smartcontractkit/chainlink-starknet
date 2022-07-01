@@ -8,6 +8,8 @@ import (
 
 	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+	junotypes "github.com/NethermindEth/juno/pkg/types"
+
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -60,6 +62,15 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func caigoStringToJunoFelt(str string) (felt junotypes.Felt, err error) {
+	big, ok := new(big.Int).SetString(str, 0)
+	if !ok {
+		return felt, errors.New("wrong format of caigo string")
+	}
+
+	return junotypes.BigToFelt(big), nil
 }
 
 func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
