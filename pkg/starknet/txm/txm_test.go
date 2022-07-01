@@ -6,26 +6,39 @@ import (
 	"time"
 
 	"github.com/dontpanicdao/caigo/types"
+	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys/mocks"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTxm(t *testing.T) {
-	// key
-	key, err := keys.New()
-	require.NoError(t, err)
+	url := SetupLocalStarkNetNode(t)
+	localKeys := TestKeys(t)
 
 	// mock keystore
 	ks := new(mocks.Keystore)
-	ks.On("Get", key.PublicKeyStr()).Return(key, nil)
+	ks.On("Get", mock.AnythingOfType("string")).Return(
+		func(id string) keys.Key {
+			return localKeys[id]
+		},
+		func(id string) error {
+
+			_, ok := localKeys[id]
+			if !ok {
+				return errors.New("key does not exist")
+			}
+			return nil
+		},
+	)
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
 	txm, err := New(lggr, ks, NodeConfig{
 		ChainID: "devnet",
-		URL:     "http://localhost:5050",
+		URL:     url,
 	})
 	require.NoError(t, err)
 
@@ -37,10 +50,12 @@ func TestTxm(t *testing.T) {
 	require.NoError(t, txm.Healthy())
 	require.NoError(t, txm.Ready())
 
-	for i := 0; i < 5; i++ {
-		require.NoError(t, txm.Enqueue(types.Transaction{
-			SenderAddress: key.PublicKeyStr(),
-		}))
+	for k := range localKeys {
+		for i := 0; i < 5; i++ {
+			require.NoError(t, txm.Enqueue(types.Transaction{
+				SenderAddress: k,
+			}))
+		}
 	}
 	time.Sleep(5 * time.Second)
 

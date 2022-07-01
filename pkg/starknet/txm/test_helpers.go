@@ -11,9 +11,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// seed = 0 keys for starknet-devnet
+var privateKeys0Seed []string = []string{
+	"0xe3e70682c2094cac629f6fbed82c07cd",
+	"0xf728b4fa42485e3a0a5d2f346baa9455",
+	"0xeb1167b367a9c3787c65c1e582e2e662",
+	"0xf7c1bd874da5e709d4713d60c8a70639",
+	"0xe443df789558867f5ba91faf7a024204",
+	"0x23a7711a8133287637ebdcd9e87a1613",
+	"0x1846d424c17c627923c6612f48268673",
+	"0xfcbd04c340212ef7cca5a5a19e4d6e3c",
+	"0xb4862b21fb97d43588561712e8e5216a",
+	"0x259f4329e6f4590b9a164106cf6a659e",
+}
 
 // SetupLocalStarkNetNode sets up a local starknet node via cli, and returns the url
 func SetupLocalStarkNetNode(t *testing.T) string {
@@ -45,10 +61,25 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 			continue
 		}
 		ready = true
+		t.Logf("API server ready at %s\n", url)
 		break
 	}
 	require.True(t, ready)
 	return url
+}
+
+func TestKeys(t *testing.T) map[string]keys.Key {
+	keyMap := map[string]keys.Key{}
+
+	for _, k := range privateKeys0Seed {
+		keyBytes, err := caigo.HexToBytes(k)
+		require.NoError(t, err)
+		raw := keys.Raw(keyBytes)
+
+		keyMap[raw.Key().PublicKeyStr()] = raw.Key()
+
+	}
+	return keyMap
 }
 
 func mustRandomPort() string {
