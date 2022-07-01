@@ -6,9 +6,9 @@ import (
 
 	"golang.org/x/exp/constraints"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
