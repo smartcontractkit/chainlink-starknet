@@ -5,7 +5,7 @@ import { shortString } from 'starknet'
 import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
 
 export interface UserInput extends DeployOCR2Input {
-  owner?: string
+  owner: string
 }
 
 type ContractInput = [
@@ -20,8 +20,10 @@ type ContractInput = [
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
-  const baseUserInput = DeployOCR2.makeUserInput(flags, args, env)
-  return flags.noWallet ? baseUserInput : ({ ...baseUserInput, owner: flags.owner || env.account } as UserInput)
+  return {
+    ...DeployOCR2.makeUserInput(flags, args, env),
+    owner: flags.owner || env.account,
+  } as UserInput
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
