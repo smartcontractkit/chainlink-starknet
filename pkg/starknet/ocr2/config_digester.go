@@ -68,7 +68,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	msg = append(
 		msg,
 		big.NewInt(int64(cfg.F)), // f
-		big.NewInt(1),            // TODO: onchain_config
+		big.NewInt(0),            // TODO: onchain_config
 		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
 		big.NewInt(int64(len(offchainConfig))),            // offchain_config_len
 	)
