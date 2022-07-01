@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/dontpanicdao/caigo v0.2.1-0.20220517132056-e34006317632
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-relay v0.0.0-20220516224734-c4759cac049a
