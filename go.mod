@@ -10,12 +10,12 @@ require (
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
 	github.com/smartcontractkit/helmenv v1.0.71
 	github.com/smartcontractkit/libocr v0.0.0-20220623210256-b7ae1e1c66f6
+	github.com/stretchr/testify v1.7.1
 	github.com/test-go/testify v1.1.4
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
 )
 
 require (
-	cloud.google.com/go v0.100.2 // indirect
 	cloud.google.com/go/compute v1.6.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -143,7 +143,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.12.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
-	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.9 // indirect
 	github.com/tklauser/numcpus v0.3.0 // indirect
