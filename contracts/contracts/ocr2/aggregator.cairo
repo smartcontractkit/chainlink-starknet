@@ -41,7 +41,7 @@ from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
 
 from contracts.ocr2.interfaces.IAccessController import IAccessController
 
-from contracts.ocr2.ownable import (
+from contracts.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
@@ -184,7 +184,6 @@ func constructor{
     end
     decimals_.write(decimals)
     description_.write(description)
-    # TODO: initialize vars to defaults
     return ()
 end
 
@@ -265,7 +264,8 @@ func config_set(
     oracles_len: felt,
     oracles: OracleConfig*,
     f: felt,
-    onchain_config: felt, # TODO
+    onchain_config_len: felt,
+    onchain_config: felt*,
     offchain_config_version: felt,
     offchain_config_len: felt,
     offchain_config: felt*,
@@ -288,7 +288,8 @@ func set_config{
     oracles_len: felt,
     oracles: OracleConfig*,
     f: felt,
-    onchain_config: felt, # TODO
+    onchain_config_len: felt,
+    onchain_config: felt*,
     offchain_config_version: felt,
     offchain_config_len: felt,
     offchain_config: felt*,
@@ -299,6 +300,7 @@ func set_config{
     assert_nn_le(oracles_len, MAX_ORACLES) # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
     assert_nn(f) # f is positive
+    assert onchain_config_len = 0 # empty onchain config provided
 
     # pay out existing oracles
     pay_oracles()
@@ -330,6 +332,7 @@ func set_config{
         oracles_len,
         oracles,
         f,
+        onchain_config_len,
         onchain_config,
         offchain_config_version,
         offchain_config_len,
@@ -347,6 +350,7 @@ func set_config{
         oracles_len=oracles_len,
         oracles=oracles,
         f=f,
+        onchain_config_len=onchain_config_len,
         onchain_config=onchain_config,
         offchain_config_version=offchain_config_version,
         offchain_config_len=offchain_config_len,
@@ -361,8 +365,6 @@ func remove_oracles{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(n: felt):
-    alloc_locals
-
     if n == 0:
         oracles_len_.write(0)
         return ()
@@ -383,8 +385,6 @@ func add_oracles{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }(oracles: OracleConfig*, index: felt, len: felt, latest_round_id: felt):
-    alloc_locals
-
     if len == 0:
         oracles_len_.write(index)
         return ()
@@ -393,6 +393,17 @@ func add_oracles{
     # NOTE: index should start with 1 here because storage is 0-initialized.
     # That way signers(pkey) => 0 indicates "not present"
     let index = index + 1
+
+    # Check for duplicates
+    let (existing_signer) = signers_.read(oracles.signer)
+    with_attr error_message("repeated signer"):
+        assert existing_signer = 0
+    end
+
+    let (existing_transmitter: Oracle) = transmitters_.read(oracles.transmitter)
+    with_attr error_message("repeated transmitter"):
+        assert existing_transmitter.index = 0
+    end
 
     signers_.write(oracles.signer, index)
     signers_list_.write(index, oracles.signer)
@@ -419,7 +430,8 @@ func config_digest_from_data{
     oracles_len: felt,
     oracles: OracleConfig*,
     f: felt,
-    onchain_config: felt, # TODO
+    onchain_config_len: felt,
+    onchain_config: felt*,
     offchain_config_version: felt,
     offchain_config_len: felt,
     offchain_config: felt*,
@@ -433,7 +445,8 @@ func config_digest_from_data{
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, oracles_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, oracles, oracles_len * OracleConfig.SIZE)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, f)
-        let (hash_state_ptr) = hash_update_single(hash_state_ptr, onchain_config)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, onchain_config_len)
+        let (hash_state_ptr) = hash_update(hash_state_ptr, onchain_config, onchain_config_len)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_version)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, offchain_config_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, offchain_config, offchain_config_len)
@@ -1040,7 +1053,8 @@ func withdraw_payment{
     end
 
     let (latest_round_id) = latest_aggregator_round_id_.read()
-    pay_oracle(transmitter, latest_round_id)
+    let (link_token) = link_token_.read()
+    pay_oracle(transmitter, latest_round_id, link_token)
     return ()
 end
 
@@ -1070,7 +1084,7 @@ func pay_oracle{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(transmitter: felt, latest_round_id: felt):
+}(transmitter: felt, latest_round_id: felt, link_token: felt):
     alloc_locals
 
     let (oracle: Oracle) = transmitters_.read(transmitter)
@@ -1079,7 +1093,7 @@ func pay_oracle{
         return ()
     end
 
-    # TODO: reuse oracle passed into owed_payment
+    # TODO: reuse oracle passed into owed_payment to avoid reading twice
     let (amount_: felt) = owed_payment(transmitter)
     assert_nn(amount_)
 
@@ -1090,8 +1104,6 @@ func pay_oracle{
 
     let (amount: Uint256) = felt_to_uint256(amount_)
     let (payee) = payees_.read(transmitter)
-
-    let (link_token) = link_token_.read()
 
     IERC20.transfer(
         contract_address=link_token,
@@ -1119,7 +1131,9 @@ func pay_oracles{
     range_check_ptr,
 }():
     let (len) = oracles_len_.read()
-    pay_oracles_(len)
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (link_token) = link_token_.read()
+    pay_oracles_(len, latest_round_id, link_token)
     return ()
 end
 
@@ -1127,17 +1141,15 @@ func pay_oracles_{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(index: felt):
+}(index: felt, latest_round_id: felt, link_token: felt):
     if index == 0:
         return ()
     end
     
-    # TODO: share link_token between pay_oracle calls
     let (transmitter) = transmitters_list_.read(index)
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    pay_oracle(transmitter, latest_round_id)
+    pay_oracle(transmitter, latest_round_id, link_token)
 
-    return pay_oracles_(index - 1)
+    return pay_oracles_(index - 1, latest_round_id, link_token)
 end
 
 @external
@@ -1351,4 +1363,10 @@ func accept_payeeship{
     )
 
     return ()
+end
+
+
+@view
+func type_and_version() -> (meta: felt):
+    return ('ocr2/aggregator.cairo 1.0.0')
 end

@@ -7,7 +7,7 @@ from starkware.cairo.common.bool import TRUE, FALSE
 func access_list_(address: felt) -> (bool: felt):
 end
 
-from contracts.ocr2.ownable import (
+from contracts.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
@@ -78,4 +78,9 @@ func remove_access{
     Ownable_only_owner()
     access_list_.write(address, FALSE)
     return ()
+end
+
+@view
+func type_and_version() -> (meta: felt):
+    return ('access_controller.cairo 1.0.0')
 end

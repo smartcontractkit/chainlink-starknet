@@ -134,7 +134,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/slack-go/slack v0.10.2 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20220623210256-b7ae1e1c66f6 // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20220701150323-d815c8d0eab8 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/cobra v1.4.0 // indirect
