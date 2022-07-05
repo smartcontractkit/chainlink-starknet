@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"math/big"
 	"time"
 
@@ -14,14 +15,16 @@ var _ types.ContractConfigTracker = (*contractReader)(nil)
 var _ median.MedianContract = (*contractReader)(nil)
 
 type contractReader struct {
-	reader Reader
-	lggr   logger.Logger
+	address string
+	reader  OCR2Reader
+	lggr    logger.Logger
 }
 
-func NewContractReader(chainReader Reader, lggr logger.Logger) *contractReader {
+func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) *contractReader {
 	return &contractReader{
-		reader: chainReader,
-		lggr:   lggr,
+		address: address,
+		reader:  reader,
+		lggr:    lggr,
 	}
 }
 
@@ -30,18 +33,35 @@ func (c *contractReader) Notify() <-chan struct{} {
 }
 
 func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
-	// todo: implement
-	return 0, types.ConfigDigest{}, nil
+	resp, err := c.reader.LatestConfigDetails(ctx, c.address)
+	if err != nil {
+		return changedInBlock, configDigest, errors.Wrap(err, "couldn't get latest config details")
+	}
+
+	changedInBlock = resp.Block
+	configDigest = resp.Digest
+
+	return
 }
 
-func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (types.ContractConfig, error) {
-	// todo: implement
-	return types.ContractConfig{}, nil
+func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
+	resp, err := c.reader.ConfigFromEventAt(ctx, c.address, changedInBlock)
+	if err != nil {
+		return config, errors.Wrap(err, "couldn't get latest config")
+	}
+
+	config = resp.Config
+
+	return
 }
 
 func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
-	// todo: implement
-	return 0, nil
+	blockHeight, err = c.reader.BaseClient().LatestBlockHeight(ctx)
+	if err != nil {
+		return blockHeight, errors.Wrap(err, "couldn't get latest block height")
+	}
+
+	return
 }
 
 func (c *contractReader) LatestTransmissionDetails(

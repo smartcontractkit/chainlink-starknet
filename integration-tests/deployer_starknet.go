@@ -2,6 +2,9 @@ package integration_tests
 
 import (
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
+
+	// unused module to keep it go.mod and prevent ambiguous import
+	_ "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 func NewStarkNetContractDeployer(c blockchain.EVMClient) (*StarkNetContractDeployer, error) {

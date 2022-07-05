@@ -2,6 +2,10 @@ package ocr2
 
 import (
 	"context"
+	"github.com/pkg/errors"
+
+	junorpc "github.com/NethermindEth/juno/pkg/rpc"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -23,10 +27,15 @@ type configProvider struct {
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainReader Reader, lggr logger.Logger) (*configProvider, error) {
-	reader := NewContractReader(chainReader, lggr)
-	cache := NewContractCache(reader, lggr)
-	digester := NewOffchainConfigDigester("chain_id", "contract_address") // TODO
+func NewConfigProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
+	chainReader, err := NewClient(chainID, lggr)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't initialize chain client")
+	}
+
+	reader := NewContractReader(contractAddress, chainReader, lggr)
+	cache := NewContractCache(cfg, reader, lggr)
+	digester := NewOffchainConfigDigester(junorpc.ChainID(chainID), junorpc.Address(contractAddress))
 	transmitter := NewContractTransmitter(reader)
 
 	return &configProvider{
@@ -53,7 +62,7 @@ func (p *configProvider) Close() error {
 }
 
 func (p *configProvider) ContractConfigTracker() types.ContractConfigTracker {
-	return p.reader
+	return p.contractCache
 }
 
 func (p *configProvider) OffchainConfigDigester() types.OffchainConfigDigester {
@@ -68,13 +77,13 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainReader Reader, lggr logger.Logger) (*medianProvider, error) {
-	configProvider, err := NewConfigProvider(chainReader, lggr)
+func NewMedianProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
+	configProvider, err := NewConfigProvider(chainID, contractAddress, cfg, lggr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}
 
-	cache := NewTransmissionsCache(configProvider.reader, configProvider.lggr)
+	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
 
 	return &medianProvider{
 		configProvider:     configProvider,
@@ -89,7 +98,7 @@ func (p *medianProvider) Start(context.Context) error {
 		// starting both cache services here
 		// todo: find a better way
 		if err := p.configProvider.contractCache.Start(); err != nil {
-			return err
+			return errors.Wrap(err, "couldn't start contractCache")
 		}
 		return p.transmissionsCache.Start()
 	})
@@ -101,7 +110,7 @@ func (p *medianProvider) Close() error {
 		// stopping both cache services here
 		// todo: find a better way
 		if err := p.configProvider.contractCache.Close(); err != nil {
-			return err
+			return errors.Wrap(err, "coulnd't stop contractCache")
 		}
 		return p.transmissionsCache.Close()
 	})
