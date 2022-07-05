@@ -5,6 +5,9 @@ import (
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
+
+	// unused module to keep it go.mod and prevent ambiguous import
+	_ "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 type ChainSet interface {
@@ -16,8 +19,6 @@ type ChainSet interface {
 type Chain interface {
 	types.Service
 
-	ID() string
 	Config() Config
 	UpdateConfig(*db.ChainCfg)
-	Reader() (Reader, error)
 }
