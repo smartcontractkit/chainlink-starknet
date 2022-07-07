@@ -6,8 +6,10 @@ import (
 
 	"golang.org/x/exp/constraints"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -60,6 +62,15 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func caigoStringToJunoFelt(str string) (felt junotypes.Felt, err error) {
+	big, ok := new(big.Int).SetString(str, 0)
+	if !ok {
+		return felt, errors.New("wrong format of caigo string")
+	}
+
+	return junotypes.BigToFelt(big), nil
 }
 
 func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
@@ -141,7 +152,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	// todo: get rid of caigoToJuno workaround
 	offchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(offchainConfigFelts))
 	if err != nil {
-		return types.ContractConfig{}, err
+		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}
 
 	return types.ContractConfig{

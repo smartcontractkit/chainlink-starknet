@@ -1,9 +1,12 @@
 package ocr2
 
 import (
-	"github.com/pkg/errors"
 	"math/big"
 	"time"
+
+	"github.com/pkg/errors"
+
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -13,25 +16,17 @@ type ContractConfigDetails struct {
 	Digest types.ConfigDigest
 }
 
-func NewContractConfigDetails(blockFelt string, digestFelt string) (ccd ContractConfigDetails, err error) {
-	block, ok := new(big.Int).SetString(blockFelt, 0)
-	if !ok {
-		return ccd, errors.New("wrong format of block")
-	}
+func NewContractConfigDetails(blockFelt junotypes.Felt, digestFelt junotypes.Felt) (ccd ContractConfigDetails, err error) {
+	block := blockFelt.Big()
 
-	digest, ok := new(big.Int).SetString(digestFelt, 0)
-	if !ok {
-		return ccd, errors.New("wrong format of digest")
-	}
-
-	digestBytes, err := types.BytesToConfigDigest(digest.Bytes())
+	digest, err := types.BytesToConfigDigest(digestFelt.Bytes())
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't decode config digest")
 	}
 
 	return ContractConfigDetails{
 		Block:  block.Uint64(),
-		Digest: digestBytes,
+		Digest: digest,
 	}, nil
 }
 
@@ -53,16 +48,9 @@ type BillingDetails struct {
 	transmissionPaymentGJuels uint64
 }
 
-func NewBillingDetails(observationPaymentFelt string, transmissionPaymentFelt string) (bd BillingDetails, err error) {
-	observationPaymentGJuels, ok := new(big.Int).SetString(observationPaymentFelt, 0)
-	if !ok {
-		return bd, errors.New("wrong format of observationPaymentGJuels")
-	}
-
-	transmissionPaymentGJuels, ok := new(big.Int).SetString(transmissionPaymentFelt, 0)
-	if !ok {
-		return bd, errors.New("wrong format of transmissionPaymentGJuels")
-	}
+func NewBillingDetails(observationPaymentFelt junotypes.Felt, transmissionPaymentFelt junotypes.Felt) (bd BillingDetails, err error) {
+	observationPaymentGJuels := observationPaymentFelt.Big()
+	transmissionPaymentGJuels := transmissionPaymentFelt.Big()
 
 	return BillingDetails{
 		observationPaymentGJuels:  observationPaymentGJuels.Uint64(),

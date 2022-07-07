@@ -58,7 +58,17 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		return bd, errors.New("unexpected result length")
 	}
 
-	bd, err = NewBillingDetails(res[0], res[1])
+	observationPaymentFelt, err := caigoStringToJunoFelt(res[0])
+	if err != nil {
+		return bd, errors.Wrap(err, "couldn't decode observation payment")
+	}
+
+	transmissionPaymentFelt, err := caigoStringToJunoFelt(res[1])
+	if err != nil {
+		return bd, errors.Wrap(err, "couldn't decode transmission payment")
+	}
+
+	bd, err = NewBillingDetails(observationPaymentFelt, transmissionPaymentFelt)
 	if err != nil {
 		return bd, errors.Wrap(err, "couldn't initialize billing details")
 	}
@@ -82,7 +92,17 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 		return ccd, errors.New("unexpected result length")
 	}
 
-	ccd, err = NewContractConfigDetails(res[1], res[2])
+	blockNum, err := caigoStringToJunoFelt(res[1])
+	if err != nil {
+		return ccd, errors.Wrap(err, "couldn't decode block num")
+	}
+
+	configDigest, err := caigoStringToJunoFelt(res[2])
+	if err != nil {
+		return ccd, errors.Wrap(err, "couldn't decode config digest")
+	}
+
+	ccd, err = NewContractConfigDetails(blockNum, configDigest)
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't initialize config details")
 	}

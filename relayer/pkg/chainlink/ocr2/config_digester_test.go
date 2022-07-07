@@ -23,16 +23,16 @@ func mustHex(data string) []byte {
 var testConfig = types.ContractConfig{
 	ConfigCount: 1,
 	Signers: []types.OnchainPublicKey{
-		mustHex("0330bd957f7d6dc7b0fc9b1c8d792eb85876ebafc7156f0c94ae4616609b1dde"),
-		mustHex("035b8d28cb168dad13b8f02aeb5b13450aa5e7552916095c72efb98bfcc7fa4f"),
-		mustHex("027048193a8696a4e691e1b3a2e91defc4a14931d3d56d79744bd8c0e5738201"),
-		mustHex("0639ed78f722682dcf52f4956a8fbe9605883ab45d20af096738c86ec0df6847"),
+		mustHex("04bb6dab7f0defb1a4e7495c8b0462a3601b6471828430e8149c6c4ce4fbb939"),
+		mustHex("06d95501c78b021f8b3ba2010495b63c9fdd7792c80f6db63614de0cfe49279f"),
+		mustHex("075f974b8699bb3f29ea4ced5586512a7b31814ba9fac9b9ae14c6da8736d868"),
+		mustHex("013cfd7d081ba6dd4fd088b543769e8201b9b06dab8b147569ccf9c4a25e11e5"),
 	},
 	Transmitters: []types.Account{
-		"035597ad15679bd62c26d2095bb7fbe9134d7d1420bda9c2a270f72ee2c9c222",
-		"01d794632b9ce1ff18d6c999932a8ab7521caf1de1c141f198c3ef8965ccaae0",
-		"03b8d21e7873041f19cbf4ad73b8d85ec4d0eccf1749c2fd107df09573d9af52",
-		"0758906a2332045ae6b410ee17533d1b302044b03f1862df771db3d154a97c0f",
+		"029f74aa5ec305f12307556d1739c181eb71c4e4f9b6b3adbbb12d66f9c837a7",
+		"07e72346466d373b3a52abc3e753e56a9fa372eb2d7aefa79e990e6d65720cb8",
+		"05ed89dbf3a22af52e7960479faa9e69bbdd17ac752bae9b5aa8ecea67992cd2",
+		"04ca4c7fa6e7423219ec2bd64a074473fd61ed80d81af335bff79a1c3bc61178",
 	},
 	F:                     1,
 	OnchainConfig:         []byte{1},
@@ -43,12 +43,12 @@ var testConfig = types.ContractConfig{
 func TestConfigDigester(t *testing.T) {
 	d := ocr2.NewOffchainConfigDigester(
 		"SN_GOERLI", // DEFAULT_CHAIN_ID = StarknetChainId.TESTNET
-		"030cd58d6b04baafd0f4bb47652312c79335bd944f9bd8245448cd82e4f04f6b",
+		"01cb7acedf79ffdd598dbe57b9dfd67e16900323da6af617944f1b763a39503a",
 	)
 
 	digest, err := d.ConfigDigest(testConfig)
 	assert.NoError(t, err)
-	assert.Equal(t, "00044d35fedccdab024f3611ff2dda5599dd5ba4da9a4501c10e7556bbf1e3e6", digest.Hex())
+	assert.Equal(t, "00044e5d4f35325e464c87374b13c512f60e09d1236dd902f4bef4c9aedd7300", digest.Hex())
 }
 
 func TestConfigDigester_InvalidChainID(t *testing.T) {

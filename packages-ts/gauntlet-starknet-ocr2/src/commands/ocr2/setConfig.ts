@@ -15,7 +15,7 @@ type ContractInput = [
   f: number,
   onchain_config: string,
   offchain_config_version: number,
-  offchain_config: string[],
+  offchain_config: BN[],
 ]
 
 const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {

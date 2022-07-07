@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"

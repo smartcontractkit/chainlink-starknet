@@ -4,19 +4,18 @@ import { encoding } from '@chainlink/gauntlet-contracts-ocr2'
 
 const CHUNK_SIZE = 31
 
-export function bytesToFelts(data: Uint8Array): string[] {
-  let felts: string[] = []
+export function bytesToFelts(data: Uint8Array): BN[] {
+  let felts: BN[] = []
 
   // prefix with len
   let len = data.byteLength
-  felts.push(number.toBN(len).toString())
+  felts.push(number.toBN(len))
 
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     const chunk = data.slice(i, i + CHUNK_SIZE)
     // cast to int
-    let bn = new BN(chunk, 'be')
-    felts.push(bn.toString())
+    felts.push(new BN(chunk, 'be'))
   }
   return felts
 }
