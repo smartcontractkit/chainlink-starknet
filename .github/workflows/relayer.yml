@@ -1,11 +1,11 @@
-name: relay
+name: relayer
 
 on:
   push:
 
 jobs:
-  relay_run_unit_tests:
-    name: Relay Run Unit Tests
+  relayer_run_unit_tests:
+    name: Relayer Run Unit Tests
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgres://postgres@localhost:5432/postgres?sslmode=disable
@@ -35,11 +35,14 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compile relay
-        run: nix develop -c go build -v ./relayer/pkg/...
+      - name: Compile module
+        run: nix develop -c go build -v ./pkg/...
+        working-directory: ./relayer
 
       - name: Run unit tests
-        run: nix develop -c go test -v ./relayer/pkg/...
+        run: nix develop -c go test -v ./pkg/...
+        working-directory: ./relayer
 
       - name: Run tests with the race detector enabled
-        run: nix develop -c go test -v ./relayer/pkg/... -race -count=10
+        run: nix develop -c go test -v ./pkg/... -race -count=10
+        working-directory: ./relayer
