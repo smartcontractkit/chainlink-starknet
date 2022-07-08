@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    cairoPaths: ["node_modules/@joriksch/oz-cairo/src"]
+    cairoPaths: ['node_modules/@joriksch/oz-cairo/src'],
   },
   networks: {
     devnet: {
