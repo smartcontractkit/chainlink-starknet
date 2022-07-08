@@ -53,7 +53,6 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/dontpanicdao/caigo v0.2.1-0.20220517132056-e34006317632 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/ethereum/go-ethereum v1.10.18 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
