@@ -2,13 +2,13 @@ import { defaultProvider, ec } from 'starknet'
 import { loadContract } from './index'
 import fs from 'fs'
 
-const CONSUMER_NAME = 'OCR2_consumer'
+const CONSUMER_NAME = 'Aggregator_consumer'
 const MOCK_NAME = 'Mock_Aggregator'
 const DECIMALS = 18
 
 async function main() {
   const MockArtifact = loadContract(MOCK_NAME)
-  const OCR2Artifact = loadContract(CONSUMER_NAME)
+  const AggregatorArtifact = loadContract(CONSUMER_NAME)
 
   const mockDeploy = await defaultProvider.deployContract({
     contract: MockArtifact,
@@ -16,7 +16,7 @@ async function main() {
   })
 
   const consumerDeploy = await defaultProvider.deployContract({
-    contract: OCR2Artifact,
+    contract: AggregatorArtifact,
     constructorCalldata: [mockDeploy.address as string],
   })
 
