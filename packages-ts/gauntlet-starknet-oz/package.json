@@ -25,7 +25,7 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "@chainlink-dev/starkgate-open-zeppelin": "^0.0.1",
+    "@chainlink-dev/starkgate-open-zeppelin": "^0.0.2",
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/gauntlet-starknet": "*",
     "starknet": "^3.15.0"

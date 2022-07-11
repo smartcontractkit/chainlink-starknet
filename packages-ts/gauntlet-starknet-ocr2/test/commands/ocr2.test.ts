@@ -40,7 +40,6 @@ const validInput = {
     deltaGraceNanoseconds: 500000000,
     deltaStageNanoseconds: 20000000000,
     rMax: 5,
-    f: 1,
     s: [1, 2],
     offchainPublicKeys: [
       'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852090',
@@ -61,12 +60,6 @@ const validInput = {
     maxDurationReportNanoseconds: 200000000,
     maxDurationShouldAcceptFinalizedReportNanoseconds: 200000000,
     maxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
-    configPublicKeys: [
-      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852090',
-      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852091',
-      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852092',
-      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852093',
-    ],
   },
   offchainConfigVersion: 2,
   secret: 'awe accuse polygon tonic depart acuity onyx inform bound gilbert expire',
