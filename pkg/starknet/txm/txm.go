@@ -2,7 +2,6 @@ package txm
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -20,8 +19,8 @@ import (
 
 const (
 	MaxQueueLen     = 1000
-	DefaultTimeout  = 1   //s TODO: move to config
-	TxSendFrequency = 1   //s TODO: move to config
+	DefaultTimeout  = 5   //s TODO: move to config
+	TxSendFrequency = 10  //s TODO: move to config
 	MaxTxsPerBatch  = 100 // TODO: move to config
 )
 
@@ -115,7 +114,6 @@ func (txm *starktxm) run() {
 				txm.client = txm.getClient(gateway.WithChain(txm.nodeCfg.ChainID)) // TODO: chains + nodes config for proper endpoint
 			}
 			txm.setClientURL(txm.nodeCfg.URL) // temp solution to override default URLs
-			fmt.Println(txm.client.Gateway)
 
 			// async process of tx batches
 			var wg sync.WaitGroup
@@ -173,6 +171,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string,
 	// TODO: move ctx construction into Reader/Writer client
 	feeCtx, feeCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
 	defer feeCancel()
+
 	fee, err := account.EstimateFee(feeCtx, txs)
 	if err != nil {
 		return txhash, errors.Errorf("failed to estimate fee: %s", err)

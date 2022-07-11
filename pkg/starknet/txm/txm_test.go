@@ -16,7 +16,7 @@ import (
 
 func TestTxm(t *testing.T) {
 	url := SetupLocalStarkNetNode(t)
-	localKeys := TestKeys(t)
+	localKeys := TestKeys(t, 2) // generate 2 keys
 
 	// mock keystore
 	ks := new(mocks.Keystore)
@@ -53,11 +53,13 @@ func TestTxm(t *testing.T) {
 	for k := range localKeys {
 		for i := 0; i < 5; i++ {
 			require.NoError(t, txm.Enqueue(types.Transaction{
-				SenderAddress: k,
+				SenderAddress:      k,
+				ContractAddress:    k, // send to self
+				EntryPointSelector: "get_nonce",
 			}))
 		}
 	}
-	time.Sleep(5 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	// stop txm
 	require.NoError(t, txm.Close())

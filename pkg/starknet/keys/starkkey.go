@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/big"
 
+	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	starksig "github.com/NethermindEth/juno/pkg/crypto/signature"
 	"github.com/NethermindEth/juno/pkg/crypto/weierstrass"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -77,12 +78,24 @@ func (key Key) ID() string {
 
 // PublicKeyStr
 func (key Key) PublicKeyStr() string {
-	return "0x" + hex.EncodeToString(PubToStarkKey(key.privkey.PublicKey))
+
+	// TODO: what if this is different per network?
+	classHash, _ := new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
+	salt := big.NewInt(20)
+
+	return "0x" + hex.EncodeToString(PubToStarkKey(key.privkey.PublicKey, classHash, salt))
 }
 
-// PubToStarkKey implements the pubkey to starkkey functionality: https://github.com/0xs34n/starknet.js/blob/cd61356974d355aa42f07a3d63f7ccefecbd913c/src/utils/ellipticCurve.ts#L49
-func PubToStarkKey(pubkey starksig.PublicKey) []byte {
-	return math.PaddedBigBytes(pubkey.X, 32)
+// PubToStarkKey implements the pubkey to deployed account given contract hash + salt
+func PubToStarkKey(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte {
+	hash := pedersen.ArrayDigest(
+		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
+		big.NewInt(0),
+		salt,      // salt TODO: what if this is different per network/user
+		classHash, // classHash
+		pedersen.ArrayDigest(pubkey.X),
+	)
+	return math.PaddedBigBytes(hash, 32)
 }
 
 // Raw from private key

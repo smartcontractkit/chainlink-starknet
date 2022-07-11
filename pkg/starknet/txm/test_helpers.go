@@ -68,10 +68,16 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 	return url
 }
 
-func TestKeys(t *testing.T) map[string]keys.Key {
+func TestKeys(t *testing.T, count int) map[string]keys.Key {
 	keyMap := map[string]keys.Key{}
 
-	for _, k := range privateKeys0Seed {
+	require.True(t, len(privateKeys0Seed) >= count, "requested more keys than available")
+	for i, k := range privateKeys0Seed {
+		// max number of keys to generate
+		if i >= count {
+			break
+		}
+
 		keyBytes, err := caigo.HexToBytes(k)
 		require.NoError(t, err)
 		raw := keys.Raw(keyBytes)
