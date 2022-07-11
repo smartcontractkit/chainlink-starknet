@@ -41,13 +41,13 @@ func NewClient(chainID string, lggr logger.Logger) (*Client, error) {
 }
 
 func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, err error) {
-	tx := caigotypes.Transaction{
+	tx := caigotypes.FunctionCall{
 		ContractAddress:    ops.ContractAddress,
 		EntryPointSelector: ops.Selector,
 		Calldata:           ops.Calldata,
 	}
 
-	res, err = c.gw.Call(ctx, tx, nil)
+	res, err = c.gw.Call(ctx, tx, "")
 	if err != nil {
 		return res, errors.Wrap(err, "couldn't call the contract")
 	}

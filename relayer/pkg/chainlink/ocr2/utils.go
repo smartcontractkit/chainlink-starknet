@@ -126,7 +126,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 		if i%2 == 0 {
 			signers = append(signers, member.Bytes())
 		} else {
-			transmitters = append(transmitters, types.Account(member.Hex()))
+			transmitters = append(transmitters, types.Account(member.String()))
 		}
 	}
 
