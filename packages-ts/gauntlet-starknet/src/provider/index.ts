@@ -1,5 +1,12 @@
 import { TransactionResponse } from '../transaction'
-import { Provider as StarknetProvider, AddTransactionResponse, CompiledContract, Account, Call } from 'starknet'
+import {
+  Provider as StarknetProvider,
+  AddTransactionResponse,
+  CompiledContract,
+  Account,
+  Call,
+  InvocationsDetails,
+} from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
 // TODO: Move to gauntlet-core
@@ -73,7 +80,8 @@ class Provider implements IStarknetProvider {
   signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[], wait = false) => {
     const account = new Account(this.provider, accountAddress, wallet.wallet)
 
-    const tx = await account.execute(calls)
+    const maxFee = await account.estimateFee(calls)
+    const tx = await account.execute(calls, undefined, { maxFee: maxFee.suggestedMaxFee })
 
     const response = wrapResponse(this, tx)
     if (!wait) return response

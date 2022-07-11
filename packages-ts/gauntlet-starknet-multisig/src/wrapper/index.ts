@@ -10,7 +10,7 @@ import {
   IStarknetWallet,
 } from '@chainlink/gauntlet-starknet'
 import { TransactionResponse } from '@chainlink/gauntlet-starknet/dist/transaction'
-import { Call, CompiledContract, Contract, addAddressPadding } from 'starknet'
+import { Call, CompiledContract, Contract, addAddressPadding, number, encode, validateAndParseAddress } from 'starknet'
 import { addHexPrefix } from 'starknet/dist/utils/encode'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { toBN, toHex } from 'starknet/dist/utils/number'
@@ -126,7 +126,9 @@ export const wrapCommand = <UI, CI>(
     }
 
     isSameProposal = (local: Call, onchain: Call): boolean => {
-      if (local.contractAddress !== onchain.contractAddress) return false
+      const localAddress = validateAndParseAddress(local.contractAddress)
+      const onchainAddress = validateAndParseAddress(onchain.contractAddress)
+      if (localAddress !== onchainAddress) return false
       if (getSelectorFromName(local.entrypoint) !== onchain.entrypoint) return false
       if (!isDeepEqual(local.calldata, onchain.calldata)) return false
       return true
@@ -240,8 +242,14 @@ export const wrapCommand = <UI, CI>(
           },
         ],
       }
-      // TODO: The multisig contract needs to return the proposal id on creation. Fix when ready
-      const data = await this.afterExecute(result, this.input.user.proposalId)
+
+      let proposalId = this.input.user.proposalId
+      if (!this.initialState.proposal) {
+        const txInfo = await this.provider.provider.getTransactionReceipt(tx.hash)
+        proposalId = Number(number.hexToDecimalString((txInfo.events[0] as any).data[1]))
+      }
+
+      const data = await this.afterExecute(result, proposalId)
 
       return !!data ? { ...result, data: { ...data } } : result
     }
