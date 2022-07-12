@@ -7,7 +7,7 @@
     "test": "npx hardhat --network localhost test",
     "readDecimals": "npx ts-node ./scripts/readDecimals.ts",
     "readLatestRound": "npx ts-node ./scripts/readLatestRound.ts",
-    "compile": "npx hardhat starknet-compile ./contracts --cairo-path ../.."
+    "compile": "npx hardhat starknet-compile ./contracts --cairo-path ../../../contracts"
   },
   "keywords": [],
   "author": "",

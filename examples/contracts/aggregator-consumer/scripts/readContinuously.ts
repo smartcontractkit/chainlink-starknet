@@ -3,7 +3,7 @@ import { CallContractResponse } from 'starknet/types'
 import { loadContract } from './index'
 import dotenv from 'dotenv'
 
-const CONTRACT_NAME = 'OCR2_consumer'
+const CONTRACT_NAME = 'Aggregator_consumer'
 let account: Account
 let consumer: Contract
 
@@ -13,9 +13,9 @@ async function main() {
   const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY as string)
   account = new Account(defaultProvider, process.env.ACCOUNT_ADDRESS as string, keyPair)
 
-  const OCR2Artifact = loadContract(CONTRACT_NAME)
+  const AggregatorArtifact = loadContract(CONTRACT_NAME)
 
-  consumer = new Contract(OCR2Artifact.abi, process.env.CONSUMER as string)
+  consumer = new Contract(AggregatorArtifact.abi, process.env.CONSUMER as string)
   setInterval(callFunction, 30000)
 }
 

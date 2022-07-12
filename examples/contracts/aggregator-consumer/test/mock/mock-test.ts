@@ -17,7 +17,7 @@ describe('ContractTestsMock', function () {
     MockContract = await MockFactory.deploy({ decimals: DECIMALS })
     console.log('MockContract: ', MockContract.address)
 
-    let ConsumerFactory = await starknet.getContractFactory('OCR2_consumer.cairo')
+    let ConsumerFactory = await starknet.getContractFactory('Aggregator_consumer.cairo')
     ConsumerContract = await ConsumerFactory.deploy({ address: MockContract.address })
     console.log('ConsumerContract: ', ConsumerContract.address)
   })
