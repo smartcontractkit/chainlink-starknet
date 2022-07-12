@@ -1,7 +1,10 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin
 from SimpleWriteAccessController.library import simple_write_access_controller
+
+from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.starknet.common.syscalls import get_tx_info
+from starkware.cairo.common.bool import TRUE, FALSE
 
 namespace simple_read_access_controller:
     func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
