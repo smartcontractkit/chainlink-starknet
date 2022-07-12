@@ -11,7 +11,7 @@ import (
 var DefaultConfigSet = ConfigSet{
 	OCR2CachePollPeriod: 5 * time.Second,
 	OCR2CacheTTL:        time.Minute,
-	RequestTimeout:      5 * time.Second,
+	RequestTimeout:      10 * time.Second,
 	TxTimeout:           time.Minute,
 	TxSendFrequency:     15 * time.Second,
 	TxMaxBatchSize:      100,
