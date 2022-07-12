@@ -1,0 +1,32 @@
+{
+  "name": "etherume",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat --network localhost test",
+    "compile": "npx hardhat starknet-compile",
+    "compile:l1": "npx hardhat compile"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.6",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@types/jest": "^28.1.4",
+    "@types/mocha": "^9.1.1",
+    "chai": "^4.3.6",
+    "ethereum-waffle": "^3.4.4",
+    "ethers": "^5.6.9",
+    "ts-node": "^10.8.2"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.4.1",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@shardlabs/starknet-hardhat-plugin": "^0.6.1",
+    "@typechain/hardhat": "^6.1.2",
+    "hardhat-abi-exporter": "^2.10.0",
+    "hardhat-contract-sizer": "^2.6.1",
+    "solidity-coverage": "^0.7.21"
+  }
+}

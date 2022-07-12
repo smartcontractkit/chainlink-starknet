@@ -9,3 +9,7 @@ yarn test
 # Example tests
 cd examples/ocr2
 yarn compile && yarn test
+
+# Validator tests
+cd ../../../emergency-protocol
+yarn compile && yarn compile:l1 && yarn test
