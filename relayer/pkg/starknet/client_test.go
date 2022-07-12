@@ -15,7 +15,7 @@ func TestGatewayClient(t *testing.T) {
 	chainID := gateway.GOERLI_ID
 	lggr := logger.Test(t)
 
-	client, err := NewClient(chainID, lggr)
+	client, err := NewClient(chainID, "", lggr)
 	assert.NoError(t, err)
 
 	t.Run("get chain id", func(t *testing.T) {

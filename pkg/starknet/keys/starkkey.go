@@ -80,6 +80,7 @@ func (key Key) ID() string {
 func (key Key) PublicKeyStr() string {
 
 	// TODO: what if this is different per network?
+	// https://github.com/Shard-Labs/starknet-devnet/blob/master/starknet_devnet/account.py
 	classHash, _ := new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
 	salt := big.NewInt(20)
 
@@ -91,7 +92,7 @@ func PubToStarkKey(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte {
 	hash := pedersen.ArrayDigest(
 		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
 		big.NewInt(0),
-		salt,      // salt TODO: what if this is different per network/user
+		salt,      // salt
 		classHash, // classHash
 		pedersen.ArrayDigest(pubkey.X),
 	)

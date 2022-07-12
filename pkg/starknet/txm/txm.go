@@ -7,21 +7,18 @@ import (
 	"time"
 
 	"github.com/dontpanicdao/caigo"
-	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
 )
 
 const (
-	MaxQueueLen     = 1000
-	DefaultTimeout  = 5   //s TODO: move to config
-	TxSendFrequency = 10  //s TODO: move to config
-	MaxTxsPerBatch  = 100 // TODO: move to config
+	MaxQueueLen = 1000
 )
 
 type TxManager interface {
@@ -33,11 +30,6 @@ type StarkTXM interface {
 	TxManager
 }
 
-type NodeConfig struct {
-	ChainID string
-	URL     string
-}
-
 type starktxm struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
@@ -46,16 +38,14 @@ type starktxm struct {
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
 	ks      keys.Keystore
+	cfg     starknet.Config
 
 	// TODO: use lazy loaded client
-	client    *gateway.GatewayProvider
-	getClient func(...gateway.Option) *gateway.GatewayProvider
-
-	// TODO: use nodes/chains config
-	nodeCfg NodeConfig
+	client    types.Provider
+	getClient func() types.Provider
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, nodeConfig NodeConfig) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, cfg starknet.Config, getClient func() types.Provider) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
@@ -64,10 +54,10 @@ func New(lggr logger.Logger, keystore keys.Keystore, nodeConfig NodeConfig) (Sta
 		lggr:      lggr,
 		queue:     make(chan types.Transaction, MaxQueueLen),
 		stop:      make(chan struct{}),
-		getClient: gateway.NewProvider,
+		getClient: getClient,
 		curve:     &curve,
 		ks:        keystore,
-		nodeCfg:   nodeConfig,
+		cfg:       cfg,
 	}, nil
 }
 
@@ -96,8 +86,8 @@ func (txm *starktxm) run() {
 
 			// calculate total txs to process
 			txLen := len(txm.queue)
-			if txLen > MaxTxsPerBatch {
-				txLen = MaxTxsPerBatch
+			if txLen > txm.cfg.TxMaxBatchSize() {
+				txLen = txm.cfg.TxMaxBatchSize()
 			}
 
 			// fetch batch and split by sender
@@ -111,9 +101,8 @@ func (txm *starktxm) run() {
 
 			// fetch client if needed
 			if txm.client == nil {
-				txm.client = txm.getClient(gateway.WithChain(txm.nodeCfg.ChainID)) // TODO: chains + nodes config for proper endpoint
+				txm.client = txm.getClient()
 			}
-			txm.setClientURL(txm.nodeCfg.URL) // temp solution to override default URLs
 
 			// async process of tx batches
 			var wg sync.WaitGroup
@@ -143,21 +132,11 @@ func (txm *starktxm) run() {
 			}
 			wg.Wait()
 
-			tick = time.After(utils.WithJitter(TxSendFrequency*time.Second) - time.Since(start))
+			tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()*time.Second) - time.Since(start))
 		case <-txm.stop:
 			return
 		}
 	}
-}
-
-func (txm *starktxm) setClientURL(baseURL string) {
-	if baseURL == "" {
-		return // if empty, use default from caigo
-	}
-
-	txm.client.Gateway.Base = baseURL
-	txm.client.Gateway.Feeder = baseURL + "/feeder_gateway"
-	txm.client.Gateway.Gateway = baseURL + "/gateway"
 }
 
 func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string, txs []types.Transaction) (txhash string, err error) {
@@ -168,19 +147,14 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string,
 	}
 
 	// get fee for txm
-	// TODO: move ctx construction into Reader/Writer client
-	feeCtx, feeCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
-	defer feeCancel()
-
-	fee, err := account.EstimateFee(feeCtx, txs)
+	fee, err := account.EstimateFee(ctx, txs)
 	if err != nil {
 		return txhash, errors.Errorf("failed to estimate fee: %s", err)
 	}
 
-	// TODO: move ctx construction into Reader/Writer client
 	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, DefaultTimeout*time.Second)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
 	defer execCancel()
 	res, err := account.Execute(execCtx, types.StrToFelt(strconv.Itoa(int(fee.Amount))), txs)
 	if err != nil {
