@@ -7,5 +7,6 @@ yarn install
 npx hardhat starknet-compile
 yarn test
 # Example tests
+yarn install
 cd ../examples/contracts/aggregator-consumer
 yarn compile && yarn test
