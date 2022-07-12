@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
 )
 
 func TestGatewayClient(t *testing.T) {
@@ -15,7 +16,7 @@ func TestGatewayClient(t *testing.T) {
 	chainID := gateway.GOERLI_ID
 	lggr := logger.Test(t)
 
-	client, err := NewClient(chainID, "", lggr)
+	client, err := NewClient(chainID, "", lggr, NewConfig(db.ChainCfg{}, lggr))
 	assert.NoError(t, err)
 
 	t.Run("get chain id", func(t *testing.T) {

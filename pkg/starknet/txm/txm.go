@@ -131,8 +131,7 @@ func (txm *starktxm) run() {
 				}(sender, txs)
 			}
 			wg.Wait()
-
-			tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()*time.Second) - time.Since(start))
+			tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start))
 		case <-txm.stop:
 			return
 		}

@@ -8,6 +8,8 @@ import (
 	"github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/db"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
 	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys/mocks"
 	"github.com/stretchr/testify/mock"
@@ -36,10 +38,14 @@ func TestTxm(t *testing.T) {
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
-	txm, err := New(lggr, ks, NodeConfig{
-		ChainID: "devnet",
-		URL:     url,
-	})
+	cfg := starknet.NewConfig(db.ChainCfg{}, lggr)
+	client, err := starknet.NewClient("devnet", url, lggr, cfg)
+	require.NoError(t, err)
+	getClient := func() types.Provider {
+		return client
+	}
+
+	txm, err := New(lggr, ks, cfg, getClient)
 	require.NoError(t, err)
 
 	// ready fail if start not called
@@ -59,7 +65,7 @@ func TestTxm(t *testing.T) {
 			}))
 		}
 	}
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	// stop txm
 	require.NoError(t, txm.Close())

@@ -15,6 +15,7 @@ import (
 type Reader interface {
 	CallContract(context.Context, CallOps) ([]string, error)
 	LatestBlockHeight(context.Context) (uint64, error)
+	BlockByNumberGateway(context.Context, uint64) (*caigogw.Block, error)
 
 	// provider interface
 	BlockByHash(context.Context, string, string) (*caigotypes.Block, error)
@@ -83,7 +84,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, e
 		Calldata:           ops.Calldata,
 	}
 
-	res, err = c.gw.Call(ctx, tx, "")
+	res, err = c.Call(ctx, tx, "")
 	if err != nil {
 		return res, errors.Wrap(err, "error in client.CallContract")
 	}
@@ -91,13 +92,28 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, e
 	return
 }
 
-func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err error) {
+func (c *Client) LatestBlockHeight(parentCtx context.Context) (height uint64, err error) {
+	ctx, cancel := context.WithTimeout(parentCtx, c.cfg.RequestTimeout())
+	defer cancel()
 	block, err := c.gw.Block(ctx, nil)
 	if err != nil {
 		return height, errors.Wrap(err, "error in client.LatestBlockHeight")
 	}
 
 	return uint64(block.BlockNumber), nil
+}
+
+func (c *Client) BlockByNumberGateway(parentCtx context.Context, blockNum uint64) (block *caigogw.Block, err error) {
+	ctx, cancel := context.WithTimeout(parentCtx, c.cfg.RequestTimeout())
+	defer cancel()
+	block, err = c.gw.Block(ctx, &caigogw.BlockOptions{
+		BlockNumber: blockNum,
+	})
+	if err != nil {
+		return block, errors.Wrap(err, "couldn't get block by number")
+	}
+
+	return block, nil
 }
 
 // -- caigo.Provider interface --
