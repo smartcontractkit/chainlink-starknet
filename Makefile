@@ -27,11 +27,11 @@ endif
 ifeq ($(OSFLAG),$(OSX))
 	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 	brew install asdf
-	asdf plugin-add nodejs || true
 	asdf plugin-add golang || true
+	asdf plugin-add nodejs || true
+	asdf plugin-add python || true
 	asdf plugin-add golangci-lint || true
 	asdf plugin-add ginkgo || true
-	asdf plugin-add pulumi || true
 	asdf plugin add actionlint || true
 	asdf plugin add shellcheck || true
 	asdf install

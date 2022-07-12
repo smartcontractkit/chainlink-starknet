@@ -24,6 +24,9 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  paths: {
+    cairoPaths: ['node_modules/@joriksch/oz-cairo/src'],
+  },
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050',
