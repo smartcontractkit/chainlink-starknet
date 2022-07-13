@@ -36,10 +36,10 @@ jobs:
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile module
-        run: nix develop -c cd ./relayer && go build -v ./pkg/...
+        run: nix develop -c "cd relayer && go build -v ./pkg/..."
 
       - name: Run unit tests
-        run: nix develop -c cd ./relayer && go test -v ./pkg/...
+        run: nix develop -c "cd relayer && go test -v ./pkg/..."
 
       - name: Run tests with the race detector enabled
-        run: nix develop -c cd ./relayer && go test -v ./pkg/... -race -count=10
+        run: nix develop -c "cd relayer && go test -v ./pkg/... -race -count=10"
