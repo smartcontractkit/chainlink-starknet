@@ -3,6 +3,10 @@ name: relayer
 on:
   push:
 
+defaults:
+  run:
+    working-directory: relayer
+
 jobs:
   relayer_run_unit_tests:
     name: Relayer Run Unit Tests
@@ -27,19 +31,15 @@ jobs:
         uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v14
+        uses: cachix/install-nix-action@v17
         with:
-          install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
-          install_options: "--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve"
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Compile module
-        run: nix develop -c "cd relayer && go build -v ./pkg/..."
+        run: nix develop -c go build -v ./pkg/...
 
       - name: Run unit tests
-        run: nix develop -c "cd relayer && go test -v ./pkg/..."
+        run: nix develop -c go test -v ./pkg/...
 
       - name: Run tests with the race detector enabled
-        run: nix develop -c "cd relayer && go test -v ./pkg/... -race -count=10"
+        run: nix develop -c go test -v ./pkg/... -race -count=10
