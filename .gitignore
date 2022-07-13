@@ -145,3 +145,6 @@ dmypy.json
 
 # vscode project settings
 .vscode/
+
+# go workspace settings
+go.work

@@ -16,7 +16,7 @@ usage="usage: $(basename "$0") [-h] [-a] [-p GO_PACKAGE] [-o OUTPUT_PNG_PATH]
 Create a dependency diagram for the provided go module:
     -h show this tip
     -a include all dependencies (otherwise include only github.com/smartcontractkit dependencies)
-    -p package name (i.e. github.com/smartcontractkit/chainlink-starknet/pkg/chainlink)
+    -p package name (i.e. github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink)
     -o output PNG path"
 
 options=':hap:o:'

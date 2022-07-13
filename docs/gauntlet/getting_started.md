@@ -68,6 +68,6 @@ ACCOUNT=0x...
 PRIVATE_KEY=0x...
 ```
 
-In order to get this configuration, go to [how to setup an account](../../packages-ts/gauntlet-starknet-account/README.md#setup-an-account)
+In order to get this configuration, go to [how to setup an account](../../packages-ts/starknet-gauntlet-account/README.md#setup-an-account)
 
 If you are interacting with a local network and do not want to use any wallet, execute every command with the flag `--noWallet`

@@ -4,29 +4,29 @@
   "include": [],
   "references": [
     {
-      "path": "./packages-ts/gauntlet-starknet"
+      "path": "./packages-ts/starknet-gauntlet"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-oz"
+      "path": "./packages-ts/starknet-gauntlet-oz"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-argent"
+      "path": "./packages-ts/starknet-gauntlet-argent"
     },
 
     {
-      "path": "./packages-ts/gauntlet-starknet-multisig"
+      "path": "./packages-ts/starknet-gauntlet-multisig"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-example"
+      "path": "./packages-ts/starknet-gauntlet-example"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-starkgate"
+      "path": "./packages-ts/starknet-gauntlet-starkgate"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-ocr2"
+      "path": "./packages-ts/starknet-gauntlet-ocr2"
     },
     {
-      "path": "./packages-ts/gauntlet-starknet-cli"
+      "path": "./packages-ts/starknet-gauntlet-cli"
     }
   ]
 }

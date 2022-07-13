@@ -1,19 +1,22 @@
 {
-  "name": "chainlink-starknet",
+  "name": "@chainlink/starknet",
   "private": true,
   "version": "0.0.1",
-  "description": "chainlink starknet",
+  "description": "Chainlink's StarkNet integration monorepo",
   "workspaces": [
-    "packages-ts/*"
+    "packages-ts/*",
+    "contracts",
+    "integration-tests",
+    "relayer"
   ],
   "keywords": [
     "typescript",
     "cli"
   ],
-  "main": "packages-ts/gauntlet-starknet-cli/dist/index.js",
-  "bin": "packages-ts/gauntlet-starknet-cli/dist/index.js",
+  "main": "packages-ts/starknet-gauntlet-cli/dist/index.js",
+  "bin": "packages-ts/starknet-gauntlet-cli/dist/index.js",
   "scripts": {
-    "gauntlet": "yarn build && node ./packages-ts/gauntlet-starknet-cli/dist/index.js",
+    "gauntlet": "yarn build && node ./packages-ts/starknet-gauntlet-cli/dist/index.js",
     "test": "yarn build && SKIP_PROMPTS=true jest --runInBand ./packages-ts",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
@@ -27,7 +30,7 @@
   },
   "pkg": {
     "scripts": [
-      "packages-ts/gauntlet-starknet-cli/dist/index.js"
+      "packages-ts/starknet-gauntlet-cli/dist/index.js"
     ],
     "targets": [
       "linux",
@@ -37,10 +40,11 @@
     "assets": [
       "node_modules/@chainlink-dev",
       "packages-ts/*/contract_artifacts/**/*",
-      "packages-ts/gauntlet-starknet-cli/networks/"
+      "packages-ts/starknet-gauntlet-cli/networks/"
     ]
   },
   "devDependencies": {
+    "@changesets/cli": "^2.22.0",
     "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.2.22",
     "@types/jest": "^26.0.15",

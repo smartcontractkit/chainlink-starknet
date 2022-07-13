@@ -1,0 +1,34 @@
+{
+  "name": "@chainlink/starknet-gauntlet-ocr2",
+  "version": "0.0.1",
+  "description": "Starknet Gauntlet OCR2",
+  "keywords": [
+    "typescript",
+    "cli"
+  ],
+  "main": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "!dist/**/*.test.js"
+  ],
+  "scripts": {
+    "gauntlet": "ts-node ./src/index.ts",
+    "lint": "tsc",
+    "test": "SKIP_PROMPTS=true jest --runInBand",
+    "test:coverage": "yarn test --collectCoverage",
+    "test:ci": "yarn test --ci",
+    "lint:format": "yarn prettier --check ./src",
+    "format": "yarn prettier --write ./src",
+    "clean": "rm -rf ./dist/ ./bin/",
+    "build": "yarn clean && tsc -b",
+    "bundle": "yarn build && pkg ."
+  },
+  "dependencies": {
+    "@chainlink-dev/starknet-contracts-ocr2": "^0.0.1",
+    "@chainlink/gauntlet-core": "0.3.1",
+    "@chainlink/gauntlet-contracts-ocr2": "0.2.1",
+    "@chainlink/starknet-gauntlet": "*",
+    "starknet": "3.15.0"
+  }
+}
