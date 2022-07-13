@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dontpanicdao/caigo"
-	"github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

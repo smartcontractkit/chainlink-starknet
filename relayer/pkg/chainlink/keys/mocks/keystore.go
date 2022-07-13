@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	keys "github.com/smartcontractkit/chainlink-starknet/pkg/starknet/keys"
+	keys "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	mock "github.com/stretchr/testify/mock"
 )
 
