@@ -13,10 +13,10 @@
     "typescript",
     "cli"
   ],
-  "main": "packages-ts/gauntlet-starknet-cli/dist/index.js",
-  "bin": "packages-ts/gauntlet-starknet-cli/dist/index.js",
+  "main": "packages-ts/starknet-gauntlet-cli/dist/index.js",
+  "bin": "packages-ts/starknet-gauntlet-cli/dist/index.js",
   "scripts": {
-    "gauntlet": "yarn build && node ./packages-ts/gauntlet-starknet-cli/dist/index.js",
+    "gauntlet": "yarn build && node ./packages-ts/starknet-gauntlet-cli/dist/index.js",
     "lint": "tsc -b ./tsconfig.json",
     "test": "yarn build && SKIP_PROMPTS=true jest --runInBand ./packages-ts",
     "test:coverage": "yarn test --collectCoverage",
@@ -30,7 +30,7 @@
   },
   "pkg": {
     "scripts": [
-      "packages-ts/gauntlet-starknet-cli/dist/index.js"
+      "packages-ts/starknet-gauntlet-cli/dist/index.js"
     ],
     "targets": [
       "linux",
@@ -40,7 +40,7 @@
     "assets": [
       "node_modules/@chainlink-dev",
       "packages-ts/*/contract_artifacts/**/*",
-      "packages-ts/gauntlet-starknet-cli/networks/"
+      "packages-ts/starknet-gauntlet-cli/networks/"
     ]
   },
   "devDependencies": {
