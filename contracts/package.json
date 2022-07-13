@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx hardhat --network localhost test"
+    "compile": "hardhat starknet-compile",
+    "test": "hardhat --network localhost test"
   },
   "author": "",
   "license": "MIT",
@@ -25,6 +26,7 @@
     "hardhat": "^2.9.9"
   },
   "dependencies": {
+    "@joriksch/oz-cairo": "^1.0.1",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "axios": "^0.24.0"
   }
