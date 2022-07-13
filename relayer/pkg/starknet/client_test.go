@@ -1,4 +1,4 @@
-package chainlink
+package starknet
 
 import (
 	"context"
