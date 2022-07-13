@@ -120,7 +120,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     ) => async () => {
       deps.logger.loading(`Executing ${context.id} from contract ${context.contractAddress}`)
       deps.logger.log('Contract Input Params:', input.contract)
-      await deps.prompt('Continue?')
     }
 
     defaultAfterExecute = () => async (response: Result<TransactionResponse>): Promise<any> => {

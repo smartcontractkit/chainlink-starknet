@@ -304,10 +304,10 @@
   resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-contracts/-/starkgate-contracts-0.0.3.tgz#915008fec43fbb15a3c87f686e74c06f3e55ca4d"
   integrity sha512-QqL+2w+WWCGg6Tw885wij/6ZWkJwGFeO+QUHg5ow9bQmgG600QpnTL5EdItvmlbUIjwNFrKkh0zyyDnwRVGhRQ==
 
-"@chainlink-dev/starkgate-open-zeppelin@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-open-zeppelin/-/starkgate-open-zeppelin-0.0.1.tgz#a0c8a6d224aebf148b43d0f937b11ca71b37adc5"
-  integrity sha512-h2TlqjPENkS7vQNz4ChX0x9a3uTTpQl6kKLvhXA+ex9nVldN5Bsg37uq91hR2htr8/BMXTgeFMamvQJeLkBf1Q==
+"@chainlink-dev/starkgate-open-zeppelin@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-open-zeppelin/-/starkgate-open-zeppelin-0.0.2.tgz#03b766b23d295cc60bc567d58dc4faa92562a168"
+  integrity sha512-XEzbdGE7BtpwlmfVF81XqqUotrfjD7hzXKDItuYYuClRyC9LWWHu9BVjh+IZT3LRkXvrQZeluQ56WkXZPcRF8g==
 
 "@chainlink-dev/starknet-contracts-ocr2@^0.0.1":
   version "0.0.1"
