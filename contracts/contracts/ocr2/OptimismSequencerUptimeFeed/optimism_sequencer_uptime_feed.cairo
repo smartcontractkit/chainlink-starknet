@@ -9,7 +9,7 @@ from ocr2.OptimismSequencerUptimeFeed.library import (
     s_l2_cross_domain_messenger,
     s_feed_state,
     record_round,
-    FeedState,
+    optimism_sequencer_uptime_feed,
 )
 from ocr2.interfaces.IAggregator import IAggregator
 from ocr2.interfaces.IAccessController import IAccessController
@@ -23,14 +23,11 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     initial_status : felt,
     owner_address : felt,
 ):
-    simple_read_access_controller.constructor(owner_address)
-    set_l1_sender(l1_sender_address)
-    s_l2_cross_domain_messenger.write(l2_cross_domain_messenger_addr)
-    let feed_state = FeedState(latest_round_id=0, latest_status=FALSE, started_at=0, updated_at=0)
-    s_feed_state.write(feed_state)
-
-    let (timestamp) = get_block_timestamp()
-    record_round(1, initial_status, timestamp)
-
     return ()
+end
+
+@external
+func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    status : felt, timestamp : felt
+):
 end
