@@ -1,0 +1,45 @@
+name: relayer
+
+on:
+  push:
+
+defaults:
+  run:
+    working-directory: relayer
+
+jobs:
+  relayer_run_unit_tests:
+    name: Relayer Run Unit Tests
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres@localhost:5432/postgres?sslmode=disable
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Compile module
+        run: nix develop -c go build -v ./pkg/...
+
+      - name: Run unit tests
+        run: nix develop -c go test -v ./pkg/...
+
+      - name: Run tests with the race detector enabled
+        run: nix develop -c go test -v ./pkg/... -race -count=10
