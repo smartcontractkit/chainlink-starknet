@@ -34,9 +34,9 @@ export default {
     outDir: './typechain',
     target: 'ethers-v5',
   },
-//   networks: {
-//     hardhat: {},
-//   },
+  //   networks: {
+  //     hardhat: {},
+  //   },
   solidity: {
     compilers: [
       {
@@ -72,7 +72,7 @@ export default {
 
     // uses the currently active Python environment (hopefully with available Starknet commands!)
     // venv: 'active',
-    network: "devnet",
+    network: 'devnet',
     // network: 'integrated-devnet',
     wallets: {
       OpenZeppelin: {
