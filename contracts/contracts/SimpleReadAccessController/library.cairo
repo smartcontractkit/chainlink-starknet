@@ -17,4 +17,8 @@ namespace simple_read_access_controller:
         let (bool) = simple_write_access_controller.has_access(user, data_len, data)
         return (bool)
     end
+
+    func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+        # TODO: cal; has_access here
+    end
 end
