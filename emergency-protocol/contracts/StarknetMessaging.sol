@@ -23,7 +23,7 @@ contract StarknetMessaging is IStarknetMessaging {
         pure
         returns (uint256 convertedValue)
     {
-        convertedValue = uint256(uint160(address(value)));
+        convertedValue = uint256(uint160(value));
     }
 
     function l1ToL2Messages(bytes32 msgHash) external view returns (uint256) {
