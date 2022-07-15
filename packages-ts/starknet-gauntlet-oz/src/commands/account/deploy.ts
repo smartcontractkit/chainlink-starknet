@@ -12,6 +12,7 @@ import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 type UserInput = {
   publicKey: string
   privateKey?: string
+  salt? : string
 }
 
 type ContractInput = [publicKey: string]
@@ -26,6 +27,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   return {
     publicKey: pubkey,
     privateKey: (!flags.publicKey || !env.account) && generatedPK,
+    salt: flags.salt,
   }
 }
 
@@ -34,7 +36,9 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
-  deps.logger.info(`About to deploy an Account Contract with public key ${input.contract[0]}`)
+  deps.logger.info(`About to deploy an Account Contract with:
+    public key: ${input.contract[0]}
+    salt: ${input.user.salt || "randomly generated"}`)
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
     deps.logger.line()

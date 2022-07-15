@@ -157,7 +157,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      const tx = await this.provider.deployContract(this.contract, this.input.contract, false)
+      const tx = await this.provider.deployContract(this.contract, this.input.contract, false, this.input.user['salt'])
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
       if (!response.success) {
