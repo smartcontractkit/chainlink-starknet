@@ -1,7 +1,7 @@
 {
   "name": "@chainlink/starknet-gauntlet-starkgate",
   "version": "0.0.1",
-  "description": "Starknet Gauntlet Starkgate contracts",
+  "description": "Gauntlet Starknet Starkgate contracts",
   "keywords": [
     "typescript",
     "cli"
