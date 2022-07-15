@@ -2,6 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp, get_caller_address
+from starkware.starknet.common.math import assert_not_zero
 
 from utils import assert_boolean
 
@@ -66,6 +67,18 @@ func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return ()
 end
 
+func require_valid_round_id(round_id : felt):
+    let (lateset_round_id) = _get_latest_round_id()
+
+    with_attr error_message("invalid round_id"):
+        assert_not_zero(round_id)
+        # TODO: do we need to check if uint80 is overflown?
+        assert_le(round_id, lateset_round_id)
+    end
+
+    return ()
+end
+
 # TODO: maybe not needed
 # @storage_var
 # func s_feed_state() -> (res : FeedState):
@@ -81,6 +94,16 @@ func _set_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return ()
 end
 
+func _get_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    round_id : felt, value : Round
+):
+    let (status) = s_rounds.read(id=round_id, field=Round.status)
+    let (started_at) = s_rounds.write(id=round_id, field=Round.started_at)
+    let (updated_at) = s_rounds.write(id=round_id, field=Round.updated_at)
+
+    return (Round(status, started_at, updated_at))
+end
+
 func _get_latest_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
 ):
@@ -88,6 +111,22 @@ func _get_latest_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     let (latest_status) = s_rounds.read(latest_round_id, Round.status)
 
     return (latest_status)
+end
+
+func _get_latest_started_at{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    ) -> (res : felt):
+    let (latest_round_id) = s_rounds_len.read()
+    let (latest_started_at) = s_rounds.read(latest_round_id, Round.started_at)
+
+    return (latest_started_at)
+end
+
+func _get_latest_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    res : felt
+):
+    let (latest_round_id) = s_rounds_len.read()
+
+    return (latest_started_at)
 end
 
 func _set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -161,6 +200,62 @@ namespace optimism_sequencer_uptime_feed:
         assert_boolean(status)
     end
 
-    func latest_answer() -> (res : felt):
+    func latest_answer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        res : felt
+    ):
+        simple_read_access_controller.check_access()
+
+        let (answer) = _get_latest_status()
+        return (answer)
+    end
+
+    func latest_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        res : felt
+    ):
+        simple_read_access_controller.check_access()
+
+        let (timestamp) = _get_latest_started_at()
+        return (timestamp)
+    end
+
+    func latest_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        res : felt
+    ):
+        simple_read_access_controller.check_access()
+
+        let (round) = _get_latest_round_id()
+        return (round)
+    end
+
+    # Maybe unite with above?
+    func get_answer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        round_id : felt
+    ) -> (res : felt):
+        simple_read_access_controller.check_access()
+        require_valid_round_id(round_id)
+
+        let (answer) = s_rounds.read(round_id, Round.status)
+        return (answer)
+    end
+
+    func get_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        round_id : felt
+    ) -> (res : felt):
+        simple_read_access_controller.check_access()
+        require_valid_round_id(round_id)
+
+        let (timestamp) = s_rounds.read(round_id, Round.timestamp)
+        return (timestamp)
+    end
+
+    # TODO: complete
+    func get_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        round_id : felt
+    ) -> (res : felt):
+        simple_read_access_controller.check_access()
+        require_valid_round_id(round_id)
+
+        let (round) = _get_round_data(round_id)
+        return (round)
     end
 end

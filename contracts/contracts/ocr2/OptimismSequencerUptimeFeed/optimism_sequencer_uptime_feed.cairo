@@ -23,6 +23,9 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     initial_status : felt,
     owner_address : felt,
 ):
+    optimism_sequencer_uptime_feed.constructor(
+        l1_sender_address, l2_cross_domain_messenger_addr, initial_status, owner_address
+    )
     return ()
 end
 
@@ -30,4 +33,47 @@ end
 func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     status : felt, timestamp : felt
 ):
+    optimism_sequencer_uptime_feed.update_status(status, timestamp)
+    return ()
+end
+
+# TODO: clarify if shall be added to some interface
+@view
+func latest_answer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    res : felt
+):
+    let (answer) = simple_read_access_controller.latest_answer()
+    return (answer)
+end
+
+@view
+func latest_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    res : felt
+):
+    let (timestamp) = simple_read_access_controller.latest_timestamp()
+    return (timestamp)
+end
+
+@view
+func latest_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    res : felt
+):
+    let (round) = simple_read_access_controller.latest_round()
+    return (round)
+end
+
+@view
+func get_answer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    round_id : felt
+) -> (res : felt):
+    let (answer) = simple_read_access_controller.get_answer(round_id)
+    return (answer)
+end
+
+@view
+func get_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    round_id : felt
+) -> (res : felt):
+    let (timestamp) = simple_read_access_controller.get_timestamp(round_id)
+    return (timestamp)
 end

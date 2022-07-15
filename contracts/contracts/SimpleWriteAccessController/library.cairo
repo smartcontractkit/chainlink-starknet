@@ -123,13 +123,20 @@ namespace simple_write_access_controller:
         return (FALSE)
     end
 
+    # Why having address here as an argument
     func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         address : felt
     ):
-        let (bool) = s_access_list.read(address)
+        alloc_locals
+
+        let empty_data_len = 0
+        let (empty_data) = alloc()
+
+        let (bool) = simple_write_access_controller.has_access(address)
         with_attr error_message("AccessController: address does not have access"):
             assert bool = TRUE
         end
+
         return ()
     end
 end
