@@ -12,7 +12,7 @@ import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 type UserInput = {
   publicKey: string
   privateKey?: string
-  salt? : number
+  salt?: number
 }
 
 type ContractInput = [publicKey: string]
@@ -39,7 +39,7 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info(`About to deploy an Account Contract with:
     public key: ${input.contract[0]}
-    salt: ${input.user.salt || "randomly generated"}`)
+    salt: ${input.user.salt || 'randomly generated'}`)
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
     deps.logger.line()
@@ -53,10 +53,10 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 
 const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (result) => {
   const contract = result.responses[0].tx.address
-  contract ?
-    deps.logger.success(`Account contract located at ${contract}`) :
-    deps.logger.error("Account contract not successfully created")
-    
+  contract
+    ? deps.logger.success(`Account contract located at ${contract}`)
+    : deps.logger.error('Account contract not successfully created')
+
   return {
     publicKey: input.user.publicKey,
     privateKey: input.user.privateKey,

@@ -162,7 +162,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         deps.logger.error(`No tx hash found:\n${JSON.stringify(tx, null, 2)}`)
         return tx
       }
-      
+
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
       if (!response.success) {
