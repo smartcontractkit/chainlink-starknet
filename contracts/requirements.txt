@@ -4,4 +4,4 @@ sympy
 cairo-lang
 cairo-nile
 openzeppelin-cairo-contracts
-starknet-devnet
+starknet-devnet>=0.2.5
