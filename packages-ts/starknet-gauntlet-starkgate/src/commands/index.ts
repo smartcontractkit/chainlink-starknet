@@ -1,3 +1,4 @@
 import Token from './token'
+import Bridge from './bridge'
 
-export default [...Token]
+export default [...Token, ...Bridge]
