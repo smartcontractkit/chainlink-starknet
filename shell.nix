@@ -21,7 +21,7 @@
 
   LD_LIBRARY_PATH="${stdenv.cc.cc.lib}/lib64:$LD_LIBRARY_PATH";
 
-  venvDir = "./.venv";
+  venvDir = "${./.venv}";
 
   postShellHook = ''
     pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}

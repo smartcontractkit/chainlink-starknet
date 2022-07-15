@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"net"
 	"net/http"
 	"os/exec"
 	"strconv"
@@ -33,7 +34,7 @@ var privateKeys0Seed []string = []string{
 
 // SetupLocalStarkNetNode sets up a local starknet node via cli, and returns the url
 func SetupLocalStarkNetNode(t *testing.T) string {
-	port := mustRandomPort()
+	port := mustRandomPort(t)
 	url := "http://127.0.0.1:" + port
 	cmd := exec.Command("starknet-devnet",
 		"--seed", "0", // use same seed for testing
@@ -88,10 +89,35 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 	return keyMap
 }
 
-func mustRandomPort() string {
+func getRandomPort() string {
 	r, err := rand.Int(rand.Reader, big.NewInt(65535-1023))
 	if err != nil {
 		panic(fmt.Errorf("unexpected error generating random port: %w", err))
 	}
+
 	return strconv.Itoa(int(r.Int64() + 1024))
+}
+
+func IsPortOpen(t *testing.T, port string) bool {
+	l, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		t.Log("error in checking port: ", err.Error())
+		return false
+	}
+	defer l.Close()
+	return true
+}
+
+func mustRandomPort(t *testing.T) string {
+	for i := 0; i < 5; i++ {
+		port := getRandomPort()
+
+		// check port if port is open
+		if IsPortOpen(t, port) {
+			t.Log("found open port: " + port)
+			return port
+		}
+	}
+
+	panic("unable to find open port")
 }
