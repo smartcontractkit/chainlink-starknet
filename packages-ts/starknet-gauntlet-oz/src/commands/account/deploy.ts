@@ -12,7 +12,7 @@ import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 type UserInput = {
   publicKey: string
   privateKey?: string
-  salt? : string
+  salt? : number
 }
 
 type ContractInput = [publicKey: string]
@@ -24,10 +24,11 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   const keypair = ec.genKeyPair()
   const generatedPK = '0x' + keypair.getPrivate('hex')
   const pubkey = flags.publicKey || env.publicKey || ec.getStarkKey(ec.getKeyPair(generatedPK))
+  const salt: number = flags.salt ? +flags.salt : undefined
   return {
     publicKey: pubkey,
     privateKey: (!flags.publicKey || !env.account) && generatedPK,
-    salt: flags.salt,
+    salt,
   }
 }
 
@@ -51,7 +52,11 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
 }
 
 const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (result) => {
-  deps.logger.success(`Account contract located at ${result.responses[0].tx.address}`)
+  const contract = result.responses[0].tx.address
+  contract ?
+    deps.logger.success(`Account contract located at ${contract}`) :
+    deps.logger.error("Account contract not successfully created")
+    
   return {
     publicKey: input.user.publicKey,
     privateKey: input.user.privateKey,
