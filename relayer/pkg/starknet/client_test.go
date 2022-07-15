@@ -6,6 +6,7 @@ import (
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/db"
@@ -15,9 +16,11 @@ func TestGatewayClient(t *testing.T) {
 	// todo: adjust for e2e tests
 	chainID := gateway.GOERLI_ID
 	lggr := logger.Test(t)
+	timeout := NewConfig(db.ChainCfg{}, lggr).RequestTimeout()
 
-	client, err := NewClient(chainID, "", lggr, NewConfig(db.ChainCfg{}, lggr))
-	assert.NoError(t, err)
+	client, err := NewClient(chainID, "", lggr, &timeout)
+	require.NoError(t, err)
+	assert.Equal(t, timeout, *client.defaultTimeout)
 
 	t.Run("get chain id", func(t *testing.T) {
 		id, err := client.ChainID(context.Background())
@@ -29,4 +32,10 @@ func TestGatewayClient(t *testing.T) {
 		_, err := client.LatestBlockHeight(context.Background())
 		assert.NoError(t, err)
 	})
+}
+
+func TestGateWayClient_DefaultTimeout(t *testing.T) {
+	client, err := NewClient(gateway.GOERLI_ID, "", logger.Test(t), nil)
+	require.NoError(t, err)
+	assert.Nil(t, client.defaultTimeout)
 }

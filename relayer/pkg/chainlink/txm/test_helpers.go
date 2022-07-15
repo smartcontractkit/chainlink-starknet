@@ -50,6 +50,7 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 				t.Log("starknet-devnet stderr:", stdErr.String())
 			}
 		}
+		t.Log("starknet-devnet server closed")
 	})
 
 	// Wait for api server to boot

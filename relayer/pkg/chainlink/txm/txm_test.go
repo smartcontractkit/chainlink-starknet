@@ -39,7 +39,8 @@ func TestTxm(t *testing.T) {
 	lggr, err := logger.New()
 	require.NoError(t, err)
 	cfg := starknet.NewConfig(db.ChainCfg{}, lggr)
-	client, err := starknet.NewClient("devnet", url, lggr, cfg)
+	timeout := cfg.RequestTimeout()
+	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
 	getClient := func() types.Provider {
 		return client

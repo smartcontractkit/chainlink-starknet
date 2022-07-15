@@ -28,7 +28,8 @@ type Client struct {
 }
 
 func NewClient(chainID string, url string, lggr logger.Logger, cfg starknet.Config) (*Client, error) {
-	client, err := starknet.NewClient(chainID, url, lggr, cfg)
+	clientDefaultTimeout := cfg.RequestTimeout()
+	client, err := starknet.NewClient(chainID, url, lggr, &clientDefaultTimeout)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize starknet client")
 	}
