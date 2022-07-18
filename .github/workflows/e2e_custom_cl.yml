@@ -14,8 +14,6 @@ jobs:
     name: E2E Custom Build Custom CL Image
     runs-on: ubuntu-latest
     environment: integration
-    env:
-      GOPRIVATE: github.com/smartcontractkit/chainlink-starknet
     permissions:
       id-token: write
       contents: read
@@ -32,6 +30,7 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
+          GOPRIVATE: github.com/smartcontractkit/chainlink-starknet
   e2e_cutsom_run_smoke_tests:
     name: E2E Custom Run Smoke Tests
     runs-on: ubuntu-latest
