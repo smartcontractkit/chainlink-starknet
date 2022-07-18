@@ -5,6 +5,7 @@
   buildInputs = with pkgs; [
     python39
     python39Packages.venvShellHook
+    python39Packages.fastecdsa # so libgmp is correctly sourced
     gmp
     nodejs-16_x
     (yarn.override { nodejs = nodejs-16_x; })
