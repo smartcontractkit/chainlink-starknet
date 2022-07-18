@@ -15,6 +15,7 @@ import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { compressProgram } from 'starknet/dist/utils/stark'
+import fetch from 'node-fetch';
 
 describe('Bridge Contract', () => {
   let network: IntegratedDevnet
@@ -40,6 +41,26 @@ describe('Bridge Contract', () => {
       account = report.responses[0].contract
       privateKey = report.data.privateKey
       publicKey = report.data.publicKey
+      
+      // Fund the newly allocated account
+      let gateway_url = process.env.NODE_URL || "http://localhost:5050"
+      let balance = 100_000_000_000_000
+      // let balance = 1e21
+      const body = {
+        address: account,
+        amount: balance,
+        lite: true
+      }
+      const response = await fetch(`${gateway_url}/mint`, {
+      	method: 'post',
+      	body: JSON.stringify(body),
+      	headers: {'Content-Type': 'application/json'}
+      });
+
+      const data = await response.json();
+      console.log(data)
+      expect(data.new_balance).toEqual(balance)
+
     },
     TIMEOUT,
   )
@@ -102,10 +123,6 @@ describe('Bridge Contract', () => {
       )
 
       const report = await command.execute()
-      console.log(account)
-      console.log(privateKey)
-      console.log(bridgeContractAddress)
-      console.log(tokenContractAddress)
       console.log(report.responses[0].tx)
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
@@ -132,8 +149,6 @@ describe('Bridge Contract', () => {
       )
 
       const report = await command.execute()
-      console.log(bridgeContractAddress)
-      console.log(tokenContractAddress)
       console.log(report.responses[0].tx)
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
