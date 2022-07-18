@@ -14,6 +14,8 @@ jobs:
     name: E2E Custom Build Custom CL Image
     runs-on: ubuntu-latest
     environment: integration
+    env:
+      GOPRIVATE: github.com/smartcontractkit/chainlink-starknet
     permissions:
       id-token: write
       contents: read
