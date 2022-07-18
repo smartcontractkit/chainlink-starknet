@@ -21,6 +21,7 @@ describe('Bridge Contract', () => {
   let account: string
   let privateKey: string
   let publicKey: string
+  let l1BridgeAddress: number = 42 // mock placeholder
   let bridgeContractAddress: string
   let tokenContractAddress: string
 
@@ -89,6 +90,36 @@ describe('Bridge Contract', () => {
   )
 
   it(
+    'Set L1 Bridge',
+    async () => {
+      const command = await registerExecuteCommand(setL1Bridge).create(
+        {
+          account: account,
+          pk: privateKey,
+          address: l1BridgeAddress,
+        },
+        [bridgeContractAddress],
+      )
+
+      const report = await command.execute()
+      console.log(account)
+      console.log(privateKey)
+      console.log(bridgeContractAddress)
+      console.log(tokenContractAddress)
+      console.log(report.responses[0].tx)
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const response = await bridgeContract.get_l1_bridge()
+
+      // TODO: Process response
+      console.log(response)
+    },
+    TIMEOUT,
+  )
+
+  it(
     'Set L2 Token',
     async () => {
       const command = await registerExecuteCommand(setL2Token).create(
@@ -101,38 +132,14 @@ describe('Bridge Contract', () => {
       )
 
       const report = await command.execute()
+      console.log(bridgeContractAddress)
+      console.log(tokenContractAddress)
       console.log(report.responses[0].tx)
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
       const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
       const response = await bridgeContract.get_l2_token()
-
-      // TODO: Process response
-      console.log(response)
-    },
-    TIMEOUT,
-  )
-
-  it(
-    'Set L1 Bridge',
-    async () => {
-      const command = await registerExecuteCommand(setL1Bridge).create(
-        {
-          account: account,
-          pk: privateKey,
-          address: account,
-        },
-        [bridgeContractAddress],
-      )
-
-      const report = await command.execute()
-      console.log(report.responses[0].tx)
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await bridgeContract.get_l1_bridge()
 
       // TODO: Process response
       console.log(response)
