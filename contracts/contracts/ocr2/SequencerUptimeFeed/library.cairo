@@ -172,7 +172,7 @@ func _update_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
-namespace optimism_sequencer_uptime_feed:
+namespace sequencer_uptime_feed:
     func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         initial_status : felt, owner_address : felt
     ):
@@ -224,7 +224,7 @@ namespace optimism_sequencer_uptime_feed:
         round : Round
     ):
         let (lateset_round_id) = _get_latest_round_id()
-        let (latest_round) = optimism_sequencer_uptime_feed.round_data(lateset_round_id)
+        let (latest_round) = sequencer_uptime_feed.round_data(lateset_round_id)
 
         return (latest_round)
     end

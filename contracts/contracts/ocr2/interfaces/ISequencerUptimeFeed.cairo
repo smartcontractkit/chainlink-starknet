@@ -1,7 +1,7 @@
 %lang starknet
 
 @contract_interface
-namespace IOptimismSequencerUptimeFeed:
+namespace ISequencerUptimeFeed:
     func update_status(status : felt, timestamp : felt):
     end
 end
