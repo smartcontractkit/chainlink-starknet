@@ -162,7 +162,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string,
 
 	// handle nil pointer
 	if res == nil {
-		return txhash, errors.Errorf("execute response and error are nil")
+		return txhash, errors.New("execute response and error are nil")
 	}
 
 	return res.TransactionHash, nil
@@ -177,7 +177,6 @@ func (txm *starktxm) Close() error {
 }
 
 func (txm *starktxm) Healthy() error {
-	// TODO
 	return txm.starter.Healthy()
 }
 
@@ -189,7 +188,7 @@ func (txm *starktxm) Enqueue(tx types.Transaction) error {
 	select {
 	case txm.queue <- tx:
 	default:
-		return errors.New("failed to enqueue transaction")
+		return errors.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 
 	return nil

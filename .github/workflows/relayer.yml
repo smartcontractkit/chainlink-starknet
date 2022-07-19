@@ -39,7 +39,7 @@ jobs:
         run: nix develop -c go build -v ./pkg/...
 
       - name: Run unit tests
-        run: nix develop -c go test -v ./pkg/...
+        run: nix develop -c go test -v ./pkg/... -tags integration
 
       - name: Run tests with the race detector enabled
-        run: nix develop -c go test -v ./pkg/... -race -count=10
+        run: nix develop -c go test -v ./pkg/... -race -count=10 -tags integration
