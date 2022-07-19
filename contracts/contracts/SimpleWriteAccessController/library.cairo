@@ -1,7 +1,8 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from ownable import Ownable_only_owner, Ownable_initializer
 
@@ -132,7 +133,7 @@ namespace simple_write_access_controller:
         let empty_data_len = 0
         let (empty_data) = alloc()
 
-        let (bool) = simple_write_access_controller.has_access(address)
+        let (bool) = simple_write_access_controller.has_access(address, empty_data_len, empty_data)
         with_attr error_message("AccessController: address does not have access"):
             assert bool = TRUE
         end

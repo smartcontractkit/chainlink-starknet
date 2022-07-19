@@ -1,10 +1,11 @@
 %lang starknet
 
-from SimpleWriteAccessController.library import simple_write_access_controller
-
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
+
+from SimpleWriteAccessController.library import simple_write_access_controller
 
 namespace simple_read_access_controller:
     func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -32,13 +33,15 @@ namespace simple_read_access_controller:
     end
 
     # TODO: remove when starkware adds get_class_hash
-    func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        address : felt
+    ):
         alloc_locals
 
         let empty_data_len = 0
         let (empty_data) = alloc()
 
-        let (bool) = simple_read_access_controller.has_access(address)
+        let (bool) = simple_read_access_controller.has_access(address, empty_data_len, empty_data)
         with_attr error_message("AccessController: address does not have access"):
             assert bool = TRUE
         end
