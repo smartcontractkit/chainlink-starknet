@@ -59,7 +59,7 @@ describe('StarknetValidator', () => {
     Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address)
     console.log('Validator address: ', Validator.address)
 
-    L2contractFactory = await starknet.getContractFactory('UptimeFeed')
+    L2contractFactory = await starknet.getContractFactory('Mock_Uptime_feed')
     l2contract = await L2contractFactory.deploy({ l1_validator_address: Validator.address })
     console.log('L2 address: ', l2contract.address)
 

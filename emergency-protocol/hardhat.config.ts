@@ -71,7 +71,6 @@ export default {
     // venv: "../.venv",
 
     // uses the currently active Python environment (hopefully with available Starknet commands!)
-    // venv: 'active',
     network: 'devnet',
     // network: 'integrated-devnet',
     wallets: {

@@ -10,31 +10,29 @@ import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
 
-import "./MockStarknetMessaging.sol";
 /**
  * @title Validator - makes cross chain call to update the Sequencer Uptime Feed on L2
  */
 contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
-  address public initiall2UptimeFeedSetter;
   uint256 constant BRIDGE_MODE_DEPOSIT = 0;
   uint256 constant BRIDGE_MODE_WITHDRAW = 1;
   int256 private constant ANSWER_SEQ_OFFLINE = 1;
   uint256 constant UPDATE_STATUS_SELECTOR = 1456392953608713042542366145306621198614634764826083394033556249611221792745;
 
-  MockStarknetMessaging starknetCore;
-  // IStarknetCore public immutable STARKNET_CORE;
+  IStarknetCore public immutable STARKNET_CORE;
   uint256 public L2_UPTIME_FEED_ADDR;
 
-
   /**
-   * @param starknetCore_ the address of the StarknetCore contract address
+   * @param starknetCore the address of the StarknetCore contract address
    */
   constructor(
-    MockStarknetMessaging starknetCore_
+    address starknetCore,
+    uint256 l2UptimeFeedAddr
   ) {
-    // require(starknetCore_ != address(0), "Invalid Starknet Core address");
-    starknetCore = starknetCore_;
-    initiall2UptimeFeedSetter = msg.sender;
+    require(starknetCore != address(0), "Invalid Starknet Core address");
+    require(l2UptimeFeedAddr != 0, "Invalid StarknetSequencerUptimeFeed contract address");
+    STARKNET_CORE = IStarknetCore(starknetCore);
+    L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
   }
 
 
@@ -47,17 +45,9 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
         pure
         returns (uint256 convertedValue)
     {
-        convertedValue = uint256(uint160(address(value)));
+      return uint256(uint160(address(value)));
     }
 
-  function setL2UptimeFeedAdd(uint256 _l2UptimeFeedAdd) external {
-        require(
-            msg.sender == initiall2UptimeFeedSetter,
-            "Gateway/unauthorized"
-        );
-        require(L2_UPTIME_FEED_ADDR == 0, "l2UptimeFeed contract address already set");
-        L2_UPTIME_FEED_ADDR = _l2UptimeFeedAdd;
-    }
   /**
    * @notice versions:
    *
@@ -69,7 +59,7 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
    * @inheritdoc TypeAndVersionInterface
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "Validator 1.0.0";
+    return "StarknetValidator 1.0.0";
   }
 
   /**
@@ -93,7 +83,7 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
     payload[0] = toUInt256(status);
     payload[1] = timestamp;
     // Make the starknet cross chain call
-    starknetCore.sendMessageToL2(
+    STARKNET_CORE.sendMessageToL2(
             L2_UPTIME_FEED_ADDR,
             UPDATE_STATUS_SELECTOR,
             payload
