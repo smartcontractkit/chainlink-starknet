@@ -81,9 +81,7 @@ class Provider implements IStarknetProvider {
     const account = new Account(this.provider, accountAddress, wallet.wallet)
 
     const maxFee = await account.estimateFee(calls)
-    console.log(calls)
     const tx = await account.execute(calls, undefined, { maxFee: maxFee.suggestedMaxFee })
-
     const response = wrapResponse(this, tx)
     if (!wait) return response
 
