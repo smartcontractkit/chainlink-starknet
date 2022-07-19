@@ -24,6 +24,6 @@
   venvDir = "./.venv";
 
   postShellHook = ''
-    pip install -r contracts/requirements.txt -c contracts/constraints.txt
+    pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
   '';
 }

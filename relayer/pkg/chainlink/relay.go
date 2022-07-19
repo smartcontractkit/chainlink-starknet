@@ -67,7 +67,8 @@ func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 		return nil, errors.Wrap(err, "couldn't initilize Chain")
 	}
 
-	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, chain.Config(), r.lggr)
+	url := "" // TODO: retrieve from reader from nodes/chains config
+	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, url, chain.Config(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "coudln't initialize ConfigProvider")
 	}
@@ -89,8 +90,8 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	}
 
 	// todo: use pargs for median provider
-
-	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, chain.Config(), r.lggr)
+	url := "" // TODO: retrieve from reader from nodes/chains config
+	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, url, chain.Config(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initilize MedianProvider")
 	}
