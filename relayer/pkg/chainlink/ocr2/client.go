@@ -27,8 +27,9 @@ type Client struct {
 	lggr           logger.Logger
 }
 
-func NewClient(chainID string, lggr logger.Logger) (*Client, error) {
-	client, err := starknet.NewClient(chainID, lggr)
+func NewClient(chainID string, url string, lggr logger.Logger, cfg starknet.Config) (*Client, error) {
+	clientDefaultTimeout := cfg.RequestTimeout()
+	client, err := starknet.NewClient(chainID, url, lggr, &clientDefaultTimeout)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize starknet client")
 	}
@@ -111,7 +112,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
-	block, err := c.starknetClient.BlockByNumber(ctx, blockNum)
+	block, err := c.starknetClient.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}

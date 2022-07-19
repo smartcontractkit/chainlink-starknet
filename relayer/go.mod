@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
-	github.com/dontpanicdao/caigo v0.2.1-0.20220517132056-e34006317632
+	github.com/dontpanicdao/caigo v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-relay v0.0.0-20220516224734-c4759cac049a
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
@@ -14,6 +14,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/test-go/testify v1.1.4
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
+	gopkg.in/guregu/null.v4 v4.0.0
 )
 
 require (
