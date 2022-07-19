@@ -85,7 +85,6 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 		raw := keys.Raw(keyBytes)
 
 		keyMap[raw.Key().PublicKeyStr()] = raw.Key()
-
 	}
 	return keyMap
 }

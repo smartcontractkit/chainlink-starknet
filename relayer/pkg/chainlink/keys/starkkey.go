@@ -10,10 +10,12 @@ import (
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	starksig "github.com/NethermindEth/juno/pkg/crypto/signature"
 	"github.com/NethermindEth/juno/pkg/crypto/weierstrass"
-	"github.com/ethereum/go-ethereum/common/math"
 )
 
-var curve = weierstrass.Stark()
+var (
+	curve   = weierstrass.Stark()
+	byteLen = 32
+)
 
 // Raw represents the Stark private key
 type Raw []byte
@@ -96,7 +98,14 @@ func PubToStarkKey(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte {
 		classHash, // classHash
 		pedersen.ArrayDigest(pubkey.X),
 	)
-	return math.PaddedBigBytes(hash, 32)
+
+	// pad big.Int to 32 bytes if needed
+	if len(hash.Bytes()) < byteLen {
+		out := make([]byte, byteLen)
+		return hash.FillBytes(out)
+	}
+
+	return hash.Bytes()
 }
 
 // Raw from private key

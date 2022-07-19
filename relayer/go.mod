@@ -6,7 +6,6 @@ require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/dontpanicdao/caigo v0.3.0
-	github.com/ethereum/go-ethereum v1.10.18
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-relay v0.0.0-20220516224734-c4759cac049a
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
@@ -15,6 +14,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/test-go/testify v1.1.4
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
+	gopkg.in/guregu/null.v4 v4.0.0
 )
 
 require (
@@ -55,6 +55,7 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/ethereum/go-ethereum v1.10.18 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
@@ -168,7 +169,6 @@ require (
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	google.golang.org/grpc v1.46.2 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/guregu/null.v4 v4.0.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
