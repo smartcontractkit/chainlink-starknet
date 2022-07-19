@@ -10,7 +10,6 @@ from ocr2.SequencerUptimeFeed.library import (
 )
 from ocr2.interfaces.IAggregator import IAggregator
 from ocr2.interfaces.IAccessController import IAccessController
-from ocr2.interfaces.ISequencerUptimeFeed import ISequencerUptimeFeed
 from SimpleReadAccessController.library import simple_read_access_controller
 
 # TODO: FIX issue with l1_handler

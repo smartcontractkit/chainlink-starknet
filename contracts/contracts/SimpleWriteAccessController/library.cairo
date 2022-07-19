@@ -124,7 +124,7 @@ namespace simple_write_access_controller:
         return (FALSE)
     end
 
-    # Why having address here as an argument
+    # TODO: Why having address here as an argument?
     func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         address : felt
     ):
