@@ -9,7 +9,7 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.1.0/${name}.cairo/${name}.json`,
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.2.0/${name}.cairo/${name}.json`,
       )
       .toString('ascii'),
   )
