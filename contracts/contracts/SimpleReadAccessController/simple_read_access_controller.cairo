@@ -1,5 +1,6 @@
 %lang starknet
 
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
@@ -21,7 +22,16 @@ func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     user : felt, data_len : felt, data : felt*
 ) -> (bool : felt):
     let (has_access) = simple_read_access_controller.has_access(user, data_len, data)
-    return (has_access)
+    if has_access == TRUE:
+        return (TRUE)
+    end
+
+    let (tx_info) = get_tx_info()
+    if tx_info.account_contract_address == user:
+        return (TRUE)
+    end
+
+    return (FALSE)
 end
 
 @view

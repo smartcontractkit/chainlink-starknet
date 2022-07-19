@@ -2,9 +2,13 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp, get_caller_address
-from starkware.starknet.common.math import assert_not_zero
+from starkware.cairo.common.math import assert_not_zero, assert_le
+from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.bool import TRUE, FALSE
 
 from utils import assert_boolean
+from SimpleReadAccessController.library import simple_read_access_controller
+from ownable import Ownable_only_owner
 
 struct Round:
     member status : felt
@@ -35,6 +39,12 @@ func RoundUpdated(status : felt, updated_at : felt):
 end
 
 @event
+func UpdateIgnored(
+    latest_status : felt, latest_timestamp : felt, incoming_status : felt, incoming_timestamp : felt
+):
+end
+
+@event
 func L1SenderTransferred(prev : felt, cur : felt):
 end
 
@@ -54,9 +64,7 @@ end
 func s_rounds_len() -> (res : felt):
 end
 
-func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    sender : felt
-):
+func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (l1_sender) = s_l1_sender.read()
     let (sender) = get_caller_address()
 
@@ -67,7 +75,9 @@ func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return ()
 end
 
-func require_valid_round_id(round_id : felt):
+func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    round_id : felt
+):
     let (lateset_round_id) = _get_latest_round_id()
 
     with_attr error_message("invalid round_id"):
@@ -75,6 +85,16 @@ func require_valid_round_id(round_id : felt):
         # TODO: do we need to check if uint80 is overflown?
         assert_le(round_id, lateset_round_id)
     end
+
+    return ()
+end
+
+@external
+func set_l1_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    address : felt
+):
+    Ownable_only_owner()
+    _set_l1_sender(address)
 
     return ()
 end
@@ -95,38 +115,20 @@ func _set_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 end
 
 func _get_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt, value : Round
-):
+    round_id : felt
+) -> (res : Round):
     let (status) = s_rounds.read(id=round_id, field=Round.status)
-    let (started_at) = s_rounds.write(id=round_id, field=Round.started_at)
-    let (updated_at) = s_rounds.write(id=round_id, field=Round.updated_at)
+    let (started_at) = s_rounds.read(id=round_id, field=Round.started_at)
+    let (updated_at) = s_rounds.read(id=round_id, field=Round.updated_at)
 
     return (Round(status, started_at, updated_at))
-end
-
-func _get_latest_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    res : felt
-):
-    let (latest_round_id) = s_rounds_len.read()
-    let (latest_status) = s_rounds.read(latest_round_id, Round.status)
-
-    return (latest_status)
-end
-
-func _get_latest_started_at{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ) -> (res : felt):
-    let (latest_round_id) = s_rounds_len.read()
-    let (latest_started_at) = s_rounds.read(latest_round_id, Round.started_at)
-
-    return (latest_started_at)
 end
 
 func _get_latest_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
 ):
     let (latest_round_id) = s_rounds_len.read()
-
-    return (latest_started_at)
+    return (latest_round_id)
 end
 
 func _set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -151,7 +153,7 @@ func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     let (updated_at) = get_block_timestamp()
     let next_round = Round(status=status, started_at=timestamp, updated_at=updated_at)
 
-    set_round(round_id, next_round)
+    _set_round(round_id, next_round)
 
     let (sender) = get_caller_address()
     NewRound.emit(round_id, sender, timestamp)
@@ -164,7 +166,7 @@ func _update_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     round_id : felt, status : felt
 ):
     let (updated_at) = get_block_timestamp()
-    s_rounds.write(round_id, Round.uodated_at, updated_at)
+    s_rounds.write(round_id, Round.updated_at, updated_at)
 
     RoundUpdated.emit(status, updated_at)
     return ()
@@ -172,23 +174,20 @@ end
 
 namespace optimism_sequencer_uptime_feed:
     func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_sender_address : felt,
-        l2_cross_domain_messenger_addr : felt,
-        initial_status : felt,
-        owner_address : felt,
+        initial_status : felt, owner_address : felt
     ):
         assert_boolean(initial_status)
 
         simple_read_access_controller.constructor(owner_address)
-        set_l1_sender(l1_sender_address)
-        s_l2_cross_domain_messenger.write(l2_cross_domain_messenger_addr)
+        # set_l1_sender(l1_sender_address)
+        # s_l2_cross_domain_messenger.write(l2_cross_domain_messenger_addr)
 
         # TODO: can not have uninitialized contracts
         # let feed_state = FeedState(latest_round_id=0, latest_status=FALSE, started_at=0, updated_at=0)
         # s_feed_state.write(feed_state)
 
         let (timestamp) = get_block_timestamp()
-        record_round(1, initial_status, timestamp)
+        _record_round(1, initial_status, timestamp)
 
         return ()
     end
@@ -196,66 +195,69 @@ namespace optimism_sequencer_uptime_feed:
     func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         status : felt, timestamp : felt
     ):
+        alloc_locals
+        # TODO: do we need to check that message comes from starknet core contract?
         require_l1_sender()
         assert_boolean(status)
+
+        let (latest_round_id) = _get_latest_round_id()
+        let (latest_started_at) = s_rounds.read(latest_round_id, Round.started_at)
+        let (local latest_status) = s_rounds.read(latest_round_id, Round.status)
+
+        let (lt) = is_le(timestamp, latest_started_at - 1)  # timestamp < latest_started_at
+        if lt == TRUE:
+            UpdateIgnored.emit(latest_status, latest_started_at, status, timestamp)
+            return ()
+        end
+
+        if latest_status == status:
+            _update_round(latest_round_id, status)
+        else:
+            let latest_round_id = latest_round_id + 1
+            _record_round(latest_round_id, status, timestamp)
+        end
+
+        return ()
     end
 
-    func latest_answer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt
+    func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        round : Round
     ):
-        simple_read_access_controller.check_access()
+        let (lateset_round_id) = _get_latest_round_id()
+        let (latest_round) = optimism_sequencer_uptime_feed.round_data(lateset_round_id)
 
-        let (answer) = _get_latest_status()
-        return (answer)
+        return (latest_round)
     end
 
-    func latest_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt
-    ):
-        simple_read_access_controller.check_access()
+    func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        round_id : felt
+    ) -> (res : Round):
+        let (address) = get_caller_address()
+        simple_read_access_controller.check_access(address)
+        require_valid_round_id(round_id)
 
-        let (timestamp) = _get_latest_started_at()
-        return (timestamp)
-    end
-
-    func latest_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt
-    ):
-        simple_read_access_controller.check_access()
-
-        let (round) = _get_latest_round_id()
+        let (round) = _get_round(round_id)
         return (round)
     end
 
-    # Maybe unite with above?
-    func get_answer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        round_id : felt
-    ) -> (res : felt):
-        simple_read_access_controller.check_access()
-        require_valid_round_id(round_id)
-
-        let (answer) = s_rounds.read(round_id, Round.status)
-        return (answer)
+    func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        description : felt
+    ):
+        const description = 'L2 Sequencer Uptime Status Feed'
+        return (description)
     end
 
-    func get_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        round_id : felt
-    ) -> (res : felt):
-        simple_read_access_controller.check_access()
-        require_valid_round_id(round_id)
-
-        let (timestamp) = s_rounds.read(round_id, Round.timestamp)
-        return (timestamp)
+    func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        decimals : felt
+    ):
+        const decimals = 0
+        return (decimals)
     end
 
-    # TODO: complete
-    func get_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        round_id : felt
-    ) -> (res : felt):
-        simple_read_access_controller.check_access()
-        require_valid_round_id(round_id)
-
-        let (round) = _get_round_data(round_id)
-        return (round)
+    func type_and_version{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        meta : felt
+    ):
+        const meta = 'SequencerUptimeFeed 1.0.0'
+        return (meta)
     end
 end
