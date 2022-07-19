@@ -13,7 +13,8 @@ from ocr2.interfaces.IAccessController import IAccessController
 from ocr2.interfaces.ISequencerUptimeFeed import ISequencerUptimeFeed
 from SimpleReadAccessController.library import simple_read_access_controller
 
-# TODO: need l2_cross_domain_messenger_addr??
+# TODO: FIX issue with l1_handler
+
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     initial_status : felt, owner_address : felt
@@ -22,11 +23,11 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-@external
+@l1_handler
 func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    status : felt, timestamp : felt
+    from_address : felt, status : felt, timestamp : felt
 ):
-    sequencer_uptime_feed.update_status(status, timestamp)
+    sequencer_uptime_feed.update_status(from_address, status, timestamp)
     return ()
 end
 
