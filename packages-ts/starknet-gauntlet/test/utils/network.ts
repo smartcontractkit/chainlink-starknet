@@ -48,7 +48,7 @@ class VenvDevnet extends IntegratedDevnet {
   }
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
-    return spawn(this.command, ['--port', this.port])
+    return spawn(this.command, ['--port', this.port, "--gas-price", "1"])
   }
 
   protected cleanup(): void {
