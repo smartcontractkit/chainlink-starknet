@@ -64,12 +64,12 @@ end
 func s_rounds_len() -> (res : felt):
 end
 
-func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    address : felt
+):
     let (l1_sender) = s_l1_sender.read()
-    let (sender) = get_caller_address()
-
     with_attr error_message("invalid sender"):
-        assert l1_sender = sender
+        assert l1_sender = address
     end
 
     return ()
@@ -89,14 +89,23 @@ func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     return ()
 end
 
+# TODO: this methods are virtual in .sol
 @external
-func set_l1_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
     Ownable_only_owner()
     _set_l1_sender(address)
 
     return ()
+end
+
+@view
+func l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    address : felt
+):
+    let (address) = s_l1_sender.read()
+    return (address)
 end
 
 # TODO: maybe not needed
@@ -193,11 +202,11 @@ namespace sequencer_uptime_feed:
     end
 
     func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        status : felt, timestamp : felt
+        from_address : felt, status : felt, timestamp : felt
     ):
         alloc_locals
-        # TODO: do we need to check that message comes from starknet core contract?
-        require_l1_sender()
+        # TODO: l1_handler issue
+        require_l1_sender(from_address)
         assert_boolean(status)
 
         let (latest_round_id) = _get_latest_round_id()
