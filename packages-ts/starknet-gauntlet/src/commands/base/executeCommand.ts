@@ -157,7 +157,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      const tx = await this.provider.deployContract(this.contract, this.input.contract, false, this.input.user['salt'])
+      const tx = await this.provider.deployContract(
+        this.contract,
+        this.input.contract,
+        false,
+        this.input?.user?.['salt'],
+      )
       if (tx.hash === undefined) {
         deps.logger.error(`No tx hash found:\n${JSON.stringify(tx, null, 2)}`)
         return tx
