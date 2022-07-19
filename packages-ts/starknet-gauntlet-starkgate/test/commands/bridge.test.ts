@@ -58,7 +58,6 @@ describe('Bridge Contract', () => {
       });
 
       const data = await response.json();
-      console.log(data)
       expect(data.new_balance).toEqual(balance)
 
     },
@@ -123,7 +122,6 @@ describe('Bridge Contract', () => {
       )
 
       const report = await command.execute()
-      console.log(report.responses[0].tx)
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
@@ -149,7 +147,6 @@ describe('Bridge Contract', () => {
       )
 
       const report = await command.execute()
-      console.log(report.responses[0].tx)
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
