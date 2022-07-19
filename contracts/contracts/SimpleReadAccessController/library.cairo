@@ -32,7 +32,7 @@ namespace simple_read_access_controller:
         return (FALSE)
     end
 
-    # TODO: remove when starkware adds get_class_hash
+    # TODO: remove when starkware adds get_class_hash_at
     func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         address : felt
     ):
