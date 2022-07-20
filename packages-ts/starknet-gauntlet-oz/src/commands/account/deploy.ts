@@ -62,7 +62,7 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
 
     // log error if address mismatch
     if (!equalAddress(contract, calcAddr)) {
-      deps.logger.error(`Deployed account ${contract} does not match calculated account ${calcAddr}`)
+      deps.logger.error(`Deployed account (${contract}) does not match calculated account (${calcAddr})`)
       deps.logger.warn(`Account addresses must match otherwise this could cause mismatched keys with chainlink node`)
     } else {
       deps.logger.success(`Deployed account matches expected contract address`)

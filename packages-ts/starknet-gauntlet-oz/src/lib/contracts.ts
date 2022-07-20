@@ -6,7 +6,8 @@ import BN from 'bn.js'
 // required in calculation of deployment address: https://docs.starknet.io/docs/Contracts/contract-address/
 // can be calculated using this formula: https://docs.starknet.io/docs/Contracts/contract-hash/
 // easier to deploy an instance then get the hash from: https://alpha4.starknet.io/feeder_gateway/get_class_hash_at?contractAddress=<contract-address>
-export const CONTRACT_HASH = '0x421374889bea7fd1bd78f976f6ae49d06cba62f5f879d0764fd8403c440400b'
+// yarn gauntlet account:deploy --network=testnet
+export const CONTRACT_HASH = '0x726edb35cc732c1b3661fd837592033bd85ae8dde31533c35711fb0422d8993'
 
 export enum CONTRACT_LIST {
   ACCOUNT = 'Account',
