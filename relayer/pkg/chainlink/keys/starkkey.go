@@ -15,6 +15,13 @@ import (
 var (
 	curve   = weierstrass.Stark()
 	byteLen = 32
+
+	// // note: the contract hash must match the corresponding OZ gauntlet command hash - otherwise addresses will not correspond
+	// defaultContractHash, _ = new(big.Int).SetString("0x726edb35cc732c1b3661fd837592033bd85ae8dde31533c35711fb0422d8993", 0)
+	// defaultSalt            = big.NewInt(100)
+
+	defaultContractHash, _ = new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
+	defaultSalt            = big.NewInt(20)
 )
 
 // Raw represents the Stark private key
@@ -79,14 +86,9 @@ func (key Key) ID() string {
 }
 
 // PublicKeyStr
+// Not actually public key, this is the derived contract address
 func (key Key) PublicKeyStr() string {
-
-	// TODO: what if this is different per network?
-	// https://github.com/Shard-Labs/starknet-devnet/blob/master/starknet_devnet/account.py
-	classHash, _ := new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
-	salt := big.NewInt(20)
-
-	return "0x" + hex.EncodeToString(PubToStarkKey(key.privkey.PublicKey, classHash, salt))
+	return "0x" + hex.EncodeToString(PubToStarkKey(key.privkey.PublicKey, defaultContractHash, defaultSalt))
 }
 
 // PubToStarkKey implements the pubkey to deployed account given contract hash + salt
