@@ -19,8 +19,7 @@ import (
 )
 
 func TestTxm(t *testing.T) {
-	// url := SetupLocalStarkNetNode(t)
-	url := "http://localhost:5050"
+	url := SetupLocalStarkNetNode(t)
 	localKeys := TestKeys(t, 2) // generate 2 keys
 
 	// mock keystore
