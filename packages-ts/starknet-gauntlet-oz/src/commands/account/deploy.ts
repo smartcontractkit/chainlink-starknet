@@ -5,9 +5,9 @@ import {
   makeExecuteCommand,
   Validation,
 } from '@chainlink/starknet-gauntlet'
-import { ec } from 'starknet'
+import { ec, hash } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST, calculateAddress, equalAddress } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
@@ -56,6 +56,18 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
   contract
     ? deps.logger.success(`Account contract located at ${contract}`)
     : deps.logger.error('Account contract not successfully created')
+
+  if (input.user.salt != undefined) {
+    const calcAddr = calculateAddress(input.user.salt, input.user.publicKey)
+
+    // log error if address mismatch
+    if (!equalAddress(contract, calcAddr)) {
+      deps.logger.error(`Deployed account ${contract} does not match calculated account ${calcAddr}`)
+      deps.logger.warn(`Account addresses must match otherwise this could cause mismatched keys with chainlink node`)
+    } else {
+      deps.logger.success(`Deployed account matches expected contract address`)
+    }
+  }
 
   return {
     publicKey: input.user.publicKey,
