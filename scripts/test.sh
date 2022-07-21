@@ -10,3 +10,8 @@ yarn test
 cd ../examples/contracts/aggregator-consumer
 yarn install
 yarn compile && yarn test
+
+# Validator tests
+cd ../../../emergency-protocol
+yarn install
+yarn compile && yarn compile:l1 && yarn test

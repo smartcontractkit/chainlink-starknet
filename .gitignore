@@ -10,6 +10,8 @@ report.json
 bin
 **/tsconfig.tsbuildinfo
 
+typechain/
+
 .DS_Store
 .temp/
 
