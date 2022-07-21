@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -40,13 +42,20 @@ func NewTransmissionsCache(cfg starknet.Config, reader *contractReader, lggr log
 }
 
 func (c *transmissionsCache) updateTransmission(ctx context.Context) error {
-	// todo: update transmission details with the reader
-	// todo: assert reading was successful, return error otherwise
-	transmissionDetails := TransmissionDetails{}
+	digest, epoch, round, answer, timestamp, err := c.reader.LatestTransmissionDetails(ctx)
+	if err != nil {
+		return errors.Wrap(err, "couldn't fetch latest transmission details")
+	}
 
 	c.tdLock.Lock()
 	defer c.tdLock.Unlock()
-	c.transmissionDetails = transmissionDetails
+	c.transmissionDetails = TransmissionDetails{
+		digest:          digest,
+		epoch:           epoch,
+		round:           round,
+		latestAnswer:    answer,
+		latestTimestamp: timestamp,
+	}
 
 	return nil
 }
@@ -103,6 +112,7 @@ func (c *transmissionsCache) LatestTransmissionDetails(
 	round = c.transmissionDetails.round
 	latestAnswer = c.transmissionDetails.latestAnswer
 	latestTimestamp = c.transmissionDetails.latestTimestamp
+
 	return
 }
 
@@ -115,6 +125,11 @@ func (c *transmissionsCache) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	// todo: implement
-	return types.ConfigDigest{}, 0, 0, err
+	c.tdLock.RLock()
+	defer c.tdLock.RUnlock()
+	configDigest = c.transmissionDetails.digest
+	epoch = c.transmissionDetails.epoch
+	round = c.transmissionDetails.round
+
+	return
 }
