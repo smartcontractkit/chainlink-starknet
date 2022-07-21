@@ -24,7 +24,7 @@ func TestStarkKey_PublicKeyStr(t *testing.T) {
 		t.Run(k.name, func(t *testing.T) {
 			b, err := hex.DecodeString(k.priv[2:])
 			require.NoError(t, err)
-			key := Raw(b).Key()
+			key := StarkRaw(b).Key()
 
 			assert.Equal(t, k.pub, key.PublicKeyStr(), "address calculated from private key does not match expected contract address")
 		})

@@ -54,7 +54,7 @@ func TestStarkNetKeyring_Marshal(t *testing.T) {
 	require.NoError(t, err)
 	m, err := kr1.marshal()
 	require.NoError(t, err)
-	kr2 := starknetKeyring{}
+	kr2 := ocr2Keyring{}
 	err = kr2.unmarshal(m)
 	require.NoError(t, err)
 	assert.True(t, kr1.privateKey.Equal(&kr2.privateKey))

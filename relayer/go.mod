@@ -131,6 +131,7 @@ require (
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/rubenv/sql-migrate v1.1.1 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
