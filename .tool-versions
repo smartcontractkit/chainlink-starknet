@@ -1,4 +1,4 @@
-nodejs 14.19.1
+nodejs 18.6.0
 golang 1.18
 python 3.9.13
 helmenv 1.0.75
