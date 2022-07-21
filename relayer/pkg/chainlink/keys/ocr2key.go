@@ -9,36 +9,31 @@ import (
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	starksig "github.com/NethermindEth/juno/pkg/crypto/signature"
 	"github.com/NethermindEth/juno/pkg/crypto/weierstrass"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
-
-	"github.com/smartcontractkit/chainlink/core/services/keystore/keys/starkkey"
 )
 
-var _ ocrtypes.OnchainKeyring = &starknetKeyring{}
+var _ ocrtypes.OnchainKeyring = &ocr2Keyring{}
 
-var starkCurve = weierstrass.Stark()
-
-type starknetKeyring struct {
+type ocr2Keyring struct {
 	privateKey starksig.PrivateKey
 }
 
-func newStarkNetKeyring(material io.Reader) (*starknetKeyring, error) {
-	privKey, err := starksig.GenerateKey(starkCurve, material)
+func newStarkNetKeyring(material io.Reader) (*ocr2Keyring, error) {
+	privKey, err := starksig.GenerateKey(curve, material)
 	if err != nil {
 		return nil, err
 	}
-	return &starknetKeyring{privateKey: *privKey}, err
+	return &ocr2Keyring{privateKey: *privKey}, err
 }
 
-func (sk *starknetKeyring) PublicKey() ocrtypes.OnchainPublicKey {
-	return starkkey.PubToStarkKey(sk.privateKey.PublicKey)
+func (sk *ocr2Keyring) PublicKey() ocrtypes.OnchainPublicKey {
+	return PubKeyToStarkKey(sk.privateKey.PublicKey)
 }
 
-func (sk *starknetKeyring) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
+func (sk *ocr2Keyring) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	var dataArray []*big.Int
 	rawReportContext := evmutil.RawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
@@ -77,7 +72,7 @@ func (sk *starknetKeyring) reportToSigData(reportCtx ocrtypes.ReportContext, rep
 	return hash.Bytes(), nil
 }
 
-func (sk *starknetKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
+func (sk *ocr2Keyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	hash, err := sk.reportToSigData(reportCtx, report)
 	if err != nil {
 		return []byte{}, err
@@ -92,10 +87,10 @@ func (sk *starknetKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtype
 	// simpler to decode later on if needed
 	// https://bitcoin.stackexchange.com/questions/92680/what-are-the-der-signature-and-sec-format
 	buff := bytes.NewBuffer([]byte{0x04})
-	if _, err := buff.Write(math.PaddedBigBytes(r, 32)); err != nil {
+	if _, err := buff.Write(PadBytes(r, byteLen)); err != nil {
 		return []byte{}, err
 	}
-	if _, err := buff.Write(math.PaddedBigBytes(s, 32)); err != nil {
+	if _, err := buff.Write(PadBytes(s, byteLen)); err != nil {
 		return []byte{}, err
 	}
 
@@ -106,17 +101,17 @@ func (sk *starknetKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtype
 	return out, nil
 }
 
-func (sk *starknetKeyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
+func (sk *ocr2Keyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
 	var keys [2]starksig.PublicKey
 
 	// convert OnchainPublicKey (starkkey) into ecdsa public keys (prepend 2 or 3 to indicate +/- Y coord)
 	prefix := []byte{2, 3}
 	for i := 0; i < len(prefix); i++ {
-		keys[i] = starksig.PublicKey{Curve: starkCurve}
+		keys[i] = starksig.PublicKey{Curve: curve}
 
 		// prepend sign byte
 		compressedKey := append([]byte{prefix[i]}, publicKey...)
-		keys[i].X, keys[i].Y = weierstrass.UnmarshalCompressed(starkCurve, compressedKey)
+		keys[i].X, keys[i].Y = weierstrass.UnmarshalCompressed(curve, compressedKey)
 
 		// handle invalid publicKey
 		if keys[i].X == nil || keys[i].Y == nil {
@@ -140,30 +135,30 @@ func (sk *starknetKeyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx
 	return starksig.Verify(&keys[0], hash, r, s) || starksig.Verify(&keys[1], hash, r, s)
 }
 
-func (sk *starknetKeyring) MaxSignatureLength() int {
+func (sk *ocr2Keyring) MaxSignatureLength() int {
 	return 65
 }
 
-func (sk *starknetKeyring) marshal() ([]byte, error) {
+func (sk *ocr2Keyring) marshal() ([]byte, error) {
 	// https://github.com/ethereum/go-ethereum/blob/07508ac0e9695df347b9dd00d418c25151fbb213/crypto/crypto.go#L159
-	return math.PaddedBigBytes(sk.privateKey.D, sk.privateKeyLen()), nil
+	return PadBytes(sk.privateKey.D, sk.privateKeyLen()), nil
 }
 
-func (sk *starknetKeyring) privateKeyLen() int {
+func (sk *ocr2Keyring) privateKeyLen() int {
 	// https://github.com/NethermindEth/juno/blob/3e71279632d82689e5af03e26693ca5c58a2376e/pkg/crypto/weierstrass/weierstrass.go#L377
-	N := starkCurve.Params().N
+	N := curve.Params().N
 	bitSize := N.BitLen()
 	return (bitSize + 7) / 8 // 32
 }
 
-func (sk *starknetKeyring) unmarshal(in []byte) error {
+func (sk *ocr2Keyring) unmarshal(in []byte) error {
 	// enforce byte length
 	if len(in) != sk.privateKeyLen() {
 		return errors.Errorf("unexpected seed size, got %d want %d", len(in), sk.privateKeyLen())
 	}
 
 	sk.privateKey.D = new(big.Int).SetBytes(in)
-	sk.privateKey.PublicKey.Curve = starkCurve
-	sk.privateKey.PublicKey.X, sk.privateKey.PublicKey.Y = starkCurve.ScalarBaseMult(in)
+	sk.privateKey.PublicKey.Curve = curve
+	sk.privateKey.PublicKey.X, sk.privateKey.PublicKey.Y = curve.ScalarBaseMult(in)
 	return nil
 }
