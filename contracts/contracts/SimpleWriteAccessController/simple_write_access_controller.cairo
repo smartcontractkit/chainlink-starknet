@@ -22,6 +22,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
+# implements IAccessController
 @view
 func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt, data_len : felt, data : felt*
@@ -30,6 +31,7 @@ func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return (has_access)
 end
 
+# implements IAccessController
 @view
 func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
