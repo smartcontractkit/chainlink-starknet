@@ -8,6 +8,14 @@ struct Round:
     member transmission_timestamp : felt
 end
 
+@event
+func AnswerUpdated(current : felt, round_id : felt, timestamp : felt):
+end
+
+@event
+func NewRound(round : Round):
+end
+
 @contract_interface
 namespace IAggregator:
     func latest_round_data() -> (round : Round):
