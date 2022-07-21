@@ -46,6 +46,13 @@ describe('StarknetValidator', () => {
   // const L1_STARKNET_CORE = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4"
 
   before(async () => {
+
+    const account = await starknet.deployAccount('OpenZeppelin')
+
+    L2contractFactory = await starknet.getContractFactory('Mock_Uptime_feed')
+    l2contract = await L2contractFactory.deploy()
+    console.log('L2 address: ', l2contract.address)
+
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
     eoaValidator = accounts[1]
@@ -56,14 +63,10 @@ describe('StarknetValidator', () => {
     mockStarknetMessaging = await MockStarknetMessaging.deploy()
     await mockStarknetMessaging.deployed()
 
-    Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address)
+    Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, l2contract.address)
     console.log('Validator address: ', Validator.address)
 
-    L2contractFactory = await starknet.getContractFactory('Mock_Uptime_feed')
-    l2contract = await L2contractFactory.deploy({ l1_validator_address: Validator.address })
-    console.log('L2 address: ', l2contract.address)
-
-    Validator.setL2UptimeFeedAdd(l2contract.address)
+    await account.invoke(l2contract, 'set_l1_sender', {address: Validator.address})
   })
 
   describe('#validate', () => {

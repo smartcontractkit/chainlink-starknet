@@ -23,8 +23,7 @@ func constructor{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(l1_validator_address : felt):
-    l1_validator_.write(l1_validator_address)
+}():
     return ()
 end
 
@@ -42,8 +41,15 @@ func update_status{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check
     return ()
 end
 
+@external
+func set_l1_sender{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(address : felt):
+    l1_validator_.write(address)
+    return ()
+end
+
 @view
 func latest_round_data{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}() -> (round : RoundFeed):
     let (round) = round_.read()
     return (round)
 end
+

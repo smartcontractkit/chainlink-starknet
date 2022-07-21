@@ -20,13 +20,6 @@ end
 func aggregator_address_() -> (address : felt):
 end
 
-@storage_var
-func get_round_() -> (round : RoundFeed):
-end
-
-@storage_var
-func get_block_() -> (block : felt):
-end
 
 @constructor
 func constructor{
@@ -70,8 +63,6 @@ func check_sequencer_state{
     let (uptime_feed_address) = uptime_feed_address_.read()
     let (round : RoundFeed) = IUptimeFeed.latest_round_data(contract_address=uptime_feed_address)
     let (local block_timestemp) = get_block_timestamp()
-    get_round_.write(round)
-    get_block_.write(block_timestemp - round.updated_at)
     if round.status == 0:
         let time = block_timestemp - round.updated_at
         let (is_ls) = is_nn(time - (3600 + 1))
