@@ -16,6 +16,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
+# implements IAggregator
 @l1_handler
 func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt, status : felt, timestamp : felt
@@ -24,6 +25,7 @@ func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
+# implements IAggregator
 @view
 func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     round : Round
@@ -32,6 +34,7 @@ func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return (latest_round)
 end
 
+# implements IAggregator
 @view
 func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt
@@ -40,6 +43,7 @@ func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return (round)
 end
 
+# implements IAggregator
 @view
 func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     description : felt
@@ -48,6 +52,7 @@ func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return (description)
 end
 
+# implements IAggregator
 @view
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
@@ -56,10 +61,29 @@ func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     return (decimals)
 end
 
+# implements IAggregator
 @view
 func type_and_version{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     meta : felt
 ):
     let (meta) = sequencer_uptime_feed.type_and_version()
     return (meta)
+end
+
+# implements IAccessController
+@view
+func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    user : felt, data_len : felt, data : felt*
+) -> (bool : felt):
+    let (has_access) = simple_read_access_controller.has_access(user, data_len, data)
+    return (has_access)
+end
+
+# implements IAccessController
+@view
+func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    address : felt
+):
+    simple_read_access_controller.check_access(address)
+    return ()
 end

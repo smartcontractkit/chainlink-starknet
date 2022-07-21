@@ -1023,6 +1023,8 @@ func billing_set(
 ):
 end
 
+# TODO: Why here and not in OffchainAggregatorBilling
+# Looks like they are merged now
 @external
 func set_billing{
     syscall_ptr : felt*,
