@@ -111,12 +111,11 @@ namespace simple_write_access_controller:
         user : felt, data_len : felt, data : felt*
     ) -> (bool : felt):
         let (has_access) = s_access_list.read(user)
-        let (check_enabled) = s_check_enabled.read()
-
         if has_access == TRUE:
             return (TRUE)
         end
 
+        let (check_enabled) = s_check_enabled.read()
         if check_enabled == FALSE:
             return (TRUE)
         end
