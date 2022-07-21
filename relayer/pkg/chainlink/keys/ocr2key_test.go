@@ -27,7 +27,6 @@ func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
 	t.Run("can verify", func(t *testing.T) {
 		sig, err := kr1.Sign(ctx, report)
 		require.NoError(t, err)
-		t.Log(len(sig))
 		result := kr2.Verify(kr1.PublicKey(), ctx, report, sig)
 		require.True(t, result)
 	})
