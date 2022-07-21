@@ -15,7 +15,6 @@ import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { compressProgram } from 'starknet/dist/utils/stark'
-import fetch from 'node-fetch'
 
 describe('Bridge Contract', () => {
   let network: IntegratedDevnet
