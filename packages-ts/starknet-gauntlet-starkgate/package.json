@@ -29,8 +29,5 @@
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/starknet-gauntlet": "*",
     "starknet": "^3.15.0"
-  },
-  "devDependencies": {
-    "node-fetch": "^2.6.7"
   }
 }
