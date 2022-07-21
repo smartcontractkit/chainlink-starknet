@@ -23,7 +23,6 @@ type configProvider struct {
 	reader        *contractReader
 	contractCache *contractCache
 	digester      types.OffchainConfigDigester
-	transmitter   types.ContractTransmitter
 
 	lggr logger.Logger
 }
@@ -37,13 +36,11 @@ func NewConfigProvider(chainID string, contractAddress string, url string, cfg s
 	reader := NewContractReader(contractAddress, chainReader, lggr)
 	cache := NewContractCache(cfg, reader, lggr)
 	digester := NewOffchainConfigDigester(junorpc.ChainID(chainID), junorpc.Address(contractAddress))
-	transmitter := NewContractTransmitter(reader)
 
 	return &configProvider{
 		reader:        reader,
 		contractCache: cache,
 		digester:      digester,
-		transmitter:   transmitter,
 		lggr:          lggr,
 	}, nil
 }
@@ -74,20 +71,23 @@ var _ relaytypes.MedianProvider = (*medianProvider)(nil)
 
 type medianProvider struct {
 	*configProvider
+	transmitter        types.ContractTransmitter
 	transmissionsCache *transmissionsCache
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, url string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, url string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainID, contractAddress, url, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}
 
+	transmitter := NewContractTransmitter(configProvider.reader, contractAddress, senderAddress)
 	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
 
 	return &medianProvider{
 		configProvider:     configProvider,
+		transmitter:        transmitter,
 		transmissionsCache: cache,
 		reportCodec:        reportCodec{},
 	}, nil

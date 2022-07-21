@@ -91,7 +91,7 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 
 	// todo: use pargs for median provider
 	url := "" // TODO: retrieve from reader from nodes/chains config
-	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, url, chain.Config(), r.lggr)
+	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, pargs.TransmitterID, url, chain.Config(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initilize MedianProvider")
 	}

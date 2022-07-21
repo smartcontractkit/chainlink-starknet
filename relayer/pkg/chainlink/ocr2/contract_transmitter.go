@@ -2,22 +2,39 @@ package ocr2
 
 import (
 	"context"
+	"encoding/hex"
 
+	"github.com/pkg/errors"
+
+	junotypes "github.com/NethermindEth/juno/pkg/types"
+	caigotypes "github.com/dontpanicdao/caigo/types"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+
+	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 var _ types.ContractTransmitter = (*contractTransmitter)(nil)
 
 type contractTransmitter struct {
-	*contractReader
-	// todo: add params
+	reader *contractReader
+
+	contractAddress string
+	senderAddress   string
+
+	txm txm.TxManager
 }
 
 func NewContractTransmitter(
 	reader *contractReader,
+	contract string,
+	sender string,
 ) *contractTransmitter {
 	return &contractTransmitter{
-		contractReader: reader,
+		reader:          reader,
+		contractAddress: contract,
+		senderAddress:   sender,
 	}
 }
 
@@ -27,8 +44,38 @@ func (c *contractTransmitter) Transmit(
 	report types.Report,
 	sigs []types.AttributedOnchainSignature,
 ) error {
-	// todo: implement
-	return nil
+	// flat array of arguments
+	// convert everything to hex string -> caigo internally converts into big.int
+	var transmitPayload []string
+
+	reportContext := utils.RawReportContext(reportCtx)
+	for _, r := range reportContext {
+		hexStr := hex.EncodeToString(r[:])
+		transmitPayload = append(transmitPayload, "0x"+hexStr)
+	}
+
+	chunkSize := junotypes.FeltLength
+	if len(report)%chunkSize != 0 {
+		return errors.New("invalid length of the report")
+	}
+
+	// order is guaranteed by buildReport
+	for i := 0; i < len(report)/chunkSize; i++ {
+		idx := i * chunkSize
+		hexStr := hex.EncodeToString(report[idx:(idx + chunkSize)])
+		transmitPayload = append(transmitPayload, "0x"+hexStr)
+	}
+
+	// todo: add sigs
+
+	err := c.txm.Enqueue(caigotypes.Transaction{
+		ContractAddress:    c.contractAddress,
+		SenderAddress:      c.senderAddress,
+		EntryPointSelector: "transmit",
+		Calldata:           transmitPayload,
+	})
+
+	return err
 }
 
 func (c *contractTransmitter) LatestConfigDigestAndEpoch(
@@ -38,11 +85,14 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 	epoch uint32,
 	err error,
 ) {
-	// todo: implement
-	return types.ConfigDigest{}, 0, err
+	configDigest, epoch, _, _, _, err = c.reader.LatestTransmissionDetails(ctx)
+	if err != nil {
+		err = errors.Wrap(err, "couldn't fetch latest transmission details")
+	}
+
+	return
 }
 
 func (c *contractTransmitter) FromAccount() types.Account {
-	// todo: implement
-	return ""
+	return types.Account(c.senderAddress)
 }
