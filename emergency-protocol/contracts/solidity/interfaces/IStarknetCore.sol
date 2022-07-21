@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.0;
 
+/// @title IStarknetCore - Sends a message to an L2 contract and consumes a message that was sent from an L2 contract.
 interface IStarknetCore {
     /**
-      Sends a message to an L2 contract.
-
-      Returns the hash of the message.
-    */
+     * @notice Sends a message to toAddress.
+     * @param toAddress the contract address on L2.
+     * @param selector of the function with l1_handler.
+     * @param payload the data to send.
+     * @return hash of the message.
+     */
     function sendMessageToL2(
         uint256 toAddress,
         uint256 selector,
@@ -15,13 +18,10 @@ interface IStarknetCore {
     ) external returns (bytes32);
 
     /**
-      Consumes a message that was sent from an L2 contract.
-
-      Returns the hash of the message.
-    */
-    function consumeMessageFromL2(uint256 fromAddress, uint256[] calldata payload)
-        external
-        returns (bytes32);
-    
-    function l2ToL1Messages(bytes32 msgHash) external view returns (uint256);
+     * @notice Consumes a message that was sent from an L2 contract.
+     * @param fromAddress the contract address on L2.
+     * @param payload the data to consume.
+     * @return hash of the message.
+     */
+    function consumeMessageFromL2(uint256 fromAddress, uint256[] calldata payload) external returns (bytes32);
 }

@@ -54,7 +54,7 @@ library NamedStorage {
     }
 
     function setUintValueOnce(string memory tag_, uint256 value) internal {
-        require(getUintValue(tag_) == 0, "ALREADY_SET");
+        require(getUintValue(tag_) == 0, 'ALREADY_SET');
         setUintValue(tag_, value);
     }
 
@@ -73,7 +73,7 @@ library NamedStorage {
     }
 
     function setAddressValueOnce(string memory tag_, address value) internal {
-        require(getAddressValue(tag_) == address(0x0), "ALREADY_SET");
+        require(getAddressValue(tag_) == address(0x0), 'ALREADY_SET');
         setAddressValue(tag_, value);
     }
 

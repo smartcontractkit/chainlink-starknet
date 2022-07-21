@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import '../interfaces/IStarknetCore.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/TypeAndVersionInterface.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol';
@@ -9,30 +10,29 @@ import '@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol';
 
 import '@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol';
 
-import './interfaces/IStarknetCore.sol';
-import './utils/utils.sol';
+import './MockStarknetMessaging.sol';
+import '../utils/utils.sol';
 
 /**
  * @title Validator - makes cross chain call to update the Sequencer Uptime Feed on L2
  */
-contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
+contract MockValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
+    address public initiall2UptimeFeedSetter;
     uint256 constant BRIDGE_MODE_DEPOSIT = 0;
     uint256 constant BRIDGE_MODE_WITHDRAW = 1;
     int256 private constant ANSWER_SEQ_OFFLINE = 1;
     uint256 constant UPDATE_STATUS_SELECTOR =
-        1456392953608713042542366145306621198614634764826083394033556249611221792745;
-
-    IStarknetCore public immutable STARKNET_CORE;
+        1585322027166395525705364165097050997465692350398750944680096081848180365267;
+    MockStarknetMessaging public immutable STARKNET_CORE;
+    // IStarknetCore public immutable STARKNET_CORE;
     uint256 public L2_UPTIME_FEED_ADDR;
 
     /**
-     * @param starknetCore the address of the StarknetCore contract address
-     * @param l2UptimeFeedAddr the address of the Sequencer Uptime Feed on L2
+     * @param starknetCore_ the address of the StarknetCore contract address
      */
-    constructor(address starknetCore, uint256 l2UptimeFeedAddr) {
-        require(starknetCore != address(0), 'Invalid Starknet Core address');
+    constructor(MockStarknetMessaging starknetCore_, uint256 l2UptimeFeedAddr) {
         require(l2UptimeFeedAddr != 0, 'Invalid StarknetSequencerUptimeFeed contract address');
-        STARKNET_CORE = IStarknetCore(starknetCore);
+        STARKNET_CORE = starknetCore_;
         L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
     }
 
