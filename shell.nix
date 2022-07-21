@@ -7,7 +7,7 @@
     python39Packages.venvShellHook
     python39Packages.fastecdsa # so libgmp is correctly sourced
     gmp
-    nodejs-16_x
+    nodejs-18_x
     (yarn.override { nodejs = nodejs-16_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
