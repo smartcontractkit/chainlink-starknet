@@ -55,15 +55,17 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
   const contract = result.responses[0].tx.address
   contract
     ? deps.logger.success(`Account contract located at ${contract}`)
-    : deps.logger.error('Account contract not successfully created')
+    : deps.logger.error('Account contract deployment failed')
 
   if (input.user.salt != undefined) {
     const calcAddr = calculateAddress(input.user.salt, input.user.publicKey)
 
     // log error if address mismatch
     if (!equalAddress(contract, calcAddr)) {
-      deps.logger.error(`Deployed account (${contract}) does not match calculated account (${calcAddr})`)
-      deps.logger.warn(`Account addresses must match otherwise this could cause mismatched keys with chainlink node`)
+      deps.logger
+        .error(`Deployed account contract address (${contract}) does not match calculated account contract address (${calcAddr}).
+        There is likely a difference in hash of the deployed contract and the CONTRACT_HASH constant`)
+      deps.logger.warn(`Account addresses must match otherwise this could cause mismatched keys with chainlink node.`)
     } else {
       deps.logger.success(`Deployed account matches expected contract address`)
     }
