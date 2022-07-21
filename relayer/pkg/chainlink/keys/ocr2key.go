@@ -83,10 +83,8 @@ func (sk *ocr2Keyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Re
 		return []byte{}, err
 	}
 
-	// construct signature using SEC encoding (instead of ASN.1 DER)
-	// simpler to decode later on if needed
-	// https://bitcoin.stackexchange.com/questions/92680/what-are-the-der-signature-and-sec-format
-	buff := bytes.NewBuffer([]byte{0x04})
+	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
+	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
 	if _, err := buff.Write(PadBytes(r, byteLen)); err != nil {
 		return []byte{}, err
 	}
@@ -102,9 +100,13 @@ func (sk *ocr2Keyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Re
 }
 
 func (sk *ocr2Keyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
-	var keys [2]starksig.PublicKey
+	// check valid signature length
+	if len(signature) != sk.MaxSignatureLength() {
+		return false
+	}
 
 	// convert OnchainPublicKey (starkkey) into ecdsa public keys (prepend 2 or 3 to indicate +/- Y coord)
+	var keys [2]starksig.PublicKey
 	prefix := []byte{2, 3}
 	for i := 0; i < len(prefix); i++ {
 		keys[i] = starksig.PublicKey{Curve: curve}
@@ -119,24 +121,19 @@ func (sk *ocr2Keyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocr
 		}
 	}
 
-	// check valid signature length
-	if len(signature) != sk.MaxSignatureLength() {
-		return false
-	}
-
 	hash, err := sk.reportToSigData(reportCtx, report)
 	if err != nil {
 		return false
 	}
 
-	r := new(big.Int).SetBytes(signature[1:33])
-	s := new(big.Int).SetBytes(signature[33:65])
+	r := new(big.Int).SetBytes(signature[32:64])
+	s := new(big.Int).SetBytes(signature[64:])
 
 	return starksig.Verify(&keys[0], hash, r, s) || starksig.Verify(&keys[1], hash, r, s)
 }
 
 func (sk *ocr2Keyring) MaxSignatureLength() int {
-	return 65
+	return 32 + 32 + 32 // publickey + r + s
 }
 
 func (sk *ocr2Keyring) marshal() ([]byte, error) {
