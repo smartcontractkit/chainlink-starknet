@@ -34,4 +34,9 @@ func TestOCR2Client(t *testing.T) {
 		_, err = client.ConfigFromEventAt(context.Background(), ocr2ContractAddress, details.Block)
 		assert.NoError(t, err)
 	})
+
+	t.Run("get latest transmission details", func(t *testing.T) {
+		_, err := client.LatestTransmissionDetails(context.Background(), ocr2ContractAddress)
+		assert.NoError(t, err)
+	})
 }

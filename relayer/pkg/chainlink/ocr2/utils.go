@@ -3,6 +3,7 @@ package ocr2
 import (
 	"github.com/pkg/errors"
 	"math/big"
+	"time"
 
 	"golang.org/x/exp/constraints"
 
@@ -81,13 +82,13 @@ func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
 	return jFelts
 }
 
-func isSetConfigEventFromContract(event *caigotypes.Event, address string) bool {
+func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
 	if event.FromAddress != address {
 		return false
 	}
 
 	var isSameEventSelector bool
-	eventKey := caigo.GetSelectorFromName("config_set")
+	eventKey := caigo.GetSelectorFromName(eventName)
 	for _, key := range event.Keys {
 		if key.Cmp(eventKey) == 0 {
 			isSameEventSelector = true
@@ -96,6 +97,47 @@ func isSetConfigEventFromContract(event *caigotypes.Event, address string) bool 
 	}
 
 	return isSameEventSelector
+}
+
+func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetails, error) {
+	// round_id - skip
+	// answer
+	index := 1
+	latestAnswer := eventData[index].Big()
+
+	// transmitter - skip
+	// observation_timestamp
+	index += 2
+	unixTime := eventData[index].Int64()
+	latestTimestamp := time.Unix(unixTime, 0)
+
+	// observers - skip
+	// observation_len
+	index += 2
+	observationLen := eventData[index].Int64()
+
+	// observations - skip (based on observationLen)
+	// juels_per_fee_coin - skip
+	// config digest
+	index += int(observationLen) + 2
+	digest, err := types.BytesToConfigDigest(eventData[index].Bytes())
+	if err != nil {
+		return TransmissionDetails{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
+	}
+
+	// epoch_and_round
+	index += 1
+	epochAndRound := eventData[index].Int64()
+
+	// reimbursement - skip
+
+	return TransmissionDetails{
+		digest:          digest,
+		epoch:           uint32(epochAndRound), // todo: read epoch/round as big/little endian
+		round:           uint8(epochAndRound),
+		latestAnswer:    latestAnswer,
+		latestTimestamp: latestTimestamp,
+	}, nil
 }
 
 func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, error) {
