@@ -3,6 +3,7 @@ package txm
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"net"
@@ -18,19 +19,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// seed = 0 keys for starknet-devnet
-var privateKeys0Seed []string = []string{
-	"0xe3e70682c2094cac629f6fbed82c07cd",
-	"0xf728b4fa42485e3a0a5d2f346baa9455",
-	"0xeb1167b367a9c3787c65c1e582e2e662",
-	"0xf7c1bd874da5e709d4713d60c8a70639",
-	"0xe443df789558867f5ba91faf7a024204",
-	"0x23a7711a8133287637ebdcd9e87a1613",
-	"0x1846d424c17c627923c6612f48268673",
-	"0xfcbd04c340212ef7cca5a5a19e4d6e3c",
-	"0xb4862b21fb97d43588561712e8e5216a",
-	"0x259f4329e6f4590b9a164106cf6a659e",
-}
+var (
+	// seed = 0 keys for starknet-devnet
+	privateKeys0Seed []string = []string{
+		"0xe3e70682c2094cac629f6fbed82c07cd",
+		"0xf728b4fa42485e3a0a5d2f346baa9455",
+		"0xeb1167b367a9c3787c65c1e582e2e662",
+		"0xf7c1bd874da5e709d4713d60c8a70639",
+		"0xe443df789558867f5ba91faf7a024204",
+		"0x23a7711a8133287637ebdcd9e87a1613",
+		"0x1846d424c17c627923c6612f48268673",
+		"0xfcbd04c340212ef7cca5a5a19e4d6e3c",
+		"0xb4862b21fb97d43588561712e8e5216a",
+		"0x259f4329e6f4590b9a164106cf6a659e",
+	}
+
+	// devnet key derivation
+	// https://github.com/Shard-Labs/starknet-devnet/blob/master/starknet_devnet/account.py
+	devnetClassHash, _ = new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
+	devnetSalt         = big.NewInt(20)
+)
 
 // SetupLocalStarkNetNode sets up a local starknet node via cli, and returns the url
 func SetupLocalStarkNetNode(t *testing.T) string {
@@ -83,8 +91,11 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 		keyBytes, err := caigo.HexToBytes(k)
 		require.NoError(t, err)
 		raw := keys.Raw(keyBytes)
+		key := raw.Key()
 
-		keyMap[raw.Key().PublicKeyStr()] = raw.Key()
+		// recalculate account address using devnet contract hash + salt
+		address := "0x" + hex.EncodeToString(keys.PubToStarkKey(key.PublicKey(), devnetClassHash, devnetSalt))
+		keyMap[address] = key
 	}
 	return keyMap
 }
