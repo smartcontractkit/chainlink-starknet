@@ -2,18 +2,13 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
-import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { assertErrorMsg } from '../utils'
-// import { defaultPayload, assertErrorMsg } from './utils'
 
 describe('SequencerUptimeFeed test', function () {
   this.timeout(300_000)
 
   let account: Account
   let nonOwner: Account
-  let accountAddress: string
-  let privateKey: string
-  let publicKey: string
 
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
@@ -91,20 +86,31 @@ describe('SequencerUptimeFeed test', function () {
     it('check interface', async function () {
       {
         const res = await mockContract.call('latest_round_data')
-        console.log(res)
+        expect(res.round.round_id).to.equal(1n)
+        expect(res.round.answer).to.equal(0n)
       }
 
       {
         const res = await mockContract.call('description')
-        console.log(res)
+        expect(res.description).to.equal(134626335741441605527772921271890603575702899782138692259993464692975953252n)
       }
 
       {
-        const res = await mockContract.call('has_access', { user: 0, data: [] })
-        console.log(res)
+        const res = await mockContract.call('has_access', { user: user, data: [] })
+        expect(res.bool).to.equal(0n)
+      }
+
+      await account.invoke(uptimeFeedContract, 'add_access', {
+        user,
+      })
+
+      {
+        const res = await mockContract.call('has_access', { user: user, data: [] })
+        expect(res.bool).to.equal(1n)
       }
     })
 
+    // No l1_handler testing for now
     it.skip('test l1 handler', async function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
       const classHash = await uptimeFeedFactory.declare()
