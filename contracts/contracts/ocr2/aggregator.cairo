@@ -1013,6 +1013,7 @@ func has_billing_access{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }() -> (bool: felt):
+    alloc_locals
     let (caller) = get_caller_address()
     let (owner) = Ownable_get_owner()
 
@@ -1022,10 +1023,14 @@ func has_billing_access{
     end
 
     let (access_controller) = billing_access_controller_.read()
+    let empty_data_len = 0
+    let (empty_data) = alloc()
 
     let (has_access: felt) = IAccessController.has_access(
         contract_address=access_controller,
-        address=caller
+        address=caller,
+        data_len=empty_data_len,
+        data=empty_data
     )
     return (has_access)
 end
