@@ -13,14 +13,14 @@ type Keystore struct {
 }
 
 // Get provides a mock function with given fields: id
-func (_m *Keystore) Get(id string) (keys.Key, error) {
+func (_m *Keystore) Get(id string) (keys.StarkKey, error) {
 	ret := _m.Called(id)
 
-	var r0 keys.Key
-	if rf, ok := ret.Get(0).(func(string) keys.Key); ok {
+	var r0 keys.StarkKey
+	if rf, ok := ret.Get(0).(func(string) keys.StarkKey); ok {
 		r0 = rf(id)
 	} else {
-		r0 = ret.Get(0).(keys.Key)
+		r0 = ret.Get(0).(keys.StarkKey)
 	}
 
 	var r1 error
