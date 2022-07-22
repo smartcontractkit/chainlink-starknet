@@ -40,7 +40,7 @@ func (sk *ocr2Keyring) reportToSigData(reportCtx ocrtypes.ReportContext, report 
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[2][:]))
 
-	// TODO: report hashing needs to be finalized and verified before merging
+	// TODO: report decoding needs to be finalized
 
 	// assert minimum length (timestamp + observers + observation number + observations + juelsPerFeeCoin)
 	// 4 bytes (uint32) + 32 bytes + 1 byte + obs number * 16 bytes + 16 bytes
