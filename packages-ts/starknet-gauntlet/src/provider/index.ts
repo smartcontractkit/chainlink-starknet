@@ -13,7 +13,12 @@ import { IStarknetWallet } from '../wallet'
 interface IProvider<P> {
   provider: P
   send: () => Promise<TransactionResponse>
-  deployContract: (contract: CompiledContract, input: any, wait?: boolean) => Promise<TransactionResponse>
+  deployContract: (
+    contract: CompiledContract,
+    input: any,
+    wait?: boolean,
+    salt?: number,
+  ) => Promise<TransactionResponse>
   signAndSend: (accountAddress: string, wallet: IStarknetWallet, calls: Call[]) => Promise<TransactionResponse>
 }
 
@@ -64,9 +69,10 @@ class Provider implements IStarknetProvider {
     return {} as TransactionResponse
   }
 
-  deployContract = async (contract: CompiledContract, input: any = [], wait = true) => {
+  deployContract = async (contract: CompiledContract, input: any = [], wait = true, salt = undefined) => {
     const tx = await this.provider.deployContract({
       contract,
+      addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
