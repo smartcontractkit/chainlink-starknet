@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"context"
+	"fmt"
 	"encoding/hex"
 
 	"github.com/pkg/errors"
@@ -48,10 +49,13 @@ func (c *contractTransmitter) Transmit(
 	// convert everything to hex string -> caigo internally converts into big.int
 	var transmitPayload []string
 
+	// ReportContext:
+	//    config_digest
+	//    epoch_and_round
+	//    extra_hash
 	reportContext := utils.RawReportContext(reportCtx)
 	for _, r := range reportContext {
-		hexStr := hex.EncodeToString(r[:])
-		transmitPayload = append(transmitPayload, "0x"+hexStr)
+		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(r[:]))
 	}
 
 	chunkSize := junotypes.FeltLength
@@ -59,14 +63,29 @@ func (c *contractTransmitter) Transmit(
 		return errors.New("invalid length of the report")
 	}
 
-	// order is guaranteed by buildReport
+	// order is guaranteed by buildReport:
+	//   observation_timestamp
+	//   observers
+	//   observations_len
+	//   observations
+	//   juels_per_fee_coin
 	for i := 0; i < len(report)/chunkSize; i++ {
 		idx := i * chunkSize
 		hexStr := hex.EncodeToString(report[idx:(idx + chunkSize)])
 		transmitPayload = append(transmitPayload, "0x"+hexStr)
 	}
 
-	// todo: add sigs
+	transmitPayload = append(transmitPayload, "0x"+fmt.Sprintf("%x",len(sigs))) // signatures_len
+	for _, sig := range sigs {
+		// signature: 32 byte public key + 32 byte R + 32 byte S
+		signature := sig.Signature
+		if len(signature) != 32+32+32 {
+			return errors.New("invalid length of the signature")
+		}
+		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[32:64])) // r
+		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[64:]))   // s
+		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[:32]))   // public key
+	}
 
 	err := c.txm.Enqueue(caigotypes.Transaction{
 		ContractAddress:    c.contractAddress,
