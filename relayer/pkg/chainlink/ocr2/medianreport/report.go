@@ -1,4 +1,4 @@
-package ocr2
+package medianreport
 
 import (
 	"math"
@@ -111,4 +111,25 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 
 func (c ReportCodec) MaxReportLength(n int) int {
 	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes
+}
+
+func SplitReport(report types.Report) ([][]byte, error) {
+	chunkSize := junotypes.FeltLength
+	if len(report)%chunkSize != 0 {
+		return [][]byte{}, errors.New("invalid length of the report")
+	}
+
+	// order is guaranteed by buildReport:
+	//   observation_timestamp
+	//   observers
+	//   observations_len
+	//   observations
+	//   juels_per_fee_coin
+	slices := [][]byte{}
+	for i := 0; i < len(report)/chunkSize; i++ {
+		idx := i * chunkSize
+		slices = append(slices, report[idx:(idx+chunkSize)])
+	}
+
+	return slices, nil
 }

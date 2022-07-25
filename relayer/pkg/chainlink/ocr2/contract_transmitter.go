@@ -7,9 +7,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -58,20 +58,12 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(r[:]))
 	}
 
-	chunkSize := junotypes.FeltLength
-	if len(report)%chunkSize != 0 {
-		return errors.New("invalid length of the report")
+	slices, err := medianreport.SplitReport(report)
+	if err != nil {
+		return err
 	}
-
-	// order is guaranteed by buildReport:
-	//   observation_timestamp
-	//   observers
-	//   observations_len
-	//   observations
-	//   juels_per_fee_coin
-	for i := 0; i < len(report)/chunkSize; i++ {
-		idx := i * chunkSize
-		hexStr := hex.EncodeToString(report[idx:(idx + chunkSize)])
+	for i := 0; i < len(report); i++ {
+		hexStr := hex.EncodeToString(slices[i])
 		transmitPayload = append(transmitPayload, "0x"+hexStr)
 	}
 
@@ -87,7 +79,7 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[:32]))   // public key
 	}
 
-	err := c.txm.Enqueue(caigotypes.Transaction{
+	err = c.txm.Enqueue(caigotypes.Transaction{
 		ContractAddress:    c.contractAddress,
 		SenderAddress:      c.senderAddress,
 		EntryPointSelector: "transmit",

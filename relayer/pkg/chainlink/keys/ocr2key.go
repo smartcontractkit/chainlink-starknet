@@ -11,6 +11,7 @@ import (
 	"github.com/NethermindEth/juno/pkg/crypto/weierstrass"
 	"github.com/pkg/errors"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -40,33 +41,14 @@ func (sk *ocr2Keyring) reportToSigData(reportCtx ocrtypes.ReportContext, report 
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[2][:]))
 
-	// TODO: report decoding needs to be finalized
-
-	// assert minimum length (timestamp + observers + observation number + observations + juelsPerFeeCoin)
-	// 4 bytes (uint32) + 32 bytes + 1 byte + obs number * 16 bytes + 16 bytes
-	timestampLen := 4
-	observersLen := 32
-	obsCountLen := 1
-	obsLen := 16
-	juelsLen := 16
-	min := timestampLen + observersLen + obsCountLen + 0*obsLen + juelsLen
-	if len(report) < min {
-		return []byte{}, errors.Errorf("report did not meet minimum length, got %d want %d", len(report), min)
+	// split report into seperate felts for hashing
+	splitReport, err := medianreport.SplitReport(report)
+	if err != nil {
+		return []byte{}, err
 	}
-	obsCount := int(report[timestampLen+observersLen])
-	expectedLen := min + obsLen*obsCount
-	if len(report) != expectedLen {
-		return []byte{}, errors.Errorf("incorrect report length, got %d want %d", len(report), expectedLen)
+	for i := 0; i < len(splitReport); i++ {
+		dataArray = append(dataArray, new(big.Int).SetBytes(splitReport[i]))
 	}
-	dataArray = append(dataArray, new(big.Int).SetBytes(report[:timestampLen]))
-	dataArray = append(dataArray, new(big.Int).SetBytes(report[timestampLen:timestampLen+observersLen]))
-	dataArray = append(dataArray, new(big.Int).SetBytes(report[timestampLen+observersLen:timestampLen+observersLen+obsCountLen]))
-	// hash observations
-	for i := 0; i < obsCount; i++ {
-		obsData := report[timestampLen+observersLen+obsCountLen+obsLen*i : timestampLen+observersLen+obsCountLen+obsLen*(i+1)]
-		dataArray = append(dataArray, new(big.Int).SetBytes(obsData))
-	}
-	dataArray = append(dataArray, new(big.Int).SetBytes(report[expectedLen-juelsLen:]))
 
 	hash := pedersen.ArrayDigest(dataArray...)
 	return hash.Bytes(), nil

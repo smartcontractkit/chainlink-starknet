@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -89,7 +90,7 @@ func NewMedianProvider(chainID string, contractAddress string, senderAddress str
 		configProvider:     configProvider,
 		transmitter:        transmitter,
 		transmissionsCache: cache,
-		reportCodec:        ReportCodec{},
+		reportCodec:        medianreport.ReportCodec{},
 	}, nil
 }
 
