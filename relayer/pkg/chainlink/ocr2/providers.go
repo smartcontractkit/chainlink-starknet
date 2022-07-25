@@ -89,7 +89,7 @@ func NewMedianProvider(chainID string, contractAddress string, senderAddress str
 		configProvider:     configProvider,
 		transmitter:        transmitter,
 		transmissionsCache: cache,
-		reportCodec:        reportCodec{},
+		reportCodec:        ReportCodec{},
 	}, nil
 }
 

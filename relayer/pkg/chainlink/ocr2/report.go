@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ median.ReportCodec = (*reportCodec)(nil)
+var _ median.ReportCodec = (*ReportCodec)(nil)
 
 const (
 	timestampSizeBytes       = junotypes.FeltLength
@@ -23,9 +23,9 @@ const (
 	observationSizeBytes     = junotypes.FeltLength
 )
 
-type reportCodec struct{}
+type ReportCodec struct{}
 
-func (c reportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types.Report, error) {
+func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types.Report, error) {
 	num := len(oo)
 	if num == 0 {
 		return nil, errors.New("couldn't build report from empty attributed observations")
@@ -73,7 +73,7 @@ func (c reportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	return report, nil
 }
 
-func (c reportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
+func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	rLen := len(report)
 	if rLen < prefixSizeBytes+juelsPerFeeCoinSizeBytes {
 		return nil, errors.New("invalid report length")
@@ -95,6 +95,6 @@ func (c reportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	return observations[num/2], nil
 }
 
-func (c reportCodec) MaxReportLength(n int) int {
+func (c ReportCodec) MaxReportLength(n int) int {
 	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes
 }
