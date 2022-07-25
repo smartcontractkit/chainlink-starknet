@@ -1,6 +1,7 @@
 package ocr2
 
 import (
+	"math"
 	"math/big"
 	"sort"
 
@@ -79,20 +80,33 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 		return nil, errors.New("invalid report length")
 	}
 
-	numFelt := junotypes.BytesToFelt(report[(timestampSizeBytes + observersSizeBytes):prefixSizeBytes])
-	num := int(numFelt.Big().Int64())
-	if num == 0 {
+	numBig := junotypes.BytesToFelt(report[(timestampSizeBytes + observersSizeBytes):prefixSizeBytes]).Big()
+	if !numBig.IsUint64() {
+		return nil, errors.New("length of observations is invalid")
+	}
+	n64 := numBig.Uint64()
+	if n64 == 0 {
 		return nil, errors.New("unpacked report has no observations")
+	}
+	if n64 >= math.MaxInt8 {
+		return nil, errors.New("length of observations is invalid")
+	}
+
+	n := int(n64)
+
+	if rLen < prefixSizeBytes+(observationSizeBytes*n)+juelsPerFeeCoinSizeBytes {
+		return nil, errors.New("report does not contain enough observations or is missing juels/feeCoin observation")
 	}
 
 	var observations []*big.Int
-	for i := 0; i < num; i++ {
-		idx := prefixSizeBytes + observationSizeBytes*i
-		o := junotypes.BytesToFelt(report[idx:(idx + observationSizeBytes)]).Big()
+	for i := 0; i < n; i++ {
+		start := prefixSizeBytes + observationSizeBytes*i
+		end := start + observationSizeBytes
+		o := junotypes.BytesToFelt(report[start:end]).Big()
 		observations = append(observations, o)
 	}
 
-	return observations[num/2], nil
+	return observations[n/2], nil
 }
 
 func (c ReportCodec) MaxReportLength(n int) int {
