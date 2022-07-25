@@ -74,8 +74,18 @@ func (c *contractReader) LatestTransmissionDetails(
 	latestTimestamp time.Time,
 	err error,
 ) {
-	// todo: implement
-	return types.ConfigDigest{}, 0, 0, nil, time.Now(), nil
+	transmissionDetails, err := c.reader.LatestTransmissionDetails(ctx, c.address)
+	if err != nil {
+		err = errors.Wrap(err, "couldn't get transmission details")
+	}
+
+	configDigest = transmissionDetails.digest
+	epoch = transmissionDetails.epoch
+	round = transmissionDetails.round
+	latestAnswer = transmissionDetails.latestAnswer
+	latestTimestamp = transmissionDetails.latestTimestamp
+
+	return
 }
 
 func (c *contractReader) LatestRoundRequested(
@@ -87,6 +97,14 @@ func (c *contractReader) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	// todo: implement
-	return types.ConfigDigest{}, 0, 0, err
+	transmissionDetails, err := c.reader.LatestTransmissionDetails(ctx, c.address)
+	if err != nil {
+		err = errors.Wrap(err, "couldn't get transmission details")
+	}
+
+	configDigest = transmissionDetails.digest
+	epoch = transmissionDetails.epoch
+	round = transmissionDetails.round
+
+	return
 }
