@@ -82,8 +82,8 @@ func NewMedianProvider(chainID string, contractAddress string, senderAddress str
 		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}
 
-	transmitter := NewContractTransmitter(configProvider.reader, contractAddress, senderAddress)
 	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
+	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress)
 
 	return &medianProvider{
 		configProvider:     configProvider,

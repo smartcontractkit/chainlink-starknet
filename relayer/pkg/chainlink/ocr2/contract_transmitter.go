@@ -19,7 +19,7 @@ import (
 var _ types.ContractTransmitter = (*contractTransmitter)(nil)
 
 type contractTransmitter struct {
-	reader *contractReader
+	reader *transmissionsCache
 
 	contractAddress string
 	senderAddress   string
@@ -28,7 +28,7 @@ type contractTransmitter struct {
 }
 
 func NewContractTransmitter(
-	reader *contractReader,
+	reader *transmissionsCache,
 	contract string,
 	sender string,
 ) *contractTransmitter {
