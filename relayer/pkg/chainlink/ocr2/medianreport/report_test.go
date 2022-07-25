@@ -1,4 +1,4 @@
-package ocr2
+package medianreport
 
 import (
 	"fmt"

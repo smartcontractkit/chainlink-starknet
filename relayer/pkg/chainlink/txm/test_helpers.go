@@ -78,8 +78,8 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 	return url
 }
 
-func TestKeys(t *testing.T, count int) map[string]keys.Key {
-	keyMap := map[string]keys.Key{}
+func TestKeys(t *testing.T, count int) map[string]keys.StarkKey {
+	keyMap := map[string]keys.StarkKey{}
 
 	require.True(t, len(privateKeys0Seed) >= count, "requested more keys than available")
 	for i, k := range privateKeys0Seed {
@@ -90,11 +90,11 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 
 		keyBytes, err := caigo.HexToBytes(k)
 		require.NoError(t, err)
-		raw := keys.Raw(keyBytes)
+		raw := keys.StarkRaw(keyBytes)
 		key := raw.Key()
 
 		// recalculate account address using devnet contract hash + salt
-		address := "0x" + hex.EncodeToString(keys.PubToStarkKey(key.PublicKey(), devnetClassHash, devnetSalt))
+		address := "0x" + hex.EncodeToString(keys.PubKeyToContract(key.PublicKey(), devnetClassHash, devnetSalt))
 		keyMap[address] = key
 	}
 	return keyMap

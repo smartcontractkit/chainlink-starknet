@@ -25,7 +25,7 @@ func TestTxm(t *testing.T) {
 	// mock keystore
 	ks := new(mocks.Keystore)
 	ks.On("Get", mock.AnythingOfType("string")).Return(
-		func(id string) keys.Key {
+		func(id string) keys.StarkKey {
 			return localKeys[id]
 		},
 		func(id string) error {
