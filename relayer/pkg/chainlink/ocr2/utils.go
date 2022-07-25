@@ -1,6 +1,7 @@
 package ocr2
 
 import (
+	"encoding/binary"
 	"github.com/pkg/errors"
 	"math/big"
 	"time"
@@ -127,14 +128,18 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 
 	// epoch_and_round
 	index += 1
-	epochAndRound := eventData[index].Int64()
+	var epochAndRound [junotypes.FeltLength]byte
+	epochAndRoundFelt := eventData[index].Big()
+	epochAndRoundFelt.FillBytes(epochAndRound[:])
+	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
+	round := epochAndRound[junotypes.FeltLength-1]
 
 	// reimbursement - skip
 
 	return TransmissionDetails{
 		digest:          digest,
-		epoch:           uint32(epochAndRound), // todo: read epoch/round as big/little endian
-		round:           uint8(epochAndRound),
+		epoch:           epoch,
+		round:           round,
 		latestAnswer:    latestAnswer,
 		latestTimestamp: latestTimestamp,
 	}, nil

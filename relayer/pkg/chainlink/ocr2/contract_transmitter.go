@@ -2,8 +2,8 @@ package ocr2
 
 import (
 	"context"
-	"fmt"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -75,7 +75,7 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hexStr)
 	}
 
-	transmitPayload = append(transmitPayload, "0x"+fmt.Sprintf("%x",len(sigs))) // signatures_len
+	transmitPayload = append(transmitPayload, "0x"+fmt.Sprintf("%x", len(sigs))) // signatures_len
 	for _, sig := range sigs {
 		// signature: 32 byte public key + 32 byte R + 32 byte S
 		signature := sig.Signature
