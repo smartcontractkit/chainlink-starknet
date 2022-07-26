@@ -26,7 +26,6 @@
     "typescript": "^4.5.2"
   },
   "dependencies": {
-    "@joriksch/oz-cairo": "^1.0.1",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "axios": "^0.24.0"
   }
