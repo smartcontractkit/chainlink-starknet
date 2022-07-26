@@ -10,9 +10,9 @@ import (
 )
 
 func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
-	kr1, err := newStarkNetKeyring(cryptorand.Reader)
+	kr1, err := NewStarkNetKeyring(cryptorand.Reader)
 	require.NoError(t, err)
-	kr2, err := newStarkNetKeyring(cryptorand.Reader)
+	kr2, err := NewStarkNetKeyring(cryptorand.Reader)
 	require.NoError(t, err)
 	ctx := ocrtypes.ReportContext{}
 	report := ocrtypes.Report{
@@ -49,11 +49,11 @@ func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
 }
 
 func TestStarkNetKeyring_Marshal(t *testing.T) {
-	kr1, err := newStarkNetKeyring(cryptorand.Reader)
+	kr1, err := NewStarkNetKeyring(cryptorand.Reader)
 	require.NoError(t, err)
 	m, err := kr1.marshal()
 	require.NoError(t, err)
-	kr2 := ocr2Keyring{}
+	kr2 := OCR2Keyring{}
 	err = kr2.unmarshal(m)
 	require.NoError(t, err)
 	assert.True(t, kr1.privateKey.Equal(&kr2.privateKey))
