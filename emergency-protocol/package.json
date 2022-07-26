@@ -26,6 +26,7 @@
     "@chainlink/contracts": "^0.4.1",
     "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
+    "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.2",
     "dotenv": "^16.0.1",
     "hardhat-abi-exporter": "^2.10.0",
