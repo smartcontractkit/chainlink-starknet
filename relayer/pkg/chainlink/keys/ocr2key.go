@@ -118,7 +118,7 @@ func (sk *OCR2Keyring) MaxSignatureLength() int {
 	return 32 + 32 + 32 // publickey + r + s
 }
 
-func (sk *OCR2Keyring) marshal() ([]byte, error) {
+func (sk *OCR2Keyring) Marshal() ([]byte, error) {
 	// https://github.com/ethereum/go-ethereum/blob/07508ac0e9695df347b9dd00d418c25151fbb213/crypto/crypto.go#L159
 	return PadBytes(sk.privateKey.D, sk.privateKeyLen()), nil
 }
@@ -130,7 +130,7 @@ func (sk *OCR2Keyring) privateKeyLen() int {
 	return (bitSize + 7) / 8 // 32
 }
 
-func (sk *OCR2Keyring) unmarshal(in []byte) error {
+func (sk *OCR2Keyring) Unmarshal(in []byte) error {
 	// enforce byte length
 	if len(in) != sk.privateKeyLen() {
 		return errors.Errorf("unexpected seed size, got %d want %d", len(in), sk.privateKeyLen())
