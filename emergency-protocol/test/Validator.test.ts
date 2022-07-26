@@ -11,21 +11,17 @@ describe('StarknetValidator', () => {
   let Validator: Contract
   let MockStarknetMessaging: ContractFactory
   let mockStarknetMessaging: Contract
-  //   let mockOptimismL1CrossDomainMessenger: Contract
   let deployer: SignerWithAddress
   let eoaValidator: SignerWithAddress
 
   let L2contractFactory: StarknetContractFactory
   let l2contract: StarknetContract
 
-  // const L1_STARKNET_CORE = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4"
-
   before(async () => {
     const account = await starknet.deployAccount('OpenZeppelin')
 
     L2contractFactory = await starknet.getContractFactory('Mock_Uptime_feed')
     l2contract = await L2contractFactory.deploy()
-    console.log('L2 address: ', l2contract.address)
 
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
@@ -38,7 +34,6 @@ describe('StarknetValidator', () => {
     await mockStarknetMessaging.deployed()
 
     Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, l2contract.address)
-    console.log('Validator address: ', Validator.address)
 
     await account.invoke(l2contract, 'set_l1_sender', { address: Validator.address })
   })

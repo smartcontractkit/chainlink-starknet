@@ -69,9 +69,9 @@ export default {
     // dockerizedVersion: "0.9.1", // alternatively choose one of the two venv options below
     // uses (my-venv) defined by `python -m venv path/to/my-venv`
     // venv: "../.venv",
-
+    venv: 'active',
     // uses the currently active Python environment (hopefully with available Starknet commands!)
-    network: 'devnet',
+    network: 'integrated-devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
