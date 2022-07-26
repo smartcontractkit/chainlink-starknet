@@ -13,21 +13,21 @@ make e2e_test
 1. Spin up an env, for example, see yaml file for more options with a stark-devnet/pathfinder real node
 
 ```
-envcli new -p ops/chainlink-starknet.yaml
+envcli new -p relayer/ops/chainlink-starknet.yaml -o local_env.yaml
 ```
 
 2. Check created file in a previous command output, example `Environment setup and written to file environmentFile=chainlink-stark-k42hp.yaml`
 3. Run the tests
 
 ```
-ENVIRONMENT_FILE="$(pwd)/chainlink-stark-k42hp.yaml" KEEP_ENVIRONMENTS="Always" make e2e_test
+ENVIRONMENT_FILE="$(pwd)/local_env.yaml" KEEP_ENVIRONMENTS="Always" make e2e_test
 ```
 
 4. Check the env file or connect command logs for a forwarded `local_ports` and try it in the browser
 5. Destroy the env
 
 ```
-envcli rm -e chainlink-stark-b7mt9.yaml
+envcli rm -e local_env.yaml
 ```
 
 ### Interact with an env using other scripts
