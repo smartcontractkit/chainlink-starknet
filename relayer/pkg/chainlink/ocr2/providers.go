@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -23,13 +24,12 @@ type configProvider struct {
 	reader        *contractReader
 	contractCache *contractCache
 	digester      types.OffchainConfigDigester
-	transmitter   types.ContractTransmitter
 
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
-	chainReader, err := NewClient(chainID, lggr)
+func NewConfigProvider(chainID string, contractAddress string, url string, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
+	chainReader, err := NewClient(chainID, url, lggr, cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize chain client")
 	}
@@ -37,13 +37,11 @@ func NewConfigProvider(chainID string, contractAddress string, cfg starknet.Conf
 	reader := NewContractReader(contractAddress, chainReader, lggr)
 	cache := NewContractCache(cfg, reader, lggr)
 	digester := NewOffchainConfigDigester(junorpc.ChainID(chainID), junorpc.Address(contractAddress))
-	transmitter := NewContractTransmitter(reader)
 
 	return &configProvider{
 		reader:        reader,
 		contractCache: cache,
 		digester:      digester,
-		transmitter:   transmitter,
 		lggr:          lggr,
 	}, nil
 }
@@ -74,22 +72,25 @@ var _ relaytypes.MedianProvider = (*medianProvider)(nil)
 
 type medianProvider struct {
 	*configProvider
+	transmitter        types.ContractTransmitter
 	transmissionsCache *transmissionsCache
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
-	configProvider, err := NewConfigProvider(chainID, contractAddress, cfg, lggr)
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, url string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
+	configProvider, err := NewConfigProvider(chainID, contractAddress, url, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}
 
 	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
+	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress)
 
 	return &medianProvider{
 		configProvider:     configProvider,
+		transmitter:        transmitter,
 		transmissionsCache: cache,
-		reportCodec:        reportCodec{},
+		reportCodec:        medianreport.ReportCodec{},
 	}, nil
 }
 

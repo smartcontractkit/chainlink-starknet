@@ -14,6 +14,7 @@ import (
 
 type OCR2Reader interface {
 	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
+	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
@@ -27,8 +28,9 @@ type Client struct {
 	lggr           logger.Logger
 }
 
-func NewClient(chainID string, lggr logger.Logger) (*Client, error) {
-	client, err := starknet.NewClient(chainID, lggr)
+func NewClient(chainID string, url string, lggr logger.Logger, cfg starknet.Config) (*Client, error) {
+	clientDefaultTimeout := cfg.RequestTimeout()
+	client, err := starknet.NewClient(chainID, url, lggr, &clientDefaultTimeout)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize starknet client")
 	}
@@ -110,8 +112,60 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 	return
 }
 
+func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) (td TransmissionDetails, err error) {
+	ops := starknet.CallOps{
+		ContractAddress: address,
+		Selector:        "latest_round_data",
+	}
+
+	res, err := c.starknetClient.CallContract(ctx, ops)
+	if err != nil {
+		return td, errors.Wrap(err, "couldn't call the contract")
+	}
+
+	// [0] - round_id, [1] - answer, [2] - block_num,
+	// [3] - observation_timestamp, [4] - transmission_timestamp
+	blockNumFelt, err := caigoStringToJunoFelt(res[2])
+	if err != nil {
+		return td, errors.Wrap(err, "couldn't decode block num")
+	}
+
+	blockNum := uint64(blockNumFelt.Big().Int64())
+	if blockNum == 0 {
+		c.lggr.Warn("No transmissions found")
+		return td, nil
+	}
+
+	block, err := c.starknetClient.BlockByNumberGateway(ctx, blockNum)
+	if err != nil {
+		return td, errors.Wrap(err, "couldn't fetch block by number")
+	}
+
+	for _, txReceipt := range block.TransactionReceipts {
+		for _, event := range txReceipt.Events {
+			var decodedEvent caigotypes.Event
+
+			m, err := json.Marshal(event)
+			if err != nil {
+				return td, errors.Wrap(err, "couldn't marshal event")
+			}
+
+			err = json.Unmarshal(m, &decodedEvent)
+			if err != nil {
+				return td, errors.Wrap(err, "couldn't unmarshal event")
+			}
+
+			if isEventFromContract(&decodedEvent, address, "new_transmission") {
+				return parseTransmissionEventData(decodedEvent.Data)
+			}
+		}
+	}
+
+	return td, errors.New("transmission details not found")
+}
+
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
-	block, err := c.starknetClient.BlockByNumber(ctx, blockNum)
+	block, err := c.starknetClient.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}
@@ -130,7 +184,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 				return cc, errors.Wrap(err, "couldn't unmarshal event")
 			}
 
-			if isSetConfigEventFromContract(&decodedEvent, address) {
+			if isEventFromContract(&decodedEvent, address, "config_set") {
 				config, err := parseConfigEventData(decodedEvent.Data)
 				if err != nil {
 					return cc, errors.Wrap(err, "couldn't parse config event")

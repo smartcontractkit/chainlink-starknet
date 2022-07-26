@@ -5,8 +5,9 @@
   buildInputs = with pkgs; [
     python39
     python39Packages.venvShellHook
+    python39Packages.fastecdsa # so libgmp is correctly sourced
     gmp
-    nodejs-16_x
+    nodejs-18_x
     (yarn.override { nodejs = nodejs-16_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
@@ -24,6 +25,6 @@
   venvDir = "./.venv";
 
   postShellHook = ''
-    pip install -r contracts/requirements.txt -c contracts/constraints.txt
+    pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
   '';
 }

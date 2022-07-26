@@ -5,15 +5,16 @@ go 1.18
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
-	github.com/dontpanicdao/caigo v0.2.1-0.20220517132056-e34006317632
+	github.com/dontpanicdao/caigo v0.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/chainlink-relay v0.0.0-20220516224734-c4759cac049a
+	github.com/smartcontractkit/chainlink-relay v0.1.2
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
 	github.com/smartcontractkit/helmenv v1.0.71
 	github.com/smartcontractkit/libocr v0.0.0-20220701150323-d815c8d0eab8
 	github.com/stretchr/testify v1.7.1
 	github.com/test-go/testify v1.1.4
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
+	gopkg.in/guregu/null.v4 v4.0.0
 )
 
 require (
@@ -130,6 +131,7 @@ require (
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/rubenv/sql-migrate v1.1.1 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect

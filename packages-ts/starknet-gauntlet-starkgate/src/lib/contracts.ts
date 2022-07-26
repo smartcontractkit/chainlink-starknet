@@ -3,6 +3,7 @@ import { CompiledContract, json } from 'starknet'
 
 export enum CONTRACT_LIST {
   TOKEN = 'ERC20',
+  BRIDGE = 'token_bridge',
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
@@ -16,3 +17,4 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
 }
 
 export const contractLoader = () => loadContract(CONTRACT_LIST.TOKEN)
+export const bridgeContractLoader = () => loadContract(CONTRACT_LIST.BRIDGE)
