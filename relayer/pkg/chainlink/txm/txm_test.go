@@ -43,8 +43,8 @@ func TestTxm(t *testing.T) {
 	timeout := 5 * time.Second
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
-	getClient := func() types.Provider {
-		return client
+	getClient := func() (types.Provider, error) {
+		return client, nil
 	}
 
 	// mock config to prevent import cycle
