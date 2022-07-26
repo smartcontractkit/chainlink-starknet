@@ -6,6 +6,7 @@ import (
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -19,7 +20,10 @@ func TestOCR2Client(t *testing.T) {
 	lggr := logger.Test(t)
 
 	cfg := starknet.NewConfig(db.ChainCfg{}, lggr)
-	client, err := NewClient(chainID, "", lggr, cfg)
+	duration := cfg.RequestTimeout()
+	reader, err := starknet.NewClient(chainID, "", lggr, &duration)
+	require.NoError(t, err)
+	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
 
 	t.Run("get billing details", func(t *testing.T) {

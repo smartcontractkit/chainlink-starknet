@@ -12,8 +12,8 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
+	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/db"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -40,13 +40,18 @@ func TestTxm(t *testing.T) {
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
-	cfg := starknet.NewConfig(db.ChainCfg{}, lggr)
-	timeout := cfg.RequestTimeout()
+	timeout := 5 * time.Second
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
 	getClient := func() types.Provider {
 		return client
 	}
+
+	// mock config to prevent import cycle
+	cfg := new(txmmock.TxConfig)
+	cfg.On("TxMaxBatchSize").Return(100)
+	cfg.On("TxSendFrequency").Return(15 * time.Second)
+	cfg.On("TxTimeout").Return(10 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)
 	require.NoError(t, err)

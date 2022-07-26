@@ -18,30 +18,24 @@ type OCR2Reader interface {
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
-	BaseClient() *starknet.Client
+	BaseClient() starknet.Reader
 }
 
 var _ OCR2Reader = (*Client)(nil)
 
 type Client struct {
-	starknetClient *starknet.Client
+	starknetClient starknet.Reader
 	lggr           logger.Logger
 }
 
-func NewClient(chainID string, url string, lggr logger.Logger, cfg starknet.Config) (*Client, error) {
-	clientDefaultTimeout := cfg.RequestTimeout()
-	client, err := starknet.NewClient(chainID, url, lggr, &clientDefaultTimeout)
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't initialize starknet client")
-	}
-
+func NewClient(reader starknet.Reader, lggr logger.Logger) (*Client, error) {
 	return &Client{
-		starknetClient: client,
+		starknetClient: reader,
 		lggr:           lggr,
 	}, nil
 }
 
-func (c *Client) BaseClient() *starknet.Client {
+func (c *Client) BaseClient() starknet.Reader {
 	return c.starknetClient
 }
 

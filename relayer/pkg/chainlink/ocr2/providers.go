@@ -28,8 +28,8 @@ type configProvider struct {
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainID string, contractAddress string, url string, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
-	chainReader, err := NewClient(chainID, url, lggr, cfg)
+func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
+	chainReader, err := NewClient(basereader, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize chain client")
 	}
@@ -77,8 +77,8 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, senderAddress string, url string, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
-	configProvider, err := NewConfigProvider(chainID, contractAddress, url, cfg, lggr)
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
+	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}

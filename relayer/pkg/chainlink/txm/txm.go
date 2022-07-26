@@ -14,7 +14,6 @@ import (
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 const (
@@ -30,6 +29,14 @@ type StarkTXM interface {
 	TxManager
 }
 
+//go:generate mockery --name TxConfig --output ./mocks/ --case=underscore --filename txconfig.go
+
+type TxConfig interface {
+	TxTimeout() time.Duration
+	TxSendFrequency() time.Duration
+	TxMaxBatchSize() int
+}
+
 type starktxm struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
@@ -38,14 +45,14 @@ type starktxm struct {
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
 	ks      keys.Keystore
-	cfg     starknet.Config
+	cfg     TxConfig
 
 	// TODO: use lazy loaded client
 	client    types.Provider
 	getClient func() types.Provider
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg starknet.Config, getClient func() types.Provider) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, cfg TxConfig, getClient func() types.Provider) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
