@@ -20,7 +20,6 @@ end
 func aggregator_address_() -> (address : felt):
 end
 
-
 @constructor
 func constructor{
     syscall_ptr : felt*,
@@ -36,7 +35,6 @@ func constructor{
     return ()
 end
 
-
 @view
 func get_latest_price{
     syscall_ptr : felt*,
@@ -49,7 +47,7 @@ func get_latest_price{
     end
     let (aggregator_address) = aggregator_address_.read()
     let (round : Round) = IAggregator.latest_round_data(contract_address=aggregator_address)
-    return (round.answer)
+    return (round=round.answer)
 end
 
 @external
@@ -71,6 +69,5 @@ func check_sequencer_state{
         end
         return (FALSE)
     end
-
     return (FALSE)
 end

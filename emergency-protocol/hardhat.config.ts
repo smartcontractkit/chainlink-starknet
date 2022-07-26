@@ -66,13 +66,12 @@ export default {
     ],
   },
   starknet: {
-    // dockerizedVersion: "0.8.1", // alternatively choose one of the two venv options below
+    // dockerizedVersion: "0.9.1", // alternatively choose one of the two venv options below
     // uses (my-venv) defined by `python -m venv path/to/my-venv`
     // venv: "../.venv",
 
     // uses the currently active Python environment (hopefully with available Starknet commands!)
     network: 'devnet',
-    // network: 'integrated-devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
@@ -90,7 +89,6 @@ export default {
       url: 'http://127.0.0.1:5050',
       venv: 'active',
       args: ['--lite-mode'],
-      // dockerizedVersion: "0.2.0"
     },
   },
   contractSizer: {

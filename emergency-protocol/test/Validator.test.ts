@@ -3,32 +3,7 @@ import { BigNumber, Contract, ContractFactory } from 'ethers'
 import { StarknetContractFactory, StarknetContract, HttpNetworkConfig } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-/// Pick ABIs from compilation
-// @ts-ignore
-import { abi as optimismSequencerStatusRecorderAbi } from '../../../artifacts/src/v0.8/dev/OptimismSequencerUptimeFeed.sol/OptimismSequencerUptimeFeed.json'
-// @ts-ignore
-import { abi as optimismL1CrossDomainMessengerAbi } from '@eth-optimism/contracts/artifacts/contracts/L1/messaging/L1CrossDomainMessenger.sol'
-// @ts-ignore
-import { abi as aggregatorAbi } from '../../../artifacts/src/v0.8/interfaces/AggregatorV2V3Interface.sol/AggregatorV2V3Interface.json'
-
-/**
- * Receives a hex address, converts it to bigint, converts it back to hex.
- * This is done to strip leading zeros.
- * @param address a hex string representation of an address
- * @returns an adapted hex string representation of the address
- */
-function adaptAddress(address: string) {
-  return '0x' + BigInt(address).toString(16)
-}
-
-/**
- * Expects address equality after adapting them.
- * @param actual
- * @param expected
- */
-export function expectAddressEquality(actual: string, expected: string) {
-  expect(adaptAddress(actual)).to.equal(adaptAddress(expected))
-}
+import { expectAddressEquality } from './utils'
 
 describe('StarknetValidator', () => {
   /** Fake L2 target */
@@ -46,7 +21,6 @@ describe('StarknetValidator', () => {
   // const L1_STARKNET_CORE = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4"
 
   before(async () => {
-
     const account = await starknet.deployAccount('OpenZeppelin')
 
     L2contractFactory = await starknet.getContractFactory('Mock_Uptime_feed')
@@ -66,7 +40,7 @@ describe('StarknetValidator', () => {
     Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, l2contract.address)
     console.log('Validator address: ', Validator.address)
 
-    await account.invoke(l2contract, 'set_l1_sender', {address: Validator.address})
+    await account.invoke(l2contract, 'set_l1_sender', { address: Validator.address })
   })
 
   describe('#validate', () => {

@@ -19,7 +19,8 @@
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.9",
     "hardhat": "^2.10.0",
-    "ts-node": "^10.8.2"
+    "ts-node": "^10.8.2",
+    "typechain": "^8.1.0"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.1",

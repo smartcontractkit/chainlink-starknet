@@ -17,7 +17,6 @@ end
 func round_() -> (round: RoundFeed):
 end
 
-
 @constructor
 func constructor{
     syscall_ptr : felt*,
@@ -52,4 +51,3 @@ func latest_round_data{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_c
     let (round) = round_.read()
     return (round)
 end
-
