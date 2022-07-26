@@ -16,9 +16,9 @@ describe('Multisig', () => {
   let multisigContractAddress: string
   const SEED: number = 10
   let accounts: string[] = [
-    '0x2ea08d8ea2435755926e3766f9a131c6c0c5b15e690864df4478621565d5d48',
-    '0x458d3122886b79be2d4f455ab64e4c8f49fa613829e21a40bb0f61814a7d8e7',
-    '0x2095b0b11b236bfd6f337a16d26ff63edf6de7e792523ec90396b906a27b2fa',
+    '0x72ad5b6e5a1c114c370eeabbe700cac4fdd7be47f2ada87ad3b89d346303dec',
+    '0x467e04fd5fee4f8a0023c5da41dcdfd963f7e4a9f498a29cbc5c8d030924f5d',
+    '0x77c3cd3e09a70580db713fc0d8da7298a9739dea23d4de561eac2991cb6c300',
   ]
   let publicKeys: string[] = [
     '0x5366dfa9668f9f51c6f4277455b34881262f12cb6b12b487877d9319a5b48bc',
@@ -32,13 +32,13 @@ describe('Multisig', () => {
   ]
 
   let newOwnerAccount = {
-    account: '0x53670d100f4d7aca6afca85bb1a7267e494c51331b2eb99f0c0442cfbcc56b1',
+    account: '0x5cdb30a922a2d4f9836877ed76c67564ec32625458884d0f1f2aef1ae023249',
     publicKey: '0x6a5f1d67f6b59f3a2a294c3e523731b43fccbb7230985be7399c118498faf03',
     privateKey: '0x8ceac392904cdefcf84b683a749f9c5',
   }
 
   beforeAll(async () => {
-    network = await startNetwork()
+    network = await startNetwork({ seed: SEED })
   }, 5000)
 
   it(
