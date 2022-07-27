@@ -3,31 +3,31 @@ package smoke_test
 //revive:disable:dot-imports
 import (
 	"encoding/json"
-	"math/big"
 	"os"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	it "github.com/smartcontractkit/chainlink-starknet/integration-tests"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
-	"github.com/smartcontractkit/chainlink-testing-framework/actions"
-	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
-	"github.com/smartcontractkit/chainlink-testing-framework/client"
 	gauntlet "github.com/smartcontractkit/chainlink-testing-framework/gauntlet"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils"
-	"github.com/smartcontractkit/helmenv/environment"
 )
+
+type StarkNetwork struct {
+	External          bool          `mapstructure:"external" yaml:"external"`
+	ContractsDeployed bool          `mapstructure:"contracts_deployed" yaml:"contracts_deployed"`
+	Name              string        `mapstructure:"name" yaml:"name"`
+	ID                string        `mapstructure:"id" yaml:"id"`
+	ChainID           int64         `mapstructure:"chain_id" yaml:"chain_id"`
+	URL               string        `mapstructure:"url" yaml:"url"`
+	URLs              []string      `mapstructure:"urls" yaml:"urls"`
+	Type              string        `mapstructure:"type" yaml:"type"`
+	PrivateKeys       []string      `mapstructure:"private_keys" yaml:"private_keys"`
+	Timeout           time.Duration `mapstructure:"transaction_timeout" yaml:"transaction_timeout"`
+}
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err           error
-		nets          *blockchain.Networks
-		cls           []client.Chainlink
-		networkL1     blockchain.EVMClient
-		networkL2     blockchain.EVMClient
-		ocrDeployer   *it.OCRDeployer
-		starkDeployer *it.StarkNetContractDeployer
-		e             *environment.Environment
+		err error
 		// These are one of the the default addresses based on the seed we pass to starknet which is 123
 		walletAddress           string = "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502"
 		walletPrivKey           string = "0xc4da537c1651ddae44867db30d67b366"
@@ -37,6 +37,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		g                       *gauntlet.Gauntlet
 		options                 gauntlet.ExecCommandOptions
 		gr                      *it.GauntletResponse
+		// sc                      *it.StarkNetClient
 	)
 
 	BeforeEach(func() {
@@ -54,46 +55,12 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying the environment", func() {
-			e, err = environment.DeployOrLoadEnvironment(ops.DefaultStarkNETEnv())
-			Expect(err).ShouldNot(HaveOccurred())
-			err = e.ConnectAll()
-			Expect(err).ShouldNot(HaveOccurred())
+			_ = it.DeployCluster(5)
+			// g.WriteNetworkConfigMap("./")
 		})
 
-		By("Connecting to launched resources", func() {
-			networkRegistry := blockchain.NewDefaultNetworkRegistry()
-			networkRegistry.RegisterNetwork(
-				"l2_starknet_dev",
-				it.GetStarkNetClient,
-				it.GetStarkNetURLs,
-			)
-			nets, err = networkRegistry.GetNetworks(e)
-			Expect(err).ShouldNot(HaveOccurred())
-			networkL1, err = nets.Get(0)
-			Expect(err).ShouldNot(HaveOccurred())
-			networkL2, err = nets.Get(1)
-			Expect(err).ShouldNot(HaveOccurred())
-			ocrDeployer, err = it.NewOCRDeployer(networkL1)
-			Expect(err).ShouldNot(HaveOccurred())
-			starkDeployer, err = it.NewStarkNetContractDeployer(networkL2)
-			Expect(err).ShouldNot(HaveOccurred())
-			nets.Default.ParallelTransactions(true)
-		})
-		By("Funding Chainlink nodes", func() {
-			cls, err = client.ConnectChainlinkNodes(e)
-			Expect(err).ShouldNot(HaveOccurred())
-			err = actions.FundChainlinkNodes(cls, networkL1, big.NewFloat(3))
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+		By("Configuring environment", func() {
 
-		By("Deploying L1 contracts", func() {
-			err = ocrDeployer.Deploy()
-			Expect(err).ShouldNot(HaveOccurred())
-		})
-
-		By("Deploying L2 contracts", func() {
-			err = starkDeployer.Deploy()
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		By("Deploying LINK token contract", func() {
@@ -146,8 +113,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	AfterEach(func() {
 		By("Tearing down the environment", func() {
-			err = actions.TeardownSuite(e, nets, utils.ProjectRoot, nil, nil)
-			Expect(err).ShouldNot(HaveOccurred())
+			// err = actions.TeardownSuite(e, nets, utils.ProjectRoot, nil, nil)
+			// Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 })

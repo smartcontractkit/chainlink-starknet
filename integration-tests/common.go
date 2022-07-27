@@ -2,6 +2,8 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
+	"math/big"
 	"net/url"
 	"time"
 
@@ -10,17 +12,17 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
-	geth "github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	starknet "github.com/smartcontractkit/chainlink-env/pkg/helm/starknet"
+	"github.com/smartcontractkit/chainlink-testing-framework/actions"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	"github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink-testing-framework/contracts"
 )
 
 const (
-	gethClient   = "Simulated Geth"
+	gethClient   = "Hardhat"
 	devnetClient = "starknet-dev"
 )
 
@@ -68,6 +70,12 @@ type Chart struct {
 	Values *map[string]interface{}
 }
 
+type NodeKeysBundle struct {
+	OCR2Key *client.OCR2Key
+	PeerID  string
+	TXKey   *client.TxKey
+}
+
 func NewStarkNetClient(cfg *StarkNetNetworkConfig) (*StarkNetClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &StarkNetClient{
@@ -76,16 +84,18 @@ func NewStarkNetClient(cfg *StarkNetNetworkConfig) (*StarkNetClient, error) {
 		cfg:    cfg,
 		client: resty.New().SetBaseURL(cfg.URL),
 	}
-	if err := c.init(); err != nil {
-		return nil, err
-	}
+	// Currently not needed since we are testing on L2
+	// if err := c.init(); err != nil {
+	// 	return nil, err
+	// }
 	return c, nil
 }
 
-func DeployCluster(nodes int) {
+func DeployCluster(nodes int) *StarkNetClient {
 	DeployEnv(nodes)
 	SetupClients()
-	DeployContracts()
+	return sc
+	// DeployContracts()
 }
 
 func DeployEnv(nodes int) {
@@ -94,7 +104,7 @@ func DeployEnv(nodes int) {
 		TTL:             3 * time.Hour,
 		InsideK8s:       false,
 	}).
-		AddHelm(geth.New(nil)).
+		// AddHelm(hardhat.New(nil)).
 		AddHelm(starknet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
@@ -124,43 +134,48 @@ func SetupClients() {
 		L1BridgeAddr:      "",
 		Name:              "devnet",
 		URL:               Env.URLs[devnetClient][0],
-		URLs:              Env.URLs[gethClient],
-		Type:              "starknet",
+		//URLs:              Env.URLs[gethClient],
+		Type: "starknet",
 		PrivateKeys: []string{
 			"0xc4da537c1651ddae44867db30d67b366",
 		},
 		WalletAddress: "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502",
 	})
 	Expect(err).ShouldNot(HaveOccurred())
-	err = sc.init()
-	Expect(err).ShouldNot(HaveOccurred())
-	sc.autoSyncL1()
+	// err = sc.init()
+	// Expect(err).ShouldNot(HaveOccurred())
+	// sc.autoSyncL1()
 }
 
 func DeployContracts() {
-	chainClient, err = blockchain.NewEthereumMultiNodeClientSetup(blockchain.SimulatedEVMNetwork)(Env)
+	Env.URLs[gethClient] = []string{Env.URLs[gethClient][0]}
+	chainClient, err = blockchain.NewEthereumMultiNodeClientSetup(blockchain.SimulatedEVMNetworkHardhat)(Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Connecting to blockchain nodes shouldn't fail")
-	//contractDeployer, err = contracts.NewContractDeployer(chainClient)
-	// Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts shouldn't fail")
+	chainlinkNodes, err = client.ConnectChainlinkNodes(Env)
+	Expect(err).ShouldNot(HaveOccurred(), "Connecting to chainlink nodes shouldn't fail")
+	_, err = CreateNodeKeysBundle(chainlinkNodes)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating key bundles should not fail")
+	contractDeployer, err = contracts.NewContractDeployer(chainClient)
+	Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts shouldn't fail")
 
-	// chainlinkNodes, err = client.ConnectChainlinkNodes(Env)
-	// Expect(err).ShouldNot(HaveOccurred(), "Connecting to chainlink nodes shouldn't fail")
-	// mockServer, err = client.ConnectMockServer(Env)
-	// Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
+	mockServer, err = client.ConnectMockServer(Env)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
 
-	// chainClient.ParallelTransactions(true)
-	// Expect(err).ShouldNot(HaveOccurred())
+	chainClient.ParallelTransactions(true)
+	Expect(err).ShouldNot(HaveOccurred())
 
-	// linkTokenContract, err = contractDeployer.DeployLinkTokenContract()
-	// Expect(err).ShouldNot(HaveOccurred(), "Deploying Link Token Contract shouldn't fail")
-	// ocrInstances = actions.DeployOCRContracts(1, linkTokenContract, contractDeployer, chainlinkNodes, chainClient)
-	// err = chainClient.WaitForEvents()
-	// Expect(err).ShouldNot(HaveOccurred())
+	linkTokenContract, err = contractDeployer.DeployLinkTokenContract()
+	Expect(err).ShouldNot(HaveOccurred(), "Deploying Link Token Contract shouldn't fail")
+	err = actions.FundChainlinkNodes(chainlinkNodes, chainClient, big.NewFloat(.01))
+	Expect(err).ShouldNot(HaveOccurred())
+	//ocrInstances = actions.DeployOCRContracts(1, linkTokenContract, contractDeployer, chainlinkNodes, chainClient)
+	err = chainClient.WaitForEvents()
+	Expect(err).ShouldNot(HaveOccurred())
 }
 
 func (s *StarkNetClient) init() error {
 	resp, err := s.client.R().SetBody(map[string]interface{}{
-		"networkUrl": Env.URLs[gethClient][3],
+		"networkUrl": Env.URLs[gethClient][1],
 	}).Post("/postman/load_l1_messaging_contract")
 	if err != nil {
 		return err
@@ -347,3 +362,38 @@ func (s *StarkNetClient) autoSyncL1() {
 // 		Msg("Connecting StarkNet client")
 // 	return NewStarkNetClient(networkSettings, urls)
 // }
+
+func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
+	nkb := make([]NodeKeysBundle, 0)
+	for _, n := range nodes {
+		p2pkeys, err := n.ReadP2PKeys()
+		if err != nil {
+			return nil, err
+		}
+
+		peerID := p2pkeys.Data[0].Attributes.PeerID
+		txKey, err := n.CreateTxKey("eth")
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(peerID)
+		fmt.Println(txKey)
+
+		ocrKey, err := n.CreateOCR2Key("evm")
+		if err != nil {
+			return nil, err
+		}
+		nkb = append(nkb, NodeKeysBundle{
+			PeerID:  peerID,
+			OCR2Key: ocrKey,
+			TXKey:   txKey,
+		})
+
+	}
+
+	return nkb, nil
+}
+
+func getDevnetUrl() string {
+	return sc.cfg.URL
+}
