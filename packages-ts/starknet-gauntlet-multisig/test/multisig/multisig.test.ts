@@ -90,7 +90,7 @@ describe('Multisig', () => {
 
       let report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-      const multisigProposalId = report.data // TODO: fix this (not sure where msig proposal is in the response object)
+      const multisigProposalId = report.data
 
       // Approve Multisig Proposal
       const approveCommand = await wrapCommand(registerExecuteCommand(setThreshold))(deps).create(
@@ -150,7 +150,7 @@ describe('Multisig', () => {
 
       let report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-      const multisigProposalId = report.data // TODO: fix this (not sure where msig proposal is in the response object)
+      const multisigProposalId = report.data
 
       // Approve Multisig Proposal
       const approveCommand = await wrapCommand(registerExecuteCommand(setOwners))(deps).create(
