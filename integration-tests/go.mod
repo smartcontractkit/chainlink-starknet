@@ -6,9 +6,9 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
+	github.com/smartcontractkit/chainlink-env v0.2.26
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818193333-666574ae910e
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
-	github.com/smartcontractkit/helmenv v1.0.71
 )
 
 require (
@@ -37,6 +37,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dontpanicdao/caigo v0.3.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -52,6 +53,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
@@ -64,6 +66,7 @@ require (
 	github.com/rubenv/sql-migrate v1.1.1 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/smartcontractkit/helmenv v1.0.71 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -92,7 +95,6 @@ require (
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
-	github.com/smartcontractkit/chainlink-env v0.2.26
 	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee // indirect
 )
 
@@ -111,7 +113,6 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect
 	github.com/go-logr/logr v1.2.2 // indirect
@@ -142,7 +143,6 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
