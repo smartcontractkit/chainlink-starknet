@@ -56,7 +56,7 @@ func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64
 }
 
 func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
-	blockHeight, err = c.reader.BaseClient().LatestBlockHeight(ctx)
+	blockHeight, err = c.reader.BaseReader().LatestBlockHeight(ctx)
 	if err != nil {
 		return blockHeight, errors.Wrap(err, "couldn't get latest block height")
 	}

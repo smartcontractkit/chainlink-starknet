@@ -10,6 +10,7 @@ import (
 	"github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/ops"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
 	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
@@ -19,8 +20,8 @@ import (
 )
 
 func TestTxm(t *testing.T) {
-	url := SetupLocalStarkNetNode(t)
-	localKeys := TestKeys(t, 2) // generate 2 keys
+	url := ops.SetupLocalStarkNetNode(t)
+	localKeys := ops.TestKeys(t, 2) // generate 2 keys
 
 	// mock keystore
 	ks := new(mocks.Keystore)

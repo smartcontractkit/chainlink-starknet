@@ -29,14 +29,6 @@ type StarkTXM interface {
 	TxManager
 }
 
-//go:generate mockery --name TxConfig --output ./mocks/ --case=underscore --filename txconfig.go
-
-type TxConfig interface {
-	TxTimeout() time.Duration
-	TxSendFrequency() time.Duration
-	TxMaxBatchSize() int
-}
-
 type starktxm struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
