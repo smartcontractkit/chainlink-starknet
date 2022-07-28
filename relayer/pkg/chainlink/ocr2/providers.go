@@ -8,6 +8,7 @@ import (
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -78,14 +79,14 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg config.Config, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg config.Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
 	}
 
 	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
-	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress)
+	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress, txm)
 
 	return &medianProvider{
 		configProvider:     configProvider,
