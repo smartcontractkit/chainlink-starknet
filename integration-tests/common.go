@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
-	starknet "github.com/smartcontractkit/chainlink-env/pkg/helm/starknet"
+	ops "github.com/smartcontractkit/chainlink-starknet/relayer/ops"
 	"github.com/smartcontractkit/chainlink-testing-framework/actions"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	"github.com/smartcontractkit/chainlink-testing-framework/client"
@@ -76,6 +76,15 @@ type NodeKeysBundle struct {
 	TXKey   *client.TxKey
 }
 
+type Node struct {
+	ID        int32     `json:"ID"`
+	Name      string    `json:"Name"`
+	ChainID   string    `json:"ChainID"`
+	URL       string    `json:"URL"`
+	CreatedAt time.Time `json:"CreatedAt"`
+	UpdatedAt time.Time `json:"UpdatedAt"`
+}
+
 func NewStarkNetClient(cfg *StarkNetNetworkConfig) (*StarkNetClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &StarkNetClient{
@@ -99,13 +108,33 @@ func DeployCluster(nodes int) *StarkNetClient {
 }
 
 func DeployEnv(nodes int) {
+
+	// nodeStruct := &Node{
+	// 	ID:      0,
+	// 	Name:    "starknet-devnet",
+	// 	ChainID: "13337",
+	// 	URL:     "0.0.0.0:5000",
+	// }
+
+	// jsonData := `
+	// [
+	// {
+	// 		"ID": "0"
+	// 		"name": "devnet",
+	// 		"ChainID": "13337",
+	// 		"URL": "0.0.0.0:5000"
+	// 	}
+	// ]`
+
+	//b, _ := json.Marshal(jsonData)
+
 	Env = environment.New(&environment.Config{
 		NamespacePrefix: "smoke-ocr-starknet",
 		TTL:             3 * time.Hour,
 		InsideK8s:       false,
 	}).
 		// AddHelm(hardhat.New(nil)).
-		AddHelm(starknet.New(nil)).
+		AddHelm(ops.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, map[string]interface{}{
@@ -122,6 +151,7 @@ func DeployEnv(nodes int) {
 				"P2PV2_DELTA_DIAL":            "5s",
 				"P2PV2_DELTA_RECONCILE":       "5s",
 				"p2p_listen_port":             "0",
+				//"STARKNET_NODES":              b,
 			},
 		}))
 	err := Env.Run()

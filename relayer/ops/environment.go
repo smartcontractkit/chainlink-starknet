@@ -1,45 +1,101 @@
 package ops
 
 import (
-	"github.com/smartcontractkit/chainlink-testing-framework/config"
-	"github.com/smartcontractkit/helmenv/environment"
+	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink-env/client"
+	"github.com/smartcontractkit/chainlink-env/environment"
 )
 
-func DefaultStarkNETEnv() *environment.Config {
-	return &environment.Config{
-		NamespacePrefix: "chainlink-starknet",
-		Charts: environment.Charts{
-			"geth": {Index: 1},
-			"starknet": {
-				Index: 1,
-				Path:  "../../relayer/ops/charts/starknet",
-				Values: map[string]interface{}{
-					"real_node": false,
+type Props struct {
+	NetworkName string   `envconfig:"network_name"`
+	HttpURLs    []string `envconfig:"http_url"`
+	WsURLs      []string `envconfig:"ws_url"`
+	Values      map[string]interface{}
+}
+
+type HelmProps struct {
+	Name   string
+	Path   string
+	Values *map[string]interface{}
+}
+
+type Chart struct {
+	HelmProps *HelmProps
+	Props     *Props
+}
+
+func (m Chart) IsDeploymentNeeded() bool {
+	return true
+}
+
+func (m Chart) GetProps() interface{} {
+	return m.Props
+}
+
+func (m Chart) GetName() string {
+	return m.HelmProps.Name
+}
+
+func (m Chart) GetPath() string {
+	return m.HelmProps.Path
+}
+
+func (m Chart) GetValues() *map[string]interface{} {
+	return m.HelmProps.Values
+}
+
+func (m Chart) ExportData(e *environment.Environment) error {
+	devnetLocalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.LocalConnection, client.HTTP)
+	if err != nil {
+		return err
+	}
+	devnetInternalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.RemoteConnection, client.HTTP)
+	if err != nil {
+		return err
+	}
+	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetLocalHttp)
+	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetInternalHttp)
+	log.Info().Str("Name", "Devnet").Str("URLs", devnetLocalHttp).Msg("Devnet network")
+	return nil
+}
+
+func defaultProps() *Props {
+	return &Props{
+		NetworkName: "starknet-dev",
+		Values: map[string]interface{}{
+			"replicas": "1",
+			"starknet-dev": map[string]interface{}{
+				"image": map[string]interface{}{
+					"image":   "shardlabs/starknet-devnet",
+					"version": "v0.2.6",
 				},
-			},
-			"mockserver-config": {Index: 1},
-			"mockserver":        {Index: 2},
-			"chainlink": {
-				Index: 2,
-				Values: map[string]interface{}{
-					"replicas":  5,
-					"chainlink": config.ChainlinkVals(),
-					"env": map[string]interface{}{
-						"EVM_ENABLED":                 "true",
-						"EVM_RPC_ENABLED":             "true",
-						"eth_url":                     "ws://geth:8546",
-						"eth_http_url":                "http://geth:8544",
-						"feature_external_initiators": "true",
-						"FEATURE_CCIP":                "true",
-						"FEATURE_OFFCHAIN_REPORTING2": "true",
-						"P2P_NETWORKING_STACK":        "V2",
-						"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
-						"P2PV2_DELTA_DIAL":            "5s",
-						"P2PV2_DELTA_RECONCILE":       "5s",
-						"p2p_listen_port":             "0",
+				"resources": map[string]interface{}{
+					"requests": map[string]interface{}{
+						"cpu":    "1000m",
+						"memory": "1024Mi",
+					},
+					"limits": map[string]interface{}{
+						"cpu":    "1000m",
+						"memory": "1024Mi",
 					},
 				},
+				"seed":      "123",
+				"real_node": "false",
 			},
 		},
+	}
+}
+
+func New(props *Props) environment.ConnectedChart {
+	if props == nil {
+		props = defaultProps()
+	}
+	return Chart{
+		HelmProps: &HelmProps{
+			Name:   "starknet-dev",
+			Path:   "../../relayer/ops/charts/starknet",
+			Values: &props.Values,
+		},
+		Props: props,
 	}
 }
