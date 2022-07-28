@@ -18,25 +18,25 @@ type OCR2Reader interface {
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
-	BaseClient() starknet.Reader
+	BaseReader() starknet.Reader
 }
 
 var _ OCR2Reader = (*Client)(nil)
 
 type Client struct {
-	starknetClient starknet.Reader
-	lggr           logger.Logger
+	r    starknet.Reader
+	lggr logger.Logger
 }
 
 func NewClient(reader starknet.Reader, lggr logger.Logger) (*Client, error) {
 	return &Client{
-		starknetClient: reader,
-		lggr:           lggr,
+		r:    reader,
+		lggr: lggr,
 	}, nil
 }
 
-func (c *Client) BaseClient() starknet.Reader {
-	return c.starknetClient
+func (c *Client) BaseReader() starknet.Reader {
+	return c.r
 }
 
 func (c *Client) BillingDetails(ctx context.Context, address string) (bd BillingDetails, err error) {
@@ -45,7 +45,7 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		Selector:        "billing",
 	}
 
-	res, err := c.starknetClient.CallContract(ctx, ops)
+	res, err := c.r.CallContract(ctx, ops)
 	if err != nil {
 		return bd, errors.Wrap(err, "couldn't call the contract")
 	}
@@ -78,7 +78,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 		Selector:        "latest_config_details",
 	}
 
-	res, err := c.starknetClient.CallContract(ctx, ops)
+	res, err := c.r.CallContract(ctx, ops)
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't call the contract")
 	}
@@ -112,7 +112,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 		Selector:        "latest_round_data",
 	}
 
-	res, err := c.starknetClient.CallContract(ctx, ops)
+	res, err := c.r.CallContract(ctx, ops)
 	if err != nil {
 		return td, errors.Wrap(err, "couldn't call the contract")
 	}
@@ -130,7 +130,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 		return td, nil
 	}
 
-	block, err := c.starknetClient.BlockByNumberGateway(ctx, blockNum)
+	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return td, errors.Wrap(err, "couldn't fetch block by number")
 	}
@@ -159,7 +159,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
-	block, err := c.starknetClient.BlockByNumberGateway(ctx, blockNum)
+	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}
