@@ -1,11 +1,11 @@
-package starknet
+package config
 
 import (
 	"sync"
 	"time"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/db"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 )
 
 var DefaultConfigSet = ConfigSet{

@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/db"
 )
 
 func TestOCR2Client(t *testing.T) {
@@ -19,7 +20,7 @@ func TestOCR2Client(t *testing.T) {
 	ocr2ContractAddress := "0x756ce9ca3dff7ee1037e712fb9662be13b5dcfc0660b97d266298733e1196b"
 	lggr := logger.Test(t)
 
-	cfg := starknet.NewConfig(db.ChainCfg{}, lggr)
+	cfg := config.NewConfig(db.ChainCfg{}, lggr)
 	duration := cfg.RequestTimeout()
 	reader, err := starknet.NewClient(chainID, "", lggr, &duration)
 	require.NoError(t, err)

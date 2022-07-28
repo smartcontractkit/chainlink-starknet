@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
@@ -28,7 +29,7 @@ type configProvider struct {
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg starknet.Config, lggr logger.Logger) (*configProvider, error) {
+func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg config.Config, lggr logger.Logger) (*configProvider, error) {
 	chainReader, err := NewClient(basereader, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize chain client")
@@ -77,7 +78,7 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg starknet.Config, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg config.Config, lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")

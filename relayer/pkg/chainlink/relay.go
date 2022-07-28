@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	chainset "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/chain"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -16,7 +16,7 @@ import (
 var _ relaytypes.Relayer = (*relayer)(nil)
 
 type relayer struct {
-	chainSet chainset.ChainSet
+	chainSet starkchain.ChainSet
 	ctx      context.Context
 
 	lggr logger.Logger
@@ -24,7 +24,7 @@ type relayer struct {
 	cancel func()
 }
 
-func NewRelayer(lggr logger.Logger, chainSet chainset.ChainSet) *relayer {
+func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relayer{
 		chainSet: chainSet,
