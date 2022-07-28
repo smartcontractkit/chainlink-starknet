@@ -22,7 +22,7 @@ spec:
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.2.4"}}"
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.2.6"}}"
         args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
 {{- end }}
         imagePullPolicy: IfNotPresent
@@ -38,6 +38,8 @@ spec:
         env:
           - name: PYTHONUNBUFFERED
             value: "1"
+          - name: PATHFINDER_ETHEREUM_API_URL
+            value: {{ .Values.url_http_L1 }}
 {{- end }}
         ports:
           - name: http
