@@ -68,20 +68,20 @@ func newFrom(reader io.Reader) (Key, error) {
 
 // ID gets Key ID
 func (key Key) ID() string {
-	return key.PublicKeyStr()
+	return key.ContractAddressStr()
 }
 
-// Not actually public key, this is the derived contract address
+// this is the derived contract address, the contract is deployed using the StarkKeyStr
 // This is the primary identifier for onchain interactions
 // the private key is identified by this
-func (key Key) PublicKeyStr() string {
+func (key Key) ContractAddressStr() string {
 	return "0x" + hex.EncodeToString(PubKeyToContract(key.privkey.PublicKey, defaultContractHash, defaultSalt))
 }
 
-// KeyStr is the real public key associated to the private key
+// StarkKeyStr is the starknet public key associated to the private key
 // it is the X component of the ECDSA pubkey and used in the deployment of the account contract
 // this func is used in exporting it via CLI and API
-func (key Key) KeyStr() string {
+func (key Key) StarkKeyStr() string {
 	return "0x" + hex.EncodeToString(PubKeyToStarkKey(key.privkey.PublicKey))
 }
 
@@ -92,7 +92,7 @@ func (key Key) Raw() Raw {
 
 // String is the print-friendly format of the Key
 func (key Key) String() string {
-	return fmt.Sprintf("StarkNetKey{PrivateKey: <redacted>, Public Key: %s}", key.PublicKeyStr())
+	return fmt.Sprintf("StarkNetKey{PrivateKey: <redacted>, Contract Address: %s}", key.ContractAddressStr())
 }
 
 // GoString wraps String()
