@@ -10,7 +10,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -31,11 +30,11 @@ type contractCache struct {
 	stop, done chan struct{}
 
 	reader *contractReader
-	cfg    config.Config
+	cfg    Config
 	lggr   logger.Logger
 }
 
-func NewContractCache(cfg config.Config, reader *contractReader, lggr logger.Logger) *contractCache {
+func NewContractCache(cfg Config, reader *contractReader, lggr logger.Logger) *contractCache {
 	return &contractCache{
 		cfg:    cfg,
 		reader: reader,
