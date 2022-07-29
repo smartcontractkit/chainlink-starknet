@@ -19,7 +19,7 @@ var (
 )
 
 // PubKeyToContract implements the pubkey to deployed account given contract hash + salt
-func PubKeyToContract(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte {
+func PubKeyToAccount(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte {
 	hash := pedersen.ArrayDigest(
 		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
 		big.NewInt(0),
@@ -28,7 +28,7 @@ func PubKeyToContract(pubkey starksig.PublicKey, classHash, salt *big.Int) []byt
 		pedersen.ArrayDigest(pubkey.X),
 	)
 
-	// pad big.Int to 32 bytes if needed
+	// pad big.Int to 32 bytes if needed:w
 	return PadBytes(hash, byteLen)
 }
 

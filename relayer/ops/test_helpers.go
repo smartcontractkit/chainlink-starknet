@@ -94,7 +94,7 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 		key := raw.Key()
 
 		// recalculate account address using devnet contract hash + salt
-		address := "0x" + hex.EncodeToString(keys.PubKeyToContract(key.PublicKey(), devnetClassHash, devnetSalt))
+		address := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), devnetClassHash, devnetSalt))
 		keyMap[address] = key
 	}
 	return keyMap

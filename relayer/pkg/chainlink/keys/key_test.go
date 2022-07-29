@@ -26,7 +26,7 @@ func TestStarkKey_PublicKeyStr(t *testing.T) {
 			require.NoError(t, err)
 			key := Raw(b).Key()
 
-			assert.Equal(t, k.contract, key.ContractAddressStr(), "address calculated from private key does not match expected contract address")
+			assert.Equal(t, k.contract, key.AccountAddressStr(), "address calculated from private key does not match expected contract address")
 		})
 	}
 }
