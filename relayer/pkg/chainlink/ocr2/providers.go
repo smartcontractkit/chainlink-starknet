@@ -22,7 +22,7 @@ var _ relaytypes.ConfigProvider = (*configProvider)(nil)
 type configProvider struct {
 	utils.StartStopOnce
 
-	reader        *contractReader
+	reader        Reader
 	contractCache *contractCache
 	digester      types.OffchainConfigDigester
 

@@ -24,12 +24,12 @@ type transmissionsCache struct {
 
 	stop, done chan struct{}
 
-	reader *contractReader
+	reader Reader
 	cfg    Config
 	lggr   logger.Logger
 }
 
-func NewTransmissionsCache(cfg Config, reader *contractReader, lggr logger.Logger) *transmissionsCache {
+func NewTransmissionsCache(cfg Config, reader Reader, lggr logger.Logger) *transmissionsCache {
 	return &transmissionsCache{
 		cfg:    cfg,
 		reader: reader,

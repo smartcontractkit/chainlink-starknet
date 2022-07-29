@@ -29,12 +29,12 @@ type contractCache struct {
 
 	stop, done chan struct{}
 
-	reader *contractReader
+	reader Reader
 	cfg    Config
 	lggr   logger.Logger
 }
 
-func NewContractCache(cfg Config, reader *contractReader, lggr logger.Logger) *contractCache {
+func NewContractCache(cfg Config, reader Reader, lggr logger.Logger) *contractCache {
 	return &contractCache{
 		cfg:    cfg,
 		reader: reader,
