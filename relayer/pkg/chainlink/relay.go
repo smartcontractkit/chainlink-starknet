@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -16,7 +16,7 @@ import (
 var _ relaytypes.Relayer = (*relayer)(nil)
 
 type relayer struct {
-	chainSet starknet.ChainSet
+	chainSet starkchain.ChainSet
 	ctx      context.Context
 
 	lggr logger.Logger
@@ -24,7 +24,7 @@ type relayer struct {
 	cancel func()
 }
 
-func NewRelayer(lggr logger.Logger, chainSet starknet.ChainSet) *relayer {
+func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relayer{
 		chainSet: chainSet,
@@ -67,8 +67,11 @@ func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 		return nil, errors.Wrap(err, "couldn't initilize Chain")
 	}
 
-	url := "" // TODO: retrieve from reader from nodes/chains config
-	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, url, chain.Config(), r.lggr)
+	reader, err := chain.Reader()
+	if err != nil {
+		return nil, errors.Wrap(err, "error in NewConfigProvider chain.Reader")
+	}
+	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, reader, chain.Config(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "coudln't initialize ConfigProvider")
 	}
@@ -90,8 +93,11 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	}
 
 	// todo: use pargs for median provider
-	url := "" // TODO: retrieve from reader from nodes/chains config
-	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, pargs.TransmitterID, url, chain.Config(), r.lggr)
+	reader, err := chain.Reader()
+	if err != nil {
+		return nil, errors.Wrap(err, "error in NewMedianProvider chain.Reader")
+	}
+	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, pargs.TransmitterID, reader, chain.Config(), chain.TxManager(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initilize MedianProvider")
 	}
