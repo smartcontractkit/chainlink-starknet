@@ -4,6 +4,7 @@ package txm
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -44,7 +45,20 @@ func TestTxm(t *testing.T) {
 	timeout := 5 * time.Second
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
+
+	// test fail first client
+	failed := false
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// should be called twice
 	getClient := func() (types.Provider, error) {
+		wg.Done()
+		if !failed {
+			failed = true
+			return nil, errors.New("random test error")
+		}
+
 		return client, nil
 	}
 
@@ -75,6 +89,7 @@ func TestTxm(t *testing.T) {
 		}
 	}
 	time.Sleep(30 * time.Second)
+	wg.Wait()
 
 	// stop txm
 	require.NoError(t, txm.Close())

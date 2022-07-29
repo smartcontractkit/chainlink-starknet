@@ -83,6 +83,17 @@ func (txm *starktxm) run() {
 		case <-tick:
 			start := time.Now()
 
+			// fetch client if needed (before processing txs to preserve queue)
+			if txm.client == nil {
+				var err error
+				txm.client, err = txm.getClient()
+				if err != nil {
+					txm.lggr.Errorw("unable to fetch client", "error", err)
+					tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
+					continue
+				}
+			}
+
 			// calculate total txs to process
 			txLen := len(txm.queue)
 			if txLen > txm.cfg.TxMaxBatchSize() {
@@ -97,15 +108,6 @@ func (txm *starktxm) run() {
 			}
 			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
 			txm.lggr.Debugw("batch details", "batches", txsBySender)
-
-			// fetch client if needed
-			if txm.client == nil {
-				var err error
-				txm.client, err = txm.getClient()
-				if err != nil {
-					txm.lggr.Errorw("unable to fetch client", "error", err)
-				}
-			}
 
 			// async process of tx batches
 			var wg sync.WaitGroup
