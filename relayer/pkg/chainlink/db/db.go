@@ -40,7 +40,7 @@ func (c ChainCfg) Value() (driver.Value, error) {
 type Node struct {
 	ID        int32
 	Name      string
-	ChainID   string
+	ChainID   string `db:"starknet_chain_id"`
 	URL       string
 	CreatedAt time.Time
 	UpdatedAt time.Time
