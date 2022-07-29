@@ -11,44 +11,44 @@ import (
 )
 
 // Raw represents the Stark private key
-type StarkRaw []byte
+type Raw []byte
 
 // Key gets the Key
-func (raw StarkRaw) Key() StarkKey {
+func (raw Raw) Key() Key {
 	privKey := starksig.PrivateKey{}
 	privKey.D = new(big.Int).SetBytes(raw)
 	privKey.PublicKey.Curve = curve
 	privKey.PublicKey.X, privKey.PublicKey.Y = curve.ScalarBaseMult(raw)
 
-	return StarkKey{
+	return Key{
 		privkey: privKey,
 	}
 }
 
 // String returns description
-func (raw StarkRaw) String() string {
+func (raw Raw) String() string {
 	return "<StarkNet Raw Private Key>"
 }
 
 // GoString wraps String()
-func (raw StarkRaw) GoString() string {
+func (raw Raw) GoString() string {
 	return raw.String()
 }
 
-var _ fmt.GoStringer = &StarkKey{}
+var _ fmt.GoStringer = &Key{}
 
 // Key represents StarkNet key
-type StarkKey struct {
+type Key struct {
 	privkey starksig.PrivateKey
 }
 
 // New creates new Key
-func New() (StarkKey, error) {
+func New() (Key, error) {
 	return newFrom(crypto_rand.Reader)
 }
 
 // MustNewInsecure return Key if no error
-func MustNewInsecure(reader io.Reader) StarkKey {
+func MustNewInsecure(reader io.Reader) Key {
 	key, err := newFrom(reader)
 	if err != nil {
 		panic(err)
@@ -56,56 +56,56 @@ func MustNewInsecure(reader io.Reader) StarkKey {
 	return key
 }
 
-func newFrom(reader io.Reader) (StarkKey, error) {
+func newFrom(reader io.Reader) (Key, error) {
 	privKey, err := starksig.GenerateKey(curve, reader)
 	if err != nil {
-		return StarkKey{}, err
+		return Key{}, err
 	}
-	return StarkKey{
+	return Key{
 		privkey: *privKey,
 	}, nil
 }
 
 // ID gets Key ID
-func (key StarkKey) ID() string {
+func (key Key) ID() string {
 	return key.PublicKeyStr()
 }
 
 // Not actually public key, this is the derived contract address
 // This is the primary identifier for onchain interactions
 // the private key is identified by this
-func (key StarkKey) PublicKeyStr() string {
+func (key Key) PublicKeyStr() string {
 	return "0x" + hex.EncodeToString(PubKeyToContract(key.privkey.PublicKey, defaultContractHash, defaultSalt))
 }
 
-// StarkKeyStr is the real public key associated to the private key
+// KeyStr is the real public key associated to the private key
 // it is the X component of the ECDSA pubkey and used in the deployment of the account contract
 // this func is used in exporting it via CLI and API
-func (key StarkKey) StarkKeyStr() string {
+func (key Key) KeyStr() string {
 	return "0x" + hex.EncodeToString(PubKeyToStarkKey(key.privkey.PublicKey))
 }
 
 // Raw from private key
-func (key StarkKey) Raw() StarkRaw {
+func (key Key) Raw() Raw {
 	return key.privkey.D.Bytes()
 }
 
 // String is the print-friendly format of the Key
-func (key StarkKey) String() string {
+func (key Key) String() string {
 	return fmt.Sprintf("StarkNetKey{PrivateKey: <redacted>, Public Key: %s}", key.PublicKeyStr())
 }
 
 // GoString wraps String()
-func (key StarkKey) GoString() string {
+func (key Key) GoString() string {
 	return key.String()
 }
 
 // ToPrivKey returns the key usable for signing.
-func (key StarkKey) ToPrivKey() starksig.PrivateKey {
+func (key Key) ToPrivKey() starksig.PrivateKey {
 	return key.privkey
 }
 
 // PublicKey copies public key object
-func (key StarkKey) PublicKey() starksig.PublicKey {
+func (key Key) PublicKey() starksig.PublicKey {
 	return key.privkey.PublicKey
 }
