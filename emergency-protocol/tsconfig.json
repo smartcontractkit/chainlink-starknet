@@ -6,6 +6,6 @@
       "esModuleInterop": true,
       "outDir": "dist"
     },
-    "include": ["./scripts", "./test"],
+    "include": ["./scripts", "./test", "../contracts/test/validator/utils.ts"],
     "files": ["./hardhat.config.ts"]
 }

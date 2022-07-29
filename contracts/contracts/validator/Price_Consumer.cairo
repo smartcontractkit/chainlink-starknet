@@ -10,7 +10,7 @@ from starkware.starknet.common.syscalls import (
     get_block_timestamp,
 )
 
-from cairo.interfaces.IUptimeFeed import RoundFeed, IUptimeFeed
+from validator.interfaces.IUptimeFeed import RoundFeed, IUptimeFeed
 
 @storage_var
 func uptime_feed_address_() -> (address : felt):

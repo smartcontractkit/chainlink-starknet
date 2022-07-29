@@ -6,7 +6,7 @@ from starkware.starknet.common.syscalls import (
     get_block_timestamp,
 )
 
-from cairo.interfaces.IUptimeFeed import RoundFeed
+from validator.interfaces.IUptimeFeed import RoundFeed
 from starkware.cairo.common.alloc import alloc
 
 @storage_var
