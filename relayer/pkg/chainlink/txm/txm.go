@@ -37,14 +37,14 @@ type starktxm struct {
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
 	ks      keys.Keystore
-	cfg     TxConfig
+	cfg     Config
 
 	// TODO: use lazy loaded client
 	client    types.Provider
 	getClient func() (types.Provider, error)
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg TxConfig, getClient func() (types.Provider, error)) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (types.Provider, error)) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
@@ -83,6 +83,17 @@ func (txm *starktxm) run() {
 		case <-tick:
 			start := time.Now()
 
+			// fetch client if needed (before processing txs to preserve queue)
+			if txm.client == nil {
+				var err error
+				txm.client, err = txm.getClient()
+				if err != nil {
+					txm.lggr.Errorw("unable to fetch client", "error", err)
+					tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
+					continue
+				}
+			}
+
 			// calculate total txs to process
 			txLen := len(txm.queue)
 			if txLen > txm.cfg.TxMaxBatchSize() {
@@ -97,15 +108,6 @@ func (txm *starktxm) run() {
 			}
 			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
 			txm.lggr.Debugw("batch details", "batches", txsBySender)
-
-			// fetch client if needed
-			if txm.client == nil {
-				var err error
-				txm.client, err = txm.getClient()
-				if err != nil {
-					txm.lggr.Errorw("unable to fetch client", "error", err)
-				}
-			}
 
 			// async process of tx batches
 			var wg sync.WaitGroup

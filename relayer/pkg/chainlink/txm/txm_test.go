@@ -4,6 +4,7 @@ package txm
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ func TestTxm(t *testing.T) {
 	// mock keystore
 	ks := new(mocks.Keystore)
 	ks.On("Get", mock.AnythingOfType("string")).Return(
-		func(id string) keys.StarkKey {
+		func(id string) keys.Key {
 			return localKeys[id]
 		},
 		func(id string) error {
@@ -44,12 +45,25 @@ func TestTxm(t *testing.T) {
 	timeout := 5 * time.Second
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
+
+	// test fail first client
+	failed := false
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// should be called twice
 	getClient := func() (types.Provider, error) {
+		wg.Done()
+		if !failed {
+			failed = true
+			return nil, errors.New("random test error")
+		}
+
 		return client, nil
 	}
 
 	// mock config to prevent import cycle
-	cfg := new(txmmock.TxConfig)
+	cfg := new(txmmock.Config)
 	cfg.On("TxMaxBatchSize").Return(100)
 	cfg.On("TxSendFrequency").Return(15 * time.Second)
 	cfg.On("TxTimeout").Return(10 * time.Second)
@@ -75,6 +89,7 @@ func TestTxm(t *testing.T) {
 		}
 	}
 	time.Sleep(30 * time.Second)
+	wg.Wait()
 
 	// stop txm
 	require.NoError(t, txm.Close())

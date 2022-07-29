@@ -6,6 +6,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
 
@@ -32,11 +33,10 @@ type ConfigSet struct {
 }
 
 type Config interface {
-	txm.TxConfig // txm config
+	txm.Config // txm config
 
 	// ocr2 config
-	OCR2CachePollPeriod() time.Duration
-	OCR2CacheTTL() time.Duration
+	ocr2.Config
 
 	// client config
 	RequestTimeout() time.Duration

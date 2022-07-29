@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	junorpc "github.com/NethermindEth/juno/pkg/rpc"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -23,17 +22,17 @@ var _ relaytypes.ConfigProvider = (*configProvider)(nil)
 type configProvider struct {
 	utils.StartStopOnce
 
-	reader        *contractReader
+	reader        Reader
 	contractCache *contractCache
 	digester      types.OffchainConfigDigester
 
 	lggr logger.Logger
 }
 
-func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg config.Config, lggr logger.Logger) (*configProvider, error) {
+func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg Config, lggr logger.Logger) (*configProvider, error) {
 	chainReader, err := NewClient(basereader, lggr)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't initialize chain client")
+		return nil, errors.Wrap(err, "err in NewConfigProvider.NewClient")
 	}
 
 	reader := NewContractReader(contractAddress, chainReader, lggr)
@@ -79,13 +78,13 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg config.Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't initialize ConfigProvider")
+		return nil, errors.Wrap(err, "error in NewMedianProvider.NewConfigProvider")
 	}
 
-	cache := NewTransmissionsCache(cfg, configProvider.reader, configProvider.lggr)
+	cache := NewTransmissionsCache(cfg, configProvider.reader, lggr)
 	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress, txm)
 
 	return &medianProvider{

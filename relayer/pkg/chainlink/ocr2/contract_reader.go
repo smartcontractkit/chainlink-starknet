@@ -11,8 +11,12 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ types.ContractConfigTracker = (*contractReader)(nil)
-var _ median.MedianContract = (*contractReader)(nil)
+type Reader interface {
+	types.ContractConfigTracker
+	median.MedianContract
+}
+
+var _ Reader = (*contractReader)(nil)
 
 type contractReader struct {
 	address string
@@ -20,7 +24,7 @@ type contractReader struct {
 	lggr    logger.Logger
 }
 
-func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) *contractReader {
+func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) Reader {
 	return &contractReader{
 		address: address,
 		reader:  reader,
