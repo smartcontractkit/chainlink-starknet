@@ -10,7 +10,7 @@ from starkware.starknet.common.syscalls import (
     get_block_timestamp,
 )
 
-from validator.interfaces.IUptimeFeed import RoundFeed, IUptimeFeed
+from validator.interfaces.IUptimeFeed import IUptimeFeed
 
 @storage_var
 func uptime_feed_address_() -> (address : felt):
@@ -59,10 +59,10 @@ func check_sequencer_state{
     alloc_locals
 
     let (uptime_feed_address) = uptime_feed_address_.read()
-    let (round : RoundFeed) = IUptimeFeed.latest_round_data(contract_address=uptime_feed_address)
+    let (round : Round) = IUptimeFeed.latest_round_data(contract_address=uptime_feed_address)
     let (local block_timestemp) = get_block_timestamp()
-    if round.status == 0:
-        let time = block_timestemp - round.updated_at
+    if round.answer == 0:
+        let time = block_timestemp - round.transmission_timestamp
         let (is_ls) = is_nn(time - (3600 + 1))
         if is_ls == 0:
             return (TRUE)

@@ -7,7 +7,6 @@ import '@typechain/hardhat'
 import 'hardhat-abi-exporter'
 import 'hardhat-contract-sizer'
 import 'solidity-coverage'
-import '@shardlabs/starknet-hardhat-plugin'
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -29,7 +28,7 @@ const config: HardhatUserConfig = {
     // uses the currently active Python environment (hopefully with available Starknet commands!)
     venv: 'active',
     // network: "alpha",
-    network: 'integrated-devnet',
+    network: 'devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',

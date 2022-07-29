@@ -1,8 +1,10 @@
 package ocr2
 
 import (
+	"encoding/binary"
 	"github.com/pkg/errors"
 	"math/big"
+	"time"
 
 	"golang.org/x/exp/constraints"
 
@@ -81,13 +83,13 @@ func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
 	return jFelts
 }
 
-func isSetConfigEventFromContract(event *caigotypes.Event, address string) bool {
+func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
 	if event.FromAddress != address {
 		return false
 	}
 
 	var isSameEventSelector bool
-	eventKey := caigo.GetSelectorFromName("config_set")
+	eventKey := caigo.GetSelectorFromName(eventName)
 	for _, key := range event.Keys {
 		if key.Cmp(eventKey) == 0 {
 			isSameEventSelector = true
@@ -96,6 +98,51 @@ func isSetConfigEventFromContract(event *caigotypes.Event, address string) bool 
 	}
 
 	return isSameEventSelector
+}
+
+func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetails, error) {
+	// round_id - skip
+	// answer
+	index := 1
+	latestAnswer := eventData[index].Big()
+
+	// transmitter - skip
+	// observation_timestamp
+	index += 2
+	unixTime := eventData[index].Int64()
+	latestTimestamp := time.Unix(unixTime, 0)
+
+	// observers - skip
+	// observation_len
+	index += 2
+	observationLen := eventData[index].Int64()
+
+	// observations - skip (based on observationLen)
+	// juels_per_fee_coin - skip
+	// config digest
+	index += int(observationLen) + 2
+	digest, err := types.BytesToConfigDigest(eventData[index].Bytes())
+	if err != nil {
+		return TransmissionDetails{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
+	}
+
+	// epoch_and_round
+	index += 1
+	var epochAndRound [junotypes.FeltLength]byte
+	epochAndRoundFelt := eventData[index].Big()
+	epochAndRoundFelt.FillBytes(epochAndRound[:])
+	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
+	round := epochAndRound[junotypes.FeltLength-1]
+
+	// reimbursement - skip
+
+	return TransmissionDetails{
+		digest:          digest,
+		epoch:           epoch,
+		round:           round,
+		latestAnswer:    latestAnswer,
+		latestTimestamp: latestTimestamp,
+	}, nil
 }
 
 func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, error) {
@@ -126,7 +173,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 		if i%2 == 0 {
 			signers = append(signers, member.Bytes())
 		} else {
-			transmitters = append(transmitters, types.Account(member.Hex()))
+			transmitters = append(transmitters, types.Account(member.String()))
 		}
 	}
 

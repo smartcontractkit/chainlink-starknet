@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/db"
 )
 
 func TestOCR2Client(t *testing.T) {
@@ -16,7 +18,8 @@ func TestOCR2Client(t *testing.T) {
 	ocr2ContractAddress := "0x756ce9ca3dff7ee1037e712fb9662be13b5dcfc0660b97d266298733e1196b"
 	lggr := logger.Test(t)
 
-	client, err := NewClient(chainID, lggr)
+	cfg := starknet.NewConfig(db.ChainCfg{}, lggr)
+	client, err := NewClient(chainID, "", lggr, cfg)
 	assert.NoError(t, err)
 
 	t.Run("get billing details", func(t *testing.T) {
@@ -29,6 +32,11 @@ func TestOCR2Client(t *testing.T) {
 		assert.NoError(t, err)
 
 		_, err = client.ConfigFromEventAt(context.Background(), ocr2ContractAddress, details.Block)
+		assert.NoError(t, err)
+	})
+
+	t.Run("get latest transmission details", func(t *testing.T) {
+		_, err := client.LatestTransmissionDetails(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 	})
 }

@@ -40,15 +40,21 @@ export abstract class IntegratedDevnet {
 
 class VenvDevnet extends IntegratedDevnet {
   private command: string
+  private opts: any
 
-  constructor(port: string) {
+  constructor(port: string, opts: any) {
     super(port)
 
+    this.opts = opts
     this.command = 'starknet-devnet'
   }
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
-    return spawn(this.command, ['--port', this.port])
+    let args = ['--port', this.port, '--gas-price', '1']
+    if (this.opts?.seed) {
+      args.push('--seed', this.opts.seed.toString())
+    }
+    return spawn(this.command, args)
   }
 
   protected cleanup(): void {
@@ -56,8 +62,8 @@ class VenvDevnet extends IntegratedDevnet {
   }
 }
 
-export const startNetwork = async (): Promise<IntegratedDevnet> => {
-  const devnet = new VenvDevnet('5050')
+export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
+  const devnet = new VenvDevnet('5050', opts)
 
   await devnet.start()
 
