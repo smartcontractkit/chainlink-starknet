@@ -16,25 +16,25 @@ import (
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ ocrtypes.OnchainKeyring = &OCR2Keyring{}
+var _ ocrtypes.OnchainKeyring = &OCR2Key{}
 
-type OCR2Keyring struct {
+type OCR2Key struct {
 	privateKey starksig.PrivateKey
 }
 
-func NewStarkNetKeyring(material io.Reader) (*OCR2Keyring, error) {
+func NewOCR2Key(material io.Reader) (*OCR2Key, error) {
 	privKey, err := starksig.GenerateKey(curve, material)
 	if err != nil {
 		return nil, err
 	}
-	return &OCR2Keyring{privateKey: *privKey}, err
+	return &OCR2Key{privateKey: *privKey}, err
 }
 
-func (sk *OCR2Keyring) PublicKey() ocrtypes.OnchainPublicKey {
+func (sk *OCR2Key) PublicKey() ocrtypes.OnchainPublicKey {
 	return PubKeyToStarkKey(sk.privateKey.PublicKey)
 }
 
-func (sk *OCR2Keyring) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
+func (sk *OCR2Key) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	var dataArray []*big.Int
 	rawReportContext := evmutil.RawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
@@ -54,7 +54,7 @@ func (sk *OCR2Keyring) reportToSigData(reportCtx ocrtypes.ReportContext, report 
 	return hash.Bytes(), nil
 }
 
-func (sk *OCR2Keyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
+func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	hash, err := sk.reportToSigData(reportCtx, report)
 	if err != nil {
 		return []byte{}, err
@@ -81,7 +81,7 @@ func (sk *OCR2Keyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Re
 	return out, nil
 }
 
-func (sk *OCR2Keyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
+func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
 	// check valid signature length
 	if len(signature) != sk.MaxSignatureLength() {
 		return false
@@ -114,23 +114,23 @@ func (sk *OCR2Keyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocr
 	return starksig.Verify(&keys[0], hash, r, s) || starksig.Verify(&keys[1], hash, r, s)
 }
 
-func (sk *OCR2Keyring) MaxSignatureLength() int {
+func (sk *OCR2Key) MaxSignatureLength() int {
 	return 32 + 32 + 32 // publickey + r + s
 }
 
-func (sk *OCR2Keyring) Marshal() ([]byte, error) {
+func (sk *OCR2Key) Marshal() ([]byte, error) {
 	// https://github.com/ethereum/go-ethereum/blob/07508ac0e9695df347b9dd00d418c25151fbb213/crypto/crypto.go#L159
 	return PadBytes(sk.privateKey.D, sk.privateKeyLen()), nil
 }
 
-func (sk *OCR2Keyring) privateKeyLen() int {
+func (sk *OCR2Key) privateKeyLen() int {
 	// https://github.com/NethermindEth/juno/blob/3e71279632d82689e5af03e26693ca5c58a2376e/pkg/crypto/weierstrass/weierstrass.go#L377
 	N := curve.Params().N
 	bitSize := N.BitLen()
 	return (bitSize + 7) / 8 // 32
 }
 
-func (sk *OCR2Keyring) Unmarshal(in []byte) error {
+func (sk *OCR2Key) Unmarshal(in []byte) error {
 	// enforce byte length
 	if len(in) != sk.privateKeyLen() {
 		return errors.Errorf("unexpected seed size, got %d want %d", len(in), sk.privateKeyLen())

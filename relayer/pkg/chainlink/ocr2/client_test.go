@@ -3,14 +3,13 @@ package ocr2
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -20,8 +19,7 @@ func TestOCR2Client(t *testing.T) {
 	ocr2ContractAddress := "0x756ce9ca3dff7ee1037e712fb9662be13b5dcfc0660b97d266298733e1196b"
 	lggr := logger.Test(t)
 
-	cfg := config.NewConfig(db.ChainCfg{}, lggr)
-	duration := cfg.RequestTimeout()
+	duration := 10 * time.Second
 	reader, err := starknet.NewClient(chainID, "", lggr, &duration)
 	require.NoError(t, err)
 	client, err := NewClient(reader, lggr)

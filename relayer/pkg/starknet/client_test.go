@@ -3,21 +3,20 @@ package starknet
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 )
 
 func TestGatewayClient(t *testing.T) {
 	// todo: adjust for e2e tests
 	chainID := gateway.GOERLI_ID
 	lggr := logger.Test(t)
-	timeout := config.NewConfig(db.ChainCfg{}, lggr).RequestTimeout()
+	timeout := 10 * time.Second
 
 	client, err := NewClient(chainID, "", lggr, &timeout)
 	require.NoError(t, err)
