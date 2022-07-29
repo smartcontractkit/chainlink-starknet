@@ -63,7 +63,7 @@ func TestTxm(t *testing.T) {
 	}
 
 	// mock config to prevent import cycle
-	cfg := new(txmmock.TxConfig)
+	cfg := new(txmmock.Config)
 	cfg.On("TxMaxBatchSize").Return(100)
 	cfg.On("TxSendFrequency").Return(15 * time.Second)
 	cfg.On("TxTimeout").Return(10 * time.Second)

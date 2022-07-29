@@ -33,7 +33,7 @@ type ConfigSet struct {
 }
 
 type Config interface {
-	txm.TxConfig // txm config
+	txm.Config // txm config
 
 	// ocr2 config
 	ocr2.Config

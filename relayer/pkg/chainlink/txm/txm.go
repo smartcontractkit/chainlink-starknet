@@ -37,14 +37,14 @@ type starktxm struct {
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
 	ks      keys.Keystore
-	cfg     TxConfig
+	cfg     Config
 
 	// TODO: use lazy loaded client
 	client    types.Provider
 	getClient func() (types.Provider, error)
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg TxConfig, getClient func() (types.Provider, error)) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (types.Provider, error)) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
