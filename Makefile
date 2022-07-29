@@ -47,4 +47,4 @@ endif
 
 .PHONY: e2e_test
 e2e_test:
-	ginkgo -r integration-tests/smoke
+	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
