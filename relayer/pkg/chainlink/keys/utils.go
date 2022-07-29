@@ -28,7 +28,7 @@ func PubKeyToAccount(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte
 		pedersen.ArrayDigest(pubkey.X),
 	)
 
-	// pad big.Int to 32 bytes if needed:w
+	// pad big.Int to 32 bytes if needed
 	return PadBytes(hash, byteLen)
 }
 
