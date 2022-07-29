@@ -6,6 +6,7 @@ package-lock.json
 node_modules/
 flow-report.json
 .env
+.idea/
 report.json
 bin
 **/tsconfig.tsbuildinfo
