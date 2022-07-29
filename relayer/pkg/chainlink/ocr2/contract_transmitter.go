@@ -31,11 +31,13 @@ func NewContractTransmitter(
 	reader *transmissionsCache,
 	contract string,
 	sender string,
+	txm txm.TxManager,
 ) *contractTransmitter {
 	return &contractTransmitter{
 		reader:          reader,
 		contractAddress: contract,
 		senderAddress:   sender,
+		txm:             txm,
 	}
 }
 

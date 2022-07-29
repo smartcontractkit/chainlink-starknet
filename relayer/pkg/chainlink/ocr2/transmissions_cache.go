@@ -8,10 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -27,11 +26,11 @@ type transmissionsCache struct {
 	stop, done chan struct{}
 
 	reader *contractReader
-	cfg    starknet.Config
+	cfg    config.Config
 	lggr   logger.Logger
 }
 
-func NewTransmissionsCache(cfg starknet.Config, reader *contractReader, lggr logger.Logger) *transmissionsCache {
+func NewTransmissionsCache(cfg config.Config, reader *contractReader, lggr logger.Logger) *transmissionsCache {
 	return &transmissionsCache{
 		cfg:    cfg,
 		reader: reader,

@@ -14,7 +14,6 @@ import (
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 const (
@@ -38,14 +37,14 @@ type starktxm struct {
 	queue   chan types.Transaction
 	curve   *caigo.StarkCurve
 	ks      keys.Keystore
-	cfg     starknet.Config
+	cfg     TxConfig
 
 	// TODO: use lazy loaded client
 	client    types.Provider
-	getClient func() types.Provider
+	getClient func() (types.Provider, error)
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg starknet.Config, getClient func() types.Provider) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, cfg TxConfig, getClient func() (types.Provider, error)) (StarkTXM, error) {
 	curve, err := caigo.SC(caigo.WithConstants())
 	if err != nil {
 		return nil, errors.Errorf("failed to build curve: %s", err)
@@ -101,7 +100,11 @@ func (txm *starktxm) run() {
 
 			// fetch client if needed
 			if txm.client == nil {
-				txm.client = txm.getClient()
+				var err error
+				txm.client, err = txm.getClient()
+				if err != nil {
+					txm.lggr.Errorw("unable to fetch client", "error", err)
+				}
 			}
 
 			// async process of tx batches

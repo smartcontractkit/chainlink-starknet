@@ -72,8 +72,17 @@ func (key StarkKey) ID() string {
 }
 
 // Not actually public key, this is the derived contract address
+// This is the primary identifier for onchain interactions
+// the private key is identified by this
 func (key StarkKey) PublicKeyStr() string {
 	return "0x" + hex.EncodeToString(PubKeyToContract(key.privkey.PublicKey, defaultContractHash, defaultSalt))
+}
+
+// StarkKeyStr is the real public key associated to the private key
+// it is the X component of the ECDSA pubkey and used in the deployment of the account contract
+// this func is used in exporting it via CLI and API
+func (key StarkKey) StarkKeyStr() string {
+	return "0x" + hex.EncodeToString(PubKeyToStarkKey(key.privkey.PublicKey))
 }
 
 // Raw from private key
