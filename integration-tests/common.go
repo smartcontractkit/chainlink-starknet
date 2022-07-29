@@ -2,8 +2,6 @@ package integration_tests
 
 import (
 	"context"
-	"fmt"
-	"math/big"
 	"net/url"
 	"time"
 
@@ -15,10 +13,8 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	ops "github.com/smartcontractkit/chainlink-starknet/relayer/ops"
-	"github.com/smartcontractkit/chainlink-testing-framework/actions"
-	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
+	blockchain "github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	"github.com/smartcontractkit/chainlink-testing-framework/client"
-	"github.com/smartcontractkit/chainlink-testing-framework/contracts"
 )
 
 const (
@@ -27,41 +23,22 @@ const (
 )
 
 var (
-	err               error
-	Env               *environment.Environment
-	sc                *StarkNetClient
-	contractDeployer  contracts.ContractDeployer
-	chainClient       blockchain.EVMClient
-	linkTokenContract contracts.LinkToken
-	chainlinkNodes    []client.Chainlink
-	mockServer        *client.MockserverClient
-	ocrInstances      []contracts.OffchainAggregator
-	clientFunc        func(*environment.Environment) (blockchain.EVMClient, error)
+	err             error
+	Env             *environment.Environment
+	sc              *StarkNetClient
+	chainlinkNodes  []client.Chainlink
+	mockServer      *client.MockserverClient
+	nodeKeys        []NodeKeysBundle
+	starknetNetwork *blockchain.EVMNetwork
 )
-
-// StarkNetNetworkConfig StarkNet network config
-type StarkNetNetworkConfig struct {
-	ContractsDeployed         bool          `mapstructure:"contracts_deployed" yaml:"contracts_deployed"`
-	L1BridgeAddr              string        `mapstructure:"l1_bridge_addr" yaml:"l1_bridge_addr"`
-	Name                      string        `mapstructure:"name" yaml:"name"`
-	ChainID                   int64         `mapstructure:"chain_id" yaml:"chain_id"`
-	URL                       string        `mapstructure:"url" yaml:"url"`
-	URLs                      []string      `mapstructure:"urls" yaml:"urls"`
-	Type                      string        `mapstructure:"type" yaml:"type"`
-	PrivateKeys               []string      `mapstructure:"private_keys" yaml:"private_keys"`
-	ChainlinkTransactionLimit uint64        `mapstructure:"chainlink_transaction_limit" yaml:"chainlink_transaction_limit"`
-	Timeout                   time.Duration `mapstructure:"transaction_timeout" yaml:"transaction_timeout"`
-	MinimumConfirmations      int           `mapstructure:"minimum_confirmations" yaml:"minimum_confirmations"`
-	BlockGasLimit             uint64        `mapstructure:"block_gas_limit" yaml:"block_gas_limit"`
-	WalletAddress             string
-}
 
 type StarkNetClient struct {
 	ctx    context.Context
 	cancel context.CancelFunc
-	cfg    *StarkNetNetworkConfig
+	cfg    *blockchain.EVMNetwork
 	urls   []*url.URL
 	client *resty.Client
+	nKeys  []NodeKeysBundle
 }
 
 type Chart struct {
@@ -71,9 +48,9 @@ type Chart struct {
 }
 
 type NodeKeysBundle struct {
-	OCR2Key *client.OCR2Key
+	OCR2Key client.OCR2Key
 	PeerID  string
-	TXKey   *client.TxKey
+	TXKey   client.TxKey
 }
 
 type Node struct {
@@ -85,7 +62,7 @@ type Node struct {
 	UpdatedAt time.Time `json:"UpdatedAt"`
 }
 
-func NewStarkNetClient(cfg *StarkNetNetworkConfig) (*StarkNetClient, error) {
+func NewStarkNetClient(cfg *blockchain.EVMNetwork) (*StarkNetClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &StarkNetClient{
 		ctx:    ctx,
@@ -103,31 +80,11 @@ func NewStarkNetClient(cfg *StarkNetNetworkConfig) (*StarkNetClient, error) {
 func DeployCluster(nodes int) *StarkNetClient {
 	DeployEnv(nodes)
 	SetupClients()
+	CreateKeys()
 	return sc
-	// DeployContracts()
 }
 
 func DeployEnv(nodes int) {
-
-	// nodeStruct := &Node{
-	// 	ID:      0,
-	// 	Name:    "starknet-devnet",
-	// 	ChainID: "13337",
-	// 	URL:     "0.0.0.0:5000",
-	// }
-
-	// jsonData := `
-	// [
-	// {
-	// 		"ID": "0"
-	// 		"name": "devnet",
-	// 		"ChainID": "13337",
-	// 		"URL": "0.0.0.0:5000"
-	// 	}
-	// ]`
-
-	//b, _ := json.Marshal(jsonData)
-
 	Env = environment.New(&environment.Config{
 		NamespacePrefix: "smoke-ocr-starknet",
 		TTL:             3 * time.Hour,
@@ -139,6 +96,12 @@ func DeployEnv(nodes int) {
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, map[string]interface{}{
 			"replicas": nodes,
+			"chainlink": map[string]interface{}{
+				"image": map[string]interface{}{
+					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
+					"version": "develop-root",
+				},
+			},
 			"env": map[string]interface{}{
 				"STARKNET_ENABLED":            "true",
 				"EVM_ENABLED":                 "false",
@@ -151,56 +114,37 @@ func DeployEnv(nodes int) {
 				"P2PV2_DELTA_DIAL":            "5s",
 				"P2PV2_DELTA_RECONCILE":       "5s",
 				"p2p_listen_port":             "0",
-				//"STARKNET_NODES":              b,
 			},
 		}))
 	err := Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
+	mockServer, err = client.ConnectMockServer(Env)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
 }
 
 func SetupClients() {
-	sc, err = NewStarkNetClient(&StarkNetNetworkConfig{
-		ContractsDeployed: false,
-		L1BridgeAddr:      "",
-		Name:              "devnet",
-		URL:               Env.URLs[devnetClient][0],
-		//URLs:              Env.URLs[gethClient],
-		Type: "starknet",
+	sc, err = NewStarkNetClient(&blockchain.EVMNetwork{
+		Name:    "starknet-dev",
+		URL:     "0.0.0.0:5000",
+		ChainID: 13337,
 		PrivateKeys: []string{
-			"0xc4da537c1651ddae44867db30d67b366",
+			"c4da537c1651ddae44867db30d67b366",
 		},
-		WalletAddress: "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502",
+		ChainlinkTransactionLimit: 500000,
+		Timeout:                   2 * time.Minute,
+		MinimumConfirmations:      1,
+		GasEstimationBuffer:       10000,
 	})
 	Expect(err).ShouldNot(HaveOccurred())
-	// err = sc.init()
-	// Expect(err).ShouldNot(HaveOccurred())
-	// sc.autoSyncL1()
 }
 
-func DeployContracts() {
-	Env.URLs[gethClient] = []string{Env.URLs[gethClient][0]}
-	chainClient, err = blockchain.NewEthereumMultiNodeClientSetup(blockchain.SimulatedEVMNetworkHardhat)(Env)
-	Expect(err).ShouldNot(HaveOccurred(), "Connecting to blockchain nodes shouldn't fail")
+func CreateKeys() {
+	starknetNetwork := blockchain.SimulatedEVMNetworkStarknet
+	starknetNetwork.URLs = Env.URLs[devnetClient]
 	chainlinkNodes, err = client.ConnectChainlinkNodes(Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Connecting to chainlink nodes shouldn't fail")
-	_, err = CreateNodeKeysBundle(chainlinkNodes)
+	sc.nKeys, err = CreateNodeKeysBundle(chainlinkNodes)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating key bundles should not fail")
-	contractDeployer, err = contracts.NewContractDeployer(chainClient)
-	Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts shouldn't fail")
-
-	mockServer, err = client.ConnectMockServer(Env)
-	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
-
-	chainClient.ParallelTransactions(true)
-	Expect(err).ShouldNot(HaveOccurred())
-
-	linkTokenContract, err = contractDeployer.DeployLinkTokenContract()
-	Expect(err).ShouldNot(HaveOccurred(), "Deploying Link Token Contract shouldn't fail")
-	err = actions.FundChainlinkNodes(chainlinkNodes, chainClient, big.NewFloat(.01))
-	Expect(err).ShouldNot(HaveOccurred())
-	//ocrInstances = actions.DeployOCRContracts(1, linkTokenContract, contractDeployer, chainlinkNodes, chainClient)
-	err = chainClient.WaitForEvents()
-	Expect(err).ShouldNot(HaveOccurred())
 }
 
 func (s *StarkNetClient) init() error {
@@ -234,164 +178,9 @@ func (s *StarkNetClient) autoSyncL1() {
 	}()
 }
 
-// func (s *StarkNetClient) Get() interface{} {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) GetNetworkName() string {
-// 	return "starknet-dev"
-// }
-
-// func (s *StarkNetClient) GetNetworkType() string {
-// 	return "l2_starknet_dev"
-// }
-
-// func (s *StarkNetClient) GetChainID() *big.Int {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) GetClients() []blockchain.EVMClient {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) GetDefaultWallet() *blockchain.EthereumWallet {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) GetWallets() []*blockchain.EthereumWallet {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) GetNetworkConfig() *config.ETHNetwork {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) SetID(id int) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) SetDefaultWallet(num int) error {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) SetWallets(wallets []*blockchain.EthereumWallet) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) LoadWallets(ns interface{}) error {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) SwitchNode(node int) error {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) HeaderHashByNumber(ctx context.Context, bn *big.Int) (string, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) HeaderTimestampByNumber(ctx context.Context, bn *big.Int) (uint64, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) LatestBlockNumber(ctx context.Context) (uint64, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) Fund(toAddress string, amount *big.Float) error {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) DeployContract(contractName string, deployer blockchain.ContractDeployer) (*common.Address, *types.Transaction, interface{}, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) TransactionOpts(from *blockchain.EthereumWallet) (*bind.TransactOpts, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) ProcessTransaction(tx *types.Transaction) error {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) IsTxConfirmed(txHash common.Hash) (bool, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) ParallelTransactions(enabled bool) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) Close() error {
-// 	s.cancel()
-// 	return nil
-// }
-
-// func (s *StarkNetClient) EstimateCostForChainlinkOperations(amountOfOperations int) (*big.Float, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) EstimateTransactionGasCost() (*big.Int, error) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) GasStats() *blockchain.GasStats {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) AddHeaderEventSubscription(key string, subscriber blockchain.HeaderEventSubscription) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) DeleteHeaderEventSubscription(key string) {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func (s *StarkNetClient) WaitForEvents() error {
-// 	//TODO implement me
-// 	panic("implement me")
-// }
-
-// func GetStarkNetClient(
-// 	_ string,
-// 	networkConfig map[string]interface{},
-// 	urls []*url.URL,
-// ) (blockchain.EVMClient, error) {
-// 	networkSettings := &StarkNetNetworkConfig{}
-// 	err := blockchain.UnmarshalNetworkConfig(networkConfig, networkSettings)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	log.Info().
-// 		Interface("URLs", networkSettings.URLs).
-// 		Msg("Connecting StarkNet client")
-// 	return NewStarkNetClient(networkSettings, urls)
-// }
+func getDevnetUrl() string {
+	return sc.cfg.Name
+}
 
 func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 	nkb := make([]NodeKeysBundle, 0)
@@ -406,8 +195,6 @@ func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(peerID)
-		fmt.Println(txKey)
 
 		ocrKey, err := n.CreateOCR2Key("evm")
 		if err != nil {
@@ -415,8 +202,8 @@ func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 		}
 		nkb = append(nkb, NodeKeysBundle{
 			PeerID:  peerID,
-			OCR2Key: ocrKey,
-			TXKey:   txKey,
+			OCR2Key: *ocrKey,
+			TXKey:   *txKey,
 		})
 
 	}
@@ -424,6 +211,6 @@ func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 	return nkb, nil
 }
 
-func getDevnetUrl() string {
-	return sc.cfg.URL
+func GetNodeKeys() []NodeKeysBundle {
+	return sc.nKeys
 }
