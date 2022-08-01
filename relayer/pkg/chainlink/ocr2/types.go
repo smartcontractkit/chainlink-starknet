@@ -36,16 +36,16 @@ type ContractConfig struct {
 }
 
 type TransmissionDetails struct {
-	digest          types.ConfigDigest
-	epoch           uint32
-	round           uint8
-	latestAnswer    *big.Int
-	latestTimestamp time.Time
+	Digest          types.ConfigDigest
+	Epoch           uint32
+	Round           uint8
+	LatestAnswer    *big.Int
+	LatestTimestamp time.Time
 }
 
 type BillingDetails struct {
-	observationPaymentGJuels  uint64
-	transmissionPaymentGJuels uint64
+	ObservationPaymentGJuels  uint64
+	TransmissionPaymentGJuels uint64
 }
 
 func NewBillingDetails(observationPaymentFelt junotypes.Felt, transmissionPaymentFelt junotypes.Felt) (bd BillingDetails, err error) {
@@ -53,7 +53,7 @@ func NewBillingDetails(observationPaymentFelt junotypes.Felt, transmissionPaymen
 	transmissionPaymentGJuels := transmissionPaymentFelt.Big()
 
 	return BillingDetails{
-		observationPaymentGJuels:  observationPaymentGJuels.Uint64(),
-		transmissionPaymentGJuels: transmissionPaymentGJuels.Uint64(),
+		ObservationPaymentGJuels:  observationPaymentGJuels.Uint64(),
+		TransmissionPaymentGJuels: transmissionPaymentGJuels.Uint64(),
 	}, nil
 }

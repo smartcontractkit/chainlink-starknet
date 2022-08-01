@@ -137,11 +137,11 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 	// reimbursement - skip
 
 	return TransmissionDetails{
-		digest:          digest,
-		epoch:           epoch,
-		round:           round,
-		latestAnswer:    latestAnswer,
-		latestTimestamp: latestTimestamp,
+		Digest:          digest,
+		Epoch:           epoch,
+		Round:           round,
+		LatestAnswer:    latestAnswer,
+		LatestTimestamp: latestTimestamp,
 	}, nil
 }
 
