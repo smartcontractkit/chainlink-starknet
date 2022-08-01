@@ -18,8 +18,10 @@ import (
 )
 
 const (
-	gethClient   = "Hardhat"
-	devnetClient = "starknet-dev"
+	gethClient      = "Hardhat"
+	devnetClient    = "starknet-dev"
+	chainLinkClient = "chainlink"
+	ChainName       = "starknet"
 )
 
 var (
@@ -41,6 +43,35 @@ type StarkNetClient struct {
 	nKeys  []NodeKeysBundle
 }
 
+// ContractNodeInfo contains the indexes of the nodes, bridges, NodeKeyBundles and nodes relevant to an OCR2 Contract
+type ContractNodeInfo struct {
+	OCR2 *OCRv2
+	// Store                   *solclient.Store
+	BootstrapNodeIdx        int
+	BootstrapNode           client.Chainlink
+	BootstrapNodeKeysBundle NodeKeysBundle
+	BootstrapBridgeInfo     BridgeInfo
+	NodesIdx                []int
+	Nodes                   []client.Chainlink
+	NodeKeysBundle          []NodeKeysBundle
+	// BridgeInfos             []BridgeInfo
+}
+
+type OCRv2 struct {
+	Client           *client.Chainlink
+	ContractDeployer *ContractDeployer
+}
+
+type ContractDeployer struct {
+	Client *client.Chainlink
+	Env    *environment.Environment
+}
+
+type BridgeInfo struct {
+	ObservationSource string
+	JuelsSource       string
+}
+
 type Chart struct {
 	Name   string
 	Path   string
@@ -51,6 +82,7 @@ type NodeKeysBundle struct {
 	OCR2Key client.OCR2Key
 	PeerID  string
 	TXKey   client.TxKey
+	P2PKeys client.P2PKeys
 }
 
 type Node struct {
@@ -68,7 +100,7 @@ func NewStarkNetClient(cfg *blockchain.EVMNetwork) (*StarkNetClient, error) {
 		ctx:    ctx,
 		cancel: cancel,
 		cfg:    cfg,
-		client: resty.New().SetBaseURL(cfg.URL),
+		client: resty.New().SetBaseURL(GetStarkNetAddress()),
 	}
 	// Currently not needed since we are testing on L2
 	// if err := c.init(); err != nil {
@@ -120,12 +152,13 @@ func DeployEnv(nodes int) {
 	Expect(err).ShouldNot(HaveOccurred())
 	mockServer, err = client.ConnectMockServer(Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
+
 }
 
 func SetupClients() {
 	sc, err = NewStarkNetClient(&blockchain.EVMNetwork{
 		Name:    "starknet-dev",
-		URL:     "0.0.0.0:5000",
+		URL:     "http://0.0.0.0:5000",
 		ChainID: 13337,
 		PrivateKeys: []string{
 			"c4da537c1651ddae44867db30d67b366",
@@ -178,10 +211,6 @@ func (s *StarkNetClient) autoSyncL1() {
 	}()
 }
 
-func getDevnetUrl() string {
-	return sc.cfg.Name
-}
-
 func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 	nkb := make([]NodeKeysBundle, 0)
 	for _, n := range nodes {
@@ -191,12 +220,12 @@ func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 		}
 
 		peerID := p2pkeys.Data[0].Attributes.PeerID
-		txKey, err := n.CreateTxKey("eth")
+		txKey, err := n.CreateTxKey(ChainName)
 		if err != nil {
 			return nil, err
 		}
 
-		ocrKey, err := n.CreateOCR2Key("evm")
+		ocrKey, err := n.CreateOCR2Key(ChainName)
 		if err != nil {
 			return nil, err
 		}
@@ -204,11 +233,85 @@ func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
 			PeerID:  peerID,
 			OCR2Key: *ocrKey,
 			TXKey:   *txKey,
+			P2PKeys: *p2pkeys,
 		})
 
 	}
 
 	return nkb, nil
+}
+
+func (s *StarkNetClient) FundAccounts(l2AccList []string) {
+	for _, key := range l2AccList {
+		_, err := s.client.R().SetBody(map[string]interface{}{
+			"address": key,
+			"amount":  500000,
+		}).Post("/mint")
+		Expect(err).ShouldNot(HaveOccurred(), "Funding accounts should not fail")
+	}
+}
+
+// TODO - Adding creation of Job Specs
+// func (s *StarkNetClient) CreateJobsForContract(contractNodeInfo *ContractNodeInfo) error {
+// 	relayConfig := map[string]string{
+// 		"nodeEndpointHTTP": "http://0.0.0.0:8899",
+// 		"ocr2ProgramID":    s.nKeys[0].OCR2Key.Data.ID,
+// 		"transmissionsID":  s.nKeys[0].TXKey.Data.ID,
+// 		//	"storeProgramID":   contractNodeInfo.Store.ProgramAddress(),
+// 		"chainID": "starknet",
+// 	}
+// 	bootstrapPeers := []client.P2PData{
+// 		{
+// 			RemoteIP:   Env.URLs[chainLinkClient][0],
+// 			RemotePort: "6690",
+// 			PeerID:     contractNodeInfo.BootstrapNodeKeysBundle.PeerID,
+// 		},
+// 	}
+// 	jobSpec := &client.OCR2TaskJobSpec{
+// 		Name:                  fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+// 		JobType:               "bootstrap",
+// 		ContractID:            s.nKeys[0].OCR2Key.Data.ID,
+// 		Relay:                 ChainName,
+// 		RelayConfig:           relayConfig,
+// 		PluginType:            "median",
+// 		P2PV2Bootstrappers:    bootstrapPeers,
+// 		OCRKeyBundleID:        contractNodeInfo.BootstrapNodeKeysBundle.OCR2Key.Data.ID,
+// 		TransmitterID:         contractNodeInfo.BootstrapNodeKeysBundle.TXKey.Data.ID,
+// 		ObservationSource:     contractNodeInfo.BootstrapBridgeInfo.ObservationSource,
+// 		JuelsPerFeeCoinSource: contractNodeInfo.BootstrapBridgeInfo.JuelsSource,
+// 		TrackerPollInterval:   15 * time.Second, // faster config checking
+// 	}
+// 	if _, err := contractNodeInfo.BootstrapNode.CreateJob(jobSpec); err != nil {
+// 		return fmt.Errorf("failed creating job for boostrap node: %w", err)
+// 	}
+// 	for nIdx, n := range contractNodeInfo.Nodes {
+// 		jobSpec := &client.OCR2TaskJobSpec{
+// 			Name:                  fmt.Sprintf("sol-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
+// 			JobType:               "offchainreporting2",
+// 			ContractID:            contractNodeInfo.OCR2.Address(),
+// 			Relay:                 ChainName,
+// 			RelayConfig:           relayConfig,
+// 			PluginType:            "median",
+// 			P2PV2Bootstrappers:    bootstrapPeers,
+// 			OCRKeyBundleID:        contractNodeInfo.NodeKeysBundle[nIdx].OCR2Key.Data.ID,
+// 			TransmitterID:         contractNodeInfo.NodeKeysBundle[nIdx].TXKey.Data.ID,
+// 			ObservationSource:     contractNodeInfo.BridgeInfos[nIdx].ObservationSource,
+// 			JuelsPerFeeCoinSource: contractNodeInfo.BridgeInfos[nIdx].JuelsSource,
+// 			TrackerPollInterval:   15 * time.Second, // faster config checking
+// 		}
+// 		if _, err := n.CreateJob(jobSpec); err != nil {
+// 			return fmt.Errorf("failed creating job for node %s: %w", n.URL(), err)
+// 		}
+// 	}
+// 	return nil
+// }
+
+func GetStarkNetName() string {
+	return sc.cfg.Name
+}
+
+func GetStarkNetAddress() string {
+	return Env.URLs[devnetClient][0]
 }
 
 func GetNodeKeys() []NodeKeysBundle {
