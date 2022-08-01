@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from 'hardhat/types'
 import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
-
+import '@nomiclabs/hardhat-waffle'
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -15,7 +15,7 @@ const config: HardhatUserConfig = {
     // uses the currently active Python environment (hopefully with available Starknet commands!)
     venv: 'active',
     // network: "alpha",
-    network: 'integrated-devnet',
+    network: 'devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
@@ -34,6 +34,9 @@ const config: HardhatUserConfig = {
       args: ['--lite-mode'],
       // dockerizedVersion: "0.2.0"
     },
+  },
+  mocha: {
+    timeout: 10000000,
   },
 }
 
