@@ -83,11 +83,11 @@ func (c *contractReader) LatestTransmissionDetails(
 		err = errors.Wrap(err, "couldn't get transmission details")
 	}
 
-	configDigest = transmissionDetails.digest
-	epoch = transmissionDetails.epoch
-	round = transmissionDetails.round
-	latestAnswer = transmissionDetails.latestAnswer
-	latestTimestamp = transmissionDetails.latestTimestamp
+	configDigest = transmissionDetails.Digest
+	epoch = transmissionDetails.Epoch
+	round = transmissionDetails.Round
+	latestAnswer = transmissionDetails.LatestAnswer
+	latestTimestamp = transmissionDetails.LatestTimestamp
 
 	return
 }
@@ -106,9 +106,18 @@ func (c *contractReader) LatestRoundRequested(
 		err = errors.Wrap(err, "couldn't get transmission details")
 	}
 
-	configDigest = transmissionDetails.digest
-	epoch = transmissionDetails.epoch
-	round = transmissionDetails.round
+	configDigest = transmissionDetails.Digest
+	epoch = transmissionDetails.Epoch
+	round = transmissionDetails.Round
 
+	return
+}
+
+func (c *contractReader) LatestBillingDetails(ctx context.Context) (bd BillingDetails, err error) {
+	bd, err = c.reader.BillingDetails(ctx, c.address)
+	if err != nil {
+		err = errors.Wrap(err, "couldn't get billing details")
+	}
+	
 	return
 }
