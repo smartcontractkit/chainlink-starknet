@@ -117,26 +117,6 @@ func DeployCluster(nodes int) *StarkNetClient {
 }
 
 func DeployEnv(nodes int) {
-
-	// nodeStruct := &Node{
-	// 	ID:      0,
-	// 	Name:    "starknet-devnet",
-	// 	ChainID: "13337",
-	// 	URL:     "0.0.0.0:5000",
-	// }
-
-	// jsonData := `
-	// [
-	// {
-	// 		"ID": "0"
-	// 		"name": "devnet",
-	// 		"ChainID": "13337",
-	// 		"URL": "0.0.0.0:5000"
-	// 	}
-	// ]`
-
-	//b, _ := json.Marshal(jsonData)
-
 	Env = environment.New(&environment.Config{
 		NamespacePrefix: "smoke-ocr-starknet",
 		TTL:             3 * time.Hour,
@@ -166,7 +146,6 @@ func DeployEnv(nodes int) {
 				"P2PV2_DELTA_DIAL":            "5s",
 				"P2PV2_DELTA_RECONCILE":       "5s",
 				"p2p_listen_port":             "0",
-				//"STARKNET_NODES":              b,
 			},
 		}))
 	err := Env.Run()

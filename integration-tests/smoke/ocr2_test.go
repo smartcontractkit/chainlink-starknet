@@ -57,7 +57,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying the environment", func() {
-
 			sc = it.DeployCluster(5)
 			nKeys = it.GetNodeKeys()
 			g.AddNetworkConfigVar("NODE_URL", it.GetStarkNetAddress())
