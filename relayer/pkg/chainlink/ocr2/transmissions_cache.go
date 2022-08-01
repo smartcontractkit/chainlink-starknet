@@ -48,11 +48,11 @@ func (c *transmissionsCache) updateTransmission(ctx context.Context) error {
 	c.tdLock.Lock()
 	defer c.tdLock.Unlock()
 	c.transmissionDetails = TransmissionDetails{
-		digest:          digest,
-		epoch:           epoch,
-		round:           round,
-		latestAnswer:    answer,
-		latestTimestamp: timestamp,
+		Digest:          digest,
+		Epoch:           epoch,
+		Round:           round,
+		LatestAnswer:    answer,
+		LatestTimestamp: timestamp,
 	}
 
 	return nil
@@ -105,11 +105,11 @@ func (c *transmissionsCache) LatestTransmissionDetails(
 ) {
 	c.tdLock.RLock()
 	defer c.tdLock.RUnlock()
-	configDigest = c.transmissionDetails.digest
-	epoch = c.transmissionDetails.epoch
-	round = c.transmissionDetails.round
-	latestAnswer = c.transmissionDetails.latestAnswer
-	latestTimestamp = c.transmissionDetails.latestTimestamp
+	configDigest = c.transmissionDetails.Digest
+	epoch = c.transmissionDetails.Epoch
+	round = c.transmissionDetails.Round
+	latestAnswer = c.transmissionDetails.LatestAnswer
+	latestTimestamp = c.transmissionDetails.LatestTimestamp
 
 	return
 }
@@ -125,9 +125,9 @@ func (c *transmissionsCache) LatestRoundRequested(
 ) {
 	c.tdLock.RLock()
 	defer c.tdLock.RUnlock()
-	configDigest = c.transmissionDetails.digest
-	epoch = c.transmissionDetails.epoch
-	round = c.transmissionDetails.round
+	configDigest = c.transmissionDetails.Digest
+	epoch = c.transmissionDetails.Epoch
+	round = c.transmissionDetails.Round
 
 	return
 }
