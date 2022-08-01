@@ -15,10 +15,10 @@ const config: HardhatUserConfig = {
   // abiExporter: {
   //   path: './abi',
   // },
-  // typechain: {
-  //   outDir: './typechain',
-  //   target: 'ethers-v5',
-  // },
+  typechain: {
+    outDir: './typechain',
+    target: 'ethers-v5',
+  },
   solidity: '0.8.14',
   starknet: {
     // dockerizedVersion: "0.8.1", // alternatively choose one of the two venv options below
