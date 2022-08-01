@@ -1,10 +1,11 @@
 #!/bin/sh
 cpu_struct=`arch`;
 echo $cpu_struct;
-rm -rf starknet-hardhat-example
-git clone git@github.com:Shard-Labs/starknet-hardhat-example.git;
-echo "nodejs 16.13.2" > starknet-hardhat-example/.tool-versions;
-cd starknet-hardhat-example;
+#rm -rf starknet-hardhat-example
+#git clone git@github.com:Shard-Labs/starknet-hardhat-example.git;
+#echo "nodejs 16.13.2" > starknet-hardhat-example/.tool-versions;
+#cd starknet-hardhat-example;
+cd contracts;
 node --version;
 dpid=`docker ps | grep devnet | awk '{print $1}'`;
 echo "Checking for existing docker containers for devnet..."
@@ -34,8 +35,10 @@ else
 fi
 
 echo "Installing dependencies..."
-npm ci
-npx hardhat starknet-compile contracts/l1l2.cairo
+# npm ci
+yarn install
+# npx hardhat starknet-compile contracts/l1l2.cairo
+yarn compile:l1
 echo "Checking for running hardhat process..."
 
 hardhat_image=`docker image ls | grep hardhat | awk '{print $3}'`
@@ -57,5 +60,6 @@ fi
 echo "Starting hardhat..."
 docker run --net container:devnet_local -d ethereumoptimism/hardhat
 echo "Starting L1<>L2 tests"
-npx hardhat test test/postman.test.ts --starknet-network devnet --network localhost
+# npx hardhat test test/postman.test.ts --starknet-network devnet --network localhost
+yarn test:validator
 
