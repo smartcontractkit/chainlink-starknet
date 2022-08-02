@@ -39,6 +39,7 @@ echo "Installing dependencies..."
 yarn install
 # npx hardhat starknet-compile contracts/l1l2.cairo
 yarn compile:l1
+yarn compile
 echo "Checking for running hardhat process..."
 
 hardhat_image=`docker image ls | grep hardhat | awk '{print $3}'`
@@ -61,5 +62,22 @@ echo "Starting hardhat..."
 docker run --net container:devnet_local -d ethereumoptimism/hardhat
 echo "Starting L1<>L2 tests"
 # npx hardhat test test/postman.test.ts --starknet-network devnet --network localhost
-yarn test:validator
+yarn test
+
+dpid=`docker ps | grep devnet | awk '{print $1}'`;
+echo "Checking for existing docker containers for devnet..."
+if [ -z "$dpid" ]
+then
+    echo "No docker devnet container running...";
+else
+    docker kill $dpid;
+fi
+
+devnet_image=`docker ps -a | grep devnet_local | awk '{print $1}'`
+if [ -z "$devnet_image" ]
+then
+    echo "No docker devnet imagse found...";
+else
+    docker rm $devnet_image;
+fi
 
