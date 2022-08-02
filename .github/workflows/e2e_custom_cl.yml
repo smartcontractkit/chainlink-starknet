@@ -23,7 +23,7 @@ jobs:
         with:
           cl_repo: smartcontractkit/chainlink
           # by default we are integrating with develop
-          cl_ref: connecting-starknet-components
+          cl_ref: 9aa34d164d1c9ac9265bea7bcde2782917a5ce3d
           # commit of the caller branch
           dep_starknet_sha: ${{ github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
