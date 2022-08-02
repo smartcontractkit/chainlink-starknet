@@ -19,10 +19,16 @@ type ContractInput = [
 ]
 
 const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {
-  const oracles: Oracle[] = input.signers.map((o, i) => ({
-    signer: input.signers[i].replace('ocr2on_starknet_', '0x'),
-    transmitter: input.transmitters[i],
-  }))
+  const oracles: Oracle[] = input.signers.map((o, i) => {
+    // standard format from chainlink node ocr2on_starknet_<key> (no 0x prefix)
+    let signer = input.signers[i].replace('ocr2on_starknet_', '') // replace prefix if present
+    signer = signer.startsWith('0x') ? signer : '0x' + signer // prepend 0x if missing
+
+    return {
+      signer,
+      transmitter: input.transmitters[i],
+    }
+  })
   const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
   return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
