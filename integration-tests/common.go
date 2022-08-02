@@ -175,7 +175,17 @@ func SetupClients() {
 }
 
 func (sc *StarkNetClient) CreateKeys() {
-	starknetNetwork := blockchain.SimulatedEVMNetworkStarknet
+	starknetNetwork := &blockchain.EVMNetwork{
+		Name:    "starknet",
+		ChainID: 1337,
+		PrivateKeys: []string{
+			"ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+		},
+		ChainlinkTransactionLimit: 500000,
+		Timeout:                   2 * time.Minute,
+		MinimumConfirmations:      1,
+		GasEstimationBuffer:       10000,
+	}
 	starknetNetwork.URLs = Env.URLs[devnetClient]
 	chainlinkNodes, err = client.ConnectChainlinkNodes(Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Connecting to chainlink nodes shouldn't fail")
