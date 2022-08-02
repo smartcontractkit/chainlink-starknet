@@ -20,7 +20,7 @@ type ContractInput = [
 
 const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {
   const oracles: Oracle[] = input.signers.map((o, i) => ({
-    signer: input.signers[i],
+    signer: input.signers[i].replace('ocr2on_starknet_', '0x'),
     transmitter: input.transmitters[i],
   }))
   const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
