@@ -22,10 +22,10 @@ const signers = [
 ]
 
 const transmitters = [
-  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
-  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603731',
-  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603732',
-  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603733',
+  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603734',
+  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603735',
+  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603736',
+  '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603737',
 ]
 
 const validInput = {
@@ -143,11 +143,24 @@ describe('OCR2 Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
+      const provider = makeProvider(LOCAL_URL).provider
       const ocr2 = loadContract(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
+      const ocr2Contract = new Contract(ocr2.abi, contractAddress, provider)
       const response = await ocr2Contract.transmitters()
       const resultTrasmitters = response[0]
 
+      // retrieve signer keys from transaction event
+      // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/contracts/ocr2/aggregator.cairo#L260
+      const trace = await provider.getTransactionTrace(report.responses[0].tx.hash)
+      const eventData = trace.function_invocation.events[0].data
+      // reconstruct signers array from event
+      let eventSigners = []
+      for (let i = 0; i < signers.length; i++) {
+        const signer = new BN(eventData[4 + 2 * i].replace('0x', ''), 16) // split according to event structure
+        eventSigners.push(signer)
+      }
+
+      expect(eventSigners).toEqual(signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16))) // remove all prefixes
       expect(resultTrasmitters).toEqual(transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)))
     },
     TIMEOUT,
