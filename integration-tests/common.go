@@ -2,19 +2,22 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
+	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	ops "github.com/smartcontractkit/chainlink-starknet/relayer/ops"
 	blockchain "github.com/smartcontractkit/chainlink-testing-framework/blockchain"
-	"github.com/smartcontractkit/chainlink-testing-framework/client"
+	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
+	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
 const (
@@ -22,25 +25,28 @@ const (
 	devnetClient    = "starknet-dev"
 	chainLinkClient = "chainlink"
 	ChainName       = "starknet"
+	ChainId         = "devnet"
 )
 
 var (
 	err             error
 	Env             *environment.Environment
 	sc              *StarkNetClient
-	chainlinkNodes  []client.Chainlink
-	mockServer      *client.MockserverClient
+	chainlinkNodes  []*client.Chainlink
+	mockServer      *ctfClient.MockserverClient
 	nodeKeys        []NodeKeysBundle
 	starknetNetwork *blockchain.EVMNetwork
+	bTypeAttr       *client.BridgeTypeAttributes
 )
 
 type StarkNetClient struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	cfg    *blockchain.EVMNetwork
-	urls   []*url.URL
-	client *resty.Client
-	nKeys  []NodeKeysBundle
+	ctx            context.Context
+	cancel         context.CancelFunc
+	cfg            *blockchain.EVMNetwork
+	urls           []*url.URL
+	client         *resty.Client
+	nKeys          []NodeKeysBundle
+	chainlinkNodes []*client.Chainlink
 }
 
 // ContractNodeInfo contains the indexes of the nodes, bridges, NodeKeyBundles and nodes relevant to an OCR2 Contract
@@ -112,7 +118,7 @@ func NewStarkNetClient(cfg *blockchain.EVMNetwork) (*StarkNetClient, error) {
 func DeployCluster(nodes int) *StarkNetClient {
 	DeployEnv(nodes)
 	SetupClients()
-	CreateKeys()
+	sc.CreateKeys()
 	return sc
 }
 
@@ -131,7 +137,7 @@ func DeployEnv(nodes int) {
 			"chainlink": map[string]interface{}{
 				"image": map[string]interface{}{
 					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-					"version": "develop-root",
+					"version": "custom.6e31f3079442a3c50980a4929110aff64489f4cd",
 				},
 			},
 			"env": map[string]interface{}{
@@ -150,7 +156,7 @@ func DeployEnv(nodes int) {
 		}))
 	err := Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
-	mockServer, err = client.ConnectMockServer(Env)
+	mockServer, err = ctfClient.ConnectMockServer(Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
 
 }
@@ -158,26 +164,38 @@ func DeployEnv(nodes int) {
 func SetupClients() {
 	sc, err = NewStarkNetClient(&blockchain.EVMNetwork{
 		Name:    "starknet-dev",
-		URL:     "http://0.0.0.0:5000",
+		URL:     Env.URLs[devnetClient][1],
 		ChainID: 13337,
 		PrivateKeys: []string{
 			"c4da537c1651ddae44867db30d67b366",
 		},
-		ChainlinkTransactionLimit: 500000,
-		Timeout:                   2 * time.Minute,
-		MinimumConfirmations:      1,
-		GasEstimationBuffer:       10000,
 	})
 	Expect(err).ShouldNot(HaveOccurred())
 }
 
-func CreateKeys() {
+func (sc *StarkNetClient) CreateKeys() {
 	starknetNetwork := blockchain.SimulatedEVMNetworkStarknet
 	starknetNetwork.URLs = Env.URLs[devnetClient]
 	chainlinkNodes, err = client.ConnectChainlinkNodes(Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Connecting to chainlink nodes shouldn't fail")
 	sc.nKeys, err = CreateNodeKeysBundle(chainlinkNodes)
+	sc.chainlinkNodes = chainlinkNodes
 	Expect(err).ShouldNot(HaveOccurred(), "Creating key bundles should not fail")
+	for _, n := range sc.chainlinkNodes {
+		_, _, err = n.CreateStarknetChain(&client.StarknetChainAttributes{
+			Type:    ChainName,
+			ChainID: ChainId,
+			Config:  client.StarknetChainConfig{},
+		})
+		Expect(err).ShouldNot(HaveOccurred(), "Creating starknet chain should not fail")
+		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
+			Name:    ChainName,
+			ChainID: ChainId,
+			Url:     Env.URLs[devnetClient][1],
+		})
+		Expect(err).ShouldNot(HaveOccurred(), "Creating starknet node should not fail")
+	}
+
 }
 
 func (s *StarkNetClient) init() error {
@@ -211,21 +229,21 @@ func (s *StarkNetClient) autoSyncL1() {
 	}()
 }
 
-func CreateNodeKeysBundle(nodes []client.Chainlink) ([]NodeKeysBundle, error) {
+func CreateNodeKeysBundle(nodes []*client.Chainlink) ([]NodeKeysBundle, error) {
 	nkb := make([]NodeKeysBundle, 0)
 	for _, n := range nodes {
-		p2pkeys, err := n.ReadP2PKeys()
+		p2pkeys, err := n.MustReadP2PKeys()
 		if err != nil {
 			return nil, err
 		}
 
 		peerID := p2pkeys.Data[0].Attributes.PeerID
-		txKey, err := n.CreateTxKey(ChainName)
+		txKey, _, err := n.CreateTxKey(ChainName)
 		if err != nil {
 			return nil, err
 		}
 
-		ocrKey, err := n.CreateOCR2Key(ChainName)
+		ocrKey, _, err := n.CreateOCR2Key(ChainName)
 		if err != nil {
 			return nil, err
 		}
@@ -251,60 +269,73 @@ func (s *StarkNetClient) FundAccounts(l2AccList []string) {
 	}
 }
 
-// TODO - Adding creation of Job Specs
-// func (s *StarkNetClient) CreateJobsForContract(contractNodeInfo *ContractNodeInfo) error {
-// 	relayConfig := map[string]string{
-// 		"nodeEndpointHTTP": "http://0.0.0.0:8899",
-// 		"ocr2ProgramID":    s.nKeys[0].OCR2Key.Data.ID,
-// 		"transmissionsID":  s.nKeys[0].TXKey.Data.ID,
-// 		//	"storeProgramID":   contractNodeInfo.Store.ProgramAddress(),
-// 		"chainID": "starknet",
-// 	}
-// 	bootstrapPeers := []client.P2PData{
-// 		{
-// 			RemoteIP:   Env.URLs[chainLinkClient][0],
-// 			RemotePort: "6690",
-// 			PeerID:     contractNodeInfo.BootstrapNodeKeysBundle.PeerID,
-// 		},
-// 	}
-// 	jobSpec := &client.OCR2TaskJobSpec{
-// 		Name:                  fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
-// 		JobType:               "bootstrap",
-// 		ContractID:            s.nKeys[0].OCR2Key.Data.ID,
-// 		Relay:                 ChainName,
-// 		RelayConfig:           relayConfig,
-// 		PluginType:            "median",
-// 		P2PV2Bootstrappers:    bootstrapPeers,
-// 		OCRKeyBundleID:        contractNodeInfo.BootstrapNodeKeysBundle.OCR2Key.Data.ID,
-// 		TransmitterID:         contractNodeInfo.BootstrapNodeKeysBundle.TXKey.Data.ID,
-// 		ObservationSource:     contractNodeInfo.BootstrapBridgeInfo.ObservationSource,
-// 		JuelsPerFeeCoinSource: contractNodeInfo.BootstrapBridgeInfo.JuelsSource,
-// 		TrackerPollInterval:   15 * time.Second, // faster config checking
-// 	}
-// 	if _, err := contractNodeInfo.BootstrapNode.CreateJob(jobSpec); err != nil {
-// 		return fmt.Errorf("failed creating job for boostrap node: %w", err)
-// 	}
-// 	for nIdx, n := range contractNodeInfo.Nodes {
-// 		jobSpec := &client.OCR2TaskJobSpec{
-// 			Name:                  fmt.Sprintf("sol-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
-// 			JobType:               "offchainreporting2",
-// 			ContractID:            contractNodeInfo.OCR2.Address(),
-// 			Relay:                 ChainName,
-// 			RelayConfig:           relayConfig,
-// 			PluginType:            "median",
-// 			P2PV2Bootstrappers:    bootstrapPeers,
-// 			OCRKeyBundleID:        contractNodeInfo.NodeKeysBundle[nIdx].OCR2Key.Data.ID,
-// 			TransmitterID:         contractNodeInfo.NodeKeysBundle[nIdx].TXKey.Data.ID,
-// 			ObservationSource:     contractNodeInfo.BridgeInfos[nIdx].ObservationSource,
-// 			JuelsPerFeeCoinSource: contractNodeInfo.BridgeInfos[nIdx].JuelsSource,
-// 			TrackerPollInterval:   15 * time.Second, // faster config checking
-// 		}
-// 		if _, err := n.CreateJob(jobSpec); err != nil {
-// 			return fmt.Errorf("failed creating job for node %s: %w", n.URL(), err)
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *StarkNetClient) CreateJobsForContract(ocrControllerAddress string) error {
+	relayConfig := map[string]string{
+		"nodeName": fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.NewV4().String()),
+		"chainID":  ChainId,
+	}
+
+	// Setting up bootstrap node
+	jobSpec := &OCR2TaskJobSpec{
+		Name:        fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+		JobType:     "bootstrap",
+		ContractID:  s.nKeys[0].OCR2Key.Data.ID,
+		Relay:       ChainName,
+		RelayConfig: relayConfig,
+	}
+	_, _, err := sc.chainlinkNodes[0].CreateJob(jobSpec)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating bootstrap job should not fail")
+
+	// Defining bridge
+	bTypeAttr = &client.BridgeTypeAttributes{
+		Name: "bridge-cryptocompare",
+		URL:  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD",
+	}
+	for nIdx, n := range s.chainlinkNodes {
+		if nIdx == 0 {
+			continue
+		}
+		// Creating bridge
+		n.CreateBridge(bTypeAttr)
+		// Creating OCRv2 Job
+		jobSpec := &OCR2TaskJobSpec{
+			Name:        fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
+			JobType:     "offchainreporting2",
+			ContractID:  ocrControllerAddress,
+			Relay:       ChainName,
+			RelayConfig: relayConfig,
+			PluginType:  "median",
+			P2pPeerID:   s.nKeys[nIdx].PeerID,
+			P2pBootstrapPeers: []P2PData{
+				P2PData{
+					RemoteIP:   s.chainlinkNodes[0].RemoteIP(),
+					RemotePort: "8090",
+					PeerID:     s.nKeys[0].PeerID,
+				},
+			},
+			OCRKeyBundleID:    s.nKeys[nIdx].OCR2Key.Data.ID,
+			TransmitterID:     s.nKeys[nIdx].TXKey.Data.ID,
+			ObservationSource: client.ObservationSourceSpecBridge(*bTypeAttr),
+			JuelsPerFeeCoinSource: ` // Fetch the LINK price from a data source
+			// data source 1
+			ds1_link       [type="bridge" name="bridge-cryptocompare"]
+			ds1_link_parse [type="jsonparse" path="BTC"]
+			ds1_link -> ds1_link_parse -> divide
+			// Fetch the ETH price from a data source
+			// data source 1
+			ds1_coin       [type="bridge" name="bridge-cryptocompare"]
+			ds1_coin_parse [type="jsonparse" path="BTC"]
+			ds1_coin -> ds1_coin_parse -> divide
+			divide [type="divide" input="$(ds1_coin_parse)" divisor="$(ds1_link_parse)" precision="18"]
+			scale  [type="multiply" times=1000000000000000000]
+			divide -> scale`,
+		}
+		_, _, err := n.CreateJob(jobSpec)
+		Expect(err).ShouldNot(HaveOccurred(), "Creating node job should not fail")
+
+	}
+	return nil
+}
 
 func GetStarkNetName() string {
 	return sc.cfg.Name
