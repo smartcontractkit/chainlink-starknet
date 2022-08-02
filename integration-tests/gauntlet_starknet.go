@@ -2,10 +2,20 @@ package integration_tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	gauntlet "github.com/smartcontractkit/chainlink-testing-framework/gauntlet"
 )
+
+var (
+	sg *StarknetGauntlet
+)
+
+type StarknetGauntlet struct {
+	g       *gauntlet.Gauntlet
+	options *gauntlet.ExecCommandOptions
+}
 
 // Default response output for starknet gauntlet commands
 type GauntletResponse struct {
@@ -64,7 +74,18 @@ type ReportingPluginConfig struct {
 
 // Creates a default gauntlet config
 func NewStarknetGauntlet() (*gauntlet.Gauntlet, error) {
-	return gauntlet.NewGauntlet()
+	g, err := gauntlet.NewGauntlet()
+	if err != nil {
+		return nil, err
+	}
+	sg = &StarknetGauntlet{
+		g: g,
+		options: &gauntlet.ExecCommandOptions{
+			ErrHandling:       []string{},
+			CheckErrorsInRead: true,
+		},
+	}
+	return g, nil
 }
 
 // Parse gauntlet json response that is generated after yarn gauntlet command execution
@@ -128,4 +149,13 @@ func LoadOCR2Config(nKeys []NodeKeysBundle) (*OCR2Config, error) {
 	}
 
 	return payload, nil
+}
+
+func (sg *StarknetGauntlet) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string) error {
+	_, err := sg.g.ExecCommand([]string{"ocr2:deploy", fmt.Sprintf("--minSubmissionValue=%d", minSubmissionValue), fmt.Sprintf("--maxSubmissionValue=%d", maxSubmissionValue), fmt.Sprintf("--decimals=%d", decimals), fmt.Sprintf("--name=%s", name)}, *sg.options)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

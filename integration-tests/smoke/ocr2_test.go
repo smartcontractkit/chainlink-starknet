@@ -63,6 +63,18 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			g.WriteNetworkConfigMap(gauntletPath)
 		})
 
+		By("Deploying OCR2 controller contract", func() {
+			_, err := g.ExecCommand([]string{"ocr2:deploy", "--minSubmissionValue=0", "--maxSubmissionValue=9999999999", "--decimals=18", "--name=auto"}, options)
+			Expect(err).ShouldNot(HaveOccurred(), "Access controller contract deployment should not fail")
+			gr, err = it.FetchGauntletJsonOutput()
+			Expect(err).ShouldNot(HaveOccurred(), "Fetching OCR controller gauntlet output should not fail")
+			ocrControllerAddress = gr.Responses[0].Contract
+		})
+
+		By("Setting up bootstrap and oracle nodes", func() {
+			sc.CreateJobsForContract(ocrControllerAddress)
+		})
+
 		By("Funding nodes", func() {
 			for _, key := range nKeys {
 				_, err := g.ExecCommand([]string{"account:deploy", "--salt=100", "--publicKey=" + key.TXKey.Data.ID}, options)
@@ -90,15 +102,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Fetching access controller gauntlet output should not fail")
 			accessControllerAddress = gr.Responses[0].Contract
 			os.Setenv("BILLING_ACCESS_CONTROLLER", accessControllerAddress)
-		})
-
-		By("Deploying OCR2 controller contract", func() {
-			_, err := g.ExecCommand([]string{"ocr2:deploy", "--minSubmissionValue=0", "--maxSubmissionValue=9999999999", "--decimals=18", "--name=auto"}, options)
-			Expect(err).ShouldNot(HaveOccurred(), "Access controller contract deployment should not fail")
-			gr, err = it.FetchGauntletJsonOutput()
-			Expect(err).ShouldNot(HaveOccurred(), "Fetching OCR controller gauntlet output should not fail")
-			ocrControllerAddress = gr.Responses[0].Contract
-
 		})
 
 		By("Setting OCR2 billing", func() {
