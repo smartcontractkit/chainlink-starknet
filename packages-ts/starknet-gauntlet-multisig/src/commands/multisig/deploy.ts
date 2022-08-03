@@ -10,17 +10,17 @@ import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
 
 type UserInput = {
-  owners: string[]
+  signers: string[]
   threshold: string
 }
 
-type ContractInput = [ownersLen: string, ...owners: string[], threshold: string]
+type ContractInput = [signersLen: string, ...signers: string[], threshold: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   return {
-    owners: flags.owners,
+    signers: flags.signers,
     threshold: flags.threshold,
   }
 }
@@ -28,29 +28,29 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 export const validateThreshold = async (input: UserInput) => {
   const threshold = Number(input.threshold)
   if (isNaN(threshold)) throw new Error('Threshold is not a number')
-  if (threshold > input.owners.length)
-    throw new Error(`Threshold is higher than owners length: ${threshold} > ${input.owners.length}`)
+  if (threshold > input.signers.length)
+    throw new Error(`Threshold is higher than signers length: ${threshold} > ${input.signers.length}`)
   return true
 }
 
-export const validateOwners = async (input) => {
-  const areValid = input.owners.every(isValidAddress)
-  if (!areValid) throw new Error('Owners are not valid accounts')
-  if (new Set(input.owners).size !== input.owners.length) throw new Error('Owners are not unique')
+export const validateSigners = async (input) => {
+  const areValid = input.signers.every(isValidAddress)
+  if (!areValid) throw new Error('Signers are not valid accounts')
+  if (new Set(input.signers).size !== input.signers.length) throw new Error('Signers are not unique')
   return true
 }
 
 const makeContractInput = async (input: UserInput, context: ExecutionContext): Promise<ContractInput> => {
   return [
-    number.toFelt(input.owners.length),
-    ...input.owners.map((addr) => number.toFelt(number.toBN(addr))),
+    number.toFelt(input.signers.length),
+    ...input.signers.map((addr) => number.toFelt(number.toBN(addr))),
     number.toFelt(input.threshold),
   ]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
   deps.logger.info(`About to deploy an Multisig Contract with the following details:
-    - Owners: ${input.user.owners}
+    - Signers: ${input.user.signers}
     - Threshold: ${input.user.threshold}
   `)
 }
@@ -61,11 +61,11 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys Multisig Wallet',
-    examples: [`${CATEGORIES.MULTISIG}:deploy --network=<NETWORK> --threshold=<MIN_APPROVALS> --owners=[OWNERS_LIST]`],
+    examples: [`${CATEGORIES.MULTISIG}:deploy --network=<NETWORK> --threshold=<MIN_APPROVALS> --signers=[SIGNERS_LIST]`],
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateOwners, validateThreshold],
+  validations: [validateSigners, validateThreshold],
   loadContract: contractLoader,
   hooks: {
     beforeExecute,

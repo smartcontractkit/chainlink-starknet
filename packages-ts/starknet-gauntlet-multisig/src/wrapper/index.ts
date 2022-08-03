@@ -92,15 +92,15 @@ export const wrapCommand = <UI, CI>(
     }
 
     fetchMultisigState = async (address: string, proposalId?: number): Promise<State> => {
-      const [owners, threshold] = await Promise.all(
-        ['get_owners', 'get_confirmations_required'].map((func) => {
+      const [signers, threshold] = await Promise.all(
+        ['get_signers', 'get_confirmations_required'].map((func) => {
           return this.executionContext.contract[func]()
         }),
       )
       const multisig = {
         address,
         threshold: toBN(threshold.confirmations_required).toNumber(),
-        owners: owners.owners.map((o) => toHex(o)),
+        signers: signers.signers.map((o) => toHex(o)),
       }
 
       if (isNaN(proposalId)) return { multisig }
@@ -207,7 +207,7 @@ export const wrapCommand = <UI, CI>(
     execute = async () => {
       deps.logger.info(`Multisig State:
         - Address: ${this.initialState.multisig.address}
-        - Owners: ${this.initialState.multisig.owners}
+        - Signers: ${this.initialState.multisig.signers}
         - Threshold: ${this.initialState.multisig.threshold}
       `)
       if (this.initialState.proposal) {

@@ -5,25 +5,25 @@
 ### Deploy the contract
 
 ```bash
-yarn gauntlet multisig:deploy --network=<NETWORK> --threshold=<APPROVALS_NEEDED> --owners=<[OWNERS_LIST]>
+yarn gauntlet multisig:deploy --network=<NETWORK> --threshold=<APPROVALS_NEEDED> --signers=<[SIGNERS_LIST]>
 ```
 
-Note that threshold must be equal or higher than the amount of owners
+Note that threshold must be equal or higher than the amount of signers
 
 Examples:
 
 ```bash
-yarn gauntlet multisig:deploy --network=local --threshold=2 --owners="[0x26e10005e67c478b373658755749a60f2f31bc955a6a2311eb456b20b8913e9, 0x56bfff7e282d1e023c6268e72dba551a22c1bf816a30334ae43b5c491c99bb8]"
+yarn gauntlet multisig:deploy --network=local --threshold=2 --signers="[0x26e10005e67c478b373658755749a60f2f31bc955a6a2311eb456b20b8913e9, 0x56bfff7e282d1e023c6268e72dba551a22c1bf816a30334ae43b5c491c99bb8]"
 # Or
-yarn gauntlet multisig:deploy --network=local --input='{"threshold":2, "owners": ["0x26e10005e67c478b373658755749a60f2f31bc955a6a2311eb456b20b8913e9", "0x56bfff7e282d1e023c6268e72dba551a22c1bf816a30334ae43b5c491c99bb8"]}'
+yarn gauntlet multisig:deploy --network=local --input='{"threshold":2, "signers": ["0x26e10005e67c478b373658755749a60f2f31bc955a6a2311eb456b20b8913e9", "0x56bfff7e282d1e023c6268e72dba551a22c1bf816a30334ae43b5c491c99bb8"]}'
 ```
 
-### Set owners
+### Set signers
 
-Owners can only be updated through a transaction executed from the multisig itself
+Signers can only be updated through a transaction executed from the multisig itself
 
 ```bash
-yarn gauntlet multisig:set_owners:multisig --network=<NETWORK> --owners=<[OWNERS_LIST]> <MULTISIG_CONTRACT_ADDRESS>
+yarn gauntlet multisig:set_signers:multisig --network=<NETWORK> --signers=<[SIGNERS_LIST]> <MULTISIG_CONTRACT_ADDRESS>
 ```
 
 ### Set threshold
@@ -49,7 +49,7 @@ The proposal index will be prompted.
 
 2. Approve proposal
 
-`T` (threshold) owners need to run this command
+`T` (threshold) signers need to run this command
 
 ```bash
 yarn gauntlet <CATEGORY>:<FUNCTION>:multisig --network=<NETWORK> (...<INPUT NEEDED FOR COMMAND>) --multisigProposal=<PROPOSAL_ID> <CONTRACT_ADDRESS>

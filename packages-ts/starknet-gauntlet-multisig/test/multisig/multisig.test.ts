@@ -1,6 +1,6 @@
 import { makeProvider, makeWallet, Dependencies } from '@chainlink/starknet-gauntlet'
 import deployCommand from '../../src/commands/multisig/deploy'
-import setOwners from '../../src/commands/multisig/setOwners'
+import setSigners from '../../src/commands/multisig/setSigners'
 import setThreshold from '../../src/commands/multisig/setThreshold'
 import { wrapCommand } from '../../src/wrapper'
 import {
@@ -31,7 +31,7 @@ describe('Multisig', () => {
     '0x470b9805d2d6b8777dc59a3ad035d259',
   ]
 
-  let newOwnerAccount = {
+  let newSignerAccount = {
     account: '0x5cdb30a922a2d4f9836877ed76c67564ec32625458884d0f1f2aef1ae023249',
     publicKey: '0x6a5f1d67f6b59f3a2a294c3e523731b43fccbb7230985be7399c118498faf03',
     privateKey: '0x8ceac392904cdefcf84b683a749f9c5',
@@ -46,7 +46,7 @@ describe('Multisig', () => {
     async () => {
       const command = await registerExecuteCommand(deployCommand).create(
         {
-          owners: accounts,
+          signers: accounts,
           threshold: 1,
         },
         [],
@@ -120,7 +120,7 @@ describe('Multisig', () => {
   )
 
   it(
-    'Set Owners with multisig',
+    'Set Signers with multisig',
     async () => {
       const deps: Dependencies = {
         logger: logger,
@@ -138,12 +138,12 @@ describe('Multisig', () => {
         makeWallet: makeWallet,
       }
 
-      accounts.push(newOwnerAccount.account)
+      accounts.push(newSignerAccount.account)
 
       // Create Multisig Proposal
-      const command = await wrapCommand(registerExecuteCommand(setOwners))(deps).create(
+      const command = await wrapCommand(registerExecuteCommand(setSigners))(deps).create(
         {
-          owners: accounts,
+          signers: accounts,
         },
         [multisigContractAddress],
       )
@@ -153,9 +153,9 @@ describe('Multisig', () => {
       const multisigProposalId = report.data
 
       // Approve Multisig Proposal
-      const approveCommand = await wrapCommand(registerExecuteCommand(setOwners))(deps).create(
+      const approveCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps).create(
         {
-          owners: accounts,
+          signers: accounts,
           multisigProposal: multisigProposalId,
         },
         [multisigContractAddress],
@@ -165,9 +165,9 @@ describe('Multisig', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       // Execute Multisig Proposal
-      const executeCommand = await wrapCommand(registerExecuteCommand(setOwners))(deps).create(
+      const executeCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps).create(
         {
-          owners: accounts,
+          signers: accounts,
           multisigProposal: multisigProposalId,
         },
         [multisigContractAddress],
