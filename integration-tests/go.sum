@@ -526,6 +526,8 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrfsX/uA88=
 github.com/slack-go/slack v0.11.0 h1:sBBjQz8LY++6eeWhGJNZpRm5jvLRNnWBFZ/cAq58a6k=
 github.com/slack-go/slack v0.11.0/go.mod h1:hlGi5oXA+Gt+yWTPP0plCdRKmjsDxecdHxYQdlMQKOw=
+github.com/smartcontractkit/chainlink-testing-framework v1.5.4 h1:w867Chc0iQtVPdfUwgJOwuXkHC9RbfnwDjwJDvezLrE=
+github.com/smartcontractkit/chainlink-testing-framework v1.5.4/go.mod h1:lCBrPZpvPlaihjboEdzPVhicI0pKuuqzgdk/NfJ01fk=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 h1:jKnLPHAE7x5SDLG6PnLqwg+IeZ8gFSmg0iKBJsSuflo=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
