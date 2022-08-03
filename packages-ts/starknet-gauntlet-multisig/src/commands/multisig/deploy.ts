@@ -61,7 +61,9 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys Multisig Wallet',
-    examples: [`${CATEGORIES.MULTISIG}:deploy --network=<NETWORK> --threshold=<MIN_APPROVALS> --signers=[SIGNERS_LIST]`],
+    examples: [
+      `${CATEGORIES.MULTISIG}:deploy --network=<NETWORK> --threshold=<MIN_APPROVALS> --signers=[SIGNERS_LIST]`,
+    ],
   },
   makeUserInput,
   makeContractInput,

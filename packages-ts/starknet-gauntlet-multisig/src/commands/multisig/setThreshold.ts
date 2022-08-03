@@ -44,7 +44,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   category: CATEGORIES.MULTISIG,
   contractId: CATEGORIES.MULTISIG,
   action: 'set_threshold',
-  internalFunction: 'set_confirmations_required',
+  internalFunction: 'set_threshold',
   makeUserInput,
   makeContractInput,
   validations: [validateThreshold],
