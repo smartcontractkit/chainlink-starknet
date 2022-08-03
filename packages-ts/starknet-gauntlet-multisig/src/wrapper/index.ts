@@ -93,13 +93,13 @@ export const wrapCommand = <UI, CI>(
 
     fetchMultisigState = async (address: string, proposalId?: number): Promise<State> => {
       const [signers, threshold] = await Promise.all(
-        ['get_signers', 'get_confirmations_required'].map((func) => {
+        ['get_signers', 'get_threshold'].map((func) => {
           return this.executionContext.contract[func]()
         }),
       )
       const multisig = {
         address,
-        threshold: toBN(threshold.confirmations_required).toNumber(),
+        threshold: toBN(threshold.threshold).toNumber(),
         signers: signers.signers.map((o) => toHex(o)),
       }
 
@@ -109,7 +109,7 @@ export const wrapCommand = <UI, CI>(
         multisig,
         proposal: {
           id: proposalId,
-          approvers: proposal.tx.num_confirmations,
+          approvers: proposal.tx.threshold,
           data: {
             contractAddress: addAddressPadding(proposal.tx.to),
             entrypoint: addHexPrefix(toBN(proposal.tx.function_selector).toString('hex')),
@@ -118,7 +118,7 @@ export const wrapCommand = <UI, CI>(
           nextAction:
             toBN(proposal.tx.executed).toNumber() !== 0
               ? Action.NONE
-              : proposal.tx.num_confirmations >= multisig.threshold
+              : proposal.tx.threshold >= multisig.threshold
               ? Action.EXECUTE
               : Action.APPROVE,
         },
