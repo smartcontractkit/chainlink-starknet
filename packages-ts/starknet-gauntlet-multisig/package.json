@@ -25,7 +25,7 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "@chainlink-dev/starknet-multisig": "0.0.1",
+    "@chainlink-dev/starknet-multisig": "0.1.0",
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/starknet-gauntlet": "*",
     "starknet": "^3.15.0"
