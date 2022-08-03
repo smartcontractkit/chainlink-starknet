@@ -5,7 +5,7 @@ const config: HardhatUserConfig = {
   solidity: '0.8.14',
   starknet: {
     venv: 'active',
-    network: 'integrated-devnet',
+    network: 'devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
