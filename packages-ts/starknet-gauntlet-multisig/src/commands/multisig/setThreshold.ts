@@ -2,7 +2,7 @@ import { BeforeExecute, ExecuteCommandConfig, ExecutionContext, makeExecuteComma
 import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
-import { validateThreshold as validateThresholdWithOwners } from './deploy'
+import { validateThreshold as validateThresholdWithSigners } from './deploy'
 
 type UserInput = {
   threshold: string
@@ -19,8 +19,8 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const validateThreshold = async (input: UserInput, context: ExecutionContext) => {
-  const owners = (await context.contract.get_owners()).owners
-  return validateThresholdWithOwners({ ...input, owners })
+  const signers = (await context.contract.get_signers()).signers
+  return validateThresholdWithSigners({ ...input, signers })
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {

@@ -10,7 +10,7 @@ export type State = {
   multisig: {
     address: string
     threshold: number
-    owners: string[]
+    signers: string[]
   }
   proposal?: {
     id: number
