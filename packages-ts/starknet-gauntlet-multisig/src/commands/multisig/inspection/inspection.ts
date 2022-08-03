@@ -32,7 +32,7 @@ const commandConfig: InspectCommandConfig<null, null, null, QueryResult> = {
     function: 'inspect',
     examples: [`${CATEGORIES.MULTISIG}:inspect --network=<NETWORK>`],
   },
-  queries: ['get_signers', 'get_confirmations_required'],
+  queries: ['get_signers', 'get_threshold'],
   makeComparisionData,
   loadContract: contractLoader,
 }
