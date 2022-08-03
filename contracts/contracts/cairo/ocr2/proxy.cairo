@@ -3,9 +3,9 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.math import split_felt, assert_not_zero
 
-from contracts.ocr2.interfaces.IAggregator import IAggregator, Round
+from contracts.cairo.ocr2.interfaces.IAggregator import IAggregator, Round
 
-from contracts.ownable import (
+from contracts.cairo.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
