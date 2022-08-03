@@ -134,11 +134,12 @@ export const wrapCommand = <UI, CI>(
       return true
     }
 
-    makeProposeMessage: ProposalAction = (message) => {
+    makeProposeMessage: ProposalAction = (message, proposalId) => {
       const invocation = this.executionContext.contract.populate('submit_transaction', [
         this.contractAddress,
         toBN(getSelectorFromName(message.entrypoint)),
         message.calldata,
+        proposalId,
       ])
       return invocation
     }
@@ -162,7 +163,10 @@ export const wrapCommand = <UI, CI>(
         },
       }
       const message = await this.command.makeMessage()
-      if (!this.initialState.proposal) return [this.makeProposeMessage(message[0])]
+      if (!this.initialState.proposal) {
+        const nonce = await this.executionContext.contract.get_transactions_len()
+        return [this.makeProposeMessage(message[0], nonce)]
+      }
 
       if (!this.isSameProposal(message[0], this.initialState.proposal.data)) {
         throw new Error('The transaction generated is different from the proposal provided')
