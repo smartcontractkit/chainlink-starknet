@@ -71,6 +71,15 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			ocrControllerAddress = gr.Responses[0].Contract
 		})
 
+		By("Setting the Config Details on OCR2 Contract", func() {
+			config, err := it.LoadOCR2Config(nKeys)
+			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR2 config should not fail")
+			parsedConfig, err := json.Marshal(config)
+			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR2 config should not fail ")
+			_, err = g.ExecCommand([]string{"ocr2:set_config", "--input=" + string(parsedConfig), ocrControllerAddress}, options)
+			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config details should not fail")
+		})
+
 		By("Setting up bootstrap and oracle nodes", func() {
 			sc.CreateJobsForContract(ocrControllerAddress)
 		})
@@ -107,15 +116,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		By("Setting OCR2 billing", func() {
 			_, err := g.ExecCommand([]string{"ocr2:set_billing", "--observationPaymentGjuels=0", "--transmissionPaymentGjuels=1", ocrControllerAddress}, options)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR billing should not fail")
-		})
-
-		By("Setting the Config Details on OCR2 Contract", func() {
-			config, err := it.LoadOCR2Config(nKeys)
-			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR2 config should not fail")
-			parsedConfig, err := json.Marshal(config)
-			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR2 config should not fail ")
-			_, err = g.ExecCommand([]string{"ocr2:set_config", "--input=" + string(parsedConfig), ocrControllerAddress}, options)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config details should not fail")
 		})
 
 	})
