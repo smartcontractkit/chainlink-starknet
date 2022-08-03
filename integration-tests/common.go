@@ -290,7 +290,7 @@ func (s *StarkNetClient) CreateJobsForContract(ocrControllerAddress string) erro
 	jobSpec := &OCR2TaskJobSpec{
 		Name:        fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
 		JobType:     "bootstrap",
-		ContractID:  s.nKeys[0].OCR2Key.Data.ID,
+		ContractID:  ocrControllerAddress,
 		Relay:       ChainName,
 		RelayConfig: relayConfig,
 	}

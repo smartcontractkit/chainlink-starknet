@@ -136,7 +136,7 @@ replace github.com/smartcontractkit/chainlink-starknet/ops => ../../chainlink-st
 
 replace github.com/smartcontractkit/chainlink-env => ../../chainlink-env
 
-// replace github.com/smartcontractkit/chainlink-testing-framework => ../../chainlink-testing-framework
+//replace github.com/smartcontractkit/chainlink-testing-framework => ../../chainlink-testing-framework
 
 // replace github.com/smartcontractkit/chainlink => ../../chainlink
 
