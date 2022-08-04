@@ -20,7 +20,7 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
     /* Selector hardcoded because StarkNet generates selectors differently than the standard ethereum way
     different hash function on stark curve is used */
     uint256 constant STARK_SELECTOR_UPDATE_STATUS =
-        1456392953608713042542366145306621198614634764826083394033556249611221792745;
+        1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
     IStarknetCore public immutable STARKNET_CORE;
     uint256 public L2_UPTIME_FEED_ADDR;

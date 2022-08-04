@@ -1,5 +1,6 @@
 import { ethers, starknet, network } from 'hardhat'
-import { BigNumber, Contract, ContractFactory } from 'ethers'
+import { Contract, ContractFactory } from 'ethers'
+import { number } from 'starknet'
 import { StarknetContractFactory, StarknetContract, HttpNetworkConfig } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
@@ -20,14 +21,17 @@ describe('StarknetValidator', () => {
   before(async () => {
     const account = await starknet.deployAccount('OpenZeppelin')
 
-    L2contractFactory = await starknet.getContractFactory('Mock_Uptime_feed')
-    l2contract = await L2contractFactory.deploy()
+    L2contractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
+    l2contract = await L2contractFactory.deploy({
+      initial_status: 0,
+      owner_address: number.toBN(account.starknetContract.address),
+    })
 
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
     eoaValidator = accounts[1]
 
-    const ValidatorFactory = await ethers.getContractFactory('MockValidator', deployer)
+    const ValidatorFactory = await ethers.getContractFactory('Validator', deployer)
     MockStarknetMessaging = await ethers.getContractFactory('MockStarknetMessaging', deployer)
 
     mockStarknetMessaging = await MockStarknetMessaging.deploy()
