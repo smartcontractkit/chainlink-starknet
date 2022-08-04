@@ -9,8 +9,8 @@ from starkware.starknet.common.syscalls import (
 )
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from ocr2.interfaces.IAggregator import IAggregator, Round
-from ocr2.interfaces.IAccessController import IAccessController
+from cairo.ocr2.interfaces.IAggregator import IAggregator, Round
+from cairo.ocr2.interfaces.IAccessController import IAccessController
 
 @storage_var
 func s_uptime_feed_address() -> (address : felt):

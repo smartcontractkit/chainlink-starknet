@@ -50,25 +50,4 @@ interface IStarknetMessaging {
         uint256[] payload,
         uint256 nonce
     );
-
-    /**
-     * @notice Sends a message to an L2 contract.
-     * @param to_address the L2 address.
-     * @param selector of the function with l1_handler.
-     * @param payload the data to send.
-     * @return the hash of the message.
-     */
-    function sendMessageToL2(
-        uint256 to_address,
-        uint256 selector,
-        uint256[] calldata payload
-    ) external returns (bytes32);
-
-    /**
-     * @notice Consumes a message that was sent from an L2 contract.
-     * @param fromAddress the L2 address.
-     * @param payload the data to send.
-     * @return the hash of the message.
-     */
-    function consumeMessageFromL2(uint256 fromAddress, uint256[] calldata payload) external returns (bytes32);
 }

@@ -11,10 +11,10 @@ from starkware.cairo.common.math import assert_not_zero, assert_le
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from utils import assert_boolean
-from ocr2.interfaces.IAggregator import Round, AnswerUpdated, NewRound
-from SimpleReadAccessController.library import simple_read_access_controller
-from ownable import Ownable_only_owner
+from cairo.utils import assert_boolean
+from cairo.ocr2.interfaces.IAggregator import Round, AnswerUpdated, NewRound
+from cairo.SimpleReadAccessController.library import simple_read_access_controller
+from cairo.ownable import Ownable_only_owner
 
 @event
 func RoundUpdated(status : felt, transmission_timestamp : felt):

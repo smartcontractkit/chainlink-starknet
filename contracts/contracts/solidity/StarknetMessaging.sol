@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import './interfaces/IStarknetMessaging.sol';
+import './interfaces/IStarknetCore.sol';
+
 import './library/NamedStorage.sol';
 
 /**
@@ -9,7 +11,7 @@ import './library/NamedStorage.sol';
   removing them from a different pipe. A deriving contract can handle the former pipe and add items
   to the latter pipe while interacting with L2..
 */
-contract StarknetMessaging is IStarknetMessaging {
+contract StarknetMessaging is IStarknetCore, IStarknetMessaging {
     /// Random slot storage elements and accessors.
     string constant L1L2_MESSAGE_MAP_TAG = 'STARKNET_1.0_MSGING_L1TOL2_MAPPPING_V2';
     string constant L2L1_MESSAGE_MAP_TAG = 'STARKNET_1.0_MSGING_L2TOL1_MAPPPING';

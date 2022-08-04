@@ -2,15 +2,13 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from ocr2.interfaces.IAggregator import IAggregator, Round
+from cairo.ocr2.interfaces.IAggregator import IAggregator, Round
 from starkware.cairo.common.math import assert_not_zero
 from starkware.cairo.common.math_cmp import is_nn
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.starknet.common.syscalls import (
     get_block_timestamp,
 )
-
-from validator.interfaces.IUptimeFeed import IUptimeFeed
 
 @storage_var
 func uptime_feed_address_() -> (address : felt):
@@ -59,7 +57,7 @@ func check_sequencer_state{
     alloc_locals
 
     let (uptime_feed_address) = uptime_feed_address_.read()
-    let (round : Round) = IUptimeFeed.latest_round_data(contract_address=uptime_feed_address)
+    let (round : Round) = IAggregator.latest_round_data(contract_address=uptime_feed_address)
     let (local block_timestemp) = get_block_timestamp()
     if round.answer == 0:
         let time = block_timestemp - round.transmission_timestamp

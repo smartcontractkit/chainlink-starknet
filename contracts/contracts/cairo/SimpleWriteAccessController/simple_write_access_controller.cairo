@@ -1,19 +1,24 @@
 %lang starknet
 
-from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from ocr2.interfaces.IAccessController import IAccessController
-from SimpleReadAccessController.library import simple_read_access_controller
-from SimpleWriteAccessController.library import simple_write_access_controller
+from Contracts.cairo.SimpleWriteAccessController.library import (
+    s_access_list,
+    s_check_enabled,
+    AddedAccess,
+    RemovedAccess,
+    CheckAccessEnabled,
+    CheckAccessDisabled,
+    simple_write_access_controller,
+)
+from cairo.ocr2.interfaces.IAccessController import IAccessController
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner_address : felt
 ):
-    simple_read_access_controller.constructor(owner_address)
+    simple_write_access_controller.constructor(owner_address)
     return ()
 end
 
@@ -22,7 +27,7 @@ end
 func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt, data_len : felt, data : felt*
 ) -> (bool : felt):
-    let (has_access) = simple_read_access_controller.has_access(user, data_len, data)
+    let (has_access) = simple_write_access_controller.has_access(user, data_len, data)
     return (has_access)
 end
 
@@ -31,6 +36,6 @@ end
 func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    simple_read_access_controller.check_access(address)
+    simple_write_access_controller.check_access(address)
     return ()
 end
