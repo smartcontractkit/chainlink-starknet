@@ -16,7 +16,9 @@ var (
 
 type StarknetGauntlet struct {
 	g       *gauntlet.Gauntlet
+	gr      *GauntletResponse
 	options *gauntlet.ExecCommandOptions
+	cfg     *OCR2Config
 }
 
 // Default response output for starknet gauntlet commands
@@ -75,19 +77,21 @@ type ReportingPluginConfig struct {
 }
 
 // Creates a default gauntlet config
-func NewStarknetGauntlet() (*gauntlet.Gauntlet, error) {
+func NewStarknetGauntlet(workingDir string) (*StarknetGauntlet, error) {
 	g, err := gauntlet.NewGauntlet()
+	g.SetWorkingDir(workingDir)
 	if err != nil {
 		return nil, err
 	}
 	sg = &StarknetGauntlet{
-		g: g,
+		g:  g,
+		gr: &GauntletResponse{},
 		options: &gauntlet.ExecCommandOptions{
 			ErrHandling:       []string{},
 			CheckErrorsInRead: true,
 		},
 	}
-	return g, nil
+	return sg, nil
 }
 
 // Parse gauntlet json response that is generated after yarn gauntlet command execution
@@ -153,11 +157,88 @@ func LoadOCR2Config(nKeys []ctfClient.NodeKeysBundle) (*OCR2Config, error) {
 	return payload, nil
 }
 
-func (sg *StarknetGauntlet) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string) error {
-	_, err := sg.g.ExecCommand([]string{"ocr2:deploy", fmt.Sprintf("--minSubmissionValue=%d", minSubmissionValue), fmt.Sprintf("--maxSubmissionValue=%d", maxSubmissionValue), fmt.Sprintf("--decimals=%d", decimals), fmt.Sprintf("--name=%s", name)}, *sg.options)
+func (sg *StarknetGauntlet) SetupNetwork(addr string, ntwrkConfigMap string) {
+	sg.g.AddNetworkConfigVar("NODE_URL", addr)
+	sg.g.WriteNetworkConfigMap(ntwrkConfigMap)
+}
+
+func (sg *StarknetGauntlet) DeployAccountContract(salt int64, pubKey string) (string, error) {
+	_, err := sg.g.ExecCommand([]string{"account:deploy", fmt.Sprintf("--salt=%d", salt), fmt.Sprintf("--publicKey=%s", pubKey)}, *sg.options)
 	if err != nil {
-		return err
+		return "", err
+	}
+	sg.gr, err = FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
+	_, err := sg.g.ExecCommand([]string{"ERC20:deploy", "--link"}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, linkTokenAddress string) (string, error) {
+	_, err := sg.g.ExecCommand([]string{"ocr2:deploy", fmt.Sprintf("--minSubmissionValue=%d", minSubmissionValue), fmt.Sprintf("--maxSubmissionValue=%d", maxSubmissionValue), fmt.Sprintf("--decimals=%d", decimals), fmt.Sprintf("--name=%s", name), fmt.Sprintf("--link=%s", linkTokenAddress)}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) DeployAccessControllerContract() (string, error) {
+	_, err := sg.g.ExecCommand([]string{"access_controller:deploy"}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) SetOCRBilling(observationPaymentGjuels int64, transmissionPaymentGjuels int64, ocrAddress string) (string, error) {
+	_, err := sg.g.ExecCommand([]string{"ocr2:set_billing", fmt.Sprintf("--observationPaymentGjuels=%d", observationPaymentGjuels), fmt.Sprintf("--transmissionPaymentGjuels=%d", transmissionPaymentGjuels), ocrAddress}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) SetConfigDetails(nKeys []ctfClient.NodeKeysBundle, ocrAddress string) (string, error) {
+	sg.cfg, err = LoadOCR2Config(nKeys)
+	if err != nil {
+		return "", err
+	}
+	parsedConfig, err := json.Marshal(sg.cfg)
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	_, err = sg.g.ExecCommand([]string{"ocr2:set_config", "--input=" + string(parsedConfig), ocrAddress}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
 }
