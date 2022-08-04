@@ -289,3 +289,7 @@ func (t *Test) GetStarkNetAddress() string {
 func (t *Test) GetNodeKeys() []ctfClient.NodeKeysBundle {
 	return t.cc.nKeys
 }
+
+func (t *Test) GetChainlinkNodes() []*client.Chainlink {
+	return t.cc.chainlinkNodes
+}
