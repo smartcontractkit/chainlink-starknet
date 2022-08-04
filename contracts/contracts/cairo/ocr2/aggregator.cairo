@@ -42,7 +42,7 @@ from openzeppelin.token.erc20.IERC20 import IERC20
 
 from contracts.cairo.ocr2.interfaces.IAccessController import IAccessController
 
-from contracts.ownable import (
+from contracts.cairo.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,

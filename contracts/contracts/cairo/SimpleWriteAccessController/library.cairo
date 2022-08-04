@@ -4,7 +4,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
-from ownable import Ownable_only_owner, Ownable_initializer
+from cairo.ownable import Ownable_only_owner, Ownable_initializer
 
 @event
 func AddedAccess(user : felt):

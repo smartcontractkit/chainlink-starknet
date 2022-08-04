@@ -3,10 +3,10 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
 
-from ocr2.interfaces.IAggregator import Round
-from ocr2.interfaces.IAccessController import IAccessController
-from ocr2.SequencerUptimeFeed.library import s_l2_cross_domain_messenger, sequencer_uptime_feed
-from SimpleReadAccessController.library import simple_read_access_controller
+from cairo.ocr2.interfaces.IAggregator import Round
+from cairo.ocr2.interfaces.IAccessController import IAccessController
+from cairo.ocr2.SequencerUptimeFeed.library import s_l2_cross_domain_messenger, sequencer_uptime_feed
+from cairo.SimpleReadAccessController.library import simple_read_access_controller
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
