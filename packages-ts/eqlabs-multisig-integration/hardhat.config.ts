@@ -22,8 +22,8 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    starknetArtifacts: "./node_modules/@chainlink-dev/starknet-multisig/artifacts"
-  }
+    starknetArtifacts: '../../node_modules/@chainlink-dev/starknet-multisig/artifacts',
+  },
 }
 
 export default config
