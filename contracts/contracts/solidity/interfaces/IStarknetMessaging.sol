@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity ^0.8.0;
+pragma solidity >0.6.0 <=0.8.0;
 
 /// @title IStarknetMessaging - Sends a message from L1 to L2 and from L2 to L1 and consumes it.
 interface IStarknetMessaging {
