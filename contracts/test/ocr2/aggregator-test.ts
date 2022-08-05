@@ -139,9 +139,20 @@ describe('aggregator.cairo', function () {
     console.log(config)
 
     await owner.invoke(aggregator, 'set_config', config)
+    // const receipt = await starknet.getTransactionReceipt(txHash);
+    // const decodedEvents = await aggregator.decodeEvents(receipt.events);
+    // console.log(decodedEvents)
 
     let result = await aggregator.call('latest_config_details')
     config_digest = result.config_digest
+
+    // Immitate the fetch done by relay to confirm latest_config_details_works
+    let block = await starknet.getBlock(result.block_number)
+    let events = block.transaction_receipts[0].events
+    const decodedEvents = await aggregator.decodeEvents(events)
+    assert.equal(decodedEvents.length, 1)
+    let event = decodedEvents[0]
+    assert.equal(event.name, 'config_set')
 
     console.log(`config_digest: ${config_digest.toString(16)}`)
   })
