@@ -17,7 +17,7 @@ const COMPILER_SETTINGS = {
  * @type import('hardhat/config').HardhatUserConfig
  */
 const config: HardhatUserConfig = {
-  solidity:  {
+  solidity: {
     compilers: [
       {
         version: '0.4.24',
