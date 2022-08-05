@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega"
 	it "github.com/smartcontractkit/chainlink-starknet/integration-tests"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 )
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
@@ -93,8 +92,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	AfterEach(func() {
 		By("Tearing down the environment", func() {
-			err = actions.TeardownSuite(t.Env, "./", t.GetChainlinkNodes(), nil, nil)
-			Expect(err).ShouldNot(HaveOccurred())
+			//	err = actions.TeardownSuite(t.Env, "./", t.GetChainlinkNodes(), nil, nil)
+			//	Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 })
