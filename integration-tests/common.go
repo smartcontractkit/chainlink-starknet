@@ -33,9 +33,6 @@ var (
 	t   *Test
 )
 
-type NodeKeysBundle ctfClient.NodeKeysBundle
-type Node ctfClient.Node
-
 type Test struct {
 	sc         *StarkNetDevnetClient
 	cc         *ChainlinkClient
@@ -59,7 +56,7 @@ type ChainlinkClient struct {
 
 func (t *Test) NewStarkNetDevnetClient(cfg *blockchain.EVMNetwork) (*StarkNetDevnetClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	c := &StarkNetDevnetClient{
+	t.sc = &StarkNetDevnetClient{
 		ctx:    ctx,
 		cancel: cancel,
 		cfg:    cfg,
@@ -69,7 +66,7 @@ func (t *Test) NewStarkNetDevnetClient(cfg *blockchain.EVMNetwork) (*StarkNetDev
 	// if err := c.init(); err != nil {
 	// 	return nil, err
 	// }
-	return c, nil
+	return t.sc, nil
 }
 
 // Deploys and sets up config of the environment and nodes
