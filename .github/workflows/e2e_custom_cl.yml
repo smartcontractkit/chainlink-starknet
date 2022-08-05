@@ -20,7 +20,6 @@ jobs:
     steps:
       - name: Build Image
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@7d405e28e1419c0a48198793e6647005c409f4cf # v2.0.4
-a56166e585d2361ec40faf31669de # v2.0.4
         with:
           cl_repo: smartcontractkit/chainlink
           # by default we are integrating with develop
