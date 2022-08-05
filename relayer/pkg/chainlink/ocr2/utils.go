@@ -88,16 +88,8 @@ func isEventFromContract(event *caigotypes.Event, address string, eventName stri
 		return false
 	}
 
-	var isSameEventSelector bool
 	eventKey := caigo.GetSelectorFromName(eventName)
-	for _, key := range event.Keys {
-		if key.Cmp(eventKey) == 0 {
-			isSameEventSelector = true
-			break
-		}
-	}
-
-	return isSameEventSelector
+	return event.Keys[0].Cmp(eventKey) == 0
 }
 
 func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetails, error) {

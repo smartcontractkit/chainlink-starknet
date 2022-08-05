@@ -2,9 +2,12 @@ package ocr2
 
 import (
 	"context"
+	"encoding/hex"
+	"math/big"
 	"testing"
 	"time"
 
+	caigo "github.com/dontpanicdao/caigo"
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,4 +45,12 @@ func TestOCR2Client(t *testing.T) {
 		_, err := client.LatestTransmissionDetails(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 	})
+}
+
+func TestSelector(t *testing.T) {
+	bytes, err := hex.DecodeString("80c5d224cddf12d83d4ae2998d9a35b77d54490de62265c020ac35a6935e13")
+	require.NoError(t, err)
+	eventKey := new(big.Int)
+	eventKey.SetBytes(bytes)
+	assert.Equal(t, caigo.GetSelectorFromName("config_set").Cmp(eventKey), 0)
 }
