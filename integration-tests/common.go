@@ -123,9 +123,8 @@ func (t *Test) DeployEnv(nodes int) {
 // Sets up the starknet client
 func (t *Test) SetupClients() {
 	t.sc, err = t.NewStarkNetDevnetClient(&blockchain.EVMNetwork{
-		Name:    "starknet-dev",
-		URL:     t.Env.URLs[devnetClient][1],
-		ChainID: 13337,
+		Name: "starknet-dev",
+		URL:  t.Env.URLs[devnetClient][1],
 		PrivateKeys: []string{
 			"c4da537c1651ddae44867db30d67b366",
 		},
