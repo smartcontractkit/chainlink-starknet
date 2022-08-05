@@ -6,7 +6,7 @@ on:
       cl_branch_ref:
         description: Chainlink repo branch to integrate with
         required: true
-        default: minor
+        default: develop
         type: string
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
         with:
           cl_repo: smartcontractkit/chainlink
           # by default we are integrating with develop
-          cl_ref: minor
+          cl_ref: 2a7566c9f5d4fce05db13cdf337f8695327296cd
           # commit of the caller branch
           dep_starknet_sha: ${{ github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
