@@ -6,7 +6,7 @@ on:
       cl_branch_ref:
         description: Chainlink repo branch to integrate with
         required: true
-        default: connecting-starknet-components
+        default: minor
         type: string
 
 jobs:
@@ -20,10 +20,11 @@ jobs:
     steps:
       - name: Build Image
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@7d405e28e1419c0a48198793e6647005c409f4cf # v2.0.4
+a56166e585d2361ec40faf31669de # v2.0.4
         with:
           cl_repo: smartcontractkit/chainlink
           # by default we are integrating with develop
-          cl_ref: 9aa34d164d1c9ac9265bea7bcde2782917a5ce3d
+          cl_ref: 2a7566c9f5d4fce05db13cdf337f8695327296cd
           # commit of the caller branch
           dep_starknet_sha: ${{ github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
