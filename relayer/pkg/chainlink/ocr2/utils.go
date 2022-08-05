@@ -89,6 +89,7 @@ func isEventFromContract(event *caigotypes.Event, address string, eventName stri
 	}
 
 	eventKey := caigo.GetSelectorFromName(eventName)
+        // encoded event name guaranteed to be at index 0
 	return event.Keys[0].Cmp(eventKey) == 0
 }
 
