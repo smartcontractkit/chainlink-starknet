@@ -3,7 +3,7 @@ pragma solidity >0.6.0 <=0.8.0;
 
 import './interfaces/IStarknetMessaging.sol';
 import './interfaces/IStarknetCore.sol';
-import '../../vendor/src/starkware/solidity/libraries/NamedStorage.sol';
+import '../../vendor/starkgate/src/starkware/solidity/libraries/NamedStorage.sol';
 
 /**
 * @title StarknetMessaging implements sending messages to L2 by adding them to a pipe and consuming messages from L2 by
