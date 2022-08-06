@@ -1028,7 +1028,7 @@ func has_billing_access{
 
     let (has_access: felt) = IAccessController.has_access(
         contract_address=access_controller,
-        address=caller,
+        user=caller,
         data_len=empty_data_len,
         data=empty_data
     )
