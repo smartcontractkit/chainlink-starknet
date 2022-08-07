@@ -147,7 +147,7 @@ describe('aggregator.cairo', function () {
     config_digest = result.config_digest
 
     // Immitate the fetch done by relay to confirm latest_config_details_works
-    let block = await starknet.getBlock(result.block_number)
+    let block = await starknet.getBlock({ blockNumber: result.block_number })
     let events = block.transaction_receipts[0].events
     const decodedEvents = await aggregator.decodeEvents(events)
     assert.equal(decodedEvents.length, 1)
