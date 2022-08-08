@@ -160,7 +160,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
-	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
+	block, err := c.r.BlockByNumberGateway(ctx, blockNum+1) // HAXX: temporary workaround for devnet 0.2.8
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}
