@@ -9,7 +9,7 @@ import '@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol';
 
 import '@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol';
 
-import './interfaces/IStarknetCore.sol';
+import '../../vendor/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol';
 import './utils/utils.sol';
 
 /**
@@ -22,7 +22,7 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
     uint256 constant STARK_SELECTOR_UPDATE_STATUS =
         1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
-    IStarknetCore public immutable STARKNET_CORE;
+    IStarknetMessaging public immutable STARKNET_CORE;
     uint256 public L2_UPTIME_FEED_ADDR;
 
     /**
@@ -32,7 +32,7 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
     constructor(address starknetCore, uint256 l2UptimeFeedAddr) {
         require(starknetCore != address(0), 'Invalid Starknet Core address');
         require(l2UptimeFeedAddr != 0, 'Invalid StarknetSequencerUptimeFeed contract address');
-        STARKNET_CORE = IStarknetCore(starknetCore);
+        STARKNET_CORE = IStarknetMessaging(starknetCore);
         L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
     }
 
