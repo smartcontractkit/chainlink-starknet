@@ -2,13 +2,100 @@ package smoke_test
 
 //revive:disable:dot-imports
 import (
+	"encoding/json"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	it "github.com/smartcontractkit/chainlink-starknet/integration-tests"
+	starknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 )
+
+// Default config for OCR2 for starknet
+type OCR2Config struct {
+	F                     int             `json:"f"`
+	Signers               []string        `json:"signers"`
+	Transmitters          []string        `json:"transmitters"`
+	OnchainConfig         string          `json:"onchainConfig"`
+	OffchainConfig        *OffchainConfig `json:"offchainConfig"`
+	OffchainConfigVersion int             `json:"offchainConfigVersion"`
+	Secret                string          `json:"secret"`
+}
+
+type OffchainConfig struct {
+	DeltaProgressNanoseconds                           int64                  `json:"deltaProgressNanoseconds"`
+	DeltaResendNanoseconds                             int64                  `json:"deltaResendNanoseconds"`
+	DeltaRoundNanoseconds                              int64                  `json:"deltaRoundNanoseconds"`
+	DeltaGraceNanoseconds                              int                    `json:"deltaGraceNanoseconds"`
+	DeltaStageNanoseconds                              int64                  `json:"deltaStageNanoseconds"`
+	RMax                                               int                    `json:"rMax"`
+	S                                                  []int                  `json:"s"`
+	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
+	PeerIds                                            []string               `json:"peerIds"`
+	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
+	MaxDurationQueryNanoseconds                        int                    `json:"maxDurationQueryNanoseconds"`
+	MaxDurationObservationNanoseconds                  int                    `json:"maxDurationObservationNanoseconds"`
+	MaxDurationReportNanoseconds                       int                    `json:"maxDurationReportNanoseconds"`
+	MaxDurationShouldAcceptFinalizedReportNanoseconds  int                    `json:"maxDurationShouldAcceptFinalizedReportNanoseconds"`
+	MaxDurationShouldTransmitAcceptedReportNanoseconds int                    `json:"maxDurationShouldTransmitAcceptedReportNanoseconds"`
+}
+
+type ReportingPluginConfig struct {
+	AlphaReportInfinite bool `json:"alphaReportInfinite"`
+	AlphaReportPpb      int  `json:"alphaReportPpb"`
+	AlphaAcceptInfinite bool `json:"alphaAcceptInfinite"`
+	AlphaAcceptPpb      int  `json:"alphaAcceptPpb"`
+	DeltaCNanoseconds   int  `json:"deltaCNanoseconds"`
+}
+
+// Loads and returns the default starknet gauntlet config
+func LoadOCR2Config(nKeys []ctfClient.NodeKeysBundle) (*OCR2Config, error) {
+	var offChainKeys []string
+	var onChainKeys []string
+	var peerIds []string
+	var txKeys []string
+	for _, key := range nKeys {
+		offChainKeys = append(offChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", "", 1))
+		peerIds = append(peerIds, key.PeerID)
+		txKeys = append(txKeys, key.TXKey.Data.ID)
+		onChainKeys = append(onChainKeys, "0x"+strings.Replace(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "", 1))
+	}
+
+	var payload = &OCR2Config{
+		F:             1,
+		Signers:       onChainKeys,
+		Transmitters:  txKeys,
+		OnchainConfig: "",
+		OffchainConfig: &OffchainConfig{
+			DeltaProgressNanoseconds: 8000000000,
+			DeltaResendNanoseconds:   30000000000,
+			DeltaRoundNanoseconds:    3000000000,
+			DeltaGraceNanoseconds:    500000000,
+			DeltaStageNanoseconds:    20000000000,
+			RMax:                     5,
+			S:                        []int{1, 2},
+			OffchainPublicKeys:       offChainKeys,
+			PeerIds:                  peerIds,
+			ReportingPluginConfig: &ReportingPluginConfig{
+				AlphaReportInfinite: false,
+				AlphaReportPpb:      0,
+				AlphaAcceptInfinite: false,
+				AlphaAcceptPpb:      0,
+				DeltaCNanoseconds:   0,
+			},
+			MaxDurationQueryNanoseconds:                        0,
+			MaxDurationObservationNanoseconds:                  1000000000,
+			MaxDurationReportNanoseconds:                       200000000,
+			MaxDurationShouldAcceptFinalizedReportNanoseconds:  200000000,
+			MaxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
+		},
+		OffchainConfigVersion: 2,
+		Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
+	}
+
+	return payload, nil
+}
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
@@ -19,8 +106,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		linkTokenAddress        string
 		accessControllerAddress string
 		ocrAddress              string
-		sg                      *it.StarknetGauntlet
-		t                       *it.Test
+		sg                      *starknet.StarknetGauntlet
+		t                       *starknet.Test
 		nKeys                   []ctfClient.NodeKeysBundle
 		nAccounts               []string
 		gauntletPath            string = "../../packages-ts/starknet-gauntlet-cli/networks/"
@@ -30,7 +117,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		By("Gauntlet preparation", func() {
 			os.Setenv("PRIVATE_KEY", walletPrivKey)
 			os.Setenv("ACCOUNT", walletAddress)
-			sg, err = it.NewStarknetGauntlet("../../")
+			sg, err = starknet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
 		})
@@ -74,9 +161,12 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Setting the Config Details on OCR2 Contract", func() {
-			_, err = sg.SetConfigDetails(nKeys[1:], ocrAddress)
+			cfg, err := LoadOCR2Config(nKeys)
+			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR config should not fail")
+			parsedConfig, err := json.Marshal(cfg)
+			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR config should not fail")
+			_, err = sg.SetConfigDetails(nKeys[1:], string(parsedConfig), ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config should not fail")
-
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {

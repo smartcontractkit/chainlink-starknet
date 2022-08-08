@@ -1,4 +1,4 @@
-package integration_tests
+package starknet
 
 import (
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
