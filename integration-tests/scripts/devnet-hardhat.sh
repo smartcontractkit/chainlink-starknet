@@ -60,6 +60,3 @@ else
 fi
 echo "Starting hardhat..."
 docker run --net container:devnet_local -d ethereumoptimism/hardhat
-echo "Starting L1<>L2 tests"
-# npx hardhat test test/postman.test.ts --starknet-network devnet --network localhost
-yarn test

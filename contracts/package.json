@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "hardhat starknet-compile",
-    "compile:l1": "npx hardhat compile",
+    "compile:l1": "hardhat compile",
     "test": "hardhat --network localhost test"
   },
   "author": "",
