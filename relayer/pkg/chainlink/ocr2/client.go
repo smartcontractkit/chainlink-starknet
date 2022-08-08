@@ -165,7 +165,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}
 
-	c.lggr.Debugf("Fetching block number %v", blockNum)
+	c.lggr.Errorf("Fetching block number %v", blockNum)
 
 	for _, txReceipt := range block.TransactionReceipts {
 		for _, event := range txReceipt.Events {
@@ -182,7 +182,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 			}
 
 			eventKey := caigo.GetSelectorFromName("config_set")
-			c.lggr.Debugf("Checking %v if address=%v selector %v", decodedEvent, address, eventKey)
+			c.lggr.Errorf("Checking %v if address=%v selector %v", decodedEvent, address, eventKey)
 
 			if isEventFromContract(&decodedEvent, address, "config_set") {
 				config, err := parseConfigEventData(decodedEvent.Data)
