@@ -137,7 +137,7 @@ func (sg *StarknetGauntlet) SetOCRBilling(observationPaymentGjuels int64, transm
 }
 
 func (sg *StarknetGauntlet) SetConfigDetails(nKeys []ctfClient.NodeKeysBundle, cfg string, ocrAddress string) (string, error) {
-	_, err = sg.g.ExecCommand([]string{"ocr2:set_config", "--input=" + cfg, ocrAddress}, *sg.options)
+	_, err := sg.g.ExecCommand([]string{"ocr2:set_config", "--input=" + cfg, ocrAddress}, *sg.options)
 	if err != nil {
 		return "", err
 	}
