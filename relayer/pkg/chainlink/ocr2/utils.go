@@ -84,9 +84,10 @@ func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
 }
 
 func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
-	if event.FromAddress != address {
-		return false
-	}
+	// temp: disable because of address format differences (with/without leading zeros)
+	// if event.FromAddress != address {
+	// 	return false
+	// }
 
 	eventKey := caigo.GetSelectorFromName(eventName)
         // encoded event name guaranteed to be at index 0
