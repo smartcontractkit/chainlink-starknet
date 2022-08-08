@@ -3,10 +3,8 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.18
 
 require (
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
-	github.com/smartcontractkit/chainlink-env v0.2.31
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.6
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220804093026-514d60783a8a
@@ -16,19 +14,25 @@ require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac // indirect
 	github.com/aws/constructs-go/constructs/v10 v10.1.43 // indirect
 	github.com/aws/jsii-runtime-go v1.61.0 // indirect
+	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.3.41 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dontpanicdao/caigo v0.3.0 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/slack-go/slack v0.11.2 // indirect
+	github.com/smartcontractkit/chainlink-env v0.2.31 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	go.uber.org/zap v1.21.0 // indirect
 	gopkg.in/guregu/null.v4 v4.0.0 // indirect
 )
 
@@ -53,7 +57,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
-	github.com/go-resty/resty/v2 v2.7.0
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -84,9 +88,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.27.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
-	github.com/satori/go.uuid v1.2.0
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 // indirect
 	github.com/spf13/cobra v1.5.0 // indirect
