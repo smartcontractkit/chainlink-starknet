@@ -18,12 +18,12 @@ import (
 
 func TestOCR2Client(t *testing.T) {
 	// todo: adjust for e2e tests
-	chainID := gateway.GOERLI_ID
-	ocr2ContractAddress := "0x756ce9ca3dff7ee1037e712fb9662be13b5dcfc0660b97d266298733e1196b"
+	//chainID := gateway.GOERLI_ID
+	ocr2ContractAddress := "0x024b2d8c30ef3e78d0fe98568f004216fc7ebc32edab46ce1321e572edebaeed"
 	lggr := logger.Test(t)
 
 	duration := 10 * time.Second
-	reader, err := starknet.NewClient(chainID, "", lggr, &duration)
+	reader, err := starknet.NewClient("devnet", "http://localhost:61076", lggr, &duration)
 	require.NoError(t, err)
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
@@ -37,6 +37,7 @@ func TestOCR2Client(t *testing.T) {
 		details, err := client.LatestConfigDetails(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 
+		t.Logf("%v + newDetails1", details)
 		_, err = client.ConfigFromEventAt(context.Background(), ocr2ContractAddress, details.Block)
 		assert.NoError(t, err)
 	})

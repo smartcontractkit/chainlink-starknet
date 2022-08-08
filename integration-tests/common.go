@@ -3,7 +3,6 @@ package integration_tests
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -30,84 +29,41 @@ const (
 )
 
 var (
-	err             error
-	Env             *environment.Environment
-	sc              *StarkNetClient
-	chainlinkNodes  []*client.Chainlink
-	mockServer      *ctfClient.MockserverClient
-	nodeKeys        []NodeKeysBundle
-	starknetNetwork *blockchain.EVMNetwork
-	bTypeAttr       *client.BridgeTypeAttributes
+	err error
+	t   *Test
 )
 
-type StarkNetClient struct {
-	ctx            context.Context
-	cancel         context.CancelFunc
-	cfg            *blockchain.EVMNetwork
-	urls           []*url.URL
-	client         *resty.Client
-	nKeys          []NodeKeysBundle
+type NodeKeysBundle ctfClient.NodeKeysBundle
+type Node ctfClient.Node
+
+type Test struct {
+	sc         *StarkNetDevnetClient
+	cc         *ChainlinkClient
+	mockServer *ctfClient.MockserverClient
+	Env        *environment.Environment
+}
+
+type StarkNetDevnetClient struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	cfg    *blockchain.EVMNetwork
+	client *resty.Client
+}
+
+type ChainlinkClient struct {
+	nKeys          []ctfClient.NodeKeysBundle
 	chainlinkNodes []*client.Chainlink
+	bTypeAttr      *client.BridgeTypeAttributes
+	bootstrapPeers []client.P2PData
 }
 
-// ContractNodeInfo contains the indexes of the nodes, bridges, NodeKeyBundles and nodes relevant to an OCR2 Contract
-type ContractNodeInfo struct {
-	OCR2 *OCRv2
-	// Store                   *solclient.Store
-	BootstrapNodeIdx        int
-	BootstrapNode           client.Chainlink
-	BootstrapNodeKeysBundle NodeKeysBundle
-	BootstrapBridgeInfo     BridgeInfo
-	NodesIdx                []int
-	Nodes                   []client.Chainlink
-	NodeKeysBundle          []NodeKeysBundle
-	// BridgeInfos             []BridgeInfo
-}
-
-type OCRv2 struct {
-	Client           *client.Chainlink
-	ContractDeployer *ContractDeployer
-}
-
-type ContractDeployer struct {
-	Client *client.Chainlink
-	Env    *environment.Environment
-}
-
-type BridgeInfo struct {
-	ObservationSource string
-	JuelsSource       string
-}
-
-type Chart struct {
-	Name   string
-	Path   string
-	Values *map[string]interface{}
-}
-
-type NodeKeysBundle struct {
-	OCR2Key client.OCR2Key
-	PeerID  string
-	TXKey   client.TxKey
-	P2PKeys client.P2PKeys
-}
-
-type Node struct {
-	ID        int32     `json:"ID"`
-	Name      string    `json:"Name"`
-	ChainID   string    `json:"ChainID"`
-	URL       string    `json:"URL"`
-	CreatedAt time.Time `json:"CreatedAt"`
-	UpdatedAt time.Time `json:"UpdatedAt"`
-}
-
-func NewStarkNetClient(cfg *blockchain.EVMNetwork) (*StarkNetClient, error) {
+func (t *Test) NewStarkNetDevnetClient(cfg *blockchain.EVMNetwork) (*StarkNetDevnetClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	c := &StarkNetClient{
+	c := &StarkNetDevnetClient{
 		ctx:    ctx,
 		cancel: cancel,
 		cfg:    cfg,
-		client: resty.New().SetBaseURL(GetStarkNetAddress()),
+		client: resty.New().SetBaseURL(t.GetStarkNetAddress()),
 	}
 	// Currently not needed since we are testing on L2
 	// if err := c.init(); err != nil {
@@ -116,15 +72,21 @@ func NewStarkNetClient(cfg *blockchain.EVMNetwork) (*StarkNetClient, error) {
 	return c, nil
 }
 
-func DeployCluster(nodes int) *StarkNetClient {
-	DeployEnv(nodes)
-	SetupClients()
-	sc.CreateKeys()
-	return sc
+// Deploys and sets up config of the environment and nodes
+func (t *Test) DeployCluster(nodes int) *Test {
+	t = &Test{
+		sc: &StarkNetDevnetClient{},
+		cc: &ChainlinkClient{},
+	}
+	t.DeployEnv(nodes)
+	t.SetupClients()
+	t.CreateKeys()
+	return t
 }
 
-func DeployEnv(nodes int) {
-	Env = environment.New(&environment.Config{
+// Deploys the environment
+func (t *Test) DeployEnv(nodes int) {
+	t.Env = environment.New(&environment.Config{
 		NamespacePrefix: "smoke-ocr-starknet",
 		TTL:             3 * time.Hour,
 		InsideK8s:       false,
@@ -149,50 +111,40 @@ func DeployEnv(nodes int) {
 				"FEATURE_OFFCHAIN_REPORTING2": "true",
 				"feature_offchain_reporting":  "false",
 				"P2P_NETWORKING_STACK":        "V2",
-				"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
+				"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:8090",
 				"P2PV2_DELTA_DIAL":            "5s",
 				"P2PV2_DELTA_RECONCILE":       "5s",
 				"p2p_listen_port":             "0",
 			},
 		}))
-	err := Env.Run()
+	err := t.Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
-	mockServer, err = ctfClient.ConnectMockServer(Env)
+	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
 
 }
 
-func SetupClients() {
-	sc, err = NewStarkNetClient(&blockchain.EVMNetwork{
+// Sets up the starknet client
+func (t *Test) SetupClients() {
+	t.sc, err = t.NewStarkNetDevnetClient(&blockchain.EVMNetwork{
 		Name:    "starknet-dev",
-		URL:     Env.URLs[devnetClient][1],
+		URL:     t.Env.URLs[devnetClient][1],
 		ChainID: 13337,
 		PrivateKeys: []string{
 			"c4da537c1651ddae44867db30d67b366",
 		},
 	})
+
 	Expect(err).ShouldNot(HaveOccurred())
 }
 
-func (sc *StarkNetClient) CreateKeys() {
-	starknetNetwork := &blockchain.EVMNetwork{
-		Name:    "starknet",
-		ChainID: 1337,
-		PrivateKeys: []string{
-			"ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-		},
-		ChainlinkTransactionLimit: 500000,
-		Timeout:                   2 * time.Minute,
-		MinimumConfirmations:      1,
-		GasEstimationBuffer:       10000,
-	}
-	starknetNetwork.URLs = Env.URLs[devnetClient]
-	chainlinkNodes, err = client.ConnectChainlinkNodes(Env)
+// Creates node keys and defines chain and nodes for each node
+func (t *Test) CreateKeys() {
+	t.cc.chainlinkNodes, err = client.ConnectChainlinkNodes(t.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Connecting to chainlink nodes shouldn't fail")
-	sc.nKeys, err = CreateNodeKeysBundle(chainlinkNodes)
-	sc.chainlinkNodes = chainlinkNodes
+	t.cc.nKeys, err = ctfClient.CreateNodeKeysBundle(t.cc.chainlinkNodes, ChainName)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating key bundles should not fail")
-	for _, n := range sc.chainlinkNodes {
+	for _, n := range t.cc.chainlinkNodes {
 		_, _, err = n.CreateStarknetChain(&client.StarknetChainAttributes{
 			Type:    ChainName,
 			ChainID: ChainId,
@@ -202,16 +154,16 @@ func (sc *StarkNetClient) CreateKeys() {
 		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
 			Name:    ChainName,
 			ChainID: ChainId,
-			Url:     Env.URLs[devnetClient][1],
+			Url:     t.Env.URLs[devnetClient][1],
 		})
 		Expect(err).ShouldNot(HaveOccurred(), "Creating starknet node should not fail")
 	}
 
 }
 
-func (s *StarkNetClient) init() error {
+func (s *StarkNetDevnetClient) init() error {
 	resp, err := s.client.R().SetBody(map[string]interface{}{
-		"networkUrl": Env.URLs[gethClient][1],
+		"networkUrl": t.Env.URLs[gethClient][1],
 	}).Post("/postman/load_l1_messaging_contract")
 	if err != nil {
 		return err
@@ -221,7 +173,7 @@ func (s *StarkNetClient) init() error {
 	return nil
 }
 
-func (s *StarkNetClient) autoSyncL1() {
+func (s *StarkNetDevnetClient) autoSyncL1() {
 	t := time.NewTicker(2 * time.Second)
 	go func() {
 		for {
@@ -240,39 +192,10 @@ func (s *StarkNetClient) autoSyncL1() {
 	}()
 }
 
-func CreateNodeKeysBundle(nodes []*client.Chainlink) ([]NodeKeysBundle, error) {
-	nkb := make([]NodeKeysBundle, 0)
-	for _, n := range nodes {
-		p2pkeys, err := n.MustReadP2PKeys()
-		if err != nil {
-			return nil, err
-		}
-
-		peerID := p2pkeys.Data[0].Attributes.PeerID
-		txKey, _, err := n.CreateTxKey(ChainName)
-		if err != nil {
-			return nil, err
-		}
-
-		ocrKey, _, err := n.CreateOCR2Key(ChainName)
-		if err != nil {
-			return nil, err
-		}
-		nkb = append(nkb, NodeKeysBundle{
-			PeerID:  peerID,
-			OCR2Key: *ocrKey,
-			TXKey:   *txKey,
-			P2PKeys: *p2pkeys,
-		})
-
-	}
-
-	return nkb, nil
-}
-
-func (s *StarkNetClient) FundAccounts(l2AccList []string) {
+// Funds provided accounts with 500000 eth each
+func (t *Test) FundAccounts(l2AccList []string) {
 	for _, key := range l2AccList {
-		_, err := s.client.R().SetBody(map[string]interface{}{
+		_, err := t.sc.client.R().SetBody(map[string]interface{}{
 			"address": key,
 			"amount":  500000,
 		}).Post("/mint")
@@ -280,53 +203,57 @@ func (s *StarkNetClient) FundAccounts(l2AccList []string) {
 	}
 }
 
-func (s *StarkNetClient) CreateJobsForContract(ocrControllerAddress string) error {
+//
+func (t *Test) CreateJobsForContract(ocrControllerAddress string) error {
+	// Defining bootstrap peers
+	for nIdx, n := range t.cc.chainlinkNodes {
+		t.cc.bootstrapPeers = append(t.cc.bootstrapPeers, client.P2PData{
+			RemoteIP:   n.RemoteIP(),
+			RemotePort: "8090",
+			PeerID:     t.cc.nKeys[nIdx].PeerID,
+		})
+	}
+	// Defining relay config
 	relayConfig := map[string]string{
 		"nodeName": fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.NewV4().String()),
 		"chainID":  ChainId,
 	}
 
 	// Setting up bootstrap node
-	jobSpec := &OCR2TaskJobSpec{
-		Name:        fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
-		JobType:     "bootstrap",
-		ContractID:  ocrControllerAddress,
-		Relay:       ChainName,
-		RelayConfig: relayConfig,
+	jobSpec := &client.OCR2TaskJobSpec{
+		Name:               fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+		JobType:            "bootstrap",
+		ContractID:         ocrControllerAddress,
+		Relay:              ChainName,
+		RelayConfig:        relayConfig,
+		P2PV2Bootstrappers: t.cc.bootstrapPeers,
 	}
-	_, _, err := sc.chainlinkNodes[0].CreateJob(jobSpec)
+	_, _, err := t.cc.chainlinkNodes[0].CreateJob(jobSpec)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating bootstrap job should not fail")
 
 	// Defining bridge
-	bTypeAttr = &client.BridgeTypeAttributes{
+	t.cc.bTypeAttr = &client.BridgeTypeAttributes{
 		Name: "bridge-cryptocompare",
 		URL:  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD",
 	}
-	for nIdx, n := range s.chainlinkNodes {
+
+	// Setting up job specs
+	for nIdx, n := range t.cc.chainlinkNodes {
 		if nIdx == 0 {
 			continue
 		}
-		// Creating bridge
-		n.CreateBridge(bTypeAttr)
-		// Creating OCRv2 Job
-		jobSpec := &OCR2TaskJobSpec{
-			Name:        fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
-			JobType:     "offchainreporting2",
-			ContractID:  ocrControllerAddress,
-			Relay:       ChainName,
-			RelayConfig: relayConfig,
-			PluginType:  "median",
-			P2pPeerID:   s.nKeys[nIdx].PeerID,
-			P2pBootstrapPeers: []P2PData{
-				P2PData{
-					RemoteIP:   s.chainlinkNodes[0].RemoteIP(),
-					RemotePort: "8090",
-					PeerID:     s.nKeys[0].PeerID,
-				},
-			},
-			OCRKeyBundleID:    s.nKeys[nIdx].OCR2Key.Data.ID,
-			TransmitterID:     s.nKeys[nIdx].TXKey.Data.ID,
-			ObservationSource: client.ObservationSourceSpecBridge(*bTypeAttr),
+		n.CreateBridge(t.cc.bTypeAttr)
+		jobSpec := &client.OCR2TaskJobSpec{
+			Name:               fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
+			JobType:            "offchainreporting2",
+			ContractID:         ocrControllerAddress,
+			Relay:              ChainName,
+			RelayConfig:        relayConfig,
+			PluginType:         "median",
+			P2PV2Bootstrappers: t.cc.bootstrapPeers,
+			OCRKeyBundleID:     t.cc.nKeys[nIdx].OCR2Key.Data.ID,
+			TransmitterID:      t.cc.nKeys[nIdx].TXKey.Data.ID,
+			ObservationSource:  client.ObservationSourceSpecBridge(*t.cc.bTypeAttr),
 			JuelsPerFeeCoinSource: ` // Fetch the LINK price from a data source
 			// data source 1
 			ds1_link       [type="bridge" name="bridge-cryptocompare"]
@@ -348,14 +275,17 @@ func (s *StarkNetClient) CreateJobsForContract(ocrControllerAddress string) erro
 	return nil
 }
 
-func GetStarkNetName() string {
-	return sc.cfg.Name
+// Returns the config name for StarkNET
+func (t *Test) GetStarkNetName() string {
+	return t.sc.cfg.Name
 }
 
-func GetStarkNetAddress() string {
-	return Env.URLs[devnetClient][0]
+// Returns the local StarkNET address
+func (t *Test) GetStarkNetAddress() string {
+	return t.Env.URLs[devnetClient][0]
 }
 
-func GetNodeKeys() []NodeKeysBundle {
-	return sc.nKeys
+// Returns the node key bundles
+func (t *Test) GetNodeKeys() []ctfClient.NodeKeysBundle {
+	return t.cc.nKeys
 }
