@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
+	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	gauntlet "github.com/smartcontractkit/chainlink-testing-framework/gauntlet"
 )
 
@@ -104,16 +106,16 @@ func FetchGauntletJsonOutput() (*GauntletResponse, error) {
 }
 
 // Loads and returns the default starknet gauntlet config
-func LoadOCR2Config(nKeys []NodeKeysBundle) (*OCR2Config, error) {
+func LoadOCR2Config(nKeys []ctfClient.NodeKeysBundle) (*OCR2Config, error) {
 	var offChainKeys []string
 	var onChainKeys []string
 	var peerIds []string
 	var txKeys []string
 	for _, key := range nKeys {
-		offChainKeys = append(offChainKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
+		offChainKeys = append(offChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", "", 1))
 		peerIds = append(peerIds, key.PeerID)
 		txKeys = append(txKeys, key.TXKey.Data.ID)
-		onChainKeys = append(onChainKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
+		onChainKeys = append(onChainKeys, "0x"+strings.Replace(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "", 1))
 	}
 
 	var payload = &OCR2Config{

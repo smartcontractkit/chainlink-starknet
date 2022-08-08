@@ -4,25 +4,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
+	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
 )
 
-type Props struct {
-	NetworkName string   `envconfig:"network_name"`
-	HttpURLs    []string `envconfig:"http_url"`
-	WsURLs      []string `envconfig:"ws_url"`
-	Values      map[string]interface{}
-}
-
-type HelmProps struct {
-	Name   string
-	Path   string
-	Values *map[string]interface{}
-}
-
-type Chart struct {
-	HelmProps *HelmProps
-	Props     *Props
-}
+type Chart ethereum.Chart
+type Props ethereum.Props
+type HelmProps ethereum.HelmProps
 
 func (m Chart) IsDeploymentNeeded() bool {
 	return true
@@ -59,8 +46,8 @@ func (m Chart) ExportData(e *environment.Environment) error {
 	return nil
 }
 
-func defaultProps() *Props {
-	return &Props{
+func defaultProps() *ethereum.Props {
+	return &ethereum.Props{
 		NetworkName: "starknet-dev",
 		Values: map[string]interface{}{
 			"replicas": "1",
@@ -86,12 +73,12 @@ func defaultProps() *Props {
 	}
 }
 
-func New(props *Props) environment.ConnectedChart {
+func New(props *ethereum.Props) environment.ConnectedChart {
 	if props == nil {
 		props = defaultProps()
 	}
 	return Chart{
-		HelmProps: &HelmProps{
+		HelmProps: &ethereum.HelmProps{
 			Name:   "starknet-dev",
 			Path:   "../../relayer/ops/charts/starknet",
 			Values: &props.Values,
