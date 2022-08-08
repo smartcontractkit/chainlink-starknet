@@ -1,4 +1,4 @@
-package integration_tests
+package starknet
 
 import (
 	"context"
@@ -21,11 +21,11 @@ import (
 )
 
 const (
-	gethClient      = "Hardhat"
-	devnetClient    = "starknet-dev"
-	chainLinkClient = "chainlink"
-	ChainName       = "starknet"
-	ChainId         = "devnet"
+	serviceKeyL1        = "Hardhat"
+	serviceKeyL2        = "starknet-dev"
+	serviceKeyChainlink = "chainlink"
+	ChainName           = "starknet"
+	ChainId             = "devnet"
 )
 
 var (
@@ -62,10 +62,6 @@ func (t *Test) NewStarkNetDevnetClient(cfg *blockchain.EVMNetwork) (*StarkNetDev
 		cfg:    cfg,
 		client: resty.New().SetBaseURL(t.GetStarkNetAddress()),
 	}
-	// Currently not needed since we are testing on L2
-	// if err := c.init(); err != nil {
-	// 	return nil, err
-	// }
 	return t.sc, nil
 }
 
@@ -97,7 +93,7 @@ func (t *Test) DeployEnv(nodes int) {
 			"chainlink": map[string]interface{}{
 				"image": map[string]interface{}{
 					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-					"version": "custom.aea1182fa47e5b354a497ad5f8f38e08dfc81bfb",
+					"version": "custom.732a24e3fe9028f939a5bdb97ccd3e88dc6ad716",
 				},
 			},
 			"env": map[string]interface{}{
@@ -125,7 +121,7 @@ func (t *Test) DeployEnv(nodes int) {
 func (t *Test) SetupClients() {
 	t.sc, err = t.NewStarkNetDevnetClient(&blockchain.EVMNetwork{
 		Name: "starknet-dev",
-		URL:  t.Env.URLs[devnetClient][1],
+		URL:  t.Env.URLs[serviceKeyL2][1],
 		PrivateKeys: []string{
 			"c4da537c1651ddae44867db30d67b366",
 		},
@@ -150,16 +146,16 @@ func (t *Test) CreateKeys() {
 		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
 			Name:    ChainName,
 			ChainID: ChainId,
-			Url:     t.Env.URLs[devnetClient][1],
+			Url:     t.Env.URLs[serviceKeyL2][1],
 		})
 		Expect(err).ShouldNot(HaveOccurred(), "Creating starknet node should not fail")
 	}
 
 }
 
-func (s *StarkNetDevnetClient) init() error {
+func (s *StarkNetDevnetClient) loadL1MesagingContract() error {
 	resp, err := s.client.R().SetBody(map[string]interface{}{
-		"networkUrl": t.Env.URLs[gethClient][1],
+		"networkUrl": t.Env.URLs[serviceKeyL1][1],
 	}).Post("/postman/load_l1_messaging_contract")
 	if err != nil {
 		return err
@@ -278,7 +274,7 @@ func (t *Test) GetStarkNetName() string {
 
 // Returns the local StarkNET address
 func (t *Test) GetStarkNetAddress() string {
-	return t.Env.URLs[devnetClient][0]
+	return t.Env.URLs[serviceKeyL2][0]
 }
 
 // Returns the node key bundles
@@ -288,4 +284,13 @@ func (t *Test) GetNodeKeys() []ctfClient.NodeKeysBundle {
 
 func (t *Test) GetChainlinkNodes() []*client.Chainlink {
 	return t.cc.chainlinkNodes
+}
+
+// Sets the L1 messaging contract location and RPC url on L2
+func (t *Test) ConfigureL1Messaging() error {
+	//Currently not needed since we are testing on L2
+	if err := t.sc.loadL1MesagingContract(); err != nil {
+		return err
+	}
+	return nil
 }
