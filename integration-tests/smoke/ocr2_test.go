@@ -99,10 +99,7 @@ func LoadOCR2Config(nKeys []ctfClient.NodeKeysBundle) (*OCR2Config, error) {
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err error
-		// These are one of the the default addresses based on the seed we pass to starknet which is 123
-		walletAddress           string = "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502"
-		walletPrivKey           string = "0xc4da537c1651ddae44867db30d67b366"
+		err                     error
 		linkTokenAddress        string
 		accessControllerAddress string
 		ocrAddress              string
@@ -115,11 +112,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
-			os.Setenv("PRIVATE_KEY", walletPrivKey)
-			os.Setenv("ACCOUNT", walletAddress)
+			os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
+			os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
+			// Setting this to the root of the repo for cmd exec func for Gauntlet
 			sg, err = starknet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
-			// Setting this to the root of the repo for cmd exec func for Gauntlet
 		})
 
 		By("Deploying the environment", func() {
