@@ -92,7 +92,7 @@ func (t *Test) DeployEnv(nodes int) {
 			"chainlink": map[string]interface{}{
 				"image": map[string]interface{}{
 					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-					"version": "custom.732a24e3fe9028f939a5bdb97ccd3e88dc6ad716",
+					"version": "custom.73db21cf91b5608d20ef0aa15d49f825cd49f0b6",
 				},
 			},
 			"env": map[string]interface{}{

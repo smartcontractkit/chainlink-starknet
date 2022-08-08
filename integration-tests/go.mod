@@ -7,7 +7,7 @@ require (
 	github.com/onsi/gomega v1.20.0
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.6
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220804093026-514d60783a8a
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808094605-e57ae378aae7
 )
 
 require (
@@ -29,7 +29,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/slack-go/slack v0.11.2 // indirect
-	github.com/smartcontractkit/chainlink-env v0.2.31 // indirect
+	github.com/smartcontractkit/chainlink-env v0.2.34 // indirect
 	github.com/smartcontractkit/chainlink-relay v0.1.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/zap v1.21.0 // indirect
@@ -87,6 +87,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/zerolog v1.27.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
