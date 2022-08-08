@@ -5,11 +5,11 @@ go 1.18
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/onsi/ginkgo/v2 v2.1.4
-	github.com/onsi/gomega v1.19.0
+	github.com/onsi/gomega v1.20.0
 	github.com/smartcontractkit/chainlink-env v0.2.31
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
-	github.com/smartcontractkit/chainlink-testing-framework v1.5.4
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220801192413-1edc37b124e3
+	github.com/smartcontractkit/chainlink-testing-framework v1.5.6
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220804093026-514d60783a8a
 )
 
 require (
@@ -27,7 +27,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/common v0.35.0 // indirect
-	github.com/slack-go/slack v0.11.0 // indirect
+	github.com/slack-go/slack v0.11.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	gopkg.in/guregu/null.v4 v4.0.0 // indirect
 )
@@ -42,7 +42,7 @@ require (
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
-	github.com/ethereum/go-ethereum v1.10.20 // indirect
+	github.com/ethereum/go-ethereum v1.10.21 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
@@ -113,7 +113,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.24.2 // indirect
-	k8s.io/apimachinery v0.24.2 // indirect
+	k8s.io/apimachinery v0.24.3 // indirect
 	k8s.io/cli-runtime v0.24.2 // indirect
 	k8s.io/client-go v0.24.2 // indirect
 	k8s.io/component-base v0.24.2 // indirect
@@ -134,8 +134,8 @@ replace github.com/smartcontractkit/chainlink-starknet/relayer => ../../chainlin
 
 replace github.com/smartcontractkit/chainlink-env => ../../chainlink-env
 
-//replace github.com/smartcontractkit/chainlink-testing-framework => ../../chainlink-testing-framework
+replace github.com/smartcontractkit/chainlink-testing-framework => ../../chainlink-testing-framework
 
-// replace github.com/smartcontractkit/chainlink => ../../chainlink
+replace github.com/smartcontractkit/chainlink => ../../chainlink
 
-// replace github.com/smartcontractkit/chainlink/integration-tests => ../../chainlink/integration-tests
+replace github.com/smartcontractkit/chainlink/integration-tests => ../../chainlink/integration-tests
