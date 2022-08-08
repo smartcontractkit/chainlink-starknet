@@ -25,6 +25,9 @@ const (
 	serviceKeyChainlink = "chainlink"
 	ChainName           = "starknet"
 	ChainId             = "devnet"
+	// These are one of the the default addresses based on the seed we pass to devnet which is 123
+	defaultWalletAddress = "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502"
+	defaultWalletPrivKey = "0xc4da537c1651ddae44867db30d67b366"
 )
 
 var (
@@ -119,10 +122,10 @@ func (t *Test) DeployEnv(nodes int) {
 // Sets up the starknet client
 func (t *Test) SetupClients() {
 	t.sc, err = t.NewStarkNetDevnetClient(&blockchain.EVMNetwork{
-		Name: "starknet-dev",
+		Name: serviceKeyL2,
 		URL:  t.Env.URLs[serviceKeyL2][1],
 		PrivateKeys: []string{
-			"c4da537c1651ddae44867db30d67b366",
+			defaultWalletPrivKey,
 		},
 	})
 
@@ -283,6 +286,14 @@ func (t *Test) GetNodeKeys() []ctfClient.NodeKeysBundle {
 
 func (t *Test) GetChainlinkNodes() []*client.Chainlink {
 	return t.cc.chainlinkNodes
+}
+
+func (t *Test) GetDefaultPrivateKey() string {
+	return defaultWalletPrivKey
+}
+
+func (t *Test) GetDefaultWalletAddress() string {
+	return defaultWalletAddress
 }
 
 // Sets the L1 messaging contract location and RPC url on L2
