@@ -10,7 +10,7 @@ const COMPILER_SETTINGS = {
   },
   metadata: {
     bytecodeHash: 'none',
-  }
+  },
 }
 
 /**

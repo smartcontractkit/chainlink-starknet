@@ -43,6 +43,13 @@ describe('StarknetValidator', () => {
   })
 
   describe('#validate', () => {
+    it('should get the selector from name successfully', async () => {
+      const setSelector = getSelectorFromName('update_status')
+      expect(BigInt(setSelector).toString(10)).to.equal(
+        1585322027166395525705364165097050997465692350398750944680096081848180365267n,
+      )
+    })
+
     it('reverts if called by account with no access', async () => {
       await expect(Validator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith('No access')
     })
