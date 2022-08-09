@@ -2,6 +2,10 @@ package common
 
 import (
 	"context"
+	"flag"
+	"strings"
+	"time"
+
 	"github.com/go-resty/resty/v2"
 	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-env/environment"
@@ -13,8 +17,6 @@ import (
 	blockchain "github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"strings"
-	"time"
 )
 
 const (
@@ -26,8 +28,13 @@ const (
 )
 
 var (
-	err error
+	err         error
+	useLocalImg bool
 )
+
+func init() {
+	flag.BoolVar(&useLocalImg, "use-local-image", false, "enable to point to local k3d registry image")
+}
 
 type Test struct {
 	sc         *StarkNetDevnetClient
@@ -100,6 +107,20 @@ func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
 
 // DeployEnv Deploys the environment
 func (t *Test) DeployEnv(nodes int) {
+	imgParams := map[string]interface{}{
+		"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
+		"version": "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122",
+	}
+
+	// override image parameters if necessary
+	if useLocalImg {
+		imgParams = map[string]interface{}{
+			"image":   "k3d-registry.local:12345/chainlink",
+			"version": "local",
+		}
+
+	}
+
 	t.Env = environment.New(&environment.Config{
 		NamespacePrefix: "smoke-ocr-starknet",
 		TTL:             3 * time.Hour,
@@ -112,10 +133,7 @@ func (t *Test) DeployEnv(nodes int) {
 		AddHelm(chainlink.New(0, map[string]interface{}{
 			"replicas": nodes,
 			"chainlink": map[string]interface{}{
-				"image": map[string]interface{}{
-					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-					"version": "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122",
-				},
+				"image": imgParams,
 			},
 			"env": map[string]interface{}{
 				"STARKNET_ENABLED":            "true",
