@@ -45,6 +45,22 @@ endif
 	go install github.com/onsi/ginkgo/v2/ginkgo@v$(shell cat ./.tool-versions | grep ginkgo | sed -En "s/ginkgo.(.*)/\1/p")
 endif
 
+.PHONY: build_deps
+build_deps:
+	git submodule update --init --recursive
+
+	## Cleanup old builds and build again
+	rm -rf contracts/vendor/starkgate-build-solidity
+	docker build -t starkgate-build -f contracts/vendor/Dockerfile.starkgate-build contracts/vendor/starkgate
+
+	# Run the image and copy build generated contracts and artifacts (Solidity env)
+	docker run --name=starkgate-build-container -d starkgate-build
+	docker cp starkgate-build-container:/app/build/Release/src/starkware/starknet/apps/starkgate/eth/starkgate_bridge_sol_env/. contracts/vendor/starkgate-build-solidity
+
+	# Cleanup the build container
+	docker stop starkgate-build-container
+	docker rm   starkgate-build-container
+
 .PHONY: e2e_test
 e2e_test:
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
