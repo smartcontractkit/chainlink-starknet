@@ -1,3 +1,0 @@
-[submodule "contracts/vendor/starkgate"]
-	path = contracts/vendor/starkgate
-	url = git@github.com:starkware-libs/starkgate-contracts.git
