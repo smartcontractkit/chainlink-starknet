@@ -28,12 +28,15 @@ const (
 )
 
 var (
-	err         error
-	useLocalImg bool
+	err       error
+	clImage   string
+	clVersion string
 )
 
 func init() {
-	flag.BoolVar(&useLocalImg, "use-local-image", false, "enable to point to local k3d registry image")
+	// pass in flags to override default chainlink imave & version
+	flag.StringVar(&clImage, "chainlink-image", "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink", "specify chainlink image to be used")
+	flag.StringVar(&clVersion, "chainlink-version", "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122", "specify chainlink version to be used")
 }
 
 type Test struct {
@@ -107,20 +110,6 @@ func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
 
 // DeployEnv Deploys the environment
 func (t *Test) DeployEnv(nodes int) {
-	imgParams := map[string]interface{}{
-		"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-		"version": "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122",
-	}
-
-	// override image parameters if necessary
-	if useLocalImg {
-		imgParams = map[string]interface{}{
-			"image":   "k3d-registry.local:12345/chainlink",
-			"version": "local",
-		}
-
-	}
-
 	t.Env = environment.New(&environment.Config{
 		NamespacePrefix: "smoke-ocr-starknet",
 		TTL:             3 * time.Hour,
@@ -133,7 +122,10 @@ func (t *Test) DeployEnv(nodes int) {
 		AddHelm(chainlink.New(0, map[string]interface{}{
 			"replicas": nodes,
 			"chainlink": map[string]interface{}{
-				"image": imgParams,
+				"image": map[string]interface{}{
+					"image":   clImage,
+					"version": clVersion,
+				},
 			},
 			"env": map[string]interface{}{
 				"STARKNET_ENABLED":            "true",
