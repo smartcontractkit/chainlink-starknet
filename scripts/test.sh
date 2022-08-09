@@ -3,6 +3,8 @@ set -euxo pipefail
 
 sh ./integration-tests/scripts/devnet-hardhat.sh
 cd contracts
+yarn install
+yarn compile:l1 && yarn compile
 yarn test
 
 # Example tests

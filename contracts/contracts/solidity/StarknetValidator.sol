@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >0.6.0 <=0.8.0;
+pragma solidity >0.6.0 <0.9.0;
 
 import '@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/TypeAndVersionInterface.sol';
@@ -9,8 +9,8 @@ import '@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol';
 
 import '@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol';
 
-import '../../vendor/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol';
-import './utils/utils.sol';
+// import '../../vendor/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol';
+import '../../vendor/starkgate-contracts-solidity-v0.8/contracts/starkware/starknet/solidity/IStarknetMessaging.sol';
 
 /**
  * @title Validator - makes cross chain call to update the Sequencer Uptime Feed on L2
@@ -22,25 +22,33 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
     uint256 constant STARK_SELECTOR_UPDATE_STATUS =
         1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
-    IStarknetMessaging public immutable STARKNET_CORE;
+    IStarknetMessaging public immutable STARKNET_MESSAGING;
     uint256 public L2_UPTIME_FEED_ADDR;
 
     /**
-     * @param starknetCore the address of the StarknetCore contract address
+     * @param starknetMessaging the address of the Starknet Messaging contract address
      * @param l2UptimeFeedAddr the address of the Sequencer Uptime Feed on L2
      */
-    constructor(address starknetCore, uint256 l2UptimeFeedAddr) {
-        require(starknetCore != address(0), 'Invalid Starknet Core address');
+    constructor(address starknetMessaging, uint256 l2UptimeFeedAddr) {
+        require(starknetMessaging != address(0), 'Invalid Starknet Messaging address');
         require(l2UptimeFeedAddr != 0, 'Invalid StarknetSequencerUptimeFeed contract address');
-        STARKNET_CORE = IStarknetMessaging(starknetCore);
+        STARKNET_MESSAGING = IStarknetMessaging(starknetMessaging);
         L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
+    }
+
+    /**
+     * @notice toUInt256 convert a bool to uint256.
+     */
+    function toUInt256(bool x) internal pure returns (uint256 r) {
+        assembly {
+            r := x
+        }
     }
 
     /**
      * @notice versions:
      *
      * - Validator 0.1.0: initial release
-     * - Validator 1.0.0: change target of L2 sequencer status update
      *   - now calls `updateStatus` on an L2 SequencerUptimeFeed contract instead of
      *     directly calling the Flags contract
      *
@@ -70,7 +78,7 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
         payload[0] = toUInt256(status);
         payload[1] = timestamp;
         // Make the starknet cross chain call
-        STARKNET_CORE.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
+        STARKNET_MESSAGING.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
         return true;
     }
 }
