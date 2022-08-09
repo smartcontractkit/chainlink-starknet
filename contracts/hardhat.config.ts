@@ -10,7 +10,7 @@ const COMPILER_SETTINGS = {
   },
   metadata: {
     bytecodeHash: 'none',
-  },
+  }
 }
 
 /**
@@ -18,9 +18,6 @@ const COMPILER_SETTINGS = {
  */
 const config: HardhatUserConfig = {
   solidity: {
-    settings: {
-      "remappings": [ "contracts/starkware=../vendor/starkgate-build-solidity/contracts/starkware" ]
-    },
     compilers: [
       {
         version: '0.6.12',
