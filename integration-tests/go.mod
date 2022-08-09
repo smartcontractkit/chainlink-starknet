@@ -9,7 +9,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808094605-e57ae378aae7
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808150607-ea111ecb64e8
 )
 
 require (
@@ -32,7 +32,7 @@ require (
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/slack-go/slack v0.11.2 // indirect
 	github.com/smartcontractkit/chainlink-env v0.2.34
-	github.com/smartcontractkit/chainlink-relay v0.1.2 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	gopkg.in/guregu/null.v4 v4.0.0 // indirect
@@ -44,6 +44,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/VictoriaMetrics/fastcache v1.10.0 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -97,17 +98,18 @@ require (
 	github.com/spf13/cobra v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a // indirect
 	github.com/tklauser/go-sysconf v0.3.9 // indirect
 	github.com/tklauser/numcpus v0.3.0 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
 	go.starlark.net v0.0.0-20211013185944-b0039bd2cfe3 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
@@ -136,7 +138,5 @@ require (
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 replace github.com/smartcontractkit/chainlink-starknet/relayer => ../../chainlink-starknet/relayer
-
-replace github.com/smartcontractkit/chainlink => ../../chainlink
 
 replace github.com/smartcontractkit/chainlink/integration-tests => ../../chainlink/integration-tests
