@@ -71,6 +71,13 @@ func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     return ()
 end
 
+func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    let (address) = get_caller_address()
+    simple_read_access_controller.check_access(address)
+
+    return ()
+end
+
 # TODO: this methods are virtual in .sol: clarify
 @external
 func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -136,6 +143,8 @@ namespace sequencer_uptime_feed:
     func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
         round : Round
     ):
+        require_access()
+
         let (lateset_round_id) = s_latest_round_id.read()
         let (latest_round) = sequencer_uptime_feed.round_data(lateset_round_id)
 
@@ -145,8 +154,7 @@ namespace sequencer_uptime_feed:
     func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         round_id : felt
     ) -> (res : Round):
-        let (address) = get_caller_address()
-        simple_read_access_controller.check_access(address)
+        require_access()
         require_valid_round_id(round_id)
 
         let (round) = _get_round(round_id)

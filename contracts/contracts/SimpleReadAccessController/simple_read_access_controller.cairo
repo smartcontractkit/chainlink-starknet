@@ -2,7 +2,6 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from ocr2.interfaces.IAccessController import IAccessController

@@ -6,11 +6,6 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from ownable import Ownable_only_owner, Ownable_initializer
 
-struct Phase:
-    member id : felt
-    member aggregator_address : felt
-end
-
 @event
 func AddedAccess(user : felt):
 end
@@ -123,7 +118,6 @@ namespace simple_write_access_controller:
         return (FALSE)
     end
 
-    # TODO: Why having address here as an argument?
     func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt
     ):
