@@ -9,7 +9,7 @@ import { loadContractSequencer } from '.'
 
 dotenv.config({ path: __dirname + '/.env' })
 const AGGREGATOR_NAME = 'Mock_Aggregator'
-const UPTIME_FEED_NAME = 'sequencer_uptime_feed'
+const UPTIME_FEED_NAME = '../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed'
 
 let Validator: Contract
 let MockStarknetMessaging: ContractFactory
@@ -28,36 +28,37 @@ async function main() {
 
   
   // const MockUptimeFeedFactory = loadContractSequencer(UPTIME_FEED_NAME)
-  const MockUptimeFeedFactory = await starknet.getContractFactory('contracts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed.cairo')
-  const MockUptimeFeedDeploy = await MockUptimeFeedFactory.deploy({})
-  // const MockUptimeFeedDeploy = await defaultProvider.deployContract({
-  //   contract: MockUptimeFeedFactory,
-  //   constructorCalldata: [0, account.address],
+  // const MockUptimeFeedFactory = await starknet.getContractFactory(UPTIME_FEED_NAME)
+  // const MockUptimeFeedDeploy = await MockUptimeFeedFactory.deploy({initial_status: 0,
+  //   owner_address: account.starknetContract.address,
+  // })
+  // // const MockUptimeFeedDeploy = await defaultProvider.deployContract({
+  // //   contract: MockUptimeFeedFactory,
+  // //   constructorCalldata: [0, account.address],
+  // // })
+
+  // const AggregatorFactory = await starknet.getContractFactory(AGGREGATOR_NAME)
+  // const AggregatorDeploy = await AggregatorFactory.deploy({})
+
+  // fs.appendFile(__dirname + '/.env', '\nUPTIME_FEED=' + MockUptimeFeedDeploy.address, function (err) {
+  //   if (err) throw err
+  // })
+  // fs.appendFile(__dirname + '/.env', '\nMOCK_AGGREGATOR=' + AggregatorDeploy.address, function (err) {
+  //   if (err) throw err
   // })
 
-  const AggregatorFactory = await starknet.getContractFactory(AGGREGATOR_NAME)
-  const AggregatorDeploy = await AggregatorFactory.deploy({})
-
-  fs.appendFile(__dirname + '/.env', '\nUPTIME_FEED=' + MockUptimeFeedDeploy.address, function (err) {
-    if (err) throw err
-  })
-  fs.appendFile(__dirname + '/.env', '\nMOCK_AGGREGATOR=' + AggregatorDeploy.address, function (err) {
-    if (err) throw err
-  })
-
-  networkUrl = (network.config as HttpNetworkConfig).url
-  const accounts = await ethers.getSigners()
-  deployer = accounts[0]
-  eoaValidator = accounts[1]
-
-  const ValidatorFactory = await ethers.getContractFactory('Validator', deployer)
+  // networkUrl = (network.config as HttpNetworkConfig).url
+  // const accounts = await ethers.getSigners()
+  // deployer = accounts[0]
+  // eoaValidator = accounts[1]
+  // const ValidatorFactory = await ethers.getContractFactory('../../../../contracts/artifacts/contracts/solidity/StarknetValidator/Validator', deployer)
   MockStarknetMessaging = await ethers.getContractFactory('MockStarknetMessaging', deployer)
 
-  mockStarknetMessaging = await MockStarknetMessaging.deploy()
-  await mockStarknetMessaging.deployed()
+  // mockStarknetMessaging = await MockStarknetMessaging.deploy()
+  // await mockStarknetMessaging.deployed()
 
-  Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, MockUptimeFeedDeploy.address)
-  console.log('Validator address: ', Validator.address)
+  // Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, MockUptimeFeedDeploy.address)
+  // console.log('Validator address: ', Validator.address)
 
   // await account.invoke(MockUptimeFeedDeploy, 'set_l1_sender', { address: Validator.address })
 

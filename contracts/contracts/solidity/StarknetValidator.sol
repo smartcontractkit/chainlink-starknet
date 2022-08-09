@@ -13,9 +13,9 @@ import '@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/co
 import '../../vendor/starkgate-contracts-solidity-v0.8/contracts/starkware/starknet/solidity/IStarknetMessaging.sol';
 
 /**
- * @title Validator - makes cross chain call to update the Sequencer Uptime Feed on L2
+ * @title StarkNetValidator - makes cross chain call to update the Sequencer Uptime Feed on L2
  */
-contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
+contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
     int256 private constant ANSWER_SEQ_OFFLINE = 1;
     /* Selector hardcoded because StarkNet generates selectors differently than the standard ethereum way
     different hash function on stark curve is used */
@@ -48,14 +48,14 @@ contract Validator is TypeAndVersionInterface, AggregatorValidatorInterface, Sim
     /**
      * @notice versions:
      *
-     * - Validator 0.1.0: initial release
+     * - StarkNetValidator 0.1.0: initial release
      *   - now calls `updateStatus` on an L2 SequencerUptimeFeed contract instead of
      *     directly calling the Flags contract
      *
      * @inheritdoc TypeAndVersionInterface
      */
     function typeAndVersion() external pure virtual override returns (string memory) {
-        return 'StarknetValidator 0.1.0';
+        return 'StarkNetValidator 0.1.0';
     }
 
     /**
