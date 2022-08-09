@@ -3,99 +3,13 @@ package smoke_test
 //revive:disable:dot-imports
 import (
 	"encoding/json"
-	"os"
-	"strings"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	starknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	client "github.com/smartcontractkit/chainlink/integration-tests/client"
+	"os"
 )
-
-// Default config for OCR2 for starknet
-type OCR2Config struct {
-	F                     int             `json:"f"`
-	Signers               []string        `json:"signers"`
-	Transmitters          []string        `json:"transmitters"`
-	OnchainConfig         string          `json:"onchainConfig"`
-	OffchainConfig        *OffchainConfig `json:"offchainConfig"`
-	OffchainConfigVersion int             `json:"offchainConfigVersion"`
-	Secret                string          `json:"secret"`
-}
-
-type OffchainConfig struct {
-	DeltaProgressNanoseconds                           int64                  `json:"deltaProgressNanoseconds"`
-	DeltaResendNanoseconds                             int64                  `json:"deltaResendNanoseconds"`
-	DeltaRoundNanoseconds                              int64                  `json:"deltaRoundNanoseconds"`
-	DeltaGraceNanoseconds                              int                    `json:"deltaGraceNanoseconds"`
-	DeltaStageNanoseconds                              int64                  `json:"deltaStageNanoseconds"`
-	RMax                                               int                    `json:"rMax"`
-	S                                                  []int                  `json:"s"`
-	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
-	PeerIds                                            []string               `json:"peerIds"`
-	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
-	MaxDurationQueryNanoseconds                        int                    `json:"maxDurationQueryNanoseconds"`
-	MaxDurationObservationNanoseconds                  int                    `json:"maxDurationObservationNanoseconds"`
-	MaxDurationReportNanoseconds                       int                    `json:"maxDurationReportNanoseconds"`
-	MaxDurationShouldAcceptFinalizedReportNanoseconds  int                    `json:"maxDurationShouldAcceptFinalizedReportNanoseconds"`
-	MaxDurationShouldTransmitAcceptedReportNanoseconds int                    `json:"maxDurationShouldTransmitAcceptedReportNanoseconds"`
-}
-
-type ReportingPluginConfig struct {
-	AlphaReportInfinite bool `json:"alphaReportInfinite"`
-	AlphaReportPpb      int  `json:"alphaReportPpb"`
-	AlphaAcceptInfinite bool `json:"alphaAcceptInfinite"`
-	AlphaAcceptPpb      int  `json:"alphaAcceptPpb"`
-	DeltaCNanoseconds   int  `json:"deltaCNanoseconds"`
-}
-
-// Loads and returns the default starknet gauntlet config
-func LoadOCR2Config(nKeys []ctfClient.NodeKeysBundle) (*OCR2Config, error) {
-	var offChainKeys []string
-	var onChainKeys []string
-	var peerIds []string
-	var txKeys []string
-	for _, key := range nKeys {
-		offChainKeys = append(offChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", "", 1))
-		peerIds = append(peerIds, key.PeerID)
-		txKeys = append(txKeys, key.TXKey.Data.ID)
-		onChainKeys = append(onChainKeys, "0x"+strings.Replace(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "", 1))
-	}
-
-	var payload = &OCR2Config{
-		F:             1,
-		Signers:       onChainKeys,
-		Transmitters:  txKeys,
-		OnchainConfig: "",
-		OffchainConfig: &OffchainConfig{
-			DeltaProgressNanoseconds: 8000000000,
-			DeltaResendNanoseconds:   30000000000,
-			DeltaRoundNanoseconds:    3000000000,
-			DeltaGraceNanoseconds:    500000000,
-			DeltaStageNanoseconds:    20000000000,
-			RMax:                     5,
-			S:                        []int{1, 2},
-			OffchainPublicKeys:       offChainKeys,
-			PeerIds:                  peerIds,
-			ReportingPluginConfig: &ReportingPluginConfig{
-				AlphaReportInfinite: false,
-				AlphaReportPpb:      0,
-				AlphaAcceptInfinite: false,
-				AlphaAcceptPpb:      0,
-				DeltaCNanoseconds:   0,
-			},
-			MaxDurationQueryNanoseconds:                        0,
-			MaxDurationObservationNanoseconds:                  1000000000,
-			MaxDurationReportNanoseconds:                       200000000,
-			MaxDurationShouldAcceptFinalizedReportNanoseconds:  200000000,
-			MaxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
-		},
-		OffchainConfigVersion: 2,
-		Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
-	}
-
-	return payload, nil
-}
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
@@ -104,47 +18,53 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		accessControllerAddress string
 		ocrAddress              string
 		sg                      *starknet.StarknetGauntlet
-		t                       *starknet.Test
-		nKeys                   []ctfClient.NodeKeysBundle
+		t                       *common.Test
 		nAccounts               []string
-		gauntletPath            string = "../../packages-ts/starknet-gauntlet-cli/networks/"
+		gauntletPath            = "../../packages-ts/starknet-gauntlet-cli/networks/"
 	)
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
-			os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
-			os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
+			err = os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
+			err = os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
+			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
+
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
 			sg, err = starknet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
 		By("Deploying the environment", func() {
-			t = t.DeployCluster(5)
+			t.DeployCluster(5)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			nKeys = t.GetNodeKeys()
+			starknet.SetL2RpcUrl(t.Env.URLs[common.GetServiceKeyL2()][0])
 			sg.SetupNetwork(t.GetStarkNetAddress(), gauntletPath)
 		})
 
 		By("Funding nodes", func() {
-			for _, key := range nKeys {
+			for _, key := range t.GetNodeKeys() {
 				nAccount, err := sg.DeployAccountContract(100, key.TXKey.Data.ID)
 				Expect(err).ShouldNot(HaveOccurred(), "Funding node should not fail")
 				nAccounts = append(nAccounts, nAccount)
 			}
-			t.FundAccounts(nAccounts)
+			err = starknet.FundAccounts(nAccounts)
+			Expect(err).ShouldNot(HaveOccurred(), "Funding accounts should not fail")
 		})
 
 		By("Deploying LINK token contract", func() {
 			linkTokenAddress, err := sg.DeployLinkTokenContract()
 			Expect(err).ShouldNot(HaveOccurred(), "LINK Contract deployment should not fail")
-			os.Setenv("LINK", linkTokenAddress)
+			err = os.Setenv("LINK", linkTokenAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
+
 		})
 
 		By("Deploying access controller contract", func() {
 			accessControllerAddress, err = sg.DeployAccessControllerContract()
 			Expect(err).ShouldNot(HaveOccurred(), "Access controller contract deployment should not fail")
-			os.Setenv("BILLING_ACCESS_CONTROLLER", accessControllerAddress)
+			err = os.Setenv("BILLING_ACCESS_CONTROLLER", accessControllerAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
+
 		})
 
 		By("Deploying OCR2 contract", func() {
@@ -158,16 +78,35 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Setting the Config Details on OCR2 Contract", func() {
-			cfg, err := LoadOCR2Config(nKeys)
+			cfg, err := t.LoadOCR2Config()
 			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR config should not fail")
 			parsedConfig, err := json.Marshal(cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR config should not fail")
-			_, err = sg.SetConfigDetails(nKeys[1:], string(parsedConfig), ocrAddress)
+			_, err = sg.SetConfigDetails(t.GetNodeKeys()[1:], string(parsedConfig), ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config should not fail")
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
-			t.CreateJobsForContract(ocrAddress)
+			juelsPerFeeCoinSource := ` // Fetch the LINK price from a data source
+			// data source 1
+			ds1_link       [type="bridge" name="bridge-cryptocompare"]
+			ds1_link_parse [type="jsonparse" path="BTC"]
+			ds1_link -> ds1_link_parse -> divide
+			// Fetch the ETH price from a data source
+			// data source 1
+			ds1_coin       [type="bridge" name="bridge-cryptocompare"]
+			ds1_coin_parse [type="jsonparse" path="BTC"]
+			ds1_coin -> ds1_coin_parse -> divide
+			divide [type="divide" input="$(ds1_coin_parse)" divisor="$(ds1_link_parse)" precision="18"]
+			scale  [type="multiply" times=1000000000000000000]
+			divide -> scale`
+
+			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
+				Name: "bridge-cryptocompare",
+				URL:  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD",
+			})
+			err = common.CreateJobsForContract(t.GetChainlinkClient(), juelsPerFeeCoinSource, ocrAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
 
 	})
