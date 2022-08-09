@@ -1,11 +1,7 @@
 #!/bin/sh
 cpu_struct=`arch`;
 echo $cpu_struct;
-#rm -rf starknet-hardhat-example
-#git clone git@github.com:Shard-Labs/starknet-hardhat-example.git;
-#echo "nodejs 16.13.2" > starknet-hardhat-example/.tool-versions;
-#cd starknet-hardhat-example;
-cd contracts;
+# cd contracts;
 node --version;
 dpid=`docker ps | grep devnet | awk '{print $1}'`;
 echo "Checking for existing docker containers for devnet..."
@@ -34,12 +30,6 @@ else
     docker run -p 5050:5050 -p 8545:8545 -d --name devnet_local shardlabs/starknet-devnet:0.2.5;
 fi
 
-echo "Installing dependencies..."
-# npm ci
-yarn install
-# npx hardhat starknet-compile contracts/l1l2.cairo
-yarn compile:l1
-yarn compile
 echo "Checking for running hardhat process..."
 
 hardhat_image=`docker image ls | grep hardhat | awk '{print $3}'`

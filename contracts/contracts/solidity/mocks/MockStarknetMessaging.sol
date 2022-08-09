@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity >0.6.0 <=0.8.0;
+pragma solidity ^0.6.12;
 
-import '../../../vendor/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/StarknetMessaging.sol';
-
+// import '../../../vendor/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/StarknetMessaging.sol';
+import '../../../vendor/starkgate-build-solidity/contracts/starkware/starknet/solidity/StarknetMessaging.sol';
 /**
  * @title MockStarknetMessaging make cross chain call.
+ For Devnet L1 <> L2 communication testing, we have to replace IStarknetCore with the MockStarknetMessaging.sol contract
  */
 contract MockStarknetMessaging is StarknetMessaging {
     /**

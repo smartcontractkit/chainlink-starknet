@@ -65,12 +65,12 @@ func assert_sequencer_healthy{
     # Get latest_round_data from sequencer contract which should be update by a message send from L1
     let (round : Round) = IAggregator.latest_round_data(contract_address=uptime_feed_address)
     let (local block_timestemp) = get_block_timestamp()
-
-    # 0 if the sequencer is up and 1 if it is down
     let time = block_timestemp - round.transmission_timestamp
     
     # After 60 sec the report is considered stale
     let (is_ls) = is_nn(time - (60 + 1))
+
+    # 0 if the sequencer is up and 1 if it is down
     if round.answer == 0:
         with_attr error_message("L2 Sequencer is up, report stale"):
             assert is_ls = 0
