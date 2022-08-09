@@ -9,7 +9,8 @@ import { loadContractSequencer } from '.'
 
 dotenv.config({ path: __dirname + '/.env' })
 const AGGREGATOR_NAME = 'Mock_Aggregator'
-const UPTIME_FEED_NAME = '../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed'
+const UPTIME_FEED_NAME =
+  '../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed'
 
 let Validator: Contract
 let MockStarknetMessaging: ContractFactory
@@ -26,9 +27,8 @@ async function main() {
     'OpenZeppelin',
   )
 
-  
   const MockUptimeFeedFactory = await starknet.getContractFactory(UPTIME_FEED_NAME)
-  const MockUptimeFeedDeploy = await MockUptimeFeedFactory.deploy({ 
+  const MockUptimeFeedDeploy = await MockUptimeFeedFactory.deploy({
     initial_status: 0,
     owner_address: account.starknetContract.address,
   })

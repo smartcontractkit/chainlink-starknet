@@ -9,7 +9,11 @@ export const loadContract = (name: string): CompiledContract => {
 
 export const loadContractSequencer = (name: string): CompiledContract => {
   return json.parse(
-    fs.readFileSync(`${__dirname}/../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/${name}.cairo/${name}.json`).toString('ascii'),
+    fs
+      .readFileSync(
+        `${__dirname}/../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/${name}.cairo/${name}.json`,
+      )
+      .toString('ascii'),
   )
 }
 
