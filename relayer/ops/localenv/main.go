@@ -13,6 +13,9 @@ var (
 	namespace string
 )
 
+// TODO: consider extracting entire file to `chainlink-relay/ops` or into a separate CLI tool
+// this simply runs underlying functions but does not import them
+
 func main() {
 	if len(os.Args) < 2 {
 		panic("missing required command")
