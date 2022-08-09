@@ -42,7 +42,6 @@ type StarkNetDevnetClient struct {
 	cfg    *blockchain.EVMNetwork
 	client *resty.Client
 }
-
 type ChainlinkClient struct {
 	nKeys          []ctfClient.NodeKeysBundle
 	chainlinkNodes []*client.Chainlink
@@ -113,7 +112,7 @@ func (t *Test) DeployEnv(nodes int) {
 			"chainlink": map[string]interface{}{
 				"image": map[string]interface{}{
 					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-					"version": "custom.73db21cf91b5608d20ef0aa15d49f825cd49f0b6",
+					"version": "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122",
 				},
 			},
 			"env": map[string]interface{}{
