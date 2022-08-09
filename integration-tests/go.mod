@@ -8,7 +8,7 @@ require (
 	github.com/onsi/gomega v1.20.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
-	github.com/smartcontractkit/chainlink-testing-framework v1.5.6
+	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808094605-e57ae378aae7
 )
 
@@ -136,10 +136,6 @@ require (
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 replace github.com/smartcontractkit/chainlink-starknet/relayer => ../../chainlink-starknet/relayer
-
-replace github.com/smartcontractkit/chainlink-env => ../../chainlink-env
-
-replace github.com/smartcontractkit/chainlink-testing-framework => ../../chainlink-testing-framework
 
 replace github.com/smartcontractkit/chainlink => ../../chainlink
 
