@@ -37,8 +37,8 @@ describe('ContractTestsMock', function () {
       console.log(round.answer)
       assert.equal(round.answer, 12)
       assert.equal(round.block_num, 1)
-      assert.equal(round.observation_timestamp, 14325)
-      assert.equal(round.transmission_timestamp, 87654)
+      assert.equal(round.started_at, 14325)
+      assert.equal(round.updated_at, 87654)
     }
   })
   it('should set and read latest round data successfully for the second time', async () => {
@@ -53,8 +53,8 @@ describe('ContractTestsMock', function () {
       const { round: round } = await ConsumerContract.call('readLatestRound', {})
       assert.equal(round.answer, 19)
       assert.equal(round.block_num, 2)
-      assert.equal(round.observation_timestamp, 14345)
-      assert.equal(round.transmission_timestamp, 62543)
+      assert.equal(round.started_at, 14345)
+      assert.equal(round.updated_at, 62543)
     }
   })
   it('should set and read latest round data successfully for the third time', async () => {
