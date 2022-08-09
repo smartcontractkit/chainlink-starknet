@@ -1,11 +1,11 @@
 {
-  "name": "@chainlink/starknet-contracts-ocr2",
+  "name": "@chainlink/starknet-contracts",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "hardhat starknet-compile",
-    "compile:l1": "hardhat compile",
+    "compile:cairo": "hardhat starknet-compile",
+    "compile": "hardhat compile",
     "test": "hardhat --network localhost test"
   },
   "author": "",

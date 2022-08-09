@@ -10,10 +10,7 @@ const COMPILER_SETTINGS = {
   },
   metadata: {
     bytecodeHash: 'none',
-  },
-  settings: {
-    "remappings": [ "contracts/starkware=vendor/starkgate/src/starkware" ]
-  },
+  }
 }
 
 /**
