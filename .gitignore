@@ -149,3 +149,6 @@ dmypy.json
 
 # go workspace settings
 go.work
+
+.env.test*
+tmp-manifest-*

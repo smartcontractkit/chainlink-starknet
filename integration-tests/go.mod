@@ -3,8 +3,10 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.18
 
 require (
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
+	github.com/satori/go.uuid v1.2.0
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.6
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808094605-e57ae378aae7
@@ -29,7 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/slack-go/slack v0.11.2 // indirect
-	github.com/smartcontractkit/chainlink-env v0.2.34 // indirect
+	github.com/smartcontractkit/chainlink-env v0.2.34
 	github.com/smartcontractkit/chainlink-relay v0.1.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/zap v1.21.0 // indirect
@@ -57,7 +59,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -91,7 +92,6 @@ require (
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/zerolog v1.27.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 // indirect
 	github.com/spf13/cobra v1.5.0 // indirect
