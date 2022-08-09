@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity >0.6.0 <0.9.0;
+pragma solidity ^0.6.12;
 
 import "./IStarknetMessaging.sol";
-import '../../../../../../vendor/starkgate/src/starkware/solidity/libraries/NamedStorage.sol';
+import "../../solidity/libraries/NamedStorage.sol";
 
 /**
   Implements sending messages to L2 by adding them to a pipe and consuming messages from L2 by
