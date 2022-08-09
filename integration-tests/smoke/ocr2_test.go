@@ -35,6 +35,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying the environment", func() {
+			t = &common.Test{}
 			t.DeployCluster(5)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			starknet.SetL2RpcUrl(t.Env.URLs[common.GetServiceKeyL2()][0])
