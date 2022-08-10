@@ -6,6 +6,7 @@ import (
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	starksig "github.com/NethermindEth/juno/pkg/crypto/signature"
 	"github.com/NethermindEth/juno/pkg/crypto/weierstrass"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 // constants
@@ -29,19 +30,10 @@ func PubKeyToAccount(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte
 	)
 
 	// pad big.Int to 32 bytes if needed
-	return PadBytes(hash, byteLen)
+	return starknet.PadBytesBigInt(hash, byteLen)
 }
 
 // PubToStarkKey implements the pubkey to starkkey functionality: https://github.com/0xs34n/starknet.js/blob/cd61356974d355aa42f07a3d63f7ccefecbd913c/src/utils/ellipticCurve.ts#L49
 func PubKeyToStarkKey(pubkey starksig.PublicKey) []byte {
-	return PadBytes(pubkey.X, byteLen)
-}
-
-func PadBytes(a *big.Int, length int) []byte {
-	if len(a.Bytes()) < length {
-		out := make([]byte, length)
-		return a.FillBytes(out)
-	}
-
-	return a.Bytes()
+	return starknet.PadBytesBigInt(pubkey.X, byteLen)
 }

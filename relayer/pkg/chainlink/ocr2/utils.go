@@ -2,9 +2,10 @@ package ocr2
 
 import (
 	"encoding/binary"
-	"github.com/pkg/errors"
 	"math/big"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"golang.org/x/exp/constraints"
 
@@ -12,6 +13,7 @@ import (
 	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -90,7 +92,7 @@ func isEventFromContract(event *caigotypes.Event, address string, eventName stri
 	// }
 
 	eventKey := caigo.GetSelectorFromName(eventName)
-        // encoded event name guaranteed to be at index 0
+	// encoded event name guaranteed to be at index 0
 	return event.Keys[0].Cmp(eventKey) == 0
 }
 
@@ -115,7 +117,7 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 	// juels_per_fee_coin - skip
 	// config digest
 	index += int(observationLen) + 2
-	digest, err := types.BytesToConfigDigest(eventData[index].Bytes())
+	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
 	if err != nil {
 		return TransmissionDetails{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
 	}
@@ -145,7 +147,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 
 	// latest_config_digest
 	index += 1
-	digest, err := types.BytesToConfigDigest(eventData[index].Bytes())
+	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
 	}

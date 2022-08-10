@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	"github.com/NethermindEth/juno/pkg/rpc"
@@ -32,7 +33,7 @@ func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offcha
 func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
-	contract_address, valid := new(big.Int).SetString(string(d.contract), 16)
+	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(string(d.contract), "0x"), 16)
 	if !valid {
 		return configDigest, errors.New("invalid contract address")
 	}
@@ -48,7 +49,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	oracles := []*big.Int{}
 	for i := range cfg.Signers {
 		signer := new(big.Int).SetBytes(cfg.Signers[i])
-		transmitter, valid := new(big.Int).SetString(string(cfg.Transmitters[i]), 16)
+		transmitter, valid := new(big.Int).SetString(strings.TrimPrefix(string(cfg.Transmitters[i]), "0x"), 16)
 		if !valid {
 			return configDigest, errors.New("invalid transmitter")
 		}
