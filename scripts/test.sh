@@ -4,7 +4,7 @@ set -euxo pipefail
 sh ./integration-tests/scripts/devnet-hardhat.sh
 cd contracts
 yarn install
-yarn compile:l1 && yarn compile
+yarn compile && yarn compile:cairo
 yarn test
 # Example tests
 cd ../examples/contracts/aggregator-consumer
