@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 	"os"
@@ -38,7 +39,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			t = &common.Test{}
 			t.DeployCluster(5)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			starknet.SetL2RpcUrl(t.Env.URLs[common.GetServiceKeyL2()][0])
+			devnet.SetL2RpcUrl(t.Env.URLs[common.GetServiceKeyL2()][0])
 			sg.SetupNetwork(t.GetStarkNetAddress(), gauntletPath)
 		})
 
@@ -48,7 +49,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				Expect(err).ShouldNot(HaveOccurred(), "Funding node should not fail")
 				nAccounts = append(nAccounts, nAccount)
 			}
-			err = starknet.FundAccounts(nAccounts)
+			err = devnet.FundAccounts(nAccounts)
 			Expect(err).ShouldNot(HaveOccurred(), "Funding accounts should not fail")
 		})
 
