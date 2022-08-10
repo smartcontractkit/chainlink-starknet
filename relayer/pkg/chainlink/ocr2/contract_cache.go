@@ -24,6 +24,7 @@ var _ types.ContractConfigTracker = (*contractCache)(nil)
 
 type contractCache struct {
 	contractConfig  ContractConfig
+	blockHeight     uint64
 	ccLock          sync.RWMutex
 	ccLastCheckedAt time.Time
 
@@ -62,9 +63,15 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 		}
 	}
 
+	blockHeight, err := c.reader.LatestBlockHeight(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch latest block height")
+	}
+
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
 	c.ccLastCheckedAt = time.Now()
+	c.blockHeight = blockHeight
 	if !isSame {
 		c.contractConfig = ContractConfig{
 			Config:      newConfig,
@@ -132,8 +139,9 @@ func (c *contractCache) LatestConfig(ctx context.Context, changedInBlock uint64)
 }
 
 func (c *contractCache) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
-	// todo: implement
-	return 0, nil
+	c.ccLock.RLock()
+	defer c.ccLock.RUnlock()
+	return c.blockHeight, c.assertConfigNotStale()
 }
 
 func (c *contractCache) assertConfigNotStale() error {
