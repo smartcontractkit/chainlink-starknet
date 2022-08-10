@@ -9,7 +9,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808150607-ea111ecb64e8
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1
 )
 
 require (
@@ -18,7 +18,6 @@ require (
 	github.com/aws/jsii-runtime-go v1.61.0 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.3.41 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dontpanicdao/caigo v0.3.0 // indirect
@@ -139,4 +138,4 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 
 replace github.com/smartcontractkit/chainlink-starknet/relayer => ../../chainlink-starknet/relayer
 
-replace github.com/smartcontractkit/chainlink/integration-tests => ../../chainlink/integration-tests
+replace github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1

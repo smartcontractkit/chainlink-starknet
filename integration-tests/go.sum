@@ -98,7 +98,6 @@ github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2y
 github.com/btcsuite/btcd/btcec/v2 v2.2.0 h1:fzn1qaOt32TuLjFlkzYSsBC35Q3KUjT1SwPxiMSCF5k=
 github.com/btcsuite/btcd/btcec/v2 v2.2.0/go.mod h1:U7MHm051Al6XmscBQ0BoNydpOTsFAn707034b5nY8zU=
 github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 h1:q0rUy8C/TYNBQS1+CGKw68tLOFYSNEs0TFnxxnS9+4U=
-github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1/go.mod h1:7SFka0XMvUgj3hfZtydOrQY2mwhPclbT2snogU7SQQc=
 github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.3.41 h1:eS/ohntbEOFGagaYwxjSMF50Qdk0/JO+LlWwn20p+wU=
 github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.3.41/go.mod h1:LgPDb0Qz4fGqI4JTqXUAumn+kggDfDIjm1mpyb4qvlA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -549,6 +548,8 @@ github.com/smartcontractkit/chainlink-relay v0.1.4 h1:MtLcRe2PuP0dY1LQPaMdYqqQSH
 github.com/smartcontractkit/chainlink-relay v0.1.4/go.mod h1:ODzTQ5y/i3/9EQzfv1MxKXG9N+BUGOSw/xTNkdY1kcw=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8 h1:bAOP5KcHXwbcysScCXq4Ovgufs4HyDxWkUkyVhGhcfY=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8/go.mod h1:xv840sOjnMYkR+YUYta/sVr0HF1Tb52vUJ777yYEaXc=
+github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1 h1:rzi+vIFjRCop9F19QoHA8665pLul90vVq2un1w/4x4M=
+github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1/go.mod h1:gW4UmEtqvdbM2mBVUFzQBaglvHb5B0eVWuFmVxaKyHU=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 h1:jKnLPHAE7x5SDLG6PnLqwg+IeZ8gFSmg0iKBJsSuflo=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
