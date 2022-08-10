@@ -30,10 +30,10 @@ func PubKeyToAccount(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte
 	)
 
 	// pad big.Int to 32 bytes if needed
-	return starknet.BigIntPadBytes(hash, byteLen)
+	return starknet.PadBytesBigInt(hash, byteLen)
 }
 
 // PubToStarkKey implements the pubkey to starkkey functionality: https://github.com/0xs34n/starknet.js/blob/cd61356974d355aa42f07a3d63f7ccefecbd913c/src/utils/ellipticCurve.ts#L49
 func PubKeyToStarkKey(pubkey starksig.PublicKey) []byte {
-	return starknet.BigIntPadBytes(pubkey.X, byteLen)
+	return starknet.PadBytesBigInt(pubkey.X, byteLen)
 }
