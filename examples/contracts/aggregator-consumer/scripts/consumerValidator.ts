@@ -31,13 +31,13 @@ async function main() {
     owner_address: account.starknetContract.address,
   })
 
-  const AggregatorFactory = await starknet.getContractFactory(AGGREGATOR_NAME)
-  const AggregatorDeploy = await AggregatorFactory.deploy({})
+  const aggregatorFactory = await starknet.getContractFactory(AGGREGATOR_NAME)
+  const aggregatorDeploy = await aggregatorFactory.deploy({})
 
-  fs.appendFile(__dirname + '/.env', '\nUPTIME_FEED=' + MockUptimeFeedDeploy.address, function (err) {
+  fs.appendFile(__dirname + '/.env', '\nUPTIME_FEED=' + mockUptimeFeedDeploy.address, function (err) {
     if (err) throw err
   })
-  fs.appendFile(__dirname + '/.env', '\nMOCK_AGGREGATOR=' + AggregatorDeploy.address, function (err) {
+  fs.appendFile(__dirname + '/.env', '\nMOCK_AGGREGATOR=' + aggregatorDeploy.address, function (err) {
     if (err) throw err
   })
 
