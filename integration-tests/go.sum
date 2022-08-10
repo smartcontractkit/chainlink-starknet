@@ -549,6 +549,8 @@ github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4/go.mod h1:KPGa7AfPNBfPqPbl1c/7lNipFaxG/6Lvf3dRcY60+Yo=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8 h1:bAOP5KcHXwbcysScCXq4Ovgufs4HyDxWkUkyVhGhcfY=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8/go.mod h1:xv840sOjnMYkR+YUYta/sVr0HF1Tb52vUJ777yYEaXc=
+github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1 h1:rzi+vIFjRCop9F19QoHA8665pLul90vVq2un1w/4x4M=
+github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1/go.mod h1:gW4UmEtqvdbM2mBVUFzQBaglvHb5B0eVWuFmVxaKyHU=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 h1:jKnLPHAE7x5SDLG6PnLqwg+IeZ8gFSmg0iKBJsSuflo=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=

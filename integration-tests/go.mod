@@ -10,7 +10,7 @@ require (
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-00010101000000-000000000000
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220808150607-ea111ecb64e8
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1
 )
 
 require github.com/dontpanicdao/caigo v0.3.0 // indirect
