@@ -18,11 +18,6 @@
     delve
     golangci-lint
     gotools
-
-    kube3d
-    kubectl
-    k9s
-    kubernetes-helm
   ];
 
   LD_LIBRARY_PATH="${stdenv.cc.cc.lib}/lib64:$LD_LIBRARY_PATH";

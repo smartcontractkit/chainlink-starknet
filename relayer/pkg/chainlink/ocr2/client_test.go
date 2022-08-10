@@ -2,12 +2,10 @@ package ocr2
 
 import (
 	"context"
-	"encoding/hex"
-	"math/big"
 	"testing"
 	"time"
 
-	caigo "github.com/dontpanicdao/caigo"
+	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,12 +15,12 @@ import (
 
 func TestOCR2Client(t *testing.T) {
 	// todo: adjust for e2e tests
-	chainID := "devnet"
-	ocr2ContractAddress := "0x04ec68c50e8cdaa4fb5e91663ab3f2c754a7a5d2eaa7d858c6e5b6c4430a389e"
+	chainID := gateway.GOERLI_ID
+	ocr2ContractAddress := "0x756ce9ca3dff7ee1037e712fb9662be13b5dcfc0660b97d266298733e1196b"
 	lggr := logger.Test(t)
 
 	duration := 10 * time.Second
-	reader, err := starknet.NewClient(chainID, "http://localhost:60484", lggr, &duration)
+	reader, err := starknet.NewClient(chainID, "", lggr, &duration)
 	require.NoError(t, err)
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
@@ -44,12 +42,4 @@ func TestOCR2Client(t *testing.T) {
 		_, err := client.LatestTransmissionDetails(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 	})
-}
-
-func TestSelector(t *testing.T) {
-	bytes, err := hex.DecodeString("80c5d224cddf12d83d4ae2998d9a35b77d54490de62265c020ac35a6935e13")
-	require.NoError(t, err)
-	eventKey := new(big.Int)
-	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigo.GetSelectorFromName("config_set").Cmp(eventKey), 0)
 }

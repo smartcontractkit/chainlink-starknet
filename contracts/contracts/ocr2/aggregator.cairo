@@ -35,9 +35,9 @@ from starkware.starknet.common.syscalls import (
     get_tx_info,
 )
 
-from openzeppelin.utils.constants.library import UINT8_MAX
+from openzeppelin.utils.constants import UINT8_MAX
 
-from openzeppelin.token.erc20.IERC20 import IERC20
+from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
 
 from contracts.ocr2.interfaces.IAccessController import IAccessController
 

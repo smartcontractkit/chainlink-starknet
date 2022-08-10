@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
@@ -160,12 +159,10 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
-	block, err := c.r.BlockByNumberGateway(ctx, blockNum+1) // HAXX: temporary workaround for devnet 0.2.8
+	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't fetch block by number")
 	}
-
-	c.lggr.Errorf("Fetching block number %v", blockNum)
 
 	for _, txReceipt := range block.TransactionReceipts {
 		for _, event := range txReceipt.Events {
@@ -180,9 +177,6 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 			if err != nil {
 				return cc, errors.Wrap(err, "couldn't unmarshal event")
 			}
-
-			eventKey := caigo.GetSelectorFromName("config_set")
-			c.lggr.Errorf("Checking %v if address=%v selector %v", decodedEvent, address, eventKey)
 
 			if isEventFromContract(&decodedEvent, address, "config_set") {
 				config, err := parseConfigEventData(decodedEvent.Data)

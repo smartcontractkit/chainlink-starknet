@@ -84,14 +84,20 @@ func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
 }
 
 func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
-	// temp: disable because of address format differences (with/without leading zeros)
-	// if event.FromAddress != address {
-	// 	return false
-	// }
+	if event.FromAddress != address {
+		return false
+	}
 
+	var isSameEventSelector bool
 	eventKey := caigo.GetSelectorFromName(eventName)
-        // encoded event name guaranteed to be at index 0
-	return event.Keys[0].Cmp(eventKey) == 0
+	for _, key := range event.Keys {
+		if key.Cmp(eventKey) == 0 {
+			isSameEventSelector = true
+			break
+		}
+	}
+
+	return isSameEventSelector
 }
 
 func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetails, error) {
