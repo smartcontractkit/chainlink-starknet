@@ -67,5 +67,8 @@ export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
 
   await devnet.start()
 
+  // Starting to poll devnet too soon can result in ENOENT
+  await new Promise((f) => setTimeout(f, 2000))
+
   return devnet
 }

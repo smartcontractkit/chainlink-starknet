@@ -27,7 +27,7 @@ describe('Example Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 5000)
+  }, 15000)
 
   it(
     'Deployment with default input',

@@ -93,7 +93,7 @@ describe('Execute with network', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 5000)
+  }, 15000)
 
   it(
     'Command deploy execution',

@@ -16,7 +16,7 @@ describe('Token Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 5000)
+  }, 15000)
 
   it(
     'Deploy OZ Account',
