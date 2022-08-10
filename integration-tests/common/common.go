@@ -67,11 +67,12 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSourc
 
 	// Setting up bootstrap node
 	jobSpec := &client.OCR2TaskJobSpec{
-		Name:        fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
-		JobType:     "bootstrap",
-		ContractID:  ocrControllerAddress,
-		Relay:       c.ChainName,
-		RelayConfig: relayConfig,
+		Name:                  fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+		JobType:               "bootstrap",
+		ContractID:            ocrControllerAddress,
+		Relay:                 c.ChainName,
+		RelayConfig:           relayConfig,
+		ContractConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	_, _, err := cc.chainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
@@ -99,6 +100,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSourc
 			TransmitterID:         cc.nKeys[nIdx].TXKey.Data.ID,
 			ObservationSource:     client.ObservationSourceSpecBridge(*cc.bTypeAttr),
 			JuelsPerFeeCoinSource: juelsPerFeeCoinSource,
+			ContractConfirmations: 1, // don't wait for confirmation on devnet
 		}
 		_, _, err := n.CreateJob(jobSpec)
 		if err != nil {
