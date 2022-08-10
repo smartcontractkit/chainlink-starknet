@@ -5,6 +5,7 @@ import { StarknetContractFactory, StarknetContract, HttpNetworkConfig } from 'ha
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expectAddressEquality } from './utils'
+import { getSelectorFromName } from 'starknet/dist/utils/hash'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
