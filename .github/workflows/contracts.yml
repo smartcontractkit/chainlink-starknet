@@ -14,7 +14,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
-        submodules: true
 
       - name: Install Nix
         uses: cachix/install-nix-action@v17
