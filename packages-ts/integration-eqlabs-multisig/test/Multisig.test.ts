@@ -35,20 +35,24 @@ describe('Multisig integration tests', function () {
 
   it('should submit & confirm transaction', async () => {
     const nonce = 0
-    const selector = getSelectorFromName('get_signers')
+    const newThreshold = 1n
+    const selector = getSelectorFromName('set_threshold')
+
     const payload = {
       to: multisig.address,
       function_selector: selector,
-      calldata: [],
+      calldata: [newThreshold],
       nonce,
     }
 
-    const res = await account1.invoke(multisig, 'submit_transaction', payload)
-    const txReciept = await starknet.getTransactionReceipt(res)
+    {
+      const res = await account1.invoke(multisig, 'submit_transaction', payload)
+      const txReciept = await starknet.getTransactionReceipt(res)
 
-    expect(txReciept.events.length).to.equal(1)
-    expect(txReciept.events[0].data.length).to.equal(3)
-    expect(txReciept.events[0].data[1]).to.equal(number.toHex(number.toBN(nonce, 'hex')))
+      expect(txReciept.events.length).to.equal(1)
+      expect(txReciept.events[0].data.length).to.equal(3)
+      expect(txReciept.events[0].data[1]).to.equal(number.toHex(number.toBN(nonce, 'hex')))
+    }
 
     await account1.invoke(multisig, 'confirm_transaction', {
       nonce,
@@ -61,5 +65,10 @@ describe('Multisig integration tests', function () {
     await account3.invoke(multisig, 'execute_transaction', {
       nonce,
     })
+
+    {
+      const res = await multisig.call('get_threshold')
+      expect(res.threshold).to.equal(newThreshold)
+    }
   })
 })
