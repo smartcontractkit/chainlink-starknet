@@ -21,23 +21,35 @@ endif
 .PHONY: install
 install:
 ifeq ($(OSFLAG),$(WINDOWS))
-	echo "If you are running windows and know how to install what is needed, please contribute by adding it here!"
+	@echo "Windows system detected - no automated setup available."
+	@echo "Please install your developer enviroment manually (@see .tool-versions)."
+	@echo
 	exit 1
 endif
 ifeq ($(OSFLAG),$(OSX))
-	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+	@echo "MacOS system detected - installing the required toolchain via asdf (@see .tool-versions)."
+	@echo
 	brew install asdf
-	asdf plugin-add golang || true
-	asdf plugin-add nodejs || true
-	asdf plugin-add python || true
-	asdf plugin-add golangci-lint || true
-	asdf plugin-add ginkgo || true
+	asdf plugin add golang || true
+	asdf plugin add nodejs || true
+	asdf plugin add python || true
+	asdf plugin add ginkgo || true
+	asdf plugin add mockery || true
+	asdf plugin add golangci-lint || true
 	asdf plugin add actionlint || true
 	asdf plugin add shellcheck || true
+	asdf plugin add k3d || true
+	asdf plugin add kubectl || true
+	asdf plugin add k9s || true
+	asdf plugin add helm || true
+	asdf plugin add helmenv https://github.com/smartcontractkit/asdf-helmenv.git || true
+	@echo
 	asdf install
 endif
 ifeq ($(OSFLAG),$(LINUX))
-	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+	@echo "Linux system detected - please install and use NIX (@see shell.nix)."
+	@echo
+	exit 1
 ifneq ($(CI),true)
 	# install nix
 	# sh <(curl -L https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install) --daemon --tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve --nix-extra-conf-file ./nix.conf
