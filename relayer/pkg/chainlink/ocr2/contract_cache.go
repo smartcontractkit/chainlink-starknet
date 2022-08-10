@@ -68,6 +68,8 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 		return errors.Wrap(err, "failed to fetch latest block height")
 	}
 
+	c.lggr.Debugw("contract cache update", "blockHeight", blockHeight, "configBlock", configBlock, "configDigest", configDigest)
+
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
 	c.ccLastCheckedAt = time.Now()
