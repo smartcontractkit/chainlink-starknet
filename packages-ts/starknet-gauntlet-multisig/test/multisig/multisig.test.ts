@@ -39,7 +39,7 @@ describe('Multisig', () => {
 
   beforeAll(async () => {
     network = await startNetwork({ seed: SEED })
-  }, 5000)
+  }, 15000)
 
   it(
     'Deployment',
