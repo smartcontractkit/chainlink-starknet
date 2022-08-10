@@ -34,6 +34,7 @@ type Test struct {
 	cc         *ChainlinkClient
 	mockServer *ctfClient.MockserverClient
 	Env        *environment.Environment
+	Common     *Common
 }
 
 type StarkNetDevnetClient struct {
@@ -87,12 +88,13 @@ type ReportingPluginConfig struct {
 }
 
 // DeployCluster Deploys and sets up config of the environment and nodes
-func (t *Test) DeployCluster(nodes int) {
+func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
+	t.Common = SetConfig(commonConfig)
 	t.cc = &ChainlinkClient{}
 	t.sc = &StarkNetDevnetClient{}
 	t.DeployEnv(nodes)
 	t.SetupClients()
-	t.cc.nKeys, t.cc.chainlinkNodes, err = CreateKeys(t.Env)
+	t.cc.nKeys, t.cc.chainlinkNodes, err = t.Common.CreateKeys(t.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating chains and keys should not fail")
 }
 
@@ -138,8 +140,8 @@ func (t *Test) DeployEnv(nodes int) {
 // SetupClients Sets up the starknet client
 func (t *Test) SetupClients() {
 	t.sc = t.NewStarkNetDevnetClient(&blockchain.EVMNetwork{
-		Name: serviceKeyL2,
-		URL:  t.Env.URLs[serviceKeyL2][1],
+		Name: t.Common.ServiceKeyL2,
+		URL:  t.Env.URLs[t.Common.ServiceKeyL2][1],
 		PrivateKeys: []string{
 			defaultWalletPrivKey,
 		},
@@ -214,7 +216,7 @@ func (t *Test) GetStarkNetName() string {
 
 // GetStarkNetAddress Returns the local StarkNET address
 func (t *Test) GetStarkNetAddress() string {
-	return t.Env.URLs[serviceKeyL2][0]
+	return t.Env.URLs[t.Common.ServiceKeyL2][0]
 }
 
 // GetNodeKeys Returns the node key bundles

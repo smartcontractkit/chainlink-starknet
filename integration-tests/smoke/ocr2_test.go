@@ -22,6 +22,12 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		t                       *common.Test
 		nAccounts               []string
 		gauntletPath            = "../../packages-ts/starknet-gauntlet-cli/networks/"
+		serviceKeyL1            = "Hardhat"
+		serviceKeyL2            = "starknet-dev"
+		serviceKeyChainlink     = "chainlink"
+		chainName               = "starknet"
+		chainId                 = "devnet"
+		cfg                     *common.Common
 	)
 
 	BeforeEach(func() {
@@ -36,10 +42,17 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying the environment", func() {
+			cfg = &common.Common{
+				ChainName:           chainName,
+				ChainId:             chainId,
+				ServiceKeyChainlink: serviceKeyChainlink,
+				ServiceKeyL1:        serviceKeyL1,
+				ServiceKeyL2:        serviceKeyL2,
+			}
 			t = &common.Test{}
-			t.DeployCluster(5)
+			t.DeployCluster(5, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			devnet.SetL2RpcUrl(t.Env.URLs[common.GetServiceKeyL2()][0])
+			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][0])
 			sg.SetupNetwork(t.GetStarkNetAddress(), gauntletPath)
 		})
 
@@ -107,7 +120,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				Name: "bridge-cryptocompare",
 				URL:  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD",
 			})
-			err = common.CreateJobsForContract(t.GetChainlinkClient(), juelsPerFeeCoinSource, ocrAddress)
+			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), juelsPerFeeCoinSource, ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
 

@@ -8,41 +8,38 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
-const (
-	serviceKeyL1        = "Hardhat"
-	serviceKeyL2        = "starknet-dev"
-	serviceKeyChainlink = "chainlink"
-	chainName           = "starknet"
-	chainId             = "devnet"
-)
-
-var (
-	defaultP2PPort = "8090"
-)
+type Common struct {
+	P2PPort             string
+	ServiceKeyL1        string
+	ServiceKeyL2        string
+	ServiceKeyChainlink string
+	ChainName           string
+	ChainId             string
+}
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
-func CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysBundle, []*client.Chainlink, error) {
+func (c *Common) CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysBundle, []*client.Chainlink, error) {
 	chainlinkNodes, err := client.ConnectChainlinkNodes(env)
 	if err != nil {
 		return nil, nil, err
 	}
-	nKeys, err := ctfClient.CreateNodeKeysBundle(chainlinkNodes, chainName)
+	nKeys, err := ctfClient.CreateNodeKeysBundle(chainlinkNodes, c.ChainName)
 	if err != nil {
 		return nil, nil, err
 	}
 	for _, n := range chainlinkNodes {
 		_, _, err = n.CreateStarknetChain(&client.StarknetChainAttributes{
-			Type:    chainName,
-			ChainID: chainId,
+			Type:    c.ChainName,
+			ChainID: c.ChainId,
 			Config:  client.StarknetChainConfig{},
 		})
 		if err != nil {
 			return nil, nil, err
 		}
 		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
-			Name:    chainName,
-			ChainID: chainId,
-			Url:     env.URLs[serviceKeyL2][1],
+			Name:    c.ChainName,
+			ChainID: c.ChainId,
+			Url:     env.URLs[c.ServiceKeyL2][1],
 		})
 		if err != nil {
 			return nil, nil, err
@@ -52,19 +49,19 @@ func CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysBundle, []*cl
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
-func CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
+func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
 	// Defining bootstrap peers
 	for nIdx, n := range cc.chainlinkNodes {
 		cc.bootstrapPeers = append(cc.bootstrapPeers, client.P2PData{
 			RemoteIP:   n.RemoteIP(),
-			RemotePort: defaultP2PPort,
+			RemotePort: c.P2PPort,
 			PeerID:     cc.nKeys[nIdx].PeerID,
 		})
 	}
 	// Defining relay config
 	relayConfig := map[string]string{
 		"nodeName": fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.NewV4().String()),
-		"chainID":  chainId,
+		"chainID":  c.ChainId,
 	}
 
 	// Setting up bootstrap node
@@ -72,7 +69,7 @@ func CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, oc
 		Name:               fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
 		JobType:            "bootstrap",
 		ContractID:         ocrControllerAddress,
-		Relay:              chainName,
+		Relay:              c.ChainName,
 		RelayConfig:        relayConfig,
 		P2PV2Bootstrappers: cc.bootstrapPeers,
 	}
@@ -94,7 +91,7 @@ func CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, oc
 			Name:                  fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
 			JobType:               "offchainreporting2",
 			ContractID:            ocrControllerAddress,
-			Relay:                 chainName,
+			Relay:                 c.ChainName,
 			RelayConfig:           relayConfig,
 			PluginType:            "median",
 			P2PV2Bootstrappers:    cc.bootstrapPeers,
@@ -111,13 +108,17 @@ func CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, oc
 	return nil
 }
 
-func GetServiceKeyL1() string {
-	return serviceKeyL1
-}
-func GetServiceKeyL2() string {
-	return serviceKeyL2
+func (c *Common) GetConfig() *Common {
+	return c
 }
 
-func SetDefaultP2PPort(port string) {
-	defaultP2PPort = port
+func SetConfig(cfg *Common) *Common {
+	return &Common{
+		ServiceKeyChainlink: cfg.ServiceKeyChainlink,
+		ServiceKeyL1:        cfg.ServiceKeyL1,
+		ServiceKeyL2:        cfg.ServiceKeyL2,
+		P2PPort:             cfg.P2PPort,
+		ChainId:             cfg.ChainId,
+		ChainName:           cfg.ChainName,
+	}
 }
