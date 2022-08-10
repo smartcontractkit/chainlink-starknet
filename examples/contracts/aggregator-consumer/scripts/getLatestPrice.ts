@@ -12,13 +12,13 @@ async function main() {
     'OpenZeppelin',
   )
 
-  const PriceConsumerFactory = await starknet.getContractFactory(PRICE_CONSUMER_NAME)
-  const PriceConsumerDeploy = await PriceConsumerFactory.deploy({
+  const priceConsumerFactory = await starknet.getContractFactory(PRICE_CONSUMER_NAME)
+  const priceConsumerDeploy = await priceConsumerFactory.deploy({
     uptime_feed_address: process.env.UPTIME_FEED,
     aggregator_address: process.env.MOCK_AGGREGATOR,
   })
 
-  const latestPrice = await account.call(PriceConsumerDeploy, 'get_latest_price')
+  const latestPrice = await account.call(priceConsumerDeploy, 'get_latest_price')
   console.log('answer= ', latestPrice)
 }
 

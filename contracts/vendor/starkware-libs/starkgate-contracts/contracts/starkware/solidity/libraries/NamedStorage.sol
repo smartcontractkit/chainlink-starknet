@@ -3,7 +3,6 @@ pragma solidity ^0.6.12;
 
 /*
   Library to provide basic storage, in storage location out of the low linear address space.
-
   New types of storage variables should be added here upon need.
 */
 library NamedStorage {

@@ -1,7 +1,7 @@
 #!/bin/sh
 cpu_struct=`arch`;
 echo $cpu_struct;
-# cd contracts;
+
 node --version;
 dpid=`docker ps | grep devnet | awk '{print $1}'`;
 echo "Checking for existing docker containers for devnet..."
