@@ -23,6 +23,13 @@ namespace simple_read_access_controller:
             return (TRUE)
         end
 
+        # NOTICE: access is granted to account contracts, to enable off-chain reads.
+        # The account abstraction architecture can be used to deploy a custom contract
+        # that could access the data and pass it forward to a contract,
+        # but a workflow like that would be of little use
+        # because the contract would need to trust user inputs as it can't verify the data itself.
+        # While the financial contract could accept calls from verified account contracts only (to verify data is correct),
+        # it would be a risky strategy to depend on this part of infrastructure that can easily be upgraded.
         let (tx_info) = get_tx_info()
         if tx_info.account_contract_address == user:
             return (TRUE)
@@ -33,14 +40,14 @@ namespace simple_read_access_controller:
 
     # TODO: remove when starkware adds get_class_hash_at
     func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        address : felt
+        user : felt
     ):
         alloc_locals
 
         let empty_data_len = 0
         let (empty_data) = alloc()
 
-        let (bool) = simple_read_access_controller.has_access(address, empty_data_len, empty_data)
+        let (bool) = simple_read_access_controller.has_access(user, empty_data_len, empty_data)
         with_attr error_message("AccessController: address does not have access"):
             assert bool = TRUE
         end

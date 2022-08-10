@@ -57,10 +57,10 @@ describe('SequencerUptimeFeed test', function () {
     })
 
     it('Test check_access', async function () {
-      await uptimeFeedContract.call('check_access', { address: user })
+      await uptimeFeedContract.call('check_access', { user: user })
 
       try {
-        await account.invoke(uptimeFeedContract, 'check_access', { address: user + 1 })
+        await account.invoke(uptimeFeedContract, 'check_access', { user: user + 1 })
       } catch (err: any) {
         assertErrorMsg(err?.message, 'AccessController: address does not have access')
       }

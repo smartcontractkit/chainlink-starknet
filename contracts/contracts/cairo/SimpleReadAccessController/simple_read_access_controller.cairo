@@ -2,7 +2,6 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from cairo.ocr2.interfaces.IAccessController import IAccessController
@@ -28,9 +27,7 @@ end
 
 # implements IAccessController
 @view
-func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    simple_read_access_controller.check_access(address)
+func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
+    simple_read_access_controller.check_access(user)
     return ()
 end

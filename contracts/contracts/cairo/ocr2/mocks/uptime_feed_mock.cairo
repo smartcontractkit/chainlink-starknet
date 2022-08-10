@@ -49,7 +49,7 @@ func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     alloc_locals
     let (local address) = s_uptime_feed_address.read()
     let (has_access : felt) = IAccessController.has_access(
-        contract_address=address, address=user, data_len=data_len, data=data
+        contract_address=address, user=user, data_len=data_len, data=data
     )
     return (has_access)
 end

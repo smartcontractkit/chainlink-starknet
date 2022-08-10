@@ -33,9 +33,7 @@ end
 
 # implements IAccessController
 @view
-func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    simple_write_access_controller.check_access(address)
+func check_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
+    simple_write_access_controller.check_access(user)
     return ()
 end
