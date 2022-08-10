@@ -4,17 +4,15 @@ import { HttpNetworkConfig, StarknetContract, Account } from 'hardhat/types'
 import fs from 'fs'
 import dotenv from 'dotenv'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { defaultProvider, ec } from 'starknet'
-import { loadContractSequencer } from '.'
 
 dotenv.config({ path: __dirname + '/.env' })
 const AGGREGATOR_NAME = 'Mock_Aggregator'
 const UPTIME_FEED_NAME =
   '../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed'
 
-let Validator: Contract
-let MockStarknetMessaging: ContractFactory
-let mockStarknetMessaging: Contract
+let validator: Contract
+let mockStarkNetMessengerFactory: ContractFactory
+let mockStarkNetMessenger: Contract
 let deployer: SignerWithAddress
 let eoaValidator: SignerWithAddress
 let networkUrl: string
@@ -27,8 +25,8 @@ async function main() {
     'OpenZeppelin',
   )
 
-  const MockUptimeFeedFactory = await starknet.getContractFactory(UPTIME_FEED_NAME)
-  const MockUptimeFeedDeploy = await MockUptimeFeedFactory.deploy({
+  const mockUptimeFeedFactory = await starknet.getContractFactory(UPTIME_FEED_NAME)
+  const mockUptimeFeedDeploy = await mockUptimeFeedFactory.deploy({
     initial_status: 0,
     owner_address: account.starknetContract.address,
   })
@@ -48,25 +46,25 @@ async function main() {
   deployer = accounts[0]
   eoaValidator = accounts[1]
 
-  const ValidatorFactory = await ethers.getContractFactory('StarknetValidator', deployer)
-  MockStarknetMessaging = await ethers.getContractFactory('MockStarknetMessaging', deployer)
+  const validatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
+  mockStarkNetMessengerFactory = await ethers.getContractFactory('MockStarkNetMessaging', deployer)
 
-  mockStarknetMessaging = await MockStarknetMessaging.deploy()
-  await mockStarknetMessaging.deployed()
+  mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy()
+  await mockStarkNetMessenger.deployed()
 
-  Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, MockUptimeFeedDeploy.address)
-  console.log('Validator address: ', Validator.address)
+  validator = await validatorFactory.deploy(mockStarkNetMessenger.address, mockUptimeFeedDeploy.address)
+  console.log('Validator address: ', validator.address)
 
-  await account.invoke(MockUptimeFeedDeploy, 'set_l1_sender', { address: Validator.address })
+  await account.invoke(mockUptimeFeedDeploy, 'set_l1_sender', { address: validator.address })
 
-  await Validator.addAccess(eoaValidator.address)
+  await validator.addAccess(eoaValidator.address)
   setInterval(callFunction, 60_000)
 }
 
 async function callFunction() {
-  await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
+  await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessenger.address)
 
-  await Validator.connect(eoaValidator).validate(0, 0, 1, 0)
+  await validator.connect(eoaValidator).validate(0, 0, 1, 0)
 
   const flushL1Response = await starknet.devnet.flush()
   flushL1Response.consumed_messages.from_l1

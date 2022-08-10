@@ -6,7 +6,7 @@ import '../../../vendor/starkware-libs/starkgate-contracts/contracts/starkware/s
 /**
  * @title MockStarknetMessaging make cross chain call for Devnet L1 <> L2 communication testing.
  */
-contract MockStarknetMessaging is StarknetMessaging {
+contract MockStarkNetMessaging is StarknetMessaging {
     /**
      * @notice Mocks a message from L2 to L1.
      * @param from_address the contract address on L2.
