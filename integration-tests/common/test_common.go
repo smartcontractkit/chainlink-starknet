@@ -2,6 +2,10 @@ package common
 
 import (
 	"context"
+	"flag"
+	"strings"
+	"time"
+
 	"github.com/go-resty/resty/v2"
 	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-env/environment"
@@ -13,8 +17,6 @@ import (
 	blockchain "github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"strings"
-	"time"
 )
 
 const (
@@ -26,8 +28,16 @@ const (
 )
 
 var (
-	err error
+	err       error
+	clImage   string
+	clVersion string
 )
+
+func init() {
+	// pass in flags to override default chainlink imave & version
+	flag.StringVar(&clImage, "chainlink-image", "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink", "specify chainlink image to be used")
+	flag.StringVar(&clVersion, "chainlink-version", "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122", "specify chainlink version to be used")
+}
 
 type Test struct {
 	sc         *StarkNetDevnetClient
@@ -113,8 +123,8 @@ func (t *Test) DeployEnv(nodes int) {
 			"replicas": nodes,
 			"chainlink": map[string]interface{}{
 				"image": map[string]interface{}{
-					"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-					"version": "custom.2205e48ec7979b34fbc7a15ec2234bd16ca35122",
+					"image":   clImage,
+					"version": clVersion,
 				},
 			},
 			"env": map[string]interface{}{
