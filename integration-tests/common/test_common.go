@@ -9,7 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	ops "github.com/smartcontractkit/chainlink-starknet/relayer/ops"
-	starknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	starknet "github.com/smartcontractkit/chainlink-starknet/relayer/ops/devnet"
 	blockchain "github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
