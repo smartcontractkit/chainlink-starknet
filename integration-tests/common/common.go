@@ -50,14 +50,15 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysB
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
 func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
-	// Defining bootstrap peers
-	for nIdx, n := range cc.chainlinkNodes {
-		cc.bootstrapPeers = append(cc.bootstrapPeers, client.P2PData{
-			RemoteIP:   n.RemoteIP(),
+	// Define node[0] as bootstrap node
+	cc.bootstrapPeers = []client.P2PData{
+		{
+			RemoteIP:   cc.chainlinkNodes[0].RemoteIP(),
 			RemotePort: c.P2PPort,
-			PeerID:     cc.nKeys[nIdx].PeerID,
-		})
+			PeerID:     cc.nKeys[0].PeerID,
+		},
 	}
+
 	// Defining relay config
 	relayConfig := map[string]string{
 		"nodeName": fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.NewV4().String()),
@@ -66,12 +67,11 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSourc
 
 	// Setting up bootstrap node
 	jobSpec := &client.OCR2TaskJobSpec{
-		Name:               fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
-		JobType:            "bootstrap",
-		ContractID:         ocrControllerAddress,
-		Relay:              c.ChainName,
-		RelayConfig:        relayConfig,
-		P2PV2Bootstrappers: cc.bootstrapPeers,
+		Name:        fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+		JobType:     "bootstrap",
+		ContractID:  ocrControllerAddress,
+		Relay:       c.ChainName,
+		RelayConfig: relayConfig,
 	}
 	_, _, err := cc.chainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
