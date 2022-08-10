@@ -6,7 +6,6 @@ cd contracts
 yarn install
 yarn compile:l1 && yarn compile
 yarn test
-
 # Example tests
 cd ../examples/contracts/aggregator-consumer
 yarn install

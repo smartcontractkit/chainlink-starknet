@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import '@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/TypeAndVersionInterface.sol';
@@ -22,16 +22,40 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
         1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
     IStarknetMessaging public immutable STARKNET_MESSAGING;
-    uint256 public L2_UPTIME_FEED_ADDR;
+    uint256 public immutable L2_UPTIME_FEED_ADDR;
+
+    /** 
+     * Invalid StarkNet Messaging address.
+     * The address is 0.
+     * @param starkNetMessagingAddr address.
+     */
+    error InvalidStarkNetMessaging (address starkNetMessagingAddr);
 
     /**
-     * @param starknetMessaging the address of the Starknet Messaging contract address
+     * Invalid StarkNet UptimeFeed address.
+     * The address is 0.
+     * @param uptimeFeedAddr StarkNet UptimeFeed address.
+     */
+    error InvalidUptimeFeedAddress (uint256 uptimeFeedAddr);
+
+    /**
+     * @param starkNetMessaging the address of the StarkNet Messaging contract address
      * @param l2UptimeFeedAddr the address of the Sequencer Uptime Feed on L2
      */
-    constructor(address starknetMessaging, uint256 l2UptimeFeedAddr) {
-        require(starknetMessaging != address(0), 'Invalid Starknet Messaging address');
-        require(l2UptimeFeedAddr != 0, 'Invalid StarknetSequencerUptimeFeed contract address');
-        STARKNET_MESSAGING = IStarknetMessaging(starknetMessaging);
+    constructor(address starkNetMessaging, uint256 l2UptimeFeedAddr) {
+        if (starkNetMessaging == address(0)) {
+            revert InvalidStarkNetMessaging({
+                starkNetMessagingAddr: starkNetMessaging
+            });
+        }
+
+        if (l2UptimeFeedAddr == 0) {
+            revert InvalidUptimeFeedAddress({
+                uptimeFeedAddr: l2UptimeFeedAddr
+            });
+        }
+
+        STARKNET_MESSAGING = IStarknetMessaging(starkNetMessaging);
         L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
     }
 
@@ -76,7 +100,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
         // File payload with `status` and `timestamp`
         payload[0] = toUInt256(status);
         payload[1] = timestamp;
-        // Make the starknet cross chain call
+        // Make the starkNet cross chain call
         STARKNET_MESSAGING.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
         return true;
     }

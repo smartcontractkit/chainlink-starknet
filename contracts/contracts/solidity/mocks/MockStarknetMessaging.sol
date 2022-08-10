@@ -7,7 +7,7 @@ import '../../../vendor/starkware-libs/starkgate-contracts/contracts/starkware/s
  * @title MockStarknetMessaging make cross chain call.
  For Devnet L1 <> L2 communication testing, we have to replace IStarknetCore with the MockStarknetMessaging.sol contract
  */
-contract MockStarknetMessaging is StarknetMessaging {
+contract MockStarkNetMessaging is StarknetMessaging {
     /**
      * @notice Mocks a message from L2 to L1.
      * @param from_address the contract address on L2.

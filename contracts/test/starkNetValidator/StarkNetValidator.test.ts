@@ -6,23 +6,23 @@ import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expectAddressEquality } from './utils'
 
-describe('StarknetValidator', () => {
+describe('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
-  let Validator: Contract
-  let MockStarknetMessaging: ContractFactory
-  let mockStarknetMessaging: Contract
+  let starkNetValidator: Contract
+  let mockStarkNetMessengerFactory: ContractFactory
+  let mockStarkNetMessenger: Contract
   let deployer: SignerWithAddress
   let eoaValidator: SignerWithAddress
 
-  let L2contractFactory: StarknetContractFactory
-  let l2contract: StarknetContract
+  let l2ContractFactory: StarknetContractFactory
+  let l2Contract: StarknetContract
 
   before(async () => {
     const account = await starknet.deployAccount('OpenZeppelin')
 
-    L2contractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    l2contract = await L2contractFactory.deploy({
+    l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
+    l2Contract = await l2ContractFactory.deploy({
       initial_status: 0,
       owner_address: number.toBN(account.starknetContract.address),
     })
@@ -31,36 +31,31 @@ describe('StarknetValidator', () => {
     deployer = accounts[0]
     eoaValidator = accounts[1]
 
-    const ValidatorFactory = await ethers.getContractFactory('Validator', deployer)
-    MockStarknetMessaging = await ethers.getContractFactory('MockStarknetMessaging', deployer)
+    const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
+    mockStarkNetMessengerFactory = await ethers.getContractFactory('MockStarkNetMessaging', deployer)
 
-    mockStarknetMessaging = await MockStarknetMessaging.deploy()
-    await mockStarknetMessaging.deployed()
+    mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy()
+    await mockStarkNetMessenger.deployed()
 
-    Validator = await ValidatorFactory.deploy(mockStarknetMessaging.address, l2contract.address)
+    starkNetValidator = await starknetValidatorFactory.deploy(mockStarkNetMessenger.address, l2Contract.address)
 
-    await account.invoke(l2contract, 'set_l1_sender', { address: Validator.address })
+    await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
   })
 
-  describe('#validate', () => {
+  describe('starknetValidator', () => {
     it('should get the selector from name successfully', async () => {
       const setSelector = getSelectorFromName('update_status')
-      expect(BigInt(setSelector).toString(10)).to.equal(
+      expect(BigInt(setSelector)).to.equal(
         1585322027166395525705364165097050997465692350398750944680096081848180365267n,
       )
     })
 
     it('reverts if called by account with no access', async () => {
-      await expect(Validator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith('No access')
-    })
-
-    it('should connect successfully', async () => {
-      Validator.addAccess(eoaValidator.address)
-      Validator.connect(eoaValidator).validate(0, 0, 1, 1)
+      await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith('No access')
     })
 
     it('should deploy the messaging contract', async () => {
-      Validator.addAccess(eoaValidator.address)
+      starkNetValidator.addAccess(eoaValidator.address)
 
       const { address: deployedTo, l1_provider: L1Provider } = await starknet.devnet.loadL1MessagingContract(networkUrl)
 
@@ -69,21 +64,21 @@ describe('StarknetValidator', () => {
 
       const { address: loadedFrom } = await starknet.devnet.loadL1MessagingContract(
         networkUrl,
-        mockStarknetMessaging.address,
+        mockStarkNetMessenger.address,
       )
 
-      expect(mockStarknetMessaging.address).to.equal(loadedFrom)
+      expect(mockStarkNetMessenger.address).to.equal(loadedFrom)
 
-      await Validator.connect(eoaValidator).validate(0, 0, 1, 1)
+      await starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)
 
       const flushL1Response = await starknet.devnet.flush()
       const flushL1Messages = flushL1Response.consumed_messages.from_l1
       expect(flushL1Messages).to.have.a.lengthOf(1)
       expect(flushL1Response.consumed_messages.from_l2).to.be.empty
 
-      expectAddressEquality(flushL1Messages[0].args.from_address, Validator.address)
-      expectAddressEquality(flushL1Messages[0].args.to_address, l2contract.address)
-      expectAddressEquality(flushL1Messages[0].address, mockStarknetMessaging.address)
+      expectAddressEquality(flushL1Messages[0].args.from_address, starkNetValidator.address)
+      expectAddressEquality(flushL1Messages[0].args.to_address, l2Contract.address)
+      expectAddressEquality(flushL1Messages[0].address, mockStarkNetMessenger.address)
     })
   })
 })

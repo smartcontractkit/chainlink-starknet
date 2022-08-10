@@ -112,7 +112,6 @@ contract StarknetMessaging is IStarknetMessaging {
 
     /**
       Consumes a message that was sent from an L2 contract.
-
       Returns the hash of the message.
     */
     function consumeMessageFromL2(uint256 fromAddress, uint256[] calldata payload)
