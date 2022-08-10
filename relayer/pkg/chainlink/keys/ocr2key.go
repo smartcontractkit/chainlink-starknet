@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -67,10 +68,10 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 
 	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
 	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
-	if _, err := buff.Write(PadBytes(r, byteLen)); err != nil {
+	if _, err := buff.Write(starknet.BigIntPadBytes(r, byteLen)); err != nil {
 		return []byte{}, err
 	}
-	if _, err := buff.Write(PadBytes(s, byteLen)); err != nil {
+	if _, err := buff.Write(starknet.BigIntPadBytes(s, byteLen)); err != nil {
 		return []byte{}, err
 	}
 
@@ -120,7 +121,7 @@ func (sk *OCR2Key) MaxSignatureLength() int {
 
 func (sk *OCR2Key) Marshal() ([]byte, error) {
 	// https://github.com/ethereum/go-ethereum/blob/07508ac0e9695df347b9dd00d418c25151fbb213/crypto/crypto.go#L159
-	return PadBytes(sk.privateKey.D, sk.privateKeyLen()), nil
+	return starknet.BigIntPadBytes(sk.privateKey.D, sk.privateKeyLen()), nil
 }
 
 func (sk *OCR2Key) privateKeyLen() int {
