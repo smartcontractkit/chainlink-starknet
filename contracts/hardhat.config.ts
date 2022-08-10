@@ -24,11 +24,7 @@ const config: HardhatUserConfig = {
         settings: COMPILER_SETTINGS,
       },
       {
-        version: '0.8.0',
-        settings: COMPILER_SETTINGS,
-      },
-      {
-        version: '0.8.4',
+        version: '0.8.15',
         settings: COMPILER_SETTINGS,
       },
     ],

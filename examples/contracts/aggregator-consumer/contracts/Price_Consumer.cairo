@@ -42,22 +42,19 @@ func get_latest_price{
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
 }() -> (round : felt):
-    let (sequencer_is_up) = assert_sequencer_healthy()
-    with_attr error_message("L2 Sequencer is down, report ok"):
-        assert sequencer_is_up = TRUE
-    end
+    assert_sequencer_healthy()
     let (aggregator_address) = aggregator_address_.read()
     let (round : Round) = IAggregator.latest_round_data(contract_address=aggregator_address)
     return (round=round.answer)
 end
 
-# Check if the sequencer is up or down
+# Errors if the report is stale, or it's reported that Sequencer node is down
 @external
 func assert_sequencer_healthy{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}() -> (sequencer_is_up : felt):
+}():
     alloc_locals
 
     let (uptime_feed_address) = uptime_feed_address_.read()
@@ -75,10 +72,13 @@ func assert_sequencer_healthy{
         with_attr error_message("L2 Sequencer is up, report stale"):
             assert is_ls = 0
         end
-        return (TRUE)
+        return ()
     end
     with_attr error_message("L2 Sequencer is down, report stale"):
         assert is_ls = 0
     end
-    return (FALSE)
+    with_attr error_message("L2 Sequencer is down, report ok"):
+        assert round.answer = 0
+    end
+    return ()
 end

@@ -16,27 +16,18 @@ import '../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/contracts/
  */
 contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
     int256 private constant ANSWER_SEQ_OFFLINE = 1;
-    /* Selector hardcoded because StarkNet generates selectors differently than the standard ethereum way
-    different hash function on stark curve is used */
+    // Selector hardcoded because StarkNet hash function is not available in this environment
     uint256 constant STARK_SELECTOR_UPDATE_STATUS =
         1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
     IStarknetMessaging public immutable STARKNET_MESSAGING;
     uint256 public immutable L2_UPTIME_FEED_ADDR;
 
-    /** 
-     * Invalid StarkNet Messaging address.
-     * The address is 0.
-     * @param starkNetMessagingAddr address.
-     */
-    error InvalidStarkNetMessaging (address starkNetMessagingAddr);
+    /// Invalid StarkNet messaging contract address - the address is 0.
+    error InvalidStarkNetMessaging ();
 
-    /**
-     * Invalid StarkNet UptimeFeed address.
-     * The address is 0.
-     * @param uptimeFeedAddr StarkNet UptimeFeed address.
-     */
-    error InvalidUptimeFeedAddress (uint256 uptimeFeedAddr);
+    /// Invalid StarkNet uptime feed address - the address is 0.
+    error InvalidUptimeFeedAddress ();
 
     /**
      * @param starkNetMessaging the address of the StarkNet Messaging contract address
@@ -44,24 +35,18 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
      */
     constructor(address starkNetMessaging, uint256 l2UptimeFeedAddr) {
         if (starkNetMessaging == address(0)) {
-            revert InvalidStarkNetMessaging({
-                starkNetMessagingAddr: starkNetMessaging
-            });
+            revert InvalidStarkNetMessaging({});
         }
 
         if (l2UptimeFeedAddr == 0) {
-            revert InvalidUptimeFeedAddress({
-                uptimeFeedAddr: l2UptimeFeedAddr
-            });
+            revert InvalidUptimeFeedAddress({});
         }
 
         STARKNET_MESSAGING = IStarknetMessaging(starkNetMessaging);
         L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
     }
 
-    /**
-     * @notice toUInt256 convert a bool to uint256.
-     */
+    /// @notice converts a bool to uint256.
     function toUInt256(bool x) internal pure returns (uint256 r) {
         assembly {
             r := x
@@ -72,9 +57,6 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
      * @notice versions:
      *
      * - StarkNetValidator 0.1.0: initial release
-     *   - now calls `updateStatus` on an L2 SequencerUptimeFeed contract instead of
-     *     directly calling the Flags contract
-     *
      * @inheritdoc TypeAndVersionInterface
      */
     function typeAndVersion() external pure virtual override returns (string memory) {
@@ -94,13 +76,13 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
         int256 currentAnswer
     ) external override checkAccess returns (bool) {
         bool status = currentAnswer == ANSWER_SEQ_OFFLINE;
-        uint64 timestamp = uint64(block.timestamp);
         uint256[] memory payload = new uint256[](2);
 
         // File payload with `status` and `timestamp`
         payload[0] = toUInt256(status);
-        payload[1] = timestamp;
-        // Make the starkNet cross chain call
+        payload[1] = block.timestamp;
+        // Make the StarkNet x-domain call.
+        // NOTICE: we ignore the output of this call (msgHash, nonce), and we don't raise any events as the event LogMessageToL2 will be emitted from the messaging contract
         STARKNET_MESSAGING.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
         return true;
     }
