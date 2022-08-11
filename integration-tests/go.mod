@@ -13,7 +13,7 @@ require (
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220809185547-24c8fa387fb1
 )
 
-require github.com/dontpanicdao/caigo v0.3.0 // indirect
+require github.com/dontpanicdao/caigo v0.3.0
 
 require (
 	github.com/aws/constructs-go/constructs/v10 v10.1.43 // indirect

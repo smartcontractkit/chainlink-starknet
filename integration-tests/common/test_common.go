@@ -13,9 +13,10 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
-	ops "github.com/smartcontractkit/chainlink-starknet/ops"
-	starknet "github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	blockchain "github.com/smartcontractkit/chainlink-testing-framework/blockchain"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+
+	//"github.com/smartcontractkit/chainlink-starknet/relayer/ops/hardhat"
+	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
@@ -116,8 +117,8 @@ func (t *Test) DeployEnv(nodes int) {
 		TTL:             3 * time.Hour,
 		InsideK8s:       false,
 	}).
-		// AddHelm(hardhat.New(nil)).
-		AddHelm(ops.New(nil)).
+		//AddHelm(hardhat.New(nil)).
+		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, map[string]interface{}{
@@ -146,6 +147,7 @@ func (t *Test) DeployEnv(nodes int) {
 	Expect(err).ShouldNot(HaveOccurred())
 	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
+	//Expect(true).ShouldNot(BeTrue())
 }
 
 // SetupClients Sets up the starknet client
@@ -261,6 +263,6 @@ func (t *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
 
 // ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
 func (t *Test) ConfigureL1Messaging() {
-	err := starknet.LoadL1MessagingContract()
+	err := devnet.LoadL1MessagingContract()
 	Expect(err).ShouldNot(HaveOccurred(), "Setting up L1 messaging should not fail")
 }

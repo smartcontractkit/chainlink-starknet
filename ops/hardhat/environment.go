@@ -1,4 +1,4 @@
-package ops
+package hardhat
 
 import (
 	"github.com/rs/zerolog/log"
@@ -32,11 +32,11 @@ func (m Chart) GetValues() *map[string]interface{} {
 }
 
 func (m Chart) ExportData(e *environment.Environment) error {
-	devnetLocalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.LocalConnection, client.HTTP)
+	devnetLocalHttp, err := e.Fwd.FindPort("hardhat:0", "hardhat", "http").As(client.LocalConnection, client.HTTP)
 	if err != nil {
 		return err
 	}
-	devnetInternalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.RemoteConnection, client.HTTP)
+	devnetInternalHttp, err := e.Fwd.FindPort("hardhat:0", "hardhat", "http").As(client.RemoteConnection, client.HTTP)
 	if err != nil {
 		return err
 	}
@@ -48,13 +48,13 @@ func (m Chart) ExportData(e *environment.Environment) error {
 
 func defaultProps() *ethereum.Props {
 	return &ethereum.Props{
-		NetworkName: "starknet-dev",
+		NetworkName: "hardhat",
 		Values: map[string]interface{}{
 			"replicas": "1",
 			"starknet-dev": map[string]interface{}{
 				"image": map[string]interface{}{
-					"image":   "shardlabs/starknet-devnet",
-					"version": "v0.2.9",
+					"image":   "ethereumoptimism/hardhat-node",
+					"version": "nightly",
 				},
 				"resources": map[string]interface{}{
 					"requests": map[string]interface{}{
@@ -66,8 +66,6 @@ func defaultProps() *ethereum.Props {
 						"memory": "1024Mi",
 					},
 				},
-				"seed":      "123",
-				"real_node": "false",
 			},
 		},
 	}
@@ -79,8 +77,8 @@ func New(props *ethereum.Props) environment.ConnectedChart {
 	}
 	return Chart{
 		HelmProps: &ethereum.HelmProps{
-			Name:   "starknet-dev",
-			Path:   "../../relayer/ops/charts/starknet",
+			Name:   "hardhat",
+			Path:   "../../relayer/ops/charts/hardhat",
 			Values: &props.Values,
 		},
 		Props: props,
