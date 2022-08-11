@@ -8,6 +8,7 @@ import (
 	"time"
 
 	caigo "github.com/dontpanicdao/caigo"
+	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,7 +18,7 @@ import (
 
 func TestOCR2Client(t *testing.T) {
 	// todo: adjust for e2e tests
-	chainID := "devnet"
+	chainID := gateway.GOERLI_ID
 	ocr2ContractAddress := "0x04ec68c50e8cdaa4fb5e91663ab3f2c754a7a5d2eaa7d858c6e5b6c4430a389e"
 	lggr := logger.Test(t)
 
