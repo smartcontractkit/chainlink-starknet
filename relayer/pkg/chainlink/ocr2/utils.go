@@ -3,6 +3,7 @@ package ocr2
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"math"
 	"math/big"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -189,6 +191,17 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "error in decoding onchainConfig")
 	}
+
+	// TODO: remove the below once onchain config is implemented
+	temp := median.OnchainConfig{
+		Min: big.NewInt(math.MinInt64),
+		Max: big.NewInt(math.MaxInt64),
+	}
+	onchainConfig, err = temp.Encode()
+	if err != nil {
+		return types.ContractConfig{}, errors.Wrap(err, "err in generating placeholder onchain config")
+	}
+	// -----------------------------------------
 
 	// offchain_config_version
 	index += int(onchainConfigLen)
