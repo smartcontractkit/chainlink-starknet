@@ -34,11 +34,6 @@ end
 @external
 func add_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     Ownable_only_owner()
-    _add_access(user)
-    return ()
-end
-
-func _add_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     let (has_access) = s_access_list.read(user)
     if has_access == FALSE:
         s_access_list.write(user, TRUE)
@@ -49,7 +44,7 @@ func _add_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-# # Removes an address from the access list
+# Removes an address from the access list
 @external
 func remove_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     Ownable_only_owner()
@@ -63,7 +58,7 @@ func remove_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
-# makes the access check enforced
+# Makes the access check enforced
 @external
 func enable_access_check{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     Ownable_only_owner()
@@ -101,7 +96,6 @@ namespace simple_write_access_controller:
         return ()
     end
 
-    # Virtual method needs wrapper
     func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, data_len : felt, data : felt*
     ) -> (bool : felt):

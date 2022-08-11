@@ -3,7 +3,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from Contracts.cairo.SimpleWriteAccessController.library import (
+from cairo.SimpleWriteAccessController.library import (
     s_access_list,
     s_check_enabled,
     AddedAccess,
