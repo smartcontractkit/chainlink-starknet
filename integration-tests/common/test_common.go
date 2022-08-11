@@ -135,7 +135,7 @@ func (t *Test) DeployEnv(nodes int) {
 				"FEATURE_OFFCHAIN_REPORTING2": "true",
 				"feature_offchain_reporting":  "false",
 				"P2P_NETWORKING_STACK":        "V2",
-				"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:8090",
+				"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
 				"P2PV2_DELTA_DIAL":            "5s",
 				"P2PV2_DELTA_RECONCILE":       "5s",
 				"p2p_listen_port":             "0",
