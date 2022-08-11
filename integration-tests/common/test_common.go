@@ -14,8 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-
-	//"github.com/smartcontractkit/chainlink-starknet/relayer/ops/hardhat"
+	"github.com/smartcontractkit/chainlink-starknet/ops/hardhat"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
@@ -113,11 +112,11 @@ func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
 // DeployEnv Deploys the environment
 func (t *Test) DeployEnv(nodes int) {
 	t.Env = environment.New(&environment.Config{
-		NamespacePrefix: "smoke-ocr-starknet",
+		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
 		TTL:             3 * time.Hour,
 		InsideK8s:       false,
 	}).
-		//AddHelm(hardhat.New(nil)).
+		AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
@@ -147,7 +146,6 @@ func (t *Test) DeployEnv(nodes int) {
 	Expect(err).ShouldNot(HaveOccurred())
 	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
-	//Expect(true).ShouldNot(BeTrue())
 }
 
 // SetupClients Sets up the starknet client
