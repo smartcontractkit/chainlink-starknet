@@ -181,7 +181,7 @@ func (t *Test) LoadOCR2Config() (*OCR2Config, error) {
 		offChainKeys = append(offChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", "", 1))
 		peerIds = append(peerIds, key.PeerID)
 		txKeys = append(txKeys, key.TXKey.Data.ID)
-		onChainKeys = append(onChainKeys, "0x"+strings.Replace(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "", 1))
+		onChainKeys = append(onChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "", 1))
 	}
 
 	var payload = &OCR2Config{

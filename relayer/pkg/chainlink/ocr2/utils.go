@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"math/big"
 	"time"
 
@@ -167,9 +168,9 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	var transmitters []types.Account
 	for i, member := range oracleMembers {
 		if i%2 == 0 {
-			signers = append(signers, member.Bytes())
+			signers = append(signers, starknet.PadBytes(member.Bytes(), 32)) // pad to 32 bytes
 		} else {
-			transmitters = append(transmitters, types.Account(member.String()))
+			transmitters = append(transmitters, types.Account("0x"+hex.EncodeToString(starknet.PadBytes(member.Bytes(), 32)))) // pad to 32 byte length then re-encode
 		}
 	}
 
