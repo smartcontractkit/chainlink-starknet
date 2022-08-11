@@ -14,7 +14,6 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink-starknet/ops/hardhat"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
@@ -116,7 +115,7 @@ func (t *Test) DeployEnv(nodes int) {
 		TTL:             3 * time.Hour,
 		InsideK8s:       false,
 	}).
-		AddHelm(hardhat.New(nil)).
+		//AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
@@ -253,6 +252,10 @@ func (t *Test) GetChainlinkClient() *ChainlinkClient {
 
 func (t *Test) GetStarknetDevnetClient() *StarkNetDevnetClient {
 	return t.sc
+}
+
+func (t *Test) GetStarknetDevnetCfg() *blockchain.EVMNetwork {
+	return t.sc.cfg
 }
 
 func (t *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
