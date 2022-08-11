@@ -49,7 +49,7 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysB
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
-func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
+func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
@@ -98,7 +98,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, juelsPerFeeCoinSourc
 			P2PV2Bootstrappers:    cc.bootstrapPeers,
 			OCRKeyBundleID:        cc.nKeys[nIdx].OCR2Key.Data.ID,
 			TransmitterID:         cc.nKeys[nIdx].TXKey.Data.ID,
-			ObservationSource:     client.ObservationSourceSpecBridge(*cc.bTypeAttr),
+			ObservationSource:     observationSource,
 			JuelsPerFeeCoinSource: juelsPerFeeCoinSource,
 			ContractConfirmations: 1, // don't wait for confirmation on devnet
 		}

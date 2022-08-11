@@ -30,6 +30,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		chainName               = "starknet"
 		chainId                 = gateway.GOERLI_ID
 		cfg                     *common.Common
+		decimals                = 9
 	)
 
 	BeforeEach(func() {
@@ -85,7 +86,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying OCR2 contract", func() {
-			ocrAddress, err = sg.DeployOCR2ControllerContract(0, 9999999999, 18, "auto", linkTokenAddress)
+			ocrAddress, err = sg.DeployOCR2ControllerContract(0, 100000000000, decimals, "auto", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
 		})
 
@@ -104,25 +105,25 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
-			juelsPerFeeCoinSource := ` // Fetch the LINK price from a data source
-			// data source 1
-			ds1_link       [type="bridge" name="bridge-cryptocompare"]
-			ds1_link_parse [type="jsonparse" path="BTC"]
-			ds1_link -> ds1_link_parse -> divide
-			// Fetch the ETH price from a data source
-			// data source 1
-			ds1_coin       [type="bridge" name="bridge-cryptocompare"]
-			ds1_coin_parse [type="jsonparse" path="BTC"]
-			ds1_coin -> ds1_coin_parse -> divide
-			divide [type="divide" input="$(ds1_coin_parse)" divisor="$(ds1_link_parse)" precision="18"]
-			scale  [type="multiply" times=1000000000000000000]
-			divide -> scale`
+			// TODO: validate juels per fee coin calculation
+			juelsPerFeeCoinSource := ` 
+			val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"ETH"}>]
+			parse [type="jsonparse" path="ETH"]
+			scale  [type="multiply" times=1000000000]
+			val -> parse -> scale`
+
+			observationSource := `
+			val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"USD"}>]
+			parse [type="jsonparse" path="USD"]
+			scale [type="multiply" times=1000000000]
+			val -> parse -> scale
+			`
 
 			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 				Name: "bridge-cryptocompare",
-				URL:  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD",
+				URL:  "https://min-api.cryptocompare.com/data/price",
 			})
-			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), juelsPerFeeCoinSource, ocrAddress)
+			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
 
