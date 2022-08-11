@@ -16,6 +16,12 @@ var (
 // TODO: consider extracting entire file to `chainlink-relay/ops` or into a separate CLI tool
 // this simply runs underlying functions but does not import them
 
+// PODMAN:
+// ~/.config/containers/registries.conf
+// [[registry]]
+// location = "localhost:12345"
+// insecure = true
+
 func main() {
 	if len(os.Args) < 2 {
 		panic("missing required command")
@@ -24,8 +30,8 @@ func main() {
 	switch strings.ToLower(os.Args[1]) {
 	// create k8s cluster + resources
 	case "create":
-		run("create registry", "k3d", "registry", "create", "registry.local", "--port", "12345")
-		run("create k8s cluster", "k3d", "cluster", "create", "local", "--registry-use", "k3d-registry.local:12345")
+		run("create registry", "k3d", "registry", "create", "registry.localhost", "--port", "12345")
+		run("create k8s cluster", "k3d", "cluster", "create", "local", "--registry-use", "k3d-registry.localhost:12345")
 		run("switch k8s context", "kubectl", "config", "use-context", "k3d-local")
 	// build and upload image to local registry
 	case "build":
@@ -36,7 +42,7 @@ func main() {
 	// run ginkgo commands to spin up environment
 	case "run":
 		os.Chdir("../../../") // move to repo root
-		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.local:12345/chainlink", "--chainlink-version", "local")
+		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.localhost:12345/chainlink", "--chainlink-version", "local")
 	// stop k8s namespace from environment
 	case "stop":
 		if len(os.Args) < 3 {
@@ -46,7 +52,7 @@ func main() {
 	// delete removes the k8s cluster
 	case "delete":
 		run("remove k8s cluster", "k3d", "cluster", "delete", "local")
-		run("remove registry", "k3d", "registry", "delete", "k3d-registry.local")
+		run("remove registry", "k3d", "registry", "delete", "k3d-registry.localhost")
 	default:
 		panic("unrecognized command")
 	}
