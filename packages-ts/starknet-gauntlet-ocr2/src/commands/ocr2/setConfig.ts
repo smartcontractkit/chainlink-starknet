@@ -13,7 +13,7 @@ type Oracle = {
 type ContractInput = [
   oracles: Oracle[],
   f: number,
-  onchain_config: string,
+  onchain_config: string[],
   offchain_config_version: number,
   offchain_config: string[],
 ]
@@ -30,7 +30,9 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
     }
   })
   const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
-  return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, bytesToFelts(offchainConfig)]
+  // TODO: encode input.onchainConfig to a sequence of felts
+  let onchainConfig = []
+  return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
 const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (result) => {
