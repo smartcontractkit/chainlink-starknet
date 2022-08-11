@@ -60,12 +60,12 @@ end
 func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt
 ):
-    let (lateset_round_id) = s_latest_round_id.read()
+    let (latest_round_id) = s_latest_round_id.read()
 
     with_attr error_message("invalid round_id"):
         assert_not_zero(round_id)
         # TODO: do we need to check if uint80 is overflown?
-        assert_le(round_id, lateset_round_id)
+        assert_le(round_id, latest_round_id)
     end
 
     return ()
@@ -145,8 +145,8 @@ namespace sequencer_uptime_feed:
     ):
         require_access()
 
-        let (lateset_round_id) = s_latest_round_id.read()
-        let (latest_round) = sequencer_uptime_feed.round_data(lateset_round_id)
+        let (latest_round_id) = s_latest_round_id.read()
+        let (latest_round) = sequencer_uptime_feed.round_data(latest_round_id)
 
         return (latest_round)
     end

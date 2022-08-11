@@ -6,7 +6,6 @@ from starkware.cairo.common.bool import TRUE, FALSE
 
 from cairo.ocr2.interfaces.IAccessController import IAccessController
 from cairo.SimpleReadAccessController.library import simple_read_access_controller
-from cairo.SimpleWriteAccessController.library import simple_write_access_controller
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
