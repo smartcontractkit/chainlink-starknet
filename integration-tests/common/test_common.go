@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"flag"
-	"strings"
 	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
@@ -178,10 +177,10 @@ func (t *Test) LoadOCR2Config() (*OCR2Config, error) {
 	var peerIds []string
 	var txKeys []string
 	for _, key := range t.cc.nKeys {
-		offChainKeys = append(offChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", "", 1))
+		offChainKeys = append(offChainKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
 		txKeys = append(txKeys, key.TXKey.Data.ID)
-		onChainKeys = append(onChainKeys, strings.Replace(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "", 1))
+		onChainKeys = append(onChainKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 	}
 
 	var payload = &OCR2Config{

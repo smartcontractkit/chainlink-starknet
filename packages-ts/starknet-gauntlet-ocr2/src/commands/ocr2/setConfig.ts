@@ -29,9 +29,14 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
       transmitter: input.transmitters[i],
     }
   })
+  
+  // remove prefix if present on offchain key
+  input.offchainConfig.offchainPublicKeys = input.offchainConfig.offchainPublicKeys.map(k => k.replace('ocr2off_starknet_', ''))
+  
   const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
   // TODO: encode input.onchainConfig to a sequence of felts
   let onchainConfig = []
+  console.log(offchainConfig.length, offchainConfig.toString('hex'))
   return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
