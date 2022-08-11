@@ -86,6 +86,7 @@ type OffchainConfig struct {
 	MaxDurationReportNanoseconds                       int                    `json:"maxDurationReportNanoseconds"`
 	MaxDurationShouldAcceptFinalizedReportNanoseconds  int                    `json:"maxDurationShouldAcceptFinalizedReportNanoseconds"`
 	MaxDurationShouldTransmitAcceptedReportNanoseconds int                    `json:"maxDurationShouldTransmitAcceptedReportNanoseconds"`
+	ConfigPublicKeys                                   []string               `json:"configPublicKeys"`
 }
 
 type ReportingPluginConfig struct {
@@ -176,11 +177,13 @@ func (t *Test) LoadOCR2Config() (*OCR2Config, error) {
 	var onChainKeys []string
 	var peerIds []string
 	var txKeys []string
+	var cfgKeys []string
 	for _, key := range t.cc.nKeys {
 		offChainKeys = append(offChainKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
 		txKeys = append(txKeys, key.TXKey.Data.ID)
 		onChainKeys = append(onChainKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
+		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
 
 	var payload = &OCR2Config{
@@ -210,6 +213,7 @@ func (t *Test) LoadOCR2Config() (*OCR2Config, error) {
 			MaxDurationReportNanoseconds:                       200000000,
 			MaxDurationShouldAcceptFinalizedReportNanoseconds:  200000000,
 			MaxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
+			ConfigPublicKeys:                                   cfgKeys,
 		},
 		OffchainConfigVersion: 2,
 		Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",

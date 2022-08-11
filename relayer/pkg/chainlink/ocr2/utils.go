@@ -3,7 +3,6 @@ package ocr2
 import (
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -208,7 +207,6 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}
 
-	fmt.Println("DEBUG", len(offchainConfig), hex.EncodeToString(offchainConfig))
 	return types.ContractConfig{
 		ConfigDigest:          digest,
 		ConfigCount:           configCount,
