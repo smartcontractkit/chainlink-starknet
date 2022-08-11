@@ -10,7 +10,7 @@
 
 [Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch client details
 
-[Starknet Commons](../../relayer/pkg/starknet/starknet.go) - Methods related to starknet and L2 actions such as minting, L1<>L2 sync
+[Starknet Commons](../../relayer/ops/devnet/devnet.go) - Methods related to starknet and L2 actions such as minting, L1<>L2 sync
 
 [Gauntlet wrapper](../../relayer/pkg/starknet/gauntlet_starknet.go) - Wrapper for Starknet gauntlet
 
@@ -31,3 +31,10 @@ See examples [here](../../integration-tests/smoke/ocr2_test.go)
 9. Set OCR2 billing via Gauntlet
 10. Set OCR2 config details via Gauntlet
 11. Set up boostrap and oracle nodes
+
+### Metrics and logs (K8)
+1. Navigate to Grafana
+2. Search for `chainlink-testing-insights` dashboard
+3. Select the starknet namespace
+
+Here you will find pod logs for all the chainlink nodes as well as Devnet / Geth
