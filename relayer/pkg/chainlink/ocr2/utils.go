@@ -3,6 +3,7 @@ package ocr2
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -46,7 +47,7 @@ func EncodeBytes(data []byte) (felts []*big.Int) {
 
 func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	if len(felts) == 0 {
-		return nil, errors.New("invalid length: expected at least one felt")
+		return []byte{}, nil
 	}
 
 	data := []byte{}
@@ -178,12 +179,20 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	index = index + int(oraclesLen)*2
 	f := eventData[index].Uint64()
 
+	//onchain_config length
+	index += 1
+	onchainConfigLen := eventData[index].Uint64()
+
 	// onchain_config
 	index += 1
-	onchainConfig := eventData[index].Bytes()
+	onchainConfigFelts := eventData[index:(index + int(onchainConfigLen))]
+	onchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(onchainConfigFelts))
+	if err != nil {
+		return types.ContractConfig{}, errors.Wrap(err, "error in decoding onchainConfig")
+	}
 
 	// offchain_config_version
-	index += 1
+	index += int(onchainConfigLen)
 	offchainConfigVersion := eventData[index].Uint64()
 
 	// offchain_config_len
@@ -199,6 +208,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}
 
+	fmt.Println("DEBUG", len(offchainConfig), hex.EncodeToString(offchainConfig))
 	return types.ContractConfig{
 		ConfigDigest:          digest,
 		ConfigCount:           configCount,
