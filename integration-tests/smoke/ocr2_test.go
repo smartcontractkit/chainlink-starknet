@@ -3,13 +3,15 @@ package smoke_test
 //revive:disable:dot-imports
 import (
 	"encoding/json"
+	"os"
+
+	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
-	"os"
 )
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
@@ -26,7 +28,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		serviceKeyL2            = "starknet-dev"
 		serviceKeyChainlink     = "chainlink"
 		chainName               = "starknet"
-		chainId                 = "devnet"
+		chainId                 = gateway.GOERLI_ID
 		cfg                     *common.Common
 	)
 
