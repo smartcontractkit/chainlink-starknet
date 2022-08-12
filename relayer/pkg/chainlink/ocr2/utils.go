@@ -99,6 +99,7 @@ func isEventFromContract(event *caigotypes.Event, address string, eventName stri
 	return event.Keys[0].Cmp(eventKey) == 0
 }
 
+// NOTE: currently unused, could be used by monitoring component
 func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetails, error) {
 	// round_id - skip
 	// answer
