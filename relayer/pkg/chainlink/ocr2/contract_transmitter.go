@@ -64,7 +64,7 @@ func (c *contractTransmitter) Transmit(
 	if err != nil {
 		return err
 	}
-	for i := 0; i < len(report); i++ {
+	for i := 0; i < len(slices); i++ {
 		hexStr := hex.EncodeToString(slices[i])
 		transmitPayload = append(transmitPayload, "0x"+hexStr)
 	}
