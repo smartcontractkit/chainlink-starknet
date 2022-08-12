@@ -2,12 +2,16 @@ package ocr2
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
+	"time"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
@@ -109,7 +113,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) (td TransmissionDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "latest_round_data",
+		Selector:        "latest_transmission_details",
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -117,45 +121,47 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 		return td, errors.Wrap(err, "couldn't call the contract")
 	}
 
-	// [0] - round_id, [1] - answer, [2] - block_num,
-	// [3] - observation_timestamp, [4] - transmission_timestamp
-	blockNumFelt, err := caigoStringToJunoFelt(res[2])
+	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
+	digest, err := caigoStringToJunoFelt(res[0])
 	if err != nil {
-		return td, errors.Wrap(err, "couldn't decode block num")
+		return td, errors.Wrap(err, "couldn't decode config digest")
 	}
+	configDigest := types.ConfigDigest{}
+	digest.Big().FillBytes(configDigest[:])
 
-	blockNum := uint64(blockNumFelt.Big().Int64())
-	if blockNum == 0 {
-		c.lggr.Warn("No transmissions found")
-		return td, nil
-	}
-
-	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
+	epochAndRoundFelt, err := caigoStringToJunoFelt(res[1])
 	if err != nil {
-		return td, errors.Wrap(err, "couldn't fetch block by number")
+		return td, errors.Wrap(err, "couldn't decode epoch and round")
+	}
+	// TODO: extract into utils.go and share
+	var epochAndRound [junotypes.FeltLength]byte
+	epochAndRoundFelt.Big().FillBytes(epochAndRound[:])
+	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
+	round := epochAndRound[junotypes.FeltLength-1]
+
+	answerFelt, err := caigoStringToJunoFelt(res[2])
+	if err != nil {
+		return td, errors.Wrap(err, "couldn't decode latestAnswer")
+	}
+	latestAnswer := answerFelt.Big()
+
+	timestampFelt, err := caigoStringToJunoFelt(res[3])
+	if err != nil {
+		return td, errors.Wrap(err, "couldn't decode latestTimestamp")
+	}
+	// TODO: Int64() can return invalid data if int is too big
+	unixTime := timestampFelt.Big().Int64()
+	latestTimestamp := time.Unix(unixTime, 0)
+
+	td = TransmissionDetails{
+		Digest:          configDigest,
+		Epoch:           epoch,
+		Round:           round,
+		LatestAnswer:    latestAnswer,
+		LatestTimestamp: latestTimestamp,
 	}
 
-	for _, txReceipt := range block.TransactionReceipts {
-		for _, event := range txReceipt.Events {
-			var decodedEvent caigotypes.Event
-
-			m, err := json.Marshal(event)
-			if err != nil {
-				return td, errors.Wrap(err, "couldn't marshal event")
-			}
-
-			err = json.Unmarshal(m, &decodedEvent)
-			if err != nil {
-				return td, errors.Wrap(err, "couldn't unmarshal event")
-			}
-
-			if isEventFromContract(&decodedEvent, address, "new_transmission") {
-				return parseTransmissionEventData(decodedEvent.Data)
-			}
-		}
-	}
-
-	return td, errors.New("transmission details not found")
+	return td, nil
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
