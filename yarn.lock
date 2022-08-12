@@ -511,10 +511,10 @@
   dependencies:
     "@chainlink/gauntlet-core" "*"
 
-"@chainlink/gauntlet-contracts-ocr2@0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-contracts-ocr2/-/gauntlet-contracts-ocr2-0.2.1.tgz#14fb4249c04f13c27019ea109a8538ad7062ece2"
-  integrity sha512-JgWp0tZ2gktnQlx3TxLNna5kU5U9Iezcrf4jPnetV8bbzKEM7jtkfiVHpeKPBuPFxHm2hskaVBLx6N5ETukzrg==
+"@chainlink/gauntlet-contracts-ocr2@0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-contracts-ocr2/-/gauntlet-contracts-ocr2-0.2.2.tgz#b2e6deab8c52abea588cad7c152bf8cc7a03ca28"
+  integrity sha512-Wmxl3lwlEFVO+jQ7CvOnOV4UA67XguIs6tCY2ayf4KdnNVARgPatI5emAniooNd27n0zgDT+61s5gEpVzWBEqw==
   dependencies:
     "@chainlink/gauntlet-core" "*"
 
