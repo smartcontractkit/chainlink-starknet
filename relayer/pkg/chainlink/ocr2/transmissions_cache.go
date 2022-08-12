@@ -36,6 +36,9 @@ func NewTransmissionsCache(cfg Config, reader Reader, lggr logger.Logger) *trans
 		lggr:   lggr,
 		stop:   make(chan struct{}),
 		done:   make(chan struct{}),
+		transmissionDetails: TransmissionDetails{
+			LatestAnswer: big.NewInt(0), // should always return at least 0 and not nil
+		},
 	}
 }
 
