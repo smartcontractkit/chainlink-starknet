@@ -769,6 +769,32 @@ func verify_signatures{
     )
 end
 
+@view
+func latest_transmission_details{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (config_digest: felt, epoch_and_round: felt, latest_answer: felt, latest_timestamp: felt):
+    let (config_digest) = latest_config_digest_.read()
+    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (epoch_and_round) = latest_epoch_and_round_.read()
+    let (transmission: Transmission) = transmissions_.read(latest_round_id)
+
+    let round = Round(
+        round_id=latest_round_id,
+        answer=transmission.answer,
+        block_num=transmission.block_num,
+        observation_timestamp=transmission.observation_timestamp,
+        transmission_timestamp=transmission.transmission_timestamp,
+    )
+    return (
+        config_digest=config_digest,
+        epoch_and_round=epoch_and_round,
+        latest_answer=transmission.answer,
+        latest_timestamp=transmission.transmission_timestamp
+    )
+end
+
 # --- RequestNewRound
 
 # --- Queries
