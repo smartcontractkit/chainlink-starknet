@@ -61,8 +61,10 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 		By("Funding nodes", func() {
 			for _, key := range t.GetNodeKeys() {
-				nAccount, err := sg.DeployAccountContract(100, key.TXKey.Data.ID)
+				Expect(key.TXKey.Data.Attributes.StarkKey).NotTo(Equal(""))
+				nAccount, err := sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 				Expect(err).ShouldNot(HaveOccurred(), "Funding node should not fail")
+				Expect(nAccount).To(Equal(key.TXKey.Data.Attributes.AccountAddr))
 				nAccounts = append(nAccounts, nAccount)
 			}
 			err = devnet.FundAccounts(nAccounts)
