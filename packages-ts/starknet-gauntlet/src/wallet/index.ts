@@ -1,34 +1,21 @@
-import { ec, KeyPair, Signer } from 'starknet'
+import { SignerInterface } from 'starknet'
+import { Wallet as DefaultWallet } from './defaultWallet'
+import { Wallet as LedgerWallet } from './ledgerWallet'
+
 export interface IWallet<W> {
   wallet: W
   sign: (message: any) => any
   getPublicKey: () => Promise<string>
 }
 
-export interface IStarknetWallet extends IWallet<Signer> {
+export interface IStarknetWallet extends IWallet<SignerInterface> {
   getAccountPublicKey: () => string
 }
 
-export const makeWallet = (rawPk?: string, account?: string) => {
-  return Wallet.create(rawPk, account)
-}
-
-class Wallet implements IStarknetWallet {
-  wallet: Signer
-  account: string
-
-  private constructor(keypair: KeyPair, account?: string) {
-    this.wallet = new Signer(keypair)
-    this.account = account
+export const makeWallet = async (withLedger: boolean, rawPk?: string, account?: string): Promise<IStarknetWallet> => {
+  if (withLedger) {
+    return await LedgerWallet.create()
   }
 
-  static create = (pKey: string, account?: string) => {
-    const keyPair = ec.getKeyPair(pKey)
-    return new Wallet(keyPair, account)
-  }
-
-  sign = () => {}
-
-  getPublicKey = async () => await this.wallet.getPubKey()
-  getAccountPublicKey = () => this.account
+  return DefaultWallet.create(rawPk, account)
 }
