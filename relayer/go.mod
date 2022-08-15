@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
-	github.com/dontpanicdao/caigo v0.3.0
+	github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.27.0

@@ -137,8 +137,8 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
 github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
-github.com/dontpanicdao/caigo v0.3.0 h1:nQcvspUDIdOPM1ZGyTinCnimzdpDzgPukgH0GB6ln7M=
-github.com/dontpanicdao/caigo v0.3.0/go.mod h1:AilbIgy6IRkL9ZL2Z2rZ4aVBEjPSc7SV3KjONbipon0=
+github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5 h1:37YQPO1xKfciFA/4y371DOmTaxmn8QD3P1nAPOBpySI=
+github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5/go.mod h1:6i+wtZJN1nvTbh2i55OgMuEHq3wYxe6dvRTHBVWZEZ8=
 github.com/edsrzf/mmap-go v1.0.0 h1:CEBF7HpRnUCSJgGUb5h1Gm7e3VkmVDrR8lvWVLtrOFw=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153 h1:yUdfgN0XgIJw7foRItutHYUIhlcKzcSf5vDpdhQAKTc=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
