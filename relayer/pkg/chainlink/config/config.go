@@ -15,7 +15,7 @@ var DefaultConfigSet = ConfigSet{
 	OCR2CacheTTL:        time.Minute,
 	RequestTimeout:      10 * time.Second,
 	TxTimeout:           time.Minute,
-	TxSendFrequency:     15 * time.Second,
+	TxSendFrequency:     5 * time.Second,
 	TxMaxBatchSize:      100,
 }
 
