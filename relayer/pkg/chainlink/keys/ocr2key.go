@@ -40,8 +40,7 @@ func (sk *OCR2Key) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrt
 	rawReportContext := evmutil.RawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
-	// dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[2][:]))
-	dataArray = append(dataArray, new(big.Int)) // TODO: extraBytes can overflow felts
+	dataArray = append(dataArray, new(big.Int).SetBytes(starknet.EnsureFelt(rawReportContext[2]))) // convert 32 byte extraHash to 31 bytes
 
 	// split report into seperate felts for hashing
 	splitReport, err := medianreport.SplitReport(report)
