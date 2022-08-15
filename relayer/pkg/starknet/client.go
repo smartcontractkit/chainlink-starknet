@@ -27,10 +27,10 @@ type Reader interface {
 
 type Writer interface {
 	AccountNonce(context.Context, string) (*big.Int, error)
-	Invoke(context.Context, caigotypes.Transaction) (*caigotypes.AddTxResponse, error)
+	Invoke(context.Context, caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error)
 	TransactionByHash(context.Context, string) (*caigotypes.Transaction, error)
 	TransactionReceipt(context.Context, string) (*caigotypes.TransactionReceipt, error)
-	EstimateFee(context.Context, caigotypes.Transaction) (*caigotypes.FeeEstimate, error)
+	EstimateFee(context.Context, caigotypes.FunctionInvoke, string) (*caigotypes.FeeEstimate, error)
 }
 
 type Unimplemented interface {
@@ -203,14 +203,14 @@ func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, er
 
 }
 
-func (c *Client) Invoke(ctx context.Context, txs caigotypes.Transaction) (*caigotypes.AddTxResponse, error) {
+func (c *Client) Invoke(ctx context.Context, invoke caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error) {
 	if c.defaultTimeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
 		defer cancel()
 	}
 
-	out, err := c.gw.Invoke(ctx, txs)
+	out, err := c.gw.Invoke(ctx, invoke)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Invoke")
 	}
@@ -248,14 +248,14 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotyp
 
 }
 
-func (c *Client) EstimateFee(ctx context.Context, txs caigotypes.Transaction) (*caigotypes.FeeEstimate, error) {
+func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke, hash string) (*caigotypes.FeeEstimate, error) {
 	if c.defaultTimeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
 		defer cancel()
 	}
 
-	out, err := c.gw.EstimateFee(ctx, txs)
+	out, err := c.gw.EstimateFee(ctx, call, hash)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.EstimateFee")
 	}
