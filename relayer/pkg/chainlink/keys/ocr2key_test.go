@@ -84,7 +84,7 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 
 	expected, err := HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
 	require.NoError(t, err)
-	assert.Equal(t, expected, msg)
+	assert.Equal(t, expected, msg.Bytes())
 
 	// check that signature matches expected
 	sig, err := kr1.Sign(ctx, report)
@@ -171,7 +171,7 @@ func TestStarkNetKeyring_Marshal(t *testing.T) {
 	kr2 := OCR2Key{}
 	err = kr2.Unmarshal(m)
 	require.NoError(t, err)
-	assert.True(t, kr1.privateKey.Equal(&kr2.privateKey))
+	assert.True(t, kr1.priv.Cmp(kr2.priv) == 0)
 
 	// Invalid seed size should error
 	require.Error(t, kr2.Unmarshal([]byte{0x01}))
