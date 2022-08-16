@@ -1,10 +1,14 @@
+//go:build integration
+
 package ocr2
 
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -12,19 +16,48 @@ import (
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/ops"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
 func TestOCR2Client(t *testing.T) {
-	// todo: adjust for e2e tests
+	// setup testing env
+	url := ops.SetupLocalStarkNetNode(t)
+	keys := ops.TestKeys(t, 1)
 	chainID := gateway.GOERLI_ID
-	ocr2ContractAddress := "0x01c85befe8de5deb81443cd3655b293a381a841fa56e6da8fc9585c838890c22"
 	lggr := logger.Test(t)
+	g, err := ops.NewStarknetGauntlet("../../../../")
+	g.SetupNetwork(url)
+
+	// set env vars
+	require.NoError(t, os.Setenv("PRIVATE_KEY", "0x"+hex.EncodeToString(maps.Values(keys)[0].Raw())))
+	require.NoError(t, os.Setenv("ACCOUNT", maps.Keys(keys)[0]))
+	require.NoError(t, os.Setenv("BILLING_ACCESS_CONTROLLER", ZERO_ADDRESS))
+
+	// clean up env vars
+
+	// deploy contract
+	ocr2ContractAddress, err := g.DeployOCR2ControllerContract(0, 1000000, 10, "test", ZERO_ADDRESS)
+	require.NoError(t, err)
+
+	// set config
+	cfg := ops.TestOCR2Config
+	cfg.Signers = ops.TestOnKeys
+	cfg.Transmitters = ops.TestTxKeys
+	cfg.OffchainConfig.OffchainPublicKeys = ops.TestOffKeys
+	cfg.OffchainConfig.PeerIds = ops.TestOnKeys // use random keys as random p2p ids
+	cfg.OffchainConfig.ConfigPublicKeys = ops.TestCfgKeys
+	parsedConfig, err := json.Marshal(cfg)
+	_, err = g.SetConfigDetails(string(parsedConfig), ocr2ContractAddress)
+	require.NoError(t, err)
 
 	duration := 10 * time.Second
-	reader, err := starknet.NewClient(chainID, "http://localhost:5000", lggr, &duration)
+	reader, err := starknet.NewClient(chainID, url, lggr, &duration)
 	require.NoError(t, err)
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)

@@ -12,6 +12,7 @@ import (
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
+	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
@@ -57,44 +58,6 @@ type ChainlinkClient struct {
 	chainlinkNodes []*client.Chainlink
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
-}
-
-// OCR2Config Default config for OCR2 for starknet
-type OCR2Config struct {
-	F                     int             `json:"f"`
-	Signers               []string        `json:"signers"`
-	Transmitters          []string        `json:"transmitters"`
-	OnchainConfig         string          `json:"onchainConfig"`
-	OffchainConfig        *OffchainConfig `json:"offchainConfig"`
-	OffchainConfigVersion int             `json:"offchainConfigVersion"`
-	Secret                string          `json:"secret"`
-}
-
-type OffchainConfig struct {
-	DeltaProgressNanoseconds                           int64                  `json:"deltaProgressNanoseconds"`
-	DeltaResendNanoseconds                             int64                  `json:"deltaResendNanoseconds"`
-	DeltaRoundNanoseconds                              int64                  `json:"deltaRoundNanoseconds"`
-	DeltaGraceNanoseconds                              int                    `json:"deltaGraceNanoseconds"`
-	DeltaStageNanoseconds                              int64                  `json:"deltaStageNanoseconds"`
-	RMax                                               int                    `json:"rMax"`
-	S                                                  []int                  `json:"s"`
-	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
-	PeerIds                                            []string               `json:"peerIds"`
-	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
-	MaxDurationQueryNanoseconds                        int                    `json:"maxDurationQueryNanoseconds"`
-	MaxDurationObservationNanoseconds                  int                    `json:"maxDurationObservationNanoseconds"`
-	MaxDurationReportNanoseconds                       int                    `json:"maxDurationReportNanoseconds"`
-	MaxDurationShouldAcceptFinalizedReportNanoseconds  int                    `json:"maxDurationShouldAcceptFinalizedReportNanoseconds"`
-	MaxDurationShouldTransmitAcceptedReportNanoseconds int                    `json:"maxDurationShouldTransmitAcceptedReportNanoseconds"`
-	ConfigPublicKeys                                   []string               `json:"configPublicKeys"`
-}
-
-type ReportingPluginConfig struct {
-	AlphaReportInfinite bool `json:"alphaReportInfinite"`
-	AlphaReportPpb      int  `json:"alphaReportPpb"`
-	AlphaAcceptInfinite bool `json:"alphaAcceptInfinite"`
-	AlphaAcceptPpb      int  `json:"alphaAcceptPpb"`
-	DeltaCNanoseconds   int  `json:"deltaCNanoseconds"`
 }
 
 // DeployCluster Deploys and sets up config of the environment and nodes
@@ -172,7 +135,7 @@ func (t *Test) NewStarkNetDevnetClient(cfg *blockchain.EVMNetwork) *StarkNetDevn
 }
 
 // LoadOCR2Config Loads and returns the default starknet gauntlet config
-func (t *Test) LoadOCR2Config() (*OCR2Config, error) {
+func (t *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var offChainKeys []string
 	var onChainKeys []string
 	var peerIds []string
@@ -186,40 +149,14 @@ func (t *Test) LoadOCR2Config() (*OCR2Config, error) {
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
 
-	var payload = &OCR2Config{
-		F:             1,
-		Signers:       onChainKeys,
-		Transmitters:  txKeys,
-		OnchainConfig: "",
-		OffchainConfig: &OffchainConfig{
-			DeltaProgressNanoseconds: 8000000000,
-			DeltaResendNanoseconds:   30000000000,
-			DeltaRoundNanoseconds:    3000000000,
-			DeltaGraceNanoseconds:    500000000,
-			DeltaStageNanoseconds:    20000000000,
-			RMax:                     5,
-			S:                        []int{1, 2},
-			OffchainPublicKeys:       offChainKeys,
-			PeerIds:                  peerIds,
-			ReportingPluginConfig: &ReportingPluginConfig{
-				AlphaReportInfinite: false,
-				AlphaReportPpb:      0,
-				AlphaAcceptInfinite: false,
-				AlphaAcceptPpb:      0,
-				DeltaCNanoseconds:   0,
-			},
-			MaxDurationQueryNanoseconds:                        0,
-			MaxDurationObservationNanoseconds:                  1000000000,
-			MaxDurationReportNanoseconds:                       200000000,
-			MaxDurationShouldAcceptFinalizedReportNanoseconds:  200000000,
-			MaxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
-			ConfigPublicKeys:                                   cfgKeys,
-		},
-		OffchainConfigVersion: 2,
-		Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
-	}
+	var payload = ops.TestOCR2Config
+	payload.Signers = onChainKeys
+	payload.Transmitters = txKeys
+	payload.OffchainConfig.OffchainPublicKeys = offChainKeys
+	payload.OffchainConfig.PeerIds = peerIds
+	payload.OffchainConfig.ConfigPublicKeys = cfgKeys
 
-	return payload, nil
+	return &payload, nil
 }
 
 // GetStarkNetName Returns the config name for StarkNET

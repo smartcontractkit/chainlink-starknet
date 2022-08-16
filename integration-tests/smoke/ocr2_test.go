@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
@@ -20,10 +19,9 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		linkTokenAddress        string
 		accessControllerAddress string
 		ocrAddress              string
-		sg                      *starknet.StarknetGauntlet
+		sg                      *ops.StarknetGauntlet
 		t                       *common.Test
 		nAccounts               []string
-		gauntletPath            = "../../packages-ts/starknet-gauntlet-cli/networks/"
 		serviceKeyL1            = "Hardhat"
 		serviceKeyL2            = "starknet-dev"
 		serviceKeyChainlink     = "chainlink"
@@ -40,7 +38,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
 
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err = starknet.NewStarknetGauntlet("../../")
+			sg, err = ops.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
@@ -56,7 +54,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			t.DeployCluster(5, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][0])
-			sg.SetupNetwork(t.GetStarkNetAddress(), gauntletPath)
+			sg.SetupNetwork(t.GetStarkNetAddress())
 		})
 
 		By("Funding nodes", func() {
@@ -102,7 +100,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR config should not fail")
 			parsedConfig, err := json.Marshal(cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR config should not fail")
-			_, err = sg.SetConfigDetails(t.GetNodeKeys()[1:], string(parsedConfig), ocrAddress)
+			_, err = sg.SetConfigDetails(string(parsedConfig), ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config should not fail")
 		})
 
