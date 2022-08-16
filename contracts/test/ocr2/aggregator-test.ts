@@ -188,10 +188,25 @@ describe('aggregator.cairo', function () {
 
     let signatures = []
 
+    console.log([
+      // report_context
+      `0x${config_digest.toString(16)}`,
+      epoch_and_round,
+      extra_hash,
+      // raw_report
+      observation_timestamp,
+      observers,
+      observations.length,
+      ...observations,
+      juels_per_fee_coin,
+    ])
+    console.log(msg)
     for (let oracle of oracles.slice(0, f + 1)) {
       let [r, s] = ec.sign(oracle.signer, msg)
+      console.log(`privKey ${oracle.signer.getPrivate()} r ${r} s ${s} pubKey ${number.toBN(ec.getStarkKey(oracle.signer))}`)
       signatures.push({ r, s, public_key: number.toBN(ec.getStarkKey(oracle.signer)) })
     }
+    console.log("---")
 
     let transmitter = oracles[0].transmitter
 

@@ -35,7 +35,7 @@ func (sk *OCR2Key) PublicKey() ocrtypes.OnchainPublicKey {
 	return PubKeyToStarkKey(sk.privateKey.PublicKey)
 }
 
-func (sk *OCR2Key) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
+func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	var dataArray []*big.Int
 	rawReportContext := evmutil.RawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
@@ -56,7 +56,7 @@ func (sk *OCR2Key) reportToSigData(reportCtx ocrtypes.ReportContext, report ocrt
 }
 
 func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
-	hash, err := sk.reportToSigData(reportCtx, report)
+	hash, err := ReportToSigData(reportCtx, report)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -104,7 +104,7 @@ func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtype
 		}
 	}
 
-	hash, err := sk.reportToSigData(reportCtx, report)
+	hash, err := ReportToSigData(reportCtx, report)
 	if err != nil {
 		return false
 	}

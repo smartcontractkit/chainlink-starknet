@@ -3,12 +3,109 @@ package keys
 import (
 	cryptorand "crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"math/big"
+	"strings"
 	"testing"
+
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// msg to hash
+// [
+//   '0x4acf99cb25a4803916f086440c661295b105a485efdc649ac4de9536da25b', // digest
+//   1, // epoch_and_round
+//   1, // extra_hash
+//   1, // timestamp
+//   '0x00010203000000000000000000000000000000000000000000000000000000', // observers
+//   4, // len
+//   99, // reports
+//   99,
+//   99,
+//   99,
+//   1 juels_per_fee_coin
+// ]
+// hash 0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3
+// --> privKey 2137244795266879235401249500471353867704187908407744160927664772020405449078 r 2898571078985034687500959842265381508927681132188252715370774777831313601543 s 1930849708769648077928186998643944706551011476358007177069185543644456022504 pubKey 1118148281956858477519852250235501663092798578871088714409528077622994994907
+//     privKey 3571531812827697194985986636869245829152430835021673171507607525908246940354 r 3242770073040892094735101607173275538752888766491356946211654602282309624331 s 2150742645846855766116236144967953798077492822890095121354692808525999221887 pubKey 2445157821578193538289426656074203099996547227497157254541771705133209838679
+
+// trim "0x" prefix(if exists) and converts hexidecimal string to byte slice
+func HexToBytes(hexString string) ([]byte, error) {
+	numStr := strings.Replace(hexString, "0x", "", -1)
+	if (len(numStr) % 2) != 0 {
+		numStr = fmt.Sprintf("%s%s", "0", numStr)
+	}
+
+	return hex.DecodeString(numStr)
+}
+
+func TestStarkNetKeyring_TestVector(t *testing.T) {
+	var kr1 OCR2Key
+	bigKey, _ := new(big.Int).SetString("2137244795266879235401249500471353867704187908407744160927664772020405449078", 10)
+	feltKey := junotypes.BigToFelt(bigKey)
+	err := kr1.Unmarshal(feltKey.Bytes())
+	require.NoError(t, err)
+	// kr2, err := NewOCR2Key(cryptorand.Reader)
+	// require.NoError(t, err)
+
+	bytes, err := HexToBytes("0x004acf99cb25a4803916f086440c661295b105a485efdc649ac4de9536da25b")
+	require.NoError(t, err)
+	configDigest, err := ocrtypes.BytesToConfigDigest(bytes)
+	require.NoError(t, err)
+
+	ctx := ocrtypes.ReportContext{
+		ReportTimestamp: ocrtypes.ReportTimestamp{
+			ConfigDigest: configDigest,
+			Epoch:        0,
+			Round:        1,
+		},
+		ExtraHash: [32]byte{
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		},
+	}
+
+	var report []byte
+	report = append(report, junotypes.BigToFelt(big.NewInt(1)).Bytes()...)
+	report = append(report, junotypes.HexToFelt("0x00010203000000000000000000000000000000000000000000000000000000").Bytes()...)
+	report = append(report, junotypes.BigToFelt(big.NewInt(4)).Bytes()...)
+	report = append(report, junotypes.BigToFelt(big.NewInt(99)).Bytes()...)
+	report = append(report, junotypes.BigToFelt(big.NewInt(99)).Bytes()...)
+	report = append(report, junotypes.BigToFelt(big.NewInt(99)).Bytes()...)
+	report = append(report, junotypes.BigToFelt(big.NewInt(99)).Bytes()...)
+	report = append(report, junotypes.BigToFelt(big.NewInt(1)).Bytes()...)
+
+	// check that report hash matches expected
+	msg, err := ReportToSigData(ctx, report)
+
+	expected, err := HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
+	require.NoError(t, err)
+	assert.Equal(t, expected, msg)
+
+	// check that signature matches expected
+	sig, err := kr1.Sign(ctx, report)
+	require.NoError(t, err)
+
+	pub := junotypes.BytesToFelt(sig[0:32])
+	r := junotypes.BytesToFelt(sig[32:64])
+	s := junotypes.BytesToFelt(sig[64:])
+
+	bigPubExpected, _ := new(big.Int).SetString("1118148281956858477519852250235501663092798578871088714409528077622994994907", 10)
+	feltPubExpected := junotypes.BigToFelt(bigPubExpected)
+	assert.Equal(t, feltPubExpected, pub)
+
+	bigRExpected, _ := new(big.Int).SetString("2898571078985034687500959842265381508927681132188252715370774777831313601543", 10)
+	feltRExpected := junotypes.BigToFelt(bigRExpected)
+	assert.Equal(t, feltRExpected, r)
+
+	bigSExpected, _ := new(big.Int).SetString("1930849708769648077928186998643944706551011476358007177069185543644456022504", 10)
+	feltSExpected := junotypes.BigToFelt(bigSExpected)
+	assert.Equal(t, feltSExpected, s)
+}
 
 func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
 	kr1, err := NewOCR2Key(cryptorand.Reader)
@@ -39,7 +136,7 @@ func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, // len
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 73, 150, 2, 210, // observation 1
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 73, 150, 2, 211, // observation 2
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182, 179, 167, 100, 0, 0, // juels per luna (1 with 18 decimal places)
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182, 179, 167, 100, 0, 0, // juels per fee coin (1 with 18 decimal places)
 	}
 
 	t.Run("can verify", func(t *testing.T) {
