@@ -1,11 +1,10 @@
-package starknet
+package ops
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
-	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	gauntlet "github.com/smartcontractkit/chainlink-testing-framework/gauntlet"
 )
 
@@ -14,6 +13,7 @@ var (
 )
 
 type StarknetGauntlet struct {
+	dir     string
 	g       *gauntlet.Gauntlet
 	gr      *GauntletResponse
 	options *gauntlet.ExecCommandOptions
@@ -45,8 +45,9 @@ func NewStarknetGauntlet(workingDir string) (*StarknetGauntlet, error) {
 		return nil, err
 	}
 	sg = &StarknetGauntlet{
-		g:  g,
-		gr: &GauntletResponse{},
+		dir: workingDir,
+		g:   g,
+		gr:  &GauntletResponse{},
 		options: &gauntlet.ExecCommandOptions{
 			ErrHandling:       []string{},
 			CheckErrorsInRead: true,
@@ -56,9 +57,9 @@ func NewStarknetGauntlet(workingDir string) (*StarknetGauntlet, error) {
 }
 
 // Parse gauntlet json response that is generated after yarn gauntlet command execution
-func FetchGauntletJsonOutput() (*GauntletResponse, error) {
+func (sg *StarknetGauntlet) FetchGauntletJsonOutput() (*GauntletResponse, error) {
 	var payload = &GauntletResponse{}
-	gauntletOutput, err := ioutil.ReadFile("../../report.json")
+	gauntletOutput, err := ioutil.ReadFile(sg.dir + "report.json")
 	if err != nil {
 		return payload, err
 	}
@@ -66,14 +67,13 @@ func FetchGauntletJsonOutput() (*GauntletResponse, error) {
 	if err != nil {
 		return payload, err
 	}
-
 	return payload, nil
 }
 
 // Sets up a new network and sets the NODE_URL for Devnet / Starknet RPC
-func (sg *StarknetGauntlet) SetupNetwork(addr string, ntwrkConfigMap string) {
+func (sg *StarknetGauntlet) SetupNetwork(addr string) {
 	sg.g.AddNetworkConfigVar("NODE_URL", addr)
-	sg.g.WriteNetworkConfigMap(ntwrkConfigMap)
+	sg.g.WriteNetworkConfigMap(sg.dir + "packages-ts/starknet-gauntlet-cli/networks/")
 }
 
 func (sg *StarknetGauntlet) DeployAccountContract(salt int64, pubKey string) (string, error) {
@@ -81,7 +81,7 @@ func (sg *StarknetGauntlet) DeployAccountContract(salt int64, pubKey string) (st
 	if err != nil {
 		return "", err
 	}
-	sg.gr, err = FetchGauntletJsonOutput()
+	sg.gr, err = sg.FetchGauntletJsonOutput()
 	if err != nil {
 		return "", err
 	}
@@ -93,7 +93,7 @@ func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sg.gr, err = FetchGauntletJsonOutput()
+	sg.gr, err = sg.FetchGauntletJsonOutput()
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +105,7 @@ func (sg *StarknetGauntlet) DeployOCR2ControllerContract(minSubmissionValue int6
 	if err != nil {
 		return "", err
 	}
-	sg.gr, err = FetchGauntletJsonOutput()
+	sg.gr, err = sg.FetchGauntletJsonOutput()
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +117,7 @@ func (sg *StarknetGauntlet) DeployAccessControllerContract() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sg.gr, err = FetchGauntletJsonOutput()
+	sg.gr, err = sg.FetchGauntletJsonOutput()
 	if err != nil {
 		return "", err
 	}
@@ -129,19 +129,19 @@ func (sg *StarknetGauntlet) SetOCRBilling(observationPaymentGjuels int64, transm
 	if err != nil {
 		return "", err
 	}
-	sg.gr, err = FetchGauntletJsonOutput()
+	sg.gr, err = sg.FetchGauntletJsonOutput()
 	if err != nil {
 		return "", err
 	}
 	return sg.gr.Responses[0].Contract, nil
 }
 
-func (sg *StarknetGauntlet) SetConfigDetails(nKeys []ctfClient.NodeKeysBundle, cfg string, ocrAddress string) (string, error) {
+func (sg *StarknetGauntlet) SetConfigDetails(cfg string, ocrAddress string) (string, error) {
 	_, err := sg.g.ExecCommand([]string{"ocr2:set_config", "--input=" + cfg, ocrAddress}, *sg.options)
 	if err != nil {
 		return "", err
 	}
-	sg.gr, err = FetchGauntletJsonOutput()
+	sg.gr, err = sg.FetchGauntletJsonOutput()
 	if err != nil {
 		return "", err
 	}
