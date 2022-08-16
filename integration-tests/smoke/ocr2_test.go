@@ -108,17 +108,25 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 		By("Setting up bootstrap and oracle nodes", func() {
 			// TODO: validate juels per fee coin calculation
+			// juelsPerFeeCoinSource := `
+			// val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"ETH"}>]
+			// parse [type="jsonparse" path="ETH"]
+			// scale  [type="multiply" times=1000000000]
+			// val -> parse -> scale`
+
+			// observationSource := `
+			// val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"USD"}>]
+			// parse [type="jsonparse" path="USD"]
+			// scale [type="multiply" times=1000000000]
+			// val -> parse -> scale
+			// `
 			juelsPerFeeCoinSource := ` 
-			val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"ETH"}>]
-			parse [type="jsonparse" path="ETH"]
-			scale  [type="multiply" times=1000000000]
-			val -> parse -> scale`
+			sum  [type="sum" values=<[451000]> ]
+			sum`
 
 			observationSource := `
-			val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"USD"}>]
-			parse [type="jsonparse" path="USD"]
-			scale [type="multiply" times=1000000000]
-			val -> parse -> scale
+			sum [type="sum" values=<[900000000]>]
+			sum
 			`
 
 			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
