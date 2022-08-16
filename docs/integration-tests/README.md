@@ -4,8 +4,8 @@
 
 1. `ginkgo -r --focus @ocr integration-tests/smoke` (from core of repo)
 
-
 ### Structure
+
 [Commons](../../integration-tests/common/common.go) - Common EVM based methods to generate chains, nodes, key bundles
 
 [Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch client details
@@ -16,8 +16,8 @@
 
 [OCRv2 tests](../../integration-tests/smoke/ocr2_test.go) - Example smoke test to set up environment, configure it and run the smoke test
 
-
 ### Writing tests
+
 See examples [here](../../integration-tests/smoke/ocr2_test.go)
 
 1. Instantiate Gauntlet
@@ -33,6 +33,7 @@ See examples [here](../../integration-tests/smoke/ocr2_test.go)
 11. Set up boostrap and oracle nodes
 
 ### Metrics and logs (K8)
+
 1. Navigate to Grafana
 2. Search for `chainlink-testing-insights` dashboard
 3. Select the starknet namespace

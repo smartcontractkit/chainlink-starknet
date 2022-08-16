@@ -23,14 +23,14 @@ jobs:
         with:
           cl_repo: smartcontractkit/chainlink
           # by default we are integrating with develop
-          cl_ref: 352acfc4a95e032cf76087af363cbd51a8848c75
+          cl_ref: ${{ github.event.inputs.cl_branch_ref }}
           # commit of the caller branch
           dep_starknet_sha: ${{ github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
-          GOPRIVATE: github.com/smartcontractkit/chainlink-starknet
+          GOPRIVATE: github.com/smartcontractkit/chainlink-starknet/relayer
   e2e_cutsom_run_smoke_tests:
     name: E2E Custom Run Smoke Tests
     runs-on: ubuntu-latest
