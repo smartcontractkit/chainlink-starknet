@@ -22,7 +22,8 @@ func PadBytes(a []byte, length int) []byte {
 
 // convert 32 byte to "0" + 31 bytes
 func EnsureFelt(b [32]byte) (out []byte) {
-	out = b[:]
+	out = make([]byte, 32)
+	copy(out[:], b[:])
 	out[0] = 0
 	return out
 }
