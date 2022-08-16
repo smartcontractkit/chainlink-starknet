@@ -1,17 +1,18 @@
 package keys
 
 import (
+	"crypto/rand"
+	"fmt"
+	"io"
 	"math/big"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	starksig "github.com/NethermindEth/juno/pkg/crypto/signature"
-	"github.com/NethermindEth/juno/pkg/crypto/weierstrass"
+	"github.com/dontpanicdao/caigo"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 // constants
 var (
-	curve   = weierstrass.Stark()
 	byteLen = 32
 
 	// note: the contract hash must match the corresponding OZ gauntlet command hash - otherwise addresses will not correspond
@@ -20,7 +21,7 @@ var (
 )
 
 // PubKeyToContract implements the pubkey to deployed account given contract hash + salt
-func PubKeyToAccount(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte {
+func PubKeyToAccount(pubkey PublicKey, classHash, salt *big.Int) []byte {
 	hash := pedersen.ArrayDigest(
 		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
 		big.NewInt(0),
@@ -34,6 +35,25 @@ func PubKeyToAccount(pubkey starksig.PublicKey, classHash, salt *big.Int) []byte
 }
 
 // PubToStarkKey implements the pubkey to starkkey functionality: https://github.com/0xs34n/starknet.js/blob/cd61356974d355aa42f07a3d63f7ccefecbd913c/src/utils/ellipticCurve.ts#L49
-func PubKeyToStarkKey(pubkey starksig.PublicKey) []byte {
+func PubKeyToStarkKey(pubkey PublicKey) []byte {
 	return starknet.PadBytesBigInt(pubkey.X, byteLen)
+}
+
+// reimplements: https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// using io.Reader, and Key struct
+func GenerateKey(material io.Reader) (k Key, err error) {
+	max := new(big.Int).Sub(caigo.Curve.Max, big.NewInt(1))
+
+	k.priv, err = rand.Int(material, max)
+	if err != nil {
+		return k, err
+	}
+
+	k.pub.X, k.pub.Y, err = caigo.Curve.PrivateToPoint(k.priv)
+
+	if !caigo.Curve.IsOnCurve(k.pub.X, k.pub.Y) {
+		return k, fmt.Errorf("key gen is not on stark curve")
+	}
+
+	return k, nil
 }
