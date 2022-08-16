@@ -29,6 +29,14 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+      - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
+        id: tool-versions
+      - name: Setup Node ${{ steps.tool-versions.outputs.nodejs_version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
+      - name: Install
+        run: cd .. && yarn install --frozen-lockfile
 
       - name: Install Nix
         uses: cachix/install-nix-action@v17
