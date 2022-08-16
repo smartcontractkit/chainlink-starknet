@@ -1,6 +1,7 @@
 package starknet
 
 import (
+	"fmt"
 	"math/big"
 )
 
@@ -26,4 +27,8 @@ func EnsureFelt(b [32]byte) (out []byte) {
 	copy(out[:], b[:])
 	out[0] = 0
 	return out
+}
+
+func NilResultError(funcName string) error {
+	return fmt.Errorf("nil result in %s", funcName)
 }

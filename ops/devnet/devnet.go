@@ -2,6 +2,7 @@ package devnet
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -34,16 +35,17 @@ func AutoSyncL1(ctx context.Context) {
 	}()
 }
 
-// FundAccounts Funds provided accounts with 500000 eth each
+// FundAccounts Funds provided accounts with 100 eth each
 func FundAccounts(l2AccList []string) error {
 	for _, key := range l2AccList {
-		_, err := rClient.R().SetBody(map[string]interface{}{
+		res, err := rClient.R().SetBody(map[string]interface{}{
 			"address": key,
-			"amount":  500000,
+			"amount":  1e21,
 		}).Post("/mint")
 		if err != nil {
 			return err
 		}
+		log.Info().Msg(fmt.Sprintf("Funding account: %s", string(res.Body())))
 	}
 	return nil
 }
