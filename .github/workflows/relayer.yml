@@ -42,4 +42,4 @@ jobs:
         run: nix develop -c go test -v ./pkg/... -tags integration
 
       - name: Run tests with the race detector enabled
-        run: nix develop -c go test -v ./pkg/... -race -count=10 -tags integration
+        run: nix develop -c go test -v ./pkg/... -race -count=10
