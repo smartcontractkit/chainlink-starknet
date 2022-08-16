@@ -20,7 +20,7 @@ import (
 func TestOCR2Client(t *testing.T) {
 	// todo: adjust for e2e tests
 	chainID := gateway.GOERLI_ID
-	ocr2ContractAddress := "0x069a59ca18658ec35418742a6648d0c85888f8b4bd01dfea45951362d01b2d63"
+	ocr2ContractAddress := "0x01c85befe8de5deb81443cd3655b293a381a841fa56e6da8fc9585c838890c22"
 	lggr := logger.Test(t)
 
 	duration := 10 * time.Second

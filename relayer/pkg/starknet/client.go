@@ -122,6 +122,9 @@ func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (blo
 	if err != nil {
 		return block, errors.Wrap(err, "couldn't get block by number")
 	}
+	if block == nil {
+		return block, NilResultError("client.BlockByNumberGateway")
+	}
 
 	return block, nil
 }
@@ -139,8 +142,10 @@ func (c *Client) BlockByHash(ctx context.Context, hash string, _ string) (*caigo
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.BlockByHash")
 	}
+	if out == nil {
+		return out, NilResultError("client.BlockByHash")
+	}
 	return out, nil
-
 }
 
 func (c *Client) BlockByNumber(ctx context.Context, num *big.Int, _ string) (*caigotypes.Block, error) {
@@ -153,6 +158,9 @@ func (c *Client) BlockByNumber(ctx context.Context, num *big.Int, _ string) (*ca
 	out, err := c.gw.BlockByNumber(ctx, num, "")
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.BlockByNumber")
+	}
+	if out == nil {
+		return out, NilResultError("client.BlockByNumber")
 	}
 	return out, nil
 
@@ -168,6 +176,9 @@ func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockH
 	out, err := c.gw.Call(ctx, calls, blockHashOrTag)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Call")
+	}
+	if out == nil {
+		return out, NilResultError("client.Call")
 	}
 	return out, nil
 
@@ -199,6 +210,11 @@ func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, er
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.AccountNonce")
 	}
+
+	if out == nil {
+		return out, NilResultError("client.AccountNonce")
+	}
+
 	return out, nil
 
 }
@@ -213,6 +229,9 @@ func (c *Client) Invoke(ctx context.Context, invoke caigotypes.FunctionInvoke) (
 	out, err := c.gw.Invoke(ctx, invoke)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Invoke")
+	}
+	if out == nil {
+		return out, NilResultError("client.Invoke")
 	}
 	return out, nil
 
@@ -229,6 +248,9 @@ func (c *Client) TransactionByHash(ctx context.Context, hash string) (*caigotype
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.TransactionByHash")
 	}
+	if out == nil {
+		return out, NilResultError("client.TransactionByHash")
+	}
 	return out, nil
 
 }
@@ -244,6 +266,9 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotyp
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.TransactionReceipt")
 	}
+	if out == nil {
+		return out, NilResultError("client.TransactionReceipt")
+	}
 	return out, nil
 
 }
@@ -258,6 +283,9 @@ func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke
 	out, err := c.gw.EstimateFee(ctx, call, hash)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.EstimateFee")
+	}
+	if out == nil {
+		return out, NilResultError("client.EstimateFee")
 	}
 	return out, nil
 
