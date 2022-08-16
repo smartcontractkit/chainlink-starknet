@@ -58,6 +58,8 @@ func (c *transmissionsCache) updateTransmission(ctx context.Context) error {
 		LatestTimestamp: timestamp,
 	}
 
+	c.lggr.Debugw("transmission cache update", "details", c.transmissionDetails)
+
 	return nil
 }
 
