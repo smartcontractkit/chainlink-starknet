@@ -38,8 +38,8 @@ function printResult(latestRound: CallContractResponse, decimals: CallContractRe
   console.log('round_id= ', parseInt(latestRound.result[0], 16))
   console.log('answer= ', parseInt(latestRound.result[1], 16))
   console.log('block_num= ', parseInt(latestRound.result[2], 16))
-  console.log('observation_timestamp= ', parseInt(latestRound.result[3], 16))
-  console.log('transmission_timestamp= ', parseInt(latestRound.result[4], 16))
+  console.log('staerted_at= ', parseInt(latestRound.result[3], 16))
+  console.log('updated_at= ', parseInt(latestRound.result[4], 16))
   console.log('decimals= ', parseInt(decimals.result[0], 16))
 }
 
