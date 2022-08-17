@@ -54,6 +54,8 @@ github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6
 github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
+github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac h1:TQ2m26VW06Df1P82Ed/jZhBtf13pReWyl2XQ8hy+J08=
+github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac/go.mod h1:FTk2+xybtQe5X+oNFx+a0n5EeZMD9Nc+LCH4fxFwrEE=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
@@ -101,6 +103,7 @@ github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.3.41 h1:eS/ohntbEOFGagaYwxjSMF50
 github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.3.41/go.mod h1:LgPDb0Qz4fGqI4JTqXUAumn+kggDfDIjm1mpyb4qvlA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/cp v1.1.1 h1:nCb6ZLdB7NRaqsm91JtQTAme2SKJzXVsdPIPkyJr1MU=
+github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cespare/xxhash/v2 v2.1.2 h1:YRXhKfTDauu4ajMg1TPgFO5jnlC2HCbmLXMcTG5cbYE=
@@ -546,6 +549,8 @@ github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee/go.mod h1:ODzTQ5y/i3/9EQzfv1MxKXG9N+BUGOSw/xTNkdY1kcw=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8 h1:bAOP5KcHXwbcysScCXq4Ovgufs4HyDxWkUkyVhGhcfY=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8/go.mod h1:xv840sOjnMYkR+YUYta/sVr0HF1Tb52vUJ777yYEaXc=
+github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220812145122-12f3ceba55e2 h1:mLLfd5/fj+FTbOgmuhsYO3YWhyqdS6p+waBzr58xjM8=
+github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220812145122-12f3ceba55e2/go.mod h1:gW4UmEtqvdbM2mBVUFzQBaglvHb5B0eVWuFmVxaKyHU=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 h1:jKnLPHAE7x5SDLG6PnLqwg+IeZ8gFSmg0iKBJsSuflo=
 github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
@@ -584,6 +589,7 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a h1:1ur3QoCqvE5fl+nylMaIr9PVV1w343YRDtsy+Rwu7XI=
 github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
+github.com/test-go/testify v1.1.4 h1:Tf9lntrKUMHiXQ07qBScBTSA0dhYQlu83hswqelv1iE=
 github.com/tklauser/go-sysconf v0.3.9 h1:JeUVdAOWhhxVcU6Eqr/ATFHgXk/mmiItdKeJPev3vTo=
 github.com/tklauser/go-sysconf v0.3.9/go.mod h1:11DU/5sG7UexIrp/O6g35hrWzu0JxlwQ3LSFUzyeuhs=
 github.com/tklauser/numcpus v0.3.0 h1:ILuRUQBtssgnxw0XXIjKUC56fgnOrFoQQ/4+DeU2biQ=
@@ -662,6 +668,8 @@ golang.org/x/exp v0.0.0-20191227195350-da58074b4299/go.mod h1:2RIsYlXP63K8oxa1u0
 golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a/go.mod h1:2RIsYlXP63K8oxa1u096TMicItID8zy7Y6sNkU49FU4=
 golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EHIKF9dgMWnmCNThgcyBT1FY9mM=
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
+golang.org/x/exp v0.0.0-20220608143224-64259d1afd70 h1:8uGxpY2cLF9H/NSHUiEWUIBZqIcsMzMWIMPCCUkyYgc=
+golang.org/x/exp v0.0.0-20220608143224-64259d1afd70/go.mod h1:yh0Ynu2b5ZUe3MQfp2nM0ecK7wsgouWTDN0FNeJuIys=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.0.0-20190802002840-cff245a6509b/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=

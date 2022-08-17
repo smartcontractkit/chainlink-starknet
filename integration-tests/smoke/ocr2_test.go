@@ -39,6 +39,9 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		chainId                 = gateway.GOERLI_ID
 		cfg                     *common.Common
 		decimals                = 9
+		rpcRequestTimeout       = 10 * time.Second
+		roundWaitTimeout        = 5 * time.Minute
+		increasingCountMax      = 10
 	)
 
 	BeforeEach(func() {
@@ -149,24 +152,28 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
-			requestTimeout := 10 * time.Second
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][0]
 
 			// build client
-			reader, err := starknet.NewClient(chainId, url, lggr, &requestTimeout)
+			reader, err := starknet.NewClient(chainId, url, lggr, &rpcRequestTimeout)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
 			client, err := ocr2.NewClient(reader, lggr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
 
 			// assert new rounds are occuring
 			details := ocr2.TransmissionDetails{}
-			var increasing bool
+			increasing := 0 // track number of increasing rounds
 			var stuck bool
 			stuckCount := 0
-			ctx := context.Background() // context backround used because timeout handeld by requestTimeout param
+			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 
-			for i := 0; i < 30; i++ {
+			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
+				// end condition
+				if increasing == increasingCountMax {
+					break
+				}
+
 				time.Sleep(5 * time.Second)
 
 				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
@@ -192,7 +199,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// check increasing
 				Expect(res.Digest == details.Digest).To(BeTrue(), "Config digest should not change")
 				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
-					increasing = true
+					increasing += 1
 					stuck = false
 					stuckCount = 0 // reset counter
 					continue
@@ -202,11 +209,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				stuckCount += 1
 				if stuckCount > 5 {
 					stuck = true
-					increasing = false
+					increasing = 0
 				}
 			}
 
-			Expect(increasing).To(BeTrue(), "Round + epochs should be increasing")
+			Expect(increasing == increasingCountMax).To(BeTrue(), "Round + epochs should be increasing")
 			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
 		})
 	})

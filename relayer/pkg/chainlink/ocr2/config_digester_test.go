@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NethermindEth/juno/pkg/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/test-go/testify/assert"
@@ -53,7 +52,7 @@ func TestConfigDigester(t *testing.T) {
 
 func TestConfigDigester_InvalidChainID(t *testing.T) {
 	d := ocr2.NewOffchainConfigDigester(
-		rpc.ChainID(strings.Repeat("a", 256)), // chain ID is too long
+		strings.Repeat("a", 256), // chain ID is too long
 		"42c59a00fd21bdc27c7be3e9cc272a9b684037e4a37417c2d5a920081e6e87c",
 	)
 

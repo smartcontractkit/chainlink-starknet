@@ -43,9 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
-      - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
-        id: tool-versions
-
       - name: Install Nix
         uses: cachix/install-nix-action@v17
         with:
