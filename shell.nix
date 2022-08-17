@@ -8,7 +8,7 @@
     python39Packages.fastecdsa # so libgmp is correctly sourced
     gmp
     nodejs-18_x
-    (yarn.override { nodejs = nodejs-16_x; })
+    (yarn.override { nodejs = nodejs-18_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
