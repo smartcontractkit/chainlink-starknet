@@ -50,6 +50,8 @@ from contracts.cairo.ownable import (
     Ownable_accept_ownership
 )
 
+from cairo.ocr2.interfaces.IAggregator import Round
+
 # ---
 
 const MAX_ORACLES = 31
@@ -832,14 +834,6 @@ func decimals{
     return (decimals)
 end
 
-struct Round:
-    member round_id: felt
-    member answer: felt
-    member block_num: felt
-    member observation_timestamp: felt
-    member transmission_timestamp: felt
-end
-
 @view
 func round_data{
     syscall_ptr : felt*,
@@ -854,8 +848,8 @@ func round_data{
         round_id=round_id,
         answer=transmission.answer,
         block_num=transmission.block_num,
-        observation_timestamp=transmission.observation_timestamp,
-        transmission_timestamp=transmission.transmission_timestamp,
+        started_at=transmission.observation_timestamp,
+        updated_at=transmission.transmission_timestamp,
     )
     return (round)
 end
@@ -873,8 +867,8 @@ func latest_round_data{
         round_id=latest_round_id,
         answer=transmission.answer,
         block_num=transmission.block_num,
-        observation_timestamp=transmission.observation_timestamp,
-        transmission_timestamp=transmission.transmission_timestamp,
+        started_at=transmission.observation_timestamp,
+        updated_at=transmission.transmission_timestamp,
     )
     return (round)
 end
@@ -1023,8 +1017,6 @@ func billing_set(
 ):
 end
 
-# TODO: Why here and not in OffchainAggregatorBilling
-# Looks like they are merged now
 @external
 func set_billing{
     syscall_ptr : felt*,

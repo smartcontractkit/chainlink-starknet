@@ -17,7 +17,7 @@ from cairo.SimpleReadAccessController.library import simple_read_access_controll
 from cairo.ownable import Ownable_only_owner
 
 @event
-func RoundUpdated(status : felt, transmission_timestamp : felt):
+func RoundUpdated(status : felt, updated_at : felt):
 end
 
 @event
@@ -32,10 +32,6 @@ end
 
 @storage_var
 func s_l1_sender() -> (address : felt):
-end
-
-@storage_var
-func s_l2_cross_domain_messenger() -> (address : felt):
 end
 
 @storage_var
@@ -119,14 +115,12 @@ namespace sequencer_uptime_feed:
         assert_boolean(status)
 
         let (latest_round_id) = s_latest_round_id.read()
-        let (latest_observation_timestamp) = s_rounds.read(
-            latest_round_id, Round.observation_timestamp
-        )
+        let (latest_started_at) = s_rounds.read(latest_round_id, Round.started_at)
         let (local latest_status) = s_rounds.read(latest_round_id, Round.answer)
 
-        let (lt) = is_le(timestamp, latest_observation_timestamp - 1)  # timestamp < latest_observation_timestamp
+        let (lt) = is_le(timestamp, latest_started_at - 1)  # timestamp < latest_started_at
         if lt == TRUE:
-            UpdateIgnored.emit(latest_status, latest_observation_timestamp, status, timestamp)
+            UpdateIgnored.emit(latest_status, latest_started_at, status, timestamp)
             return ()
         end
 
@@ -188,12 +182,8 @@ func _set_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 ):
     s_rounds.write(id=round_id, field=Round.answer, value=value.answer)
     s_rounds.write(id=round_id, field=Round.block_num, value=value.block_num)
-    s_rounds.write(
-        id=round_id, field=Round.observation_timestamp, value=value.observation_timestamp
-    )
-    s_rounds.write(
-        id=round_id, field=Round.transmission_timestamp, value=value.transmission_timestamp
-    )
+    s_rounds.write(id=round_id, field=Round.started_at, value=value.started_at)
+    s_rounds.write(id=round_id, field=Round.updated_at, value=value.updated_at)
 
     return ()
 end
@@ -203,10 +193,10 @@ func _get_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 ) -> (round : Round):
     let (answer) = s_rounds.read(id=round_id, field=Round.answer)
     let (block_num) = s_rounds.read(id=round_id, field=Round.block_num)
-    let (observation_timestamp) = s_rounds.read(id=round_id, field=Round.observation_timestamp)
-    let (transmission_timestamp) = s_rounds.read(id=round_id, field=Round.transmission_timestamp)
+    let (started_at) = s_rounds.read(id=round_id, field=Round.started_at)
+    let (updated_at) = s_rounds.read(id=round_id, field=Round.updated_at)
 
-    return (Round(round_id, answer, block_num, observation_timestamp, transmission_timestamp))
+    return (Round(round_id, answer, block_num, started_at, updated_at))
 end
 
 func _set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -229,14 +219,14 @@ func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     s_latest_round_id.write(round_id)
 
     let (block_num) = get_block_number()
-    let (transmission_timestamp) = get_block_timestamp()
+    let (updated_at) = get_block_timestamp()
 
     let round = Round(
         round_id=round_id,
         answer=status,
         block_num=block_num,
-        observation_timestamp=timestamp,
-        transmission_timestamp=transmission_timestamp,
+        started_at=timestamp,
+        updated_at=updated_at,
     )
     _set_round(round_id, round)
 
@@ -250,9 +240,9 @@ end
 func _update_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt, status : felt
 ):
-    let (transmission_timestamp) = get_block_timestamp()
-    s_rounds.write(round_id, Round.transmission_timestamp, transmission_timestamp)
+    let (updated_at) = get_block_timestamp()
+    s_rounds.write(round_id, Round.updated_at, updated_at)
 
-    RoundUpdated.emit(status, transmission_timestamp)
+    RoundUpdated.emit(status, updated_at)
     return ()
 end

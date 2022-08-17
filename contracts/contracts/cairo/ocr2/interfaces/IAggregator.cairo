@@ -4,8 +4,8 @@ struct Round:
     member round_id : felt
     member answer : felt
     member block_num : felt
-    member observation_timestamp : felt
-    member transmission_timestamp : felt
+    member started_at : felt
+    member updated_at : felt
 end
 
 @event
