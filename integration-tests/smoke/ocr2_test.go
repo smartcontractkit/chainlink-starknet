@@ -40,7 +40,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		cfg                     *common.Common
 		decimals                = 9
 		rpcRequestTimeout       = 10 * time.Second
-		roundWaitTimeout        = 5 * time.Minute
+		roundWaitTimeout        = 10 * time.Minute
 		increasingCountMax      = 10
 	)
 
