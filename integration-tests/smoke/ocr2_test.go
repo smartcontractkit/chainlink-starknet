@@ -1,15 +1,25 @@
 package smoke_test
 
-//revive:disable:dot-imports
+// revive:disable:dot-imports
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"os"
+	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
+	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
@@ -139,6 +149,65 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
+			requestTimeout := 10 * time.Second
+			lggr := logger.Nop()
+			url := t.Env.URLs[serviceKeyL2][0]
+
+			// build client
+			reader, err := starknet.NewClient(chainId, url, lggr, &requestTimeout)
+			Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
+			client, err := ocr2.NewClient(reader, lggr)
+			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
+
+			// assert new rounds are occuring
+			details := ocr2.TransmissionDetails{}
+			var increasing bool
+			var stuck bool
+			stuckCount := 0
+			ctx := context.Background() // context backround used because timeout handeld by requestTimeout param
+
+			for i := 0; i < 30; i++ {
+				time.Sleep(5 * time.Second)
+
+				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
+				Expect(err).ShouldNot(HaveOccurred(), "Reading transmission details should not fail")
+				log.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
+
+				// continue if no changes
+				if res.Epoch == 0 && res.Round == 0 {
+					continue
+				}
+
+				// if changes from zero values set (should only initially)
+				if res.Epoch > 0 && details.Epoch == 0 {
+					Expect(res.Epoch > details.Epoch).To(BeTrue())
+					Expect(res.Round >= details.Round).To(BeTrue())
+					Expect(res.LatestAnswer.Cmp(big.NewInt(0)) == 1).To(BeTrue())
+					Expect(res.Digest != details.Digest).To(BeTrue())
+					Expect(details.LatestTimestamp.Before(res.LatestTimestamp)).To(BeTrue())
+					details = res
+					continue
+				}
+
+				// check increasing
+				Expect(res.Digest == details.Digest).To(BeTrue(), "Config digest should not change")
+				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
+					increasing = true
+					stuck = false
+					stuckCount = 0 // reset counter
+					continue
+				}
+
+				// reach this point, answer may be stuck
+				stuckCount += 1
+				if stuckCount > 5 {
+					stuck = true
+					increasing = false
+				}
+			}
+
+			Expect(increasing).To(BeTrue(), "Round + epochs should be increasing")
+			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
 		})
 	})
 

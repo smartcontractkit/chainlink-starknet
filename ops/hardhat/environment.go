@@ -78,7 +78,7 @@ func New(props *ethereum.Props) environment.ConnectedChart {
 	return Chart{
 		HelmProps: &ethereum.HelmProps{
 			Name:   "hardhat",
-			Path:   "../../relayer/ops/charts/hardhat",
+			Path:   "../../ops/charts/hardhat",
 			Values: &props.Values,
 		},
 		Props: props,
