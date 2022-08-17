@@ -42,7 +42,7 @@ func main() {
 	// run ginkgo commands to spin up environment
 	case "run":
 		os.Chdir("../../../") // move to repo root
-		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.localhost:12345/chainlink", "--chainlink-version", "local")
+		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.localhost:12345/chainlink", "--chainlink-version", "local", "--keep-alive")
 	// stop k8s namespace from environment
 	case "stop":
 		if len(os.Args) < 3 {
