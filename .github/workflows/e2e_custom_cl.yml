@@ -31,7 +31,7 @@ jobs:
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
           GOPRIVATE: github.com/smartcontractkit/chainlink-starknet/relayer
-  e2e_cutsom_run_smoke_tests:
+  e2e_custom_run_smoke_tests:
     name: E2E Custom Run Smoke Tests
     runs-on: ubuntu-latest
     needs: [ e2e_custom_build_custom_chainlink_image ]
@@ -46,6 +46,8 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+      - name: Install Yarn dependencies
+        run: yarn install --frozen-lockfile
       - name: Run Tests
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@7d405e28e1419c0a48198793e6647005c409f4cf # v2.0.4
         with:
