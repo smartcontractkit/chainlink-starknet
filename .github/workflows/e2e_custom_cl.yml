@@ -19,7 +19,7 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@7d405e28e1419c0a48198793e6647005c409f4cf # v2.0.4
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@49420f73b5604d3904d82f8b753b2ccb6b8fca84 # v2.0.4
         with:
           cl_repo: smartcontractkit/chainlink
           # by default we are integrating with develop
@@ -30,7 +30,6 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
-          GOPRIVATE: github.com/smartcontractkit/chainlink-starknet/relayer
   e2e_custom_run_smoke_tests:
     name: E2E Custom Run Smoke Tests
     runs-on: ubuntu-latest

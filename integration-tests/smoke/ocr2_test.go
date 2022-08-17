@@ -4,6 +4,7 @@ package smoke_test
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math/big"
 	"os"
@@ -14,6 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
@@ -22,6 +24,14 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 )
+
+var (
+	keepAlive bool
+)
+
+func init() {
+	flag.BoolVar(&keepAlive, "keep-alive", false, "enable to keep the cluster alive")
+}
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
@@ -219,9 +229,14 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	})
 
 	AfterEach(func() {
+		// do not clean up if keepAlive flag is used
+		if keepAlive {
+			return
+		}
+
 		By("Tearing down the environment", func() {
-			//	err = actions.TeardownSuite(t.Env, "./", t.GetChainlinkNodes(), nil, nil)
-			//	Expect(err).ShouldNot(HaveOccurred())
+			err = actions.TeardownSuite(t.Env, "./", t.GetChainlinkNodes(), nil, nil)
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 })
