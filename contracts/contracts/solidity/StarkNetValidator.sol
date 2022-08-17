@@ -23,11 +23,11 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     IStarknetMessaging public immutable STARKNET_MESSAGING;
     uint256 public immutable L2_UPTIME_FEED_ADDR;
 
-    /// Invalid StarkNet messaging contract address - the address is 0.
-    error InvalidStarkNetMessaging ();
+    /// @notice StarkNet messaging contract address - the address is 0.
+    error InvalidStarkNetMessaging();
 
-    /// Invalid StarkNet uptime feed address - the address is 0.
-    error InvalidUptimeFeedAddress ();
+    /// @notice StarkNet uptime feed address - the address is 0.
+    error InvalidUptimeFeedAddress();
 
     /**
      * @param starkNetMessaging the address of the StarkNet Messaging contract address
@@ -35,11 +35,11 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
      */
     constructor(address starkNetMessaging, uint256 l2UptimeFeedAddr) {
         if (starkNetMessaging == address(0)) {
-            revert InvalidStarkNetMessaging({});
+            revert InvalidStarkNetMessaging();
         }
 
         if (l2UptimeFeedAddr == 0) {
-            revert InvalidUptimeFeedAddress({});
+            revert InvalidUptimeFeedAddress();
         }
 
         STARKNET_MESSAGING = IStarknetMessaging(starkNetMessaging);
@@ -78,7 +78,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
         bool status = currentAnswer == ANSWER_SEQ_OFFLINE;
         uint256[] memory payload = new uint256[](2);
 
-        // File payload with `status` and `timestamp`
+        // Fill payload with `status` and `timestamp`
         payload[0] = toUInt256(status);
         payload[1] = block.timestamp;
         // Make the StarkNet x-domain call.
