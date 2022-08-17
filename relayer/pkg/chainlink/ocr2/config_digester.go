@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/NethermindEth/juno/pkg/rpc"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -18,11 +17,11 @@ const ConfigDigestPrefixStarknet types.ConfigDigestPrefix = 4
 var _ types.OffchainConfigDigester = (*offchainConfigDigester)(nil)
 
 type offchainConfigDigester struct {
-	chainID  rpc.ChainID
-	contract rpc.Address
+	chainID  string
+	contract string
 }
 
-func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offchainConfigDigester {
+func NewOffchainConfigDigester(chainID, contract string) offchainConfigDigester {
 	return offchainConfigDigester{
 		chainID:  chainID,
 		contract: contract,
@@ -33,7 +32,7 @@ func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offcha
 func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
-	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(string(d.contract), "0x"), 16)
+	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(d.contract, "0x"), 16)
 	if !valid {
 		return configDigest, errors.New("invalid contract address")
 	}
