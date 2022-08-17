@@ -80,7 +80,7 @@ func New(props *ethereum.Props) environment.ConnectedChart {
 	return Chart{
 		HelmProps: &ethereum.HelmProps{
 			Name:   "starknet-dev",
-			Path:   "../../relayer/ops/charts/devnet",
+			Path:   "../../ops/charts/devnet",
 			Values: &props.Values,
 		},
 		Props: props,

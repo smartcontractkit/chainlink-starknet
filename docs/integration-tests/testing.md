@@ -13,7 +13,7 @@ make e2e_test
 1. Spin up an env, for example, see yaml file for more options with a stark-devnet/pathfinder real node
 
 ```
-envcli new -p relayer/ops/chainlink-starknet.yaml -o local_env.yaml
+envcli new -p ops/chainlink-starknet.yaml -o local_env.yaml
 ```
 
 2. Check created file in a previous command output, example `Environment setup and written to file environmentFile=chainlink-stark-k42hp.yaml`

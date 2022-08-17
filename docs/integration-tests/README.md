@@ -10,7 +10,7 @@
 
 [Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch client details
 
-[Starknet Commons](../../relayer/ops/devnet/devnet.go) - Methods related to starknet and L2 actions such as minting, L1<>L2 sync
+[Starknet Commons](../../ops/devnet/devnet.go) - Methods related to starknet and L2 actions such as minting, L1<>L2 sync
 
 [Gauntlet wrapper](../../relayer/pkg/starknet/gauntlet_starknet.go) - Wrapper for Starknet gauntlet
 

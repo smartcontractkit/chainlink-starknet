@@ -8,12 +8,14 @@ require (
 	github.com/onsi/gomega v1.20.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-00010101000000-000000000000
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220729175036-d01d60ffd0b4
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220812145122-12f3ceba55e2
 )
 
-require github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
+require (
+	github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
+	github.com/rs/zerolog v1.27.0
+)
 
 require (
 	github.com/aws/constructs-go/constructs/v10 v10.1.43 // indirect
@@ -30,7 +32,7 @@ require (
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/slack-go/slack v0.11.2 // indirect
 	github.com/smartcontractkit/chainlink-env v0.2.35
-	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	gopkg.in/guregu/null.v4 v4.0.0 // indirect
 )
@@ -39,7 +41,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
-	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/VictoriaMetrics/fastcache v1.10.0 // indirect
@@ -91,7 +92,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
-	github.com/rs/zerolog v1.27.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 // indirect
@@ -138,9 +138,9 @@ require (
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/smartcontractkit/chainlink-starknet/ops => ../../chainlink-starknet/ops
+replace github.com/smartcontractkit/chainlink-starknet/ops => ../ops
 
-replace github.com/smartcontractkit/chainlink/integration-tests => ../../chainlink/integration-tests
+replace github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
 
 // Fix go mod tidy issue for ambiguous imports from go-ethereum
 // See https://github.com/ugorji/go/issues/279
