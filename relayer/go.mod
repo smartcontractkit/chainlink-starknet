@@ -8,8 +8,7 @@ require (
 	github.com/dontpanicdao/caigo v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee
-	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
-	github.com/smartcontractkit/helmenv v1.0.71
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818192054-2a761cdd6f6a
 	github.com/smartcontractkit/libocr v0.0.0-20220701150323-d815c8d0eab8
 	github.com/stretchr/testify v1.7.1
 	github.com/test-go/testify v1.1.4
@@ -139,6 +138,8 @@ require (
 	github.com/shirou/gopsutil v3.21.10+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/smartcontractkit/chainlink-testing-framework v1.1.18 // indirect
+	github.com/smartcontractkit/helmenv v1.0.71 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.4.0 // indirect
