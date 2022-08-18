@@ -2,7 +2,9 @@ package common
 
 import (
 	"context"
+	"encoding/hex"
 	"flag"
+	"strings"
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/go-resty/resty/v2"
@@ -13,6 +15,7 @@ import (
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
@@ -21,21 +24,29 @@ import (
 const (
 	ChainName = "starknet"
 	ChainId   = gateway.GOERLI_ID // default chainID for local devnet and live testnet
-	// These are one of the default addresses based on the seed we pass to devnet which is 123
-	defaultWalletAddress = "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502"
-	defaultWalletPrivKey = "0xc4da537c1651ddae44867db30d67b366"
 )
 
 var (
 	err       error
 	clImage   string
 	clVersion string
+
+	// These are one of the default addresses based on the seed we pass to devnet which is 0
+	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
+	defaultWalletAddress string // derived in init()
 )
 
 func init() {
 	// pass in flags to override default chainlink image & version
 	flag.StringVar(&clImage, "chainlink-image", "", "specify chainlink image to be used")
 	flag.StringVar(&clVersion, "chainlink-version", "", "specify chainlink version to be used")
+
+	// wallet contract derivation
+	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
+	if err != nil {
+		panic(err)
+	}
+	defaultWalletAddress = "0x" + hex.EncodeToString(keys.PubKeyToAccount(keys.Raw(keyBytes).Key().PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
 }
 
 type Test struct {
@@ -104,7 +115,7 @@ func (t *Test) DeployEnv(nodes int) {
 		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
 		InsideK8s:       false,
 	}).
-		//AddHelm(hardhat.New(nil)).
+		// AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
