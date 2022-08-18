@@ -1,6 +1,7 @@
 package ocr2
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"math"
@@ -15,6 +16,7 @@ import (
 	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -89,10 +91,19 @@ func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
 }
 
 func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
-	// temp: disable because of address format differences (with/without leading zeros)
-	// if event.FromAddress != address {
-	// 	return false
-	// }
+	fromBytes, err := keys.HexToBytes(event.FromAddress)
+	if err != nil {
+		return false
+	}
+
+	addrBytes, err := keys.HexToBytes(address)
+	if err != nil {
+		return false
+	}
+
+	if bytes.Compare(starknet.PadBytes(fromBytes, 32), starknet.PadBytes(addrBytes, 32)) != 0 {
+		return false
+	}
 
 	eventKey := caigo.GetSelectorFromName(eventName)
 	// encoded event name guaranteed to be at index 0

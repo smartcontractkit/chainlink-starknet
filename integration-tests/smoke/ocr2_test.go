@@ -187,7 +187,16 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				time.Sleep(5 * time.Second)
 
 				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
-				Expect(err).ShouldNot(HaveOccurred(), "Reading transmission details should not fail")
+				if err != nil {
+					log.Error().Err(err)
+
+					// exit loop early
+					if stuck && stuckCount > 10 {
+						log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
+						break
+					}
+					continue
+				}
 				log.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
 
 				// continue if no changes

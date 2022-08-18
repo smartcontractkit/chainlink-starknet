@@ -2,9 +2,11 @@ package keys
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math/big"
+	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	"github.com/dontpanicdao/caigo"
@@ -56,4 +58,14 @@ func GenerateKey(material io.Reader) (k Key, err error) {
 	}
 
 	return k, nil
+}
+
+// trim "0x" prefix(if exists) and converts hexidecimal string to byte slice
+func HexToBytes(hexString string) ([]byte, error) {
+	numStr := strings.Replace(hexString, "0x", "", -1)
+	if (len(numStr) % 2) != 0 {
+		numStr = fmt.Sprintf("%s%s", "0", numStr)
+	}
+
+	return hex.DecodeString(numStr)
 }
