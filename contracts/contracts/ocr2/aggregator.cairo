@@ -2,6 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.hash_state import (
     hash_init, hash_finalize, hash_update, hash_update_single
@@ -278,6 +279,12 @@ struct OracleConfig:
     member transmitter: felt
 end
 
+struct OnchainConfig:
+    member version: felt
+    member min_answer: felt
+    member max_answer: felt
+end
+
 @external
 func set_config{
     syscall_ptr : felt*,
@@ -301,6 +308,12 @@ func set_config{
     assert_lt(3 * f, oracles_len) # 3 * f < oracles_len
     assert_nn(f) # f is positive
     assert onchain_config_len = 0 # empty onchain config provided
+
+    let (answer_range : Range) = answer_range_.read()
+    local computed_onchain_config: OnchainConfig = OnchainConfig(version=1, min_answer=answer_range.min,max_answer=answer_range.max)
+    # cast to felt* and use OnchainConfig.SIZE as len
+    let (__fp__, _) = get_fp_and_pc()
+    let onchain_config = cast(&computed_onchain_config, felt*)
 
     # pay out existing oracles
     pay_oracles()
@@ -332,7 +345,7 @@ func set_config{
         oracles_len,
         oracles,
         f,
-        onchain_config_len,
+        OnchainConfig.SIZE,
         onchain_config,
         offchain_config_version,
         offchain_config_len,
@@ -350,7 +363,7 @@ func set_config{
         oracles_len=oracles_len,
         oracles=oracles,
         f=f,
-        onchain_config_len=onchain_config_len,
+        onchain_config_len=OnchainConfig.SIZE,
         onchain_config=onchain_config,
         offchain_config_version=offchain_config_version,
         offchain_config_len=offchain_config_len,
