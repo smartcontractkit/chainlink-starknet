@@ -2,8 +2,6 @@ import { assert, expect } from 'chai'
 import BN from 'bn.js'
 import { toBN } from 'starknet/utils/number'
 import { starknet } from 'hardhat'
-import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
@@ -113,7 +111,7 @@ describe('LinkToken', function () {
   })
 
   describe('#transfer(address,uint256,bytes)', () => {
-    const value = 1000
+    const amount = 1000
 
     before(async () => {
       const receiverFactory = await starknet.getContractFactory('linkReceiver')
@@ -144,7 +142,7 @@ describe('LinkToken', function () {
       let { balance: balance } = await token.call('balanceOf', {
         account: recipient.address,
       })
-      expect(uint256ToBigInt(balance)).to.deep.equal(toBN(value))
+      expect(uint256ToBigInt(balance)).to.deep.equal(toBN(amount))
       const { remaining: allowance } = await token.call('allowance', {
         owner: owner.starknetContract.address,
         spender: recipient.address,
@@ -152,12 +150,42 @@ describe('LinkToken', function () {
       expect(uint256ToBigInt(allowance)).to.deep.equal(toBN(0))
 
       const { bool: fallBack } = await recipient.call('get_fallback', {})
-      console.log('fallBack: ', fallBack)
       expect(fallBack).to.deep.equal(1n)
 
       const { bool: callData } = await recipient.call('get_call_data', {})
-      console.log('callData: ', callData)
       expect(callData).to.deep.equal(1n)
+    })
+    it('transfers the amount to the contract and calls the contract', async () => {
+      let selector = getSelectorFromName('callbackWithWithdrawl')
+      // data = []
+      await owner.invoke(token, 'approve', { spender: recipient.address, amount: { high: 0n, low: 1000n } })
+
+      const { remaining: allowance } = await token.call('allowance', {
+        owner: owner.starknetContract.address,
+        spender: recipient.address,
+      })
+      expect(uint256ToBigInt(allowance)).to.deep.equal(toBN(amount))
+
+      await owner.invoke(token, 'transferAndCall', {
+        to: recipient.address,
+        value: { high: 0n, low: 1000n },
+        selector: selector,
+        data: [0n, 1000n, owner.starknetContract.address, token.address],
+      })
+
+      let { balance: balance } = await token.call('balanceOf', {
+        account: recipient.address,
+      })
+      expect(uint256ToBigInt(balance)).to.deep.equal(toBN(amount + amount))
+
+      const { bool: fallBack } = await recipient.call('get_fallback', {})
+      expect(fallBack).to.deep.equal(1n)
+
+      const { bool: callData } = await recipient.call('get_call_data', {})
+      expect(callData).to.deep.equal(1n)
+
+      const { value: value } = await recipient.call('get_tokens', {})
+      expect(uint256ToBigInt(value)).to.deep.equal(toBN(amount))
     })
   })
 })

@@ -35,9 +35,19 @@ from contracts.ERC677.ERC20.permitted import (
 )
 from contracts.ERC677.ERC20.initializable import initialized, set_initialized
 from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
+from contracts.ERC677.library import ERC677
 
-@event
-func Transfer(from_ : felt, to : felt, value : Uint256, data_len : felt, data : felt*):
+const CONTRACT_IDENTITY = 'ERC20'
+const CONTRACT_VERSION = 1
+
+@view
+func get_version() -> (version : felt):
+    return (version=CONTRACT_VERSION)
+end
+
+@view
+func get_identity() -> (identity : felt):
+    return (identity=CONTRACT_IDENTITY)
 end
 
 # Constructor (as initializer).
@@ -177,36 +187,6 @@ end
 func transferAndCall{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     to : felt, value : Uint256, selector : felt, data_len : felt, data : felt*
 ) -> (success : felt):
-    alloc_locals
-
-    let (caller) = get_caller_address()
-    with_attr error_message("ERC677: address can not be null"):
-        assert_not_zero(to)
-    end
-    ERC20_transfer(caller, to, value)
-    Transfer.emit(caller, to, value, data_len, data)
-
-    contractFallback(to, selector, data_len, data)
+    ERC677.transfer_and_call(to, value, selector, data_len, data)
     return (TRUE)
 end
-
-# PRIVATE
-
-func contractFallback{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    to : felt, selector : felt, data_len : felt, data : felt*
-):
-    IERC677Receiver.onTokenTransfer(to, selector, data_len, data)
-    return ()
-end
-
-# func fill_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-#     index : felt, data_len : felt, data : felt*
-# ) -> (len : felt):
-#     if data_len == 0:
-#         return ()
-#     end
-
-# let index = index + 1
-#     token_data_.write(index, [data])
-#     return fill_data_storage(index=index, data_len=data_len - 1, data=data + 1)
-# end

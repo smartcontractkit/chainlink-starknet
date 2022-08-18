@@ -2,41 +2,9 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import assert_not_zero, split_felt
-from starkware.cairo.common.uint256 import (
-    Uint256,
-    uint256_add,
-    uint256_check,
-    uint256_le,
-    uint256_lt,
-    uint256_sub,
-)
-from starkware.starknet.common.syscalls import get_caller_address
-from starkware.cairo.common.bool import FALSE, TRUE
-from contracts.ERC677.ERC20.ERC20_base import (
-    ERC20_allowances,
-    ERC20_approve,
-    ERC20_burn,
-    ERC20_initializer,
-    ERC20_mint,
-    ERC20_transfer,
-    allowance,
-    balanceOf,
-    decimals,
-    name,
-    symbol,
-    totalSupply,
-)
-from contracts.ERC677.ERC20.permitted import (
-    permitted_initializer,
-    permitted_minter,
-    permitted_minter_only,
-    permittedMinter,
-)
-from contracts.ERC677.ERC20.initializable import initialized, set_initialized
-from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
 
-from contracts.ERC677.ERC677 import (
+from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
+from contracts.ERC677.starkgate_token import (
     initialize,
     transfer,
     transferFrom,
@@ -50,10 +18,6 @@ from contracts.ERC677.ERC677 import (
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
-
-@event
-func Transfer(from_ : felt, to : felt, value : Uint256, data_len : felt, data : felt*):
-end
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(minter : felt):
