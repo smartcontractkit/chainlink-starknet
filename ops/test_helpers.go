@@ -16,7 +16,7 @@ import (
 
 var (
 	// seed = 0 keys for starknet-devnet
-	privateKeys0Seed []string = []string{
+	PrivateKeys0Seed []string = []string{
 		"0xe3e70682c2094cac629f6fbed82c07cd",
 		"0xf728b4fa42485e3a0a5d2f346baa9455",
 		"0xeb1167b367a9c3787c65c1e582e2e662",
@@ -74,8 +74,8 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 }
 
 func TestKeys(t *testing.T, count int) (rawkeys [][]byte) {
-	require.True(t, len(privateKeys0Seed) >= count, "requested more keys than available")
-	for i, k := range privateKeys0Seed {
+	require.True(t, len(PrivateKeys0Seed) >= count, "requested more keys than available")
+	for i, k := range PrivateKeys0Seed {
 		// max number of keys to generate
 		if i >= count {
 			break

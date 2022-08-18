@@ -30,9 +30,7 @@ func TestGatewayClient(t *testing.T) {
 	}))
 	defer mockServer.Close()
 
-	// todo: adjust for e2e tests
 	lggr := logger.Test(t)
-
 	client, err := NewClient(chainID, mockServer.URL, lggr, &timeout)
 	require.NoError(t, err)
 	assert.Equal(t, timeout, client.defaultTimeout)

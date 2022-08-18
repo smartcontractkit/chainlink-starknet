@@ -7,8 +7,8 @@ service:
   internalPort: 8545
 resources:
   limits:
-    cpu: 5000m
-    memory: 5120Mi
+    cpu: 2000m
+    memory: 2048Mi
   requests:
-    cpu: 5000m
-    memory: 5120Mi
+    cpu: 2000m
+    memory: 2048Mi
