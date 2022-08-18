@@ -51,7 +51,7 @@ func TestTxm(t *testing.T) {
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
-	timeout := 5 * time.Second
+	timeout := 10 * time.Second
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
 
@@ -65,7 +65,9 @@ func TestTxm(t *testing.T) {
 		wg.Done()
 		if !failed {
 			failed = true
-			return nil, errors.New("random test error")
+
+			// test return not nil
+			return &starknet.Client{}, errors.New("random test error")
 		}
 
 		return client, nil

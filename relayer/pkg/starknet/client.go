@@ -52,16 +52,24 @@ var _ caigotypes.Provider = (*Client)(nil)
 type Client struct {
 	gw             *caigogw.GatewayProvider
 	lggr           logger.Logger
-	defaultTimeout *time.Duration
+	defaultTimeout time.Duration
 }
 
-// pass nil to timeout to not use built in default timeout
+// pass nil or 0 to timeout to not use built in default timeout
 func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	client := &Client{
-		gw:             caigogw.NewProvider(caigogw.WithChain(chainID)),
-		lggr:           lggr,
-		defaultTimeout: timeout,
+		gw:   caigogw.NewProvider(caigogw.WithChain(chainID)),
+		lggr: lggr,
 	}
+
+	// make copy to preserve value
+	// defensive in case the timeout reference is ever garbage collected or removed
+	if timeout == nil {
+		client.defaultTimeout = 0
+	} else {
+		client.defaultTimeout = *timeout
+	}
+
 	client.setURL(baseURL) // hack: change the base URL (not supported in caigo)
 
 	return client, nil
@@ -95,9 +103,9 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, e
 }
 
 func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -110,9 +118,9 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 }
 
 func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (block *caigogw.Block, err error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -132,9 +140,9 @@ func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (blo
 // -- caigo.Provider interface --
 
 func (c *Client) BlockByHash(ctx context.Context, hash string, _ string) (*caigotypes.Block, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -149,9 +157,9 @@ func (c *Client) BlockByHash(ctx context.Context, hash string, _ string) (*caigo
 }
 
 func (c *Client) BlockByNumber(ctx context.Context, num *big.Int, _ string) (*caigotypes.Block, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -167,9 +175,9 @@ func (c *Client) BlockByNumber(ctx context.Context, num *big.Int, _ string) (*ca
 }
 
 func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockHashOrTag string) ([]string, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -185,9 +193,9 @@ func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockH
 }
 
 func (c *Client) ChainID(ctx context.Context) (string, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -200,9 +208,9 @@ func (c *Client) ChainID(ctx context.Context) (string, error) {
 }
 
 func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -220,9 +228,9 @@ func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, er
 }
 
 func (c *Client) Invoke(ctx context.Context, invoke caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -238,9 +246,9 @@ func (c *Client) Invoke(ctx context.Context, invoke caigotypes.FunctionInvoke) (
 }
 
 func (c *Client) TransactionByHash(ctx context.Context, hash string) (*caigotypes.Transaction, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -256,9 +264,9 @@ func (c *Client) TransactionByHash(ctx context.Context, hash string) (*caigotype
 }
 
 func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotypes.TransactionReceipt, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -274,9 +282,9 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotyp
 }
 
 func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke, hash string) (*caigotypes.FeeEstimate, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 

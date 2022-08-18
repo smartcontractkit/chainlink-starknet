@@ -84,6 +84,7 @@ func (txm *starktxm) run() {
 				if err != nil {
 					txm.lggr.Errorw("unable to fetch client", "error", err)
 					tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
+					txm.client = nil                                                                   // reset
 					continue
 				}
 			}
