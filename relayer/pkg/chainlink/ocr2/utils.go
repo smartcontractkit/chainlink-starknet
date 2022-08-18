@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"math"
 	"math/big"
 	"time"
 
@@ -196,20 +195,20 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	index += 1
 	onchainConfigLen := eventData[index].Uint64()
 
-	// onchain_config
+	// onchain_config (version=1, min, max)
 	index += 1
 	onchainConfigFelts := eventData[index:(index + int(onchainConfigLen))]
-	onchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(onchainConfigFelts))
-	if err != nil {
-		return types.ContractConfig{}, errors.Wrap(err, "error in decoding onchainConfig")
+
+	onchainConfigVersion := onchainConfigFelts[0].Uint64()
+	if onchainConfigVersion != 1 {
+		return types.ContractConfig{}, errors.Wrapf(err, "expected onchainConfig version 1, got %v", onchainConfigVersion)
 	}
 
-	// TODO: remove the below once onchain config is implemented
 	temp := median.OnchainConfig{
-		Min: big.NewInt(math.MinInt64),
-		Max: big.NewInt(math.MaxInt64),
+		Min: onchainConfigFelts[1].Big(),
+		Max: onchainConfigFelts[2].Big(),
 	}
-	onchainConfig, err = temp.Encode()
+	onchainConfig, err := temp.Encode()
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "err in generating placeholder onchain config")
 	}

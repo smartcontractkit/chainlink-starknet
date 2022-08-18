@@ -8,6 +8,7 @@ import (
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 
+	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -57,6 +58,17 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
+	// TODO: use libocr's custom encoding instead to produce encodedOnchainConfig
+	onchainConfig, err := median.DecodeOnchainConfig(cfg.OnchainConfig)
+	if err != nil {
+		return configDigest, err
+	}
+	encodedOnchainConfig := []*big.Int{
+		big.NewInt(1), // onchainConfigVersion
+		onchainConfig.Min,
+		onchainConfig.Max,
+	}
+
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
 	msg := []*big.Int{
 		new(big.Int).SetBytes([]byte(d.chainID)),       // chain_id
@@ -68,7 +80,11 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	msg = append(
 		msg,
 		big.NewInt(int64(cfg.F)), // f
-		big.NewInt(0),            // TODO: onchain_config
+		big.NewInt(int64(len(encodedOnchainConfig))), // onchain_config_len
+	)
+	msg = append(msg, encodedOnchainConfig...)
+	msg = append(
+		msg,
 		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
 		big.NewInt(int64(len(offchainConfig))),            // offchain_config_len
 	)
