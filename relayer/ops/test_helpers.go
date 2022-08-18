@@ -2,18 +2,15 @@ package ops
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"math/big"
-	"net"
 	"net/http"
 	"os/exec"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,13 +33,13 @@ var (
 
 	// devnet key derivation
 	// https://github.com/Shard-Labs/starknet-devnet/blob/master/starknet_devnet/account.py
-	devnetClassHash, _ = new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
-	devnetSalt         = big.NewInt(20)
+	DevnetClassHash, _ = new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
+	DevnetSalt         = big.NewInt(20)
 )
 
 // SetupLocalStarkNetNode sets up a local starknet node via cli, and returns the url
 func SetupLocalStarkNetNode(t *testing.T) string {
-	port := mustRandomPort(t)
+	port := utils.MustRandomPort(t)
 	url := "http://127.0.0.1:" + port
 	cmd := exec.Command("starknet-devnet",
 		"--seed", "0", // use same seed for testing
@@ -94,41 +91,8 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 		key := raw.Key()
 
 		// recalculate account address using devnet contract hash + salt
-		address := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), devnetClassHash, devnetSalt))
+		address := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), DevnetClassHash, DevnetSalt))
 		keyMap[address] = key
 	}
 	return keyMap
-}
-
-func getRandomPort() string {
-	r, err := rand.Int(rand.Reader, big.NewInt(65535-1023))
-	if err != nil {
-		panic(fmt.Errorf("unexpected error generating random port: %w", err))
-	}
-
-	return strconv.Itoa(int(r.Int64() + 1024))
-}
-
-func IsPortOpen(t *testing.T, port string) bool {
-	l, err := net.Listen("tcp", ":"+port)
-	if err != nil {
-		t.Log("error in checking port: ", err.Error())
-		return false
-	}
-	defer l.Close()
-	return true
-}
-
-func mustRandomPort(t *testing.T) string {
-	for i := 0; i < 5; i++ {
-		port := getRandomPort()
-
-		// check port if port is open
-		if IsPortOpen(t, port) {
-			t.Log("found open port: " + port)
-			return port
-		}
-	}
-
-	panic("unable to find open port")
 }
