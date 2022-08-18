@@ -20,7 +20,7 @@ import (
 
 const (
 	ChainName = "starknet"
-	ChainId   = gateway.GOERLI_ID
+	ChainId   = gateway.GOERLI_ID // default chainID for local devnet and live testnet
 	// These are one of the default addresses based on the seed we pass to devnet which is 123
 	defaultWalletAddress = "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac41236ea502"
 	defaultWalletPrivKey = "0xc4da537c1651ddae44867db30d67b366"

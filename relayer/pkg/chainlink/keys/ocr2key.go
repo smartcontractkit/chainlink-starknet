@@ -107,7 +107,6 @@ func (sk *OCR2Key) MaxSignatureLength() int {
 }
 
 func (sk *OCR2Key) Marshal() ([]byte, error) {
-	// https://github.com/ethereum/go-ethereum/blob/07508ac0e9695df347b9dd00d418c25151fbb213/crypto/crypto.go#L159
 	return starknet.PadBytesBigInt(sk.priv, sk.privateKeyLen()), nil
 }
 

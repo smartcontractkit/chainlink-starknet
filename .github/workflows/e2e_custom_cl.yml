@@ -6,7 +6,7 @@ on:
       cl_branch_ref:
         description: Chainlink repo branch to integrate with
         required: true
-        default: starknet-bump
+        default: develop
         type: string
 
 jobs:

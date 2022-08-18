@@ -40,6 +40,11 @@ func TestOCR2Client(t *testing.T) {
 	require.NoError(t, os.Setenv("BILLING_ACCESS_CONTROLLER", ZERO_ADDRESS))
 
 	// clean up env vars
+	t.Cleanup(func() {
+		require.NoError(t, os.Unsetenv("PRIVATE_KEY"))
+		require.NoError(t, os.Unsetenv("ACCOUNT"))
+		require.NoError(t, os.Unsetenv("BILLING_ACCESS_CONTROLLER"))
+	})
 
 	// deploy contract
 	ocr2ContractAddress, err := g.DeployOCR2ControllerContract(0, 1000000, 10, "test", ZERO_ADDRESS)
