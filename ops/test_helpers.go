@@ -2,7 +2,6 @@ package ops
 
 import (
 	"bytes"
-	"encoding/hex"
 	"math/big"
 	"net/http"
 	"os/exec"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/dontpanicdao/caigo"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,9 +73,7 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 	return url
 }
 
-func TestKeys(t *testing.T, count int) map[string]keys.Key {
-	keyMap := map[string]keys.Key{}
-
+func TestKeys(t *testing.T, count int) (rawkeys [][]byte) {
 	require.True(t, len(privateKeys0Seed) >= count, "requested more keys than available")
 	for i, k := range privateKeys0Seed {
 		// max number of keys to generate
@@ -87,12 +83,7 @@ func TestKeys(t *testing.T, count int) map[string]keys.Key {
 
 		keyBytes, err := caigo.HexToBytes(k)
 		require.NoError(t, err)
-		raw := keys.Raw(keyBytes)
-		key := raw.Key()
-
-		// recalculate account address using devnet contract hash + salt
-		address := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), DevnetClassHash, DevnetSalt))
-		keyMap[address] = key
+		rawkeys = append(rawkeys, keyBytes)
 	}
-	return keyMap
+	return rawkeys
 }
