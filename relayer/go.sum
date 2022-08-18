@@ -865,6 +865,8 @@ github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee h1:KRveIloJFp3i6QGtr5HPubZDaOdxTyl43QmDvzVjmEw=
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee/go.mod h1:ODzTQ5y/i3/9EQzfv1MxKXG9N+BUGOSw/xTNkdY1kcw=
+github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818192054-2a761cdd6f6a h1:0bUE7+M6oCJ5aV9HKE+NGBVloP3jBUnfUDcqX2Ck7j4=
+github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818192054-2a761cdd6f6a/go.mod h1:PEboJHq0HJ+0qWrrJWxeMW0P3yMWt8LimfTmAcFirmk=
 github.com/smartcontractkit/chainlink-testing-framework v1.1.18 h1:5OaKWgyRSkPyueJaYjwwGNgJHrcv8fH2C03GyVXAzY8=
 github.com/smartcontractkit/chainlink-testing-framework v1.1.18/go.mod h1:Squ1stWJdnlxS74X6ie2ucPGp0tjSwW1lxscUdoDTLI=
 github.com/smartcontractkit/helmenv v1.0.71 h1:M94EYcDbyu9zBn2iiNJ3rKxpPqJHT4AjY3yQod08QcU=
