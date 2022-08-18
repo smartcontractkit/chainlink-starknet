@@ -77,7 +77,6 @@ describe('ERC677', function () {
       })
 
       const { bool: bool } = await receiver.call('get_called_fallback', {})
-      console.log('bool: ', bool)
       expect(bool).to.deep.equal(1n)
 
       const { address: address } = await receiver.call('get_token_sender', {})
