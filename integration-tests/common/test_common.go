@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"flag"
-	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/go-resty/resty/v2"
@@ -103,7 +102,6 @@ func (t *Test) DeployEnv(nodes int) {
 
 	t.Env = environment.New(&environment.Config{
 		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
-		TTL:             3 * time.Hour,
 		InsideK8s:       false,
 	}).
 		//AddHelm(hardhat.New(nil)).
