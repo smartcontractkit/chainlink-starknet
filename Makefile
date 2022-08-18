@@ -60,3 +60,14 @@ endif
 .PHONY: e2e_test
 e2e_test:
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
+	
+.PHONY: gowork
+gowork:
+	go work init
+	go work use ./ops
+	go work use ./relayer
+	go work use ./integration-tests
+
+.PHONY: gowork_rm
+gowork_rm:
+	rm go.work*
