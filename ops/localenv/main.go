@@ -35,13 +35,13 @@ func main() {
 		run("switch k8s context", "kubectl", "config", "use-context", "k3d-local")
 	// build and upload image to local registry
 	case "build":
-		context := "../../../../chainlink" // TODO: make this an arg
+		context := "../../../chainlink" // TODO: make this an arg
 		run("build image", "docker", "build", "-f", context+"/core/chainlink.Dockerfile", context, "-t", "chainlink:local")
 		run("tag image", "docker", "tag", "chainlink:local", "localhost:12345/chainlink:local")
 		run("push image", "docker", "push", "localhost:12345/chainlink:local")
 	// run ginkgo commands to spin up environment
 	case "run":
-		os.Chdir("../../../") // move to repo root
+		os.Chdir("../../") // move to repo root
 		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.localhost:12345/chainlink", "--chainlink-version", "local", "--keep-alive")
 	// stop k8s namespace from environment
 	case "stop":

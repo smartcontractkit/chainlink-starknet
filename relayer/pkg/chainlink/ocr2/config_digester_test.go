@@ -7,8 +7,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
-	"github.com/test-go/testify/assert"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func mustHex(data string) []byte {
