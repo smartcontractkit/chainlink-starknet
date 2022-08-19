@@ -42,6 +42,7 @@ func SetupLocalStarkNetNode(t *testing.T) string {
 	cmd := exec.Command("starknet-devnet",
 		"--seed", "0", // use same seed for testing
 		"--port", port,
+		"--lite-mode",
 	)
 	var stdErr bytes.Buffer
 	cmd.Stderr = &stdErr
