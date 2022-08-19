@@ -27,7 +27,7 @@ func UpdateIgnored(
 end
 
 @event
-func L1SenderTransferred(prev : felt, cur : felt):
+func L1SenderTransferred(from_addr : felt, to_addr : felt):
 end
 
 @storage_var
@@ -158,15 +158,13 @@ namespace sequencer_uptime_feed:
     func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
         description : felt
     ):
-        const description = 'L2 Sequencer Uptime Status Feed'
-        return (description)
+        return ('L2 Sequencer Uptime Status Feed')
     end
 
     func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
         decimals : felt
     ):
-        const decimals = 0
-        return (decimals)
+        return (0)
     end
 
     func type_and_version{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
