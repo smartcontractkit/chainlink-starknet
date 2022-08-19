@@ -14,7 +14,7 @@ require (
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220812145122-12f3ceba55e2
 )
 
-require github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220819170139-f835853df6f1
+require github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220819173904-6acfa34eff14
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
