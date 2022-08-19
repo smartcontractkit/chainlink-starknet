@@ -68,7 +68,7 @@ func callback_with_withdrawl{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
 end
 
 @view
-func is_supports_interface{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func supportsInterface{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     interface_id : felt
 ) -> (success : felt):
     let (success) = ERC165.supports_interface(interface_id)
