@@ -16,10 +16,10 @@ import (
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -28,15 +28,17 @@ const ZERO_ADDRESS = "0x00000000000000000000000000000000000000000000000000000000
 func TestOCR2Client(t *testing.T) {
 	// setup testing env
 	url := ops.SetupLocalStarkNetNode(t)
-	keys := ops.TestKeys(t, 1)
+	keyBytes := ops.TestKeys(t, 1)
 	chainID := gateway.GOERLI_ID
 	lggr := logger.Test(t)
 	g, err := ops.NewStarknetGauntlet("../../../../")
 	g.SetupNetwork(url)
 
 	// set env vars
-	require.NoError(t, os.Setenv("PRIVATE_KEY", "0x"+hex.EncodeToString(maps.Values(keys)[0].Raw())))
-	require.NoError(t, os.Setenv("ACCOUNT", maps.Keys(keys)[0]))
+	require.NoError(t, os.Setenv("PRIVATE_KEY", "0x"+hex.EncodeToString(keyBytes[0])))
+	key := keys.Raw(keyBytes[0]).Key()
+	account := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+	require.NoError(t, os.Setenv("ACCOUNT", account))
 	require.NoError(t, os.Setenv("BILLING_ACCESS_CONTROLLER", ZERO_ADDRESS))
 
 	// clean up env vars
