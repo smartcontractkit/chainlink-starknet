@@ -33,8 +33,12 @@ var testConfig = types.ContractConfig{
 		"05ed89dbf3a22af52e7960479faa9e69bbdd17ac752bae9b5aa8ecea67992cd2",
 		"04ca4c7fa6e7423219ec2bd64a074473fd61ed80d81af335bff79a1c3bc61178",
 	},
-	F:                     1,
-	OnchainConfig:         []byte{1},
+	F: 1,
+	OnchainConfig: []byte{
+		1,                                                                                                                      // version
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 246, // min (-1)
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59, 154, 202, 0, // max (1000000000)
+	},
 	OffchainConfigVersion: 2,
 	OffchainConfig:        []byte{1},
 }

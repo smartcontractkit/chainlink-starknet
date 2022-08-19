@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -65,8 +66,8 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	}
 	encodedOnchainConfig := []*big.Int{
 		big.NewInt(1), // onchainConfigVersion
-		onchainConfig.Min,
-		onchainConfig.Max,
+		new(big.Int).Mod(onchainConfig.Min, caigotypes.MaxFelt.Big()), // TODO: this wraps negative values correctly into felts, use a helper
+		new(big.Int).Mod(onchainConfig.Max, caigotypes.MaxFelt.Big()), // TODO: this wraps negative values correctly into felts, use a helper
 	}
 
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
