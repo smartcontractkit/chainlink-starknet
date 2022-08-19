@@ -6,26 +6,22 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-00010101000000-000000000000
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818193333-666574ae910e
 	github.com/smartcontractkit/chainlink-testing-framework v1.1.18
 	github.com/smartcontractkit/helmenv v1.0.71
 )
 
 require (
 	cloud.google.com/go/compute v1.6.1 // indirect
-	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac // indirect
-	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dontpanicdao/caigo v0.3.0 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.2 // indirect
-	go.uber.org/zap v1.21.0 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee // indirect
 )
 
 require (
@@ -199,5 +195,3 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-replace github.com/smartcontractkit/chainlink-starknet/relayer => ../../chainlink-starknet/relayer
