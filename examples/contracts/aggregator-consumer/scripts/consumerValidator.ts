@@ -19,11 +19,11 @@ let networkUrl: string
 let account: Account
 
 async function main() {
-  // account = await starknet.getAccountFromAddress(
-  //   process.env.ACCOUNT_ADDRESS as string,
-  //   process.env.PRIVATE_KEY as string,
-  //   'OpenZeppelin',
-  // )
+  account = await starknet.getAccountFromAddress(
+    process.env.ACCOUNT_ADDRESS as string,
+    process.env.PRIVATE_KEY as string,
+    'OpenZeppelin',
+  )
 
   const mockUptimeFeedFactory = await starknet.getContractFactory(UPTIME_FEED_NAME)
   const mockUptimeFeedDeploy = await mockUptimeFeedFactory.deploy({

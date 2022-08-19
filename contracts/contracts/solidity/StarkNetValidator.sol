@@ -42,7 +42,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
             revert InvalidUptimeFeedAddress();
         }
 
-        STARKNET_MESSAGING = IStarknetMessaging(starkNetMessaging);
+        STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
         L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
     }
 
@@ -83,7 +83,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
         payload[1] = block.timestamp;
         // Make the StarkNet x-domain call.
         // NOTICE: we ignore the output of this call (msgHash, nonce), and we don't raise any events as the event LogMessageToL2 will be emitted from the messaging contract
-        STARKNET_MESSAGING.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
+        STARKNET_CROSS_DOMAIN_MESSENGER.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
         return true;
     }
 }

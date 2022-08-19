@@ -67,16 +67,13 @@ describe('StarkNetValidator', () => {
         networkUrl,
         mockStarkNetMessenger.address,
       )
-
       expect(mockStarkNetMessenger.address).to.equal(loadedFrom)
 
       await starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)
-
       const flushL1Response = await starknet.devnet.flush()
       const flushL1Messages = flushL1Response.consumed_messages.from_l1
       expect(flushL1Messages).to.have.a.lengthOf(1)
       expect(flushL1Response.consumed_messages.from_l2).to.be.empty
-
       expectAddressEquality(flushL1Messages[0].args.from_address, starkNetValidator.address)
       expectAddressEquality(flushL1Messages[0].args.to_address, l2Contract.address)
       expectAddressEquality(flushL1Messages[0].address, mockStarkNetMessenger.address)

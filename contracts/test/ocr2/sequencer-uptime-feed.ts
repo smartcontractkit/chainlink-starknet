@@ -109,13 +109,5 @@ describe('SequencerUptimeFeed test', function () {
         expect(res.bool).to.equal(1n)
       }
     })
-
-    // No l1_handler testing for now
-    it.skip('test l1 handler', async function () {
-      const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      const classHash = await uptimeFeedFactory.declare()
-
-      await account.invoke(mockContract, 'l1_handle_test', { class_hash: classHash })
-    })
   })
 })
