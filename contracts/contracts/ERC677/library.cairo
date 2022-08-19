@@ -24,7 +24,7 @@ end
 func is_contract{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to : felt) -> (
     bool : felt
 ):
-    let (bool) = IERC677Receiver.is_supports_interface(to, IERC677_RECEIVER_ID)
+    let (bool) = IERC677Receiver.supportsInterface(to, IERC677_RECEIVER_ID)
     return (bool)
 end
 
