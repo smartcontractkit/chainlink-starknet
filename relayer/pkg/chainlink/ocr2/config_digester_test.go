@@ -22,16 +22,16 @@ func mustHex(data string) []byte {
 var testConfig = types.ContractConfig{
 	ConfigCount: 1,
 	Signers: []types.OnchainPublicKey{
-		mustHex("04bb6dab7f0defb1a4e7495c8b0462a3601b6471828430e8149c6c4ce4fbb939"),
-		mustHex("06d95501c78b021f8b3ba2010495b63c9fdd7792c80f6db63614de0cfe49279f"),
-		mustHex("075f974b8699bb3f29ea4ced5586512a7b31814ba9fac9b9ae14c6da8736d868"),
-		mustHex("013cfd7d081ba6dd4fd088b543769e8201b9b06dab8b147569ccf9c4a25e11e5"),
+		mustHex("03f5df103ef3ae4d8e5ec708abf48bfdbff08f9e8deacc1a0bedf3e93cffd2a3"),
+		mustHex("0312c009b6d4cad9bd653450bb81eec18e81733052ee3f6cb3a2c182082db173"),
+		mustHex("02fc4861ccb51c1548dee618ed1103fbc1c01be0144da8950ad1d80c1a7bc3ba"),
+		mustHex("0331d8d682d098b685a929e0ad1d89a768ea8a1ca254c2dcbddf57521623729e"),
 	},
 	Transmitters: []types.Account{
-		"029f74aa5ec305f12307556d1739c181eb71c4e4f9b6b3adbbb12d66f9c837a7",
-		"07e72346466d373b3a52abc3e753e56a9fa372eb2d7aefa79e990e6d65720cb8",
-		"05ed89dbf3a22af52e7960479faa9e69bbdd17ac752bae9b5aa8ecea67992cd2",
-		"04ca4c7fa6e7423219ec2bd64a074473fd61ed80d81af335bff79a1c3bc61178",
+		"01ccc16a80a22f0643b217d32798fe6994c823b7838262db80b4e2a867c61caa",
+		"00578180df3312211b37f95ff74428270ea5fe1850908c1d6165b7242e614277",
+		"0339c8b556e92cd6b7f7b6c0c69c942db62d0385209a387600077be35509d99e",
+		"07ac7c65dc083c4552d53dc5b925de392e41255c6eada6a1ebdf1bdcb6b3ba54",
 	},
 	F: 1,
 	OnchainConfig: []byte{
@@ -46,12 +46,12 @@ var testConfig = types.ContractConfig{
 func TestConfigDigester(t *testing.T) {
 	d := ocr2.NewOffchainConfigDigester(
 		"SN_GOERLI", // DEFAULT_CHAIN_ID = StarknetChainId.TESTNET
-		"01cb7acedf79ffdd598dbe57b9dfd67e16900323da6af617944f1b763a39503a",
+		"01dfac180005c5a5efc88d2c37f880320e1764b83dd3a35006690e1ed7da68d7",
 	)
 
 	digest, err := d.ConfigDigest(testConfig)
 	assert.NoError(t, err)
-	assert.Equal(t, "00044e5d4f35325e464c87374b13c512f60e09d1236dd902f4bef4c9aedd7300", digest.Hex())
+	assert.Equal(t, "0004d46ed94aa1a4bfa938170a3df74f5b286498a411f59fe5be4d00b6eef12d", digest.Hex())
 }
 
 func TestConfigDigester_InvalidChainID(t *testing.T) {
