@@ -9,11 +9,12 @@ require (
 	github.com/onsi/gomega v1.20.0
 	github.com/rs/zerolog v1.27.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818192054-2a761cdd6f6a
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-00010101000000-000000000000
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220819165814-a4c41a5cb361
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220812145122-12f3ceba55e2
 )
+
+require github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220819170139-f835853df6f1
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -133,10 +134,6 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-replace github.com/smartcontractkit/chainlink-starknet/ops => ../ops
-
-replace github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
 
 // Fix go mod tidy issue for ambiguous imports from go-ethereum
 // See https://github.com/ugorji/go/issues/279
