@@ -83,6 +83,8 @@ github.com/shirou/gopsutil v3.21.11+incompatible h1:+1+c1VGhc88SSonWP6foOcLhvnKl
 github.com/shirou/gopsutil v3.21.11+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee h1:KRveIloJFp3i6QGtr5HPubZDaOdxTyl43QmDvzVjmEw=
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee/go.mod h1:ODzTQ5y/i3/9EQzfv1MxKXG9N+BUGOSw/xTNkdY1kcw=
+github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220819165814-a4c41a5cb361 h1:bg8BqAojnMK+U6aOwoNEZb+dRBy6H7+CrwNIGTR4ePg=
+github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220819165814-a4c41a5cb361/go.mod h1:Jp+QKghWWY7e/sqy90iwGcPsW1biTUyCok/lD59Vx0M=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8 h1:bAOP5KcHXwbcysScCXq4Ovgufs4HyDxWkUkyVhGhcfY=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8/go.mod h1:xv840sOjnMYkR+YUYta/sVr0HF1Tb52vUJ777yYEaXc=
 github.com/smartcontractkit/libocr v0.0.0-20220701150323-d815c8d0eab8 h1:raZou4k7yhqym37dqOV5xGV730G/xvBK0gDHjWHuTJw=

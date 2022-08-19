@@ -8,7 +8,7 @@ require (
 	github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220818192054-2a761cdd6f6a
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220819165814-a4c41a5cb361
 	github.com/smartcontractkit/libocr v0.0.0-20220701150323-d815c8d0eab8
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
@@ -54,5 +54,3 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-replace github.com/smartcontractkit/chainlink-starknet/ops => ../../chainlink-starknet/ops
