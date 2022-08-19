@@ -60,6 +60,9 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 10000000,
   },
+  paths: {
+    cairoPaths: ["vendor/starkware-libs/starkgate-contracts"]
+  }
 }
 
 export default config

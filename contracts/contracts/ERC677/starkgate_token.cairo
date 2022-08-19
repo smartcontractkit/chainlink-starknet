@@ -13,7 +13,8 @@ from starkware.cairo.common.uint256 import (
 )
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import FALSE, TRUE
-from contracts.ERC677.ERC20.ERC20_base import (
+from openzeppelin.introspection.erc165.library import ERC165
+from contracts.starkware.starknet.std_contracts.ERC20.ERC20_base import (
     ERC20_allowances,
     ERC20_approve,
     ERC20_burn,
@@ -27,15 +28,18 @@ from contracts.ERC677.ERC20.ERC20_base import (
     symbol,
     totalSupply,
 )
-from contracts.ERC677.ERC20.permitted import (
+from contracts.starkware.starknet.std_contracts.ERC20.permitted import (
     permitted_initializer,
     permitted_minter,
     permitted_minter_only,
     permittedMinter,
 )
-from contracts.ERC677.ERC20.initializable import initialized, set_initialized
-from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
+from contracts.starkware.starknet.std_contracts.upgradability_proxy.initializable import (
+    initialized,
+    set_initialized,
+)
 from contracts.ERC677.library import ERC677
+from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
 
 const CONTRACT_IDENTITY = 'ERC20'
 const CONTRACT_VERSION = 1
@@ -66,7 +70,6 @@ func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     let symbol = [init_vector + 1]
     let decimals = [init_vector + 2]
     ERC20_initializer(name, symbol, decimals)
-
     let minter_address = [init_vector + 3]
     permitted_initializer(minter_address)
     return ()
@@ -185,8 +188,8 @@ end
 
 @external
 func transferAndCall{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    to : felt, value : Uint256, selector : felt, data_len : felt, data : felt*
+    to : felt, value : Uint256, data_len : felt, data : felt*
 ) -> (success : felt):
-    ERC677.transfer_and_call(to, value, selector, data_len, data)
+    ERC677.transfer_and_call(to, value, data_len, data)
     return (TRUE)
 end
