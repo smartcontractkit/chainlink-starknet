@@ -1049,22 +1049,22 @@ func has_billing_access{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}() -> (bool: felt):
+}():
     let (caller) = get_caller_address()
     let (owner) = Ownable_get_owner()
 
     # owner always has access
     if caller == owner:
-        return (TRUE)
+        return ()
     end
 
     let (access_controller) = billing_access_controller_.read()
 
-    let (has_access: felt) = IAccessController.has_access(
+    IAccessController.check_access(
         contract_address=access_controller,
         address=caller
     )
-    return (has_access)
+    return ()
 end
 
 # --- Payments and Withdrawals
