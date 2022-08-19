@@ -4,6 +4,7 @@ package txm
 
 import (
 	"context"
+	"encoding/hex"
 	"sync"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ import (
 	"github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/ops"
+	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
 	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
@@ -22,7 +23,15 @@ import (
 
 func TestTxm(t *testing.T) {
 	url := ops.SetupLocalStarkNetNode(t)
-	localKeys := ops.TestKeys(t, 2) // generate 2 keys
+	rawLocalKeys := ops.TestKeys(t, 2) // generate 2 keys
+
+	// parse keys into expected format
+	localKeys := map[string]keys.Key{}
+	for _, k := range rawLocalKeys {
+		key := keys.Raw(k).Key()
+		account := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+		localKeys[account] = key
+	}
 
 	// mock keystore
 	ks := new(mocks.Keystore)
