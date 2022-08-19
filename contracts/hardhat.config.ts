@@ -61,8 +61,8 @@ const config: HardhatUserConfig = {
     timeout: 10000000,
   },
   paths: {
-    cairoPaths: ["vendor/starkware-libs/starkgate-contracts"]
-  }
+    cairoPaths: ['vendor/starkware-libs/starkgate-contracts'],
+  },
 }
 
 export default config
