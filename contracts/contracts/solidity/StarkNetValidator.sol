@@ -20,7 +20,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     uint256 constant STARK_SELECTOR_UPDATE_STATUS =
         1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
-    IStarknetMessaging public immutable STARKNET_MESSAGING;
+    IStarknetMessaging public immutable STARKNET_CROSS_DOMAIN_MESSENGER;
     uint256 public immutable L2_UPTIME_FEED_ADDR;
 
     /// @notice StarkNet messaging contract address - the address is 0.

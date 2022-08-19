@@ -51,7 +51,7 @@ describe('StarkNetValidator', () => {
       )
     })
 
-    it('reverts if called by account with no access', async () => {
+    it('reverts if called by an account with no access', async () => {
       await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith('No access')
     })
 
