@@ -39,8 +39,7 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
   )
 
   const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
-  // TODO: encode input.onchainConfig to a sequence of felts
-  let onchainConfig = []
+  let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
   return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
@@ -48,8 +47,11 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
   const txHash = result.responses[0].tx.hash
   const txInfo = await context.provider.provider.getTransactionReceipt(txHash)
   const eventData = (txInfo.events[0] as any).data
+
   const offchainConfig = decodeOffchainConfigFromEventData(eventData)
   try {
+    // remove cfg keys from user input
+    delete input.user.offchainConfig.configPublicKeys
     assert.deepStrictEqual(offchainConfig, input.user.offchainConfig)
     deps.logger.success('Configuration was successfully set')
     return { successfulConfiguration: true }
