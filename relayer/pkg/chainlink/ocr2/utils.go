@@ -106,23 +106,24 @@ func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
 }
 
 func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
-	fromBytes, err := keys.HexToBytes(event.FromAddress)
-	if err != nil {
-		return false
-	}
-
-	addrBytes, err := keys.HexToBytes(address)
-	if err != nil {
-		return false
-	}
-
-	if bytes.Compare(starknet.PadBytes(fromBytes, 32), starknet.PadBytes(addrBytes, 32)) != 0 {
-		return false
-	}
-
 	eventKey := caigo.GetSelectorFromName(eventName)
 	// encoded event name guaranteed to be at index 0
-	return event.Keys[0].Cmp(eventKey) == 0
+	return CompareAddress(event.FromAddress, address) && event.Keys[0].Cmp(eventKey) == 0
+}
+
+// CompareAddress compares different hex starknet addresses with potentially different 0 padding
+func CompareAddress(a, b string) bool {
+	aBytes, err := keys.HexToBytes(a)
+	if err != nil {
+		return false
+	}
+
+	bBytes, err := keys.HexToBytes(b)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Compare(starknet.PadBytes(aBytes, 32), starknet.PadBytes(bBytes, 32)) == 0
 }
 
 // NOTE: currently unused, could be used by monitoring component
