@@ -97,7 +97,6 @@ describe('LinkToken', function () {
     it('does NOT call the fallback on transfer', async () => {
       await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: { high: 0n, low: 100n } })
       const { bool: bool } = await receiver.call('get_called_fallback', {})
-      console.log('bool: ', bool)
       expect(bool).to.deep.equal(0n)
     })
 
@@ -153,6 +152,7 @@ describe('LinkToken', function () {
       const { bool: callData } = await recipient.call('get_call_data', {})
       expect(callData).to.deep.equal(1n)
     })
+
     it('transfers the amount to the contract and calls the contract function with withdrawl', async () => {
       let selector = getSelectorFromName('callback_with_withdrawl')
       await owner.invoke(token, 'approve', { spender: recipient.address, amount: { high: 0n, low: 1000n } })
@@ -183,6 +183,7 @@ describe('LinkToken', function () {
       const { value: value } = await recipient.call('get_tokens', {})
       expect(uint256ToBigInt(value)).to.deep.equal(toBN(amount))
     })
+
     it('transfers the amount to the account and does not call the contract', async () => {
       await owner.invoke(token, 'approve', {
         spender: sender.starknetContract.address,
@@ -198,7 +199,6 @@ describe('LinkToken', function () {
       let { balance: balance } = await token.call('balanceOf', {
         account: sender.starknetContract.address,
       })
-      console.log('balance_before: ', balance)
       await owner.invoke(token, 'transferAndCall', {
         to: sender.starknetContract.address,
         value: { high: 0n, low: 1000n },
@@ -208,7 +208,6 @@ describe('LinkToken', function () {
       let { balance: balance2 } = await token.call('balanceOf', {
         account: sender.starknetContract.address,
       })
-      console.log('balance_after: ', balance2)
       expect(uint256ToBigInt(balance2)).to.deep.equal(toBN(amount))
     })
   })
