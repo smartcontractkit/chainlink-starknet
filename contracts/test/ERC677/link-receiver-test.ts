@@ -129,9 +129,8 @@ describe('LinkToken', function () {
       expect(uint256ToBigInt(balance)).to.deep.equal(toBN(0))
     })
 
-    it('transfers the amount to the contract and calls the contract', async () => {
+    it('transfers the amount to the contract and calls the contract function without withdrawl', async () => {
       let selector = getSelectorFromName('callback_without_withdrawl')
-      // data = []
       await owner.invoke(token, 'transferAndCall', {
         to: recipient.address,
         value: { high: 0n, low: 1000n },
@@ -154,9 +153,8 @@ describe('LinkToken', function () {
       const { bool: callData } = await recipient.call('get_call_data', {})
       expect(callData).to.deep.equal(1n)
     })
-    it('transfers the amount to the contract and calls the contract', async () => {
+    it('transfers the amount to the contract and calls the contract function with withdrawl', async () => {
       let selector = getSelectorFromName('callback_with_withdrawl')
-      // data = []
       await owner.invoke(token, 'approve', { spender: recipient.address, amount: { high: 0n, low: 1000n } })
 
       const { remaining: allowance } = await token.call('allowance', {
@@ -184,6 +182,34 @@ describe('LinkToken', function () {
 
       const { value: value } = await recipient.call('get_tokens', {})
       expect(uint256ToBigInt(value)).to.deep.equal(toBN(amount))
+    })
+    it('transfers the amount to the account and does not call the contract', async () => {
+      await owner.invoke(token, 'approve', {
+        spender: sender.starknetContract.address,
+        amount: { high: 0n, low: 1000n },
+      })
+
+      const { remaining: allowance } = await token.call('allowance', {
+        owner: owner.starknetContract.address,
+        spender: sender.starknetContract.address,
+      })
+      expect(uint256ToBigInt(allowance)).to.deep.equal(toBN(amount))
+
+      let { balance: balance } = await token.call('balanceOf', {
+        account: sender.starknetContract.address,
+      })
+      console.log('balance_before: ', balance)
+      await owner.invoke(token, 'transferAndCall', {
+        to: sender.starknetContract.address,
+        value: { high: 0n, low: 1000n },
+        data: [],
+      })
+
+      let { balance: balance2 } = await token.call('balanceOf', {
+        account: sender.starknetContract.address,
+      })
+      console.log('balance_after: ', balance2)
+      expect(uint256ToBigInt(balance2)).to.deep.equal(toBN(amount))
     })
   })
 })
