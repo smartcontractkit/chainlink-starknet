@@ -7,7 +7,6 @@ import (
 	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -38,12 +37,10 @@ func TestIsEventFromContract(t *testing.T) {
 
 func TestParseAnswer(t *testing.T) {
 	// Positive value (99)
-	answer, err := parseAnswer("0x63")
-	require.NoError(t, err)
+	answer := parseAnswer("0x63")
 	assert.Equal(t, big.NewInt(99), answer)
 
 	// Negative value (-10)
-	answer, err = parseAnswer("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
-	require.NoError(t, err)
+	answer = parseAnswer("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
 	assert.Equal(t, big.NewInt(-10), answer)
 }
