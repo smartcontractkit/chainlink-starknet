@@ -7,10 +7,11 @@ service:
   internalPort: 5000
 resources:
   limits:
-    cpu: 1000m
-    memory: 1024Mi
+    cpu: 2000m
+    memory: 2048Mi
   requests:
-    cpu: 1000m
-    memory: 1024Mi
+    cpu: 2000m
+    memory: 2048Mi
 url_http_L1: ""
 real_node: false
+seed: 0

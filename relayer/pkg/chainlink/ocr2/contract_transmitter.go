@@ -11,6 +11,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -57,14 +58,18 @@ func (c *contractTransmitter) Transmit(
 	//    extra_hash
 	reportContext := utils.RawReportContext(reportCtx)
 	for _, r := range reportContext {
-		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(r[:]))
+		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(starknet.EnsureFelt(r)))
+		// ensure felt
+		// does not change config digest (already hashed through pedersen)
+		// does not change epoch & round (0x0.....0<value><value>)
+		// changes extra hash (32 bytes => 31 bytes)
 	}
 
 	slices, err := medianreport.SplitReport(report)
 	if err != nil {
 		return err
 	}
-	for i := 0; i < len(report); i++ {
+	for i := 0; i < len(slices); i++ {
 		hexStr := hex.EncodeToString(slices[i])
 		transmitPayload = append(transmitPayload, "0x"+hexStr)
 	}

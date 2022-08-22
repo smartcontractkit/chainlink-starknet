@@ -42,7 +42,7 @@ describe('Bridge Contract', () => {
       publicKey = report.data.publicKey
 
       // Fund the newly allocated account
-      let gateway_url = process.env.NODE_URL || 'http://localhost:5050'
+      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
       let balance = 100_000_000_000_000
       // let balance = 1e21
       const body = {
@@ -50,14 +50,19 @@ describe('Bridge Contract', () => {
         amount: balance,
         lite: true,
       }
-      const response = await fetch(`${gateway_url}/mint`, {
-        method: 'post',
-        body: JSON.stringify(body),
-        headers: { 'Content-Type': 'application/json' },
-      })
 
-      const data = await response.json()
-      expect(data.new_balance).toEqual(balance)
+      try {
+        const response = await fetch(`${gateway_url}/mint`, {
+          method: 'post',
+          body: JSON.stringify(body),
+          headers: { 'Content-Type': 'application/json' },
+        })
+
+        const data = await response.json()
+        expect(data.new_balance).toEqual(balance)
+      } catch (e) {
+        console.log(e)
+      }
     },
     TIMEOUT,
   )
