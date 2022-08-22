@@ -1,7 +1,7 @@
 import { starknet } from 'hardhat'
 import dotenv from 'dotenv'
 
-const PRICE_CONSUMER_NAME = 'Price_Consumer'
+const PRICE_CONSUMER_NAME = 'Price_Consumer_With_Sequencer_Check'
 
 dotenv.config({ path: __dirname + '/.env' })
 
