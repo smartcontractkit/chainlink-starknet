@@ -72,6 +72,23 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
+func parseAnswer(str string) (num *big.Int, err error) {
+	felt, err := caigoStringToJunoFelt(str)
+	num = felt.Big()
+	return signedFelt(&caigotypes.Felt{Int: num}), err
+}
+
+func signedFelt(felt *caigotypes.Felt) (num *big.Int) {
+	num = felt.Big()
+	prime := caigotypes.MaxFelt.Big()
+	half := new(big.Int).Div(prime, big.NewInt(2))
+	// if num > PRIME/2, then -PRIME to convert to negative value
+	if num.Cmp(half) > 0 {
+		return new(big.Int).Sub(num, prime)
+	}
+	return num
+}
+
 func caigoStringToJunoFelt(str string) (felt junotypes.Felt, err error) {
 	return junotypes.HexToFelt(str), nil
 }
@@ -109,7 +126,7 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 	// round_id - skip
 	// answer
 	index := 1
-	latestAnswer := eventData[index].Big()
+	latestAnswer := signedFelt(eventData[index])
 
 	// transmitter - skip
 	// observation_timestamp
@@ -200,8 +217,8 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	}
 
 	temp := median.OnchainConfig{
-		Min: onchainConfigFelts[1].Big(),
-		Max: onchainConfigFelts[2].Big(),
+		Min: signedFelt(onchainConfigFelts[1]),
+		Max: signedFelt(onchainConfigFelts[2]),
 	}
 	onchainConfig, err := temp.Encode()
 	if err != nil {
