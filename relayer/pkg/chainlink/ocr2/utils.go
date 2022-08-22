@@ -78,6 +78,14 @@ func parseAnswer(str string) (num *big.Int) {
 	return signedFelt(&caigotypes.Felt{Int: num})
 }
 
+func parseEpochAndRound(felt *big.Int) (epoch uint32, round uint8) {
+	var epochAndRound [junotypes.FeltLength]byte
+	felt.FillBytes(epochAndRound[:])
+	epoch = binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
+	round = epochAndRound[junotypes.FeltLength-1]
+	return epoch, round
+}
+
 func signedFelt(felt *caigotypes.Felt) (num *big.Int) {
 	num = felt.Big()
 	prime := caigotypes.MaxFelt.Big()
@@ -146,11 +154,7 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 
 	// epoch_and_round
 	index += 1
-	var epochAndRound [junotypes.FeltLength]byte
-	epochAndRoundFelt := eventData[index].Big()
-	epochAndRoundFelt.FillBytes(epochAndRound[:])
-	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
-	round := epochAndRound[junotypes.FeltLength-1]
+	epoch, round := parseEpochAndRound(eventData[index].Big())
 
 	// reimbursement - skip
 

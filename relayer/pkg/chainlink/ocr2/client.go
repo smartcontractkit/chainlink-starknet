@@ -2,7 +2,6 @@ package ocr2
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"time"
 
@@ -112,12 +111,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	configDigest := types.ConfigDigest{}
 	digest.Big().FillBytes(configDigest[:])
 
-	epochAndRoundFelt := junotypes.HexToFelt(res[1])
-	// TODO: extract into utils.go and share
-	var epochAndRound [junotypes.FeltLength]byte
-	epochAndRoundFelt.Big().FillBytes(epochAndRound[:])
-	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
-	round := epochAndRound[junotypes.FeltLength-1]
+	epoch, round := parseEpochAndRound(junotypes.HexToFelt(res[1]).Big())
 
 	latestAnswer := parseAnswer(res[2])
 
