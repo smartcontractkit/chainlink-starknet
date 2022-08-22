@@ -36,9 +36,14 @@ func TestIsEventFromContract(t *testing.T) {
 	assert.True(t, isEventFromContract(&event, "0x2432012bcda2bfa339c51b3be731118f2bd3bac6b63c5ca664c154bf636f", testConfigSetSelector))
 }
 
-func TestCaigoStringToJunoFelt(t *testing.T) {
-	felt, err := caigoStringToJunoFelt("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
+func TestParseAnswer(t *testing.T) {
+	// Positive value (99)
+	answer, err := parseAnswer("0x63")
 	require.NoError(t, err)
-	assert.Equal(t, big.NewInt(-10), felt.Big())
-	assert.True(t, big.NewInt(-10).Cmp(felt.Big()) == 0)
+	assert.Equal(t, big.NewInt(99), answer)
+
+	// Negative value (-10)
+	answer, err = parseAnswer("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
+	require.NoError(t, err)
+	assert.Equal(t, big.NewInt(-10), answer)
 }

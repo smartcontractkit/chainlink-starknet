@@ -139,11 +139,10 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
 	round := epochAndRound[junotypes.FeltLength-1]
 
-	answerFelt, err := caigoStringToJunoFelt(res[2])
+	latestAnswer, err := parseAnswer(res[2])
 	if err != nil {
 		return td, errors.Wrap(err, "couldn't decode latestAnswer")
 	}
-	latestAnswer := answerFelt.Big()
 
 	timestampFelt, err := caigoStringToJunoFelt(res[3])
 	if err != nil {
