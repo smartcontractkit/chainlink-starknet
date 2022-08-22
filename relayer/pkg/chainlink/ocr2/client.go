@@ -58,15 +58,8 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		return bd, errors.New("unexpected result length")
 	}
 
-	observationPaymentFelt, err := caigoStringToJunoFelt(res[0])
-	if err != nil {
-		return bd, errors.Wrap(err, "couldn't decode observation payment")
-	}
-
-	transmissionPaymentFelt, err := caigoStringToJunoFelt(res[1])
-	if err != nil {
-		return bd, errors.Wrap(err, "couldn't decode transmission payment")
-	}
+	observationPaymentFelt := caigoStringToJunoFelt(res[0])
+	transmissionPaymentFelt := caigoStringToJunoFelt(res[1])
 
 	bd, err = NewBillingDetails(observationPaymentFelt, transmissionPaymentFelt)
 	if err != nil {
@@ -92,15 +85,8 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 		return ccd, errors.New("unexpected result length")
 	}
 
-	blockNum, err := caigoStringToJunoFelt(res[1])
-	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't decode block num")
-	}
-
-	configDigest, err := caigoStringToJunoFelt(res[2])
-	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't decode config digest")
-	}
+	blockNum := caigoStringToJunoFelt(res[1])
+	configDigest := caigoStringToJunoFelt(res[2])
 
 	ccd, err = NewContractConfigDetails(blockNum, configDigest)
 	if err != nil {
@@ -122,32 +108,20 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	}
 
 	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
-	digest, err := caigoStringToJunoFelt(res[0])
-	if err != nil {
-		return td, errors.Wrap(err, "couldn't decode config digest")
-	}
+	digest := caigoStringToJunoFelt(res[0])
 	configDigest := types.ConfigDigest{}
 	digest.Big().FillBytes(configDigest[:])
 
-	epochAndRoundFelt, err := caigoStringToJunoFelt(res[1])
-	if err != nil {
-		return td, errors.Wrap(err, "couldn't decode epoch and round")
-	}
+	epochAndRoundFelt := caigoStringToJunoFelt(res[1])
 	// TODO: extract into utils.go and share
 	var epochAndRound [junotypes.FeltLength]byte
 	epochAndRoundFelt.Big().FillBytes(epochAndRound[:])
 	epoch := binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
 	round := epochAndRound[junotypes.FeltLength-1]
 
-	latestAnswer, err := parseAnswer(res[2])
-	if err != nil {
-		return td, errors.Wrap(err, "couldn't decode latestAnswer")
-	}
+	latestAnswer := parseAnswer(res[2])
 
-	timestampFelt, err := caigoStringToJunoFelt(res[3])
-	if err != nil {
-		return td, errors.Wrap(err, "couldn't decode latestTimestamp")
-	}
+	timestampFelt := caigoStringToJunoFelt(res[3])
 	// TODO: Int64() can return invalid data if int is too big
 	unixTime := timestampFelt.Big().Int64()
 	latestTimestamp := time.Unix(unixTime, 0)

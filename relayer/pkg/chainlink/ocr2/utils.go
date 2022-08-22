@@ -72,10 +72,10 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-func parseAnswer(str string) (num *big.Int, err error) {
-	felt, err := caigoStringToJunoFelt(str)
+func parseAnswer(str string) (num *big.Int) {
+	felt := caigoStringToJunoFelt(str)
 	num = felt.Big()
-	return signedFelt(&caigotypes.Felt{Int: num}), err
+	return signedFelt(&caigotypes.Felt{Int: num})
 }
 
 func signedFelt(felt *caigotypes.Felt) (num *big.Int) {
@@ -89,8 +89,8 @@ func signedFelt(felt *caigotypes.Felt) (num *big.Int) {
 	return num
 }
 
-func caigoStringToJunoFelt(str string) (felt junotypes.Felt, err error) {
-	return junotypes.HexToFelt(str), nil
+func caigoStringToJunoFelt(str string) (felt junotypes.Felt) {
+	return junotypes.HexToFelt(str)
 }
 
 func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
