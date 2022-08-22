@@ -179,22 +179,23 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 
 			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
-				// end condition
+				// end condition: enough rounds have occured
 				if increasing == increasingCountMax {
 					break
 				}
 
+				// end condition: rounds have been stuck
+				if stuck && stuckCount > 10 {
+					log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
+					break
+				}
+
+				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
 				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
 				if err != nil {
 					log.Error().Err(err)
-
-					// exit loop early
-					if stuck && stuckCount > 10 {
-						log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
-						break
-					}
 					continue
 				}
 				log.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
@@ -224,7 +225,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 					continue
 				}
 
-				// reach this point, answer may be stuck
+				// reach this point, answer has not changed
 				stuckCount += 1
 				if stuckCount > 5 {
 					stuck = true
