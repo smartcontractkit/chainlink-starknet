@@ -10,7 +10,7 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
+import { loadContractOcr2, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
@@ -60,6 +60,12 @@ const validInput = {
     maxDurationReportNanoseconds: 200000000,
     maxDurationShouldAcceptFinalizedReportNanoseconds: 200000000,
     maxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
+    configPublicKeys: [
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852094',
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852095',
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852096',
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852097',
+    ],
   },
   offchainConfigVersion: 2,
   secret: 'awe accuse polygon tonic depart acuity onyx inform bound gilbert expire',
@@ -119,7 +125,7 @@ describe('OCR2 Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const ocr2 = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2 = loadContractOcr2(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
       const response = await ocr2Contract.billing()
       const billing = response[0]
@@ -144,7 +150,7 @@ describe('OCR2 Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const provider = makeProvider(LOCAL_URL).provider
-      const ocr2 = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2 = loadContractOcr2(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, provider)
       const response = await ocr2Contract.transmitters()
       const resultTrasmitters = response[0]

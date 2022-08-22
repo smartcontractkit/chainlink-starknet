@@ -1,6 +1,9 @@
 package starknet
 
-import "math/big"
+import (
+	"fmt"
+	"math/big"
+)
 
 // convert big into padded bytes
 func PadBytesBigInt(a *big.Int, length int) []byte {
@@ -16,4 +19,16 @@ func PadBytes(a []byte, length int) []byte {
 
 	// return original if length is >= to specified length
 	return a
+}
+
+// convert 32 byte to "0" + 31 bytes
+func EnsureFelt(b [32]byte) (out []byte) {
+	out = make([]byte, 32)
+	copy(out[:], b[:])
+	out[0] = 0
+	return out
+}
+
+func NilResultError(funcName string) error {
+	return fmt.Errorf("nil result in %s", funcName)
 }

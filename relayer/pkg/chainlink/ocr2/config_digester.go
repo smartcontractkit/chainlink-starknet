@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/NethermindEth/juno/pkg/rpc"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 
+	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -18,11 +19,11 @@ const ConfigDigestPrefixStarknet types.ConfigDigestPrefix = 4
 var _ types.OffchainConfigDigester = (*offchainConfigDigester)(nil)
 
 type offchainConfigDigester struct {
-	chainID  rpc.ChainID
-	contract rpc.Address
+	chainID  string
+	contract string
 }
 
-func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offchainConfigDigester {
+func NewOffchainConfigDigester(chainID, contract string) offchainConfigDigester {
 	return offchainConfigDigester{
 		chainID:  chainID,
 		contract: contract,
@@ -33,7 +34,7 @@ func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offcha
 func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
-	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(string(d.contract), "0x"), 16)
+	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(d.contract, "0x"), 16)
 	if !valid {
 		return configDigest, errors.New("invalid contract address")
 	}
@@ -58,6 +59,17 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
+	// TODO: use libocr's custom encoding instead to produce encodedOnchainConfig
+	onchainConfig, err := median.DecodeOnchainConfig(cfg.OnchainConfig)
+	if err != nil {
+		return configDigest, err
+	}
+	encodedOnchainConfig := []*big.Int{
+		big.NewInt(1), // onchainConfigVersion
+		new(big.Int).Mod(onchainConfig.Min, caigotypes.MaxFelt.Big()), // TODO: this wraps negative values correctly into felts, use a helper
+		new(big.Int).Mod(onchainConfig.Max, caigotypes.MaxFelt.Big()), // TODO: this wraps negative values correctly into felts, use a helper
+	}
+
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
 	msg := []*big.Int{
 		new(big.Int).SetBytes([]byte(d.chainID)),       // chain_id
@@ -69,7 +81,11 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	msg = append(
 		msg,
 		big.NewInt(int64(cfg.F)), // f
-		big.NewInt(0),            // TODO: onchain_config
+		big.NewInt(int64(len(encodedOnchainConfig))), // onchain_config_len
+	)
+	msg = append(msg, encodedOnchainConfig...)
+	msg = append(
+		msg,
 		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
 		big.NewInt(int64(len(offchainConfig))),            // offchain_config_len
 	)

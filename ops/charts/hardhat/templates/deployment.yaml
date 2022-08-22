@@ -1,55 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: starknet-dev
+  name: hardhat
   labels:
     release: {{ .Release.Name }}
-    app: starknet-dev
+    app: hardhat
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       release: {{ .Release.Name }}
-      app: starknet-dev
+      app: hardhat
   template:
     metadata:
       labels:
         release: {{ .Release.Name }}
-        app: starknet-dev
+        app: hardhat
     spec:
       containers:
       - name: {{ .Chart.Name }}
-{{- if eq .Values.real_node true }}
-        image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
-{{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.1.23"}}"
-{{- end }}
+        image: "{{ .Values.repository | default "ethereumoptimism/hardhat-node"}}:{{ .Values.tag | default "nightly"}}"
         imagePullPolicy: IfNotPresent
-{{- if eq .Values.real_node true }}
-        env:
-          - name: PATHFINDER_HTTP_RPC_ADDRESS
-            value: "0.0.0.0:5000"
-          - name: RUSTLOG
-            value: "info"
-          - name: PATHFINDER_ETHEREUM_API_URL
-            value: {{ .Values.url_http_L1 }}
-{{- else }}
-        env:
-          - name: PYTHONUNBUFFERED
-            value: "1"
-{{- end }}
         ports:
           - name: http
             containerPort: {{ .Values.service.internalPort }}
         livenessProbe:
           httpGet:
-            path: /is_alive
+            path: /
             port: {{ .Values.service.externalPort }}
           initialDelaySeconds: 1
           periodSeconds: 30
         readinessProbe:
           httpGet:
-            path: /is_alive
+            path: /
             port: {{ .Values.service.externalPort }}
           initialDelaySeconds: 2
           periodSeconds: 1

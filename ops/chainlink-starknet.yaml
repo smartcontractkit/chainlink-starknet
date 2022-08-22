@@ -3,7 +3,7 @@ charts:
   geth:
     index: 1
   starknet:
-    path: ./relayer/ops/charts/starknet
+    path: ./ops/charts/starknet
     index: 1
     values:
 #       false = stark-devnet
