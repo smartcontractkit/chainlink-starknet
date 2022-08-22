@@ -28,15 +28,15 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysB
 		return nil, nil, err
 	}
 	for _, n := range chainlinkNodes {
-		_, _, err = n.CreateStarknetChain(&client.StarknetChainAttributes{
+		_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
 			Type:    c.ChainName,
 			ChainID: c.ChainId,
-			Config:  client.StarknetChainConfig{},
+			Config:  client.StarkNetChainConfig{},
 		})
 		if err != nil {
 			return nil, nil, err
 		}
-		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
+		_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
 			Name:    c.ChainName,
 			ChainID: c.ChainId,
 			Url:     env.URLs[c.ServiceKeyL2][1],
