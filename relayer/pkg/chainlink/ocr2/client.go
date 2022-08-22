@@ -58,8 +58,8 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		return bd, errors.New("unexpected result length")
 	}
 
-	observationPaymentFelt := caigoStringToJunoFelt(res[0])
-	transmissionPaymentFelt := caigoStringToJunoFelt(res[1])
+	observationPaymentFelt := junotypes.HexToFelt(res[0])
+	transmissionPaymentFelt := junotypes.HexToFelt(res[1])
 
 	bd, err = NewBillingDetails(observationPaymentFelt, transmissionPaymentFelt)
 	if err != nil {
@@ -85,8 +85,8 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 		return ccd, errors.New("unexpected result length")
 	}
 
-	blockNum := caigoStringToJunoFelt(res[1])
-	configDigest := caigoStringToJunoFelt(res[2])
+	blockNum := junotypes.HexToFelt(res[1])
+	configDigest := junotypes.HexToFelt(res[2])
 
 	ccd, err = NewContractConfigDetails(blockNum, configDigest)
 	if err != nil {
@@ -108,11 +108,11 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	}
 
 	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
-	digest := caigoStringToJunoFelt(res[0])
+	digest := junotypes.HexToFelt(res[0])
 	configDigest := types.ConfigDigest{}
 	digest.Big().FillBytes(configDigest[:])
 
-	epochAndRoundFelt := caigoStringToJunoFelt(res[1])
+	epochAndRoundFelt := junotypes.HexToFelt(res[1])
 	// TODO: extract into utils.go and share
 	var epochAndRound [junotypes.FeltLength]byte
 	epochAndRoundFelt.Big().FillBytes(epochAndRound[:])
@@ -121,7 +121,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 
 	latestAnswer := parseAnswer(res[2])
 
-	timestampFelt := caigoStringToJunoFelt(res[3])
+	timestampFelt := junotypes.HexToFelt(res[3])
 	// TODO: Int64() can return invalid data if int is too big
 	unixTime := timestampFelt.Big().Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
