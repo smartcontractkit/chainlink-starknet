@@ -1,11 +1,13 @@
 package ocr2
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -32,4 +34,11 @@ func TestIsEventFromContract(t *testing.T) {
 
 	// test different length addresses
 	assert.True(t, isEventFromContract(&event, "0x2432012bcda2bfa339c51b3be731118f2bd3bac6b63c5ca664c154bf636f", testConfigSetSelector))
+}
+
+func TestCaigoStringToJunoFelt(t *testing.T) {
+	felt, err := caigoStringToJunoFelt("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
+	require.NoError(t, err)
+	assert.Equal(t, big.NewInt(-10), felt.Big())
+	assert.True(t, big.NewInt(-10).Cmp(felt.Big()) == 0)
 }
