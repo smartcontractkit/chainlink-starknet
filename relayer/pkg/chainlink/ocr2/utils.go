@@ -73,12 +73,7 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 }
 
 func caigoStringToJunoFelt(str string) (felt junotypes.Felt, err error) {
-	big, ok := new(big.Int).SetString(str, 0)
-	if !ok {
-		return felt, errors.New("wrong format of caigo string")
-	}
-
-	return junotypes.BigToFelt(big), nil
+	return junotypes.HexToFelt(str), nil
 }
 
 func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
