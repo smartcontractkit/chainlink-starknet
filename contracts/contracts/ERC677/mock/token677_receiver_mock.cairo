@@ -35,7 +35,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 end
 
 @external
-func on_token_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func onTokenTransfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     sender : felt, value : Uint256, data_len : felt, data : felt*
 ):
     with_attr error_message("ERC677: address can not be null"):
@@ -45,11 +45,11 @@ func on_token_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     token677ReceiverMock_token_sender_.write(sender)
     token677ReceiverMock_sent_value_.write(value)
     token677ReceiverMock_token_data_len_.write(data_len)
-    fill_data_storage(0, data_len, data)
+    fillDataStorage(0, data_len, data)
     return ()
 end
 
-func fill_data_storage{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func fillDataStorage{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     index : felt, data_len : felt, data : felt*
 ):
     if data_len == 0:
@@ -58,7 +58,7 @@ func fill_data_storage{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     let index = index + 1
     token677ReceiverMock_token_data_.write(index, [data])
-    return fill_data_storage(index=index, data_len=data_len - 1, data=data + 1)
+    return fillDataStorage(index=index, data_len=data_len - 1, data=data + 1)
 end
 
 @view
@@ -70,7 +70,7 @@ func supportsInterface{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 end
 
 @view
-func get_called_fallback{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+func getCalledFallback{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     bool : felt
 ):
     let (bool) = token677ReceiverMock_called_fallback_.read()
@@ -78,7 +78,7 @@ func get_called_fallback{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 end
 
 @view
-func get_sent_value{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+func getSentValue{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     value : Uint256
 ):
     let (value) = token677ReceiverMock_sent_value_.read()
@@ -86,7 +86,7 @@ func get_sent_value{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 end
 
 @view
-func get_token_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+func getTokenSender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     address : felt
 ):
     let (address) = token677ReceiverMock_token_sender_.read()
