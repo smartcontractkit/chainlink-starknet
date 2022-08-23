@@ -2,8 +2,6 @@ import { assert, expect } from 'chai'
 import BN from 'bn.js'
 import { toBN } from 'starknet/utils/number'
 import { starknet } from 'hardhat'
-import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 
@@ -29,17 +27,16 @@ describe('ERC677', function () {
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({ minter: sender.starknetContract.address })
-
-    await sender.invoke(token, 'permissionedMint', {
+    token = await tokenFactory.deploy({
+      initial_supply: { high: 0n, low: 1000n },
       recipient: sender.starknetContract.address,
-      amount: { high: 0n, low: 1000n },
+      proxy_admin: sender.starknetContract.address,
     })
     await sender.invoke(token, 'transfer', {
       recipient: sender.starknetContract.address,
       amount: { high: 0n, low: 100n },
     })
-    const { value: value } = await receiver.call('get_sent_value')
+    const { value: value } = await receiver.call('getSentValue')
     expect(uint256ToBigInt(value)).to.deep.equal(toBN(0))
   })
 
@@ -74,13 +71,13 @@ describe('ERC677', function () {
         data: data,
       })
 
-      const { bool: bool } = await receiver.call('get_called_fallback', {})
+      const { bool: bool } = await receiver.call('getCalledFallback', {})
       expect(bool).to.deep.equal(1n)
 
-      const { address: address } = await receiver.call('get_token_sender', {})
+      const { address: address } = await receiver.call('getTokenSender', {})
       expect(address).to.equal(BigInt(sender.starknetContract.address))
 
-      const { value: sentValue } = await receiver.call('get_sent_value')
+      const { value: sentValue } = await receiver.call('getSentValue')
       expect(uint256ToBigInt(sentValue)).to.deep.equal(toBN(100))
     })
 
