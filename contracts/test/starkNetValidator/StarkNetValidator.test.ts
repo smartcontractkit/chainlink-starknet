@@ -44,14 +44,14 @@ describe('StarkNetValidator', () => {
   })
 
   describe('starknetValidator', () => {
-    it('should get the selector from name successfully', async () => {
+    it('should get the selector from the name successfully', async () => {
       const setSelector = getSelectorFromName('update_status')
       expect(BigInt(setSelector)).to.equal(
         1585322027166395525705364165097050997465692350398750944680096081848180365267n,
       )
     })
 
-    it('reverts if called by an account with no access', async () => {
+    it('reverts if called by account with no access', async () => {
       await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith('No access')
     })
 
@@ -67,13 +67,16 @@ describe('StarkNetValidator', () => {
         networkUrl,
         mockStarkNetMessenger.address,
       )
+
       expect(mockStarkNetMessenger.address).to.equal(loadedFrom)
 
       await starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)
+
       const flushL1Response = await starknet.devnet.flush()
       const flushL1Messages = flushL1Response.consumed_messages.from_l1
       expect(flushL1Messages).to.have.a.lengthOf(1)
       expect(flushL1Response.consumed_messages.from_l2).to.be.empty
+
       expectAddressEquality(flushL1Messages[0].args.from_address, starkNetValidator.address)
       expectAddressEquality(flushL1Messages[0].args.to_address, l2Contract.address)
       expectAddressEquality(flushL1Messages[0].address, mockStarkNetMessenger.address)

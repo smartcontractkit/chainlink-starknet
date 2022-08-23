@@ -799,8 +799,8 @@ func latest_transmission_details{
         round_id=latest_round_id,
         answer=transmission.answer,
         block_num=transmission.block_num,
-        observation_timestamp=transmission.observation_timestamp,
-        transmission_timestamp=transmission.transmission_timestamp,
+        started_at=transmission.observation_timestamp,
+        updated_at=transmission.transmission_timestamp,
     )
     return (
         config_digest=config_digest,
@@ -1056,7 +1056,7 @@ func has_billing_access{
 
     IAccessController.check_access(
         contract_address=access_controller,
-        address=caller
+        user=caller
     )
     return ()
 end
