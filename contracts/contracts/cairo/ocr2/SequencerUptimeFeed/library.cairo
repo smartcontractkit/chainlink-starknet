@@ -74,7 +74,7 @@ func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
-# TODO: this methods are virtual in .sol: clarify
+# TODO: make overridable in the future
 @external
 func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
@@ -94,12 +94,12 @@ func l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 end
 
 namespace sequencer_uptime_feed:
-    func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         initial_status : felt, owner_address : felt
     ):
         assert_boolean(initial_status)
 
-        simple_read_access_controller.constructor(owner_address)
+        simple_read_access_controller.initialize(owner_address)
 
         let (timestamp) = get_block_timestamp()
         _record_round(1, initial_status, timestamp)

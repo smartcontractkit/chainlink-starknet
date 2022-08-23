@@ -8,10 +8,10 @@ from starkware.cairo.common.bool import TRUE, FALSE
 from cairo.SimpleWriteAccessController.library import simple_write_access_controller
 
 namespace simple_read_access_controller:
-    func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         owner_address : felt
     ):
-        simple_write_access_controller.constructor(owner_address)
+        simple_write_access_controller.initialize(owner_address)
         return ()
     end
 

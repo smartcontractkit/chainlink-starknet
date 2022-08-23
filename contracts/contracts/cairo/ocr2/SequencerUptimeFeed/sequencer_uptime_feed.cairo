@@ -12,7 +12,7 @@ from cairo.SimpleReadAccessController.library import simple_read_access_controll
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     initial_status : felt, owner_address : felt
 ):
-    sequencer_uptime_feed.constructor(initial_status, owner_address)
+    sequencer_uptime_feed.initialize(initial_status, owner_address)
     return ()
 end
 

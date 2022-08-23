@@ -18,7 +18,7 @@ from cairo.ocr2.interfaces.IAccessController import IAccessController
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner_address : felt
 ):
-    simple_write_access_controller.constructor(owner_address)
+    simple_write_access_controller.initialize(owner_address)
     return ()
 end
 

@@ -87,7 +87,7 @@ func disable_access_check{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
 end
 
 namespace simple_write_access_controller:
-    func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         owner_address : felt
     ):
         Ownable_initializer(owner_address)
