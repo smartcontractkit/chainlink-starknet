@@ -31,10 +31,10 @@ describe('LinkToken', function () {
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({ minter: owner.starknetContract.address })
-    await owner.invoke(token, 'permissionedMint', {
+    token = await tokenFactory.deploy({
+      initial_supply: { high: 0n, low: 1000000000000000000000000000n },
       recipient: owner.starknetContract.address,
-      amount: { high: 0n, low: 1000000000000000000000000000n },
+      proxy_admin: owner.starknetContract.address,
     })
   })
 
@@ -51,7 +51,7 @@ describe('LinkToken', function () {
         recipient: sender.starknetContract.address,
         amount: { high: 0n, low: 100n },
       })
-      const { value: sentValue } = await receiver.call('get_sent_value')
+      const { value: sentValue } = await receiver.call('getSentValue')
       expect(uint256ToBigInt(sentValue)).to.deep.equal(toBN(0))
     })
 
@@ -96,7 +96,7 @@ describe('LinkToken', function () {
 
     it('does NOT call the fallback on transfer', async () => {
       await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: { high: 0n, low: 100n } })
-      const { bool: bool } = await receiver.call('get_called_fallback', {})
+      const { bool: bool } = await receiver.call('getCalledFallback', {})
       expect(bool).to.deep.equal(0n)
     })
 
@@ -129,7 +129,7 @@ describe('LinkToken', function () {
     })
 
     it('transfers the amount to the contract and calls the contract function without withdrawl', async () => {
-      let selector = getSelectorFromName('callback_without_withdrawl')
+      let selector = getSelectorFromName('callbackWithoutWithdrawl')
       await owner.invoke(token, 'transferAndCall', {
         to: recipient.address,
         value: { high: 0n, low: 1000n },
@@ -146,15 +146,15 @@ describe('LinkToken', function () {
       })
       expect(uint256ToBigInt(allowance)).to.deep.equal(toBN(0))
 
-      const { bool: fallBack } = await recipient.call('get_fallback', {})
+      const { bool: fallBack } = await recipient.call('getFallback', {})
       expect(fallBack).to.deep.equal(1n)
 
-      const { bool: callData } = await recipient.call('get_call_data', {})
+      const { bool: callData } = await recipient.call('getCallData', {})
       expect(callData).to.deep.equal(1n)
     })
 
     it('transfers the amount to the contract and calls the contract function with withdrawl', async () => {
-      let selector = getSelectorFromName('callback_with_withdrawl')
+      let selector = getSelectorFromName('callbackWithWithdrawl')
       await owner.invoke(token, 'approve', { spender: recipient.address, amount: { high: 0n, low: 1000n } })
 
       const { remaining: allowance } = await token.call('allowance', {
@@ -174,13 +174,13 @@ describe('LinkToken', function () {
       })
       expect(uint256ToBigInt(balance)).to.deep.equal(toBN(amount + amount))
 
-      const { bool: fallBack } = await recipient.call('get_fallback', {})
+      const { bool: fallBack } = await recipient.call('getFallback', {})
       expect(fallBack).to.deep.equal(1n)
 
-      const { bool: callData } = await recipient.call('get_call_data', {})
+      const { bool: callData } = await recipient.call('getCallData', {})
       expect(callData).to.deep.equal(1n)
 
-      const { value: value } = await recipient.call('get_tokens', {})
+      const { value: value } = await recipient.call('getTokens', {})
       expect(uint256ToBigInt(value)).to.deep.equal(toBN(amount))
     })
 
