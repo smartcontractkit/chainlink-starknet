@@ -60,7 +60,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
 	// TODO: use libocr's custom encoding instead to produce encodedOnchainConfig
-	onchainConfig, err := median.DecodeOnchainConfig(cfg.OnchainConfig)
+	onchainConfig, err := median.StandardOnchainConfigCodec{}.Decode(cfg.OnchainConfig)
 	if err != nil {
 		return configDigest, err
 	}

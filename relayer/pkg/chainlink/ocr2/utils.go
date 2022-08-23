@@ -221,7 +221,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 		Min: signedFelt(onchainConfigFelts[1]),
 		Max: signedFelt(onchainConfigFelts[2]),
 	}
-	onchainConfig, err := temp.Encode()
+	onchainConfig, err := median.StandardOnchainConfigCodec{}.Encode(temp)
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "err in generating placeholder onchain config")
 	}
