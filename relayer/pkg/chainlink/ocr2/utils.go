@@ -16,6 +16,7 @@ import (
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -217,11 +218,10 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 		return types.ContractConfig{}, errors.Wrapf(err, "expected onchainConfig version 1, got %v", onchainConfigVersion)
 	}
 
-	temp := median.OnchainConfig{
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.Encode(median.OnchainConfig{
 		Min: signedFelt(onchainConfigFelts[1]),
 		Max: signedFelt(onchainConfigFelts[2]),
-	}
-	onchainConfig, err := median.StandardOnchainConfigCodec{}.Encode(temp)
+	})
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "err in generating placeholder onchain config")
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -59,15 +59,15 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
-	// TODO: use libocr's custom encoding instead to produce encodedOnchainConfig
-	onchainConfig, err := median.StandardOnchainConfigCodec{}.Decode(cfg.OnchainConfig)
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeBigInt(cfg.OnchainConfig)
 	if err != nil {
 		return configDigest, err
 	}
-	encodedOnchainConfig := []*big.Int{
-		big.NewInt(1), // onchainConfigVersion
-		new(big.Int).Mod(onchainConfig.Min, caigotypes.MaxFelt.Big()), // TODO: this wraps negative values correctly into felts, use a helper
-		new(big.Int).Mod(onchainConfig.Max, caigotypes.MaxFelt.Big()), // TODO: this wraps negative values correctly into felts, use a helper
+
+	encodedOnchainConfig := []*big.Int{}
+	for i := 0; i < len(onchainConfig); i++ {
+		modded := new(big.Int).Mod(onchainConfig[i], caigotypes.MaxFelt.Big()) // TODO: this wraps negative values correctly into felts, use a helper
+		encodedOnchainConfig = append(encodedOnchainConfig, modded)
 	}
 
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions

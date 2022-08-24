@@ -131,5 +131,5 @@ func (p *medianProvider) MedianContract() median.MedianContract {
 }
 
 func (p *medianProvider) OnchainConfigCodec() median.OnchainConfigCodec {
-	return median.StandardOnchainConfigCodec{}
+	return medianreport.OnchainConfigCodec{}
 }
