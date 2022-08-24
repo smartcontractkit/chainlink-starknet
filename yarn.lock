@@ -334,11 +334,6 @@
   resolved "https://registry.yarnpkg.com/@chainlink-dev/starknet-contracts-ocr2/-/starknet-contracts-ocr2-0.0.5.tgz#89eb1cda0e8f2e72f48744de9915c0fa14c87786"
   integrity sha512-1tPkpFfrYz3PnarZvnrKHlMKV8tvUyrxV57OQI5egb0JplmEOOyB8sq9WoLyLStZnP0gk8w7IzRJtdu9lf64uA==
 
-"@chainlink-dev/starknet-multisig@0.1.0", "@chainlink-dev/starknet-multisig@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/@chainlink-dev/starknet-multisig/-/starknet-multisig-0.1.0.tgz#0164db8effd86f3b70dfc84197278d96285a7807"
-  integrity sha512-5Uat7IILf+8GCuetACZoPH+WO8d8xojat9IvQLrSSoqtFqR+lGsVec0MAcZFWbyFBYL1w4JvXWDrbI1ZHSIszw==
-
 "@chainlink/gauntlet-contracts-example@0.1.1":
   version "0.1.1"
   resolved "https://registry.npmjs.org/@chainlink/gauntlet-contracts-example/-/gauntlet-contracts-example-0.1.1.tgz#bf7827460dcb404ba3683245cec1df61ee5ee5c5"
@@ -6046,7 +6041,7 @@ starknet@3.9.0:
     superstruct "^0.15.3"
     url-join "^4.0.1"
 
-starknet@^3.15.0, starknet@^3.9.0:
+starknet@^3.15.0, starknet@^3.5.1, starknet@^3.9.0:
   version "3.18.2"
   resolved "https://registry.npmjs.org/starknet/-/starknet-3.18.2.tgz#ec0c83ca97763663722f8e4b6a6872bf2cb18e05"
   integrity sha512-w42BOws9np3C9dy4y9MOwY+KqxNhwTseci7CLVlLkui+jzQ7gGWoPVqn9OMeKy0PWIcZadCeuHvLez2xrg3zMg==
@@ -6062,6 +6057,13 @@ starknet@^3.15.0, starknet@^3.9.0:
     pako "^2.0.4"
     ts-custom-error "^3.2.0"
     url-join "^4.0.1"
+
+starsign-multisig@0.2.3, starsign-multisig@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/starsign-multisig/-/starsign-multisig-0.2.3.tgz#945eef5811660ec47bab6e7fb02622ef461ec65f"
+  integrity sha512-d93suDKVhjyPUN0rE8WEV0hnxXT+3XpwHzqqoc/jNJCHUvEK9GS2lpiCd4E68RqcUMRCX/IatnaO1SCb2Yyp4A==
+  dependencies:
+    starknet "^3.5.1"
 
 statuses@2.0.1:
   version "2.0.1"

@@ -109,7 +109,7 @@ export const wrapCommand = <UI, CI>(
         multisig,
         proposal: {
           id: proposalId,
-          approvers: proposal.tx.threshold,
+          confirmations: proposal.tx.confirmations,
           data: {
             contractAddress: addAddressPadding(proposal.tx.to),
             entrypoint: addHexPrefix(toBN(proposal.tx.function_selector).toString('hex')),
@@ -118,7 +118,7 @@ export const wrapCommand = <UI, CI>(
           nextAction:
             toBN(proposal.tx.executed).toNumber() !== 0
               ? Action.NONE
-              : proposal.tx.threshold >= multisig.threshold
+              : proposal.tx.confirmations >= multisig.threshold
               ? Action.EXECUTE
               : Action.APPROVE,
         },
@@ -189,14 +189,14 @@ export const wrapCommand = <UI, CI>(
     }
 
     afterExecute = async (result: Result<TransactionResponse>, proposalId?: number) => {
-      if (!proposalId) deps.logger.warn('Proposal ID not found')
+      if (proposalId === undefined) deps.logger.warn('Proposal ID not found')
       deps.logger.loading('Fetching latest multisig and proposal state...')
       const state = await this.fetchMultisigState(this.multisigAddress, proposalId)
       if (!state.proposal) {
         deps.logger.error(`Multisig proposal ${proposalId} not found`)
         return
       }
-      const approvalsLeft = state.multisig.threshold - state.proposal.approvers
+      const approvalsLeft = state.multisig.threshold - state.proposal.confirmations
       const messages = {
         [Action.EXECUTE]: `The multisig proposal reached the threshold and can be executed. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
         [Action.APPROVE]: `The multisig proposal needs ${approvalsLeft} more approvals. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
@@ -217,7 +217,7 @@ export const wrapCommand = <UI, CI>(
       if (this.initialState.proposal) {
         deps.logger.info(`Proposal State:
         - ID: ${this.initialState.proposal.id}
-        - Appovals: ${this.initialState.proposal.approvers}
+        - Approvals: ${this.initialState.proposal.confirmations}
         - Next action: ${this.initialState.proposal.nextAction}
       `)
       }
