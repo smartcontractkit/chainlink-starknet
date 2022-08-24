@@ -26,7 +26,7 @@ namespace ERC677:
         Transfer.emit(sender, to, value, data_len, data)
 
         let (bool) = IERC677Receiver.supportsInterface(to, IERC677_RECEIVER_ID)
-        if bool == 1:
+        if bool == TRUE:
             IERC677Receiver.onTokenTransfer(to, sender, value, data_len, data)
             return (TRUE)
         end
