@@ -33,8 +33,8 @@ from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
 
-@constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+@external
+func link_initializer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     initial_supply : Uint256, recipient : felt, proxy_admin : felt
 ):
     alloc_locals
