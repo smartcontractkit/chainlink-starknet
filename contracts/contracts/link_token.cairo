@@ -43,6 +43,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
+# This implements Starkgate IMintableToken interface
 @external
 func permissionedMint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
@@ -69,6 +70,7 @@ func permissionedBurn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     return ()
 end
 
+# This implements the ERC677 interface
 @external
 func transferAndCall{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     to : felt, value : Uint256, data_len : felt, data : felt*
@@ -78,6 +80,6 @@ func transferAndCall{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
 end
 
 @view
-func typeAndVersion() -> (meta : felt):
+func type_and_version() -> (meta : felt):
     return ('LinkToken 0.0.1')
 end

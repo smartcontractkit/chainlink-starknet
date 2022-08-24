@@ -2,6 +2,6 @@
 
 @contract_interface
 namespace ITypeAndVersion:
-    func typeAndVersion() -> (meta : felt):
+    func type_and_version() -> (meta : felt):
     end
 end

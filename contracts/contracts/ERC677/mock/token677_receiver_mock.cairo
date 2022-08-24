@@ -38,9 +38,6 @@ end
 func onTokenTransfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     sender : felt, value : Uint256, data_len : felt, data : felt*
 ):
-    with_attr error_message("ERC677: address can not be null"):
-        assert data_len = 3
-    end
     token677ReceiverMock_called_fallback_.write(TRUE)
     token677ReceiverMock_token_sender_.write(sender)
     token677ReceiverMock_sent_value_.write(value)
