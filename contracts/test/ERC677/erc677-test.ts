@@ -27,7 +27,8 @@ describe('ERC677', function () {
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({
+    token = await tokenFactory.deploy({})
+    await sender.invoke(token, 'link_initializer', {
       initial_supply: { high: 0n, low: 1000n },
       recipient: sender.starknetContract.address,
       proxy_admin: sender.starknetContract.address,
