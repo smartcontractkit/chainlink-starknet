@@ -31,7 +31,8 @@ describe('LinkToken', function () {
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({
+    token = await tokenFactory.deploy({})
+    await owner.invoke(token, 'link_initializer', {
       initial_supply: { high: 0n, low: 1000000000000000000000000000n },
       recipient: owner.starknetContract.address,
       proxy_admin: owner.starknetContract.address,
