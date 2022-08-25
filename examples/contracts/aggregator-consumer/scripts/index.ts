@@ -3,7 +3,9 @@ import { CompiledContract, json } from 'starknet'
 
 export const loadContract = (name: string): CompiledContract => {
   return json.parse(
-    fs.readFileSync(`${__dirname}/../starknet-artifacts/contracts/${name}.cairo/${name}.json`).toString('ascii'),
+    fs
+      .readFileSync(`${__dirname}/../starknet-artifacts/contracts/${name}.cairo/${name}.json`)
+      .toString('ascii'),
   )
 }
 

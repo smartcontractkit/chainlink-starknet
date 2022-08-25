@@ -4,7 +4,7 @@ import { number } from 'starknet'
 import { StarknetContractFactory, StarknetContract, HttpNetworkConfig } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { expectAddressEquality } from './utils'
+import { expectAddressEquality } from '../utils'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 
 describe('StarkNetValidator', () => {
@@ -33,12 +33,18 @@ describe('StarkNetValidator', () => {
     eoaValidator = accounts[1]
 
     const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
-    mockStarkNetMessengerFactory = await ethers.getContractFactory('MockStarkNetMessaging', deployer)
+    mockStarkNetMessengerFactory = await ethers.getContractFactory(
+      'MockStarkNetMessaging',
+      deployer,
+    )
 
     mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy()
     await mockStarkNetMessenger.deployed()
 
-    starkNetValidator = await starknetValidatorFactory.deploy(mockStarkNetMessenger.address, l2Contract.address)
+    starkNetValidator = await starknetValidatorFactory.deploy(
+      mockStarkNetMessenger.address,
+      l2Contract.address,
+    )
 
     await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
   })
@@ -52,13 +58,18 @@ describe('StarkNetValidator', () => {
     })
 
     it('reverts if called by account with no access', async () => {
-      await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith('No access')
+      await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith(
+        'No access',
+      )
     })
 
     it('should deploy the messaging contract', async () => {
       starkNetValidator.addAccess(eoaValidator.address)
 
-      const { address: deployedTo, l1_provider: L1Provider } = await starknet.devnet.loadL1MessagingContract(networkUrl)
+      const {
+        address: deployedTo,
+        l1_provider: L1Provider,
+      } = await starknet.devnet.loadL1MessagingContract(networkUrl)
 
       expect(deployedTo).not.to.be.undefined
       expect(L1Provider).to.equal(networkUrl)

@@ -26,7 +26,9 @@ describe('ContractTokenBridge', function () {
     accountUser1 = (await starknet.deployAccount('Argent')) as ArgentAccount
 
     let tokenBridgeFactory = await starknet.getContractFactory('token_bridge.cairo')
-    tokenBridgeContract = await tokenBridgeFactory.deploy({ governor_address: accountUser1.starknetContract.address })
+    tokenBridgeContract = await tokenBridgeFactory.deploy({
+      governor_address: accountUser1.starknetContract.address,
+    })
 
     let ERC20Factory = await starknet.getContractFactory('ERC20.cairo')
     ERC20Contract = await ERC20Factory.deploy({
@@ -38,13 +40,17 @@ describe('ContractTokenBridge', function () {
   })
 
   it('Test Set and Get function for L1 bridge address', async () => {
-    await accountUser1.invoke(tokenBridgeContract, 'set_l1_bridge', { l1_bridge_address: L1_BRIDGE_ADDRESS })
+    await accountUser1.invoke(tokenBridgeContract, 'set_l1_bridge', {
+      l1_bridge_address: L1_BRIDGE_ADDRESS,
+    })
     const { res: l1_address } = await tokenBridgeContract.call('get_l1_bridge', {})
     expectAddressEquality(l1_address.toString(), L1_BRIDGE_ADDRESS.toString())
   })
 
   it('Test Set and Get function for L2 token address', async () => {
-    await accountUser1.invoke(tokenBridgeContract, 'set_l2_token', { l2_token_address: ERC20Contract.address })
+    await accountUser1.invoke(tokenBridgeContract, 'set_l2_token', {
+      l2_token_address: ERC20Contract.address,
+    })
     const { res: l2_address } = await tokenBridgeContract.call('get_l2_token', {})
     expectAddressEquality(l2_address.toString(), ERC20Contract.address)
   })

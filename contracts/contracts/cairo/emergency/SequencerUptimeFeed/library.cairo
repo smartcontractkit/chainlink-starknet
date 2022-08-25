@@ -101,8 +101,9 @@ namespace sequencer_uptime_feed:
 
         simple_read_access_controller.initialize(owner_address)
 
+        let round_id = 1
         let (timestamp) = get_block_timestamp()
-        _record_round(1, initial_status, timestamp)
+        _record_round(round_id, initial_status, timestamp)
 
         return ()
     end
@@ -127,8 +128,8 @@ namespace sequencer_uptime_feed:
         if latest_status == status:
             _update_round(latest_round_id, status)
         else:
-            let latest_round_id = latest_round_id + 1
-            _record_round(latest_round_id, status, timestamp)
+            let round_id = latest_round_id + 1
+            _record_round(round_id, status, timestamp)
         end
 
         return ()

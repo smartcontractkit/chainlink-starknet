@@ -162,7 +162,11 @@ describe('Execute with network', () => {
       const report = await commandInstance.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const contract = new Contract(loadExampleContract().abi, contractAddress, makeProvider(LOCAL_URL).provider)
+      const contract = new Contract(
+        loadExampleContract().abi,
+        contractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const balance = await contract.get_balance()
 
       expect(new BN(balance.res).toString()).toEqual('100')

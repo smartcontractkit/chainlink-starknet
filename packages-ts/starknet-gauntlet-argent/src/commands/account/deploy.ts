@@ -14,11 +14,18 @@ type ContractInput = []
 
 const makeUserInput = async (flags, args): Promise<UserInput> => ({})
 
-const makeContractInput = async (input: UserInput, context: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: ExecutionContext,
+): Promise<ContractInput> => {
   return []
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to deploy an Argent Account Contract`)
 }
 

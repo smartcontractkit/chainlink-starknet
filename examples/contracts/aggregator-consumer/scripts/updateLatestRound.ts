@@ -22,7 +22,12 @@ const rl = require('readline').createInterface({
 })
 
 async function main() {
-  transmission = { answer: 0, block_num: 0, observation_timestamp: 0, transmission_timestamp: 0 }
+  transmission = {
+    answer: 0,
+    block_num: 0,
+    observation_timestamp: 0,
+    transmission_timestamp: 0,
+  }
 
   const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY_2 as string)
   account = new Account(defaultProvider, process.env.ACCOUNT_ADDRESS_2 as string, keyPair)
@@ -32,8 +37,12 @@ async function main() {
   mock = new Contract(MockArtifact.abi, process.env.MOCK as string)
   transmission.answer = Number(await input('Enter a number for new answer: '))
   transmission.block_num = Number(await input('Enter a number for new block_num: '))
-  transmission.observation_timestamp = Number(await input('Enter a number for new observation_timestamp: '))
-  transmission.transmission_timestamp = Number(await input('Enter a number for new transmission_timestamp: '))
+  transmission.observation_timestamp = Number(
+    await input('Enter a number for new observation_timestamp: '),
+  )
+  transmission.transmission_timestamp = Number(
+    await input('Enter a number for new transmission_timestamp: '),
+  )
   rl.close()
 
   callFunction(transmission)

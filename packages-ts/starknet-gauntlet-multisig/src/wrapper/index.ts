@@ -10,7 +10,15 @@ import {
   IStarknetWallet,
 } from '@chainlink/starknet-gauntlet'
 import { TransactionResponse } from '@chainlink/starknet-gauntlet/dist/transaction'
-import { Call, CompiledContract, Contract, addAddressPadding, number, encode, validateAndParseAddress } from 'starknet'
+import {
+  Call,
+  CompiledContract,
+  Contract,
+  addAddressPadding,
+  number,
+  encode,
+  validateAndParseAddress,
+} from 'starknet'
 import { addHexPrefix } from 'starknet/dist/utils/encode'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { toBN, toHex } from 'starknet/dist/utils/number'
@@ -23,7 +31,9 @@ type UserInput = {
 
 type ContractInput = {}
 
-type UnregisteredCommand<UI, CI> = (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>
+type UnregisteredCommand<UI, CI> = (
+  deps: Dependencies,
+) => CommandCtor<ExecuteCommandInstance<UI, CI>>
 
 type ProposalAction = (message: Call, proposalId?: number) => Call
 
@@ -34,7 +44,10 @@ export const wrapCommand = <UI, CI>(
 ): CommandCtor<ExecuteCommandInstance<UserInput, ContractInput>> => {
   const id = `${registeredCommand.id}:multisig`
 
-  const msigCommand: CommandCtor<ExecuteCommandInstance<UserInput, ContractInput>> = class MsigCommand
+  const msigCommand: CommandCtor<ExecuteCommandInstance<
+    UserInput,
+    ContractInput
+  >> = class MsigCommand
     extends WriteCommand<TransactionResponse>
     implements ExecuteCommandInstance<UserInput, ContractInput> {
     wallet: IStarknetWallet
@@ -80,7 +93,9 @@ export const wrapCommand = <UI, CI>(
       }
 
       c.input = {
-        user: flags.input || { proposalId: Number(flags.proposalId || flags.multisigProposal) },
+        user: flags.input || {
+          proposalId: Number(flags.proposalId || flags.multisigProposal),
+        },
         contract: {},
       }
 
@@ -145,12 +160,16 @@ export const wrapCommand = <UI, CI>(
     }
 
     makeAcceptMessage: ProposalAction = (_, proposalId) => {
-      const invocation = this.executionContext.contract.populate('confirm_transaction', [proposalId])
+      const invocation = this.executionContext.contract.populate('confirm_transaction', [
+        proposalId,
+      ])
       return invocation
     }
 
     makeExecuteMessage: ProposalAction = (_, proposalId) => {
-      const invocation = this.executionContext.contract.populate('execute_transaction', [proposalId])
+      const invocation = this.executionContext.contract.populate('execute_transaction', [
+        proposalId,
+      ])
       return invocation
     }
 
@@ -174,7 +193,12 @@ export const wrapCommand = <UI, CI>(
 
       deps.logger.success('Generated proposal matches with the one provided')
 
-      return [operations[this.initialState.proposal.nextAction](message[0], this.initialState.proposal.id)]
+      return [
+        operations[this.initialState.proposal.nextAction](
+          message[0],
+          this.initialState.proposal.id,
+        ),
+      ]
     }
 
     beforeExecute = async () => {

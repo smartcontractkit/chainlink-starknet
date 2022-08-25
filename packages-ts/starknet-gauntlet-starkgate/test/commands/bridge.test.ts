@@ -84,7 +84,11 @@ describe('Bridge Contract', () => {
       bridgeContractAddress = report.responses[0].contract
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const bridgeContract = new Contract(
+        bridge.abi,
+        bridgeContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const response = await bridgeContract.get_governor()
       const governor = response[0]
       expect(governor).toEqual(new BN(account.split('x')[1], 16))
@@ -128,7 +132,11 @@ describe('Bridge Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const bridgeContract = new Contract(
+        bridge.abi,
+        bridgeContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const response = await bridgeContract.get_l1_bridge()
 
       // TODO: Process response
@@ -153,7 +161,11 @@ describe('Bridge Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const bridgeContract = new Contract(
+        bridge.abi,
+        bridgeContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const response = await bridgeContract.get_l2_token()
 
       // TODO: Process response

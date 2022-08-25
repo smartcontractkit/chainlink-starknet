@@ -15,7 +15,11 @@ import {
 import { loadExampleContract } from '../utils'
 
 const getBalance = async (address: string) => {
-  const contract = new Contract(loadExampleContract().abi, address, makeProvider(LOCAL_URL).provider)
+  const contract = new Contract(
+    loadExampleContract().abi,
+    address,
+    makeProvider(LOCAL_URL).provider,
+  )
   const balance = await contract.get_balance()
 
   return new BN(balance.res).toString()
@@ -62,9 +66,10 @@ describe('Example Contract', () => {
   it(
     'Increase balance with custom flags and no wallet',
     async () => {
-      const command = await registerExecuteCommand(increaseBalanceCommand).create({ balance: '100', noWallet: true }, [
-        contractAddress,
-      ])
+      const command = await registerExecuteCommand(increaseBalanceCommand).create(
+        { balance: '100', noWallet: true },
+        [contractAddress],
+      )
 
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')

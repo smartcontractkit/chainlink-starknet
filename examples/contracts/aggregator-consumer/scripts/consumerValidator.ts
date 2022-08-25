@@ -34,10 +34,14 @@ async function main() {
   const aggregatorFactory = await starknet.getContractFactory(AGGREGATOR_NAME)
   const aggregatorDeploy = await aggregatorFactory.deploy({})
 
-  fs.appendFile(__dirname + '/.env', '\nUPTIME_FEED=' + mockUptimeFeedDeploy.address, function (err) {
+  fs.appendFile(__dirname + '/.env', '\nUPTIME_FEED=' + mockUptimeFeedDeploy.address, function (
+    err,
+  ) {
     if (err) throw err
   })
-  fs.appendFile(__dirname + '/.env', '\nMOCK_AGGREGATOR=' + aggregatorDeploy.address, function (err) {
+  fs.appendFile(__dirname + '/.env', '\nMOCK_AGGREGATOR=' + aggregatorDeploy.address, function (
+    err,
+  ) {
     if (err) throw err
   })
 
@@ -52,10 +56,15 @@ async function main() {
   mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy()
   await mockStarkNetMessenger.deployed()
 
-  validator = await validatorFactory.deploy(mockStarkNetMessenger.address, mockUptimeFeedDeploy.address)
+  validator = await validatorFactory.deploy(
+    mockStarkNetMessenger.address,
+    mockUptimeFeedDeploy.address,
+  )
   console.log('Validator address: ', validator.address)
 
-  await account.invoke(mockUptimeFeedDeploy, 'set_l1_sender', { address: validator.address })
+  await account.invoke(mockUptimeFeedDeploy, 'set_l1_sender', {
+    address: validator.address,
+  })
 
   await validator.addAccess(eoaValidator.address)
   setInterval(callFunction, 60_000)
