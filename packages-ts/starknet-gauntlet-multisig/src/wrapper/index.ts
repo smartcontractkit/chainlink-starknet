@@ -205,7 +205,7 @@ export const wrapCommand = <UI, CI>(
       deps.logger.line()
       deps.logger.info(`${messages[state.proposal.nextAction]}`)
       deps.logger.line()
-      return {}
+      return { proposalId }
     }
 
     execute = async () => {
