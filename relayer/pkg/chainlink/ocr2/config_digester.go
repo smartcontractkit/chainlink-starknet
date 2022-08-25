@@ -9,6 +9,7 @@ import (
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -56,9 +57,9 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 		oracles = append(oracles, signer, transmitter)
 	}
 
-	offchainConfig := EncodeBytes(cfg.OffchainConfig)
+	offchainConfig := starknet.EncodeBytes(cfg.OffchainConfig)
 
-	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeFelts(cfg.OnchainConfig)
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeToFelts(cfg.OnchainConfig)
 	if err != nil {
 		return configDigest, err
 	}

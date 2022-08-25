@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/bigbigendian"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
@@ -24,7 +25,7 @@ type OnchainConfigCodec struct{}
 
 var _ median.OnchainConfigCodec = &OnchainConfigCodec{}
 
-func (codec OnchainConfigCodec) DecodeBigInt(b []byte) ([]*big.Int, error) {
+func (codec OnchainConfigCodec) DecodeToFelts(b []byte) ([]*big.Int, error) {
 	if len(b) != length {
 		return []*big.Int{}, fmt.Errorf("unexpected length of OnchainConfig, expected %v, got %v", length, len(b))
 	}
@@ -46,34 +47,38 @@ func (codec OnchainConfigCodec) DecodeBigInt(b []byte) ([]*big.Int, error) {
 		return []*big.Int{}, err
 	}
 
-	if !(min.Cmp(max) <= 0) {
-		return []*big.Int{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
-	}
+	// ensure felts (used in config digester)
+	min = starknet.BigIntToFelt(min)
+	max = starknet.BigIntToFelt(max)
 
 	return []*big.Int{configVersion, min, max}, nil
 }
 
-func (codec OnchainConfigCodec) DecodeFelts(b []byte) ([]*big.Int, error) {
-	bigInts, err := codec.DecodeBigInt(b)
-	if err != nil {
-		return []*big.Int{}, err
-	}
-
-	// ensure felt: this wraps negative values correctly into felts
-	min := new(big.Int).Mod(bigInts[1], caigotypes.MaxFelt.Big())
-	max := new(big.Int).Mod(bigInts[2], caigotypes.MaxFelt.Big())
-	return []*big.Int{bigInts[0], min, max}, nil
-}
-
 func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
-	bigInts, err := codec.DecodeBigInt(b)
+	felts, err := codec.DecodeToFelts(b)
 	if err != nil {
 		return median.OnchainConfig{}, err
 	}
-	return median.OnchainConfig{Min: bigInts[1], Max: bigInts[2]}, nil
+
+	// convert felts to big.Ints
+	min := starknet.FeltToBigInt(&caigotypes.Felt{Int: felts[1]})
+	max := starknet.FeltToBigInt(&caigotypes.Felt{Int: felts[2]})
+
+	if !(min.Cmp(max) <= 0) {
+		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
+	}
+
+	return median.OnchainConfig{Min: min, Max: max}, nil
 }
 
-func (codec OnchainConfigCodec) EncodeBigInt(version, min, max *big.Int) ([]byte, error) {
+// EncodeFromBigInt encodes the config where min & max are big Ints with positive or negative values
+func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]byte, error) {
+	return codec.EncodeFromFelt(version, starknet.BigIntToFelt(min), starknet.BigIntToFelt(max))
+}
+
+// EncodeFromFelt encodes the config where min & max are big.Int representations of a felt
+// Cairo has no notion of signed values: negative values have to be wrapped into the upper half of PRIME (so 0 to PRIME/2 is positive, PRIME/2 to PRIME is negative)
+func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]byte, error) {
 	if version.Uint64() != OnchainConfigVersion {
 		return nil, fmt.Errorf("unexpected version of OnchainConfig, expected %v, got %v", OnchainConfigVersion, version.Int64())
 	}
@@ -82,10 +87,12 @@ func (codec OnchainConfigCodec) EncodeBigInt(version, min, max *big.Int) ([]byte
 	if err != nil {
 		return nil, err
 	}
+
 	minBytes, err := bigbigendian.SerializeSigned(byteWidth, min)
 	if err != nil {
 		return nil, err
 	}
+
 	maxBytes, err := bigbigendian.SerializeSigned(byteWidth, max)
 	if err != nil {
 		return nil, err
@@ -99,5 +106,5 @@ func (codec OnchainConfigCodec) EncodeBigInt(version, min, max *big.Int) ([]byte
 }
 
 func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
-	return codec.EncodeBigInt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
+	return codec.EncodeFromBigInt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
 }

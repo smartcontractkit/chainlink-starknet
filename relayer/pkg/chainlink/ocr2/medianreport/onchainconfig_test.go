@@ -69,7 +69,7 @@ func TestOnchainConfigCodec(t *testing.T) {
 				assert.Error(t, err)
 				return // exit func if error is verified
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			assert.True(t, cfg.Min.Cmp(newCfg.Min) == 0)

@@ -9,8 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"golang.org/x/exp/constraints"
-
 	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigo "github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
@@ -21,61 +19,10 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-func Min[T constraints.Ordered](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-const chunkSize = 31
-
-// Encodes a byte slice as a bunch of felts. First felt indicates the total byte size.
-func EncodeBytes(data []byte) (felts []*big.Int) {
-	// prefix with len
-	length := big.NewInt(int64(len(data)))
-	felts = append(felts, length)
-
-	// chunk every 31 bytes
-	for i := 0; i < len(data); i += chunkSize {
-		chunk := data[i:Min(i+chunkSize, len(data))]
-		// cast to int
-		felt := new(big.Int).SetBytes(chunk)
-		felts = append(felts, felt)
-	}
-
-	return felts
-}
-
-func DecodeBytes(felts []*big.Int) ([]byte, error) {
-	if len(felts) == 0 {
-		return []byte{}, nil
-	}
-
-	data := []byte{}
-	buf := make([]byte, chunkSize)
-	length := int(felts[0].Int64())
-
-	for _, felt := range felts[1:] {
-		buf := buf[:Min(chunkSize, length)]
-
-		felt.FillBytes(buf)
-		data = append(data, buf...)
-
-		length -= len(buf)
-	}
-
-	if length != 0 {
-		return nil, errors.New("invalid: contained less bytes than the specified length")
-	}
-
-	return data, nil
-}
-
 func parseAnswer(str string) (num *big.Int) {
 	felt := junotypes.HexToFelt(str)
 	num = felt.Big()
-	return signedFelt(&caigotypes.Felt{Int: num})
+	return starknet.FeltToBigInt(&caigotypes.Felt{Int: num})
 }
 
 func parseEpochAndRound(felt *big.Int) (epoch uint32, round uint8) {
@@ -84,25 +31,6 @@ func parseEpochAndRound(felt *big.Int) (epoch uint32, round uint8) {
 	epoch = binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
 	round = epochAndRound[junotypes.FeltLength-1]
 	return epoch, round
-}
-
-func signedFelt(felt *caigotypes.Felt) (num *big.Int) {
-	num = felt.Big()
-	prime := caigotypes.MaxFelt.Big()
-	half := new(big.Int).Div(prime, big.NewInt(2))
-	// if num > PRIME/2, then -PRIME to convert to negative value
-	if num.Cmp(half) > 0 {
-		return new(big.Int).Sub(num, prime)
-	}
-	return num
-}
-
-func caigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
-	for _, felt := range cFelts {
-		jFelts = append(jFelts, felt.Int)
-	}
-
-	return jFelts
 }
 
 func isEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
@@ -131,7 +59,7 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 	// round_id - skip
 	// answer
 	index := 1
-	latestAnswer := signedFelt(eventData[index])
+	latestAnswer := starknet.FeltToBigInt(eventData[index])
 
 	// transmitter - skip
 	// observation_timestamp
@@ -211,10 +139,10 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	// onchain_config (version=1, min, max)
 	index += 1
 	onchainConfigFelts := eventData[index:(index + int(onchainConfigLen))]
-	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeBigInt(
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
 		onchainConfigFelts[0].Big(),
-		signedFelt(onchainConfigFelts[1]),
-		signedFelt(onchainConfigFelts[2]),
+		onchainConfigFelts[1].Big(),
+		onchainConfigFelts[2].Big(),
 	)
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "err in encoding onchain config from felts")
@@ -232,7 +160,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	index += 1
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
 	// todo: get rid of caigoToJuno workaround
-	offchainConfig, err := DecodeBytes(caigoFeltsToJunoFelts(offchainConfigFelts))
+	offchainConfig, err := starknet.DecodeBytes(starknet.CaigoFeltsToJunoFelts(offchainConfigFelts))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}
