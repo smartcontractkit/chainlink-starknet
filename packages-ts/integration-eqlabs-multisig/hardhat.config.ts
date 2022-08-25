@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    starknetArtifacts: '../../node_modules/@chainlink-dev/starknet-multisig/artifacts',
+    starknetArtifacts: '../../node_modules/starsign-multisig/starknet-artifacts/contracts',
   },
 }
 
