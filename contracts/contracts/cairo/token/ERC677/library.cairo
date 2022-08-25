@@ -7,8 +7,8 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import TRUE
 from openzeppelin.token.erc20.library import ERC20
-from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
-from contracts.ERC677.interfaces.IERC677 import Transfer
+from contracts.token.ERC677.IERC677Receiver import IERC677Receiver
+from contracts.token.ERC677.IERC677 import Transfer
 
 const IERC677_RECEIVER_ID = 0x4f3dcd
 
