@@ -60,8 +60,8 @@ describe('proxy.cairo', function () {
     // TODO: split_felt the round_id and check phase=1 round=1
     assert.equal(round.answer, '10')
     assert.equal(round.block_num, '1')
-    assert.equal(round.observation_timestamp, '9')
-    assert.equal(round.transmission_timestamp, '8')
+    assert.equal(round.started_at, '9')
+    assert.equal(round.updated_at, '8')
 
     // insert a second ocr2 aggregator
     let new_aggregator = await aggregatorContractFactory.deploy({ decimals: 8 })

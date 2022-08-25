@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+sh ./integration-tests/scripts/devnet-hardhat.sh
 cd contracts
 yarn install
-# Remove once https://github.com/Shard-Labs/starknet-hardhat-plugin/pull/106 is merged
-npx hardhat starknet-compile
+yarn compile && yarn compile:cairo
 yarn test
 # Example tests
 cd ../examples/contracts/aggregator-consumer
