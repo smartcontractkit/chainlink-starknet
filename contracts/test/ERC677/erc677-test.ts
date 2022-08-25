@@ -1,44 +1,41 @@
-import { assert, expect } from 'chai'
-import BN from 'bn.js'
+import { expect } from 'chai'
 import { toBN } from 'starknet/utils/number'
 import { starknet } from 'hardhat'
+import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
-
-function uint256ToBigInt(uint256: { low: bigint; high: bigint }) {
-  return new BN(((BigInt(uint256.high) << BigInt(128)) + BigInt(uint256.low)).toString())
-}
+import { shouldBehaveLikeERC20Upgradeable } from '../ERC20-test'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
-
   let receiver: StarknetContract
   let sender: Account
   let token: StarknetContract
   let data: (number | bigint)[]
 
+  shouldBehaveLikeERC20Upgradeable('link_token')
+
   beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
-
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
     token = await tokenFactory.deploy({})
     await sender.invoke(token, 'link_initializer', {
-      initial_supply: { high: 0n, low: 1000n },
+      initial_supply: uint256.bnToUint256(1000),
       recipient: sender.starknetContract.address,
       proxy_admin: sender.starknetContract.address,
     })
     await sender.invoke(token, 'transfer', {
       recipient: sender.starknetContract.address,
-      amount: { high: 0n, low: 100n },
+      amount: uint256.bnToUint256(100),
     })
     const { value: value } = await receiver.call('getSentValue')
-    expect(uint256ToBigInt(value)).to.deep.equal(toBN(0))
+    expect(uint256.uint256ToBN(value)).to.deep.equal(toBN(0))
   })
 
   describe('#transferAndCall(address, uint, bytes)', () => {
@@ -51,24 +48,24 @@ describe('ERC677', function () {
         account: receiver.address,
       })
 
-      expect(uint256ToBigInt(balance)).to.deep.equal(toBN(0))
+      expect(uint256.uint256ToBN(balance)).to.deep.equal(toBN(0))
 
       await sender.invoke(token, 'transferAndCall', {
         to: receiver.address,
-        value: { high: 0n, low: 100n },
+        value: uint256.bnToUint256(100),
         data: data,
       })
 
       let { balance: balance1 } = await token.call('balanceOf', {
         account: receiver.address,
       })
-      expect(uint256ToBigInt(balance1)).to.deep.equal(toBN(100))
+      expect(uint256.uint256ToBN(balance1)).to.deep.equal(toBN(100))
     })
 
     it('calls the token fallback function on transfer', async () => {
       await sender.invoke(token, 'transferAndCall', {
         to: receiver.address,
-        value: { high: 0n, low: 100n },
+        value: uint256.bnToUint256(100),
         data: data,
       })
 
@@ -79,13 +76,13 @@ describe('ERC677', function () {
       expect(address).to.equal(BigInt(sender.starknetContract.address))
 
       const { value: sentValue } = await receiver.call('getSentValue')
-      expect(uint256ToBigInt(sentValue)).to.deep.equal(toBN(100))
+      expect(uint256.uint256ToBN(sentValue)).to.deep.equal(toBN(100))
     })
 
     it('transfer succeeds with response', async () => {
       const response = await sender.invoke(token, 'transferAndCall', {
         to: receiver.address,
-        value: { high: 0n, low: 100n },
+        value: uint256.bnToUint256(100),
         data: data,
       })
       expect(response).to.exist
@@ -93,7 +90,7 @@ describe('ERC677', function () {
 
     it('throws when the transfer fails', async () => {
       try {
-        await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: { high: 0n, low: 10000n } })
+        await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: uint256.bnToUint256(10000) })
         expect.fail()
       } catch (error: any) {}
     })
@@ -112,7 +109,7 @@ describe('ERC677', function () {
       try {
         await sender.invoke(token, 'transferAndCall', {
           to: nonERC677.address,
-          value: { high: 0n, low: 1000n },
+          value: uint256.bnToUint256(1000),
           data: data,
         })
         expect.fail()
@@ -120,7 +117,7 @@ describe('ERC677', function () {
         let { balance: balance1 } = await token.call('balanceOf', {
           account: nonERC677.address,
         })
-        expect(uint256ToBigInt(balance1)).to.deep.equal(toBN(0))
+        expect(uint256.uint256ToBN(balance1)).to.deep.equal(toBN(0))
       }
     })
   })
