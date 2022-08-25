@@ -40,15 +40,17 @@ from openzeppelin.utils.constants.library import UINT8_MAX
 
 from openzeppelin.token.erc20.IERC20 import IERC20
 
-from contracts.ocr2.interfaces.IAccessController import IAccessController
+from contracts.cairo.ocr2.interfaces.IAccessController import IAccessController
 
-from contracts.ownable import (
+from contracts.cairo.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
     Ownable_transfer_ownership,
     Ownable_accept_ownership
 )
+
+from cairo.ocr2.interfaces.IAggregator import Round
 
 # ---
 
@@ -797,8 +799,8 @@ func latest_transmission_details{
         round_id=latest_round_id,
         answer=transmission.answer,
         block_num=transmission.block_num,
-        observation_timestamp=transmission.observation_timestamp,
-        transmission_timestamp=transmission.transmission_timestamp,
+        started_at=transmission.observation_timestamp,
+        updated_at=transmission.transmission_timestamp,
     )
     return (
         config_digest=config_digest,
@@ -832,14 +834,6 @@ func decimals{
     return (decimals)
 end
 
-struct Round:
-    member round_id: felt
-    member answer: felt
-    member block_num: felt
-    member observation_timestamp: felt
-    member transmission_timestamp: felt
-end
-
 @view
 func round_data{
     syscall_ptr : felt*,
@@ -854,8 +848,8 @@ func round_data{
         round_id=round_id,
         answer=transmission.answer,
         block_num=transmission.block_num,
-        observation_timestamp=transmission.observation_timestamp,
-        transmission_timestamp=transmission.transmission_timestamp,
+        started_at=transmission.observation_timestamp,
+        updated_at=transmission.transmission_timestamp,
     )
     return (round)
 end
@@ -873,8 +867,8 @@ func latest_round_data{
         round_id=latest_round_id,
         answer=transmission.answer,
         block_num=transmission.block_num,
-        observation_timestamp=transmission.observation_timestamp,
-        transmission_timestamp=transmission.transmission_timestamp,
+        started_at=transmission.observation_timestamp,
+        updated_at=transmission.transmission_timestamp,
     )
     return (round)
 end
@@ -1062,7 +1056,7 @@ func has_billing_access{
 
     IAccessController.check_access(
         contract_address=access_controller,
-        address=caller
+        user=caller
     )
     return ()
 end
