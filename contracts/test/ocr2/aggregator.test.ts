@@ -56,9 +56,7 @@ function decodeBytes(felts: BN[]): Uint8Array {
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
 
-  let aggregatorContractFactory: StarknetContractFactory
-  // let accountContractFactory: StarknetContractFactory;
-  let tokenContractFactory: StarknetContractFactory
+  let aggregatorFactory: StarknetContractFactory
 
   let owner: Account
   let token: StarknetContract
@@ -74,24 +72,22 @@ describe('aggregator.cairo', function () {
 
   before(async function () {
     // assumes contract.cairo and events.cairo has been compiled
-    aggregatorContractFactory = await starknet.getContractFactory('ocr2/aggregator')
-    tokenContractFactory = await starknet.getContractFactory('ocr2/token')
+    aggregatorFactory = await starknet.getContractFactory('ocr2/aggregator')
 
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
     owner = await starknet.deployAccount('OpenZeppelin')
 
-    token = await tokenContractFactory.deploy({
-      name: starknet.shortStringToBigInt('LINK Token'),
-      symbol: starknet.shortStringToBigInt('LINK'),
-      decimals: 18,
-      initial_supply: { high: 1n, low: 0n },
-      recipient: BigInt(owner.starknetContract.address),
-      owner: BigInt(owner.starknetContract.address),
+    const tokenFactory = await starknet.getContractFactory('link_token')
+    token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
+
+    await owner.invoke(token, 'permissionedMint', {
+      recipient: owner.starknetContract.address,
+      amount: uint256.bnToUint256(100_000_000_000),
     })
 
-    aggregator = await aggregatorContractFactory.deploy({
+    aggregator = await aggregatorFactory.deploy({
       owner: BigInt(owner.starknetContract.address),
       link: BigInt(token.address),
       min_answer: toFelt(minAnswer),

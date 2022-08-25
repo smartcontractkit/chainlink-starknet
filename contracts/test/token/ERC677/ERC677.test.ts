@@ -4,7 +4,6 @@ import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
-// import { shouldBehaveLikeERC20Mintable } from '../behavior/ERC20'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
@@ -15,8 +14,6 @@ describe('ERC677', function () {
   let sender: Account
   let token: StarknetContract
   let data: (number | bigint)[]
-
-  // shouldBehaveLikeERC20Mintable('link_token')
 
   beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
