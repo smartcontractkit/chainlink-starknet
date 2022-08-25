@@ -106,6 +106,29 @@ describe('StarkNetValidator', () => {
       expect(res.round.answer).to.equal(1n)
     })
 
+    it('should always send a **boolean** message to L2 contract', async () => {
+      // Load the mock messaging contract
+      await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessaging.address);
+
+      // Simulate L1 transmit + validate
+      await starkNetValidator.addAccess(eoaValidator.address)
+      await starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 127) // incorrect value
+
+      // Simulate the L1 - L2 comms
+      const resp = await starknet.devnet.flush()
+      const msgFromL1 = resp.consumed_messages.from_l1
+      expect(msgFromL1).to.have.a.lengthOf(1)
+      expect(resp.consumed_messages.from_l2).to.be.empty
+
+      expectAddressEquality(msgFromL1[0].args.from_address, starkNetValidator.address)
+      expectAddressEquality(msgFromL1[0].args.to_address, l2Contract.address)
+      expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
+
+      // Assert L2 effects
+      const res = await l2Contract.call("latest_round_data");
+      expect(res.round.answer).to.equal(0n) // status unchanged - incorrect value treated as false
+    })
+
     it('should send multiple messages', async () => {
       // Load the mock messaging contract
       await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessaging.address)
