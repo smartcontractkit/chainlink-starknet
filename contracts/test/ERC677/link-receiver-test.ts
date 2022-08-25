@@ -27,7 +27,7 @@ describe('LinkToken', function () {
     receiver = await receiverFactory.deploy({})
     token = await tokenFactory.deploy({})
     await owner.invoke(token, 'link_initializer', {
-      initial_supply: uint256.bnToUint256(1000000000000000000000000000),
+      initial_supply: uint256.bnToUint256(1000000000000000),
       recipient: owner.starknetContract.address,
       proxy_admin: owner.starknetContract.address,
     })
@@ -37,7 +37,7 @@ describe('LinkToken', function () {
     let { balance: balance } = await token.call('balanceOf', {
       account: owner.starknetContract.address,
     })
-    expect(uint256.uint256ToBN(balance).toString()).to.equal('1000000000000000000000000000')
+    expect(uint256.uint256ToBN(balance).toString()).to.equal('1000000000000000')
   })
 
   describe('#transfer(address,uint256)', () => {
