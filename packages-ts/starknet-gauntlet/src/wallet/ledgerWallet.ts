@@ -1,20 +1,20 @@
 import { IStarknetWallet } from './'
 import { SignerInterface, encode } from 'starknet'
-import { Abi, Invocation, InvocationsSignerDetails } from 'starknet/types';
-import { TypedData, getMessageHash } from 'starknet/utils/typedData';
-import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction';
-import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash';
-import Stark from "@ledgerhq/hw-app-starknet";
-import { LedgerError } from "@ledgerhq/hw-app-starknet";
-import TransportNodeHid from "@ledgerhq/hw-transport-node-hid";
+import { Abi, Invocation, InvocationsSignerDetails } from 'starknet/types'
+import { TypedData, getMessageHash } from 'starknet/utils/typedData'
+import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
+import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash'
+import Stark from '@ledgerhq/hw-app-starknet'
+import { LedgerError } from '@ledgerhq/hw-app-starknet'
+import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 
 // EIP-2645 path
-const PATH = "m/2645'/579218131'/0'/0'";
+const PATH = "m/2645'/579218131'/0'/0'"
 
 function toHexString(byteArray: Uint8Array): string {
   return Array.from(byteArray, function (byte) {
-    return `0${byte.toString(16)}`.slice(-2);
-  }).join('');
+    return `0${byte.toString(16)}`.slice(-2)
+  }).join('')
 }
 
 class LedgerSigner implements SignerInterface {
@@ -33,7 +33,7 @@ class LedgerSigner implements SignerInterface {
   async getPubKey() {
     const response = await this.ledgerConnector.getPubKey(PATH)
     if (response.returnCode != LedgerError.NoErrors) {
-        throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
+      throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
     }
 
     return `0x${toHexString(response.publicKey).slice(2, 2 + 64)}`
@@ -44,7 +44,7 @@ class LedgerSigner implements SignerInterface {
       throw new Error('ABI must be provided for each transaction or no transaction')
     }
 
-    const calldata = fromCallsToExecuteCalldataWithNonce(transactions, transactionsDetail.nonce);
+    const calldata = fromCallsToExecuteCalldataWithNonce(transactions, transactionsDetail.nonce)
 
     const msgHash = calculcateTransactionHash(
       transactionsDetail.walletAddress,
@@ -52,14 +52,14 @@ class LedgerSigner implements SignerInterface {
       getSelectorFromName('__execute__'),
       calldata,
       transactionsDetail.maxFee,
-      transactionsDetail.chainId
-    );
+      transactionsDetail.chainId,
+    )
 
     return this.sign(msgHash)
   }
 
   async signMessage(typedData: TypedData, accountAddress: string) {
-    const msgHash = getMessageHash(typedData, accountAddress);
+    const msgHash = getMessageHash(typedData, accountAddress)
     return this.sign(msgHash)
   }
 
@@ -68,11 +68,8 @@ class LedgerSigner implements SignerInterface {
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to sign the message: ${response.signMessage}`)
     }
-    
-    return [
-      encode.addHexPrefix(toHexString(response.r)),
-      encode.addHexPrefix(toHexString(response.s)),
-    ];
+
+    return [encode.addHexPrefix(toHexString(response.r)), encode.addHexPrefix(toHexString(response.s))]
   }
 }
 
@@ -95,4 +92,3 @@ export class Wallet implements IStarknetWallet {
   getPublicKey = async () => await this.wallet.getPubKey()
   getAccountPublicKey = () => this.account
 }
-

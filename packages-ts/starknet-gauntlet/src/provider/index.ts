@@ -85,7 +85,7 @@ class Provider implements IStarknetProvider {
 
   signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[], wait = false) => {
     const account = new Account(this.provider, accountAddress, wallet.wallet)
-    
+
     const tx = await account.execute(calls)
     const response = wrapResponse(this, tx)
     if (!wait) return response
