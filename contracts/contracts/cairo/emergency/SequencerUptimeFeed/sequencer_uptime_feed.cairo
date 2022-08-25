@@ -5,7 +5,7 @@ from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
 
 from cairo.access.IAccessController import IAccessController
 from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
-from cairo.ocr2.interfaces.IAggregator import Round
+from cairo.ocr2.IAggregator import Round
 from cairo.emergency.SequencerUptimeFeed.library import sequencer_uptime_feed
 
 @constructor

@@ -12,7 +12,7 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from cairo.utils import assert_boolean
-from cairo.ocr2.interfaces.IAggregator import Round, AnswerUpdated, NewRound
+from cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
 from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
 from cairo.access.ownable import Ownable_only_owner
 
