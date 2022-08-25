@@ -13,8 +13,8 @@ from starkware.cairo.common.bool import TRUE, FALSE
 
 from cairo.utils import assert_boolean
 from cairo.ocr2.interfaces.IAggregator import Round, AnswerUpdated, NewRound
-from cairo.SimpleReadAccessController.library import simple_read_access_controller
-from cairo.ownable import Ownable_only_owner
+from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+from cairo.access.ownable import Ownable_only_owner
 
 @event
 func RoundUpdated(status : felt, updated_at : felt):

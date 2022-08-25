@@ -5,7 +5,7 @@ from starkware.cairo.common.math import split_felt, assert_not_zero
 
 from contracts.cairo.ocr2.interfaces.IAggregator import IAggregator, Round
 
-from contracts.cairo.ownable import (
+from contracts.cairo.access.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,

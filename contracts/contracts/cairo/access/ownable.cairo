@@ -66,4 +66,3 @@ func Ownable_accept_ownership{
     Ownable_owner.write(proposed_owner)
     return (new_owner=proposed_owner)
 end
-        
