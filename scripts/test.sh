@@ -6,10 +6,11 @@ sh ./ops/scripts/devnet-hardhat.sh
 
 cd contracts
 yarn install
-yarn compile && yarn compile:cairo
+yarn compile
 yarn test
 
 # Example tests
 cd ../examples/contracts/aggregator-consumer
 yarn install
-yarn compile && yarn test
+yarn compile
+yarn test

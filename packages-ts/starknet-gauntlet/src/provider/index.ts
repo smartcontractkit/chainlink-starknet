@@ -19,7 +19,11 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
-  signAndSend: (accountAddress: string, wallet: IStarknetWallet, calls: Call[]) => Promise<TransactionResponse>
+  signAndSend: (
+    accountAddress: string,
+    wallet: IStarknetWallet,
+    calls: Call[],
+  ) => Promise<TransactionResponse>
 }
 
 export interface IStarknetProvider extends IProvider<StarknetProvider> {}
@@ -40,7 +44,8 @@ export const wrapResponse = (
       // Success if does not throw
       let success: boolean
       try {
-        success = (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+        success =
+          (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
         txResponse.status = 'ACCEPTED'
       } catch (e) {
         txResponse.status = 'REJECTED'
@@ -69,7 +74,12 @@ class Provider implements IStarknetProvider {
     return {} as TransactionResponse
   }
 
-  deployContract = async (contract: CompiledContract, input: any = [], wait = true, salt = undefined) => {
+  deployContract = async (
+    contract: CompiledContract,
+    input: any = [],
+    wait = true,
+    salt = undefined,
+  ) => {
     const tx = await this.provider.deployContract({
       contract,
       addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
@@ -83,11 +93,18 @@ class Provider implements IStarknetProvider {
     return response
   }
 
-  signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[], wait = false) => {
+  signAndSend = async (
+    accountAddress: string,
+    wallet: IStarknetWallet,
+    calls: Call[],
+    wait = false,
+  ) => {
     const account = new Account(this.provider, accountAddress, wallet.wallet)
 
     const maxFee = await account.estimateFee(calls)
-    const tx = await account.execute(calls, undefined, { maxFee: maxFee.suggestedMaxFee })
+    const tx = await account.execute(calls, undefined, {
+      maxFee: maxFee.suggestedMaxFee,
+    })
     const response = wrapResponse(this, tx)
     if (!wait) return response
 

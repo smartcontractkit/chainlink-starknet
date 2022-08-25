@@ -33,7 +33,11 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.publicKey, 0]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to deploy an Account Contract with public key ${input.contract[0]}`)
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
@@ -46,7 +50,9 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
   }
 }
 
-const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (result) => {
+const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (
+  result,
+) => {
   deps.logger.success(`Account contract located at ${result.responses[0].tx.address}`)
   return {
     publicKey: input.user.publicKey,
@@ -59,8 +65,11 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   category: CATEGORIES.ACCOUNT,
   action: 'initialize',
   ux: {
-    description: 'Initializes an Argent Account Contract (Generates a public/private key for account)',
-    examples: [`${CATEGORIES.ACCOUNT}:initialize --network=<NETWORK> --publicKey=<ADDRESS> <CONTRACT_ADDRESS>`],
+    description:
+      'Initializes an Argent Account Contract (Generates a public/private key for account)',
+    examples: [
+      `${CATEGORIES.ACCOUNT}:initialize --network=<NETWORK> --publicKey=<ADDRESS> <CONTRACT_ADDRESS>`,
+    ],
   },
   makeUserInput,
   makeContractInput,
