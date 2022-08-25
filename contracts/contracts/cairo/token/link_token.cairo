@@ -8,7 +8,7 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import FALSE, TRUE
 from openzeppelin.token.erc20.library import ERC20
 from openzeppelin.token.erc20.presets.ERC20Upgradeable import (
-    initializer,
+    initializer as ERC20Upgradeable_initializer,
     upgrade,
     name,
     symbol,
@@ -27,18 +27,18 @@ from starkware.starknet.std_contracts.ERC20.permitted import (
     permitted_minter_only,
     permittedMinter,
 )
-from contracts.ERC677.library import ERC677
-from contracts.ERC677.interfaces.IERC677Receiver import IERC677Receiver
+from contracts.token.ERC677.library import ERC677
+from contracts.token.ERC677.IERC677Receiver import IERC677Receiver
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
 
 @external
-func link_initializer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func initializer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     initial_supply : Uint256, recipient : felt, proxy_admin : felt
 ):
     alloc_locals
-    initializer(NAME, SYMBOL, 18, initial_supply, recipient, proxy_admin)
+    ERC20Upgradeable_initializer(NAME, SYMBOL, 18, initial_supply, recipient, proxy_admin)
     permitted_initializer(recipient)
     return ()
 end
