@@ -25,7 +25,7 @@ describe('ERC677', function () {
 
     receiver = await receiverFactory.deploy({})
     token = await tokenFactory.deploy({})
-    await sender.invoke(token, 'link_initializer', {
+    await sender.invoke(token, 'initializer', {
       initial_supply: uint256.bnToUint256(1000),
       recipient: sender.starknetContract.address,
       proxy_admin: sender.starknetContract.address,
@@ -92,7 +92,7 @@ describe('ERC677', function () {
       try {
         await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: uint256.bnToUint256(10000) })
         expect.fail()
-      } catch (error: any) {}
+      } catch (error: any) { }
     })
   })
 

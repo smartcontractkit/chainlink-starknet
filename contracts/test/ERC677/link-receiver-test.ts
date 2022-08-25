@@ -26,7 +26,7 @@ describe('LinkToken', function () {
 
     receiver = await receiverFactory.deploy({})
     token = await tokenFactory.deploy({})
-    await owner.invoke(token, 'link_initializer', {
+    await owner.invoke(token, 'initializer', {
       initial_supply: uint256.bnToUint256(1000000000000000),
       recipient: owner.starknetContract.address,
       proxy_admin: owner.starknetContract.address,
