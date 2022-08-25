@@ -3,8 +3,8 @@ import { toBN } from 'starknet/utils/number'
 import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
-import { TIMEOUT } from '../constants'
-import { shouldBehaveLikeERC20Upgradeable } from '../ERC20-test'
+import { TIMEOUT } from '../../constants'
+import { shouldBehaveLikeERC20Mintable } from '../behavior/ERC20'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
@@ -16,7 +16,7 @@ describe('ERC677', function () {
   let token: StarknetContract
   let data: (number | bigint)[]
 
-  shouldBehaveLikeERC20Upgradeable('link_token')
+  shouldBehaveLikeERC20Mintable('link_token')
 
   beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
@@ -95,7 +95,7 @@ describe('ERC677', function () {
           amount: uint256.bnToUint256(10000),
         })
         expect.fail()
-      } catch (error: any) {}
+      } catch (error: any) { }
     })
   })
 
