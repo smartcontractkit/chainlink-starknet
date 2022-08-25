@@ -50,7 +50,7 @@ from contracts.cairo.access.ownable import (
     Ownable_accept_ownership
 )
 
-from cairo.ocr2.interfaces.IAggregator import Round
+from cairo.ocr2.IAggregator import Round
 
 # ---
 
