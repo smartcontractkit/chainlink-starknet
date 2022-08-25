@@ -11,10 +11,10 @@ from starkware.cairo.common.math import assert_not_zero, assert_le
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from cairo.utils import assert_boolean
-from cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
-from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
-from cairo.access.ownable import Ownable_only_owner
+from chainlink.cairo.utils import assert_boolean
+from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
+from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+from chainlink.cairo.access.ownable import Ownable_only_owner
 
 @event
 func RoundUpdated(status : felt, updated_at : felt):

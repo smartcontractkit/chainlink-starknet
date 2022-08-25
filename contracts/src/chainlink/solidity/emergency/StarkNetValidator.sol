@@ -9,7 +9,7 @@ import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
 
-import "../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/contracts/starkware/starknet/solidity/IStarknetMessaging.sol";
+import "../../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
 /**
  * @title StarkNetValidator - makes cross chain call to update the Sequencer Uptime Feed on L2

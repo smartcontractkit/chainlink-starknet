@@ -4,8 +4,8 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from cairo.access.IAccessController import IAccessController
-from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+from chainlink.cairo.access.IAccessController import IAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

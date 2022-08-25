@@ -2,11 +2,12 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from contracts.cairo.ocr2.IAggregator import IAggregator, Round
 from starkware.cairo.common.math import assert_not_zero
 from starkware.cairo.common.math_cmp import is_nn
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.starknet.common.syscalls import get_block_timestamp
+
+from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
 
 @storage_var
 func uptime_feed_address_() -> (address : felt):

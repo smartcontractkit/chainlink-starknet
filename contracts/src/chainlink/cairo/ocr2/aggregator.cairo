@@ -40,9 +40,9 @@ from openzeppelin.utils.constants.library import UINT8_MAX
 
 from openzeppelin.token.erc20.IERC20 import IERC20
 
-from contracts.cairo.access.IAccessController import IAccessController
+from chainlink.cairo.access.IAccessController import IAccessController
 
-from contracts.cairo.access.ownable import (
+from chainlink.cairo.access.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
     Ownable_get_owner,
@@ -50,7 +50,7 @@ from contracts.cairo.access.ownable import (
     Ownable_accept_ownership
 )
 
-from cairo.ocr2.IAggregator import Round
+from chainlink.cairo.ocr2.IAggregator import Round
 
 # ---
 

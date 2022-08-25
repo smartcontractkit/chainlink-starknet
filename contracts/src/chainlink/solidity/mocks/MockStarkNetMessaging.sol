@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import '../../../vendor/starkware-libs/starkgate-contracts/contracts/starkware/starknet/solidity/StarknetMessaging.sol';
+import '../../../vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/StarknetMessaging.sol';
 
 /**
  * @title MockStarknetMessaging make cross chain call.
