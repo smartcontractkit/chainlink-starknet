@@ -25,11 +25,11 @@ describe('LinkToken', function () {
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({})
-    await owner.invoke(token, 'initializer', {
-      initial_supply: uint256.bnToUint256(1000000000000000),
+    token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
+
+    await owner.invoke(token, 'permissionedMint', {
       recipient: owner.starknetContract.address,
-      proxy_admin: owner.starknetContract.address,
+      amount: uint256.bnToUint256(1000000000000000),
     })
   })
 
