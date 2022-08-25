@@ -3,7 +3,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from cairo.SimpleWriteAccessController.library import (
+from cairo.access.SimpleWriteAccessController.library import (
     s_access_list,
     s_check_enabled,
     AddedAccess,
@@ -12,7 +12,7 @@ from cairo.SimpleWriteAccessController.library import (
     CheckAccessDisabled,
     simple_write_access_controller,
 )
-from cairo.ocr2.interfaces.IAccessController import IAccessController
+from cairo.access.IAccessController import IAccessController
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
