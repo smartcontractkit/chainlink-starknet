@@ -105,7 +105,7 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: uint256.bnToUint256(103),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
 
       try {
         await accountMinter.invoke(ERC20Contract, 'permissionedBurn', {
@@ -113,7 +113,7 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: uint256.bnToUint256(189),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
     })
 
     it('should burn fail because wrong minter', async () => {
@@ -192,14 +192,14 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: uint256.bnToUint256(12),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
       try {
         await accountUser1.invoke(ERC20Contract, 'transfer', {
           recipient: accountUser2.starknetContract.address,
           amount: uint256.bnToUint256(17),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
     })
 
     it('should transferFrom successfully', async () => {
@@ -263,7 +263,7 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: uint256.bnToUint256(200),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
       try {
         await accountMinter.invoke(ERC20Contract, 'transferFrom', {
           sender: accountUser1.starknetContract.address,
@@ -271,7 +271,7 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: uint256.bnToUint256(300),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
     })
 
     it('should increase alllowance and transfer some tokens successfully', async () => {
@@ -369,7 +369,7 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: { low: 8n, high: 10n },
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
       try {
         await accountMinter.invoke(ERC20Contract, 'transferFrom', {
           sender: accountUser1.starknetContract.address,
@@ -377,7 +377,7 @@ export const shouldBehaveLikeERC20Mintable = (name: string) => {
           amount: uint256.bnToUint256(208),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) { }
+      } catch (error: any) {}
     })
   })
 }

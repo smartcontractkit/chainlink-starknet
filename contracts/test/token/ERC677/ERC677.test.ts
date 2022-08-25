@@ -95,7 +95,7 @@ describe('ERC677', function () {
           amount: uint256.bnToUint256(10000),
         })
         expect.fail()
-      } catch (error: any) { }
+      } catch (error: any) {}
     })
   })
 
