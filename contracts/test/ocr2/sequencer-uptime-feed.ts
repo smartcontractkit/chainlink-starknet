@@ -67,10 +67,10 @@ describe('SequencerUptimeFeed test', function () {
     })
   })
 
-  describe('Test interface', function () {
+  describe('Test IAggregator interface', function () {
     const user = 101
     let uptimeFeedContract: StarknetContract
-    let mockContract: StarknetContract
+    let proxyContract: StarknetContract
 
     before(async function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
@@ -79,35 +79,26 @@ describe('SequencerUptimeFeed test', function () {
         owner_address: number.toBN(account.starknetContract.address),
       })
 
-      const mockContractFactory = await starknet.getContractFactory('uptime_feed_mock')
-      mockContract = await mockContractFactory.deploy({ uptime_feed_address: number.toBN(uptimeFeedContract.address) })
+      const proxyFactory = await starknet.getContractFactory('proxy')
+      proxyContract = await proxyFactory.deploy({
+        owner: number.toBN(account.starknetContract.address),
+        address: number.toBN(uptimeFeedContract.address),
+      })
     })
 
     it('check interface', async function () {
       {
-        const res = await mockContract.call('latest_round_data')
+        const res = await proxyContract.call('latest_round_data')
         expect(res.round.round_id).to.equal(1n)
         expect(res.round.answer).to.equal(0n)
       }
 
       {
-        const res = await mockContract.call('description')
+        const res = await proxyContract.call('description')
         expect(res.description).to.equal(134626335741441605527772921271890603575702899782138692259993464692975953252n)
       }
 
-      {
-        const res = await mockContract.call('has_access', { user: user, data: [] })
-        expect(res.bool).to.equal(0n)
-      }
-
-      await account.invoke(uptimeFeedContract, 'add_access', {
-        user,
-      })
-
-      {
-        const res = await mockContract.call('has_access', { user: user, data: [] })
-        expect(res.bool).to.equal(1n)
-      }
+      // TODO: enable access check and assert correct behaviour
     })
   })
 })
