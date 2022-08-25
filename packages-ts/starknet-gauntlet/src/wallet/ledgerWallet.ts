@@ -1,6 +1,6 @@
 import { IStarknetWallet } from './'
-import { SignerInterface } from 'starknet'
-import { Abi, Invocation, InvocationsSignerDetails, Signature } from 'starknet/types';
+import { SignerInterface, encode } from 'starknet'
+import { Abi, Invocation, InvocationsSignerDetails } from 'starknet/types';
 import { TypedData, getMessageHash } from 'starknet/utils/typedData';
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction';
 import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash';
@@ -15,10 +15,6 @@ function toHexString(byteArray: Uint8Array): string {
   return Array.from(byteArray, function (byte) {
     return `0${byte.toString(16)}`.slice(-2);
   }).join('');
-}
-
-function fromHexString(hexString: string): Uint8Array {
-  return Uint8Array.from(hexString.match(/.{1,2}/g).map((byte: any) => parseInt(byte, 16)))
 }
 
 class LedgerSigner implements SignerInterface {
@@ -40,7 +36,7 @@ class LedgerSigner implements SignerInterface {
         throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
     }
 
-    return `0x${toHexString(response.publicKey)}`
+    return `0x${toHexString(response.publicKey).slice(2, 2 + 64)}`
   }
 
   async signTransaction(transactions: Invocation[], transactionsDetail: InvocationsSignerDetails, abis?: Abi[]) {
@@ -59,41 +55,44 @@ class LedgerSigner implements SignerInterface {
       transactionsDetail.chainId
     );
 
-    const response = await this.ledgerConnector.sign(PATH, fromHexString(msgHash));
-    if (response.returnCode != LedgerError.NoErrors) {
-      throw new Error(`Unable to sign transaction: ${response.errorMessage}`)
-    }
-
-    return [response.r.toString(), response.s.toString()];
+    return this.sign(msgHash)
   }
 
   async signMessage(typedData: TypedData, accountAddress: string) {
     const msgHash = getMessageHash(typedData, accountAddress);
-    const response = await this.ledgerConnector.sign(PATH, fromHexString(msgHash));
+    return this.sign(msgHash)
+  }
+
+  async sign(hash: string) {
+    const response = await this.ledgerConnector.signFelt(PATH, hash, true)
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to sign the message: ${response.signMessage}`)
     }
     
-    return [response.r.toString(), response.s.toString()];
+    return [
+      encode.addHexPrefix(toHexString(response.r)),
+      encode.addHexPrefix(toHexString(response.s)),
+    ];
   }
 }
 
 export class Wallet implements IStarknetWallet {
   wallet: LedgerSigner
+  account: string
 
-  private constructor(signer: LedgerSigner) {
+  private constructor(signer: LedgerSigner, account?: string) {
     this.wallet = signer
+    this.account = account
   }
 
-  static create = async () => {
+  static create = async (account?: string) => {
     const ledgerSigner: LedgerSigner = await LedgerSigner.create()
-    console.log(await ledgerSigner.getPubKey())
-    return new Wallet(ledgerSigner)
+    return new Wallet(ledgerSigner, account)
   }
 
   sign = () => {}
 
   getPublicKey = async () => await this.wallet.getPubKey()
-  getAccountPublicKey = () => "" // todo?
+  getAccountPublicKey = () => this.account
 }
 
