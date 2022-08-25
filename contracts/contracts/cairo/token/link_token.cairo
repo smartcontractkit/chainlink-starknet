@@ -27,8 +27,8 @@ from starkware.starknet.std_contracts.ERC20.permitted import (
     permitted_minter_only,
     permittedMinter,
 )
-from contracts.token.ERC677.library import ERC677
-from contracts.token.ERC677.IERC677Receiver import IERC677Receiver
+from contracts.cairo.token.ERC677.library import ERC677
+from contracts.cairo.token.ERC677.IERC677Receiver import IERC677Receiver
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
