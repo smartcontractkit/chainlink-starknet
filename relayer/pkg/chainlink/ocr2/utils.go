@@ -18,7 +18,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -212,20 +211,14 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	// onchain_config (version=1, min, max)
 	index += 1
 	onchainConfigFelts := eventData[index:(index + int(onchainConfigLen))]
-
-	onchainConfigVersion := onchainConfigFelts[0].Uint64()
-	if onchainConfigVersion != 1 {
-		return types.ContractConfig{}, errors.Wrapf(err, "expected onchainConfig version 1, got %v", onchainConfigVersion)
-	}
-
-	onchainConfig, err := medianreport.OnchainConfigCodec{}.Encode(median.OnchainConfig{
-		Min: signedFelt(onchainConfigFelts[1]),
-		Max: signedFelt(onchainConfigFelts[2]),
-	})
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeBigInt(
+		onchainConfigFelts[0].Big(),
+		signedFelt(onchainConfigFelts[1]),
+		signedFelt(onchainConfigFelts[2]),
+	)
 	if err != nil {
-		return types.ContractConfig{}, errors.Wrap(err, "err in generating placeholder onchain config")
+		return types.ContractConfig{}, errors.Wrap(err, "err in encoding onchain config from felts")
 	}
-	// -----------------------------------------
 
 	// offchain_config_version
 	index += int(onchainConfigLen)

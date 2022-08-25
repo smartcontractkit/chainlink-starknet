@@ -50,11 +50,19 @@ func (codec OnchainConfigCodec) DecodeBigInt(b []byte) ([]*big.Int, error) {
 		return []*big.Int{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
 	}
 
-	// ensure felt: this wraps negative values correctly into felts
-	min = new(big.Int).Mod(min, caigotypes.MaxFelt.Big())
-	max = new(big.Int).Mod(min, caigotypes.MaxFelt.Big())
-
 	return []*big.Int{configVersion, min, max}, nil
+}
+
+func (codec OnchainConfigCodec) DecodeFelts(b []byte) ([]*big.Int, error) {
+	bigInts, err := codec.DecodeBigInt(b)
+	if err != nil {
+		return []*big.Int{}, err
+	}
+
+	// ensure felt: this wraps negative values correctly into felts
+	min := new(big.Int).Mod(bigInts[1], caigotypes.MaxFelt.Big())
+	max := new(big.Int).Mod(bigInts[2], caigotypes.MaxFelt.Big())
+	return []*big.Int{bigInts[0], min, max}, nil
 }
 
 func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
@@ -65,16 +73,20 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	return median.OnchainConfig{Min: bigInts[1], Max: bigInts[2]}, nil
 }
 
-func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
-	versionBytes, err := bigbigendian.SerializeSigned(byteWidth, big.NewInt(OnchainConfigVersion))
+func (codec OnchainConfigCodec) EncodeBigInt(version, min, max *big.Int) ([]byte, error) {
+	if version.Uint64() != OnchainConfigVersion {
+		return nil, fmt.Errorf("unexpected version of OnchainConfig, expected %v, got %v", OnchainConfigVersion, version.Int64())
+	}
+
+	versionBytes, err := bigbigendian.SerializeSigned(byteWidth, version)
 	if err != nil {
 		return nil, err
 	}
-	minBytes, err := bigbigendian.SerializeSigned(byteWidth, c.Min)
+	minBytes, err := bigbigendian.SerializeSigned(byteWidth, min)
 	if err != nil {
 		return nil, err
 	}
-	maxBytes, err := bigbigendian.SerializeSigned(byteWidth, c.Max)
+	maxBytes, err := bigbigendian.SerializeSigned(byteWidth, max)
 	if err != nil {
 		return nil, err
 	}
@@ -84,4 +96,8 @@ func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
 	result = append(result, maxBytes...)
 
 	return result, nil
+}
+
+func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
+	return codec.EncodeBigInt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
 }

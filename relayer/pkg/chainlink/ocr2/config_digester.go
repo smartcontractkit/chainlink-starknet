@@ -58,7 +58,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
-	decodedOnchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeBigInt(cfg.OnchainConfig)
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeFelts(cfg.OnchainConfig)
 	if err != nil {
 		return configDigest, err
 	}
@@ -73,10 +73,10 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	msg = append(msg, oracles...)
 	msg = append(
 		msg,
-		big.NewInt(int64(cfg.F)), // f
-		big.NewInt(int64(len(decodedOnchainConfig))), // onchain_config_len
+		big.NewInt(int64(cfg.F)),              // f
+		big.NewInt(int64(len(onchainConfig))), // onchain_config_len
 	)
-	msg = append(msg, decodedOnchainConfig...)
+	msg = append(msg, onchainConfig...)
 	msg = append(
 		msg,
 		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
