@@ -25,6 +25,7 @@ type OnchainConfigCodec struct{}
 
 var _ median.OnchainConfigCodec = &OnchainConfigCodec{}
 
+// DecodeToFelts decodes the onchainconfig into felt values (used in config digest hashing)
 func (codec OnchainConfigCodec) DecodeToFelts(b []byte) ([]*big.Int, error) {
 	if len(b) != length {
 		return []*big.Int{}, fmt.Errorf("unexpected length of OnchainConfig, expected %v, got %v", length, len(b))
@@ -54,6 +55,7 @@ func (codec OnchainConfigCodec) DecodeToFelts(b []byte) ([]*big.Int, error) {
 	return []*big.Int{configVersion, min, max}, nil
 }
 
+// Decode converts the onchainconfig via the outputs of DecodeToFelts into signed big.Ints that libocr expects
 func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	felts, err := codec.DecodeToFelts(b)
 	if err != nil {
@@ -105,6 +107,7 @@ func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]by
 	return result, nil
 }
 
+// Encode takes the interface that libocr uses (+/- big.Ints) and serializes it into 3 felts
 func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
 	return codec.EncodeFromBigInt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
 }
