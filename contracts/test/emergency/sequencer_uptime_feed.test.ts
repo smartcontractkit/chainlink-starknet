@@ -7,12 +7,12 @@ import { assertErrorMsg } from '../utils'
 describe('SequencerUptimeFeed test', function () {
   this.timeout(300_000)
 
-  let account: Account
+  let owner: Account
   let nonOwner: Account
 
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
-    account = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.deployAccount('OpenZeppelin')
     nonOwner = await starknet.deployAccount('OpenZeppelin')
   })
 
@@ -24,12 +24,12 @@ describe('SequencerUptimeFeed test', function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
       uptimeFeedContract = await uptimeFeedFactory.deploy({
         initial_status: 0,
-        owner_address: number.toBN(account.starknetContract.address),
+        owner_address: number.toBN(owner.starknetContract.address),
       })
     })
 
     it('Test grainting access', async function () {
-      await account.invoke(uptimeFeedContract, 'add_access', {
+      await owner.invoke(uptimeFeedContract, 'add_access', {
         user,
       })
 
@@ -60,14 +60,14 @@ describe('SequencerUptimeFeed test', function () {
       await uptimeFeedContract.call('check_access', { user: user })
 
       try {
-        await account.invoke(uptimeFeedContract, 'check_access', { user: user + 1 })
+        await owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 })
       } catch (err: any) {
         assertErrorMsg(err?.message, 'AccessController: address does not have access')
       }
     })
   })
 
-  describe('Test IAggregator interface', function () {
+  describe('Test IAggregator interface using a Proxy', function () {
     const user = 101
     let uptimeFeedContract: StarknetContract
     let proxyContract: StarknetContract
@@ -76,12 +76,12 @@ describe('SequencerUptimeFeed test', function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
       uptimeFeedContract = await uptimeFeedFactory.deploy({
         initial_status: 0,
-        owner_address: number.toBN(account.starknetContract.address),
+        owner_address: number.toBN(owner.starknetContract.address),
       })
 
       const proxyFactory = await starknet.getContractFactory('proxy')
       proxyContract = await proxyFactory.deploy({
-        owner: number.toBN(account.starknetContract.address),
+        owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
       })
     })
