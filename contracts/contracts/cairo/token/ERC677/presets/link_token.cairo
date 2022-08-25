@@ -7,9 +7,7 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import FALSE, TRUE
 from openzeppelin.token.erc20.library import ERC20
-from openzeppelin.token.erc20.presets.ERC20Upgradeable import (
-    initializer as ERC20Upgradeable_initializer,
-    upgrade,
+from openzeppelin.token.erc20.presets.ERC20 import (
     name,
     symbol,
     totalSupply,
@@ -28,18 +26,21 @@ from starkware.starknet.std_contracts.ERC20.permitted import (
     permittedMinter,
 )
 from contracts.cairo.token.ERC677.library import ERC677
-from contracts.cairo.token.ERC677.IERC677Receiver import IERC677Receiver
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
+const DECIMALS = 18
 
-@external
-func initializer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    initial_supply : Uint256, recipient : felt, proxy_admin : felt
-):
-    alloc_locals
-    ERC20Upgradeable_initializer(NAME, SYMBOL, 18, initial_supply, recipient, proxy_admin)
-    permitted_initializer(recipient)
+@constructor
+func constructor{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    }(
+        owner: felt
+    ):
+    ERC20.initializer(NAME, SYMBOL, DECIMALS)
+    permitted_initializer(owner)
     return ()
 end
 
@@ -76,6 +77,7 @@ func transferAndCall{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     to : felt, value : Uint256, data_len : felt, data : felt*
 ) -> (success : felt):
     ERC677.transfer_and_call(to, value, data_len, data)
+    # TODO: should this return TRUE always?
     return (TRUE)
 end
 

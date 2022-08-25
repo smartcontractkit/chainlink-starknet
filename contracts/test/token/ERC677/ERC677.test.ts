@@ -4,7 +4,7 @@ import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
-import { shouldBehaveLikeERC20Mintable } from '../behavior/ERC20'
+// import { shouldBehaveLikeERC20Mintable } from '../behavior/ERC20'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
@@ -16,7 +16,7 @@ describe('ERC677', function () {
   let token: StarknetContract
   let data: (number | bigint)[]
 
-  shouldBehaveLikeERC20Mintable('link_token')
+  // shouldBehaveLikeERC20Mintable('link_token')
 
   beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
@@ -24,12 +24,14 @@ describe('ERC677', function () {
     tokenFactory = await starknet.getContractFactory('link_token')
 
     receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({})
-    await sender.invoke(token, 'initializer', {
-      initial_supply: uint256.bnToUint256(1000),
+
+    token = await tokenFactory.deploy({ owner: sender.starknetContract.address })
+
+    await sender.invoke(token, 'permissionedMint', {
       recipient: sender.starknetContract.address,
-      proxy_admin: sender.starknetContract.address,
+      amount: uint256.bnToUint256(1000),
     })
+
     await sender.invoke(token, 'transfer', {
       recipient: sender.starknetContract.address,
       amount: uint256.bnToUint256(100),
