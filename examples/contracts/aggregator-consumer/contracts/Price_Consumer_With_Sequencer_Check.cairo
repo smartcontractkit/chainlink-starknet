@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from contracts.cairo.ocr2.interfaces.IAggregator import IAggregator, Round
+from contracts.cairo.ocr2.IAggregator import IAggregator, Round
 from starkware.cairo.common.math import assert_not_zero
 from starkware.cairo.common.math_cmp import is_nn
 from starkware.cairo.common.bool import TRUE, FALSE

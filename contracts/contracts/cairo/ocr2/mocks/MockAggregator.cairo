@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from contracts.cairo.ocr2.interfaces.IAggregator import IAggregator, Round
+from contracts.cairo.ocr2.IAggregator import IAggregator, Round
 
 struct Transmission:
     member answer : felt
