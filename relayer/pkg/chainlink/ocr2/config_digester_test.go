@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,9 +36,9 @@ var testConfig = types.ContractConfig{
 	},
 	F: 1,
 	OnchainConfig: []byte{
-		1,                                                                                                                      // version
-		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 246, // min (-1)
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59, 154, 202, 0, // max (1000000000)
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // version
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 246, // min (-1)
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59, 154, 202, 0, // max (1000000000)
 	},
 	OffchainConfigVersion: 2,
 	OffchainConfig:        []byte{1},
@@ -67,7 +68,7 @@ func TestConfigDigester_InvalidChainID(t *testing.T) {
 func FuzzEncoding(f *testing.F) {
 	f.Add([]byte("hello world"))
 	f.Fuzz(func(t *testing.T, data []byte) {
-		result, err := ocr2.DecodeBytes(ocr2.EncodeBytes(data))
+		result, err := starknet.DecodeBytes(starknet.EncodeBytes(data))
 		require.NoError(t, err)
 		require.Equal(t, data, result)
 	})
