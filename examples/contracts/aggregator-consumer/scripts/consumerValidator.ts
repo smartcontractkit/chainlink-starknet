@@ -8,7 +8,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 dotenv.config({ path: __dirname + '/.env' })
 const AGGREGATOR_NAME = 'MockAggregator'
 const UPTIME_FEED_NAME =
-  '../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed'
+  '../../../../contracts/starknet-artifacts/contracts/cairo/emergency/SequencerUptimeFeed/sequencer_uptime_feed'
 
 let validator: Contract
 let mockStarkNetMessengerFactory: ContractFactory

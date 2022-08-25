@@ -6,7 +6,7 @@ from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
 from cairo.access.IAccessController import IAccessController
 from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
 from cairo.ocr2.interfaces.IAggregator import Round
-from cairo.ocr2.SequencerUptimeFeed.library import sequencer_uptime_feed
+from cairo.emergency.SequencerUptimeFeed.library import sequencer_uptime_feed
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
