@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -59,15 +58,9 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	offchainConfig := EncodeBytes(cfg.OffchainConfig)
 
-	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeBigInt(cfg.OnchainConfig)
+	decodedOnchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeBigInt(cfg.OnchainConfig)
 	if err != nil {
 		return configDigest, err
-	}
-
-	encodedOnchainConfig := []*big.Int{}
-	for i := 0; i < len(onchainConfig); i++ {
-		modded := new(big.Int).Mod(onchainConfig[i], caigotypes.MaxFelt.Big()) // TODO: this wraps negative values correctly into felts, use a helper
-		encodedOnchainConfig = append(encodedOnchainConfig, modded)
 	}
 
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
@@ -81,9 +74,9 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	msg = append(
 		msg,
 		big.NewInt(int64(cfg.F)), // f
-		big.NewInt(int64(len(encodedOnchainConfig))), // onchain_config_len
+		big.NewInt(int64(len(decodedOnchainConfig))), // onchain_config_len
 	)
-	msg = append(msg, encodedOnchainConfig...)
+	msg = append(msg, decodedOnchainConfig...)
 	msg = append(
 		msg,
 		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/libocr/bigbigendian"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
@@ -48,6 +49,10 @@ func (codec OnchainConfigCodec) DecodeBigInt(b []byte) ([]*big.Int, error) {
 	if !(min.Cmp(max) <= 0) {
 		return []*big.Int{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
 	}
+
+	// ensure felt: this wraps negative values correctly into felts
+	min = new(big.Int).Mod(min, caigotypes.MaxFelt.Big())
+	max = new(big.Int).Mod(min, caigotypes.MaxFelt.Big())
 
 	return []*big.Int{configVersion, min, max}, nil
 }
