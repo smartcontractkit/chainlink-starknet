@@ -3,7 +3,7 @@ import { toBN } from 'starknet/utils/number'
 import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
-import { TIMEOUT } from '../constants'
+import { TIMEOUT } from '../../constants'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 
 describe('LinkToken', function () {
