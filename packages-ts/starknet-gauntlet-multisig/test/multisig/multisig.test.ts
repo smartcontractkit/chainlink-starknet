@@ -120,7 +120,11 @@ describe('Multisig', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const multisig = loadContract(CONTRACT_LIST.MULTISIG)
-      const multisigContract = new Contract(multisig.abi, multisigContractAddress, makeProvider(LOCAL_URL).provider)
+      const multisigContract = new Contract(
+        multisig.abi,
+        multisigContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const { threshold } = await multisigContract.get_threshold()
       expect(threshold.toNumber()).toEqual(2)
     },
@@ -199,7 +203,11 @@ describe('Multisig', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const multisig = loadContract(CONTRACT_LIST.MULTISIG)
-      const multisigContract = new Contract(multisig.abi, multisigContractAddress, makeProvider(LOCAL_URL).provider)
+      const multisigContract = new Contract(
+        multisig.abi,
+        multisigContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const { signers } = await multisigContract.get_signers()
       expect(signers).toHaveLength(4)
     },
