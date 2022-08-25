@@ -156,7 +156,7 @@ describe('OCR2 Contract', () => {
       const resultTrasmitters = response[0]
 
       // retrieve signer keys from transaction event
-      // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/contracts/ocr2/aggregator.cairo#L260
+      // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
       const trace = await provider.getTransactionTrace(report.responses[0].tx.hash)
       const eventData = trace.function_invocation.events[0].data
       // reconstruct signers array from event

@@ -3,10 +3,10 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
 
-from cairo.access.IAccessController import IAccessController
-from cairo.access.SimpleReadAccessController.library import simple_read_access_controller
-from cairo.ocr2.IAggregator import Round
-from cairo.emergency.SequencerUptimeFeed.library import sequencer_uptime_feed
+from chainlink.cairo.access.IAccessController import IAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+from chainlink.cairo.ocr2.IAggregator import Round
+from chainlink.cairo.emergency.SequencerUptimeFeed.library import sequencer_uptime_feed
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
