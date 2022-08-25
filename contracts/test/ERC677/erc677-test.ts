@@ -90,9 +90,12 @@ describe('ERC677', function () {
 
     it('throws when the transfer fails', async () => {
       try {
-        await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: uint256.bnToUint256(10000) })
+        await sender.invoke(token, 'transfer', {
+          recipient: receiver.address,
+          amount: uint256.bnToUint256(10000),
+        })
         expect.fail()
-      } catch (error: any) { }
+      } catch (error: any) {}
     })
   })
 
