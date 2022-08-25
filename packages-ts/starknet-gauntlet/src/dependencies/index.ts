@@ -6,7 +6,8 @@ export interface Env {
   providerUrl: string
   pk?: string
   account?: string
-  [key: string]: string // Custom env
+  withLedger?: boolean
+  [key: string]: any // Custom env
 }
 
 export interface Dependencies {
@@ -14,7 +15,7 @@ export interface Dependencies {
   prompt: typeof prompt
   makeProvider: (url: string) => IStarknetProvider
   makeWallet: (withLedger: boolean, pk?: string, account?: string) => Promise<IStarknetWallet>
-  makeEnv: (flags: Record<string, string>) => Env
+  makeEnv: (flags: Record<string, any>) => Env
 }
 
 export type InspectionDependencies = Omit<Dependencies, 'makeWallet'>
