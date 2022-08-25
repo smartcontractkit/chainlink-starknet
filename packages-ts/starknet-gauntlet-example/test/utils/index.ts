@@ -3,7 +3,9 @@ import fs from 'fs'
 import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
 
 export const loadContract = (name: string): CompiledContract => {
-  return json.parse(fs.readFileSync(`${__dirname}/../../contract_artifacts/abi/${name}.json`).toString('ascii'))
+  return json.parse(
+    fs.readFileSync(`${__dirname}/../../contract_artifacts/abi/${name}.json`).toString('ascii'),
+  )
 }
 
 export const loadExampleContract = () => loadContract('example')

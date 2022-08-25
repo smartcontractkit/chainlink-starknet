@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
-import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types/runtime'
+import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
 import { assertErrorMsg } from '../utils'
 
@@ -89,13 +89,19 @@ describe('SequencerUptimeFeed test', function () {
     it('check interface', async function () {
       {
         const res = await proxyContract.call('latest_round_data')
-        expect(res.round.round_id).to.equal(1n)
         expect(res.round.answer).to.equal(0n)
       }
 
       {
         const res = await proxyContract.call('description')
-        expect(res.description).to.equal(134626335741441605527772921271890603575702899782138692259993464692975953252n)
+        expect(res.description).to.equal(
+          134626335741441605527772921271890603575702899782138692259993464692975953252n,
+        )
+      }
+
+      {
+        const res = await proxyContract.call('decimals')
+        expect(res.decimals).to.equal(0n)
       }
 
       // TODO: enable access check and assert correct behaviour

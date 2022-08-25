@@ -1,4 +1,9 @@
-import { AfterExecute, ExecuteCommandConfig, makeExecuteCommand, BeforeExecute } from '@chainlink/starknet-gauntlet'
+import {
+  AfterExecute,
+  ExecuteCommandConfig,
+  makeExecuteCommand,
+  BeforeExecute,
+} from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
@@ -38,12 +43,17 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
     k.replace('ocr2cfg_starknet_', ''),
   )
 
-  const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
+  const { offchainConfig } = await encoding.serializeOffchainConfig(
+    input.offchainConfig,
+    input.secret,
+  )
   let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
   return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
-const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (result) => {
+const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (
+  result,
+) => {
   const txHash = result.responses[0].tx.hash
   const txInfo = await context.provider.provider.getTransactionReceipt(txHash)
   const eventData = (txInfo.events[0] as any).data

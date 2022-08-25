@@ -1,7 +1,10 @@
 import { ExecuteCommandConfig, makeExecuteCommand, Validation } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContractLoader } from '../../lib/contracts'
-import { IncreaseBalanceBaseConfig, IncreaseBalanceInput } from '@chainlink/gauntlet-contracts-example'
+import {
+  IncreaseBalanceBaseConfig,
+  IncreaseBalanceInput,
+} from '@chainlink/gauntlet-contracts-example'
 
 type ContractInput = [number]
 

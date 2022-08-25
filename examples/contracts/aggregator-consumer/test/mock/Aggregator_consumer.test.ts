@@ -17,7 +17,9 @@ describe('ContractTestsMock', function () {
     console.log('MockContract: ', MockContract.address)
 
     const ConsumerFactory = await starknet.getContractFactory('Aggregator_consumer.cairo')
-    ConsumerContract = await ConsumerFactory.deploy({ address: MockContract.address })
+    ConsumerContract = await ConsumerFactory.deploy({
+      address: MockContract.address,
+    })
     console.log('ConsumerContract: ', ConsumerContract.address)
   })
 
@@ -35,6 +37,7 @@ describe('ContractTestsMock', function () {
     assert.equal(round.started_at, 14325)
     assert.equal(round.updated_at, 87654)
   })
+
   it('should set and read latest round data successfully for the second time', async () => {
     await MockContract.invoke('set_latest_round_data', {
       answer: 19,
@@ -49,6 +52,7 @@ describe('ContractTestsMock', function () {
     assert.equal(round.started_at, 14345)
     assert.equal(round.updated_at, 62543)
   })
+
   it('should set and read latest round data successfully for the third time', async () => {
     await MockContract.invoke('set_latest_round_data', {
       answer: 42,

@@ -27,4 +27,5 @@ export const loadContractAccessController = (name: CONTRACT_LIST): CompiledContr
 }
 
 export const ocr2ContractLoader = () => loadContractOcr2(CONTRACT_LIST.OCR2)
-export const accessControllerContractLoader = () => loadContractAccessController(CONTRACT_LIST.ACCESS_CONTROLLER)
+export const accessControllerContractLoader = () =>
+  loadContractAccessController(CONTRACT_LIST.ACCESS_CONTROLLER)

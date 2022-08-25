@@ -204,9 +204,15 @@ describe('aggregator.cairo', function () {
     for (let oracle of oracles.slice(0, f + 1)) {
       let [r, s] = ec.sign(oracle.signer, msg)
       console.log(
-        `privKey ${oracle.signer.getPrivate()} r ${r} s ${s} pubKey ${number.toBN(ec.getStarkKey(oracle.signer))}`,
+        `privKey ${oracle.signer.getPrivate()} r ${r} s ${s} pubKey ${number.toBN(
+          ec.getStarkKey(oracle.signer),
+        )}`,
       )
-      signatures.push({ r, s, public_key: number.toBN(ec.getStarkKey(oracle.signer)) })
+      signatures.push({
+        r,
+        s,
+        public_key: number.toBN(ec.getStarkKey(oracle.signer)),
+      })
     }
     console.log('---')
 
@@ -307,7 +313,9 @@ describe('aggregator.cairo', function () {
     } catch (err: any) {}
 
     // successful accept
-    await proposed_oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
+    await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
+      transmitter,
+    })
   })
 
   it('payments and withdrawals', async () => {

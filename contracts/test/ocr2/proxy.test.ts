@@ -75,7 +75,9 @@ describe('proxy.cairo', function () {
     })
 
     // propose it to the proxy
-    await owner.invoke(proxy, 'propose_aggregator', { address: new_aggregator.address })
+    await owner.invoke(proxy, 'propose_aggregator', {
+      address: new_aggregator.address,
+    })
 
     // query latest round, it should still point to the old aggregator
     round = (await proxy.call('latest_round_data')).round
@@ -86,7 +88,9 @@ describe('proxy.cairo', function () {
     assert.equal(round.answer, '12')
 
     // confirm the new aggregator
-    await owner.invoke(proxy, 'confirm_aggregator', { address: new_aggregator.address })
+    await owner.invoke(proxy, 'confirm_aggregator', {
+      address: new_aggregator.address,
+    })
 
     // query latest round, it should now point to the new aggregator
     round = (await proxy.call('latest_round_data')).round

@@ -166,8 +166,12 @@ describe('OCR2 Contract', () => {
         eventSigners.push(signer)
       }
 
-      expect(eventSigners).toEqual(signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16))) // remove all prefixes
-      expect(resultTrasmitters).toEqual(transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)))
+      expect(eventSigners).toEqual(
+        signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16)),
+      ) // remove all prefixes
+      expect(resultTrasmitters).toEqual(
+        transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)),
+      )
     },
     TIMEOUT,
   )
