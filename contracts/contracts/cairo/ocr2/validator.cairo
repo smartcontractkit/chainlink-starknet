@@ -16,7 +16,7 @@ from starkware.cairo.common.uint256 import (
 
 const THRESHOLD_MULTIPLIER = 100000
 
-from contracts.cairo.ownable import (
+from contracts.cairo.access.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
 )
