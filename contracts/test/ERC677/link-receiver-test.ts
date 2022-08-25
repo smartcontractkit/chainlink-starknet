@@ -65,7 +65,10 @@ describe('LinkToken', function () {
     // TODO For now it let you transfer to the contract itself
     xit('does not let you transfer to the contract itself', async () => {
       try {
-        await sender.invoke(token, 'transfer', { recipient: token.address, amount: uint256.bnToUint256(100) })
+        await sender.invoke(token, 'transfer', {
+          recipient: token.address,
+          amount: uint256.bnToUint256(100),
+        })
         expect.fail()
       } catch (error: any) {
         let { balance: balance1 } = await token.call('balanceOf', {
@@ -81,7 +84,10 @@ describe('LinkToken', function () {
       })
       expect(uint256.uint256ToBN(balance)).to.deep.equal(toBN(0))
 
-      await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: uint256.bnToUint256(100) })
+      await sender.invoke(token, 'transfer', {
+        recipient: receiver.address,
+        amount: uint256.bnToUint256(100),
+      })
 
       let { balance: balance1 } = await token.call('balanceOf', {
         account: receiver.address,
@@ -90,7 +96,10 @@ describe('LinkToken', function () {
     })
 
     it('does NOT call the fallback on transfer', async () => {
-      await sender.invoke(token, 'transfer', { recipient: receiver.address, amount: uint256.bnToUint256(100) })
+      await sender.invoke(token, 'transfer', {
+        recipient: receiver.address,
+        amount: uint256.bnToUint256(100),
+      })
       const { bool: bool } = await receiver.call('getCalledFallback', {})
       expect(bool).to.deep.equal(0n)
     })
@@ -150,7 +159,10 @@ describe('LinkToken', function () {
 
     it('transfers the amount to the contract and calls the contract function with withdrawl', async () => {
       let selector = getSelectorFromName('callbackWithWithdrawl')
-      await owner.invoke(token, 'approve', { spender: recipient.address, amount: uint256.bnToUint256(1000) })
+      await owner.invoke(token, 'approve', {
+        spender: recipient.address,
+        amount: uint256.bnToUint256(1000),
+      })
 
       const { remaining: allowance } = await token.call('allowance', {
         owner: owner.starknetContract.address,
