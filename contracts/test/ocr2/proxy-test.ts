@@ -29,7 +29,7 @@ describe('proxy.cairo', function () {
 
   before(async function () {
     // assumes contract.cairo and events.cairo has been compiled
-    aggregatorContractFactory = await starknet.getContractFactory('ocr2/Mock_Aggregator')
+    aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
     proxyContractFactory = await starknet.getContractFactory('ocr2/proxy')
 
     owner = await starknet.deployAccount('OpenZeppelin')

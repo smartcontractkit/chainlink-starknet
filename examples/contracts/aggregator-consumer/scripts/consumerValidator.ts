@@ -6,7 +6,7 @@ import dotenv from 'dotenv'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 dotenv.config({ path: __dirname + '/.env' })
-const AGGREGATOR_NAME = 'Mock_Aggregator'
+const AGGREGATOR_NAME = 'MockAggregator'
 const UPTIME_FEED_NAME =
   '../../../../contracts/starknet-artifacts/contracts/cairo/ocr2/SequencerUptimeFeed/sequencer_uptime_feed'
 

@@ -1,3 +1,3 @@
 %lang starknet
 
-from contracts.cairo.ocr2.Mock_Aggregator import constructor
+from contracts.cairo.ocr2.mocks.MockAggregator import constructor

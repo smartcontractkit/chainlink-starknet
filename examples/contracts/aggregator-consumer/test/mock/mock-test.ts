@@ -12,7 +12,7 @@ describe('ContractTestsMock', function () {
     account = await starknet.deployAccount('OpenZeppelin')
 
     const decimals = 18
-    const MockFactory = await starknet.getContractFactory('Mock_Aggregator.cairo')
+    const MockFactory = await starknet.getContractFactory('MockAggregator.cairo')
     MockContract = await MockFactory.deploy({ decimals })
     console.log('MockContract: ', MockContract.address)
 
