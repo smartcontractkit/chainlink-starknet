@@ -98,7 +98,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: uint256.bnToUint256(103),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
 
       try {
         await t.owner.invoke(t.token, 'permissionedBurn', {
@@ -106,7 +108,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: uint256.bnToUint256(189),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
     })
 
     it('should burn fail because wrong minter', async () => {
@@ -185,14 +189,18 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: uint256.bnToUint256(12),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
       try {
         await t.alice.invoke(t.token, 'transfer', {
           recipient: t.bob.starknetContract.address,
           amount: uint256.bnToUint256(17),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
     })
 
     it('should transferFrom successfully', async () => {
@@ -256,7 +264,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: uint256.bnToUint256(200),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
       try {
         await t.owner.invoke(t.token, 'transferFrom', {
           sender: t.alice.starknetContract.address,
@@ -264,7 +274,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: uint256.bnToUint256(300),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
     })
 
     it('should increase alllowance and transfer some tokens successfully', async () => {
@@ -362,7 +374,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: { low: 8n, high: 10n },
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
       try {
         await t.owner.invoke(t.token, 'transferFrom', {
           sender: t.alice.starknetContract.address,
@@ -370,7 +384,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           amount: uint256.bnToUint256(208),
         })
         throw new Error('This should not pass!')
-      } catch (error: any) {}
+      } catch (error: any) {
+        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+      }
     })
   })
 }
