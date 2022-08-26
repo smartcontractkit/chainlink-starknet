@@ -52,6 +52,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		rpcRequestTimeout       = 10 * time.Second
 		roundWaitTimeout        = 10 * time.Minute
 		increasingCountMax      = 10
+		mockServerVal           = 900000000
 	)
 
 	BeforeEach(func() {
@@ -128,36 +129,22 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
-			// TODO: validate juels per fee coin calculation
-			// juelsPerFeeCoinSource := `
-			// val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"ETH"}>]
-			// parse [type="jsonparse" path="ETH"]
-			// scale  [type="multiply" times=1000000000]
-			// val -> parse -> scale`
+			observationSource := `
+			val [type = "bridge" name="bridge-mockserver"]
+			parse [type="jsonparse" path="data,result"]
+			val -> parse
+			`
 
-			// observationSource := `
-			// val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"USD"}>]
-			// parse [type="jsonparse" path="USD"]
-			// scale [type="multiply" times=1000000000]
-			// val -> parse -> scale
-			// `
+			// TODO: validate juels per fee coin calculation
 			juelsPerFeeCoinSource := ` 
 			sum  [type="sum" values=<[451000]> ]
 			sum`
 
-			observationSource := `
-			pos [type="sum" values=<[900000000]>]
-			neg [type="sum" values=<[-900000000]>]
-			pick [type="any"]
-			
-			pos -> pick
-			neg -> pick
-			`
-
 			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
-				Name: "bridge-cryptocompare",
-				URL:  "https://min-api.cryptocompare.com/data/price",
+				Name: "bridge-mockserver",
+				URL:  t.GetMockServerURL(),
 			})
+			t.SetMockServerValue("", mockServerVal)
 			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
@@ -188,7 +175,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
 				// end condition: enough rounds have occured, and positive and negative answers have been seen
-				if increasing == increasingCountMax && positive && negative {
+				if increasing >= increasingCountMax && positive && negative {
 					break
 				}
 
@@ -196,6 +183,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				if stuck && stuckCount > 10 {
 					log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 					break
+				}
+
+				// once progression has reached halfway, change to negative values
+				if increasing == increasingCountMax/2 {
+					t.SetMockServerValue("", -1*mockServerVal)
 				}
 
 				// try to fetch rounds
