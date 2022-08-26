@@ -4,10 +4,6 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from chainlink.cairo.access.SimpleWriteAccessController.library import (
-    AddedAccess,
-    RemovedAccess,
-    CheckAccessEnabled,
-    CheckAccessDisabled,
     add_access,
     remove_access,
     enable_access_check,
