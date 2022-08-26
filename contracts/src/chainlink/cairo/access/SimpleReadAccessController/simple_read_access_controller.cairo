@@ -6,6 +6,16 @@ from starkware.cairo.common.bool import TRUE, FALSE
 
 from chainlink.cairo.access.IAccessController import IAccessController
 from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
+    AddedAccess,
+    RemovedAccess,
+    CheckAccessEnabled,
+    CheckAccessDisabled,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
