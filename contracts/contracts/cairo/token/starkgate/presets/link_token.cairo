@@ -170,7 +170,6 @@ func transferAndCall{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     to : felt, value : Uint256, data_len : felt, data : felt*
 ) -> (success : felt):
     ERC677.transfer_and_call(to, value, data_len, data)
-    # TODO: should this return TRUE always?
     return (TRUE)
 end
 
