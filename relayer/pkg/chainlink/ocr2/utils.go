@@ -54,31 +54,61 @@ func CompareAddress(a, b string) bool {
 	return bytes.Compare(starknet.PadBytes(aBytes, 32), starknet.PadBytes(bBytes, 32)) == 0
 }
 
-// NOTE: currently unused, could be used by monitoring component
-func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetails, error) {
-	// round_id - skip
-	// answer
-	index := 1
-	latestAnswer := starknet.FeltToSignedBig(eventData[index])
+type NewTransmission struct {
+	RoundId         uint32
+	Epoch           uint32
+	Round           uint8
+	ConfigDigest    types.ConfigDigest
+	LatestAnswer    *big.Int
+	LatestTimestamp time.Time
+	Transmitter     *caigotypes.Felt
+	Observers       []uint8
+	Observations    []*big.Int
+	JuelsPerFeeCoin *big.Int
+	Reimbursement   *big.Int
+}
 
-	// transmitter - skip
+// NOTE: currently unused, could be used by monitoring component
+func parseTransmissionEventData(eventData []*caigotypes.Felt) (NewTransmission, error) {
+	// round_id
+	index := 0
+	roundId := uint32(eventData[index].Big().Uint64())
+
+	// answer
+	index += 1
+	latestAnswer := starknet.FeltToBigInt(eventData[index])
+
+	// transmitter
+	index += 1
+	transmitter := eventData[index]
+
 	// observation_timestamp
-	index += 2
+	index += 1
 	unixTime := eventData[index].Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
-	// observers - skip
+	// observers - TODO
+	index += 1
+
 	// observation_len
-	index += 2
+	index += 1
 	observationLen := eventData[index].Int64()
 
-	// observations - skip (based on observationLen)
-	// juels_per_fee_coin - skip
+	// observations - (based on observationLen)
+	var observations []*big.Int
+	for i := 0; i < int(observationLen); i++ {
+		observations = append(observations, eventData[index+1].Big())
+	}
+
+	// juels_per_fee_coin
+	index += 1 + int(observationLen)
+	juelsPerFeeCoin := eventData[index].Big()
+
 	// config digest
-	index += int(observationLen) + 2
+	index += 1
 	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
 	if err != nil {
-		return TransmissionDetails{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
+		return NewTransmission{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
 	}
 
 	// epoch_and_round
@@ -86,13 +116,21 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 	epoch, round := parseEpochAndRound(eventData[index].Big())
 
 	// reimbursement - skip
+	index += 1
+	reimbursement := eventData[index].Big()
 
-	return TransmissionDetails{
-		Digest:          digest,
+	return NewTransmission{
+		RoundId:         roundId,
 		Epoch:           epoch,
 		Round:           round,
+		ConfigDigest:    digest,
 		LatestAnswer:    latestAnswer,
 		LatestTimestamp: latestTimestamp,
+		Transmitter:     transmitter,
+		// Observers: observers,
+		Observations:    observations,
+		JuelsPerFeeCoin: juelsPerFeeCoin,
+		Reimbursement:   reimbursement,
 	}, nil
 }
 
