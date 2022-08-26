@@ -48,7 +48,8 @@ const registerExecuteCommand = <UI, CI>(
         billingAccessController: process.env.BILLING_ACCESS_CONTROLLER,
         link: process.env.LINK,
         secret: flags.secret || process.env.SECRET,
-        withLedger: !!flags.withLedger,
+        withLedger: !!flags.withLedger || !!process.env.WITH_LEDGER,
+        ledgerPath: (flags.ledgerPath as string) || process.env.LEDGER_PATH,
       }
       return env
     },
