@@ -22,7 +22,7 @@ import (
 func parseAnswer(str string) (num *big.Int) {
 	felt := junotypes.HexToFelt(str)
 	num = felt.Big()
-	return starknet.FeltToBigInt(&caigotypes.Felt{Int: num})
+	return starknet.FeltToSignedBig(&caigotypes.Felt{Int: num})
 }
 
 func parseEpochAndRound(felt *big.Int) (epoch uint32, round uint8) {
@@ -59,7 +59,7 @@ func parseTransmissionEventData(eventData []*caigotypes.Felt) (TransmissionDetai
 	// round_id - skip
 	// answer
 	index := 1
-	latestAnswer := starknet.FeltToBigInt(eventData[index])
+	latestAnswer := starknet.FeltToSignedBig(eventData[index])
 
 	// transmitter - skip
 	// observation_timestamp
@@ -160,7 +160,7 @@ func parseConfigEventData(eventData []*caigotypes.Felt) (types.ContractConfig, e
 	index += 1
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
 	// todo: get rid of caigoToJuno workaround
-	offchainConfig, err := starknet.DecodeBytes(starknet.CaigoFeltsToJunoFelts(offchainConfigFelts))
+	offchainConfig, err := starknet.DecodeFelts(starknet.CaigoFeltsToJunoFelts(offchainConfigFelts))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}

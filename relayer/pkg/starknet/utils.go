@@ -46,8 +46,8 @@ func Min[T constraints.Ordered](a, b T) T {
 	return b
 }
 
-// Encodes a byte slice as a bunch of felts. First felt indicates the total byte size.
-func EncodeBytes(data []byte) (felts []*big.Int) {
+// EncodeFelts takes a byte slice and splits as bunch of felts. First felt indicates the total byte size.
+func EncodeFelts(data []byte) (felts []*big.Int) {
 	// prefix with len
 	length := big.NewInt(int64(len(data)))
 	felts = append(felts, length)
@@ -63,7 +63,8 @@ func EncodeBytes(data []byte) (felts []*big.Int) {
 	return felts
 }
 
-func DecodeBytes(felts []*big.Int) ([]byte, error) {
+// DecodeFelts is the reverse of EncodeFelts
+func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	if len(felts) == 0 {
 		return []byte{}, nil
 	}
@@ -88,13 +89,13 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-// BigIntToFelt wraps negative values correctly into felts
-func BigIntToFelt(num *big.Int) *big.Int {
+// SignedBigToFelt wraps negative values correctly into felt
+func SignedBigToFelt(num *big.Int) *big.Int {
 	return new(big.Int).Mod(num, caigotypes.MaxFelt.Big())
 }
 
-// FeltToBigInt unwraps felt into negative values
-func FeltToBigInt(felt *caigotypes.Felt) (num *big.Int) {
+// FeltToSigned unwraps felt into negative values
+func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
 	num = felt.Big()
 	prime := caigotypes.MaxFelt.Big()
 	half := new(big.Int).Div(prime, big.NewInt(2))
