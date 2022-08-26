@@ -4,7 +4,7 @@ import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
 import { assertErrorMsg } from '../utils'
 
-describe('SequencerUptimeFeed test', function () {
+describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
 
   let owner: Account
@@ -16,7 +16,7 @@ describe('SequencerUptimeFeed test', function () {
     nonOwner = await starknet.deployAccount('OpenZeppelin')
   })
 
-  describe('Test inheritence', function () {
+  describe('Test access control via inherited `simple_read_access_controller`', function () {
     const user = 101
     let uptimeFeedContract: StarknetContract
 
@@ -28,23 +28,18 @@ describe('SequencerUptimeFeed test', function () {
       })
     })
 
-    it('Test grainting access', async function () {
-      await owner.invoke(uptimeFeedContract, 'add_access', {
-        user,
-      })
+    it('should block non-owners from making admin changes', async function () {
+      await owner.invoke(uptimeFeedContract, 'add_access', { user })
 
       try {
-        await nonOwner.invoke(uptimeFeedContract, 'add_access', {
-          user,
-        })
-
+        await nonOwner.invoke(uptimeFeedContract, 'add_access', { user })
         expect.fail()
       } catch (err: any) {
         assertErrorMsg(err?.message, 'Ownable: caller is not the owner')
       }
     })
 
-    it('Test has_access', async function () {
+    it('should report access information correctly', async function () {
       {
         const res = await uptimeFeedContract.call('has_access', { user: user, data: [] })
         expect(res.bool).to.equal(1n)
@@ -56,11 +51,12 @@ describe('SequencerUptimeFeed test', function () {
       }
     })
 
-    it('Test check_access', async function () {
+    it('should error on `check_access` without access', async function () {
       await uptimeFeedContract.call('check_access', { user: user })
 
       try {
         await owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 })
+        expect.fail()
       } catch (err: any) {
         assertErrorMsg(err?.message, 'AccessController: address does not have access')
       }
@@ -68,7 +64,6 @@ describe('SequencerUptimeFeed test', function () {
   })
 
   describe('Test IAggregator interface using a Proxy', function () {
-    const user = 101
     let uptimeFeedContract: StarknetContract
     let proxyContract: StarknetContract
 
@@ -86,7 +81,8 @@ describe('SequencerUptimeFeed test', function () {
       })
     })
 
-    it('check interface', async function () {
+    it('should respond via a Proxy', async function () {
+      // TODO: this test should fail on AC check, but it passes? (no explicit access was given to the Proxy contract)
       {
         const res = await proxyContract.call('latest_round_data')
         expect(res.round.answer).to.equal(0n)
