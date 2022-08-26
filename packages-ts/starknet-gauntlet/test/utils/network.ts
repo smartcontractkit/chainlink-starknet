@@ -50,7 +50,7 @@ class VenvDevnet extends IntegratedDevnet {
   }
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
-    let args = ['--port', this.port, '--gas-price', '1']
+    let args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
     if (this.opts?.seed) {
       args.push('--seed', this.opts.seed.toString())
     }

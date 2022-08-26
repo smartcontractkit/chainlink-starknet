@@ -22,7 +22,9 @@ async function main() {
     if (err) throw err
   })
 
-  fs.appendFile(__dirname + '/.env', '\nACCOUNT_ADDRESS_2=' + secondAccount.account, function (err) {
+  fs.appendFile(__dirname + '/.env', '\nACCOUNT_ADDRESS_2=' + secondAccount.account, function (
+    err,
+  ) {
     if (err) throw err
   })
   fs.appendFile(__dirname + '/.env', '\nPRIVATE_KEY_2=' + secondAccount.privateKey, function (err) {

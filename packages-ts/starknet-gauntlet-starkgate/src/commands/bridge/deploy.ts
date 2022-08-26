@@ -26,12 +26,19 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   }
 }
 
-const makeContractInput = async (input: UserInput, context: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: ExecutionContext,
+): Promise<ContractInput> => {
   const defaultWallet = context.wallet.getAccountPublicKey()
   return [input.governor || defaultWallet]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to deploy an L2 Bridge Contract with the following details:
     ${input.contract}
   `)

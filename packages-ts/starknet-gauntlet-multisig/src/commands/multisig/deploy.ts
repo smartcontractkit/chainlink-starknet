@@ -29,18 +29,24 @@ export const validateThreshold = async (input: UserInput) => {
   const threshold = Number(input.threshold)
   if (isNaN(threshold)) throw new Error('Threshold is not a number')
   if (threshold > input.signers.length)
-    throw new Error(`Threshold is higher than signers length: ${threshold} > ${input.signers.length}`)
+    throw new Error(
+      `Threshold is higher than signers length: ${threshold} > ${input.signers.length}`,
+    )
   return true
 }
 
 export const validateSigners = async (input) => {
   const areValid = input.signers.every(isValidAddress)
   if (!areValid) throw new Error('Signers are not valid accounts')
-  if (new Set(input.signers).size !== input.signers.length) throw new Error('Signers are not unique')
+  if (new Set(input.signers).size !== input.signers.length)
+    throw new Error('Signers are not unique')
   return true
 }
 
-const makeContractInput = async (input: UserInput, context: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: ExecutionContext,
+): Promise<ContractInput> => {
   return [
     number.toFelt(input.signers.length),
     ...input.signers.map((addr) => number.toFelt(number.toBN(addr))),
@@ -48,7 +54,11 @@ const makeContractInput = async (input: UserInput, context: ExecutionContext): P
   ]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to deploy an Multisig Contract with the following details:
     - Signers: ${input.user.signers}
     - Threshold: ${input.user.threshold}

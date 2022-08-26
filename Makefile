@@ -49,10 +49,9 @@ endif
 ifeq ($(OSFLAG),$(LINUX))
 	@echo "Linux system detected - please install and use NIX (@see shell.nix)."
 	@echo
-	exit 1
 ifneq ($(CI),true)
 	# install nix
-	# sh <(curl -L https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install) --daemon --tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve --nix-extra-conf-file ./nix.conf
+	sh <(curl -L https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install) --daemon --tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve --nix-extra-conf-file ./nix.conf
 endif
 	go install github.com/onsi/ginkgo/v2/ginkgo@v$(shell cat ./.tool-versions | grep ginkgo | sed -En "s/ginkgo.(.*)/\1/p")
 endif
@@ -60,3 +59,14 @@ endif
 .PHONY: e2e_test
 e2e_test:
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
+	
+.PHONY: gowork
+gowork:
+	go work init
+	go work use ./ops
+	go work use ./relayer
+	go work use ./integration-tests
+
+.PHONY: gowork_rm
+gowork_rm:
+	rm go.work*

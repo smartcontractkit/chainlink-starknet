@@ -60,7 +60,9 @@ const registerExecuteCommand = <UI, CI>(
 }
 
 const registerInspectionCommand = <QueryResult>(
-  registerCommand: (deps: Omit<Dependencies, 'makeWallet'>) => CommandCtor<InspectCommandInstance<QueryResult>>,
+  registerCommand: (
+    deps: Omit<Dependencies, 'makeWallet'>,
+  ) => CommandCtor<InspectCommandInstance<QueryResult>>,
 ) => {
   const deps: Omit<Dependencies, 'makeWallet'> = {
     logger: logger,
@@ -84,7 +86,9 @@ const executeCommands = [
   ...ArgentCommands,
   ...MultisigExecuteCommands,
 ]
-const msigCommands = executeCommands.map((c) => registerExecuteCommand(c, true)).map(multisigWrapCommand)
+const msigCommands = executeCommands
+  .map((c) => registerExecuteCommand(c, true))
+  .map(multisigWrapCommand)
 const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
@@ -106,7 +110,10 @@ const commands = {
 
 ;(async () => {
   try {
-    const networkPossiblePaths = [path.join(process.cwd(), 'networks'), path.join(__dirname, '../networks')]
+    const networkPossiblePaths = [
+      path.join(process.cwd(), 'networks'),
+      path.join(__dirname, '../networks'),
+    ]
     const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
     const result = await executeCLI(commands, networkPath)
     if (result) {

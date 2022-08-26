@@ -13,11 +13,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.1.0",
     "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
     "@types/chai": "^4.3.1",
     "@types/jest": "^28.1.0",
     "@types/mocha": "^9.1.1",
-    "hardhat": "^2.9.9",
+    "hardhat": "^2.10.2",
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2"
   },

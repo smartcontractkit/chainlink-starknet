@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	junorpc "github.com/NethermindEth/juno/pkg/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -37,7 +36,7 @@ func NewConfigProvider(chainID string, contractAddress string, basereader starkn
 
 	reader := NewContractReader(contractAddress, chainReader, lggr)
 	cache := NewContractCache(cfg, reader, lggr)
-	digester := NewOffchainConfigDigester(junorpc.ChainID(chainID), junorpc.Address(contractAddress))
+	digester := NewOffchainConfigDigester(chainID, contractAddress)
 
 	return &configProvider{
 		reader:        reader,
@@ -129,4 +128,8 @@ func (p *medianProvider) ReportCodec() median.ReportCodec {
 
 func (p *medianProvider) MedianContract() median.MedianContract {
 	return p.transmissionsCache
+}
+
+func (p *medianProvider) OnchainConfigCodec() median.OnchainConfigCodec {
+	return medianreport.OnchainConfigCodec{}
 }

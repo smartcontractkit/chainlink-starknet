@@ -1,4 +1,9 @@
-import { AfterExecute, ExecuteCommandConfig, makeExecuteCommand, BeforeExecute } from '@chainlink/starknet-gauntlet'
+import {
+  AfterExecute,
+  ExecuteCommandConfig,
+  makeExecuteCommand,
+  BeforeExecute,
+} from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
@@ -13,7 +18,7 @@ type Oracle = {
 type ContractInput = [
   oracles: Oracle[],
   f: number,
-  onchain_config: string,
+  onchain_config: string[],
   offchain_config_version: number,
   offchain_config: string[],
 ]
@@ -29,16 +34,34 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
       transmitter: input.transmitters[i],
     }
   })
-  const { offchainConfig } = await encoding.serializeOffchainConfig(input.offchainConfig, input.secret)
-  return [oracles, new BN(input.f).toNumber(), input.onchainConfig, 2, bytesToFelts(offchainConfig)]
+
+  // remove prefix if present on offchain key
+  input.offchainConfig.offchainPublicKeys = input.offchainConfig.offchainPublicKeys.map((k) =>
+    k.replace('ocr2off_starknet_', ''),
+  )
+  input.offchainConfig.configPublicKeys = input.offchainConfig.configPublicKeys.map((k) =>
+    k.replace('ocr2cfg_starknet_', ''),
+  )
+
+  const { offchainConfig } = await encoding.serializeOffchainConfig(
+    input.offchainConfig,
+    input.secret,
+  )
+  let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
+  return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
-const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (result) => {
+const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (
+  result,
+) => {
   const txHash = result.responses[0].tx.hash
   const txInfo = await context.provider.provider.getTransactionReceipt(txHash)
   const eventData = (txInfo.events[0] as any).data
+
   const offchainConfig = decodeOffchainConfigFromEventData(eventData)
   try {
+    // remove cfg keys from user input
+    delete input.user.offchainConfig.configPublicKeys
     assert.deepStrictEqual(offchainConfig, input.user.offchainConfig)
     deps.logger.success('Configuration was successfully set')
     return { successfulConfiguration: true }

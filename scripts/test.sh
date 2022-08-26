@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+# TODO: this script needs to be replaced with a predefined K8s enviroment
+sh ./ops/scripts/devnet-hardhat.sh
+
 cd contracts
 yarn install
-# Remove once https://github.com/Shard-Labs/starknet-hardhat-plugin/pull/106 is merged
-npx hardhat starknet-compile
+yarn compile
 yarn test
+
 # Example tests
 cd ../examples/contracts/aggregator-consumer
 yarn install
-yarn compile && yarn test
+yarn compile
+yarn test
