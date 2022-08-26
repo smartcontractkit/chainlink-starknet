@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
-import { assertErrorMsg } from '../utils'
+import { expectInvokeError, expectCallError } from '../utils'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
@@ -35,7 +35,7 @@ describe('SequencerUptimeFeed', function () {
         await nonOwner.invoke(uptimeFeedContract, 'add_access', { user })
         expect.fail()
       } catch (err: any) {
-        assertErrorMsg(err?.message, 'Ownable: caller is not the owner')
+        expectInvokeError(err?.message, 'Ownable: caller is not the owner')
       }
     })
 
@@ -58,7 +58,7 @@ describe('SequencerUptimeFeed', function () {
         await owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 })
         expect.fail()
       } catch (err: any) {
-        assertErrorMsg(err?.message, 'AccessController: address does not have access')
+        expectInvokeError(err?.message, 'AccessController: address does not have access')
       }
     })
   })
@@ -97,7 +97,7 @@ describe('SequencerUptimeFeed', function () {
         await accWithoutAccess.call(proxyContract, 'latest_round_data')
         expect.fail()
       } catch (err: any) {
-        assertErrorMsg(err?.message, 'AccessController: address does not have access')
+        expectCallError(err?.message, 'AccessController: address does not have access')
       }
     })
 
