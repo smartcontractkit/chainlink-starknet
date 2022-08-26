@@ -6,7 +6,17 @@ export enum CONTRACT_LIST {
   ACCESS_CONTROLLER = 'access_controller',
 }
 
-export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
+export const loadContractOcr2 = (name: CONTRACT_LIST): CompiledContract => {
+  return json.parse(
+    fs
+      .readFileSync(
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starknet-contracts-ocr2/artifacts/ocr2/${name}.cairo/${name}.json`,
+      )
+      .toString('ascii'),
+  )
+}
+
+export const loadContractAccessController = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
@@ -16,5 +26,6 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
   )
 }
 
-export const ocr2ContractLoader = () => loadContract(CONTRACT_LIST.OCR2)
-export const accessControllerContractLoader = () => loadContract(CONTRACT_LIST.ACCESS_CONTROLLER)
+export const ocr2ContractLoader = () => loadContractOcr2(CONTRACT_LIST.OCR2)
+export const accessControllerContractLoader = () =>
+  loadContractAccessController(CONTRACT_LIST.ACCESS_CONTROLLER)

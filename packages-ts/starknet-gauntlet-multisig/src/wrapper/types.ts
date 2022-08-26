@@ -16,6 +16,6 @@ export type State = {
     id: number
     nextAction: Action
     data: Call
-    approvers: number
+    confirmations: number
   }
 }

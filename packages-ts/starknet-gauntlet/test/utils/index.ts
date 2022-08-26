@@ -59,7 +59,9 @@ export const registerExecuteCommand = <UI, CI>(
 }
 
 export const registerInspectCommand = <QueryResult>(
-  registerCommand: (deps: Omit<Dependencies, 'makeWallet'>) => CommandCtor<InspectCommandInstance<QueryResult>>,
+  registerCommand: (
+    deps: Omit<Dependencies, 'makeWallet'>,
+  ) => CommandCtor<InspectCommandInstance<QueryResult>>,
 ) => {
   const deps: Omit<Dependencies, 'makeWallet'> = {
     logger: noopLogger,

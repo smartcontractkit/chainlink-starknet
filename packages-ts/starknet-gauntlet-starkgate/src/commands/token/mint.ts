@@ -1,4 +1,9 @@
-import { BeforeExecute, ExecuteCommandConfig, makeExecuteCommand, Validation } from '@chainlink/starknet-gauntlet'
+import {
+  BeforeExecute,
+  ExecuteCommandConfig,
+  makeExecuteCommand,
+  Validation,
+} from '@chainlink/starknet-gauntlet'
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
 import { CATEGORIES } from '../../lib/categories'
@@ -24,7 +29,11 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.recipient, bnToUint256(input.amount)]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to mint an ERC20 Token Contract with the following details:
     ${input.contract}
   `)

@@ -2,7 +2,6 @@ package starknet
 
 import (
 	"crypto/rand"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,8 +33,27 @@ func TestPadBytes(t *testing.T) {
 		if v < length {
 			start = length - v
 		}
-		fmt.Println(in, out)
 		assert.Equal(t, in, out[start:])
 	}
 
+}
+
+func TestEnsureFelt(t *testing.T) {
+	// create random bytes
+	random := make([]byte, 32)
+	rand.Read(random)
+
+	// fit into [32]byte
+	val := [32]byte{}
+	copy(val[:], random[:])
+
+	// validate replace first char with 0
+	out := EnsureFelt(val)
+	assert.Equal(t, 32, len(out))
+	assert.Equal(t, uint8(0), out[0])
+	assert.Equal(t, random[1:], out[1:])
+
+	// validate always fills 64 characters
+	out = EnsureFelt([32]byte{})
+	assert.Equal(t, 32, len(out))
 }

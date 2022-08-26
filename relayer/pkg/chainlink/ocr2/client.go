@@ -3,11 +3,14 @@ package ocr2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
@@ -54,15 +57,8 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		return bd, errors.New("unexpected result length")
 	}
 
-	observationPaymentFelt, err := caigoStringToJunoFelt(res[0])
-	if err != nil {
-		return bd, errors.Wrap(err, "couldn't decode observation payment")
-	}
-
-	transmissionPaymentFelt, err := caigoStringToJunoFelt(res[1])
-	if err != nil {
-		return bd, errors.Wrap(err, "couldn't decode transmission payment")
-	}
+	observationPaymentFelt := junotypes.HexToFelt(res[0])
+	transmissionPaymentFelt := junotypes.HexToFelt(res[1])
 
 	bd, err = NewBillingDetails(observationPaymentFelt, transmissionPaymentFelt)
 	if err != nil {
@@ -88,15 +84,8 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 		return ccd, errors.New("unexpected result length")
 	}
 
-	blockNum, err := caigoStringToJunoFelt(res[1])
-	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't decode block num")
-	}
-
-	configDigest, err := caigoStringToJunoFelt(res[2])
-	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't decode config digest")
-	}
+	blockNum := junotypes.HexToFelt(res[1])
+	configDigest := junotypes.HexToFelt(res[2])
 
 	ccd, err = NewContractConfigDetails(blockNum, configDigest)
 	if err != nil {
@@ -109,7 +98,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) (td TransmissionDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "latest_round_data",
+		Selector:        "latest_transmission_details",
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -117,45 +106,29 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 		return td, errors.Wrap(err, "couldn't call the contract")
 	}
 
-	// [0] - round_id, [1] - answer, [2] - block_num,
-	// [3] - observation_timestamp, [4] - transmission_timestamp
-	blockNumFelt, err := caigoStringToJunoFelt(res[2])
-	if err != nil {
-		return td, errors.Wrap(err, "couldn't decode block num")
+	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
+	digest := junotypes.HexToFelt(res[0])
+	configDigest := types.ConfigDigest{}
+	digest.Big().FillBytes(configDigest[:])
+
+	epoch, round := parseEpochAndRound(junotypes.HexToFelt(res[1]).Big())
+
+	latestAnswer := parseAnswer(res[2])
+
+	timestampFelt := junotypes.HexToFelt(res[3])
+	// TODO: Int64() can return invalid data if int is too big
+	unixTime := timestampFelt.Big().Int64()
+	latestTimestamp := time.Unix(unixTime, 0)
+
+	td = TransmissionDetails{
+		Digest:          configDigest,
+		Epoch:           epoch,
+		Round:           round,
+		LatestAnswer:    latestAnswer,
+		LatestTimestamp: latestTimestamp,
 	}
 
-	blockNum := uint64(blockNumFelt.Big().Int64())
-	if blockNum == 0 {
-		c.lggr.Warn("No transmissions found")
-		return td, nil
-	}
-
-	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
-	if err != nil {
-		return td, errors.Wrap(err, "couldn't fetch block by number")
-	}
-
-	for _, txReceipt := range block.TransactionReceipts {
-		for _, event := range txReceipt.Events {
-			var decodedEvent caigotypes.Event
-
-			m, err := json.Marshal(event)
-			if err != nil {
-				return td, errors.Wrap(err, "couldn't marshal event")
-			}
-
-			err = json.Unmarshal(m, &decodedEvent)
-			if err != nil {
-				return td, errors.Wrap(err, "couldn't unmarshal event")
-			}
-
-			if isEventFromContract(&decodedEvent, address, "new_transmission") {
-				return parseTransmissionEventData(decodedEvent.Data)
-			}
-		}
-	}
-
-	return td, errors.New("transmission details not found")
+	return td, nil
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
