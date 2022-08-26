@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile:cairo": "hardhat starknet-compile ./src ./vendor",
+    "compile:cairo": "hardhat starknet-compile",
     "compile:solidity": "hardhat compile",
     "compile": "yarn compile:cairo && yarn compile:solidity",
     "test": "hardhat --network localhost test"
