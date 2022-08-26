@@ -1,7 +1,12 @@
 import { ethers, starknet, network } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
 import { number } from 'starknet'
-import { StarknetContractFactory, StarknetContract, HttpNetworkConfig } from 'hardhat/types'
+import {
+  Account,
+  StarknetContractFactory,
+  StarknetContract,
+  HttpNetworkConfig,
+} from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expectAddressEquality } from '../utils'
@@ -11,42 +16,48 @@ describe('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
 
+  let account: Account
+  let deployer: SignerWithAddress
+  let eoaValidator: SignerWithAddress
+
   let starkNetValidator: Contract
   let mockStarkNetMessagingFactory: ContractFactory
   let mockStarkNetMessaging: Contract
-  let deployer: SignerWithAddress
-  let eoaValidator: SignerWithAddress
 
   let l2ContractFactory: StarknetContractFactory
   let l2Contract: StarknetContract
 
   before(async () => {
-    const account = await starknet.deployAccount('OpenZeppelin')
+    // Deploy L2 account
+    account = await starknet.deployAccount('OpenZeppelin')
+    // Fetch predefined L1 EOA accounts
+    const accounts = await ethers.getSigners()
+    deployer = accounts[0]
+    eoaValidator = accounts[1]
 
+    // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
     l2Contract = await l2ContractFactory.deploy({
       initial_status: 0,
       owner_address: number.toBN(account.starknetContract.address),
     })
 
-    const accounts = await ethers.getSigners()
-    deployer = accounts[0]
-    eoaValidator = accounts[1]
-
-    const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
+    // Deploy the MockStarkNetMessaging contract used to simulate L1 - L2 comms
     mockStarkNetMessagingFactory = await ethers.getContractFactory(
       'MockStarkNetMessaging',
       deployer,
     )
-
     mockStarkNetMessaging = await mockStarkNetMessagingFactory.deploy()
     await mockStarkNetMessaging.deployed()
 
+    // Deploy the L1 StarkNetValidator
+    const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
     starkNetValidator = await starknetValidatorFactory.deploy(
       mockStarkNetMessaging.address,
       l2Contract.address,
     )
 
+    // Point the L2 feed contract to receive from the L1 StarkNetValidator contract
     await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
   })
 
@@ -58,10 +69,15 @@ describe('StarkNetValidator', () => {
       )
     })
 
-    it('reverts if called by account with no access', async () => {
+    it('reverts if `StarkNetValidator.validate` called by account with no access', async () => {
       await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith(
         'No access',
       )
+    })
+
+    it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
+      const res = await account.call(l2Contract, 'latest_round_data')
+      expect(res.round.answer).to.equal(0n)
     })
 
     it('should deploy the messaging contract', async () => {
@@ -102,13 +118,13 @@ describe('StarkNetValidator', () => {
       expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await l2Contract.call('latest_round_data')
+      const res = await account.call(l2Contract, 'latest_round_data')
       expect(res.round.answer).to.equal(1n)
     })
 
     it('should always send a **boolean** message to L2 contract', async () => {
       // Load the mock messaging contract
-      await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessaging.address);
+      await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessaging.address)
 
       // Simulate L1 transmit + validate
       await starkNetValidator.addAccess(eoaValidator.address)
@@ -125,7 +141,7 @@ describe('StarkNetValidator', () => {
       expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await l2Contract.call("latest_round_data");
+      const res = await account.call(l2Contract, 'latest_round_data')
       expect(res.round.answer).to.equal(0n) // status unchanged - incorrect value treated as false
     })
 
@@ -152,7 +168,7 @@ describe('StarkNetValidator', () => {
       expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await l2Contract.call('latest_round_data')
+      const res = await account.call(l2Contract, 'latest_round_data')
       expect(res.round.answer).to.equal(0n) // final status 0
     })
   })
