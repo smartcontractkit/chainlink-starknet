@@ -55,7 +55,11 @@ class LedgerSigner implements SignerInterface {
     return this.publicKey
   }
 
-  async signTransaction(transactions: Invocation[], transactionsDetail: InvocationsSignerDetails, abis?: Abi[]) {
+  async signTransaction(
+    transactions: Invocation[],
+    transactionsDetail: InvocationsSignerDetails,
+    abis?: Abi[],
+  ) {
     if (abis && abis.length !== transactions.length) {
       throw new Error('ABI must be provided for each transaction or no transaction')
     }
@@ -85,7 +89,10 @@ class LedgerSigner implements SignerInterface {
       throw new Error(`Unable to sign the message: ${response.signMessage}`)
     }
 
-    return [encode.addHexPrefix(encode.buf2hex(response.r)), encode.addHexPrefix(encode.buf2hex(response.s))]
+    return [
+      encode.addHexPrefix(encode.buf2hex(response.r)),
+      encode.addHexPrefix(encode.buf2hex(response.s)),
+    ]
   }
 }
 
