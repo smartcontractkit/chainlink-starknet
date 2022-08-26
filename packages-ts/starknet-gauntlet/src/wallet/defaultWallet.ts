@@ -15,8 +15,6 @@ export class Wallet implements IStarknetWallet {
     return new Wallet(keyPair, account)
   }
 
-  sign = () => {}
-
   getPublicKey = async () => await this.wallet.getPubKey()
   getAccountPublicKey = () => this.account
 }

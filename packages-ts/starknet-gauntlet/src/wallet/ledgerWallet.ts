@@ -4,39 +4,55 @@ import { Abi, Invocation, InvocationsSignerDetails } from 'starknet/types'
 import { TypedData, getMessageHash } from 'starknet/utils/typedData'
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
 import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash'
-import Stark from '@ledgerhq/hw-app-starknet'
-import { LedgerError } from '@ledgerhq/hw-app-starknet'
+import Stark, { LedgerError } from '@ledgerhq/hw-app-starknet'
 import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 
 // EIP-2645 path
-const PATH = "m/2645'/579218131'/0'/0'"
-
-function toHexString(byteArray: Uint8Array): string {
-  return Array.from(byteArray, function (byte) {
-    return `0${byte.toString(16)}`.slice(-2)
-  }).join('')
-}
+//  2645 - EIP number
+//  579218131 - layer - 31 lowest bits of sha256("starkex")
+//  894929996 - application - 31 lowest bits of sha256("chainlink")
+const DEFAULT_PATH = "m/2645'/579218131'/894929996'/0'"
+const PATH_REGEX = /^\s*m\s*\/\s*2645\s*\'\s*\/\s*579218131\s*\'\s*\/\s*(\d+)\s*\'\s*\/\s*(\d+)\s*\'$/
 
 class LedgerSigner implements SignerInterface {
-  protected ledgerConnector: Stark
+  ledgerConnector: Stark
+  path: string
+  publicKey: string
 
-  private constructor(lc: Stark) {
+  private constructor(lc: Stark, path: string, publicKey: string) {
     this.ledgerConnector = lc
+    this.path = path
+    this.publicKey = publicKey
   }
 
-  static create = async () => {
+  static create = async (path?: string) => {
+    if (!path) {
+      path = DEFAULT_PATH
+    } else {
+      const match = PATH_REGEX.exec(path)
+      if (!match) {
+        throw new Error(
+          "Provided ledger path doesn't correspond the expected format m/2645'/579218131'/<application>'/<index>'",
+        )
+      }
+    }
+
     const transport = await TransportNodeHid.create()
     const ledgerConnector = new Stark(transport)
-    return new LedgerSigner(ledgerConnector)
-  }
 
-  async getPubKey() {
-    const response = await this.ledgerConnector.getPubKey(PATH)
+    const response = await ledgerConnector.getPubKey(path)
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
     }
 
-    return `0x${toHexString(response.publicKey).slice(2, 2 + 64)}`
+    const publicKey = encode.addHexPrefix(encode.buf2hex(response.publicKey).slice(2, 2 + 64))
+    const signer = new LedgerSigner(ledgerConnector, path, publicKey)
+
+    return signer
+  }
+
+  async getPubKey() {
+    return this.publicKey
   }
 
   async signTransaction(transactions: Invocation[], transactionsDetail: InvocationsSignerDetails, abis?: Abi[]) {
@@ -64,12 +80,12 @@ class LedgerSigner implements SignerInterface {
   }
 
   async sign(hash: string) {
-    const response = await this.ledgerConnector.signFelt(PATH, hash, true)
+    const response = await this.ledgerConnector.signFelt(this.path, hash, true)
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to sign the message: ${response.signMessage}`)
     }
 
-    return [encode.addHexPrefix(toHexString(response.r)), encode.addHexPrefix(toHexString(response.s))]
+    return [encode.addHexPrefix(encode.buf2hex(response.r)), encode.addHexPrefix(encode.buf2hex(response.s))]
   }
 }
 
@@ -82,12 +98,10 @@ export class Wallet implements IStarknetWallet {
     this.account = account
   }
 
-  static create = async (account?: string) => {
-    const ledgerSigner: LedgerSigner = await LedgerSigner.create()
+  static create = async (ledgerPath?: string, account?: string) => {
+    const ledgerSigner: LedgerSigner = await LedgerSigner.create(ledgerPath)
     return new Wallet(ledgerSigner, account)
   }
-
-  sign = () => {}
 
   getPublicKey = async () => await this.wallet.getPubKey()
   getAccountPublicKey = () => this.account
