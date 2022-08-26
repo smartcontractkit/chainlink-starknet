@@ -81,8 +81,27 @@ describe('SequencerUptimeFeed', function () {
       })
     })
 
+    it('should allow access without specifying account (toolchain quirk)', async function () {
+      // NOTICE: This test should fail on AC check, but it passes!?
+      // The StarkNet Devnet simulator sets the contract as the caller account, when no explicit account is used - this makes the AC check pass.
+      {
+        const res = await proxyContract.call('latest_round_data')
+        expect(res.round.answer).to.equal(0n)
+      }
+    })
+
+    it('should block access when using an account without access', async function () {
+      const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
+
+      try {
+        await accWithoutAccess.call(proxyContract, 'latest_round_data')
+        expect.fail()
+      } catch (err: any) {
+        assertErrorMsg(err?.message, 'AccessController: address does not have access')
+      }
+    })
+
     it('should respond via a Proxy', async function () {
-      // TODO: this test should fail on AC check, but it passes? (no explicit access was given to the Proxy contract)
       {
         const res = await proxyContract.call('latest_round_data')
         expect(res.round.answer).to.equal(0n)
