@@ -7,10 +7,6 @@ from starkware.cairo.common.bool import TRUE, FALSE
 from chainlink.cairo.access.IAccessController import IAccessController
 from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
 from chainlink.cairo.access.SimpleWriteAccessController.library import (
-    AddedAccess,
-    RemovedAccess,
-    CheckAccessEnabled,
-    CheckAccessDisabled,
     add_access,
     remove_access,
     enable_access_check,
