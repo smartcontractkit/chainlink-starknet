@@ -1,13 +1,21 @@
 import { expect } from 'chai'
 
-export const assertErrorMsg = (full: string, expected: string) => {
+export const expectInvokeError = (full: string, expected: string) => {
+  // Match transaction error
   expect(full).to.deep.contain('Transaction rejected. Error message:')
+  // Match specific error
   const match = /Error message: (.+?)\n/.exec(full)
-  if (match && match.length > 1) {
-    expect(match[1]).to.equal(expected)
-    return
-  }
-  expect.fail('No expected error found: ' + expected)
+  if (match && match.length > 1) expect(match[1]).to.equal(expected)
+  else expect.fail(`No expected error found: ${expected} \nFull error message: ${full}`)
+}
+
+export const expectCallError = (full: string, expected: string) => {
+  // Match call error
+  expect(full).to.deep.contain('Could not perform call')
+  // Match specific error
+  const match = /Error message: (.+?)\n/.exec(full)
+  if (match && match.length > 1) expect(match[1]).to.equal(expected)
+  else expect.fail(`No expected error found: ${expected} \nFull error message: ${full}`)
 }
 
 /**
