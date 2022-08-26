@@ -5,7 +5,6 @@ import { TypedData, getMessageHash } from 'starknet/utils/typedData'
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
 import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash'
 import Stark, { LedgerError } from '@ledgerhq/hw-app-starknet'
-import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 
 // EIP-2645 path
 //  2645 - EIP number
@@ -37,6 +36,9 @@ class LedgerSigner implements SignerInterface {
       }
     }
 
+    // work around jest reimporting the package
+    // package is only allowed to be imported once
+    const TransportNodeHid = (await import('@ledgerhq/hw-transport-node-hid')).default
     const transport = await TransportNodeHid.create()
     const ledgerConnector = new Stark(transport)
 
