@@ -1,4 +1,4 @@
-package smoke_test
+package soak_test
 
 //revive:disable:dot-imports
 import (

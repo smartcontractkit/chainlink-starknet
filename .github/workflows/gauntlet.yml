@@ -8,41 +8,25 @@ jobs:
     name: Gauntlet Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
-      - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
-        id: tool-versions
-      - name: Setup Node ${{ steps.tool-versions.outputs.nodejs_version }}
-        uses: actions/setup-node@v2
+      - name: Checkout sources
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+      - name: Install Nix
+        uses: cachix/install-nix-action@v17
         with:
-          node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
-      - name: Install
-        run: yarn install --frozen-lockfile
+          nix_path: nixpkgs=channel:nixos-unstable
+
       - name: Build
-        run: yarn build
+        run: nix develop -c yarn build
+
       - name: Run Gauntlet
-        run: yarn gauntlet
+        run: nix develop -c yarn gauntlet
 
   gauntlet_format:
     name: Gauntlet Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
-      - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
-        id: tool-versions
-      - name: Setup Node ${{ steps.tool-versions.outputs.nodejs_version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
-      - name: Install
-        run: yarn install --frozen-lockfile
-      - name: Lint
-        run: yarn lint:format
-
-  gauntlet_run_tests:
-    name: Gauntlet Run Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+      - name: Checkout sources
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
       - name: Install Nix
         uses: cachix/install-nix-action@v17
         with:
@@ -50,5 +34,23 @@ jobs:
 
       - name: Install
         run: nix develop -c yarn install --frozen-lockfile
+
+      - name: Format Check
+        run: nix develop -c yarn format:check
+
+  gauntlet_run_tests:
+    name: Gauntlet Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+      - name: Install Nix
+        uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Install
+        run: nix develop -c yarn install --frozen-lockfile
+
       - name: Test
         run: nix develop -c yarn test

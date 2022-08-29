@@ -118,6 +118,6 @@ func (c *contractReader) LatestBillingDetails(ctx context.Context) (bd BillingDe
 	if err != nil {
 		err = errors.Wrap(err, "couldn't get billing details")
 	}
-	
+
 	return
 }

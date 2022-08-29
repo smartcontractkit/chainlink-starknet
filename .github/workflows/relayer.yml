@@ -29,22 +29,13 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
-      - uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
-        id: tool-versions
-
       - name: Install Nix
         uses: cachix/install-nix-action@v17
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install Yarn dependencies
-        run: cd .. && nix develop -c yarn install --frozen-lockfile
-
       - name: Compile module
-        run: nix develop -c go build -v ./pkg/...
+        run: nix develop -c make build-go-relayer
 
       - name: Run unit tests
-        run: nix develop -c go test -v ./pkg/... -tags integration
-
-      - name: Run tests with the race detector enabled
-        run: nix develop -c go test -v ./pkg/... -race -count=10
+        run: nix develop -c make test-unit-go
