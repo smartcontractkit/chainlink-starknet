@@ -21,7 +21,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Check format
-        run: nix develop -c make format_check
+        run: nix develop -c make format-cairo-check
 
       - name: Run unit tests
         run: nix develop -c ./scripts/test.sh

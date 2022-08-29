@@ -50,7 +50,7 @@ jobs:
       - name: Run Tests
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@e3bf7a2d54543beb94ad4151ca2a3837d62c2592 # v2.0.8+
         with:
-          test_command_to_run: make e2e_test
+          test_command_to_run: make test-integration-smoke
           test_download_vendor_packages_command: cd integration-tests && go mod download
           cl_repo: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
           cl_image_tag: custom.${{ github.sha }}

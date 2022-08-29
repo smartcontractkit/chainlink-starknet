@@ -56,9 +56,43 @@ endif
 	go install github.com/onsi/ginkgo/v2/ginkgo@v$(shell cat ./.tool-versions | grep ginkgo | sed -En "s/ginkgo.(.*)/\1/p")
 endif
 
-.PHONY: e2e_test
-e2e_test:
-	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
+.PHONY: build
+build: build-go build-ts
+
+.PHONY: build-go
+build-go: build-go-relayer build-go-ops build-go-integration-tests
+
+.PHONY: build-go-relayer
+build-go-relayer:
+	cd relayer/ && go build ./...
+
+.PHONY: build-go-ops
+build-go-ops:
+	cd ops/ && go build ./...
+
+.PHONY: build-go-integration-tests
+build-go-integration-tests:
+	cd integration-tests/ && go build ./...
+
+.PHONY: build-ts
+build-ts: build-ts-workspace build-ts-contracts build-ts-examples
+
+.PHONY: build-ts-workspace
+build-ts-workspace:
+	yarn install
+	yarn build
+
+.PHONY: build-ts-contracts
+build-ts-contracts:
+	cd contracts/ && \
+		yarn install && \
+		yarn compile
+
+.PHONY: build-ts-examples
+build-ts-examples:
+	cd examples/contracts/aggregator-consumer && \
+		yarn install && \
+		yarn compile
 	
 .PHONY: gowork
 gowork:
@@ -72,13 +106,59 @@ gowork_rm:
 	rm go.work*
 
 .PHONY: format
-format:
-	@echo Cairo smart contracts - formatting
-	find ./contracts/src -name "*.cairo" -type f -exec cairo-format -i --one_item_per_line {} +
-	find ./examples -name "*.cairo" -type f -exec cairo-format -i --one_item_per_line {} +
+format: format-go format-cairo format-ts
 
-.PHONY: format_check
-format_check:
-	@echo Cairo smart contracts - checking format
-	find ./contracts/src -name "*.cairo" -type f -exec cairo-format -c --one_item_per_line {} +
-	find ./examples -name "*.cairo" -type f -exec cairo-format -c --one_item_per_line {} +
+.PHONY: format-check
+format-check: format-cairo-check format-ts-check
+
+.PHONY: format-go
+format-go: format-go-fmt format-go-mod-tidy
+
+.PHONY: format-go-fmt
+format-go-fmt:
+	cd ./relayer && go fmt ./...
+	cd ./ops && go fmt ./...
+	cd ./integration-tests && go fmt ./...
+
+.PHONY: format-go-mod-tidy
+format-go-mod-tidy:
+	cd ./relayer && go mod tidy
+	cd ./ops && go mod tidy
+	cd ./integration-tests && go mod tidy
+
+.PHONY: format-cairo
+format-cairo:
+	find ./contracts/src -name "*.cairo" -type f \
+		-exec cairo-format -i --one_item_per_line {} +
+	find ./examples -name "*.cairo" -type f \
+		-exec cairo-format -i --one_item_per_line {} +
+
+.PHONY: format-cairo-check
+format-cairo-check:
+	find ./contracts/src -name "*.cairo" -type f \
+		-exec cairo-format -c --one_item_per_line {} +
+	find ./examples -name "*.cairo" -type f \
+		-exec cairo-format -c --one_item_per_line {} +
+
+.PHONY: format-ts
+format-ts:
+	yarn format
+
+.PHONY: format-ts-check
+format-ts-check:
+	yarn format:check
+
+.PHONY: test-unit
+test-unit: test-unit-go
+
+.PHONY: test-unit-go
+test-unit-go:
+	cd ./relayer && go test -v ./...
+	cd ./relayer && go test -v ./... -race -count=10
+
+.PHONY: test-integration
+test-integration: test-integration-smoke
+
+.PHONY: test-integration-smoke
+test-integration-smoke:
+	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
