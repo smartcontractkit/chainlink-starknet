@@ -22,7 +22,7 @@
     "test:ci": "yarn test --ci",
     "lint": "tsc -b ./tsconfig.json",
     "format": "yarn prettier --write .",
-    "format:check": "yarn prettier --check .",
+    "format:check": "yarn prettier --check . --loglevel debug",
     "clean": "tsc -b --clean ./tsconfig.json",
     "build": "yarn clean && tsc -b ./tsconfig.json",
     "bundle": "yarn build && pkg . --no-native-build",
