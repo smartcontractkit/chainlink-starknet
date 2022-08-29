@@ -2,10 +2,10 @@ name: relayer
 
 on:
   push:
-
-defaults:
-  run:
-    working-directory: relayer
+    branches:
+      - develop
+      - main
+  pull_request:
 
 jobs:
   relayer_run_unit_tests:
