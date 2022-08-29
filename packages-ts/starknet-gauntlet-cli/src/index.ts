@@ -9,6 +9,7 @@ import {
 import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
 import { Commands as StarkgateCommands } from '@chainlink/starknet-gauntlet-starkgate'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
+import { Commands as EmergencyProtocolCommands } from '@chainlink/starknet-gauntlet-emergency-protocol'
 import {
   executeCommands as MultisigExecuteCommands,
   inspectionCommands as MultisigInspectionCommands,
@@ -83,6 +84,7 @@ const executeCommands = [
   ...StarkgateCommands,
   ...ArgentCommands,
   ...MultisigExecuteCommands,
+  ...EmergencyProtocolCommands,
 ]
 const msigCommands = executeCommands
   .map((c) => registerExecuteCommand(c, true))
