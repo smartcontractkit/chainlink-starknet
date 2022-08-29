@@ -68,8 +68,8 @@ type NewTransmission struct {
 	Reimbursement   *big.Int
 }
 
-// NOTE: currently unused, could be used by monitoring component
-func parseTransmissionEventData(eventData []*caigotypes.Felt) (NewTransmission, error) {
+// ParseTransmissionEventData is used by the monitoring component
+func ParseTransmissionEventData(eventData []*caigotypes.Felt) (NewTransmission, error) {
 	// round_id
 	index := 0
 	roundId := uint32(eventData[index].Big().Uint64())
