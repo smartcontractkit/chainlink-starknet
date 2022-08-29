@@ -759,13 +759,6 @@ func latest_transmission_details{syscall_ptr : felt*, pedersen_ptr : HashBuiltin
     let (epoch_and_round) = latest_epoch_and_round_.read()
     let (transmission : Transmission) = transmissions_.read(latest_round_id)
 
-    let round = Round(
-        round_id=latest_round_id,
-        answer=transmission.answer,
-        block_num=transmission.block_num,
-        started_at=transmission.observation_timestamp,
-        updated_at=transmission.transmission_timestamp,
-    )
     return (
         config_digest=config_digest,
         epoch_and_round=epoch_and_round,
