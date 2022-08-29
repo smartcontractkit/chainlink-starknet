@@ -30,6 +30,7 @@
   venvDir = "./.venv";
 
   postShellHook = ''
+    pip install --upgrade pip
     pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
   '';
 }
