@@ -70,3 +70,15 @@ gowork:
 .PHONY: gowork_rm
 gowork_rm:
 	rm go.work*
+
+.PHONY: format
+format:
+	@echo Cairo smart contracts - formatting
+	find ./contracts/src -name "*.cairo" -type f -exec cairo-format -i --one_item_per_line {} +
+	find ./examples -name "*.cairo" -type f -exec cairo-format -i --one_item_per_line {} +
+
+.PHONY: format_check
+format_check:
+	@echo Cairo smart contracts - checking format
+	find ./contracts/src -name "*.cairo" -type f -exec cairo-format -c --one_item_per_line {} +
+	find ./examples -name "*.cairo" -type f -exec cairo-format -c --one_item_per_line {} +
