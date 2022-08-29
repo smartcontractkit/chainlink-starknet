@@ -57,7 +57,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 		oracles = append(oracles, signer, transmitter)
 	}
 
-	offchainConfig := starknet.EncodeBytes(cfg.OffchainConfig)
+	offchainConfig := starknet.EncodeFelts(cfg.OffchainConfig)
 
 	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeToFelts(cfg.OnchainConfig)
 	if err != nil {

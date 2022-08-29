@@ -68,7 +68,7 @@ func TestConfigDigester_InvalidChainID(t *testing.T) {
 func FuzzEncoding(f *testing.F) {
 	f.Add([]byte("hello world"))
 	f.Fuzz(func(t *testing.T, data []byte) {
-		result, err := starknet.DecodeBytes(starknet.EncodeBytes(data))
+		result, err := starknet.DecodeFelts(starknet.EncodeFelts(data))
 		require.NoError(t, err)
 		require.Equal(t, data, result)
 	})

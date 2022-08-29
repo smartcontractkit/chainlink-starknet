@@ -49,8 +49,8 @@ func (codec OnchainConfigCodec) DecodeToFelts(b []byte) ([]*big.Int, error) {
 	}
 
 	// ensure felts (used in config digester)
-	min = starknet.BigIntToFelt(min)
-	max = starknet.BigIntToFelt(max)
+	min = starknet.SignedBigToFelt(min)
+	max = starknet.SignedBigToFelt(max)
 
 	return []*big.Int{configVersion, min, max}, nil
 }
@@ -63,8 +63,8 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	}
 
 	// convert felts to big.Ints
-	min := starknet.FeltToBigInt(&caigotypes.Felt{Int: felts[1]})
-	max := starknet.FeltToBigInt(&caigotypes.Felt{Int: felts[2]})
+	min := starknet.FeltToSignedBig(&caigotypes.Felt{Int: felts[1]})
+	max := starknet.FeltToSignedBig(&caigotypes.Felt{Int: felts[2]})
 
 	if !(min.Cmp(max) <= 0) {
 		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
@@ -75,7 +75,7 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 
 // EncodeFromBigInt encodes the config where min & max are big Ints with positive or negative values
 func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]byte, error) {
-	return codec.EncodeFromFelt(version, starknet.BigIntToFelt(min), starknet.BigIntToFelt(max))
+	return codec.EncodeFromFelt(version, starknet.SignedBigToFelt(min), starknet.SignedBigToFelt(max))
 }
 
 // EncodeFromFelt encodes the config where min & max are big.Int representations of a felt

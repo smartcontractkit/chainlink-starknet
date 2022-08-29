@@ -7,10 +7,11 @@ import (
 	"time"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/libocr/commontypes"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildReport(t *testing.T) {
@@ -63,4 +64,86 @@ func TestBuildReport(t *testing.T) {
 
 	// validate juelsToEth
 	assert.Equal(t, v.FillBytes(make([]byte, juelsPerFeeCoinSizeBytes)), []byte(report[totalLen-juelsPerFeeCoinSizeBytes:totalLen]), "validate juelsToEth")
+}
+
+type medianTest struct {
+	name           string
+	obs            []*big.Int
+	expectedMedian *big.Int
+}
+
+func TestMedianFromReport(t *testing.T) {
+	cdc := ReportCodec{}
+	// Requires at least one obs
+	_, err := cdc.BuildReport(nil)
+	require.Error(t, err)
+	var tt = []medianTest{
+		{
+			name:           "2 positive one zero",
+			obs:            []*big.Int{big.NewInt(0), big.NewInt(10), big.NewInt(20)},
+			expectedMedian: big.NewInt(10),
+		},
+		{
+			name:           "one zero",
+			obs:            []*big.Int{big.NewInt(0)},
+			expectedMedian: big.NewInt(0),
+		},
+		{
+			name:           "two equal",
+			obs:            []*big.Int{big.NewInt(1), big.NewInt(1)},
+			expectedMedian: big.NewInt(1),
+		},
+		{
+			name: "one negative one positive",
+			obs:  []*big.Int{big.NewInt(-1), big.NewInt(1)},
+			// sorts to -1, 1
+			expectedMedian: big.NewInt(1),
+		},
+		{
+			name: "two negative",
+			obs:  []*big.Int{big.NewInt(-2), big.NewInt(-1)},
+			// will sort to -2, -1
+			expectedMedian: big.NewInt(-1),
+		},
+		{
+			name: "three negative",
+			obs:  []*big.Int{big.NewInt(-5), big.NewInt(-3), big.NewInt(-1)},
+			// will sort to -5, -3, -1
+			expectedMedian: big.NewInt(-3),
+		},
+	}
+
+	// add cases for observation number from [1..31]
+	for i := 1; i < 32; i++ {
+		test := medianTest{
+			name:           fmt.Sprintf("observations=%d", i),
+			obs:            []*big.Int{},
+			expectedMedian: big.NewInt(1),
+		}
+		for j := 0; j < i; j++ {
+			test.obs = append(test.obs, big.NewInt(1))
+		}
+		tt = append(tt, test)
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			var pos []median.ParsedAttributedObservation
+			for i, obs := range tc.obs {
+				pos = append(pos, median.ParsedAttributedObservation{
+					Value:           obs,
+					JuelsPerFeeCoin: obs,
+					Observer:        commontypes.OracleID(uint8(i))},
+				)
+			}
+			report, err := cdc.BuildReport(pos)
+			require.NoError(t, err)
+			assert.Equal(t, len(report), cdc.MaxReportLength(len(tc.obs)))
+			med, err := cdc.MedianFromReport(report)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedMedian.String(), med.String())
+		})
+	}
+
 }
