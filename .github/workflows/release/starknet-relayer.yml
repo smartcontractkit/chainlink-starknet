@@ -12,7 +12,7 @@ jobs:
     steps:
       # Checkout this repository
       - name: Checkout Repo
-        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+        uses: actions/checkout@v3.0.2
       # Store starknet version
       - name: Set Env Variables
         run: echo "STARKNET_RELAYER=$(npm info @chainlink/starknet-relayer version)" >> $GITHUB_ENV

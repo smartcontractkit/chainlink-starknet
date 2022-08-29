@@ -44,7 +44,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+        uses: actions/checkout@v3.0.2
       - name: Install Yarn dependencies
         run: yarn install --frozen-lockfile
       - name: Run Tests
