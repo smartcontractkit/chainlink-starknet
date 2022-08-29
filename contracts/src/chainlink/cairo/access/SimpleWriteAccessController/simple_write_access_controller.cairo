@@ -3,7 +3,9 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from chainlink.cairo.access.SimpleWriteAccessController.library import simple_write_access_controller
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
+    simple_write_access_controller,
+)
 from chainlink.cairo.access.IAccessController import IAccessController
 
 @constructor
