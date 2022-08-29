@@ -218,6 +218,14 @@ func (t *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
 	t.cc.bTypeAttr = attr
 }
 
+func (t *Test) GetMockServerURL() string {
+	return t.mockServer.Config.ClusterURL
+}
+
+func (t *Test) SetMockServerValue(path string, val int) error {
+	return t.mockServer.SetValuePath(path, val)
+}
+
 // ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
 func (t *Test) ConfigureL1Messaging() {
 	err := devnet.LoadL1MessagingContract()
