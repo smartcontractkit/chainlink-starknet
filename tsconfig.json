@@ -26,6 +26,9 @@
     },
     {
       "path": "./packages-ts/starknet-gauntlet-cli"
+    },
+    {
+      "path": "./packages-ts/starknet-gauntlet-emergency-protocol"
     }
   ]
 }
