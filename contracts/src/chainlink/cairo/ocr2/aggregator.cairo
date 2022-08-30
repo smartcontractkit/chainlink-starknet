@@ -965,12 +965,9 @@ func withdraw_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     return ()
 end
 
-@external
-func owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    transmitter : felt
-) -> (amount : felt):
-    let (oracle : Oracle) = Aggregator_transmitters.read(transmitter)
-
+func _owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    oracle: Oracle
+) -> (amount: felt):
     if oracle.index == 0:
         return (0)
     end
@@ -985,6 +982,15 @@ func owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     return (amount)
 end
 
+@external
+func owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    transmitter : felt
+) -> (amount : felt):
+    let (oracle: Oracle) = Aggregator_transmitters.read(transmitter)
+    let (amount: felt) = _owed_payment(oracle)
+    return (amount)
+end
+
 func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     transmitter : felt, latest_round_id : felt, link_token : felt
 ):
@@ -996,8 +1002,7 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
         return ()
     end
 
-    # TODO: reuse oracle passed into owed_payment to avoid reading twice
-    let (amount_ : felt) = owed_payment(transmitter)
+    let (amount_: felt) = _owed_payment(oracle)
     assert_nn(amount_)
 
     # if zero, fastpath return to avoid empty transfers
