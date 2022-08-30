@@ -213,44 +213,9 @@ end
 
 # --- Validation ---
 
-# TODO: disable validation + flags in the initial release
-# TODO: document decision in repo/docs/contracts/ocr2
-
-# @contract_interface
-# namespace IValidator:
-#     func validate(prev_round_id: felt, prev_answer: felt, round_id: felt, answer: felt) -> (valid: felt):
-#     end
-# end
-
-# # TODO: can't set gas limit
-# @storage_var
-# func validator_() -> (validator: felt):
-# end
-
-# @view
-# func validator_config{
-#     syscall_ptr : felt*,
-#     pedersen_ptr : HashBuiltin*,
-#     range_check_ptr,
-# }() -> (validator: felt):
-#     let (validator) = validator_.read()
-#     return (validator)
-# end
-
-# @external
-# func set_validator_config{
-#     syscall_ptr : felt*,
-#     pedersen_ptr : HashBuiltin*,
-#     range_check_ptr,
-# }(validator: felt):
-#     Ownable_only_owner()
-#     # TODO: use openzeppelin's ERC165 to validate
-#     validator_.write(validator)
-#
-#     # TODO: emit event
-#
-#     return ()
-# end
+# NOTE: Currently unimplemented:
+# - Can't set a gas limit on the validator call
+# - Can't catch errors in calls so validation could block submission
 
 # --- Configuration
 
