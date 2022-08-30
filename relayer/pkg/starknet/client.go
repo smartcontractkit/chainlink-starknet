@@ -228,12 +228,8 @@ func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, er
 }
 
 func (c *Client) Invoke(ctx context.Context, invoke caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
-
+	// Invoke does not use default timeout context
+	// usage in transaction manager with separate config
 	out, err := c.gw.Invoke(ctx, invoke)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Invoke")

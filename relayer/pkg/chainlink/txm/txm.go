@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	MaxQueueLen = 1000
+	MaxQueueLen        = 1000
+	FEE_MARGIN  uint64 = 115
 )
 
 type TxManager interface {
@@ -138,8 +139,6 @@ func (txm *starktxm) run() {
 	}
 }
 
-const FEE_MARGIN uint64 = 115
-
 func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string, txs []types.Transaction) (txhash string, err error) {
 	// create new account
 	account, err := caigo.NewAccount(privKey, sender, txm.client)
@@ -147,21 +146,25 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string,
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
 
+	// get nonce
+	nonce, err := txm.client.AccountNonce(ctx, sender)
+	details := caigo.ExecuteDetails{
+		Nonce: nonce,
+	}
+
 	// get fee for txm
-	fee, err := account.EstimateFee(ctx, txs, caigo.ExecuteDetails{})
+	fee, err := account.EstimateFee(ctx, txs, details)
 	if err != nil {
 		return txhash, errors.Errorf("failed to estimate fee: %s", err)
 	}
 
-	details := caigo.ExecuteDetails{
-		MaxFee: &types.Felt{
-			Int: new(big.Int).SetUint64((fee.OverallFee * FEE_MARGIN) / 100),
-		},
+	details.MaxFee = &types.Felt{
+		Int: new(big.Int).SetUint64((fee.OverallFee * FEE_MARGIN) / 100),
 	}
 
 	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {

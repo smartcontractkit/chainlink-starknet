@@ -1,4 +1,4 @@
-//go:build integration
+// go:build integration
 
 package txm
 
@@ -77,7 +77,7 @@ func TestTxm(t *testing.T) {
 	cfg := new(txmmock.Config)
 	cfg.On("TxMaxBatchSize").Return(100)
 	cfg.On("TxSendFrequency").Return(15 * time.Second)
-	cfg.On("TxTimeout").Return(10 * time.Second)
+	cfg.On("TxTimeout").Return(15 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)
 	require.NoError(t, err)
@@ -90,12 +90,14 @@ func TestTxm(t *testing.T) {
 	require.NoError(t, txm.Healthy())
 	require.NoError(t, txm.Ready())
 
+	token := "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
 	for k := range localKeys {
-		for i := 0; i < 5; i++ {
+		for i := 0; i < 1; i++ {
 			require.NoError(t, txm.Enqueue(types.Transaction{
 				SenderAddress:      k,
-				ContractAddress:    k, // send to self
-				EntryPointSelector: "get_nonce",
+				ContractAddress:    token,
+				EntryPointSelector: "transfer",
+				Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
 			}))
 		}
 	}
