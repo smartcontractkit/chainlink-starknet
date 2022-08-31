@@ -52,6 +52,8 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	juelsPerFeeCoin = starknet.SignedBigToFelt(juelsPerFeeCoin) // converts negative bigInts to corresponding felt in bigInt form
 	juelsPerFeeCoinFelt := junotypes.BigToFelt(juelsPerFeeCoin)
 
+	// TODO: source and include gasPrice
+
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].Value.Cmp(oo[j].Value) < 0
