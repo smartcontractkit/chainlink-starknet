@@ -135,9 +135,6 @@ describe('aggregator.cairo', function () {
     console.log(config)
 
     await owner.invoke(aggregator, 'set_config', config)
-    // const receipt = await starknet.getTransactionReceipt(txHash);
-    // const decodedEvents = await aggregator.decodeEvents(receipt.events);
-    // console.log(decodedEvents)
 
     let result = await aggregator.call('latest_config_details')
     config_digest = result.config_digest
@@ -145,11 +142,20 @@ describe('aggregator.cairo', function () {
     // Immitate the fetch done by relay to confirm latest_config_details_works
     let block = await starknet.getBlock({ blockNumber: result.block_number })
     let events = block.transaction_receipts[0].events
-    const decodedEvents = await aggregator.decodeEvents(events)
-    assert.equal(decodedEvents.length, 1)
-    let event = decodedEvents[0]
-    assert.equal(event.name, 'config_set')
 
+    assert.isNotEmpty(events)
+    assert.equal(events.length, 1)
+    console.log("Log raw 'config_set' event: ")
+    console.log(events[0])
+
+    const decodedEvents = await aggregator.decodeEvents(events)
+    assert.isNotEmpty(decodedEvents)
+    assert.equal(decodedEvents.length, 1)
+    console.log("Log decoded 'config_set' event: ")
+    console.log(decodedEvents[0])
+
+    let e = decodedEvents[0]
+    assert.equal(e.name, 'config_set')
     console.log(`config_digest: ${config_digest.toString(16)}`)
   })
 
@@ -161,7 +167,7 @@ describe('aggregator.cairo', function () {
     let observers_buf = Buffer.alloc(31)
     let observations = []
 
-    for (const [index, _oracle] of oracles.entries()) {
+    for (const [index, _] of oracles.entries()) {
       observers_buf[index] = index
       observations.push(answer)
     }
@@ -237,19 +243,62 @@ describe('aggregator.cairo', function () {
     })
   })
 
+  it("should emit 'new_transmission' event on transmit", async () => {
+    const txHash = await transmit(1, 99)
+    const receipt = await starknet.getTransactionReceipt(txHash)
+
+    assert.isNotEmpty(receipt.events)
+    console.log("Log raw 'new_transmission' event: ")
+    console.log(receipt.events[0])
+
+    const decodedEvents = await aggregator.decodeEvents(receipt.events)
+    assert.isNotEmpty(decodedEvents)
+    console.log("Log decoded 'new_transmission' event: ")
+    console.log(decodedEvents[0])
+
+    const e = decodedEvents[0]
+    const transmitter = oracles[0].transmitter.address
+
+    // NOTICE: Leading zeros are trimmed for an encoded felt (number).
+    //   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
+    const hexPadStart = (data: any, len: number) => {
+      return `0x${data.toString(16).padStart(len, '0')}`
+    }
+
+    assert.equal(e.name, 'new_transmission')
+    assert.equal(e.data.round_id, 1n)
+
+    let len = 32 * 2 // transmitter
+    assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
+    assert.equal(e.data.observation_timestamp, 1n)
+
+    len = 31 * 2 // observers
+    assert.equal(
+      hexPadStart(e.data.observers, len),
+      '0x00010203000000000000000000000000000000000000000000000000000000',
+    )
+    assert.equal(e.data.observations_len, 4n)
+
+    len = 30.5 * 2 // config_digest
+    assert.equal(hexPadStart(e.data.config_digest, len), `0x${config_digest.toString(16)}`)
+    assert.equal(e.data.epoch_and_round, 1n)
+    assert.equal(e.data.reimbursement, 0n)
+  })
+
   it('transmission', async () => {
-    await transmit(1, 99)
+    await transmit(2, 99)
+
     let { round } = await aggregator.call('latest_round_data')
-    assert.equal(round.round_id, 1)
+    assert.equal(round.round_id, 2)
     assert.equal(round.answer, 99)
 
-    await transmit(2, toFelt(-10))
-    ;({ round } = await aggregator.call('latest_round_data'))
-    assert.equal(round.round_id, 2)
+    await transmit(3, toFelt(-10))
+      ; ({ round } = await aggregator.call('latest_round_data'))
+    assert.equal(round.round_id, 3)
     assert.equal(round.answer, -10)
 
     try {
-      await transmit(3, -100)
+      await transmit(4, -100)
       expect.fail()
     } catch (err: any) {
       // Round should be unchanged
@@ -294,7 +343,7 @@ describe('aggregator.cairo', function () {
         proposed: proposed_payee,
       })
       expect.fail()
-    } catch (err: any) {}
+    } catch (err: any) { }
 
     // successful transfer
     await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -306,7 +355,7 @@ describe('aggregator.cairo', function () {
     try {
       await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
       expect.fail()
-    } catch (err: any) {}
+    } catch (err: any) { }
 
     // successful accept
     await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
