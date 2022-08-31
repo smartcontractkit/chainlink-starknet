@@ -1,6 +1,7 @@
 package starknet
 
 import (
+	"math/big"
 	"crypto/rand"
 	"testing"
 
