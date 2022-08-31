@@ -548,6 +548,7 @@ func transmit{
         observations_len,
         observations,
         juels_per_fee_coin,
+        gas_price,
     )
     verify_signatures(msg, signatures, signatures_len, signed_count=0)
 
@@ -659,6 +660,7 @@ func hash_report{pedersen_ptr : HashBuiltin*}(
     observations_len : felt,
     observations : felt*,
     juels_per_fee_coin : felt,
+    gas_price : felt,
 ) -> (hash : felt):
     let hash_ptr = pedersen_ptr
     with hash_ptr:
@@ -671,6 +673,7 @@ func hash_report{pedersen_ptr : HashBuiltin*}(
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, observations_len)
         let (hash_state_ptr) = hash_update(hash_state_ptr, observations, observations_len)
         let (hash_state_ptr) = hash_update_single(hash_state_ptr, juels_per_fee_coin)
+        let (hash_state_ptr) = hash_update_single(hash_state_ptr, gas_price)
 
         let (hash) = hash_finalize(hash_state_ptr)
         let pedersen_ptr = hash_ptr
