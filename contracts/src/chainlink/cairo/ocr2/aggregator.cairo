@@ -55,6 +55,8 @@ from chainlink.cairo.access.ownable import (
     Ownable_accept_ownership,
 )
 
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+
 from chainlink.cairo.ocr2.IAggregator import NewTransmission, Round
 
 # ---
@@ -166,6 +168,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     description : felt,
 ):
     Ownable_initializer(owner)
+    SimpleReadAccessController.initialize(owner)
     Aggregator_link_token.write(link)
     Aggregator_billing_access_controller.write(billing_access_controller)
 
@@ -718,10 +721,19 @@ end
 
 # --- Queries
 
+# Read access helper
+func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    let (address) = get_caller_address()
+    SimpleReadAccessController.check_access(address)
+
+    return ()
+end
+
 @view
 func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     description : felt
 ):
+    require_access()
     let (description) = Aggregator_description.read()
     return (description)
 end
@@ -730,6 +742,7 @@ end
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
 ):
+    require_access()
     let (decimals) = Aggregator_decimals.read()
     return (decimals)
 end
@@ -738,6 +751,7 @@ end
 func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt
 ) -> (round : Round):
+    require_access()
     # TODO: assert round_id fits in u32
 
     let (transmission : Transmission) = Aggregator_transmissions.read(round_id)
