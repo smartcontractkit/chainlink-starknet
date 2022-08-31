@@ -498,7 +498,7 @@ func transmit{
     # validate transmitter
     let (caller) = get_caller_address()
     let (oracle : Oracle) = Aggregator_transmitters.read(caller)
-    assert_not_equal(oracle.index, 0)  # 0 index = uninitialized
+    assert_not_zero(oracle.index)  # 0 index = uninitialized
     # ERROR: caller seems to be the account contract address, not the underlying transmitter key
 
     # Validate config digest matches latest_config_digest
@@ -672,7 +672,7 @@ func verify_signatures{
     # Validate the signer key actually belongs to an oracle
     let (index) = Aggregator_signers.read(signature.public_key)
     with_attr error_message("invalid signer {signature.public_key}"):
-        assert_not_equal(index, 0)  # 0 index = uninitialized
+        assert_not_zero(index)  # 0 index = uninitialized
     end
 
     verify_ecdsa_signature(
