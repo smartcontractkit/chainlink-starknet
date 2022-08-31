@@ -124,7 +124,7 @@ describe('aggregator.cairo', function () {
     oracles = await Promise.all(futures)
 
     let onchain_config: number[] = []
-    let offchain_config_version = 2 // TODO: assert == 2 in contract
+    let offchain_config_version = 2
     let offchain_config = new Uint8Array([1])
     let offchain_config_encoded = encodeBytes(offchain_config)
     console.log('Encoded offchain_config: %O', encodeBytes(offchain_config))
