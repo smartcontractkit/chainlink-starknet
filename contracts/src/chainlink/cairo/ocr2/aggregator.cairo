@@ -53,6 +53,8 @@ from chainlink.cairo.access.ownable import (
     Ownable_accept_ownership,
 )
 
+from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+
 from chainlink.cairo.ocr2.IAggregator import Round
 
 # ---
@@ -174,6 +176,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     description : felt,
 ):
     Ownable_initializer(owner)
+    simple_read_access_controller.initialize(owner)
     link_token_.write(link)
     billing_access_controller_.write(billing_access_controller)
 
@@ -743,10 +746,19 @@ end
 
 # --- Queries
 
+# Read access helper
+func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    let (address) = get_caller_address()
+    simple_read_access_controller.check_access(address)
+
+    return ()
+end
+
 @view
 func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     description : felt
 ):
+    require_access()
     let (description) = description_.read()
     return (description)
 end
@@ -755,6 +767,7 @@ end
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
 ):
+    require_access()
     let (decimals) = decimals_.read()
     return (decimals)
 end
@@ -763,6 +776,7 @@ end
 func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt
 ) -> (round : Round):
+    require_access()
     # TODO: assert round_id fits in u32
 
     let (transmission : Transmission) = transmissions_.read(round_id)
@@ -781,6 +795,7 @@ end
 func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     round : Round
 ):
+    require_access()
     let (latest_round_id) = latest_aggregator_round_id_.read()
     let (transmission : Transmission) = transmissions_.read(latest_round_id)
 
