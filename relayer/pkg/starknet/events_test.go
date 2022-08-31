@@ -1,7 +1,6 @@
 package starknet
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/dontpanicdao/caigo"

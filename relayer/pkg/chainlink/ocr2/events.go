@@ -17,15 +17,16 @@ import (
 // NewTransmissionEvent represents the 'new_transmission' event
 type NewTransmissionEvent struct {
 	RoundId         uint32
-	Epoch           uint32
-	Round           uint8
-	ConfigDigest    types.ConfigDigest
 	LatestAnswer    *big.Int
-	LatestTimestamp time.Time
 	Transmitter     *caigotypes.Felt
+	LatestTimestamp time.Time
 	Observers       []uint8
+	ObservationsLen uint32
 	Observations    []*big.Int
 	JuelsPerFeeCoin *big.Int
+	ConfigDigest    types.ConfigDigest
+	Epoch           uint32
+	Round           uint8
 	Reimbursement   *big.Int
 }
 
@@ -33,7 +34,7 @@ type NewTransmissionEvent struct {
 func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEvent, error) {
 	// round_id
 	index := 0
-	roundId := uint32(eventData[index].Big().Uint64())
+	roundId := uint32(eventData[index].Uint64())
 
 	// answer
 	index += 1
@@ -48,21 +49,28 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	unixTime := eventData[index].Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
-	// observers - TODO
+	// observers (raw)
 	index += 1
+	observersRaw := eventData[index].Big().Bytes()
 
 	// observation_len
 	index += 1
-	observationLen := eventData[index].Int64()
+	observationsLen := uint32(eventData[index].Uint64())
 
-	// observations - (based on observationLen)
+	// observers (based on observationsLen)
+	var observers []uint8
+	for i := 0; i < int(observationsLen); i++ {
+		observers = append(observers, observersRaw[i])
+	}
+
+	// observations (based on observationsLen)
 	var observations []*big.Int
-	for i := 0; i < int(observationLen); i++ {
-		observations = append(observations, eventData[index+1].Big())
+	for i := 0; i < int(observationsLen); i++ {
+		observations = append(observations, eventData[index+i+1].Big())
 	}
 
 	// juels_per_fee_coin
-	index += 1 + int(observationLen)
+	index += int(observationsLen) + 1
 	juelsPerFeeCoin := eventData[index].Big()
 
 	// config digest
@@ -76,21 +84,22 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	index += 1
 	epoch, round := parseEpochAndRound(eventData[index].Big())
 
-	// reimbursement - skip
+	// reimbursement
 	index += 1
 	reimbursement := eventData[index].Big()
 
 	return NewTransmissionEvent{
 		RoundId:         roundId,
-		Epoch:           epoch,
-		Round:           round,
-		ConfigDigest:    digest,
 		LatestAnswer:    latestAnswer,
-		LatestTimestamp: latestTimestamp,
 		Transmitter:     transmitter,
-		// Observers: observers,
+		LatestTimestamp: latestTimestamp,
+		Observers:       observers,
+		ObservationsLen: observationsLen,
 		Observations:    observations,
 		JuelsPerFeeCoin: juelsPerFeeCoin,
+		ConfigDigest:    digest,
+		Epoch:           epoch,
+		Round:           round,
 		Reimbursement:   reimbursement,
 	}, nil
 }
