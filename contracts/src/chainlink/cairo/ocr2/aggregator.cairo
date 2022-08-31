@@ -257,7 +257,9 @@ func set_config{
     assert_nn_le(oracles_len, MAX_ORACLES)  # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len)  # 3 * f < oracles_len
     assert_nn(f)  # f is positive
-    assert onchain_config_len = 0  # empty onchain config provided
+    with_attr error_message("onchain_config must be empty"):
+        assert onchain_config_len = 0  # empty onchain config provided
+    end
 
     let (answer_range : Range) = Aggregator_answer_range.read()
     local computed_onchain_config : OnchainConfig = OnchainConfig(version=1, min_answer=answer_range.min, max_answer=answer_range.max)
