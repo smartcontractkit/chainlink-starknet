@@ -1,6 +1,7 @@
 import { SignerInterface } from 'starknet'
-import { Wallet as DefaultWallet } from './defaultWallet'
-import { Wallet as LedgerWallet } from './ledgerWallet'
+import { makeWallet as makeDefaultWallet } from './defaultWallet'
+import { makeWallet as makeLedgerWallet } from './ledgerWallet'
+import { Env } from '../dependencies'
 
 export interface IWallet<W> {
   wallet: W
@@ -8,18 +9,13 @@ export interface IWallet<W> {
 }
 
 export interface IStarknetWallet extends IWallet<SignerInterface> {
-  getAccountPublicKey: () => string
+  getAccountAddress: () => string
 }
 
-export const makeWallet = async (
-  withLedger: boolean,
-  ledgerPath?: string,
-  rawPk?: string,
-  account?: string,
-): Promise<IStarknetWallet> => {
-  if (withLedger) {
-    return await LedgerWallet.create(ledgerPath, account)
+export const makeWallet = async (env: Env) => {
+  if (env.withLedger) {
+    return makeLedgerWallet(env)
   }
 
-  return DefaultWallet.create(rawPk, account)
+  return makeDefaultWallet(env)
 }

@@ -1,5 +1,6 @@
 import { ec, KeyPair, Signer } from 'starknet'
 import { IStarknetWallet } from './'
+import { Env } from '../dependencies'
 
 export class Wallet implements IStarknetWallet {
   wallet: Signer
@@ -16,5 +17,9 @@ export class Wallet implements IStarknetWallet {
   }
 
   getPublicKey = async () => await this.wallet.getPubKey()
-  getAccountPublicKey = () => this.account
+  getAccountAddress = () => this.account
+}
+
+export const makeWallet = async (env: Env): Promise<IStarknetWallet> => {
+  return Wallet.create(env.pk, env.account)
 }

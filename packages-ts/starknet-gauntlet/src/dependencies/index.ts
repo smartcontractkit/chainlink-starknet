@@ -16,13 +16,8 @@ export interface Dependencies {
   logger: typeof logger
   prompt: typeof prompt
   makeProvider: (url: string) => IStarknetProvider
-  makeWallet: (
-    withLedger: boolean,
-    ledgerPath: string,
-    pk?: string,
-    account?: string,
-  ) => Promise<IStarknetWallet>
   makeEnv: (flags: Record<string, string | boolean>) => Env
+  makeWallet: (env: Env) => Promise<IStarknetWallet>
 }
 
 export type InspectionDependencies = Omit<Dependencies, 'makeWallet'>
