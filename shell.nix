@@ -24,6 +24,7 @@
     k9s
     kubernetes-helm
 
+    # ledger specific packages
     libusb
     udev
   ];
