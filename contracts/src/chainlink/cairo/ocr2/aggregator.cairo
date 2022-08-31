@@ -608,7 +608,7 @@ func transmit{
     # tempvar range_check_ptr = range_check_ptr
     # tempvar pedersen_ptr = pedersen_ptr
 
-    let (reimbursement_juels) = calculate_reimbursement()
+    let (reimbursement_juels) = calculate_reimbursement(juels_per_fee_coin, signatures_len)
 
     # end report()
 
@@ -1096,10 +1096,17 @@ end
 
 # --- Transmitter Payment
 
-func calculate_reimbursement() -> (amount : felt):
-    # TODO:
-    let amount = 0
-    return (amount)
+const MARGIN = 115
+
+func calculate_reimbursement{range_check_ptr}(juels_per_fee_coin: felt, signature_count: felt) -> (amount_juels: felt):
+    # Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
+    # NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
+    let exact_gas = 14951 + (signature_count * 13)
+    let (gas: felt, _) = unsigned_div_rem(exact_gas * MARGIN, 100) # scale to 115% for some margin
+    let gas_price = 0 # TODO: either source this from get_tx_info() or pass through in the report
+    let amount = gas * gas_price
+    let amount_juels = amount * juels_per_fee_coin
+    return (amount_juels)
 end
 
 # --- Payee Management
