@@ -30,6 +30,7 @@ type Writer interface {
 	Invoke(context.Context, caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error)
 	TransactionByHash(context.Context, string) (*caigotypes.Transaction, error)
 	TransactionReceipt(context.Context, string) (*caigotypes.TransactionReceipt, error)
+	TransactionStatus(context.Context, caigogw.TransactionStatusOptions) (*caigotypes.TransactionStatus, error)
 	EstimateFee(context.Context, caigotypes.FunctionInvoke, string) (*caigotypes.FeeEstimate, error)
 }
 
@@ -275,6 +276,23 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotyp
 	}
 	return out, nil
 
+}
+
+func (c *Client) TransactionStatus(ctx context.Context, opts caigogw.TransactionStatusOptions) (*caigotypes.TransactionStatus, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	out, err := c.gw.TransactionStatus(ctx, opts)
+	if err != nil {
+		return out, errors.Wrap(err, "error in client.TransactionStatus")
+	}
+	if out == nil {
+		return out, NilResultError("client.TransactionStatus")
+	}
+	return out, nil
 }
 
 func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke, hash string) (*caigotypes.FeeEstimate, error) {

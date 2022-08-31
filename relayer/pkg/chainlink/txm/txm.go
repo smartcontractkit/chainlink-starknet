@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dontpanicdao/caigo"
+	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -17,6 +18,7 @@ import (
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 const (
@@ -39,24 +41,28 @@ type starktxm struct {
 	lggr    logger.Logger
 	done    sync.WaitGroup
 	stop    chan struct{}
-	queue   chan types.Transaction
+	queue   chan transaction
 	ks      keys.Keystore
 	cfg     Config
-	client  *utils.LazyLoad[types.Provider]
+	client  *utils.LazyLoad[starknet.ReaderWriter]
 	txs     txStatuses
 }
 
 const (
 	QUEUED int = iota
+	RETRY      // can be reached from ERRORED
 	BROADCAST
-	CONFIRMED
+	CONFIRMED // ending state for happy path
 	ERRORED
+	FATAL // ending state for failed txs (reverts, etc)
 )
 
 type transaction struct {
-	tx     types.Transaction
-	id     string
-	status int
+	tx         types.Transaction
+	id         string
+	status     int
+	err        string
+	retryCount uint
 }
 
 // placeholder for managing transaction states
@@ -65,22 +71,15 @@ type txStatuses struct {
 	lock sync.RWMutex
 }
 
-func (t *txStatuses) Queued(tx types.Transaction) (id string, err error) {
-	id = uuid.New().String()
-
-	// validate it exists
-	if t.Exists(id) {
-		return id, fmt.Errorf("transaction with id: %s already exists", id)
+func (t *txStatuses) Get(state int) (out []transaction) {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
+	for k := range t.txs {
+		if t.txs[k].status == state {
+			out = append(out, t.txs[k])
+		}
 	}
-
-	t.lock.Lock()
-	defer t.lock.Unlock()
-	t.txs[id] = transaction{
-		tx:     tx,
-		id:     id,
-		status: QUEUED,
-	}
-	return id, nil
+	return out
 }
 
 func (t *txStatuses) Exists(id string) bool {
@@ -90,13 +89,53 @@ func (t *txStatuses) Exists(id string) bool {
 	return exists
 }
 
+func (t *txStatuses) Queued(tx types.Transaction) (transaction, error) {
+	id := uuid.New().String()
+
+	// validate it exists
+	if t.Exists(id) {
+		return transaction{}, fmt.Errorf("transaction with id: %s already exists", id)
+	}
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	t.txs[id] = transaction{
+		tx:     tx,
+		id:     id,
+		status: QUEUED,
+	}
+	return t.txs[id], nil
+}
+
+func (t *txStatuses) Retry(id string) (transaction, error) {
+	if !t.Exists(id) {
+		return transaction{}, fmt.Errorf("id does not exist")
+	}
+
+	t.lock.RLock()
+	if t.txs[id].status != ERRORED {
+		return transaction{}, fmt.Errorf("tx must have errored before retry")
+	}
+	t.lock.RUnlock()
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	tx := t.txs[id]
+	tx.tx.Nonce = ""  // clear if retrying
+	tx.tx.MaxFee = "" // clear if retrying
+	tx.status = RETRY
+	tx.retryCount += 1
+	t.txs[id] = tx
+	return t.txs[id], nil
+}
+
 func (t *txStatuses) Broadcast(id, txhash string) error {
 	if !t.Exists(id) {
 		return fmt.Errorf("id does not exist")
 	}
 
 	t.lock.RLock()
-	if t.txs[id].status != QUEUED {
+	if t.txs[id].status != QUEUED && t.txs[id].status != RETRY {
 		return fmt.Errorf("tx must be queued before broadcast")
 	}
 	t.lock.RUnlock()
@@ -108,17 +147,6 @@ func (t *txStatuses) Broadcast(id, txhash string) error {
 	tx.status = BROADCAST
 	t.txs[id] = tx
 	return nil
-}
-
-func (t *txStatuses) GetUnconfirmed() (out []transaction) {
-	t.lock.RLock()
-	defer t.lock.RUnlock()
-	for k := range t.txs {
-		if t.txs[k].status == BROADCAST {
-			out = append(out, t.txs[k])
-		}
-	}
-	return out
 }
 
 func (t *txStatuses) Confirmed(id string) error {
@@ -140,7 +168,7 @@ func (t *txStatuses) Confirmed(id string) error {
 	return nil
 }
 
-func (t *txStatuses) Errored(id string) error {
+func (t *txStatuses) Errored(id, err string) error {
 	if !t.Exists(id) {
 		return fmt.Errorf("id does not exist")
 	}
@@ -149,14 +177,34 @@ func (t *txStatuses) Errored(id string) error {
 	defer t.lock.Unlock()
 	tx := t.txs[id]
 	tx.status = ERRORED
+	tx.err = err
 	t.txs[id] = tx
 	return nil
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (types.Provider, error)) (StarkTXM, error) {
+func (t *txStatuses) Fatal(id string) error {
+	if !t.Exists(id) {
+		return fmt.Errorf("id does not exist")
+	}
+
+	t.lock.RLock()
+	if t.txs[id].status != ERRORED {
+		return fmt.Errorf("tx must have errored before fatal")
+	}
+	t.lock.RUnlock()
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	tx := t.txs[id]
+	tx.status = FATAL
+	t.txs[id] = tx
+	return nil
+}
+
+func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (starknet.ReaderWriter, error)) (StarkTXM, error) {
 	return &starktxm{
 		lggr:   lggr,
-		queue:  make(chan types.Transaction, MaxQueueLen),
+		queue:  make(chan transaction, MaxQueueLen),
 		stop:   make(chan struct{}),
 		ks:     keystore,
 		cfg:    cfg,
@@ -189,17 +237,10 @@ func (txm *starktxm) run() {
 	for {
 		select {
 		case tx := <-txm.queue:
-			// add transaction to storage to preserve in case of later error
-			id, err := txm.txs.Queued(tx)
-			if err != nil {
-				txm.lggr.Errorw("unable to save transaction status", "error", err, "tx", tx)
-				continue
-			}
-
 			// fetch key matching sender address
-			key, err := txm.ks.Get(tx.SenderAddress)
+			key, err := txm.ks.Get(tx.tx.SenderAddress)
 			if err != nil {
-				txm.lggr.Errorw("failed to retrieve key", "id", tx.SenderAddress, "error", err)
+				txm.lggr.Errorw("failed to retrieve key", "id", tx.tx.SenderAddress, "error", err)
 				continue
 			}
 
@@ -207,17 +248,17 @@ func (txm *starktxm) run() {
 			privKeyBytes := key.Raw()
 			privKey := caigo.BigToHex(caigo.BytesToBig(privKeyBytes))
 
-			// broadcast
-			hash, err := txm.broadcast(ctx, privKey, tx)
-			if err != nil {
+			// broadcast original transaction with custom nonce and max fee (if present)
+			hash, broadcastErr := txm.broadcast(ctx, privKey, tx.tx)
+			if broadcastErr != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx)
-				if err = txm.txs.Errored(id); err != nil {
+				if err = txm.txs.Errored(tx.id, broadcastErr.Error()); err != nil {
 					txm.lggr.Errorw("unable to save transaction status", "error", err, "tx", tx)
 				}
 				continue
 			}
 			txm.lggr.Infow("transaction broadcast", "txhash", hash)
-			if err = txm.txs.Broadcast(id, hash); err != nil {
+			if err = txm.txs.Broadcast(tx.id, hash); err != nil {
 				txm.lggr.Errorw("unable to save transaction status", "error", err, "tx", tx)
 			}
 		case <-txm.stop:
@@ -230,7 +271,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, tx types.Tra
 	txs := []types.Transaction{tx} // assemble into slice
 	client, err := txm.client.Get()
 	if err != nil {
-		return txhash, errors.Errorf("failed to fetch client: %s", err)
+		return txhash, errors.Errorf("broadcast: failed to fetch client: %s", err)
 	}
 
 	// create new account
@@ -239,21 +280,40 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, tx types.Tra
 		return txhash, errors.Errorf("failed to create account: %s", err)
 	}
 
-	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
-	// get nonce
-	nonce, err := client.AccountNonce(ctx, tx.SenderAddress)
-	details := caigo.ExecuteDetails{
-		Nonce: nonce,
+	details := caigo.ExecuteDetails{}
+
+	// allow custom passed nonce
+	if tx.Nonce != "" {
+		nonce, ok := new(big.Int).SetString(tx.Nonce, 10)
+		if !ok {
+			return txhash, errors.Errorf("failed to decode custom nonce: %s", tx.Nonce)
+		}
+		details.Nonce = nonce
+	} else {
+		// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
+		// get nonce
+		nonce, err := client.AccountNonce(ctx, tx.SenderAddress)
+		if err != nil {
+			return txhash, errors.Errorf("failed to fetch nonce: %s", err)
+		}
+		details.Nonce = nonce
 	}
 
-	// get fee for txm
-	fee, err := account.EstimateFee(ctx, txs, details)
-	if err != nil {
-		return txhash, errors.Errorf("failed to estimate fee: %s", err)
-	}
-
-	details.MaxFee = &types.Felt{
-		Int: new(big.Int).SetUint64((fee.OverallFee * FEE_MARGIN) / 100),
+	// allow fustom passed max fee
+	if tx.MaxFee != "" {
+		fee, ok := new(big.Int).SetString(tx.MaxFee, 10)
+		if !ok {
+			return txhash, errors.Errorf("failed to decode custom max fee: %s", tx.MaxFee)
+		}
+		details.MaxFee = types.BigToFelt(fee)
+	} else {
+		// nonce management + fee estimator go together (otherwise too high of nonce will cause estimate to fail)
+		// get fee for txm
+		fee, err := account.EstimateFee(ctx, txs, details)
+		if err != nil {
+			return txhash, errors.Errorf("failed to estimate fee: %s", err)
+		}
+		details.MaxFee = types.BigToFelt(new(big.Int).SetUint64((fee.OverallFee * FEE_MARGIN) / 100))
 	}
 
 	// transmit txs
@@ -281,7 +341,7 @@ func (txm *starktxm) confirmer(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-tick:
-			txs := txm.txs.GetUnconfirmed()
+			txs := txm.txs.Get(BROADCAST)
 
 			client, err := txm.client.Get()
 			if err != nil {
@@ -295,15 +355,27 @@ func (txm *starktxm) confirmer(ctx context.Context) {
 				go func(tx transaction) {
 					defer wg.Done()
 
-					receipt, err := client.TransactionReceipt(ctx, tx.tx.TransactionHash)
+					status, err := client.TransactionStatus(ctx, gateway.TransactionStatusOptions{
+						TransactionHash: tx.tx.TransactionHash,
+					})
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch receipt", "hash", tx.tx.TransactionHash)
 						return
 					}
-					txm.lggr.Infow("tx status", "hash", tx.tx.TransactionHash, "status", receipt.Status)
 
-					if strings.Contains(receipt.Status, "ACCEPTED") {
+					// TODO: change this to Debugw
+					txm.lggr.Debugw("tx status", "hash", tx.tx.TransactionHash, "status", status.TxStatus)
+
+					if strings.Contains(status.TxStatus, "ACCEPTED") {
 						if err = txm.txs.Confirmed(tx.id); err != nil {
+							txm.lggr.Errorw("unable to save transaction status", "error", err, "id", tx.id)
+							return
+						}
+					}
+
+					if status.TxStatus == "REJECTED" {
+						txm.lggr.Errorw("tx rejected by sequencer", "hash", tx.tx.TransactionHash, "error", status.TxFailureReason.ErrorMessage)
+						if err = txm.txs.Errored(tx.id, status.TxFailureReason.ErrorMessage); err != nil {
 							txm.lggr.Errorw("unable to save transaction status", "error", err, "id", tx.id)
 							return
 						}
@@ -318,6 +390,7 @@ func (txm *starktxm) confirmer(ctx context.Context) {
 }
 
 // look through txs to determine if tx should be retried
+// TODO: define what conditions to (or not to) retry, everything else will retry
 func (txm *starktxm) retryer(ctx context.Context) {
 	defer txm.done.Done()
 
@@ -328,12 +401,36 @@ func (txm *starktxm) retryer(ctx context.Context) {
 			return
 		case <-tick:
 			// do something
+			txs := txm.txs.Get(ERRORED)
+
+			for i := range txs {
+				tx := txs[i]
+
+				// Fatal condition - error revert in contract
+				// TODO: verify if this is true
+				if strings.Contains(tx.err, "Error in the called contract") {
+					txm.lggr.Errorw("transaction fatally errored", "tx", tx.tx)
+					if err := txm.txs.Fatal(tx.id); err != nil {
+						txm.lggr.Errorw("unable to save transaction", "error", err, "id", tx.id)
+					}
+					continue
+				}
+
+				// retry other transactions (nonce error, gas error, endpoint goes down
+				var err error
+				tx, err = txm.txs.Retry(tx.id)
+				if err != nil {
+					txm.lggr.Errorw("unable to update transaction", "error", err, "id", tx.id)
+				}
+				txm.queue <- tx // requeue for retry
+			}
 		}
+		tick = time.After(5 * time.Second) // TODO: set in config
 	}
 }
 
 func (txm *starktxm) InflightCount() int {
-	return len(txm.txs.GetUnconfirmed())
+	return len(txm.txs.Get(BROADCAST))
 }
 
 func (txm *starktxm) Close() error {
@@ -353,8 +450,14 @@ func (txm *starktxm) Ready() error {
 }
 
 func (txm *starktxm) Enqueue(tx types.Transaction) error {
+	// add transaction to storage to preserve in case of later error
+	queuedTx, err := txm.txs.Queued(tx)
+	if err != nil {
+		return fmt.Errorf("unable to save transaction status: %s : %+v", err, tx)
+	}
+
 	select {
-	case txm.queue <- tx:
+	case txm.queue <- queuedTx:
 	default:
 		return errors.Errorf("failed to enqueue transaction: %+v", tx)
 	}

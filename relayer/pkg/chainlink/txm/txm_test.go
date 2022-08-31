@@ -5,7 +5,6 @@ package txm
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"testing"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 )
 
 func TestTxm(t *testing.T) {
@@ -59,7 +59,7 @@ func TestTxm(t *testing.T) {
 	failedFirst := false
 
 	// should be called twice
-	getClient := func() (types.Provider, error) {
+	getClient := func() (starknet.ReaderWriter, error) {
 		if !failedFirst {
 			failedFirst = true
 
@@ -90,15 +90,25 @@ func TestTxm(t *testing.T) {
 	token := "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
 	for k := range localKeys {
 		for i := 0; i < 5; i++ {
-			go require.NoError(t, txm.Enqueue(types.Transaction{
+			require.NoError(t, txm.Enqueue(types.Transaction{
 				SenderAddress:      k,
 				ContractAddress:    token,
 				EntryPointSelector: "transfer",
 				Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
+				// Nonce:              "0",
+				MaxFee: "2000000000000000", // specifying MaxFee skips estimation/simulation
 			}))
 		}
 	}
 
+	require.NoError(t, txm.Enqueue(types.Transaction{
+		SenderAddress:      maps.Keys(localKeys)[0],
+		ContractAddress:    token,
+		EntryPointSelector: "transfer",
+		Calldata:           []string{token, "0x1", "0x1"}, // to, uint256 (lower, higher bytes)
+		// Nonce:              "0",
+		MaxFee: "2000000000000000", // specifying MaxFee skips estimation/simulation
+	}))
 	// check > 0 in flight txs
 	var seenInflight bool
 	// check txs are moved out of inflight
@@ -116,12 +126,12 @@ func TestTxm(t *testing.T) {
 		doneInflight = seenInflight && count == 0
 	}
 
+	// stop txm
+	require.NoError(t, txm.Close())
+	require.Error(t, txm.Ready())
+
 	// check conditions
 	require.True(t, seenInflight)
 	require.True(t, doneInflight)
 	require.True(t, failedFirst)
-
-	// stop txm
-	require.NoError(t, txm.Close())
-	require.Error(t, txm.Ready())
 }
