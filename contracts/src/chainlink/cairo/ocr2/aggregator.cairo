@@ -612,7 +612,9 @@ func transmit{
     # tempvar range_check_ptr = range_check_ptr
     # tempvar pedersen_ptr = pedersen_ptr
 
-    let (reimbursement_juels) = calculate_reimbursement(juels_per_fee_coin, signatures_len, gas_price)
+    let (reimbursement_juels) = calculate_reimbursement(
+        juels_per_fee_coin, signatures_len, gas_price
+    )
 
     # end report()
 
@@ -960,8 +962,8 @@ func withdraw_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 end
 
 func _owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    oracle: Oracle
-) -> (amount: felt):
+    oracle : Oracle
+) -> (amount : felt):
     if oracle.index == 0:
         return (0)
     end
@@ -980,8 +982,8 @@ end
 func owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     transmitter : felt
 ) -> (amount : felt):
-    let (oracle: Oracle) = transmitters_.read(transmitter)
-    let (amount: felt) = _owed_payment(oracle)
+    let (oracle : Oracle) = transmitters_.read(transmitter)
+    let (amount : felt) = _owed_payment(oracle)
     return (amount)
 end
 
@@ -996,7 +998,7 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
         return ()
     end
 
-    let (amount_: felt) = _owed_payment(oracle)
+    let (amount_ : felt) = _owed_payment(oracle)
     assert_nn(amount_)
 
     # if zero, fastpath return to avoid empty transfers
@@ -1103,11 +1105,13 @@ end
 
 const MARGIN = 115
 
-func calculate_reimbursement{range_check_ptr}(juels_per_fee_coin: felt, signature_count: felt, gas_price: felt) -> (amount_juels: felt):
+func calculate_reimbursement{range_check_ptr}(
+    juels_per_fee_coin : felt, signature_count : felt, gas_price : felt
+) -> (amount_juels : felt):
     # Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
     # NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
     let exact_gas = 14951 + (signature_count * 13)
-    let (gas: felt, _) = unsigned_div_rem(exact_gas * MARGIN, 100) # scale to 115% for some margin
+    let (gas : felt, _) = unsigned_div_rem(exact_gas * MARGIN, 100)  # scale to 115% for some margin
     let amount = gas * gas_price
     let amount_juels = amount * juels_per_fee_coin
     return (amount_juels)
