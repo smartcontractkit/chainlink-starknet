@@ -113,7 +113,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 
 	epoch, round := parseEpochAndRound(junotypes.HexToFelt(res[1]).Big())
 
-	latestAnswer := parseAnswer(res[2])
+	latestAnswer := starknet.HexToSignedBig(res[2])
 
 	timestampFelt := junotypes.HexToFelt(res[3])
 	// TODO: Int64() can return invalid data if int is too big
@@ -151,8 +151,8 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 				return cc, errors.Wrap(err, "couldn't unmarshal event")
 			}
 
-			if isEventFromContract(&decodedEvent, address, "config_set") {
-				config, err := parseConfigEventData(decodedEvent.Data)
+			if starknet.IsEventFromContract(&decodedEvent, address, "config_set") {
+				config, err := ParseConfigSetEvent(decodedEvent.Data)
 				if err != nil {
 					return cc, errors.Wrap(err, "couldn't parse config event")
 				}
