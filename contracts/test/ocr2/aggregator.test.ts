@@ -159,6 +159,7 @@ describe('aggregator.cairo', function () {
     let extra_hash = 1
     let observation_timestamp = 1
     let juels_per_fee_coin = 1
+    let gas_price = 1
 
     let observers_buf = Buffer.alloc(31)
     let observations = []
@@ -183,6 +184,7 @@ describe('aggregator.cairo', function () {
       observations.length,
       ...observations,
       juels_per_fee_coin,
+      gas_price,
     ]
     let reportDigest = hash.computeHashOnElements(reportData)
     console.log('Report data: %O', reportData)
@@ -210,6 +212,7 @@ describe('aggregator.cairo', function () {
       observers,
       observations,
       juels_per_fee_coin,
+      gas_price,
       signatures,
     })
   }
