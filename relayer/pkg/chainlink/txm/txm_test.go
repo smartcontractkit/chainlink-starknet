@@ -5,7 +5,7 @@ package txm
 import (
 	"context"
 	"encoding/hex"
-	"sync"
+	"fmt"
 	"testing"
 	"time"
 
@@ -56,15 +56,12 @@ func TestTxm(t *testing.T) {
 	require.NoError(t, err)
 
 	// test fail first client
-	failed := false
-	var wg sync.WaitGroup
-	wg.Add(2)
+	failedFirst := false
 
 	// should be called twice
 	getClient := func() (types.Provider, error) {
-		wg.Done()
-		if !failed {
-			failed = true
+		if !failedFirst {
+			failedFirst = true
 
 			// test return not nil
 			return &starknet.Client{}, errors.New("random test error")
@@ -92,8 +89,8 @@ func TestTxm(t *testing.T) {
 
 	token := "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
 	for k := range localKeys {
-		for i := 0; i < 1; i++ {
-			require.NoError(t, txm.Enqueue(types.Transaction{
+		for i := 0; i < 5; i++ {
+			go require.NoError(t, txm.Enqueue(types.Transaction{
 				SenderAddress:      k,
 				ContractAddress:    token,
 				EntryPointSelector: "transfer",
@@ -101,8 +98,28 @@ func TestTxm(t *testing.T) {
 			}))
 		}
 	}
-	time.Sleep(30 * time.Second)
-	wg.Wait()
+
+	// check > 0 in flight txs
+	var seenInflight bool
+	// check txs are moved out of inflight
+	var doneInflight bool
+	for i := 0; i < 30; i++ {
+		// exit condition
+		if seenInflight && doneInflight {
+			break
+		}
+
+		time.Sleep(time.Second)
+		count := txm.InflightCount()
+
+		seenInflight = count > 0 || seenInflight
+		doneInflight = seenInflight && count == 0
+	}
+
+	// check conditions
+	require.True(t, seenInflight)
+	require.True(t, doneInflight)
+	require.True(t, failedFirst)
 
 	// stop txm
 	require.NoError(t, txm.Close())
