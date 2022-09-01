@@ -239,7 +239,7 @@ func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     _set_round(round_id, round)
 
     let (sender) = get_caller_address()
-    NewRound.emit(round)
+    NewRound.emit(round_id=round_id, started_by=sender, started_at=timestamp)
     AnswerUpdated.emit(status, round_id, timestamp)
 
     return ()
