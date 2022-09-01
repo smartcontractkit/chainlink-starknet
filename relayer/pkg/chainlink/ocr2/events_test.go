@@ -1,5 +1,14 @@
 package ocr2
 
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	caigotypes "github.com/dontpanicdao/caigo/types"
+)
+
 var (
 	exampleNewTransmissionEventRaw = []string{
 		"0x1",
@@ -41,3 +50,27 @@ var (
 		"0x1",
 	}
 )
+
+func TestNewTransmissionEvent_Parse(t *testing.T) {
+	var eventData []*caigotypes.Felt
+	for i := 0; i < len(exampleNewTransmissionEventRaw); i++ {
+		eventData = append(eventData, caigotypes.StrToFelt(exampleNewTransmissionEventRaw[i]))
+	}
+
+	require.Equal(t, len(exampleNewTransmissionEventRaw), len(eventData))
+
+	_, err := ParseNewTransmissionEvent(eventData)
+	assert.NoError(t, err)
+}
+
+func TestConfigSetEvent_Parse(t *testing.T) {
+	var eventData []*caigotypes.Felt
+	for i := 0; i < len(exampleConfigSetEventRaw); i++ {
+		eventData = append(eventData, caigotypes.StrToFelt(exampleConfigSetEventRaw[i]))
+	}
+
+	require.Equal(t, len(exampleConfigSetEventRaw), len(eventData))
+
+	_, err := ParseConfigSetEvent(eventData)
+	assert.NoError(t, err)
+}
