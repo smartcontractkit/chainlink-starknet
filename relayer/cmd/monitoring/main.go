@@ -30,23 +30,22 @@ func main() {
 		return
 	}
 
-	var chainReader starknet.Reader
-	chainReader, err = starknet.NewClient(
+	starknetClient, err := starknet.NewClient(
 		starknetConfig.ChainID,
 		starknetConfig.RPCEndpoint,
-		logger.With(log, "component", "chain-reader"),
+		logger.With(log, "component", "starknet-client"),
 		&starknetConfig.ReadTimeout,
 	)
 	if err != nil {
-		log.Fatalw("failed to build a chain reader", "error", err)
+		log.Fatalw("failed to build a starknet.Client", "error", err)
 	}
 
 	envelopeSourceFactory := monitoring.NewEnvelopeSourceFactory(
-		chainReader,
+		starknetClient,
 		logger.With(log, "component", "source-envelope"),
 	)
 	txResultsFactory := monitoring.NewTxResultsSourceFactory(
-		chainReader,
+		starknetClient,
 		logger.With(log, "component", "source-txresults"),
 	)
 
@@ -63,6 +62,18 @@ func main() {
 		log.Fatalw("failed to build monitor", "error", err)
 		return
 	}
+
+	proxySourceFactory := monitoring.NewProxySourceFactory(
+		starknetClient,
+		logger.With(log, "component", "source-proxy"),
+	)
+	monitor.SourceFactories = append(monitor.SourceFactories, proxySourceFactory)
+
+	prometheusExporterFactory := monitoring.NewPrometheusExporterFactory(
+		logger.With(log, "component", "starknet-prometheus-exporter"),
+		monitoring.NewMetrics(logger.With(log, "component", "starknet-metrics")),
+	)
+	monitor.ExporterFactories = append(monitor.ExporterFactories, prometheusExporterFactory)
 
 	monitor.Run()
 	log.Info("monitor stopped")
