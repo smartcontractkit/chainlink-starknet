@@ -99,7 +99,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
 
       try {
@@ -109,7 +109,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
     })
 
@@ -190,7 +190,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
       try {
         await t.alice.invoke(t.token, 'transfer', {
@@ -199,7 +199,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
     })
 
@@ -265,7 +265,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
       try {
         await t.owner.invoke(t.token, 'transferFrom', {
@@ -275,7 +275,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
     })
 
@@ -375,7 +375,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
       try {
         await t.owner.invoke(t.token, 'transferFrom', {
@@ -385,7 +385,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        expect(/assert_not_zero/gi.test(error.message)).to.be.true
+        expect(/assert/gi.test(error.message)).to.be.true
       }
     })
   })

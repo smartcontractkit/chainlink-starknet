@@ -5,8 +5,7 @@ import { uint256, number } from 'starknet'
 import { StarknetContract, HttpNetworkConfig, Account } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { expectAddressEquality } from '../utils'
-import fs from 'fs'
+import { expectAddressEquality, loadStarkgateContract, loadProxyContract } from '../utils'
 
 describe('Test starkgate bridge with link token', function () {
   this.timeout(TIMEOUT)
@@ -25,7 +24,9 @@ describe('Test starkgate bridge with link token', function () {
   before(async () => {
     owner = await starknet.deployAccount('OpenZeppelin')
 
-    let tokenBridgeFactory = await starknet.getContractFactory('token_bridge.cairo')
+    let tokenBridgeFactory = await starknet.getContractFactory(
+      '../../node_modules/@chainlink-dev/starkgate-contracts/artifacts/token_bridge.cairo',
+    )
     tokenBridgeContract = await tokenBridgeFactory.deploy({
       governor_address: owner.starknetContract.address,
     })
@@ -36,10 +37,7 @@ describe('Test starkgate bridge with link token', function () {
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
 
-    const contractFile = fs.readFileSync(
-      '../node_modules/internals-starkgate-contracts/artifacts/0.0.3/eth/StarknetERC20Bridge.json',
-    )
-    const contract = await JSON.parse(contractFile.toString())
+    const contract = await loadStarkgateContract('StarknetERC20Bridge')
     const starkNetERC20BridgeFactory = new ethers.ContractFactory(
       contract.abi,
       contract.bytecode,
@@ -61,8 +59,7 @@ describe('Test starkgate bridge with link token', function () {
     testERC20 = await testERC20Factory.deploy()
     await testERC20.deployed()
 
-    const proxyContractFile = fs.readFileSync('./test/bridge/artifacts-test/Proxy.json')
-    const proxyContract = await JSON.parse(proxyContractFile.toString())
+    const proxyContract = loadProxyContract('Proxy')
     const proxyFactory = new ethers.ContractFactory(
       proxyContract.abi,
       proxyContract.bytecode,
@@ -93,10 +90,7 @@ describe('Test starkgate bridge with link token', function () {
     })
 
     it('Should wrap contract and set L2 TokenBridge successfully', async () => {
-      const contractFile = fs.readFileSync(
-        '../node_modules/internals-starkgate-contracts/artifacts/0.0.3/eth/StarknetERC20Bridge.json',
-      )
-      const contract = await JSON.parse(contractFile.toString())
+      const contract = await loadStarkgateContract('StarknetERC20Bridge')
       newStarkNetERC20Bridge = await ethers.getContractAt(contract.abi, proxy.address)
 
       const tx = await newStarkNetERC20Bridge.setL2TokenBridge(BigInt(tokenBridgeContract.address))
@@ -143,6 +137,7 @@ describe('Test starkgate bridge with link token', function () {
       expect(balance).to.equal(8)
     })
   })
+
   describe('Test bridge from L2 to L1', function () {
     it('Should flush the L1 messages so that they can be consumed by the L2.', async () => {
       const flushL1Response = await starknet.devnet.flush()
@@ -160,7 +155,7 @@ describe('Test starkgate bridge with link token', function () {
       expect(uint256.uint256ToBN(balance)).to.deep.equal(number.toBN(2))
     })
 
-    it('Should initiate withdraw and send message to L1 ', async () => {
+    it('Should initiate withdraw and send message to L1', async () => {
       await owner.invoke(tokenBridgeContract, 'initiate_withdraw', {
         l1_recipient: BigInt(deployer.address),
         amount: uint256.bnToUint256(2),
