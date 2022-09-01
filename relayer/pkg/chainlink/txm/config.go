@@ -7,6 +7,6 @@ import "time"
 // txm config
 type Config interface {
 	TxTimeout() time.Duration
-	TxSendFrequency() time.Duration
-	TxMaxBatchSize() int
+	TxConfirmFrequency() time.Duration
+	TxRetryFrequency() time.Duration
 }

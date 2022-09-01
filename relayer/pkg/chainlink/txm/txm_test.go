@@ -1,4 +1,4 @@
-// go:build integration
+//go:build integration
 
 package txm
 
@@ -72,8 +72,8 @@ func TestTxm(t *testing.T) {
 
 	// mock config to prevent import cycle
 	cfg := new(txmmock.Config)
-	cfg.On("TxMaxBatchSize").Return(100)
-	cfg.On("TxSendFrequency").Return(15 * time.Second)
+	cfg.On("TxConfirmFrequency").Return(1 * time.Second) // confirm quicker during tests
+	cfg.On("TxRetryFrequency").Return(5 * time.Second)
 	cfg.On("TxTimeout").Return(15 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)

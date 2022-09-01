@@ -15,8 +15,8 @@ var DefaultConfigSet = ConfigSet{
 	OCR2CacheTTL:        time.Minute,
 	RequestTimeout:      10 * time.Second,
 	TxTimeout:           time.Minute,
-	TxSendFrequency:     5 * time.Second,
-	TxMaxBatchSize:      100,
+	TxConfirmFrequency:  5 * time.Second,
+	TxRetryFrequency:    5 * time.Second,
 }
 
 type ConfigSet struct {
@@ -27,9 +27,9 @@ type ConfigSet struct {
 	RequestTimeout time.Duration
 
 	// txm config
-	TxTimeout       time.Duration
-	TxSendFrequency time.Duration
-	TxMaxBatchSize  int
+	TxTimeout          time.Duration
+	TxConfirmFrequency time.Duration
+	TxRetryFrequency   time.Duration
 }
 
 type Config interface {
@@ -107,22 +107,22 @@ func (c *config) TxTimeout() time.Duration {
 	return c.defaults.TxTimeout
 }
 
-func (c *config) TxSendFrequency() time.Duration {
+func (c *config) TxConfirmFrequency() time.Duration {
 	c.dbCfgLock.RLock()
-	ch := c.dbCfg.TxSendFrequency
+	ch := c.dbCfg.TxConfirmFrequency
 	c.dbCfgLock.RUnlock()
 	if ch != nil {
 		return ch.Duration()
 	}
-	return c.defaults.TxSendFrequency
+	return c.defaults.TxConfirmFrequency
 }
 
-func (c *config) TxMaxBatchSize() int {
+func (c *config) TxRetryFrequency() time.Duration {
 	c.dbCfgLock.RLock()
-	ch := c.dbCfg.TxMaxBatchSize
+	ch := c.dbCfg.TxRetryFrequency
 	c.dbCfgLock.RUnlock()
-	if ch.Valid {
-		return int(ch.Int64)
+	if ch != nil {
+		return ch.Duration()
 	}
-	return c.defaults.TxMaxBatchSize
+	return c.defaults.TxRetryFrequency
 }

@@ -6,8 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"gopkg.in/guregu/null.v4"
-
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	// "github.com/smartcontractkit/chainlink/core/chains"
 )
@@ -20,8 +18,8 @@ type ChainCfg struct {
 	OCR2CacheTTL        *utils.Duration
 	RequestTimeout      *utils.Duration
 	TxTimeout           *utils.Duration
-	TxSendFrequency     *utils.Duration
-	TxMaxBatchSize      null.Int
+	TxConfirmFrequency  *utils.Duration
+	TxRetryFrequency    *utils.Duration
 }
 
 func (c *ChainCfg) Scan(value interface{}) error {
