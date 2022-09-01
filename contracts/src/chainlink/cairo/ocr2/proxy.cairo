@@ -5,10 +5,7 @@ from starkware.cairo.common.math import split_felt, assert_not_zero
 
 from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
 
-from chainlink.cairo.access.ownable import (
-    Ownable_initializer,
-    Ownable_only_owner,
-)
+from chainlink.cairo.access.ownable import Ownable_initializer, Ownable_only_owner
 
 struct Phase:
     member id : felt
