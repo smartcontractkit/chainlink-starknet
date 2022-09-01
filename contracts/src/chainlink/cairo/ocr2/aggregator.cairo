@@ -11,6 +11,7 @@ from starkware.cairo.common.hash_state import (
 )
 from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.bitwise import bitwise_and
+from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.math import (
     abs_value,
     split_felt,
@@ -24,7 +25,7 @@ from starkware.cairo.common.math import (
     unsigned_div_rem,
 )
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
@@ -1032,7 +1033,27 @@ end
 func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
 ):
+    alloc_locals
     has_billing_access()
+
+    let (link_token) = Aggregator_link_token.read()
+    let (contract_address) = get_contract_address()
+
+    let (link_due) = total_link_due()
+    let (balance : Uint256) = IERC20.balanceOf(
+        contract_address=link_token, account=contract_address
+    )
+
+    let (link_due_uint256 : Uint256) = felt_to_uint256(link_due)
+    let (available : Uint256) = uint256_sub(balance, link_due_uint256)
+
+    let (less_available : felt) = uint256_lt(available, amount)
+    if less_available == TRUE:
+        # Transfer as much as there is available
+        IERC20.transfer(contract_address=link_token, recipient=recipient, amount=available)
+    else:
+        IERC20.transfer(contract_address=link_token, recipient=recipient, amount=amount)
+    end
 
     return ()
 end
