@@ -1203,6 +1203,9 @@ end
 func transfer_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     transmitter : felt, proposed : felt
 ):
+    with_attr error_message("cannot transfer payeeship to zero address"):
+        assert_not_zero(proposed)
+    end
     let (caller) = get_caller_address()
     let (payee) = payees_.read(transmitter)
     with_attr error_message("only current payee can update"):
@@ -1223,8 +1226,12 @@ end
 func accept_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     transmitter : felt
 ):
-    let (caller) = get_caller_address()
     let (proposed) = proposed_payees_.read(transmitter)
+    let (caller) = get_caller_address()
+    # caller cannot be zero address to avoid overwriting owner when proposed_owner is not set
+    with_attr error_message("caller is the zero address"):
+        assert_not_zero(caller)
+    end
     with_attr error_message("only proposed payee can accept"):
         assert caller = proposed
     end
