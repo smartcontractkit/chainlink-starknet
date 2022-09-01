@@ -4,50 +4,47 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sync"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/monitoring/encoding"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+	"go.uber.org/multierr"
 )
 
 func NewEnvelopeSourceFactory(
-	reader starknet.Reader,
+	starknetClient *starknet.Client,
 	log relayMonitoring.Logger,
 ) relayMonitoring.SourceFactory {
 	return &envelopeSourceFactory{
-		reader,
+		starknetClient,
 		log,
 	}
 }
 
 type envelopeSourceFactory struct {
-	reader starknet.Reader
-	log    relayMonitoring.Logger
+	starknetClient *starknet.Client
+	log            relayMonitoring.Logger
 }
 
 func (s *envelopeSourceFactory) NewSource(
-	_ relayMonitoring.ChainConfig,
+	chainConfig relayMonitoring.ChainConfig,
 	feedConfig relayMonitoring.FeedConfig,
 ) (relayMonitoring.Source, error) {
+	starknetChainConfig, ok := chainConfig.(StarknetConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", feedConfig)
+	}
 	starknetFeedConfig, ok := feedConfig.(StarknetFeedConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", feedConfig)
 	}
-	client, err := ocr2.NewClient(s.reader, logger.With(s.log, "component", "ocr2-client"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to build an ocr2.Client instance: %w", err)
-	}
-	// TODO (dru) maybe use the cached version!
-	reader := ocr2.NewContractReader(
-		starknetFeedConfig.ContractAddress,
-		client,
-		logger.With(s.log, "component", "ocr2-contract-reader"),
-	)
 	return &envelopeSource{
-		reader,
+		starknetChainConfig,
 		starknetFeedConfig,
+		s.starknetClient,
 	}, nil
 }
 
@@ -56,44 +53,167 @@ func (s *envelopeSourceFactory) GetType() string {
 }
 
 type envelopeSource struct {
-	reader     ocr2.Reader
-	feedConfig StarknetFeedConfig
+	chainConfig    StarknetConfig
+	feedConfig     StarknetFeedConfig
+	starknetClient *starknet.Client
 }
 
 func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
-	changedInBlock, _, err := s.reader.LatestConfigDetails(ctx)
+	envelope := relayMonitoring.Envelope{}
+	var envelopeMu sync.Mutex
+	var envelopeErr error
+	subs := &relayUtils.Subprocesses{}
+
+	subs.Go(func() {
+		latestRoundData, newTransmissionEvent, err := s.fetchNewTransmissionEvent(ctx, s.feedConfig.ContractAddress)
+		envelopeMu.Lock()
+		defer envelopeMu.Unlock()
+		if err != nil {
+			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchNewTransmissionEvent failed: %w", err))
+			return
+		}
+		envelope.BlockNumber = latestRoundData.BlockNumber
+		envelope.AggregatorRoundID = latestRoundData.RoundID
+		envelope.ConfigDigest = newTransmissionEvent.ConfigDigest
+		envelope.Epoch = newTransmissionEvent.Epoch
+		envelope.Round = newTransmissionEvent.Round
+		envelope.LatestAnswer = newTransmissionEvent.Answer
+		envelope.LatestTimestamp = newTransmissionEvent.ObservationTimestamp
+		envelope.JuelsPerFeeCoin = newTransmissionEvent.JuelsPerFeeCoin
+	})
+
+	subs.Go(func() {
+		configSetEvent, err := s.fetchConfigSetEvent(ctx, s.feedConfig.ContractAddress)
+		envelopeMu.Lock()
+		defer envelopeMu.Unlock()
+		if err != nil {
+			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchConfigSetEvent failed: %w", err))
+			return
+		}
+		envelope.ContractConfig = types.ContractConfig{
+			ConfigDigest:          configSetEvent.LatestConfigDigest,
+			ConfigCount:           configSetEvent.ConfigCount,
+			Signers:               configSetEvent.Signers,
+			Transmitters:          configSetEvent.Transmitters,
+			F:                     configSetEvent.F,
+			OnchainConfig:         configSetEvent.OnchainConfig,
+			OffchainConfigVersion: configSetEvent.OffchainConfigVersion,
+			OffchainConfig:        configSetEvent.OffchainConfig,
+		}
+	})
+
+	subs.Go(func() {
+		linkAvailable, err := s.fetchLinkAvailableForPayment(ctx, s.feedConfig.ContractAddress)
+		envelopeMu.Lock()
+		defer envelopeMu.Unlock()
+		if err != nil {
+			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchLinkAvailableForPayment failed: %w", err))
+			return
+		}
+		envelope.LinkAvailableForPayment = linkAvailable
+	})
+
+	subs.Go(func() {
+		balance, err := s.fetchLinkBalance(ctx, s.chainConfig.LinkTokenAddress, s.feedConfig.ContractAddress)
+		envelopeMu.Lock()
+		defer envelopeMu.Unlock()
+		if err != nil {
+			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchLinkBalance failed: %w", err))
+			return
+		}
+		envelope.LinkBalance = balance
+	})
+
+	subs.Wait()
+	return envelope, envelopeErr
+}
+
+func (s *envelopeSource) fetchNewTransmissionEvent(ctx context.Context, contractAddress string) (encoding.RoundData, encoding.NewTransmisisonEvent, error) {
+	results, err := s.starknetClient.CallContract(ctx, starknet.CallOps{
+		ContractAddress: contractAddress,
+		Selector:        encoding.LatestRoundDataViewName,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch latest config details: %w", err)
+		return encoding.RoundData{}, encoding.NewTransmisisonEvent{}, fmt.Errorf("couldn't call the contract selector %s: %w", encoding.LatestRoundDataViewName, err)
 	}
-	config, err := s.reader.LatestConfig(ctx, changedInBlock)
+	var latestRoundData encoding.RoundData
+	if err := latestRoundData.Unmarshal(results); err != nil {
+		return encoding.RoundData{}, encoding.NewTransmisisonEvent{}, fmt.Errorf("failed to unmarshal RoundData from %v: %w", results, err)
+	}
+	block, err := s.starknetClient.BlockByNumberGateway(ctx, latestRoundData.BlockNumber)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch latest config: %w", err)
+		return encoding.RoundData{}, encoding.NewTransmisisonEvent{}, fmt.Errorf("failed to fetch block number %d: %w", latestRoundData.BlockNumber, err)
 	}
-	configDigest, epoch, round, latestAnswer, latestTimestamp, err := s.reader.LatestTransmissionDetails(ctx)
+	resultss, err := FilterEvents(block, contractAddress, encoding.NewTransmissionEventName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch latest transmission details: %w", err)
+		return encoding.RoundData{}, encoding.NewTransmisisonEvent{}, fmt.Errorf("failed to filter events of type '%s' from block number %d: %w", encoding.NewTransmissionEventName, latestRoundData.BlockNumber, err)
 	}
-
-	envelope := relayMonitoring.Envelope{
-		// latest transmission details
-		ConfigDigest:    configDigest,
-		Epoch:           epoch,
-		Round:           round,
-		LatestAnswer:    latestAnswer,
-		LatestTimestamp: latestTimestamp,
-
-		// latest contract config
-		ContractConfig: config,
-
-		// extra
-		BlockNumber:             0,                 // TODO (dru)
-		Transmitter:             types.Account(""), // TODO (dru)
-		LinkBalance:             new(big.Int),      // TODO (dru)
-		LinkAvailableForPayment: new(big.Int),      // TODO (dru)
-
-		// The "fee coin" is different for each chain.
-		JuelsPerFeeCoin:   new(big.Int), // TODO (dru)
-		AggregatorRoundID: 0,            // TODO (dru)
+	if len(resultss) == 0 {
+		return encoding.RoundData{}, encoding.NewTransmisisonEvent{}, fmt.Errorf("could not find any events of type '%s' from block number %d", encoding.NewTransmissionEventName, latestRoundData.BlockNumber)
 	}
-	return envelope, nil
+	var newTransmissionEvent encoding.NewTransmisisonEvent
+	if err := newTransmissionEvent.Unmarshal(resultss[0]); err != nil {
+		return encoding.RoundData{}, encoding.NewTransmisisonEvent{}, fmt.Errorf("failed to unmarshal NewTransmissionEvent from %v: %w", resultss[0], err)
+	}
+	return latestRoundData, newTransmissionEvent, nil
+}
+
+func (s *envelopeSource) fetchConfigSetEvent(ctx context.Context, contractAddress string) (encoding.ConfigSetEvent, error) {
+	results, err := s.starknetClient.CallContract(ctx, starknet.CallOps{
+		ContractAddress: contractAddress,
+		Selector:        encoding.LatestConfigDetailsViewName,
+	})
+	if err != nil {
+		return encoding.ConfigSetEvent{}, fmt.Errorf("couldn't call the contract selector %s: %w", encoding.LatestConfigDetailsViewName, err)
+	}
+	var latestConfigDetails encoding.LatestConfigDetails
+	if err := latestConfigDetails.Unmarshal(results); err != nil {
+		return encoding.ConfigSetEvent{}, fmt.Errorf("failed to unmarshal LatestConfigDetails from %v: %w", results, err)
+	}
+	block, err := s.starknetClient.BlockByNumberGateway(ctx, latestConfigDetails.BlockNumber)
+	if err != nil {
+		return encoding.ConfigSetEvent{}, fmt.Errorf("failed to fetch block number %d: %w", latestConfigDetails.BlockNumber, err)
+	}
+	resultss, err := FilterEvents(block, contractAddress, encoding.ConfigSetEventName)
+	if err != nil {
+		return encoding.ConfigSetEvent{}, fmt.Errorf("failed to filter events of type '%s' from block number %d: %w", encoding.ConfigSetEventName, latestConfigDetails.BlockNumber, err)
+	}
+	if len(resultss) == 0 {
+		return encoding.ConfigSetEvent{}, fmt.Errorf("could not find any events of type '%s' from block number %d", encoding.ConfigSetEventName, latestConfigDetails.BlockNumber)
+	}
+	var configSetEvent encoding.ConfigSetEvent
+	if err := configSetEvent.Unmarshal(resultss[0]); err != nil {
+		return encoding.ConfigSetEvent{}, fmt.Errorf("failed to unmarshal ConfigSetEvent from %v: %w", resultss[0], err)
+	}
+	return configSetEvent, nil
+}
+
+func (s *envelopeSource) fetchLinkAvailableForPayment(ctx context.Context, contractAddress string) (*big.Int, error) {
+	results, err := s.starknetClient.CallContract(ctx, starknet.CallOps{
+		ContractAddress: contractAddress,
+		Selector:        encoding.LinkAvailableForPaymentViewName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("couldn't call the contract selector %s: %w", encoding.LinkAvailableForPaymentViewName, err)
+	}
+	if len(results) < 1 {
+		return nil, fmt.Errorf("insufficient data from %s event '%v': %w", encoding.LinkAvailableForPaymentViewName, results, err)
+	}
+	return encoding.DecodeBigInt(results[0])
+
+}
+
+func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress string) (*big.Int, error) {
+	results, err := s.starknetClient.CallContract(ctx, starknet.CallOps{
+		ContractAddress: linkTokenAddress,
+		Selector:        encoding.BalanceOfMethod,
+		Calldata:        []string{contractAddress},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("couldn't call the contract selector %s: %w", encoding.BalanceOfMethod, err)
+	}
+	if len(results) < 1 {
+		return nil, fmt.Errorf("insufficient data from balanceOf '%v': %w", results, err)
+	}
+	return encoding.DecodeBigInt(results[0])
 }

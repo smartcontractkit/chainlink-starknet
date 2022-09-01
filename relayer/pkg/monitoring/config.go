@@ -10,12 +10,13 @@ import (
 )
 
 type StarknetConfig struct {
-	RPCEndpoint  string
-	NetworkName  string
-	NetworkID    string
-	ChainID      string
-	ReadTimeout  time.Duration
-	PollInterval time.Duration
+	RPCEndpoint      string
+	NetworkName      string
+	NetworkID        string
+	ChainID          string
+	ReadTimeout      time.Duration
+	PollInterval     time.Duration
+	LinkTokenAddress string
 }
 
 var _ relayMonitoring.ChainConfig = StarknetConfig{}
