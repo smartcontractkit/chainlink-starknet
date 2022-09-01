@@ -17,11 +17,21 @@ namespace simple_read_access_controller:
         return ()
     end
 
+    # Gives access to:
+    # - any externally owned account (note that offchain actors can always read
+    # any contract storage regardless of onchain access control measures, so this
+    # does not weaken the access control while improving usability)
+    # - accounts explicitly added to an access list
     func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, data_len : felt, data : felt*
     ) -> (bool : felt):
         let (has_access) = simple_write_access_controller.has_access(user, data_len, data)
         if has_access == TRUE:
+            return (TRUE)
+        end
+
+        # NOTICE: access is granted to direct calls, to enable off-chain reads.
+        if user == 0:
             return (TRUE)
         end
 
