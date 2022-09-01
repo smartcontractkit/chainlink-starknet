@@ -29,7 +29,7 @@ func AnswerUpdated(current : felt, round_id : felt, timestamp : felt):
 end
 
 @event
-func NewRound(round : Round):
+func NewRound(round_id : felt, started_by : felt, started_at : felt):
 end
 
 @contract_interface
