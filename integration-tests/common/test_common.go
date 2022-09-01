@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
+	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
+	"os"
 	"strings"
 
 	"github.com/dontpanicdao/caigo/gateway"
@@ -55,6 +57,7 @@ type Test struct {
 	mockServer *ctfClient.MockserverClient
 	Env        *environment.Environment
 	Common     *Common
+	InsideK8s  bool
 }
 
 type StarkNetDevnetClient struct {
@@ -72,6 +75,8 @@ type ChainlinkClient struct {
 
 // DeployCluster Deploys and sets up config of the environment and nodes
 func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
+	// Checking if tests need to run on remote runner
+	_, t.InsideK8s = os.LookupEnv("INSIDE_K8")
 	t.Common = SetConfig(commonConfig)
 	t.cc = &ChainlinkClient{}
 	t.sc = &StarkNetDevnetClient{}
@@ -113,13 +118,24 @@ func (t *Test) DeployEnv(nodes int) {
 
 	t.Env = environment.New(&environment.Config{
 		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
-		InsideK8s:       false,
+		InsideK8s:       t.InsideK8s,
 	}).
 		// AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, clConfig))
+
+	// Checking if tests are run on remote runner
+	if t.InsideK8s {
+		soakNetwork := blockchain.LoadNetworkFromEnvironment()
+		t.Env.AddHelm(ethereum.New(&ethereum.Props{
+			NetworkName: soakNetwork.Name,
+			Simulated:   soakNetwork.Simulated,
+			WsURLs:      soakNetwork.URLs,
+		}))
+	}
+
 	err := t.Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
 	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)

@@ -5,6 +5,7 @@ import (
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
+	"os"
 )
 
 type Chart ethereum.Chart
@@ -74,13 +75,20 @@ func defaultProps() *ethereum.Props {
 }
 
 func New(props *ethereum.Props) environment.ConnectedChart {
+	defaultPath := "../../ops/charts/devnet"
+	_, InsideK8s := os.LookupEnv("INSIDE_K8")
+	if InsideK8s {
+		defaultPath = "/root/ops/charts/devnet"
+	}
+
 	if props == nil {
 		props = defaultProps()
 	}
+
 	return Chart{
 		HelmProps: &ethereum.HelmProps{
 			Name:   "starknet-dev",
-			Path:   "../../ops/charts/devnet",
+			Path:   defaultPath,
 			Values: &props.Values,
 		},
 		Props: props,
