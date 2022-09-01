@@ -103,22 +103,6 @@ func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
         started_at=transmission.observation_timestamp,
         updated_at=transmission.transmission_timestamp,
     )
-    let (observations : felt*) = alloc()
-    assert observations[0] = 2
-    assert observations[1] = 3
-    new_transmission.emit(
-        round_id=latest_round_id,
-        answer=transmission.answer,
-        transmitter=12,
-        observation_timestamp=transmission.observation_timestamp,
-        observers=3,
-        observations_len=2,
-        observations=observations,
-        juels_per_fee_coin=18,
-        config_digest=34,
-        epoch_and_round=20,
-        reimbursement=100,
-    )
     return (round)
 end
 
