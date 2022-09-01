@@ -1,4 +1,22 @@
 import { expect } from 'chai'
+import fs from 'fs'
+import { json } from 'starknet'
+
+export const loadStarkgateContract = (name: string): any => {
+  return json.parse(
+    fs
+      .readFileSync(
+        `${__dirname}/../../node_modules/internals-starkgate-contracts/artifacts/0.0.3/eth/${name}.json`,
+      )
+      .toString('ascii'),
+  )
+}
+
+export const loadProxyContract = (name: string): any => {
+  return json.parse(
+    fs.readFileSync(`${__dirname}/bridge/artifacts-test/${name}.json`).toString('ascii'),
+  )
+}
 
 export const expectInvokeError = (full: string, expected: string) => {
   // Match transaction error
