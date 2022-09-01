@@ -20,6 +20,7 @@ type StarknetFeedConfig struct {
 	Multiply       *big.Int `json:"-"`
 
 	ContractAddress string `json:"contract_address,omitempty"`
+	ProxyAddress    string `json:"proxy_address,omitempty"`
 }
 
 var _ relayMonitoring.FeedConfig = StarknetFeedConfig{}
