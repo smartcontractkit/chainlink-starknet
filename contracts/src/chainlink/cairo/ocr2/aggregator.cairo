@@ -3,7 +3,6 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.registers import get_fp_and_pc
-from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.hash_state import (
     hash_init,
     hash_finalize,
@@ -16,9 +15,7 @@ from starkware.cairo.common.math import (
     abs_value,
     split_felt,
     assert_lt_felt,
-    assert_le_felt,
     assert_lt,
-    assert_le,
     assert_not_zero,
     assert_not_equal,
     assert_nn_le,
@@ -26,10 +23,8 @@ from starkware.cairo.common.math import (
     assert_in_range,
     unsigned_div_rem,
 )
-from starkware.cairo.common.math_cmp import is_not_zero
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256, uint256_sub
-from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.uint256 import Uint256
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,

@@ -8,7 +8,7 @@ from starkware.starknet.common.syscalls import (
 )
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_lt_felt
 from starkware.cairo.common.math_cmp import is_le
-from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.bool import TRUE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
