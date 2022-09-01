@@ -104,7 +104,7 @@ describe('aggregator.cairo', function () {
       description: starknet.shortStringToBigInt('FOO/BAR'),
     })
 
-    console.log(`contract_address: ${aggregator.address}`)
+    console.log(`Deployed 'aggregator.cairo': ${aggregator.address}`)
 
     let futures = []
     let generateOracle = async () => {
@@ -123,8 +123,8 @@ describe('aggregator.cairo', function () {
     let onchain_config: number[] = []
     let offchain_config_version = 2 // TODO: assert == 2 in contract
     let offchain_config = new Uint8Array([1])
-
-    console.log(encodeBytes(offchain_config))
+    let offchain_config_encoded = encodeBytes(offchain_config)
+    console.log('Encoded offchain_config: %O', encodeBytes(offchain_config))
 
     let config = {
       oracles: oracles.map((oracle) => {
@@ -136,12 +136,10 @@ describe('aggregator.cairo', function () {
       f,
       onchain_config,
       offchain_config_version,
-      offchain_config: encodeBytes(offchain_config),
+      offchain_config: offchain_config_encoded,
     }
-
-    console.log(config)
-
     await owner.invoke(aggregator, 'set_config', config)
+    console.log('Config: %O', config)
 
     let result = await aggregator.call('latest_config_details')
     config_digest = result.config_digest
@@ -153,14 +151,12 @@ describe('aggregator.cairo', function () {
 
     assert.isNotEmpty(events)
     assert.equal(events.length, 1)
-    console.log("Log raw 'config_set' event: ")
-    console.log(events[0])
+    console.log("Log raw 'config_set' event: %O", events[0])
 
     const decodedEvents = await aggregator.decodeEvents(events)
     assert.isNotEmpty(decodedEvents)
     assert.equal(decodedEvents.length, 1)
-    console.log("Log decoded 'config_set' event: ")
-    console.log(decodedEvents[0])
+    console.log("Log decoded 'config_set' event: %O", decodedEvents[0])
 
     let e = decodedEvents[0]
     assert.equal(e.name, 'config_set')
@@ -201,15 +197,14 @@ describe('aggregator.cairo', function () {
 
     console.log('Report signatures - START')
     let signatures = []
-    for (let oracle of oracles.slice(0, f + 1)) {
-      let [r, s] = ec.sign(oracle.signer, reportDigest)
-
-      const privKey = oracle.signer.getPrivate()
-      const pubKey = number.toBN(ec.getStarkKey(oracle.signer))
-      console.log(`pubKey: ${pubKey}, privKey: ${privKey}, r: ${r}, s: ${s}`)
+    for (let { signer } of oracles.slice(0, f + 1)) {
+      let [r, s] = ec.sign(signer, reportDigest)
+      const privKey = signer.getPrivate()
+      const pubKey = number.toBN(ec.getStarkKey(signer))
       signatures.push({ r, s, public_key: pubKey })
+      console.log({ pubKey, privKey, r, s })
     }
-    console.log('Report signatures - END')
+    console.log('Report signatures - END\n')
 
     const transmitter = oracles[0].transmitter
     return await transmitter.invoke(aggregator, 'transmit', {
@@ -240,13 +235,11 @@ describe('aggregator.cairo', function () {
     const receipt = await starknet.getTransactionReceipt(txHash)
 
     assert.isNotEmpty(receipt.events)
-    console.log("Log raw 'new_transmission' event: ")
-    console.log(receipt.events[0])
+    console.log("Log raw 'new_transmission' event: %O", receipt.events[0])
 
     const decodedEvents = await aggregator.decodeEvents(receipt.events)
     assert.isNotEmpty(decodedEvents)
-    console.log("Log decoded 'new_transmission' event: ")
-    console.log(decodedEvents[0])
+    console.log("Log decoded 'new_transmission' event: %O", decodedEvents[0])
 
     const e = decodedEvents[0]
     const transmitter = oracles[0].transmitter.address
@@ -260,6 +253,7 @@ describe('aggregator.cairo', function () {
     let len = 32 * 2 // transmitter
     assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
 
+    // TODO: https://github.com/smartcontractkit/chainlink-starknet/pull/87#discussion_r960139209
     len = 31 * 2 // observers (max 31)
     assert.equal(hexPadStart(e.data.observers, len), OBSERVERS_FIXED)
     assert.equal(e.data.observations_len, 4n)
