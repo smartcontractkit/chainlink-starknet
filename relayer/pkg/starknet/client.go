@@ -71,12 +71,12 @@ func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time
 		client.defaultTimeout = *timeout
 	}
 
-	client.setURL(baseURL) // hack: change the base URL (not supported in caigo)
+	client.SetURL(baseURL) // hack: change the base URL (not supported in caigo)
 
 	return client, nil
 }
 
-func (c *Client) setURL(baseURL string) {
+func (c *Client) SetURL(baseURL string) {
 	if baseURL == "" {
 		return // if empty, use default from caigo
 	}

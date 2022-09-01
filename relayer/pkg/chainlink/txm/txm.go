@@ -33,7 +33,7 @@ type TxManager interface {
 type StarkTXM interface {
 	relaytypes.Service
 	TxManager
-	InflightCount() int
+	TxCount(int) int
 }
 
 type starktxm struct {
@@ -251,7 +251,7 @@ func (txm *starktxm) run() {
 			// broadcast original transaction with custom nonce and max fee (if present)
 			hash, broadcastErr := txm.broadcast(ctx, privKey, tx.tx)
 			if broadcastErr != nil {
-				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx)
+				txm.lggr.Errorw("transaction failed to broadcast", "error", broadcastErr, "tx", tx)
 				if err = txm.txs.Errored(tx.id, broadcastErr.Error()); err != nil {
 					txm.lggr.Errorw("unable to save transaction status", "error", err, "tx", tx)
 				}
@@ -284,7 +284,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, tx types.Tra
 
 	// allow custom passed nonce
 	if tx.Nonce != "" {
-		nonce, ok := new(big.Int).SetString(tx.Nonce, 10)
+		nonce, ok := new(big.Int).SetString(tx.Nonce, 0) // use base 0 to dynamically determine base
 		if !ok {
 			return txhash, errors.Errorf("failed to decode custom nonce: %s", tx.Nonce)
 		}
@@ -301,7 +301,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, tx types.Tra
 
 	// allow fustom passed max fee
 	if tx.MaxFee != "" {
-		fee, ok := new(big.Int).SetString(tx.MaxFee, 10)
+		fee, ok := new(big.Int).SetString(tx.MaxFee, 0) // use base 0 to dynamically determine base
 		if !ok {
 			return txhash, errors.Errorf("failed to decode custom max fee: %s", tx.MaxFee)
 		}
@@ -332,6 +332,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, tx types.Tra
 	return res.TransactionHash, nil
 }
 
+// look through transactions to see which can be confirmed
 func (txm *starktxm) confirmer(ctx context.Context) {
 	defer txm.done.Done()
 
@@ -407,6 +408,7 @@ func (txm *starktxm) retryer(ctx context.Context) {
 				tx := txs[i]
 
 				// Fatal condition - error revert in contract
+				// https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/business_logic/execution/execute_entry_point.py#L237
 				// TODO: verify if this is true
 				if strings.Contains(tx.err, "Error in the called contract") {
 					txm.lggr.Errorw("transaction fatally errored", "tx", tx.tx)
@@ -429,8 +431,8 @@ func (txm *starktxm) retryer(ctx context.Context) {
 	}
 }
 
-func (txm *starktxm) InflightCount() int {
-	return len(txm.txs.Get(BROADCAST))
+func (txm *starktxm) TxCount(state int) int {
+	return len(txm.txs.Get(state))
 }
 
 func (txm *starktxm) Close() error {

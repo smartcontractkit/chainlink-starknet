@@ -88,50 +88,149 @@ func TestTxm(t *testing.T) {
 	require.NoError(t, txm.Ready())
 
 	token := "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
-	for k := range localKeys {
-		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(types.Transaction{
-				SenderAddress:      k,
-				ContractAddress:    token,
-				EntryPointSelector: "transfer",
-				Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
-				// Nonce:              "0",
-				MaxFee: "2000000000000000", // specifying MaxFee skips estimation/simulation
-			}))
-		}
-	}
+	var confirmedCount int
+	var fatalCount int
 
-	require.NoError(t, txm.Enqueue(types.Transaction{
-		SenderAddress:      maps.Keys(localKeys)[0],
-		ContractAddress:    token,
-		EntryPointSelector: "transfer",
-		Calldata:           []string{token, "0x1", "0x1"}, // to, uint256 (lower, higher bytes)
-		// Nonce:              "0",
-		MaxFee: "2000000000000000", // specifying MaxFee skips estimation/simulation
-	}))
-	// check > 0 in flight txs
-	var seenInflight bool
-	// check txs are moved out of inflight
-	var doneInflight bool
-	for i := 0; i < 30; i++ {
-		// exit condition
-		if seenInflight && doneInflight {
-			break
+	// send many transcations to the TXM at once - all should succeed
+	t.Run("confirmed-manyTxs", func(t *testing.T) {
+		for k := range localKeys {
+			for i := 0; i < 5; i++ {
+				require.NoError(t, txm.Enqueue(types.Transaction{
+					SenderAddress:      k,
+					ContractAddress:    token,
+					EntryPointSelector: "transfer",
+					Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
+				}))
+			}
 		}
 
-		time.Sleep(time.Second)
-		count := txm.InflightCount()
+		confirmedCount += 10
+		validateTxs(t, txm, CONFIRMED, confirmedCount)
+	})
 
-		seenInflight = count > 0 || seenInflight
-		doneInflight = seenInflight && count == 0
-	}
+	// simulate rpc failed to connect error
+	// tx should be retained and then rebroadcast when endpoint is available again
+	t.Run("errored-endpointError-confirmed", func(t *testing.T) {
+		client.SetURL("http://broken.url")
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress:      maps.Keys(localKeys)[0],
+			ContractAddress:    token,
+			EntryPointSelector: "transfer",
+			Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
+		}))
+
+		// tx should reach errored state
+		validateTxs(t, txm, ERRORED, 1)
+
+		// set URL to correct URL then TX should succeed
+		client.SetURL(url)
+		confirmedCount += 1
+		validateTxs(t, txm, CONFIRMED, confirmedCount)
+	})
+
+	// send transaction with out of order nonce
+	// tx should be sent again with a new nonce
+	t.Run("errored-nonceEstimateError-confirmed", func(t *testing.T) {
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress:      maps.Keys(localKeys)[0],
+			ContractAddress:    token,
+			EntryPointSelector: "transfer",
+			Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
+			Nonce:              "1000",                        // nonce too high
+		}))
+
+		// tx should reach errored state
+		validateTxs(t, txm, ERRORED, 1)
+
+		// tx should then succeed with new nonce
+		confirmedCount += 1
+		validateTxs(t, txm, CONFIRMED, confirmedCount)
+	})
+
+	// send transaction with out of order nonce
+	// tx should be sent again with a new nonce
+	t.Run("errored-nonceTxError-confirmed", func(t *testing.T) {
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress:      maps.Keys(localKeys)[0],
+			ContractAddress:    token,
+			EntryPointSelector: "transfer",
+			Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
+			Nonce:              "1000",                        // nonce too high
+			MaxFee:             "2000000000000000",            // specifying MaxFee skips estimation/simulation
+		}))
+
+		// tx should reach errored state
+		validateTxs(t, txm, ERRORED, 1)
+
+		// tx should then succeed with new nonce
+		confirmedCount += 1
+		validateTxs(t, txm, CONFIRMED, confirmedCount)
+	})
+
+	// send transaction with too low fee
+	// tx should be sent again with proper fee
+	t.Run("errored-feeError-confirmed", func(t *testing.T) {
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress:      maps.Keys(localKeys)[0],
+			ContractAddress:    token,
+			EntryPointSelector: "transfer",
+			Calldata:           []string{token, "0x1", "0x0"}, // to, uint256 (lower, higher bytes)
+			MaxFee:             "1",                           // maxFee too low
+		}))
+
+		// tx should reach errored state
+		validateTxs(t, txm, ERRORED, 1)
+
+		// tx should then succeed with new nonce
+		confirmedCount += 1
+		validateTxs(t, txm, CONFIRMED, confirmedCount)
+	})
+
+	// send transcation that reverts at sequencer
+	t.Run("fatal-revertTx", func(t *testing.T) {
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress:      maps.Keys(localKeys)[0],
+			ContractAddress:    token,
+			EntryPointSelector: "transfer",
+			Calldata:           []string{token, "0x1", "0x1"}, // to, uint256 (lower, higher bytes)
+			MaxFee:             "2000000000000000",            // specifying MaxFee skips estimation/simulation
+		}))
+
+		fatalCount += 1
+		validateTxs(t, txm, FATAL, fatalCount)
+	})
+
+	// send transcation that reverts at estimation
+	t.Run("fatal-revertEstimate", func(t *testing.T) {
+		require.NoError(t, txm.Enqueue(types.Transaction{
+			SenderAddress:      maps.Keys(localKeys)[0],
+			ContractAddress:    token,
+			EntryPointSelector: "transfer",
+			Calldata:           []string{token, "0x1", "0x1"}, // to, uint256 (lower, higher bytes)
+		}))
+
+		fatalCount += 1
+		validateTxs(t, txm, FATAL, fatalCount)
+	})
 
 	// stop txm
 	require.NoError(t, txm.Close())
 	require.Error(t, txm.Ready())
 
 	// check conditions
-	require.True(t, seenInflight)
-	require.True(t, doneInflight)
 	require.True(t, failedFirst)
+}
+
+func validateTxs(t *testing.T, txm StarkTXM, status int, total int) {
+	var count int
+	for i := 0; i < 30; i++ {
+		if count == total {
+			break
+		}
+
+		time.Sleep(time.Second)
+		count = txm.TxCount(status)
+	}
+
+	require.Equal(t, total, count)
 }
