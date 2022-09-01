@@ -12,12 +12,19 @@ interface Oracle {
 }
 
 // Required to convert negative values into [0, PRIME) range
-function toFelt(int: number | BigNumberish): BigNumberish {
-  let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
+const toFelt = (int: number | BigNumberish): BigNumberish => {
+  const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
   return number.toBN(int).umod(prime)
 }
 
+// NOTICE: Leading zeros are trimmed for an encoded felt (number).
+//   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
+const hexPadStart = (data: number, len: number) => {
+  return `0x${data.toString(16).padStart(len, '0')}`
+}
+
 const CHUNK_SIZE = 31
+const OBSERVERS_FIXED = '0x00010203000000000000000000000000000000000000000000000000000000' // 31 bytes, max 31 oracles
 
 function encodeBytes(data: Uint8Array): BN[] {
   let felts = []
@@ -138,6 +145,7 @@ describe('aggregator.cairo', function () {
 
     let result = await aggregator.call('latest_config_details')
     config_digest = result.config_digest
+    console.log(`Config digest: 0x${config_digest.toString(16)}`)
 
     // Immitate the fetch done by relay to confirm latest_config_details_works
     let block = await starknet.getBlock({ blockNumber: result.block_number })
@@ -156,7 +164,6 @@ describe('aggregator.cairo', function () {
 
     let e = decodedEvents[0]
     assert.equal(e.name, 'config_set')
-    console.log(`config_digest: ${config_digest.toString(16)}`)
   })
 
   let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
@@ -174,8 +181,9 @@ describe('aggregator.cairo', function () {
 
     // convert to a single value that will be decoded by toBN
     let observers = `0x${observers_buf.toString('hex')}`
+    assert.equal(observers, OBSERVERS_FIXED)
 
-    let msg = hash.computeHashOnElements([
+    const reportData = [
       // report_context
       config_digest,
       epoch_and_round,
@@ -186,40 +194,24 @@ describe('aggregator.cairo', function () {
       observations.length,
       ...observations,
       juels_per_fee_coin,
-    ])
+    ]
+    let reportDigest = hash.computeHashOnElements(reportData)
+    console.log('Report data: %O', reportData)
+    console.log(`Report digest: ${reportDigest}`)
 
+    console.log('Report signatures - START')
     let signatures = []
-
-    console.log([
-      // report_context
-      `0x${config_digest.toString(16)}`,
-      epoch_and_round,
-      extra_hash,
-      // raw_report
-      observation_timestamp,
-      observers,
-      observations.length,
-      ...observations,
-      juels_per_fee_coin,
-    ])
-    console.log(msg)
     for (let oracle of oracles.slice(0, f + 1)) {
-      let [r, s] = ec.sign(oracle.signer, msg)
-      console.log(
-        `privKey ${oracle.signer.getPrivate()} r ${r} s ${s} pubKey ${number.toBN(
-          ec.getStarkKey(oracle.signer),
-        )}`,
-      )
-      signatures.push({
-        r,
-        s,
-        public_key: number.toBN(ec.getStarkKey(oracle.signer)),
-      })
+      let [r, s] = ec.sign(oracle.signer, reportDigest)
+
+      const privKey = oracle.signer.getPrivate()
+      const pubKey = number.toBN(ec.getStarkKey(oracle.signer))
+      console.log(`pubKey: ${pubKey}, privKey: ${privKey}, r: ${r}, s: ${s}`)
+      signatures.push({ r, s, public_key: pubKey })
     }
-    console.log('---')
+    console.log('Report signatures - END')
 
-    let transmitter = oracles[0].transmitter
-
+    const transmitter = oracles[0].transmitter
     return await transmitter.invoke(aggregator, 'transmit', {
       report_context: {
         config_digest,
@@ -234,7 +226,7 @@ describe('aggregator.cairo', function () {
     })
   }
 
-  it('billing config', async () => {
+  it("should 'set_billing' successfully", async () => {
     await owner.invoke(aggregator, 'set_billing', {
       config: {
         observation_payment_gjuels: 1,
@@ -259,33 +251,24 @@ describe('aggregator.cairo', function () {
     const e = decodedEvents[0]
     const transmitter = oracles[0].transmitter.address
 
-    // NOTICE: Leading zeros are trimmed for an encoded felt (number).
-    //   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
-    const hexPadStart = (data: any, len: number) => {
-      return `0x${data.toString(16).padStart(len, '0')}`
-    }
-
     assert.equal(e.name, 'new_transmission')
     assert.equal(e.data.round_id, 1n)
+    assert.equal(e.data.observation_timestamp, 1n)
+    assert.equal(e.data.epoch_and_round, 1n)
+    assert.equal(e.data.reimbursement, 0n)
 
     let len = 32 * 2 // transmitter
     assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
-    assert.equal(e.data.observation_timestamp, 1n)
 
-    len = 31 * 2 // observers
-    assert.equal(
-      hexPadStart(e.data.observers, len),
-      '0x00010203000000000000000000000000000000000000000000000000000000',
-    )
+    len = 31 * 2 // observers (max 31)
+    assert.equal(hexPadStart(e.data.observers, len), OBSERVERS_FIXED)
     assert.equal(e.data.observations_len, 4n)
 
-    len = 30.5 * 2 // config_digest
-    assert.equal(hexPadStart(e.data.config_digest, len), `0x${config_digest.toString(16)}`)
-    assert.equal(e.data.epoch_and_round, 1n)
-    assert.equal(e.data.reimbursement, 0n)
+    len = 32 * 2 // config_digest
+    assert.equal(hexPadStart(e.data.config_digest, len), hexPadStart(config_digest, len))
   })
 
-  it('transmission', async () => {
+  it('should transmit correctly', async () => {
     await transmit(2, 99)
 
     let { round } = await aggregator.call('latest_round_data')
@@ -293,7 +276,7 @@ describe('aggregator.cairo', function () {
     assert.equal(round.answer, 99)
 
     await transmit(3, toFelt(-10))
-      ; ({ round } = await aggregator.call('latest_round_data'))
+    ;({ round } = await aggregator.call('latest_round_data'))
     assert.equal(round.round_id, 3)
     assert.equal(round.answer, -10)
 
@@ -343,7 +326,7 @@ describe('aggregator.cairo', function () {
         proposed: proposed_payee,
       })
       expect.fail()
-    } catch (err: any) { }
+    } catch (err: any) {}
 
     // successful transfer
     await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -355,7 +338,7 @@ describe('aggregator.cairo', function () {
     try {
       await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
       expect.fail()
-    } catch (err: any) { }
+    } catch (err: any) {}
 
     // successful accept
     await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
@@ -401,11 +384,11 @@ describe('aggregator.cairo', function () {
     assert.ok(number.toBN(owed).eq(uint256.uint256ToBN(balance)))
 
     // owed payment is now zero
-    owed = (
-      await payee.call(aggregator, 'owed_payment', {
+    {
+      let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })
-    ).amount
-    assert.ok(owed == 0)
+      assert.ok(owed == 0)
+    }
   })
 })

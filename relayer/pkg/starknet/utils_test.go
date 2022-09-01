@@ -1,8 +1,8 @@
 package starknet
 
 import (
-	"math/big"
 	"crypto/rand"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
