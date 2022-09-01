@@ -1,7 +1,6 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.bool import TRUE, FALSE
 
 from chainlink.cairo.access.SimpleWriteAccessController.library import SimpleWriteAccessController
 

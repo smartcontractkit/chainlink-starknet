@@ -1,11 +1,8 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import assert_not_zero, assert_le
 from starkware.cairo.common.uint256 import Uint256
-from starkware.starknet.common.syscalls import get_caller_address
-from starkware.cairo.common.bool import FALSE, TRUE
+from starkware.cairo.common.bool import TRUE
 
 from openzeppelin.token.erc20.library import ERC20
 
