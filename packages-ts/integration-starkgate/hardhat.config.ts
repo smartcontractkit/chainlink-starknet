@@ -1,4 +1,6 @@
 import '@shardlabs/starknet-hardhat-plugin'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
 
 import { HardhatUserConfig } from 'hardhat/types'
 
@@ -6,6 +8,7 @@ const config: HardhatUserConfig = {
   solidity: '0.8.14',
   starknet: {
     venv: 'active',
+    network: 'devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
@@ -15,7 +18,7 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    starknetArtifacts: 'node_modules/@chainlink-dev/starkgate-contracts/artifacts',
+    starknetArtifacts: '../../contracts/starknet-artifacts',
   },
   networks: {
     devnet: {
