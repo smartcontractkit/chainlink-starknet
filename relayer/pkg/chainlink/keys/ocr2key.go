@@ -64,10 +64,10 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 
 	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
 	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
-	if _, err := buff.Write(starknet.PadBytesBigInt(r, byteLen)); err != nil {
+	if _, err := buff.Write(starknet.PadBytes(r.Bytes(), byteLen)); err != nil {
 		return []byte{}, err
 	}
-	if _, err := buff.Write(starknet.PadBytesBigInt(s, byteLen)); err != nil {
+	if _, err := buff.Write(starknet.PadBytes(s.Bytes(), byteLen)); err != nil {
 		return []byte{}, err
 	}
 
@@ -107,7 +107,7 @@ func (sk *OCR2Key) MaxSignatureLength() int {
 }
 
 func (sk *OCR2Key) Marshal() ([]byte, error) {
-	return starknet.PadBytesBigInt(sk.priv, sk.privateKeyLen()), nil
+	return starknet.PadBytes(sk.priv.Bytes(), sk.privateKeyLen()), nil
 }
 
 func (sk *OCR2Key) privateKeyLen() int {
