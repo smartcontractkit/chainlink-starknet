@@ -5,7 +5,7 @@ from starkware.cairo.common.math import split_felt, assert_not_zero
 
 from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
 
-from chainlink.cairo.access.ownable import Ownable_initializer, Ownable_only_owner
+from chainlink.cairo.access.ownable import Ownable
 
 struct Phase:
     member id : felt
@@ -39,7 +39,7 @@ end
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner : felt, address : felt
 ):
-    Ownable_initializer(owner)
+    Ownable.initializer(owner)
     set_aggregator(address)
     return ()
 end
@@ -58,7 +58,7 @@ end
 func propose_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     Proxy_proposed_aggregator.write(address)
 
@@ -72,7 +72,7 @@ end
 func confirm_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     let (phase : Phase) = Proxy_current_phase.read()
     let previous = phase.aggregator

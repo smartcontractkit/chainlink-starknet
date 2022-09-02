@@ -43,13 +43,7 @@ from chainlink.cairo.access.IAccessController import IAccessController
 
 from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
 
-from chainlink.cairo.access.ownable import (
-    Ownable_initializer,
-    Ownable_only_owner,
-    Ownable_get_owner,
-    Ownable_transfer_ownership,
-    Ownable_accept_ownership,
-)
+from chainlink.cairo.access.ownable import Ownable
 
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 
@@ -163,7 +157,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     decimals : felt,
     description : felt,
 ):
-    Ownable_initializer(owner)
+    Ownable.initializer(owner)
     SimpleReadAccessController.initialize(owner)
     Aggregator_link_token.write(link)
     Aggregator_billing_access_controller.write(billing_access_controller)
@@ -184,7 +178,7 @@ end
 
 @view
 func owner{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}() -> (owner : felt):
-    let (owner) = Ownable_get_owner()
+    let (owner) = Ownable.get_owner()
     return (owner=owner)
 end
 
@@ -192,14 +186,12 @@ end
 func transfer_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     new_owner : felt
 ) -> ():
-    return Ownable_transfer_ownership(new_owner)
+    return Ownable.transfer_ownership(new_owner)
 end
 
 @external
-func accept_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    new_owner : felt
-):
-    return Ownable_accept_ownership()
+func accept_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    return Ownable.accept_ownership()
 end
 
 # --- Validation ---
@@ -251,7 +243,7 @@ func set_config{
     offchain_config : felt*,
 ) -> (digest : felt):
     alloc_locals
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     assert_nn_le(oracles_len, MAX_ORACLES)  # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len)  # 3 * f < oracles_len
@@ -797,7 +789,7 @@ func set_link_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     link_token : felt, recipient : felt
 ):
     alloc_locals
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     let (old_token) = Aggregator_link_token.read()
     if link_token == old_token:
@@ -844,7 +836,7 @@ end
 func set_billing_access_controller{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(access_controller : felt):
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     let (old_controller) = Aggregator_billing_access_controller.read()
     if access_controller != old_controller:
@@ -913,7 +905,7 @@ end
 
 func has_billing_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller) = get_caller_address()
-    let (owner) = Ownable_get_owner()
+    let (owner) = Ownable.get_owner()
 
     # owner always has access
     if caller == owner:
@@ -1152,7 +1144,7 @@ end
 func set_payees{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     payees_len : felt, payees : PayeeConfig*
 ):
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     set_payee(payees, payees_len)
 
