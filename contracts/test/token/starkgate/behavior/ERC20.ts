@@ -3,7 +3,7 @@ import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { uint256 } from 'starknet'
 import { toBN } from 'starknet/utils/number'
 import { TIMEOUT } from '../../../constants'
-import { assertErrorMsg } from '../../../utils'
+import * as utils from '../../../utils'
 
 export type TestData = {
   token: StarknetContract
@@ -25,6 +25,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
     })
 
     it('should mint successfully', async () => {
+      console.log(Object.keys(utils))
       /* Mint some token with the good minter and check the user's balance */
       await t.owner.invoke(t.token, 'permissionedMint', {
         recipient: t.alice.starknetContract.address,
@@ -101,7 +102,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
 
       try {
@@ -112,7 +113,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
     })
 
@@ -194,7 +195,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
       try {
         await t.alice.invoke(t.token, 'transfer', {
@@ -204,7 +205,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
     })
 
@@ -271,7 +272,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
       try {
         await t.owner.invoke(t.token, 'transferFrom', {
@@ -282,7 +283,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
     })
 
@@ -383,7 +384,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
       try {
         await t.owner.invoke(t.token, 'transferFrom', {
@@ -394,7 +395,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         throw new Error('This should not pass!')
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
-        assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
+        utils.assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
       }
     })
   })
