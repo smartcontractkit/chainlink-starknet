@@ -6,7 +6,7 @@ export enum CONTRACT_LIST {
   ACCESS_CONTROLLER = 'access_controller',
 }
 
-export const loadContractOcr2 = (name: CONTRACT_LIST): CompiledContract => {
+export const loadContract_Ocr2 = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
@@ -16,7 +16,7 @@ export const loadContractOcr2 = (name: CONTRACT_LIST): CompiledContract => {
   )
 }
 
-export const loadContractAccessController = (name: CONTRACT_LIST): CompiledContract => {
+export const loadContract_AccessController = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
@@ -26,6 +26,6 @@ export const loadContractAccessController = (name: CONTRACT_LIST): CompiledContr
   )
 }
 
-export const ocr2ContractLoader = () => loadContractOcr2(CONTRACT_LIST.OCR2)
+export const ocr2ContractLoader = () => loadContract_Ocr2(CONTRACT_LIST.OCR2)
 export const accessControllerContractLoader = () =>
-  loadContractAccessController(CONTRACT_LIST.ACCESS_CONTROLLER)
+  loadContract_AccessController(CONTRACT_LIST.ACCESS_CONTROLLER)
