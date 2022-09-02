@@ -6,7 +6,11 @@ import { StarknetContract, HttpNetworkConfig, Account } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expectAddressEquality } from '../../../contracts/test/utils'
-import { loadSolidityContract, loadStarkgateContract, loadOpenzepplinContract } from '../utils'
+import {
+  loadContract_Solidity,
+  loadContract_InternalStarkgate,
+  loadContract_Openzepplin,
+} from '../utils'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
@@ -45,7 +49,7 @@ describe('Test starkgate bridge with link token', function () {
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
 
-    starkNetERC20BridgeContract = await loadStarkgateContract('StarknetERC20Bridge')
+    starkNetERC20BridgeContract = await loadContract_InternalStarkgate('StarknetERC20Bridge')
     const starkNetERC20BridgeFactory = new ethers.ContractFactory(
       starkNetERC20BridgeContract.abi,
       starkNetERC20BridgeContract.bytecode,
@@ -54,7 +58,7 @@ describe('Test starkgate bridge with link token', function () {
     starkNetERC20Bridge = await starkNetERC20BridgeFactory.deploy()
     await starkNetERC20Bridge.deployed()
 
-    const mockStarknetMessagingContract = await loadSolidityContract('MockStarkNetMessaging')
+    const mockStarknetMessagingContract = await loadContract_Solidity('MockStarkNetMessaging')
     const mockStarknetMessagingFactory = new ethers.ContractFactory(
       mockStarknetMessagingContract.abi,
       mockStarknetMessagingContract.bytecode,
@@ -65,7 +69,7 @@ describe('Test starkgate bridge with link token', function () {
 
     await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
-    const testERC20contract = await loadOpenzepplinContract('ERC20PresetFixedSupply')
+    const testERC20contract = await loadContract_Openzepplin('ERC20PresetFixedSupply')
     const testERC20Factory = new ethers.ContractFactory(
       testERC20contract.abi,
       testERC20contract.bytecode,
@@ -74,7 +78,7 @@ describe('Test starkgate bridge with link token', function () {
     testERC20 = await testERC20Factory.deploy(NAME, SYMBOL, 10, deployer.address)
     await testERC20.deployed()
 
-    const proxyContract = await loadOpenzepplinContract('ERC1967Proxy')
+    const proxyContract = await loadContract_Openzepplin('ERC1967Proxy')
     proxyFactory = new ethers.ContractFactory(proxyContract.abi, proxyContract.bytecode, deployer)
 
     const inter = new ethers.utils.Interface(starkNetERC20BridgeContract.abi)

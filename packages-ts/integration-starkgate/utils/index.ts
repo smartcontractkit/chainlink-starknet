@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { json } from 'starknet'
 
-export const loadStarkgateContract = (name: string): any => {
+export const loadContract_InternalStarkgate = (name: string): any => {
   return json.parse(
     fs
       .readFileSync(
@@ -11,7 +11,7 @@ export const loadStarkgateContract = (name: string): any => {
   )
 }
 
-export const loadOpenzepplinContract = (name: string): any => {
+export const loadContract_Openzepplin = (name: string): any => {
   return json.parse(
     fs
       .readFileSync(
@@ -21,7 +21,7 @@ export const loadOpenzepplinContract = (name: string): any => {
   )
 }
 
-export const loadSolidityContract = (name: string): any => {
+export const loadContract_Solidity = (name: string): any => {
   return json.parse(
     fs
       .readFileSync(

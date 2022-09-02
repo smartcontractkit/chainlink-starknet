@@ -126,7 +126,6 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         })
         throw new Error('This should not pass!')
       } catch (error: any) {
-        console.log(error.message)
         expect(/assert/gi.test(error.message)).to.be.true
       }
 
