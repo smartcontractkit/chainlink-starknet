@@ -3,10 +3,12 @@ package starknet
 import (
 	"context"
 
+	caigotypes "github.com/dontpanicdao/caigo/types"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/core"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	// unused module to keep in go.mod and prevent ambiguous import
@@ -25,6 +27,6 @@ type Chain interface {
 	Config() config.Config
 	UpdateConfig(*db.ChainCfg)
 
-	TxManager() txm.TxManager
+	TxManager() core.TxQueue[caigotypes.Transaction]
 	Reader() (starknet.Reader, error)
 }

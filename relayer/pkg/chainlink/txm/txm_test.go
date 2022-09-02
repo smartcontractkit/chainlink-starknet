@@ -14,7 +14,8 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
-	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/core"
+	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/core/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -105,7 +106,7 @@ func TestTxm(t *testing.T) {
 		}
 
 		confirmedCount += 10
-		validateTxs(t, txm, CONFIRMED, confirmedCount)
+		validateTxs(t, txm, core.CONFIRMED, confirmedCount)
 	})
 
 	// simulate rpc failed to connect error
@@ -120,12 +121,12 @@ func TestTxm(t *testing.T) {
 		}))
 
 		// tx should reach errored state
-		validateTxs(t, txm, ERRORED, 1)
+		validateTxs(t, txm, core.ERRORED, 1)
 
 		// set URL to correct URL then TX should succeed
 		client.SetURL(url)
 		confirmedCount += 1
-		validateTxs(t, txm, CONFIRMED, confirmedCount)
+		validateTxs(t, txm, core.CONFIRMED, confirmedCount)
 	})
 
 	// send transaction with out of order nonce
@@ -140,11 +141,11 @@ func TestTxm(t *testing.T) {
 		}))
 
 		// tx should reach errored state
-		validateTxs(t, txm, ERRORED, 1)
+		validateTxs(t, txm, core.ERRORED, 1)
 
 		// tx should then succeed with new nonce
 		confirmedCount += 1
-		validateTxs(t, txm, CONFIRMED, confirmedCount)
+		validateTxs(t, txm, core.CONFIRMED, confirmedCount)
 	})
 
 	// send transaction with out of order nonce
@@ -160,11 +161,11 @@ func TestTxm(t *testing.T) {
 		}))
 
 		// tx should reach errored state
-		validateTxs(t, txm, ERRORED, 1)
+		validateTxs(t, txm, core.ERRORED, 1)
 
 		// tx should then succeed with new nonce
 		confirmedCount += 1
-		validateTxs(t, txm, CONFIRMED, confirmedCount)
+		validateTxs(t, txm, core.CONFIRMED, confirmedCount)
 	})
 
 	// send transaction with too low fee
@@ -179,11 +180,11 @@ func TestTxm(t *testing.T) {
 		}))
 
 		// tx should reach errored state
-		validateTxs(t, txm, ERRORED, 1)
+		validateTxs(t, txm, core.ERRORED, 1)
 
 		// tx should then succeed with new nonce
 		confirmedCount += 1
-		validateTxs(t, txm, CONFIRMED, confirmedCount)
+		validateTxs(t, txm, core.CONFIRMED, confirmedCount)
 	})
 
 	// send transcation that reverts at sequencer
@@ -197,7 +198,7 @@ func TestTxm(t *testing.T) {
 		}))
 
 		fatalCount += 1
-		validateTxs(t, txm, FATAL, fatalCount)
+		validateTxs(t, txm, core.FATAL, fatalCount)
 	})
 
 	// send transcation that reverts at estimation
@@ -210,8 +211,10 @@ func TestTxm(t *testing.T) {
 		}))
 
 		fatalCount += 1
-		validateTxs(t, txm, FATAL, fatalCount)
+		validateTxs(t, txm, core.FATAL, fatalCount)
 	})
+
+	// TODO: fatal test for invalid private key
 
 	// stop txm
 	require.NoError(t, txm.Close())
@@ -221,7 +224,7 @@ func TestTxm(t *testing.T) {
 	require.True(t, failedFirst)
 }
 
-func validateTxs(t *testing.T, txm StarkTXM, status int, total int) {
+func validateTxs(t *testing.T, txm core.TxManager[types.Transaction], status core.Status, total int) {
 	var count int
 	for i := 0; i < 30; i++ {
 		if count == total {

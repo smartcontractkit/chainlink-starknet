@@ -8,51 +8,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 )
-
-// transcation states
-type Status int
-
-const (
-	QUEUED Status = iota
-	RETRY         // can be reached from ERRORED
-	BROADCAST
-	CONFIRMED // ending state for happy path
-	ERRORED
-	FATAL // ending state for failed txs (reverts, etc)
-)
-
-func (d Status) String() string {
-	return [...]string{"QUEUED", "RETRY", "BROADCAST", "CONFIRMED", "FATAL"}[d]
-}
 
 const (
 	MaxQueueLen = 1000
 )
 
-type Config interface {
-	TxTimeout() time.Duration
-	TxConfirmFrequency() time.Duration
-	TxRetryFrequency() time.Duration
-}
-
-type TxQueue[T any] interface {
-	Enqueue(T) error
-}
-
-type TxManager[T any] interface {
-	types.Service
-	TxQueue[T]
-	TxCount(Status) int
-}
-
-type Keystore[K any] interface {
-	Get(id string) (K, error)
-}
-
-type txm[T any, K any, C any, N any, E any] struct {
+type txm[T any, K any, N any, E any] struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
 	done    sync.WaitGroup
@@ -64,45 +27,19 @@ type txm[T any, K any, C any, N any, E any] struct {
 	txs     TxStatuses[T]
 }
 
-type TxStatuses[T any] interface {
-	Get(status Status) []Tx[T]
-	Exists(id string) bool
-	Queued(tx T) (Tx[T], error)
-	Retry(id string) (Tx[T], error)
-	Broadcast(id, hash string) error
-	Confirmed(id string) error
-	Errored(id, err string) error
-	Fatal(id string) error
-}
-
-type Tx[T any] interface {
-	Sender() string
-	ID() string
-	Tx() T
-	Hash() string
-	Status() int
-	Err() string
-}
-
-type ChainClient[K any, T any, N any, E any] interface {
-	GetNonce(context.Context, K) (N, error)
-	EstimateTx(context.Context, K, T) (E, error)
-	SendTx(context.Context, K, T, N, E) (string, error)
-	TxStatus(context.Context, string) (Status, string, error)
-	IsFatalError(string) bool
-}
-
-// T - base transcation type to be sent in the queue
-// K - base key type
-// C - base client type
-func New[T any, K any, C any, N any, E any](
+func New[T any, K any, N any, E any](
 	lggr logger.Logger,
 	ks Keystore[K],
 	cfg Config,
 	client ChainClient[K, T, N, E],
 	txStatuses TxStatuses[T],
 ) (TxManager[T], error) {
-	return &txm[T, K, C, N, E]{
+	// validate interface inputs are not nil
+	if lggr == nil || ks == nil || cfg == nil || client == nil || txStatuses == nil {
+		return nil, fmt.Errorf("txm inputs cannot be nil")
+	}
+
+	return &txm[T, K, N, E]{
 		lggr:   lggr,
 		queue:  make(chan Tx[T], MaxQueueLen),
 		stop:   make(chan struct{}),
@@ -113,7 +50,7 @@ func New[T any, K any, C any, N any, E any](
 	}, nil
 }
 
-func (txm *txm[T, K, C, N, E]) Start(ctx context.Context) error {
+func (txm *txm[T, K, N, E]) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("txm", func() error {
 		txm.done.Add(3) // waitgroup: tx sender, confirmer, retryer
 		go txm.run()
@@ -121,7 +58,7 @@ func (txm *txm[T, K, C, N, E]) Start(ctx context.Context) error {
 	})
 }
 
-func (txm *txm[T, K, C, N, E]) run() {
+func (txm *txm[T, K, N, E]) run() {
 	defer txm.done.Done()
 
 	ctx, cancel := utils.ContextFromChan(txm.stop)
@@ -161,15 +98,15 @@ func (txm *txm[T, K, C, N, E]) run() {
 	}
 }
 
-func (txm *txm[T, K, C, N, E]) broadcast(ctx context.Context, key K, tx T) (txhash string, err error) {
+func (txm *txm[T, K, N, E]) broadcast(ctx context.Context, key K, tx T) (txhash string, err error) {
 	// get Nonce
-	nonce, err := txm.client.GetNonce(ctx, key)
+	nonce, err := txm.client.GetNonce(ctx, key, tx)
 	if err != nil {
 		return txhash, errors.Wrap(err, "err in txm.getNonce")
 	}
 
 	// estimate/simulate Tx
-	fee, err := txm.client.EstimateTx(ctx, key, tx)
+	fee, err := txm.client.EstimateTx(ctx, key, tx, nonce)
 	if err != nil {
 		return txhash, errors.Wrap(err, "err in txm.estimateFee")
 	}
@@ -180,7 +117,7 @@ func (txm *txm[T, K, C, N, E]) broadcast(ctx context.Context, key K, tx T) (txha
 	return txm.client.SendTx(execCtx, key, tx, nonce, fee)
 }
 
-func (txm *txm[T, K, C, N, E]) confirmer(ctx context.Context) {
+func (txm *txm[T, K, N, E]) confirmer(ctx context.Context) {
 	defer txm.done.Done()
 
 	tick := time.After(0) // immediately try confirming any unconfirmed
@@ -200,7 +137,7 @@ func (txm *txm[T, K, C, N, E]) confirmer(ctx context.Context) {
 				go func(tx Tx[T]) {
 					defer wg.Done()
 
-					// TODO: get transaction status
+					// get transaction status
 					status, statusErrStr, err := txm.client.TxStatus(ctx, tx.Hash())
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch tx status", "hash", tx.Hash())
@@ -233,7 +170,7 @@ func (txm *txm[T, K, C, N, E]) confirmer(ctx context.Context) {
 	}
 }
 
-func (txm *txm[T, K, C, N, E]) retryer(ctx context.Context) {
+func (txm *txm[T, K, N, E]) retryer(ctx context.Context) {
 	defer txm.done.Done()
 
 	tick := time.After(0)
@@ -249,7 +186,7 @@ func (txm *txm[T, K, C, N, E]) retryer(ctx context.Context) {
 			for i := range txs {
 				tx := txs[i]
 
-				// determine if tx is fatal error
+				// determine if fatal based on chain specific error
 				if txm.client.IsFatalError(tx.Err()) {
 					txm.lggr.Errorw("transaction fatally errored", "tx", tx.Tx(), "error", tx.Err())
 					if err := txm.txs.Fatal(tx.ID()); err != nil {
@@ -271,11 +208,11 @@ func (txm *txm[T, K, C, N, E]) retryer(ctx context.Context) {
 	}
 }
 
-func (txm *txm[T, K, C, N, E]) TxCount(state Status) int {
+func (txm *txm[T, K, N, E]) TxCount(state Status) int {
 	return len(txm.txs.Get(state))
 }
 
-func (txm *txm[T, K, C, N, E]) Close() error {
+func (txm *txm[T, K, N, E]) Close() error {
 	return txm.starter.StopOnce("txm", func() error {
 		close(txm.stop)
 		txm.done.Wait()
@@ -283,15 +220,15 @@ func (txm *txm[T, K, C, N, E]) Close() error {
 	})
 }
 
-func (txm *txm[T, K, C, N, E]) Healthy() error {
+func (txm *txm[T, K, N, E]) Healthy() error {
 	return txm.starter.Healthy()
 }
 
-func (txm *txm[T, K, C, N, E]) Ready() error {
+func (txm *txm[T, K, N, E]) Ready() error {
 	return txm.starter.Ready()
 }
 
-func (txm *txm[T, K, C, N, E]) Enqueue(tx T) error {
+func (txm *txm[T, K, N, E]) Enqueue(tx T) error {
 	// add transaction to storage to preserve in case of later error
 	queuedTx, err := txm.txs.Queued(tx)
 	if err != nil {

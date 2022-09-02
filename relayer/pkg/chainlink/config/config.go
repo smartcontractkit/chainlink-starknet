@@ -7,7 +7,7 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/core"
 )
 
 var DefaultConfigSet = ConfigSet{
@@ -33,7 +33,7 @@ type ConfigSet struct {
 }
 
 type Config interface {
-	txm.Config // txm config
+	core.Config // txm config
 
 	// ocr2 config
 	ocr2.Config

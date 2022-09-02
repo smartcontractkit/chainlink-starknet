@@ -10,7 +10,7 @@ import (
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/core"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -25,14 +25,14 @@ type contractTransmitter struct {
 	contractAddress string
 	senderAddress   string
 
-	txm txm.TxManager
+	txm core.TxQueue[caigotypes.Transaction]
 }
 
 func NewContractTransmitter(
 	reader *transmissionsCache,
 	contract string,
 	sender string,
-	txm txm.TxManager,
+	txm core.TxQueue[caigotypes.Transaction],
 ) *contractTransmitter {
 	return &contractTransmitter{
 		reader:          reader,

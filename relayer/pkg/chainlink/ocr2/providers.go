@@ -3,10 +3,11 @@ package ocr2
 import (
 	"context"
 
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/core"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -77,7 +78,7 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg Config, txm core.TxQueue[caigotypes.Transaction], lggr logger.Logger) (*medianProvider, error) {
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in NewMedianProvider.NewConfigProvider")
