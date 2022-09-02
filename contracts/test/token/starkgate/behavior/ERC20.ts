@@ -3,7 +3,7 @@ import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { uint256 } from 'starknet'
 import { toBN } from 'starknet/utils/number'
 import { TIMEOUT } from '../../../constants'
-import { assertErrorMsg } from '../../../utils'
+import { assertErrorMsg } from '../../../../test/utils'
 
 export type TestData = {
   token: StarknetContract

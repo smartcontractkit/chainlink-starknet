@@ -1,6 +1,6 @@
 import { starknet } from 'hardhat'
 import { TIMEOUT } from '../../constants'
-import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20.test'
+import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
 
 describe('link_token', function () {
   this.timeout(TIMEOUT)
