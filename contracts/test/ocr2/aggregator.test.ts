@@ -24,7 +24,10 @@ const hexPadStart = (data: number, len: number) => {
 }
 
 const CHUNK_SIZE = 31
-const OBSERVERS_FIXED = '0x00010203000000000000000000000000000000000000000000000000000000' // 31 bytes, max 31 oracles
+
+// Observers - max 31 oracles or 31 bytes
+const OBSERVERS_MAX = 31
+const OBSERVERS_HEX = '0x00010203000000000000000000000000000000000000000000000000000000'
 
 function encodeBytes(data: Uint8Array): BN[] {
   let felts = []
@@ -177,7 +180,7 @@ describe('aggregator.cairo', function () {
 
     // convert to a single value that will be decoded by toBN
     let observers = `0x${observers_buf.toString('hex')}`
-    assert.equal(observers, OBSERVERS_FIXED)
+    assert.equal(observers, OBSERVERS_HEX)
 
     const reportData = [
       // report_context
@@ -250,15 +253,13 @@ describe('aggregator.cairo', function () {
     assert.equal(e.data.epoch_and_round, 1n)
     assert.equal(e.data.reimbursement, 0n)
 
-    let len = 32 * 2 // transmitter
+    const len = 32 * 2 // 32 bytes (hex)
     assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
 
-    // TODO: https://github.com/smartcontractkit/chainlink-starknet/pull/87#discussion_r960139209
-    len = 31 * 2 // observers (max 31)
-    assert.equal(hexPadStart(e.data.observers, len), OBSERVERS_FIXED)
+    const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
+    assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)
     assert.equal(e.data.observations_len, 4n)
 
-    len = 32 * 2 // config_digest
     assert.equal(hexPadStart(e.data.config_digest, len), hexPadStart(config_digest, len))
   })
 

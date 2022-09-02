@@ -14,6 +14,10 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
+var (
+	MaxObservers = 31
+)
+
 // NewTransmissionEvent represents the 'new_transmission' event
 type NewTransmissionEvent struct {
 	RoundId         uint32
@@ -49,9 +53,9 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	unixTime := eventData[index].Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
-	// observers (raw)
+	// observers (raw) max 31
 	index += 1
-	observersRaw := eventData[index].Big().Bytes()
+	observersRaw := starknet.PadBytes(eventData[index].Big().Bytes(), MaxObservers)
 
 	// observation_len
 	index += 1
@@ -141,7 +145,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index = index + int(oraclesLen)*2
 	f := eventData[index].Uint64()
 
-	//onchain_config length
+	// onchain_config length
 	index += 1
 	onchainConfigLen := eventData[index].Uint64()
 
@@ -169,7 +173,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index += 1
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
 	// todo: get rid of caigoToJuno workaround
-	offchainConfig, err := starknet.DecodeFelts(starknet.CaigoFeltsToJunoFelts(offchainConfigFelts))
+	offchainConfig, err := starknet.DecodeFelts(starknet.FeltsToBig(offchainConfigFelts))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
 	}

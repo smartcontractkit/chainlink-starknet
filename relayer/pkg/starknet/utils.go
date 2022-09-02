@@ -15,11 +15,6 @@ import (
 
 const chunkSize = 31
 
-// convert big into padded bytes
-func PadBytesBigInt(a *big.Int, length int) []byte {
-	return PadBytes(a.Bytes(), length)
-}
-
 // padd bytes to specific length
 func PadBytes(a []byte, length int) []byte {
 	if len(a) < length {
@@ -112,16 +107,24 @@ func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
 
 func HexToSignedBig(str string) (num *big.Int) {
 	felt := junotypes.HexToFelt(str)
-	num = felt.Big()
-	return FeltToSignedBig(&caigotypes.Felt{Int: num})
+	return FeltToSignedBig(&caigotypes.Felt{Int: felt.Big()})
 }
 
-func CaigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
-	for _, felt := range cFelts {
-		jFelts = append(jFelts, felt.Int)
+func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
+	for _, f := range in {
+		out = append(out, f.Int)
 	}
 
-	return jFelts
+	return out
+}
+
+// StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
+func StringsToFelt(in []string) (out []*caigotypes.Felt) {
+	for _, f := range in {
+		out = append(out, caigotypes.StrToFelt(f))
+	}
+
+	return out
 }
 
 // CompareAddress compares different hex starknet addresses with potentially different 0 padding

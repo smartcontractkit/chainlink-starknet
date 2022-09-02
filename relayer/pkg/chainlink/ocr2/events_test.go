@@ -1,12 +1,18 @@
 package ocr2
 
 import (
+	"math/big"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 var (
@@ -52,25 +58,75 @@ var (
 )
 
 func TestNewTransmissionEvent_Parse(t *testing.T) {
-	var eventData []*caigotypes.Felt
-	for i := 0; i < len(exampleNewTransmissionEventRaw); i++ {
-		eventData = append(eventData, caigotypes.StrToFelt(exampleNewTransmissionEventRaw[i]))
-	}
-
+	eventData := starknet.StringsToFelt(exampleNewTransmissionEventRaw)
 	require.Equal(t, len(exampleNewTransmissionEventRaw), len(eventData))
 
-	_, err := ParseNewTransmissionEvent(eventData)
+	e, err := ParseNewTransmissionEvent(eventData)
 	assert.NoError(t, err)
+
+	require.Equal(t, e.RoundId, uint32(1))
+	require.Equal(t, e.LatestAnswer, big.NewInt(99))
+	require.Equal(t, e.LatestTimestamp, time.Unix(1, 0))
+	require.Equal(t, e.Epoch, uint32(0))
+	require.Equal(t, e.Round, uint8(1))
+	require.Equal(t, e.Reimbursement, big.NewInt(0))
+
+	transmitterHex := "0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d"
+	require.Equal(t, len(transmitterHex), int(2+31.5*2)) // len('0x') + len(max_felt_len)
+	require.Equal(t, e.Transmitter, caigotypes.StrToFelt(transmitterHex))
+
+	require.Equal(t, e.Observers, []uint8{0, 1, 2, 3})
+	require.Equal(t, e.ObservationsLen, uint32(4))
+	require.Equal(t, e.ObservationsLen, uint32(len(e.Observers)))
+
+	configDigest := types.ConfigDigest{0x0, 0x4, 0x85, 0x34, 0x1c, 0x18, 0x46, 0x1d, 0x70, 0xea, 0xc6, 0xde, 0xd4, 0xb8, 0xb1, 0x71, 0x47, 0xf1, 0x73, 0x30, 0x8d, 0xdd, 0x56, 0x21, 0x6a, 0x86, 0xf9, 0xec, 0x4d, 0x99, 0x44, 0x53}
+	require.Equal(t, len(configDigest), 32) // padded to 32 bytes
+	require.Equal(t, e.ConfigDigest, configDigest)
 }
 
 func TestConfigSetEvent_Parse(t *testing.T) {
-	var eventData []*caigotypes.Felt
-	for i := 0; i < len(exampleConfigSetEventRaw); i++ {
-		eventData = append(eventData, caigotypes.StrToFelt(exampleConfigSetEventRaw[i]))
-	}
-
+	eventData := starknet.StringsToFelt(exampleConfigSetEventRaw)
 	require.Equal(t, len(exampleConfigSetEventRaw), len(eventData))
 
-	_, err := ParseConfigSetEvent(eventData)
+	e, err := ParseConfigSetEvent(eventData)
 	assert.NoError(t, err)
+
+	configDigest := types.ConfigDigest{0x0, 0x4, 0x85, 0x34, 0x1c, 0x18, 0x46, 0x1d, 0x70, 0xea, 0xc6, 0xde, 0xd4, 0xb8, 0xb1, 0x71, 0x47, 0xf1, 0x73, 0x30, 0x8d, 0xdd, 0x56, 0x21, 0x6a, 0x86, 0xf9, 0xec, 0x4d, 0x99, 0x44, 0x53}
+	require.Equal(t, len(configDigest), 32) // padded to 32 bytes
+	require.Equal(t, e.ConfigDigest, configDigest)
+
+	require.Equal(t, e.ConfigCount, uint64(1))
+
+	// TODO: WIP
+	// require.Equal(t, e.Signers, uint64(1))
+	// require.Equal(t, e.Transmitters, uint64(1))
+
+	require.Equal(t, e.F, uint8(1))
+
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
+		big.NewInt(medianreport.OnchainConfigVersion), // version
+		big.NewInt(-10),        // min
+		big.NewInt(1000000000), // max
+	)
+	assert.NoError(t, err)
+
+	// TODO: hmm, it's unexpected that this fails?
+	// expected: []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xf7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3b, 0x9a, 0xca, 0x0}
+	// actual  : []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xf6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3b, 0x9a, 0xca, 0x0}
+
+	// Diff:
+	// --- Expected
+	// +++ Actual
+	// @@ -3,4 +3,4 @@
+	// 	00000010  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 01  |................|
+	//   - 00000020  08 00 00 00 00 00 00 10  ff ff ff ff ff ff ff ff  |................|
+	//   - 00000030  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff f7  |................|
+	//   + 00000020  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+	//   + 00000030  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff f6  |................|
+	// 	00000040  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+	require.Equal(t, e.OnchainConfig, onchainConfig)
+
+	require.Equal(t, e.OffchainConfigVersion, uint64(2))
+	// TODO: passes - this doesnt seem right?
+	require.Equal(t, e.OffchainConfig, []uint8{0x1})
 }
