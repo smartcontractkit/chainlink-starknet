@@ -2,6 +2,7 @@ package starknet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -140,4 +141,14 @@ func CompareAddress(a, b string) bool {
 	}
 
 	return bytes.Compare(PadBytes(aBytes, 32), PadBytes(bBytes, 32)) == 0
+}
+
+/* Testing utils - do not use (XXX) outside testing context */
+
+func XXXMustHexDecodeString(data string) []byte {
+	bytes, err := hex.DecodeString(data)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
 }
