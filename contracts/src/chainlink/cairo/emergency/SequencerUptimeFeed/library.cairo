@@ -13,7 +13,7 @@ from starkware.cairo.common.bool import TRUE
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
 from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
-from chainlink.cairo.access.ownable import Ownable_only_owner
+from chainlink.cairo.access.ownable import Ownable
 
 @event
 func RoundUpdated(status : felt, updated_at : felt):
@@ -78,7 +78,7 @@ end
 func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
     _set_l1_sender(address)
 
     return ()
