@@ -158,7 +158,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     description : felt,
 ):
     Ownable.initializer(owner)
-    SimpleReadAccessController.initialize(owner)
+    SimpleReadAccessController.initialize(owner) # This also calls Ownable.initializer
     Aggregator_link_token.write(link)
     Aggregator_billing_access_controller.write(billing_access_controller)
 
