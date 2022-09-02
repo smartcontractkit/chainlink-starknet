@@ -25,6 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "@chainlink-dev/starkgate-contracts": "^0.0.3",
-    "@openzeppelin/contracts": "^4.7.3"
+    "@openzeppelin/contracts": "^4.7.3",
+    "internals-starkgate-contracts": "^0.0.3"
   }
 }
