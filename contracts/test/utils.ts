@@ -1,21 +1,46 @@
 import { expect } from 'chai'
 
-export const expectInvokeError = (full: string, expected: string) => {
-  // Match transaction error
-  expect(full).to.deep.contain('Transaction rejected. Error message:')
-  // Match specific error
-  const match = /Error message: (.+?)\n/.exec(full)
-  if (match && match.length > 1) expect(match[1]).to.equal(expected)
-  else expect.fail(`No expected error found: ${expected} \nFull error message: ${full}`)
+export const expectInvokeError = async (invoke: Promise<any>, expected?: string) => {
+  try {
+    await invoke
+  } catch (err: any) {
+    expectInvokeErrorMsg(err?.message, expected)
+    return // force
+  }
+  expect.fail("Unexpected! Invoke didn't error!?")
 }
 
-export const expectCallError = (full: string, expected: string) => {
-  // Match call error
-  expect(full).to.deep.contain('Could not perform call')
+export const expectInvokeErrorMsg = (actual: string, expected?: string) => {
+  // Match transaction error
+  expect(actual).to.deep.contain('Transaction rejected. Error message:')
   // Match specific error
-  const match = /Error message: (.+?)\n/.exec(full)
-  if (match && match.length > 1) expect(match[1]).to.equal(expected)
-  else expect.fail(`No expected error found: ${expected} \nFull error message: ${full}`)
+  if (expected) expectSpecificMsg(actual, expected)
+}
+
+export const expectCallError = async (call: Promise<any>, expected?: string) => {
+  try {
+    await call
+  } catch (err: any) {
+    expectCallErrorMsg(err?.message, expected)
+    return // force
+  }
+  expect.fail("Unexpected! Call didn't error!?")
+}
+
+export const expectCallErrorMsg = (actual: string, expected?: string) => {
+  // Match call error
+  expect(actual).to.deep.contain('Could not perform call')
+  // Match specific error
+  if (expected) expectSpecificMsg(actual, expected)
+}
+
+export const expectSpecificMsg = (actual: string, expected: string) => {
+  // Match specific error
+  const matches = actual.match(/Error message: (.+?)\n/g)
+  // Joint matches should contain the expected, or fail
+  if (matches && matches.length > 1) {
+    expect(matches.join()).to.contain(expected)
+  } else expect.fail(actual, expected, 'Specific error message not found.')
 }
 
 /**

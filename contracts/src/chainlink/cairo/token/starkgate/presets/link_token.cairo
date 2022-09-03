@@ -143,13 +143,15 @@ end
 
 @external
 func permissionedMint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    recipient : felt, amount : Uint256
+    account : felt, amount : Uint256
 ):
     alloc_locals
-    permitted_minter_only()
+    with_attr error_message("LinkToken: no permission"):
+        permitted_minter_only()
+    end
     local syscall_ptr : felt* = syscall_ptr
 
-    ERC20._mint(recipient=recipient, amount=amount)
+    ERC20._mint(recipient=account, amount=amount)
 
     return ()
 end
@@ -159,7 +161,9 @@ func permissionedBurn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     account : felt, amount : Uint256
 ):
     alloc_locals
-    permitted_minter_only()
+    with_attr error_message("LinkToken: no permission"):
+        permitted_minter_only()
+    end
     local syscall_ptr : felt* = syscall_ptr
 
     ERC20._burn(account=account, amount=amount)

@@ -93,7 +93,7 @@ describe('aggregator.cairo', function () {
     token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
-      recipient: owner.starknetContract.address,
+      account: owner.starknetContract.address,
       amount: uint256.bnToUint256(100_000_000_000),
     })
 

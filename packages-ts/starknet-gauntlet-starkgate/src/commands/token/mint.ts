@@ -10,23 +10,23 @@ import { CATEGORIES } from '../../lib/categories'
 import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
-  recipient: string
+  account: string
   amount: string
 }
 
-type ContractInput = [recipient: string, amount: Uint256]
+type ContractInput = [account: string, amount: Uint256]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   return {
-    recipient: flags.recipient,
+    account: flags.account,
     amount: flags.amount,
   }
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [input.recipient, bnToUint256(input.amount)]
+  return [input.account, bnToUint256(input.amount)]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
