@@ -14,6 +14,20 @@ export type TestData = {
 
 export type BeforeFn = () => Promise<TestData>
 
+const expectERC20Balance = async (token: StarknetContract, acc: Account, expected: number) => {
+  const { balance: raw } = await token.call('balanceOf', {
+    account: acc.starknetContract.address,
+  })
+  const balance = uint256.uint256ToBN(raw)
+  expect(balance).to.deep.equal(toBN(expected))
+}
+
+const expectERC20TotalSupply = async (token: StarknetContract, expected: number) => {
+  const { totalSupply: raw } = await token.call('totalSupply', {})
+  const totalSupply = uint256.uint256ToBN(raw)
+  expect(totalSupply).to.deep.equal(toBN(expected))
+}
+
 export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
   describe('ContractERC20Token', function () {
     this.timeout(TIMEOUT)
@@ -30,29 +44,16 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         recipient: t.alice.starknetContract.address,
         amount: uint256.bnToUint256(15),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance = uint256.uint256ToBN(balance)
-        expect(sum_balance).to.deep.equal(toBN(15))
-      }
+
+      await expectERC20Balance(t.token, t.alice, 15)
 
       await t.owner.invoke(t.token, 'permissionedMint', {
         recipient: t.bob.starknetContract.address,
         amount: uint256.bnToUint256(12),
       })
-      {
-        const { totalSupply: totalSupply } = await t.token.call('totalSupply', {})
-        let supply = uint256.uint256ToBN(totalSupply)
-        expect(supply).to.deep.equal(toBN(27))
 
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance = uint256.uint256ToBN(balance)
-        expect(sum_balance).to.deep.equal(toBN(12))
-      }
+      await expectERC20TotalSupply(t.token, 27)
+      await expectERC20Balance(t.token, t.bob, 12)
     })
 
     it('should burn successfully', async () => {
@@ -61,33 +62,17 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         account: t.alice.starknetContract.address,
         amount: uint256.bnToUint256(3),
       })
-      {
-        const { totalSupply: totalSupply } = await t.token.call('totalSupply', {})
-        let supply = uint256.uint256ToBN(totalSupply)
-        expect(supply).to.deep.equal(toBN(24))
 
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance = uint256.uint256ToBN(balance)
-        expect(sum_balance).to.deep.equal(toBN(12))
-      }
+      await expectERC20TotalSupply(t.token, 24)
+      await expectERC20Balance(t.token, t.alice, 12)
 
       await t.owner.invoke(t.token, 'permissionedBurn', {
         account: t.bob.starknetContract.address,
         amount: uint256.bnToUint256(10),
       })
-      {
-        const { totalSupply: totalSupply } = await t.token.call('totalSupply', {})
-        let supply = uint256.uint256ToBN(totalSupply)
-        expect(supply).to.deep.equal(toBN(14))
 
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance = uint256.uint256ToBN(balance)
-        expect(sum_balance).to.deep.equal(toBN(2))
-      }
+      await expectERC20TotalSupply(t.token, 14)
+      await expectERC20Balance(t.token, t.bob, 2)
     })
 
     it('should burn fail because amount bigger than balance', async () => {
@@ -98,7 +83,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           account: t.bob.starknetContract.address,
           amount: uint256.bnToUint256(103),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -109,7 +94,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           account: t.alice.starknetContract.address,
           amount: uint256.bnToUint256(189),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -124,7 +109,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           account: t.bob.starknetContract.address,
           amount: uint256.bnToUint256(103),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
       }
@@ -134,7 +119,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           account: t.alice.starknetContract.address,
           amount: uint256.bnToUint256(189),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
       }
@@ -146,41 +131,21 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         recipient: t.bob.starknetContract.address,
         amount: uint256.bnToUint256(3),
       })
-      {
-        await t.alice.invoke(t.token, 'transfer', {
-          recipient: t.bob.starknetContract.address,
-          amount: uint256.bnToUint256(3),
-        })
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance = uint256.uint256ToBN(balance)
-        expect(sum_balance).to.deep.equal(toBN(9))
+      await t.alice.invoke(t.token, 'transfer', {
+        recipient: t.bob.starknetContract.address,
+        amount: uint256.bnToUint256(3),
+      })
 
-        const { balance: balance1 } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance1)
-        expect(sum_balance1).to.deep.equal(toBN(8))
-      }
+      await expectERC20Balance(t.token, t.alice, 9)
+      await expectERC20Balance(t.token, t.bob, 8)
 
       await t.bob.invoke(t.token, 'transfer', {
         recipient: t.alice.starknetContract.address,
         amount: uint256.bnToUint256(4),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance)
-        expect(sum_balance1).to.deep.equal(toBN(4))
 
-        const { balance: balance1 } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance2 = uint256.uint256ToBN(balance1)
-        expect(sum_balance2).to.deep.equal(toBN(13))
-      }
+      await expectERC20Balance(t.token, t.alice, 13)
+      await expectERC20Balance(t.token, t.bob, 4)
     })
 
     it('should transfer fail because amount bigger than balance', async () => {
@@ -191,7 +156,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           recipient: t.alice.starknetContract.address,
           amount: uint256.bnToUint256(12),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -201,7 +166,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           recipient: t.bob.starknetContract.address,
           amount: uint256.bnToUint256(17),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -225,38 +190,19 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         recipient: t.bob.starknetContract.address,
         amount: uint256.bnToUint256(3),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance)
-        expect(sum_balance1).to.deep.equal(toBN(10))
 
-        const { balance: balance1 } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance2 = uint256.uint256ToBN(balance1)
-        expect(sum_balance2).to.deep.equal(toBN(7))
-      }
+
+      await expectERC20Balance(t.token, t.alice, 10)
+      await expectERC20Balance(t.token, t.bob, 7)
 
       await t.owner.invoke(t.token, 'transferFrom', {
         sender: t.bob.starknetContract.address,
         recipient: t.alice.starknetContract.address,
         amount: uint256.bnToUint256(4),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance)
-        expect(sum_balance1).to.deep.equal(toBN(14))
 
-        const { balance: balance1 } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance2 = uint256.uint256ToBN(balance1)
-        expect(sum_balance2).to.deep.equal(toBN(3))
-      }
+      await expectERC20Balance(t.token, t.alice, 14)
+      await expectERC20Balance(t.token, t.bob, 3)
     })
 
     it('should transferFrom fail because amount bigger than allowance', async () => {
@@ -268,7 +214,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           recipient: t.alice.starknetContract.address,
           amount: uint256.bnToUint256(200),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -279,7 +225,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           recipient: t.bob.starknetContract.address,
           amount: uint256.bnToUint256(300),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -302,19 +248,10 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         recipient: t.bob.starknetContract.address,
         amount: uint256.bnToUint256(3),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance)
-        expect(sum_balance1).to.deep.equal(toBN(11))
 
-        const { balance: balance1 } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance2 = uint256.uint256ToBN(balance1)
-        expect(sum_balance2).to.deep.equal(toBN(6))
-      }
+      await expectERC20Balance(t.token, t.alice, 11)
+      await expectERC20Balance(t.token, t.bob, 6)
+
       await t.bob.invoke(t.token, 'increaseAllowance', {
         spender: t.owner.starknetContract.address,
         added_value: uint256.bnToUint256(15),
@@ -329,19 +266,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         recipient: t.bob.starknetContract.address,
         amount: uint256.bnToUint256(11),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance)
-        expect(sum_balance1).to.deep.equal(toBN(0))
 
-        const { balance: balance1 } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance2 = uint256.uint256ToBN(balance1)
-        expect(sum_balance2).to.deep.equal(toBN(17))
-      }
+      await expectERC20Balance(t.token, t.alice, 0)
+      await expectERC20Balance(t.token, t.bob, 17)
     })
 
     it('should decrease alllowance and transfer successfully', async () => {
@@ -356,19 +283,9 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
         recipient: t.alice.starknetContract.address,
         amount: uint256.bnToUint256(1),
       })
-      {
-        const { balance: balance } = await t.token.call('balanceOf', {
-          account: t.alice.starknetContract.address,
-        })
-        let sum_balance1 = uint256.uint256ToBN(balance)
-        expect(sum_balance1).to.deep.equal(toBN(1))
 
-        const { balance: balance2 } = await t.token.call('balanceOf', {
-          account: t.bob.starknetContract.address,
-        })
-        let sum_balance2 = uint256.uint256ToBN(balance2)
-        expect(sum_balance2).to.deep.equal(toBN(16))
-      }
+      await expectERC20Balance(t.token, t.alice, 1)
+      await expectERC20Balance(t.token, t.bob, 16)
     })
 
     it('should transferFrom fail because amount bigger than allowance', async () => {
@@ -380,7 +297,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           recipient: t.alice.starknetContract.address,
           amount: { low: 8n, high: 10n },
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
@@ -391,7 +308,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
           recipient: t.bob.starknetContract.address,
           amount: uint256.bnToUint256(208),
         })
-        throw new Error('This should not pass!')
+        expect.fail()
       } catch (error: any) {
         expect(/assert/gi.test(error.message)).to.be.true
         assertErrorMsg(error?.message, 'SafeUint256: subtraction overflow')
