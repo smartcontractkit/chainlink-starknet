@@ -19,5 +19,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
+      - name: Install
+        run: nix develop -c yarn install --frozen-lockfile
+
       - name: Check
         run: nix develop -c make format-check
