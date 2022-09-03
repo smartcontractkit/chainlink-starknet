@@ -4,10 +4,9 @@
   "version": "0.0.1",
   "description": "Chainlink's StarkNet integration monorepo",
   "workspaces": [
-    "packages-ts/*",
     "contracts",
-    "integration-tests",
-    "relayer"
+    "examples/contracts/*",
+    "packages-ts/*"
   ],
   "keywords": [
     "typescript",
@@ -17,7 +16,7 @@
   "bin": "packages-ts/starknet-gauntlet-cli/dist/index.js",
   "scripts": {
     "gauntlet": "yarn build && node ./packages-ts/starknet-gauntlet-cli/dist/index.js",
-    "test": "yarn build && SKIP_PROMPTS=true jest --runInBand ./packages-ts",
+    "test": "yarn build && yarn workspaces run test",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
     "lint": "tsc -b ./tsconfig.json",

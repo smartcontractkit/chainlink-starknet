@@ -1,3 +1,4 @@
+// TODO: it doesn't seem this file is actually used
 module.exports = {
   rootDir: '.',
   projects: [
