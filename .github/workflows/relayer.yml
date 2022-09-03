@@ -1,4 +1,4 @@
-name: relayer
+name: Relayer
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   relayer_run_unit_tests:
-    name: Relayer Run Unit Tests
+    name: Run Unit Tests
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgres://postgres@localhost:5432/postgres?sslmode=disable
@@ -34,8 +34,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Compile module
+      - name: Build
         run: nix develop -c make build-go-relayer
 
-      - name: Run unit tests
+      - name: Test
         run: nix develop -c make test-unit-go

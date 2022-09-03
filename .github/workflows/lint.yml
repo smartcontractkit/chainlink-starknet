@@ -1,4 +1,4 @@
-name: lint
+name: Lint
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  format_check:
+  lint_format_check:
     name: Format Check
     runs-on: ubuntu-latest
     steps:

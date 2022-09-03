@@ -8,8 +8,8 @@ on:
   pull_request:
 
 jobs:
-  contracts_tests:
-    name: Contracts tests
+  contracts_run_tests:
+    name: Run Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
