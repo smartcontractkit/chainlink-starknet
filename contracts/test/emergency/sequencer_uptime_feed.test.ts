@@ -31,12 +31,10 @@ describe('SequencerUptimeFeed', function () {
     it('should block non-owners from making admin changes', async function () {
       await owner.invoke(uptimeFeedContract, 'add_access', { user })
 
-      try {
-        await nonOwner.invoke(uptimeFeedContract, 'add_access', { user })
-        expect.fail()
-      } catch (err: any) {
-        expectInvokeError(err?.message, 'Ownable: caller is not the owner')
-      }
+      await expectInvokeError(
+        nonOwner.invoke(uptimeFeedContract, 'add_access', { user }),
+        'Ownable: caller is not the owner',
+      )
     })
 
     it('should report access information correctly', async function () {
@@ -54,12 +52,10 @@ describe('SequencerUptimeFeed', function () {
     it('should error on `check_access` without access', async function () {
       await uptimeFeedContract.call('check_access', { user: user })
 
-      try {
-        await owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 })
-        expect.fail()
-      } catch (err: any) {
-        expectInvokeError(err?.message, 'AccessController: address does not have access')
-      }
+      await expectInvokeError(
+        owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 }),
+        'AccessController: address does not have access',
+      )
     })
   })
 
@@ -93,12 +89,10 @@ describe('SequencerUptimeFeed', function () {
     it('should block access when using an account without access', async function () {
       const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
 
-      try {
-        await accWithoutAccess.call(proxyContract, 'latest_round_data')
-        expect.fail()
-      } catch (err: any) {
-        expectCallError(err?.message, 'AccessController: address does not have access')
-      }
+      await expectCallError(
+        accWithoutAccess.call(proxyContract, 'latest_round_data'),
+        'AccessController: address does not have access',
+      )
     })
 
     it('should respond via a Proxy', async function () {

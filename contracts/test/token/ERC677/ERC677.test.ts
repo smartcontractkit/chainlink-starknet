@@ -25,7 +25,7 @@ describe('ERC677', function () {
     token = await tokenFactory.deploy({ owner: sender.starknetContract.address })
 
     await sender.invoke(token, 'permissionedMint', {
-      recipient: sender.starknetContract.address,
+      account: sender.starknetContract.address,
       amount: uint256.bnToUint256(1000),
     })
 
