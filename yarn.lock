@@ -1516,6 +1516,11 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
+"@openzeppelin/contracts@^4.7.3":
+  version "4.7.3"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.7.3.tgz#939534757a81f8d69cc854c7692805684ff3111e"
+  integrity sha512-dGRS0agJzu8ybo44pCIf3xBaPQN/65AIXNgK8+4gzKd5kbvlqyxryUYVLJv7fK98Seyd2hDZzVEHSWAh0Bt1Yw==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -6146,6 +6151,25 @@ internal-slot@^1.0.3:
     get-intrinsic "^1.1.0"
     has "^1.0.3"
     side-channel "^1.0.4"
+
+internals-starkgate-contracts@^0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/internals-starkgate-contracts/-/internals-starkgate-contracts-0.0.0.tgz#93d85cd670a7f0257de45091eeacf6037b2122ea"
+  integrity sha512-P26ftro7Z7QaZ7fZ0njSAMpeiDLNwZoXeDANK9keHSP/ZEu4KeGyVMOzBuFKmrDw1nG6vP8q2wh5hI7w1EHvAA==
+
+internals-starkgate-contracts@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/internals-starkgate-contracts/-/internals-starkgate-contracts-0.0.2.tgz#08b8f68a198a80b3197064edbf1e8caa3fda8f29"
+  integrity sha512-Ig29kLZtGmf2z/elr98AM6BFJfSWv8zRU7fVzaV2RpY+WItJjOWWLMBVLhmD4qyZkcPVBfUO8WTMZlJDSBxS9Q==
+  dependencies:
+    internals-starkgate-contracts "^0.0.0"
+
+internals-starkgate-contracts@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/internals-starkgate-contracts/-/internals-starkgate-contracts-0.0.3.tgz#d19f550b65bf153c8d1862d4a27e7fab28af370b"
+  integrity sha512-yCP3lpegs1XJstX2JDLTpLBH4t7Yet7P058hG1ZBN/BVP6nVMIsd1CW11Qq9zUY67c5BX9cSxaqxaP1Yih1AxA==
+  dependencies:
+    internals-starkgate-contracts "^0.0.2"
 
 into-stream@^6.0.0:
   version "6.0.0"

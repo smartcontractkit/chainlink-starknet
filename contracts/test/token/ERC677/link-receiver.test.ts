@@ -28,7 +28,7 @@ describe('LinkToken', function () {
     token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
-      recipient: owner.starknetContract.address,
+      account: owner.starknetContract.address,
       amount: uint256.bnToUint256(1000000000000000),
     })
   })
@@ -63,7 +63,7 @@ describe('LinkToken', function () {
     })
 
     // TODO For now it let you transfer to the contract itself
-    xit('does not let you transfer to the contract itself', async () => {
+    it.skip('does not let you transfer to the contract itself', async () => {
       try {
         await sender.invoke(token, 'transfer', {
           recipient: token.address,
