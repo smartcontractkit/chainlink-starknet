@@ -79,7 +79,7 @@ build-ts: build-ts-workspace build-ts-contracts build-ts-examples
 
 .PHONY: build-ts-workspace
 build-ts-workspace:
-	yarn install
+	yarn install --frozen-lockfile
 	yarn build
 
 # TODO: use yarn workspaces features instead of managing separately like this
@@ -87,13 +87,13 @@ build-ts-workspace:
 .PHONY: build-ts-contracts
 build-ts-contracts:
 	cd contracts/ && \
-		yarn install && \
+		yarn install --frozen-lockfile && \
 		yarn compile
 
 .PHONY: build-ts-examples
 build-ts-examples:
 	cd examples/contracts/aggregator-consumer && \
-		yarn install && \
+		yarn install --frozen-lockfile && \
 		yarn compile
 
 .PHONY: gowork
@@ -159,14 +159,21 @@ test-unit-go:
 	cd ./relayer && go test -v ./... -race -count=10
 
 .PHONY: test-integration
-test-integration: test-integration-smoke
+test-integration: test-integration-smoke test-integration-contracts
 
 .PHONY: test-integration-smoke
 test-integration-smoke:
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
-.PHONY: test-contracts
-test-contracts: build-ts-contracts env-devnet-hardhat
+.PHONY: test-integration-contracts
+test-integration-contracts: test-ts
+
+.PHONY: test-ts
+test-ts: env-devnet-hardhat
+	yarn test
+
+.PHONY: test-ts-contracts
+test-ts-contracts: build-ts-contracts env-devnet-hardhat
 	cd contracts/ && \
 		yarn test
 
