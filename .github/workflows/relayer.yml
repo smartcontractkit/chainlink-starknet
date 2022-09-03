@@ -11,21 +11,6 @@ jobs:
   relayer_run_unit_tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgres://postgres@localhost:5432/postgres?sslmode=disable
-    services:
-      postgres:
-        image: postgres
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_HOST_AUTH_METHOD: trust
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Checkout sources
         uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
