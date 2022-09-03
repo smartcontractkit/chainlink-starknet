@@ -39,7 +39,6 @@
     "@chainlink-dev/starknet-contracts-ocr2": "^0.0.5",
     "@chainlink/gauntlet-contracts-ocr2": "0.2.2",
     "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/starknet-gauntlet": "*",
-    "starknet": "3.15.0"
+    "@chainlink/starknet-gauntlet": "*"
   }
 }
