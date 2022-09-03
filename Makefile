@@ -82,6 +82,8 @@ build-ts-workspace:
 	yarn install
 	yarn build
 
+# TODO: use yarn workspaces features instead of managing separately like this
+# https://yarnpkg.com/cli/workspaces/foreach
 .PHONY: build-ts-contracts
 build-ts-contracts:
 	cd contracts/ && \
@@ -93,7 +95,7 @@ build-ts-examples:
 	cd examples/contracts/aggregator-consumer && \
 		yarn install && \
 		yarn compile
-	
+
 .PHONY: gowork
 gowork:
 	go work init
@@ -162,3 +164,13 @@ test-integration: test-integration-smoke
 .PHONY: test-integration-smoke
 test-integration-smoke:
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
+
+.PHONY: test-contracts
+test-contracts: build-ts-contracts env-devnet-hardhat
+	cd contracts/ && \
+		yarn test
+
+# TODO: this script needs to be replaced with a predefined K8s enviroment
+.PHONY: env-devnet-hardhat
+env-devnet-hardhat:
+	./ops/scripts/devnet-hardhat.sh

@@ -37,10 +37,10 @@ export const expectCallErrorMsg = (actual: string, expected?: string) => {
 export const expectSpecificMsg = (actual: string, expected: string) => {
   // Match specific error
   const matches = actual.match(/Error message: (.+?)\n/g)
-  // Joint matches should contain the expected, or fail
-  if (matches && matches.length > 1) {
-    expect(matches.join()).to.contain(expected)
-  } else expect.fail(actual, expected, 'Specific error message not found.')
+  // Joint matches should include the expected, or fail
+  if (matches && matches.length > 0) {
+    expect(matches.join()).to.include(expected)
+  } else expect.fail(`\nActual: ${actual}\n\nExpected: ${expected}`)
 }
 
 /**

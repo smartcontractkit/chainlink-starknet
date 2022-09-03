@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "npx hardhat test"
+    "test": "npx hardhat --network localhost test"
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
