@@ -23,5 +23,8 @@ jobs:
       - name: Check format
         run: nix develop -c make format-cairo-check
 
-      - name: Run unit tests
-        run: nix develop -c ./scripts/test.sh
+      - name: Build
+        run: nix develop -c make build-ts-contracts
+
+      - name: Test
+        run: nix develop -c make test-contracts
