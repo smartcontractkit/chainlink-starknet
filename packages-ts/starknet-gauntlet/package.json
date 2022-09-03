@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.1",
-    "cross-fetch": "^3.1.5",
-    "starknet": "^3.15.0"
+    "cross-fetch": "^3.1.5"
   }
 }

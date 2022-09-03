@@ -38,7 +38,6 @@
   "dependencies": {
     "@chainlink-dev/starkgate-open-zeppelin": "^0.0.4",
     "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/starknet-gauntlet": "*",
-    "starknet": "^3.15.0"
+    "@chainlink/starknet-gauntlet": "*"
   }
 }
