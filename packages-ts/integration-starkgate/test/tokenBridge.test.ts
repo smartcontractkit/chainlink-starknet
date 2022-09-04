@@ -101,7 +101,7 @@ describe('Test starkgate bridge with link token', function () {
       expectAddressEquality(l2_address.toString(), linkTokenContract.address)
     })
 
-    it('Should wrap contract and set L2 TokenBridge successfully', async () => {
+    it('should wrap contract and set L2 TokenBridge successfully', async () => {
       newStarkNetERC20Bridge = await ethers.getContractAt(
         starkNetERC20BridgeContract.abi,
         proxy.address,
@@ -121,19 +121,19 @@ describe('Test starkgate bridge with link token', function () {
       expectAddressEquality(l1_address.toString(), newStarkNetERC20Bridge.address)
     })
 
-    it('Should set Max total balance', async () => {
+    it('should set Max total balance', async () => {
       await newStarkNetERC20Bridge.setMaxTotalBalance(100000)
       const totalbalance = await newStarkNetERC20Bridge.maxTotalBalance()
       expect(totalbalance).to.equal(100000)
     })
 
-    it('Should set Max deposit', async () => {
+    it('should set Max deposit', async () => {
       await newStarkNetERC20Bridge.setMaxDeposit(100)
       const deposit = await newStarkNetERC20Bridge.maxDeposit()
       expect(deposit).to.equal(100)
     })
 
-    it('Should deposit to the L2 contract, L1 balance should be decreased by 2', async () => {
+    it('should deposit to the L2 contract, L1 balance should be decreased by 2', async () => {
       await testERC20.approve(newStarkNetERC20Bridge.address, 2)
       await newStarkNetERC20Bridge.deposit(2, owner.starknetContract.address)
 
@@ -141,7 +141,7 @@ describe('Test starkgate bridge with link token', function () {
       expect(balance).to.equal(8)
     })
 
-    it('Should flush the L1 messages so that they can be consumed by the L2.', async () => {
+    it('should flush the L1 messages so that they can be consumed by the L2.', async () => {
       const flushL1Response = await starknet.devnet.flush()
       const flushL1Messages = flushL1Response.consumed_messages.from_l1
       expect(flushL1Messages).to.have.a.lengthOf(1)
@@ -159,7 +159,7 @@ describe('Test starkgate bridge with link token', function () {
   })
 
   describe('Test bridge from L2 to L1', function () {
-    it('Should initiate withdraw and send message to L1', async () => {
+    it('should initiate withdraw and send message to L1', async () => {
       await owner.invoke(tokenBridgeContract, 'initiate_withdraw', {
         l1_recipient: BigInt(deployer.address),
         amount: uint256.bnToUint256(2),
@@ -178,7 +178,7 @@ describe('Test starkgate bridge with link token', function () {
       expectAddressEquality(flushL2Messages[0].to_address, newStarkNetERC20Bridge.address)
     })
 
-    it('Should withdraw 2 which will consume the L2 message successfully', async () => {
+    it('should withdraw 2 which will consume the L2 message successfully', async () => {
       await newStarkNetERC20Bridge['withdraw(uint256)'](2)
 
       const balance = await testERC20.balanceOf(deployer.address)
