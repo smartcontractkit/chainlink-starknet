@@ -9,7 +9,6 @@ import {
 } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { expectAddressEquality } from '../utils'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 
 describe('StarkNetValidator', () => {
@@ -63,31 +62,25 @@ describe('StarkNetValidator', () => {
 
   describe('StarkNetValidator', () => {
     it('should get the selector from the name successfully', async () => {
-      const setSelector = getSelectorFromName('update_status')
-      expect(BigInt(setSelector)).to.equal(
-        1585322027166395525705364165097050997465692350398750944680096081848180365267n,
-      )
+      const actual = getSelectorFromName('update_status')
+      const expected = 1585322027166395525705364165097050997465692350398750944680096081848180365267n
+      expect(BigInt(actual)).to.equal(expected)
     })
 
     it('reverts if `StarkNetValidator.validate` called by account with no access', async () => {
-      await expect(starkNetValidator.connect(eoaValidator).validate(0, 0, 1, 1)).to.be.revertedWith(
-        'No access',
-      )
+      const c = starkNetValidator.connect(eoaValidator)
+      await expect(c.validate(0, 0, 1, 1)).to.be.revertedWith('No access')
     })
 
     it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
-      const res = await account.call(l2Contract, 'latest_round_data')
-      expect(res.round.answer).to.equal(0n)
+      const { round } = await account.call(l2Contract, 'latest_round_data')
+      expect(round.answer).to.equal(0n)
     })
 
     it('should deploy the messaging contract', async () => {
-      const {
-        address: deployedTo,
-        l1_provider: L1Provider,
-      } = await starknet.devnet.loadL1MessagingContract(networkUrl)
-
-      expect(deployedTo).not.to.be.undefined
-      expect(L1Provider).to.equal(networkUrl)
+      const { address, l1_provider } = await starknet.devnet.loadL1MessagingContract(networkUrl)
+      expect(address).not.to.be.undefined
+      expect(l1_provider).to.equal(networkUrl)
     })
 
     it('should load the already deployed contract if the address is provided', async () => {
@@ -113,9 +106,9 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(1)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
-      expectAddressEquality(msgFromL1[0].args.from_address, starkNetValidator.address)
-      expectAddressEquality(msgFromL1[0].args.to_address, l2Contract.address)
-      expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
+      expect(msgFromL1[0].args.from_address).to.equal(starkNetValidator.address)
+      expect(msgFromL1[0].args.to_address).to.equal(l2Contract.address)
+      expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
       const res = await account.call(l2Contract, 'latest_round_data')
@@ -136,9 +129,9 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(1)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
-      expectAddressEquality(msgFromL1[0].args.from_address, starkNetValidator.address)
-      expectAddressEquality(msgFromL1[0].args.to_address, l2Contract.address)
-      expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
+      expect(msgFromL1[0].args.from_address).to.equal(starkNetValidator.address)
+      expect(msgFromL1[0].args.to_address).to.equal(l2Contract.address)
+      expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
       const res = await account.call(l2Contract, 'latest_round_data')
@@ -163,9 +156,9 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(4)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
-      expectAddressEquality(msgFromL1[0].args.from_address, starkNetValidator.address)
-      expectAddressEquality(msgFromL1[0].args.to_address, l2Contract.address)
-      expectAddressEquality(msgFromL1[0].address, mockStarkNetMessaging.address)
+      expect(msgFromL1[0].args.from_address).to.equal(starkNetValidator.address)
+      expect(msgFromL1[0].args.to_address).to.equal(l2Contract.address)
+      expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
       const res = await account.call(l2Contract, 'latest_round_data')
