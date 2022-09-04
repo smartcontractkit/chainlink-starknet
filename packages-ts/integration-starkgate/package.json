@@ -14,6 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
+    "@types/chai": "^4.3.3",
     "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",
     "hardhat": "^2.10.2"
