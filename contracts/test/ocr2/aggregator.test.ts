@@ -1,26 +1,16 @@
 import { assert, expect } from 'chai'
 import BN from 'bn.js'
 import { starknet } from 'hardhat'
-import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
+import { ec, hash, number, uint256, KeyPair } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 
+import { toFelt, hexPadStart } from '../utils'
+
 interface Oracle {
   signer: KeyPair
   transmitter: Account
-}
-
-// Required to convert negative values into [0, PRIME) range
-const toFelt = (int: number | BigNumberish): BigNumberish => {
-  const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
-  return number.toBN(int).umod(prime)
-}
-
-// NOTICE: Leading zeros are trimmed for an encoded felt (number).
-//   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
-const hexPadStart = (data: number, len: number) => {
-  return `0x${data.toString(16).padStart(len, '0')}`
 }
 
 const CHUNK_SIZE = 31
