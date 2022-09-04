@@ -1,3 +1,5 @@
+import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
+import { BigNumberish } from 'starknet/utils/number'
 import { expect } from 'chai'
 
 export const expectInvokeError = async (invoke: Promise<any>, expected?: string) => {
@@ -43,21 +45,14 @@ export const expectSpecificMsg = (actual: string, expected: string) => {
   } else expect.fail(`\nActual: ${actual}\n\nExpected: ${expected}`)
 }
 
-/**
- * Receives a hex address, converts it to bigint, converts it back to hex.
- * This is done to strip leading zeros.
- * @param address a hex string representation of an address
- * @returns an adapted hex string representation of the address
- */
-function adaptAddress(address: string) {
-  return '0x' + BigInt(address).toString(16)
+// Required to convert negative values into [0, PRIME) range
+export const toFelt = (int: number | BigNumberish): BigNumberish => {
+  const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
+  return number.toBN(int).umod(prime)
 }
 
-/**
- * Expects address equality after adapting them.
- * @param actual
- * @param expected
- */
-export function expectAddressEquality(actual: string, expected: string) {
-  expect(adaptAddress(actual)).to.equal(adaptAddress(expected))
+// NOTICE: Leading zeros are trimmed for an encoded felt (number).
+//   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
+export const hexPadStart = (data: number | bigint, len: number) => {
+  return `0x${data.toString(16).padStart(len, '0')}`
 }

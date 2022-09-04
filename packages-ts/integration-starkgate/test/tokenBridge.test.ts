@@ -1,37 +1,34 @@
 import { TIMEOUT } from './constants'
 import { ethers, starknet, network } from 'hardhat'
-import { Contract, ContractFactory } from 'ethers'
+import { Contract } from 'ethers'
 import { uint256, number } from 'starknet'
 import { StarknetContract, HttpNetworkConfig, Account } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { expectAddressEquality } from '../../../contracts/test/utils'
+import { hexPadStart } from '../../../contracts/test/utils'
 import {
   loadContract_Solidity,
   loadContract_InternalStarkgate,
-  loadContract_Openzepplin,
-} from '../utils'
+  loadContract_OpenZepplin,
+} from '../src/utils'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
 
-describe('Test starkgate bridge with link token', function () {
+describe('Test StarkGate token bridge + link_token.cairo', function () {
   this.timeout(TIMEOUT)
+
+  // L2 StarkNet
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   let owner: Account
-  let tokenBridgeContract: StarknetContract
-  let linkTokenContract: StarknetContract
+  let tokenBridge: StarknetContract
+  let tokenL2: StarknetContract
+
+  // L1 Ethereum
   let deployer: SignerWithAddress
-
-  let proxyFactory: ContractFactory
-
-  let starkNetERC20Bridge: Contract
   let mockStarknetMessaging: Contract
-  let proxy: Contract
-  let testERC20: Contract
-  let newStarkNetERC20Bridge: Contract
-
-  let starkNetERC20BridgeContract: any
+  let tokenL1: Contract
+  let starknetERC20Bridge: Contract
 
   before(async () => {
     owner = await starknet.deployAccount('OpenZeppelin')
@@ -39,29 +36,26 @@ describe('Test starkgate bridge with link token', function () {
     let tokenBridgeFactory = await starknet.getContractFactory(
       '../../node_modules/@chainlink-dev/starkgate-contracts/artifacts/token_bridge.cairo',
     )
-    tokenBridgeContract = await tokenBridgeFactory.deploy({
+    tokenBridge = await tokenBridgeFactory.deploy({
       governor_address: owner.starknetContract.address,
     })
 
     let linkTokenFactory = await starknet.getContractFactory('link_token')
-    linkTokenContract = await linkTokenFactory.deploy({ owner: tokenBridgeContract.address })
-
-    const accounts = await ethers.getSigners()
-    deployer = accounts[0]
-
-    starkNetERC20BridgeContract = await loadContract_InternalStarkgate('StarknetERC20Bridge')
+    tokenL2 = await linkTokenFactory.deploy({ owner: tokenBridge.address })
+    ;[deployer] = await ethers.getSigners()
+    // Different .json artifact - incompatible with 'ethers.getContractFactoryFromArtifact'
+    const starknetERC20BridgeArtifact = await loadContract_InternalStarkgate('StarknetERC20Bridge')
     const starkNetERC20BridgeFactory = new ethers.ContractFactory(
-      starkNetERC20BridgeContract.abi,
-      starkNetERC20BridgeContract.bytecode,
+      starknetERC20BridgeArtifact.abi,
+      starknetERC20BridgeArtifact.bytecode,
       deployer,
     )
-    starkNetERC20Bridge = await starkNetERC20BridgeFactory.deploy()
-    await starkNetERC20Bridge.deployed()
+    const starkNetERC20BridgeCode = await starkNetERC20BridgeFactory.deploy()
+    await starkNetERC20BridgeCode.deployed()
 
-    const mockStarknetMessagingContract = await loadContract_Solidity('MockStarkNetMessaging')
-    const mockStarknetMessagingFactory = new ethers.ContractFactory(
-      mockStarknetMessagingContract.abi,
-      mockStarknetMessagingContract.bytecode,
+    const mockStarknetMessagingArtifact = await loadContract_Solidity('MockStarkNetMessaging')
+    const mockStarknetMessagingFactory = await ethers.getContractFactoryFromArtifact(
+      mockStarknetMessagingArtifact,
       deployer,
     )
     mockStarknetMessaging = await mockStarknetMessagingFactory.deploy()
@@ -69,102 +63,98 @@ describe('Test starkgate bridge with link token', function () {
 
     await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
-    const testERC20contract = await loadContract_Openzepplin('ERC20PresetFixedSupply')
-    const testERC20Factory = new ethers.ContractFactory(
-      testERC20contract.abi,
-      testERC20contract.bytecode,
+    const tokenERC20Artifact = await loadContract_OpenZepplin('ERC20PresetFixedSupply')
+    const tokenERC20Factory = await ethers.getContractFactoryFromArtifact(
+      tokenERC20Artifact,
       deployer,
     )
-    testERC20 = await testERC20Factory.deploy(NAME, SYMBOL, 10, deployer.address)
-    await testERC20.deployed()
+    tokenL1 = await tokenERC20Factory.deploy(NAME, SYMBOL, 10, deployer.address)
+    await tokenL1.deployed()
 
-    const proxyContract = await loadContract_Openzepplin('ERC1967Proxy')
-    proxyFactory = new ethers.ContractFactory(proxyContract.abi, proxyContract.bytecode, deployer)
+    const proxyArtifact = await loadContract_OpenZepplin('ERC1967Proxy')
+    const proxyFactory = await ethers.getContractFactoryFromArtifact(proxyArtifact, deployer)
 
-    const inter = new ethers.utils.Interface(starkNetERC20BridgeContract.abi)
+    const inter = new ethers.utils.Interface(starknetERC20BridgeArtifact.abi)
     const data = ethers.utils.hexConcat([
       ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32),
-      ethers.utils.hexZeroPad(testERC20.address, 32),
+      ethers.utils.hexZeroPad(tokenL1.address, 32),
       ethers.utils.hexZeroPad(mockStarknetMessaging.address, 32),
     ])
     let encode_data = inter.encodeFunctionData('initialize(bytes data)', [data])
-    proxy = await proxyFactory.deploy(starkNetERC20Bridge.address, encode_data)
+    const proxy = await proxyFactory.deploy(starkNetERC20BridgeCode.address, encode_data)
     await proxy.deployed()
+
+    starknetERC20Bridge = await ethers.getContractAt(starknetERC20BridgeArtifact.abi, proxy.address)
   })
 
-  describe('Test bridge from L1 to L2', function () {
-    it('Test Set and Get function for L2 token address', async () => {
-      await owner.invoke(tokenBridgeContract, 'set_l2_token', {
-        l2_token_address: linkTokenContract.address,
+  describe('deposit (L1 -> L2)', function () {
+    it('should configure L2 token bridge with L2 token successfully', async () => {
+      await owner.invoke(tokenBridge, 'set_l2_token', {
+        l2_token_address: tokenL2.address,
       })
-      const { res: l2_address } = await tokenBridgeContract.call('get_l2_token', {})
-      expectAddressEquality(l2_address.toString(), linkTokenContract.address)
+      const { res: l2Token } = await tokenBridge.call('get_l2_token', {})
+      expect(hexPadStart(l2Token, 32 * 2)).to.equal(tokenL2.address)
     })
 
-    it('should wrap contract and set L2 TokenBridge successfully', async () => {
-      newStarkNetERC20Bridge = await ethers.getContractAt(
-        starkNetERC20BridgeContract.abi,
-        proxy.address,
-      )
+    it(`should configure L2 token bridge with L1 token bridge successfully`, async () => {
+      await owner.invoke(tokenBridge, 'set_l1_bridge', {
+        l1_bridge_address: starknetERC20Bridge.address,
+      })
+      const { res: l1Bridge } = await tokenBridge.call('get_l1_bridge', {})
+      expect(hexPadStart(l1Bridge, 20 * 2)).to.equal(starknetERC20Bridge.address.toLowerCase())
+    })
 
-      const tx = await newStarkNetERC20Bridge.setL2TokenBridge(BigInt(tokenBridgeContract.address))
+    it('should configure L1 token bridge with L2 token bridge successfully', async () => {
+      const tx = await starknetERC20Bridge.setL2TokenBridge(BigInt(tokenBridge.address))
       await expect(tx)
-        .to.emit(newStarkNetERC20Bridge, 'LogSetL2TokenBridge')
-        .withArgs(BigInt(tokenBridgeContract.address))
+        .to.emit(starknetERC20Bridge, 'LogSetL2TokenBridge')
+        .withArgs(BigInt(tokenBridge.address))
     })
 
-    it('Test Set and Get function for L1 bridge address', async () => {
-      await owner.invoke(tokenBridgeContract, 'set_l1_bridge', {
-        l1_bridge_address: newStarkNetERC20Bridge.address,
-      })
-      const { res: l1_address } = await tokenBridgeContract.call('get_l1_bridge', {})
-      expectAddressEquality(l1_address.toString(), newStarkNetERC20Bridge.address)
-    })
-
-    it('should set Max total balance', async () => {
-      await newStarkNetERC20Bridge.setMaxTotalBalance(100000)
-      const totalbalance = await newStarkNetERC20Bridge.maxTotalBalance()
+    it('should configure L1 token bridge MaxTotalBalance', async () => {
+      await starknetERC20Bridge.setMaxTotalBalance(100000)
+      const totalbalance = await starknetERC20Bridge.maxTotalBalance()
       expect(totalbalance).to.equal(100000)
     })
 
-    it('should set Max deposit', async () => {
-      await newStarkNetERC20Bridge.setMaxDeposit(100)
-      const deposit = await newStarkNetERC20Bridge.maxDeposit()
+    it('should configure L1 token bridge MaxDeposit', async () => {
+      await starknetERC20Bridge.setMaxDeposit(100)
+      const deposit = await starknetERC20Bridge.maxDeposit()
       expect(deposit).to.equal(100)
     })
 
-    it('should deposit to the L2 contract, L1 balance should be decreased by 2', async () => {
-      await testERC20.approve(newStarkNetERC20Bridge.address, 2)
-      await newStarkNetERC20Bridge.deposit(2, owner.starknetContract.address)
+    it('should deposit to L1 token bridge', async () => {
+      await tokenL1.approve(starknetERC20Bridge.address, 2)
+      await starknetERC20Bridge.deposit(2, owner.starknetContract.address)
 
-      const balance = await testERC20.balanceOf(deployer.address)
+      const balance = await tokenL1.balanceOf(deployer.address)
       expect(balance).to.equal(8)
     })
 
-    it('should flush the L1 messages so that they can be consumed by the L2.', async () => {
+    it('should flush L1 messages and consume on L2.', async () => {
       const flushL1Response = await starknet.devnet.flush()
       const flushL1Messages = flushL1Response.consumed_messages.from_l1
       expect(flushL1Messages).to.have.a.lengthOf(1)
       expect(flushL1Response.consumed_messages.from_l2).to.be.empty
 
-      expectAddressEquality(flushL1Messages[0].args.from_address, newStarkNetERC20Bridge.address)
-      expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeContract.address)
-      expectAddressEquality(flushL1Messages[0].address, mockStarknetMessaging.address)
+      expect(flushL1Messages[0].args.from_address).to.equal(starknetERC20Bridge.address)
+      expect(flushL1Messages[0].args.to_address).to.equal(tokenBridge.address)
+      expect(flushL1Messages[0].address).to.equal(mockStarknetMessaging.address)
 
-      let { balance: balance } = await linkTokenContract.call('balanceOf', {
+      const { balance } = await tokenL2.call('balanceOf', {
         account: owner.starknetContract.address,
       })
       expect(uint256.uint256ToBN(balance)).to.deep.equal(number.toBN(2))
     })
   })
 
-  describe('Test bridge from L2 to L1', function () {
-    it('should initiate withdraw and send message to L1', async () => {
-      await owner.invoke(tokenBridgeContract, 'initiate_withdraw', {
+  describe('withdraw (L1 <- L2)', function () {
+    it('should initiate withdraw on L2 and send message to L1', async () => {
+      await owner.invoke(tokenBridge, 'initiate_withdraw', {
         l1_recipient: BigInt(deployer.address),
         amount: uint256.bnToUint256(2),
       })
-      let { balance: balance } = await linkTokenContract.call('balanceOf', {
+      let { balance } = await tokenL2.call('balanceOf', {
         account: owner.starknetContract.address,
       })
       expect(uint256.uint256ToBN(balance)).to.deep.equal(number.toBN(0))
@@ -174,14 +164,17 @@ describe('Test starkgate bridge with link token', function () {
       const flushL2Messages = flushL2Response.consumed_messages.from_l2
 
       expect(flushL2Messages).to.have.a.lengthOf(1)
-      expectAddressEquality(flushL2Messages[0].from_address, tokenBridgeContract.address)
-      expectAddressEquality(flushL2Messages[0].to_address, newStarkNetERC20Bridge.address)
+      expect(flushL2Messages[0].from_address).to.equal(tokenBridge.address)
+      // TODO: Starknet Devnet bug - 'consumed_messages.from_l2.[].to_address' not always padded to 20 bytes (expected b/c address)
+      expect(hexPadStart(BigInt(flushL2Messages[0].to_address), 20 * 2)).to.equal(
+        starknetERC20Bridge.address.toLowerCase(),
+      )
     })
 
-    it('should withdraw 2 which will consume the L2 message successfully', async () => {
-      await newStarkNetERC20Bridge['withdraw(uint256)'](2)
+    it('should withdraw from L1 token bridge and consume the L2 message successfully', async () => {
+      await starknetERC20Bridge['withdraw(uint256)'](2)
 
-      const balance = await testERC20.balanceOf(deployer.address)
+      const balance = await tokenL1.balanceOf(deployer.address)
       expect(balance).to.equal(10)
     })
   })
