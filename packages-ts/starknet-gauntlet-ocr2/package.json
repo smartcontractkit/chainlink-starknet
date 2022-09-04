@@ -12,21 +12,10 @@
     "dist/**/*",
     "!dist/**/*.test.js"
   ],
-  "jest": {
-    "transform": {
-      ".(ts|tsx)": "ts-jest"
-    },
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ]
-  },
   "scripts": {
     "gauntlet": "ts-node ./src/index.ts",
     "lint": "tsc",
-    "test": "SKIP_PROMPTS=true jest --runInBand --passWithNoTests",
+    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-ocr2 --passWithNoTests",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
     "format": "yarn prettier --write ./src",
