@@ -1,4 +1,4 @@
-name: Contracts Integration (Vendor, Examples, Gauntlet)
+name: Integration Contracts (Vendor, Examples)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  contracts_integration_run_tests:
+  integration_contracts_run_tests:
     name: Run Tests
     runs-on: ubuntu-latest
     steps:
@@ -19,12 +19,5 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Build
-        run: nix develop -c make build-ts
-
       - name: Test
         run: nix develop -c make test-integration-contracts
-
-      - name: Test - Run Gauntlet CLI via Yarn
-        run: nix develop -c yarn gauntlet
-

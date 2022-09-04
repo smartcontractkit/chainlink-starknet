@@ -159,18 +159,44 @@ test-unit-go:
 	cd ./relayer && go test -v ./... -race -count=10
 
 .PHONY: test-integration
-test-integration: test-integration-smoke test-integration-contracts
+test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-integration-smoke
 test-integration-smoke:
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
 .PHONY: test-integration-contracts
-test-integration-contracts: test-ts
+# TODO: better network lifecycle setup - requires external network (L1 + L2)
+test-integration-contracts: build-ts env-devnet-hardhat
+	cd examples/contracts/aggregator-consumer/ && \
+		yarn test
+	cd packages-ts/integration-eqlabs-multisig/ && \
+		yarn test
+	cd packages-ts/integration-starkgate/ && \
+		yarn test
+
+.PHONY: test-integration-gauntlet
+# TODO: better network lifecycle setup - tests setup/run their own network (L1 + conflict w/ above if not cleaned up)
+test-integration-gauntlet: build-ts env-devnet-hardhat-down
+	cd packages-ts/starknet-gauntlet/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-argent/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-cli/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-example/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-multisig/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-ocr2/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-oz/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-starkgate/ && \
+		yarn test
 
 .PHONY: test-ts
-test-ts: env-devnet-hardhat
-	yarn test
+test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-ts-contracts
 test-ts-contracts: build-ts-contracts env-devnet-hardhat
@@ -181,3 +207,7 @@ test-ts-contracts: build-ts-contracts env-devnet-hardhat
 .PHONY: env-devnet-hardhat
 env-devnet-hardhat:
 	./ops/scripts/devnet-hardhat.sh
+
+.PHONY: env-devnet-hardhat-down
+env-devnet-hardhat-down:
+	./ops/scripts/devnet-hardhat-down.sh
