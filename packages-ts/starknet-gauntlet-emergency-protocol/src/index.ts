@@ -7,6 +7,8 @@ import {
   Dependencies,
 } from '@chainlink/starknet-gauntlet'
 
+import { makeProvider as makeEVMProvider } from '@chainlink/evm-gauntlet'
+
 import Commands from './commands'
 
 const registerExecuteCommand = <UI, CI>(

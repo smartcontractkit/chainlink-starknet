@@ -3,6 +3,7 @@ import { CompiledContract, json } from 'starknet'
 
 export enum CONTRACT_LIST {
   SEQUENCER_UPTIME_FEED = 'sequencer_uptime_feed',
+  STARKNET_VALIDATOR = 'StarknetValidator',
 }
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
@@ -12,3 +13,4 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
 }
 
 export const uptimeFeedContractLoader = () => loadContract(CONTRACT_LIST.SEQUENCER_UPTIME_FEED)
+export const starknetValidatorContractLoader = () => loadContract(CONTRACT_LIST.STARKNET_VALIDATOR)
