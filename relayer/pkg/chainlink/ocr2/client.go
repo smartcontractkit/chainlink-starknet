@@ -151,7 +151,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 				return cc, errors.Wrap(err, "couldn't unmarshal event")
 			}
 
-			if starknet.IsEventFromContract(&decodedEvent, address, "config_set") {
+			if starknet.IsEventFromContract(&decodedEvent, address, "ConfigSet") {
 				config, err := ParseConfigSetEvent(decodedEvent.Data)
 				if err != nil {
 					return cc, errors.Wrap(err, "couldn't parse config event")

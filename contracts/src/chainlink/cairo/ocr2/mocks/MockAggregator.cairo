@@ -2,7 +2,14 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from chainlink.cairo.ocr2.IAggregator import IAggregator, Round, Transmission
+from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
+
+struct Transmission:
+    member answer : felt
+    member block_num : felt
+    member observation_timestamp : felt
+    member transmission_timestamp : felt
+end
 
 @storage_var
 func transmissions_(round_id : felt) -> (transmission : Transmission):
