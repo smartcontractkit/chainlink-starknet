@@ -16,6 +16,10 @@ import (
 
 var (
 	MaxObservers = 31
+
+	// Event selectors
+	NewTransmissionEventSelector = "019e22f866f4c5aead2809bf160d2b29e921e335d899979732101c6f3c38ff81"
+	ConfigSetEventSelector       = "9a144bf4a6a8fd083c93211e163e59221578efcc86b93f8c97c620e7b9608a"
 )
 
 // NewTransmissionEvent represents the 'NewTransmission' event
