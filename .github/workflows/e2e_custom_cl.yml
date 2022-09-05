@@ -22,8 +22,9 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@e3bf7a2d54543beb94ad4151ca2a3837d62c2592 # v2.0.8+
         with:
           cl_repo: smartcontractkit/chainlink
-          # by default we are integrating with develop
-          cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          # By default we are integrating with CL develop
+          # cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          cl_ref: 0e1bb680838713c818741504c55441d94111cc3f # https://github.com/smartcontractkit/chainlink/pull/7366
           # commit of the caller branch
           dep_starknet_sha: ${{ github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
