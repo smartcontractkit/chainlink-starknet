@@ -2,7 +2,6 @@ import {
   AfterExecute,
   ExecuteCommandConfig,
   makeExecuteCommand,
-  BeforeExecute,
 } from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'

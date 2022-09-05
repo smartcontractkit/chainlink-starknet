@@ -34,11 +34,11 @@ const SHIFT = 2 ** 128
 const MAX_ID = SHIFT - 1
 
 @event
-func aggregator_proposed(current : felt, proposed : felt):
+func AggregatorProposed(current : felt, proposed : felt):
 end
 
 @event
-func aggregator_confirmed(previous : felt, latest : felt):
+func AggregatorConfirmed(previous : felt, latest : felt):
 end
 
 @constructor
@@ -70,7 +70,7 @@ func propose_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
 
     # emit event
     let (phase : Phase) = current_phase_.read()
-    aggregator_proposed.emit(current=phase.aggregator, proposed=address)
+    AggregatorProposed.emit(current=phase.aggregator, proposed=address)
     return ()
 end
 
@@ -89,7 +89,7 @@ func confirm_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     set_aggregator(proposed_aggregator)
 
     # emit event
-    aggregator_confirmed.emit(previous=previous, latest=address)
+    AggregatorConfirmed.emit(previous=previous, latest=address)
     return ()
 end
 
