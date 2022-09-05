@@ -22,6 +22,7 @@ const (
 	observationsLenBytes     = junotypes.FeltLength
 	prefixSizeBytes          = timestampSizeBytes + observersSizeBytes + observationsLenBytes
 	juelsPerFeeCoinSizeBytes = junotypes.FeltLength
+	gasPriceSizeBytes        = junotypes.FeltLength
 	observationSizeBytes     = junotypes.FeltLength
 )
 
@@ -118,7 +119,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 }
 
 func (c ReportCodec) MaxReportLength(n int) int {
-	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes
+	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes + gasPriceSizeBytes
 }
 
 func SplitReport(report types.Report) ([][]byte, error) {
