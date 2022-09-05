@@ -1,0 +1,112 @@
+# Starknet Emergency Protocol
+
+## Background
+
+The purpose of the Starknet Sequencer Emergency Protocol is to track the last known status of the Starknet Sequencer at a given point in time.
+
+## Architecture
+
+The diagram above illustrates the general path of how the Sequencer’s status is relayed from L1 to L2.
+
+![L2 Emergency Protocol Diagram](./Starknet-L2EP.png)
+
+**L1**
+
+1. The EA is run by a network of Node operators to post the latest sequencer status to the `Aggregator` contract and relayed to the `ValidatorProxy` contract. The `Aggregator` contract then calls the `validate` function in the `ValidatorProxy` contract, which proxies the call to the `StarknetValidator` contract.
+
+2. The `StarknetValidator` then calls the `sendMessageToL2` function on the `Starknet` contract. This message will contain instructions to call the `updateStatus(bool status, uint64 timestamp)` function in the `StarknetSequencerUptimeFeed` contract deployed on L2
+
+3. The core `Starknet` contract then emits a new `LogMessageToL2` event to to signal that a new message needs to be sent from L1 to L2.
+
+```jsx
+event LogMessageToL2(
+    address indexed fromAddress,
+    uint256 indexed toAddress,
+    uint256 indexed selector,
+    uint256[] payload,
+    uint256 nonce
+);
+```
+
+4. The `Sequencer` will then pickup the `LogMessageToL2` event emitted above and forward the message to the target contract on L2.
+
+**L2**
+
+1. The Sequencer posts the message to the `starknet_sequencer_uptime_feed` contract and calls the `update_status` function to update the Sequencer status.
+
+2. Consumers can then read from the `aggregator_proxy` contract, which fetches the latest round data from the `starknet_sequencer_uptime_feed` contract.
+
+## Sequencer Downtime
+
+### L1 → L2 Transactions
+
+In the event that the Sequencer is down, messages will not be transmitted from L1 to L2 and **no L2 transactions are executed**. Instead messages will be enqueued in the Sequencer and only processed in the order they arrived later once the Sequencer comes back up. This means that as long as the message from the `StarknetValidator` on L1 is already enqueued in the Starknet Sequencer, the flag on the `starknet_sequencer_uptime_feed` on L2 will be guaranteed to be flipped prior to any subsequent transactions. This happens as the transaction flipping the flag on the uptime feed will get executed before transactions that were enqueued after it. This is further explained in the diagrams below.
+
+**During Sequencer downtime**
+
+- New `LogMessageToL2` events emitted are not picked up whilst the Sequencer is down.
+- When the Sequencer is down, all L2 transactions sent from L1 are stuck in the pending queue, which lives in Starknet’s centralized Sequencer.
+- **Tx1** contains Chainlink’s transaction to set the status of the Sequencer as being down on L2.
+- **Tx2** is a transaction made by a consumer that is dependent on
+
+![Starknet Sequencer Pending](.//Starknet-Pending.png)
+
+**After Sequencer comes back online**
+
+- `LogMessageToL2` events are picked up and added to the pending queue.
+- Transactions in the pending queue are processed chronologically so **Tx1** is processed before **Tx2.**
+- As **Tx1** happens before **Tx2, Tx2** will read the status of the Sequencer as being down
+
+### Layer2 Sequencer Health External Adapter
+
+The emergency protocol requires an off chain component to tracks the health of the centralized Starkware sequencer. Today, this is made up by a DON (Decentralized Oracle Network) that triggers using OCR (Offchain Reporting). A new OCR round is initiated every 30s whereby each node in the DON checks the health of the Sequencer using the Layer2 Sequencer Health External Adapter. If the nodes in the DON determine that the Sequencer’s health has changed, they elect a new leader to write the updated result onto chain as shown in the diagram above.
+
+**How the External Adapter Works**
+
+Checking the Starkware Sequencer’s health is currently a two step process
+
+1. Call the Sequencer directly to fetch the pending block’s details.
+   1. Verify that a new block has been produced within 2 minutes by checking the pending block’s `parentHash`
+   2. If the pending block’s `parentHash` has not changed, then check the length of the `transactions` field to see if it has increased since the last round
+2. Send an empty transaction to a dummy contract at address `0x00000000000000000000000000000000000000000000000000000000000001`
+
+   The EA sends the empty transaction using the StarknetJS library. This transaction tries to call the dummy contract’s `initialize` function with a `maxFee` of 0
+
+   ```jsx
+   const DUMMY_ADDRESS = '0x00000000000000000000000000000000000000000000000000000000000001'
+   const DEFAULT_PRIVATE_KEY = '0x0000000000000000000000000000000000000000000000000000000000000001'
+   const starkKeyPair = ec.genKeyPair(DEFAULT_PRIVATE_KEY)
+   const starkKeyPub = ec.getStarkKey(starkKeyPair)
+   const provider = config.starkwareConfig.provider
+   const account = new Account(provider, DUMMY_ADDRESS, starkKeyPair)
+
+   account.execute(
+     {
+       contractAddress: DUMMY_ADDRESS,
+       entrypoint: 'initialize',
+       calldata: [starkKeyPub, '0'],
+     },
+     undefined,
+     { maxFee: '0' },
+   )
+   ```
+
+3. As the above transaction is expected to fail, the EA will consider the Sequencer as healthy if it receives any of the expected error statuses
+   1. `StarknetErrorCode.UNINITIALIZED_CONTRACT` if the dummy contract has not been initialized
+   2. `StarknetErrorCode.OUT_OF_RANGE_FEE` if the dummy contract has been initialized by accident. As Starknet is a permissionless network, we cannot guarantee that a user deploys and initializes a contract at the dummy address. As a result, the EA will set the `maxFee` to 0 so that the transaction will fail with the `StarknetErrorCode.OUT_OF_RANGE_FEE` status code.
+
+## **Deployed Addresses**
+
+**Goerli**
+
+```jsx
+StarknetValidator: 0x8bbdd71755e163a2c1178811ab82e424cf6fc281
+ValidatorProxy: 0x404f71afcfb23590f9b54647bcf1f61284061557
+StarknetCore: 0xde29d060d45901fb19ed6c6e959eb22d8626708e
+```
+
+**Starknet Goerli**
+
+```jsx
+StarknetSequencerUptimeFeed: 0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f
+```
