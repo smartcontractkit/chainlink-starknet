@@ -19,6 +19,7 @@ import (
 type OCR2Reader interface {
 	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
 	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
+	LatestRoundData(context.Context, string) (RoundData, error)
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
@@ -131,6 +132,28 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	}
 
 	return td, nil
+}
+
+func (c *Client) LatestRoundData(ctx context.Context, address string) (round RoundData, err error) {
+	ops := starknet.CallOps{
+		ContractAddress: address,
+		Selector:        "latest_round_data",
+	}
+
+	results, err := c.r.CallContract(ctx, ops)
+	if err != nil {
+		return round, errors.Wrap(err, "couldn't call the contract with selector latest_round_data")
+	}
+	felts := []junotypes.Felt{}
+	for _, result := range results {
+		felts = append(felts, junotypes.HexToFelt(result))
+	}
+
+	round, err = NewRoundData(felts)
+	if err != nil {
+		return round, errors.Wrap(err, "unable to decode RoundData")
+	}
+	return round, nil
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
