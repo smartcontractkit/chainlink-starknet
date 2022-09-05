@@ -1,9 +1,7 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.starknet.common.syscalls import get_tx_info, get_block_timestamp
+from starkware.cairo.common.cairo_builtins import HashBuiltin
 
-from chainlink.cairo.access.IAccessController import IAccessController
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 from chainlink.cairo.ocr2.IAggregator import Round
 from chainlink.cairo.emergency.SequencerUptimeFeed.library import SequencerUptimeFeed
