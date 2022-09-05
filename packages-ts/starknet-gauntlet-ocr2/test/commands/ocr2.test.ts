@@ -96,7 +96,7 @@ describe('OCR2 Contract', () => {
       privateKey = report.data.privateKey
 
       // Fund the newly allocated account
-      let gateway_url = process.env.NODE_URL || 'http://localhost:5050'
+      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
       let balance = 100_000_000_000_000
       // let balance = 1e21
       const body = {
