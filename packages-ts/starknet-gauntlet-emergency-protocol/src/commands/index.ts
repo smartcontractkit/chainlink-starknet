@@ -1,3 +1,4 @@
 import UptimeFeedCommands from './sequencerUptimeFeed'
+import StarknetValidatorCommands from './starknetValidator'
 
-export default [...UptimeFeedCommands]
+export default [...UptimeFeedCommands, ...StarknetValidatorCommands]

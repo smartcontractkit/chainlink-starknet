@@ -341,6 +341,14 @@
   dependencies:
     "@eth-optimism/contracts" "^0.5.21"
 
+"@chainlink/evm-gauntlet@0.0.1", "@chainlink/evm-gauntlet@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.0.1.tgz#2b9ee322e62c9e469f21c8d360bafd67ebf23930"
+  integrity sha512-5kSVef8FP9MCYrj0FcmCfh7x0zYZ4R9SWm9ABjOmerRc9H+6f0u018AX5RA1V8hukS1uaFnTZ6ZzxlGTQ1ZQyA==
+  dependencies:
+    "@chainlink/gauntlet-core" "0.3.1"
+    ethers "^5.6.9"
+
 "@chainlink/gauntlet-contracts-example@0.1.1":
   version "0.1.1"
   resolved "https://registry.npmjs.org/@chainlink/gauntlet-contracts-example/-/gauntlet-contracts-example-0.1.1.tgz#bf7827460dcb404ba3683245cec1df61ee5ee5c5"
@@ -4968,7 +4976,7 @@ ethereumjs-wallet@^1.0.2:
     utf8 "^3.0.0"
     uuid "^8.3.2"
 
-ethers@^5.0.1, ethers@^5.0.2, ethers@^5.5.2, ethers@^5.6.8:
+ethers@^5.0.1, ethers@^5.0.2, ethers@^5.5.2, ethers@^5.6.8, ethers@^5.6.9:
   version "5.7.0"
   resolved "https://registry.npmjs.org/ethers/-/ethers-5.7.0.tgz#0055da174b9e076b242b8282638bc94e04b39835"
   integrity sha512-5Xhzp2ZQRi0Em+0OkOcRHxPzCfoBfgtOQA+RUylSkuHbhTEaQklnYi2hsWbRgs3ztJsXVXd9VKBcO1ScWL8YfA==
