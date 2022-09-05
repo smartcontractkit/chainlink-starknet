@@ -16,7 +16,7 @@ describe('SequencerUptimeFeed', function () {
     nonOwner = await starknet.deployAccount('OpenZeppelin')
   })
 
-  describe('Test access control via inherited `simple_read_access_controller`', function () {
+  describe('Test access control via inherited `SimpleReadAccessController`', function () {
     const user = 101
     let uptimeFeedContract: StarknetContract
 
