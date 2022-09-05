@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
+from chainlink.cairo.ocr2.IAggregator import IAggregator, NewTransmission, Round
 
 struct Transmission:
     member answer : felt
@@ -25,22 +25,6 @@ end
 
 @storage_var
 func answer_() -> (answer : felt):
-end
-
-@event
-func NewTransmission(
-    round_id : felt,
-    answer : felt,
-    transmitter : felt,
-    observation_timestamp : felt,
-    observers : felt,
-    observations_len : felt,
-    observations : felt*,
-    juels_per_fee_coin : felt,
-    config_digest : felt,
-    epoch_and_round : felt,
-    reimbursement : felt,
-):
 end
 
 @constructor
@@ -106,7 +90,7 @@ func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (observations : felt*) = alloc()
     assert observations[0] = 2
     assert observations[1] = 3
-    new_transmission.emit(
+    NewTransmission.emit(
         round_id=latest_round_id,
         answer=transmission.answer,
         transmitter=12,

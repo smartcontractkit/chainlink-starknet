@@ -9,6 +9,22 @@ struct Round:
 end
 
 @event
+func NewTransmission(
+    round_id : felt,
+    answer : felt,
+    transmitter : felt,
+    observation_timestamp : felt,
+    observers : felt,
+    observations_len : felt,
+    observations : felt*,
+    juels_per_fee_coin : felt,
+    config_digest : felt,
+    epoch_and_round : felt,
+    reimbursement : felt,
+):
+end
+
+@event
 func AnswerUpdated(current : felt, round_id : felt, timestamp : felt):
 end
 
