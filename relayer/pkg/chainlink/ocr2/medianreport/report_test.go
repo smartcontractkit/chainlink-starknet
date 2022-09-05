@@ -40,7 +40,7 @@ func TestBuildReport(t *testing.T) {
 	assert.NoError(t, err)
 
 	// validate length
-	totalLen := prefixSizeBytes + observationSizeBytes*n + juelsPerFeeCoinSizeBytes
+	totalLen := prefixSizeBytes + observationSizeBytes*n + juelsPerFeeCoinSizeBytes + gasPriceSizeBytes
 	assert.Equal(t, totalLen, len(report), "validate length")
 
 	// validate timestamp
@@ -62,8 +62,14 @@ func TestBuildReport(t *testing.T) {
 		assert.Equal(t, oo[0].Value.FillBytes(make([]byte, observationSizeBytes)), []byte(report[index:index+observationSizeBytes]), fmt.Sprintf("validate median observation #%d", i))
 	}
 
-	// validate juelsToEth
-	assert.Equal(t, v.FillBytes(make([]byte, juelsPerFeeCoinSizeBytes)), []byte(report[totalLen-juelsPerFeeCoinSizeBytes:totalLen]), "validate juelsToEth")
+	// validate juelsPerFeeCoin
+	index = prefixSizeBytes + observationSizeBytes*n
+	assert.Equal(t, v.FillBytes(make([]byte, juelsPerFeeCoinSizeBytes)), []byte(report[index:index+juelsPerFeeCoinSizeBytes]), "validate juelsPerFeeCoin")
+
+	// validate gasPrice
+	index += juelsPerFeeCoinSizeBytes
+	expectedGasPrice := big.NewInt(1)
+	assert.Equal(t, expectedGasPrice.FillBytes(make([]byte, gasPriceSizeBytes)), []byte(report[index:index+gasPriceSizeBytes]), "validate gasPrice")
 }
 
 type medianTest struct {
