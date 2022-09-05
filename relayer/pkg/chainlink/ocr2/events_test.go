@@ -1,6 +1,7 @@
 package ocr2
 
 import (
+	"encoding/hex"
 	"math/big"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
@@ -16,7 +18,7 @@ import (
 )
 
 var (
-	exampleNewTransmissionEventRaw = []string{
+	newTransmissionEventRaw = []string{
 		"0x1",
 		"0x63",
 		"0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
@@ -32,7 +34,7 @@ var (
 		"0x1",
 		"0x0",
 	}
-	exampleConfigSetEventRaw = []string{
+	configSetEventRaw = []string{
 		"0x0",
 		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453",
 		"0x1",
@@ -58,8 +60,8 @@ var (
 )
 
 func TestNewTransmissionEvent_Parse(t *testing.T) {
-	eventData := starknet.StringsToFelt(exampleNewTransmissionEventRaw)
-	require.Equal(t, len(exampleNewTransmissionEventRaw), len(eventData))
+	eventData := starknet.StringsToFelt(newTransmissionEventRaw)
+	require.Equal(t, len(newTransmissionEventRaw), len(eventData))
 
 	e, err := ParseNewTransmissionEvent(eventData)
 	assert.NoError(t, err)
@@ -85,8 +87,8 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 }
 
 func TestConfigSetEvent_Parse(t *testing.T) {
-	eventData := starknet.StringsToFelt(exampleConfigSetEventRaw)
-	require.Equal(t, len(exampleConfigSetEventRaw), len(eventData))
+	eventData := starknet.StringsToFelt(configSetEventRaw)
+	require.Equal(t, len(configSetEventRaw), len(eventData))
 
 	e, err := ParseConfigSetEvent(eventData)
 	assert.NoError(t, err)
@@ -127,4 +129,20 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 
 	require.Equal(t, e.OffchainConfigVersion, uint64(2))
 	require.Equal(t, e.OffchainConfig, []uint8{0x1}) // dummy config
+}
+
+func TestNewTransmissionEventSelector(t *testing.T) {
+	bytes, err := hex.DecodeString(NewTransmissionEventSelector)
+	require.NoError(t, err)
+	eventKey := new(big.Int)
+	eventKey.SetBytes(bytes)
+	assert.Equal(t, caigo.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
+}
+
+func TestConfigSetEventSelector(t *testing.T) {
+	bytes, err := hex.DecodeString(ConfigSetEventSelector)
+	require.NoError(t, err)
+	eventKey := new(big.Int)
+	eventKey.SetBytes(bytes)
+	assert.Equal(t, caigo.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }
