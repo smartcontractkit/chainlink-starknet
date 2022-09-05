@@ -1,8 +1,6 @@
 %lang starknet
 
-from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
-from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 
