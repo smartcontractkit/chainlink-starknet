@@ -21,6 +21,7 @@ type OCR2Reader interface {
 	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
 	LatestRoundData(context.Context, string) (RoundData, error)
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
+	NewTransmissionEventAt(context.Context, string, uint64) (NewTransmissionEvent, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
 	BaseReader() starknet.Reader
@@ -156,10 +157,10 @@ func (c *Client) LatestRoundData(ctx context.Context, address string) (round Rou
 	return round, nil
 }
 
-func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+func (c *Client) fetchEventsAt(ctx context.Context, address, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
 	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
-		return cc, errors.Wrap(err, "couldn't fetch block by number")
+		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch block by number")
 	}
 
 	for _, txReceipt := range block.TransactionReceipts {
@@ -168,27 +169,48 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 
 			m, err := json.Marshal(event)
 			if err != nil {
-				return cc, errors.Wrap(err, "couldn't marshal event")
+				return eventsAsFeltArrs, errors.Wrap(err, "couldn't marshal event")
 			}
 
 			err = json.Unmarshal(m, &decodedEvent)
 			if err != nil {
-				return cc, errors.Wrap(err, "couldn't unmarshal event")
+				return eventsAsFeltArrs, errors.Wrap(err, "couldn't unmarshal event")
 			}
 
-			if starknet.IsEventFromContract(&decodedEvent, address, "ConfigSet") {
-				config, err := ParseConfigSetEvent(decodedEvent.Data)
-				if err != nil {
-					return cc, errors.Wrap(err, "couldn't parse config event")
-				}
-
-				return ContractConfig{
-					Config:      config,
-					ConfigBlock: blockNum,
-				}, nil
+			if starknet.IsEventFromContract(&decodedEvent, address, eventType) {
+				eventsAsFeltArrs = append(eventsAsFeltArrs, decodedEvent.Data)
 			}
 		}
 	}
+	if len(eventsAsFeltArrs) == 0 {
+		return nil, errors.New("events not found in the block")
+	}
+	return eventsAsFeltArrs, nil
+}
 
-	return cc, errors.New("config not found in the block")
+func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+	eventsAsFeltArrs, err := c.fetchEventsAt(ctx, address, "ConfigSet", blockNum)
+	if err != nil {
+		return cc, errors.Wrap(err, "failed to fetch config_set events")
+	}
+	config, err := ParseConfigSetEvent(eventsAsFeltArrs[0])
+	if err != nil {
+		return cc, errors.Wrap(err, "couldn't parse config event")
+	}
+	return ContractConfig{
+		Config:      config,
+		ConfigBlock: blockNum,
+	}, nil
+}
+
+func (c *Client) NewTransmissionEventAt(ctx context.Context, address string, blockNum uint64) (event NewTransmissionEvent, err error) {
+	eventsAsFeltArrs, err := c.fetchEventsAt(ctx, address, "NewTransmission", blockNum)
+	if err != nil {
+		return event, errors.Wrap(err, "failed to fetch new_transmission events")
+	}
+	event, err = ParseNewTransmissionEvent(eventsAsFeltArrs[0])
+	if err != nil {
+		return event, errors.Wrap(err, "couldn't parse new_transmission event")
+	}
+	return event, nil
 }
