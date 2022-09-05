@@ -4,7 +4,6 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from chainlink.cairo.access.IAccessController import IAccessController
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 
 @constructor

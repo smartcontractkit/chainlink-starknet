@@ -2,7 +2,6 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.starknet.common.syscalls import (
-    get_tx_info,
     get_block_timestamp,
     get_caller_address,
     get_block_number,

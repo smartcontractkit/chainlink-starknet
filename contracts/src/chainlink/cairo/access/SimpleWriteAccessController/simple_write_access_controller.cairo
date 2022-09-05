@@ -4,7 +4,6 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from chainlink.cairo.access.SimpleWriteAccessController.library import SimpleWriteAccessController
-from chainlink.cairo.access.IAccessController import IAccessController
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
