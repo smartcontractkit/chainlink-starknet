@@ -97,5 +97,5 @@ func TestSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigo.GetSelectorFromName("config_set").Cmp(eventKey), 0)
+	assert.Equal(t, caigo.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }

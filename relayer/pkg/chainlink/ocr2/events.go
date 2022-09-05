@@ -18,7 +18,7 @@ var (
 	MaxObservers = 31
 )
 
-// NewTransmissionEvent represents the 'new_transmission' event
+// NewTransmissionEvent represents the 'NewTransmission' event
 type NewTransmissionEvent struct {
 	RoundId         uint32
 	LatestAnswer    *big.Int
