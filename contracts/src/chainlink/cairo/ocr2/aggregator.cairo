@@ -53,7 +53,7 @@ from chainlink.cairo.access.ownable import (
     Ownable_accept_ownership,
 )
 
-from chainlink.cairo.ocr2.IAggregator import Round, Transmission
+from chainlink.cairo.ocr2.IAggregator import Round
 
 # ---
 
@@ -149,6 +149,13 @@ func reward_from_aggregator_round_id_(index : felt) -> (round_id : felt):
 end
 
 # ---
+
+struct Transmission:
+    member answer : felt
+    member block_num : felt
+    member observation_timestamp : felt
+    member transmission_timestamp : felt
+end
 
 @storage_var
 func transmissions_(round_id : felt) -> (transmission : Transmission):
