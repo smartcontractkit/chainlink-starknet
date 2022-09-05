@@ -56,6 +56,9 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 ) => {
   const txHash = result.responses[0].tx.hash
   const txInfo = await context.provider.provider.getTransactionReceipt(txHash)
+  if (txInfo.status === 'REJECTED') {
+    return { successfulConfiguration: false }
+  }
   const eventData = (txInfo.events[0] as any).data
 
   const offchainConfig = decodeOffchainConfigFromEventData(eventData)
