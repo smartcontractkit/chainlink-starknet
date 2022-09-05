@@ -13,7 +13,6 @@ from starkware.cairo.common.signature import verify_ecdsa_signature
 from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.math import (
-    abs_value,
     split_felt,
     assert_lt_felt,
     assert_lt,
@@ -24,6 +23,7 @@ from starkware.cairo.common.math import (
     assert_in_range,
     unsigned_div_rem,
 )
+from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt
 
@@ -54,8 +54,9 @@ const MAX_ORACLES = 31
 const GIGA = 10 ** 9
 
 const UINT32_MAX = 2 ** 32
-const INT192_MAX = 2 ** (192 - 1)
-const INT192_MIN = -(2 ** (192 - 1))
+const INT192_MAX = 2 ** (192 - 1) - 1
+const PRIME = 2**251 + 17 * 2**192 + 1
+const INT192_MIN = (-INT192_MAX)+PRIME
 
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     let (high, low) = split_felt(x)
@@ -65,6 +66,38 @@ end
 func uint256_to_felt{range_check_ptr}(value : Uint256) -> (value : felt):
     assert_lt_felt(value.high, 2 ** 123)
     return (value.high * (2 ** 128) + value.low)
+end
+
+# Sourced from https://github.com/NethermindEth/Cairo-SafeMath/blob/5c78bf9044e301fc1f4d2f9cd19da608da817d98/src/le_signed.cairo#L697-L726
+func warp_le_signed192{bitwise_ptr : BitwiseBuiltin*, range_check_ptr}(lhs : felt, rhs : felt) -> (
+    res : felt
+):
+    alloc_locals
+    let (lhs_msb : felt) = bitwise_and(lhs, 0x800000000000000000000000000000000000000000000000)
+    let (rhs_msb : felt) = bitwise_and(rhs, 0x800000000000000000000000000000000000000000000000)
+    local bitwise_ptr : BitwiseBuiltin* = bitwise_ptr
+    if lhs_msb == 0:
+        # lhs >= 0
+        if rhs_msb == 0:
+            # rhs >= 0
+            let (result) = is_le_felt(lhs, rhs)
+            return (result)
+        else:
+            # rhs < 0
+            return (0)
+        end
+    else:
+        # lhs < 0
+        if rhs_msb == 0:
+            # rhs >= 0
+            return (1)
+        else:
+            # rhs < 0
+            # (signed) lhs <= rhs <=> (unsigned) lhs >= rhs
+            let (result) = is_le_felt(rhs, lhs)
+            return (result)
+        end
+    end
 end
 
 # Maximum number of faulty oracles
@@ -549,11 +582,12 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
-    # Check abs(median) is in i192 range.
-    # NOTE: (assert_lt_felt(-i192::MAX, median) doesn't work correctly so we have to use abs!)
-    let (value) = abs_value(median)
+    # Check median is in i192 range.
     with_attr error_message("value not in int192 range: {median}"):
-        assert_lt_felt(value, INT192_MAX)
+        let (x: felt) = warp_le_signed192(median, INT192_MAX)
+        let (y: felt) = warp_le_signed192(INT192_MIN, median)
+        # min <= median <= max
+        assert (x - 1) * (y - 1) = 0 # x || y
     end
 
     # Validate median in min-max range
