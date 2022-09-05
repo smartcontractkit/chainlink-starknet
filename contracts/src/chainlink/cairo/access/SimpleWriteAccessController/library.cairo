@@ -86,7 +86,7 @@ func disable_access_check{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
     return ()
 end
 
-namespace simple_write_access_controller:
+namespace SimpleWriteAccessController:
     func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         owner_address : felt
     ):
@@ -120,7 +120,7 @@ namespace simple_write_access_controller:
         let empty_data_len = 0
         let (empty_data) = alloc()
 
-        let (bool) = simple_write_access_controller.has_access(user, empty_data_len, empty_data)
+        let (bool) = SimpleWriteAccessController.has_access(user, empty_data_len, empty_data)
         with_attr error_message("AccessController: address does not have access"):
             assert bool = TRUE
         end
