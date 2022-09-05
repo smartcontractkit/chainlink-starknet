@@ -144,15 +144,15 @@ describe('aggregator.cairo', function () {
 
     assert.isNotEmpty(events)
     assert.equal(events.length, 1)
-    console.log("Log raw 'config_set' event: %O", events[0])
+    console.log("Log raw 'ConfigSet' event: %O", events[0])
 
     const decodedEvents = await aggregator.decodeEvents(events)
     assert.isNotEmpty(decodedEvents)
     assert.equal(decodedEvents.length, 1)
-    console.log("Log decoded 'config_set' event: %O", decodedEvents[0])
+    console.log("Log decoded 'ConfigSet' event: %O", decodedEvents[0])
 
     let e = decodedEvents[0]
-    assert.equal(e.name, 'config_set')
+    assert.equal(e.name, 'ConfigSet')
   })
 
   let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
@@ -223,21 +223,21 @@ describe('aggregator.cairo', function () {
     })
   })
 
-  it("should emit 'new_transmission' event on transmit", async () => {
+  it("should emit 'NewTransmission' event on transmit", async () => {
     const txHash = await transmit(1, 99)
     const receipt = await starknet.getTransactionReceipt(txHash)
 
     assert.isNotEmpty(receipt.events)
-    console.log("Log raw 'new_transmission' event: %O", receipt.events[0])
+    console.log("Log raw 'NewTransmission' event: %O", receipt.events[0])
 
     const decodedEvents = await aggregator.decodeEvents(receipt.events)
     assert.isNotEmpty(decodedEvents)
-    console.log("Log decoded 'new_transmission' event: %O", decodedEvents[0])
+    console.log("Log decoded 'NewTransmission' event: %O", decodedEvents[0])
 
     const e = decodedEvents[0]
     const transmitter = oracles[0].transmitter.address
 
-    assert.equal(e.name, 'new_transmission')
+    assert.equal(e.name, 'NewTransmission')
     assert.equal(e.data.round_id, 1n)
     assert.equal(e.data.observation_timestamp, 1n)
     assert.equal(e.data.epoch_and_round, 1n)

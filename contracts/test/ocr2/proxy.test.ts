@@ -1,21 +1,7 @@
-import { assert, expect } from 'chai'
-import BN from 'bn.js'
+import { assert } from 'chai'
 import { starknet } from 'hardhat'
-import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
-
-interface Oracle {
-  signer: KeyPair
-  transmitter: Account
-}
-
-// Required to convert negative values into [0, PRIME) range
-function toFelt(int: number | BigNumberish): BigNumberish {
-  let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
-  return number.toBN(int).umod(prime)
-}
 
 describe('proxy.cairo', function () {
   this.timeout(TIMEOUT)

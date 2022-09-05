@@ -8,6 +8,13 @@ struct Round:
     member updated_at : felt
 end
 
+struct Transmission:
+    member answer : felt
+    member block_num : felt
+    member observation_timestamp : felt
+    member transmission_timestamp : felt
+end
+
 @event
 func AnswerUpdated(current : felt, round_id : felt, timestamp : felt):
 end
