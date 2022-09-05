@@ -69,47 +69,47 @@ const INT192_MIN = -(2 ** (192 - 1))
 
 # Maximum number of faulty oracles
 @storage_var
-func f_() -> (f : felt):
+func Aggregator_f() -> (f : felt):
 end
 
 @storage_var
-func latest_epoch_and_round_() -> (res : felt):
+func Aggregator_latest_epoch_and_round() -> (res : felt):
 end
 
 @storage_var
-func latest_aggregator_round_id_() -> (round_id : felt):
+func Aggregator_latest_aggregator_round_id() -> (round_id : felt):
 end
 
 using Range = (min : felt, max : felt)
 
 @storage_var
-func answer_range_() -> (range : Range):
+func Aggregator_answer_range() -> (range : Range):
 end
 
 @storage_var
-func decimals_() -> (decimals : felt):
+func Aggregator_decimals() -> (decimals : felt):
 end
 
 @storage_var
-func description_() -> (description : felt):
+func Aggregator_description() -> (description : felt):
 end
 
 #
 
 @storage_var
-func latest_config_block_number_() -> (block : felt):
+func Aggregator_latest_config_block_number() -> (block : felt):
 end
 
 @storage_var
-func config_count_() -> (count : felt):
+func Aggregator_config_count() -> (count : felt):
 end
 
 @storage_var
-func latest_config_digest_() -> (digest : felt):
+func Aggregator_latest_config_digest() -> (digest : felt):
 end
 
 @storage_var
-func oracles_len_() -> (len : felt):
+func Aggregator_oracles_len() -> (len : felt):
 end
 
 # TODO: should we pack into (index, payment) = split_felt()? index is u8, payment is u128
@@ -121,19 +121,19 @@ struct Oracle:
 end
 
 @storage_var
-func transmitters_(pkey : felt) -> (index : Oracle):
+func Aggregator_transmitters(pkey : felt) -> (index : Oracle):
 end
 
 @storage_var
-func signers_(pkey : felt) -> (index : felt):
+func Aggregator_signers(pkey : felt) -> (index : felt):
 end
 
 @storage_var
-func signers_list_(index : felt) -> (pkey : felt):
+func Aggregator_signers_list(index : felt) -> (pkey : felt):
 end
 
 @storage_var
-func transmitters_list_(index : felt) -> (pkey : felt):
+func Aggregator_transmitters_list(index : felt) -> (pkey : felt):
 end
 
 @storage_var
@@ -150,7 +150,7 @@ struct Transmission:
 end
 
 @storage_var
-func transmissions_(round_id : felt) -> (transmission : Transmission):
+func Aggregator_transmissions(round_id : felt) -> (transmission : Transmission):
 end
 
 # ---
@@ -166,18 +166,18 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     description : felt,
 ):
     Ownable_initializer(owner)
-    link_token_.write(link)
-    billing_access_controller_.write(billing_access_controller)
+    Aggregator_link_token.write(link)
+    Aggregator_billing_access_controller.write(billing_access_controller)
 
     assert_lt(min_answer, max_answer)
     let range : Range = (min=min_answer, max=max_answer)
-    answer_range_.write(range)
+    Aggregator_answer_range.write(range)
 
     with_attr error_message("decimals exceed 2^8"):
         assert_lt(decimals, UINT8_MAX)
     end
-    decimals_.write(decimals)
-    description_.write(description)
+    Aggregator_decimals.write(decimals)
+    Aggregator_description.write(description)
     return ()
 end
 
@@ -294,7 +294,7 @@ func set_config{
     assert_nn(f)  # f is positive
     assert onchain_config_len = 0  # empty onchain config provided
 
-    let (answer_range : Range) = answer_range_.read()
+    let (answer_range : Range) = Aggregator_answer_range.read()
     local computed_onchain_config : OnchainConfig = OnchainConfig(version=1, min_answer=answer_range.min, max_answer=answer_range.max)
     # cast to felt* and use OnchainConfig.SIZE as len
     let (__fp__, _) = get_fp_and_pc()
@@ -304,22 +304,22 @@ func set_config{
     pay_oracles()
 
     # remove old signers/transmitters
-    let (len) = oracles_len_.read()
+    let (len) = Aggregator_oracles_len.read()
     remove_oracles(len)
 
-    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
 
     # add new oracles (also sets oracle_len_)
     add_oracles(oracles, 0, oracles_len, latest_round_id)
 
-    f_.write(f)
+    Aggregator_f.write(f)
     let (block_num : felt) = get_block_number()
-    let (prev_block_num) = latest_config_block_number_.read()
-    latest_config_block_number_.write(block_num)
+    let (prev_block_num) = Aggregator_latest_config_block_number.read()
+    Aggregator_latest_config_block_number.write(block_num)
     # update config count
-    let (config_count) = config_count_.read()
+    let (config_count) = Aggregator_config_count.read()
     let config_count = config_count + 1
-    config_count_.write(config_count)
+    Aggregator_config_count.write(config_count)
     # calculate and store config digest
     let (contract_address) = get_contract_address()
     let (tx_info) = get_tx_info()
@@ -336,10 +336,10 @@ func set_config{
         offchain_config_len,
         offchain_config,
     )
-    latest_config_digest_.write(digest)
+    Aggregator_latest_config_digest.write(digest)
 
     # reset epoch & round
-    latest_epoch_and_round_.write(0)
+    Aggregator_latest_epoch_and_round.write(0)
 
     ConfigSet.emit(
         previous_config_block_number=prev_block_num,
@@ -360,16 +360,16 @@ end
 
 func remove_oracles{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(n : felt):
     if n == 0:
-        oracles_len_.write(0)
+        Aggregator_oracles_len.write(0)
         return ()
     end
 
     # delete oracle from all maps
-    let (signer) = signers_list_.read(n)
-    signers_.write(signer, 0)
+    let (signer) = Aggregator_signers_list.read(n)
+    Aggregator_signers.write(signer, 0)
 
-    let (transmitter) = transmitters_list_.read(n)
-    transmitters_.write(transmitter, Oracle(index=0, payment_juels=0))
+    let (transmitter) = Aggregator_transmitters_list.read(n)
+    Aggregator_transmitters.write(transmitter, Oracle(index=0, payment_juels=0))
 
     return remove_oracles(n - 1)
 end
@@ -378,7 +378,7 @@ func add_oracles{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     oracles : OracleConfig*, index : felt, len : felt, latest_round_id : felt
 ):
     if len == 0:
-        oracles_len_.write(index)
+        Aggregator_oracles_len.write(index)
         return ()
     end
 
@@ -387,21 +387,21 @@ func add_oracles{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     let index = index + 1
 
     # Check for duplicates
-    let (existing_signer) = signers_.read(oracles.signer)
+    let (existing_signer) = Aggregator_signers.read(oracles.signer)
     with_attr error_message("repeated signer"):
         assert existing_signer = 0
     end
 
-    let (existing_transmitter : Oracle) = transmitters_.read(oracles.transmitter)
+    let (existing_transmitter : Oracle) = Aggregator_transmitters.read(oracles.transmitter)
     with_attr error_message("repeated transmitter"):
         assert existing_transmitter.index = 0
     end
 
-    signers_.write(oracles.signer, index)
-    signers_list_.write(index, oracles.signer)
+    Aggregator_signers.write(oracles.signer, index)
+    Aggregator_signers_list.write(index, oracles.signer)
 
-    transmitters_.write(oracles.transmitter, Oracle(index=index, payment_juels=0))
-    transmitters_list_.write(index, oracles.transmitter)
+    Aggregator_transmitters.write(oracles.transmitter, Oracle(index=index, payment_juels=0))
+    Aggregator_transmitters_list.write(index, oracles.transmitter)
 
     reward_from_aggregator_round_id_.write(index, latest_round_id)
 
@@ -454,9 +454,9 @@ end
 func latest_config_details{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     config_count : felt, block_number : felt, config_digest : felt
 ):
-    let (config_count) = config_count_.read()
-    let (block_number) = latest_config_block_number_.read()
-    let (config_digest) = latest_config_digest_.read()
+    let (config_count) = Aggregator_config_count.read()
+    let (block_number) = Aggregator_latest_config_block_number.read()
+    let (config_digest) = Aggregator_latest_config_digest.read()
     return (config_count=config_count, block_number=block_number, config_digest=config_digest)
 end
 
@@ -467,7 +467,7 @@ func transmitters{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     alloc_locals
 
     let (result : felt*) = alloc()
-    let (len) = oracles_len_.read()
+    let (len) = Aggregator_oracles_len.read()
 
     transmitters_inner(len, 0, result)
 
@@ -484,7 +484,7 @@ func transmitters_inner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
 
     let index = index + 1
 
-    let (transmitter) = transmitters_list_.read(index)
+    let (transmitter) = Aggregator_transmitters_list.read(index)
     assert result[0] = transmitter
 
     return transmitters_inner(len - 1, index, result + 1)
@@ -523,24 +523,24 @@ func transmit{
 ):
     alloc_locals
 
-    let (epoch_and_round) = latest_epoch_and_round_.read()
+    let (epoch_and_round) = Aggregator_latest_epoch_and_round.read()
     with_attr error_message("stale report"):
         assert_lt(epoch_and_round, report_context.epoch_and_round)
     end
 
     # validate transmitter
     let (caller) = get_caller_address()
-    let (oracle : Oracle) = transmitters_.read(caller)
+    let (oracle : Oracle) = Aggregator_transmitters.read(caller)
     assert_not_equal(oracle.index, 0)  # 0 index = uninitialized
     # ERROR: caller seems to be the account contract address, not the underlying transmitter key
 
     # Validate config digest matches latest_config_digest
-    let (config_digest) = latest_config_digest_.read()
+    let (config_digest) = Aggregator_latest_config_digest.read()
     with_attr error_message("config digest mismatch"):
         assert report_context.config_digest = config_digest
     end
 
-    let (f) = f_.read()
+    let (f) = Aggregator_f.read()
     with_attr error_message("wrong number of signatures f={f}"):
         assert signatures_len = (f + 1)
     end
@@ -560,7 +560,7 @@ func transmit{
     assert_nn_le(observations_len, MAX_ORACLES)  # len <= MAX_ORACLES
     assert_lt(f, observations_len)  # f < len
 
-    latest_epoch_and_round_.write(report_context.epoch_and_round)
+    Aggregator_latest_epoch_and_round.write(report_context.epoch_and_round)
 
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
@@ -573,19 +573,19 @@ func transmit{
     end
 
     # Validate median in min-max range
-    let (answer_range : Range) = answer_range_.read()
+    let (answer_range : Range) = Aggregator_answer_range.read()
     assert_in_range(median, answer_range.min, answer_range.max)
 
-    let (local prev_round_id) = latest_aggregator_round_id_.read()
-    # let (prev_round_id) = latest_aggregator_round_id_.read()
+    let (local prev_round_id) = Aggregator_latest_aggregator_round_id.read()
+    # let (prev_round_id) = Aggregator_latest_aggregator_round_id.read()
     let round_id = prev_round_id + 1
-    latest_aggregator_round_id_.write(round_id)
+    Aggregator_latest_aggregator_round_id.write(round_id)
 
     let (timestamp : felt) = get_block_timestamp()
     let (block_num : felt) = get_block_number()
 
     # write to storage
-    transmissions_.write(
+    Aggregator_transmissions.write(
         round_id,
         Transmission(
         answer=median,
@@ -599,7 +599,7 @@ func transmit{
     # validate via validator
     # let (validator) = validator_.read()
     # if validator != 0:
-    #     let (prev_transmission) = transmissions_.read(prev_round_id)
+    #     let (prev_transmission) = Aggregator_transmissions.read(prev_round_id)
     #     IValidator.validate(
     #         contract_address=validator,
     #         prev_round_id=prev_round_id,
@@ -642,7 +642,7 @@ func transmit{
     let payment = reimbursement_juels + (billing.transmission_payment_gjuels * GIGA)
     # TODO: check overflow
 
-    transmitters_.write(
+    Aggregator_transmitters.write(
         caller,
         Oracle(
         index=oracle.index,
@@ -703,7 +703,7 @@ func verify_signatures{
     let signature = signatures[0]
 
     # Validate the signer key actually belongs to an oracle
-    let (index) = signers_.read(signature.public_key)
+    let (index) = Aggregator_signers.read(signature.public_key)
     with_attr error_message("invalid signer {signature.public_key}"):
         assert_not_equal(index, 0)  # 0 index = uninitialized
     end
@@ -730,10 +730,10 @@ func latest_transmission_details{syscall_ptr : felt*, pedersen_ptr : HashBuiltin
     ) -> (
     config_digest : felt, epoch_and_round : felt, latest_answer : felt, latest_timestamp : felt
 ):
-    let (config_digest) = latest_config_digest_.read()
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (epoch_and_round) = latest_epoch_and_round_.read()
-    let (transmission : Transmission) = transmissions_.read(latest_round_id)
+    let (config_digest) = Aggregator_latest_config_digest.read()
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
+    let (epoch_and_round) = Aggregator_latest_epoch_and_round.read()
+    let (transmission : Transmission) = Aggregator_transmissions.read(latest_round_id)
 
     let round = Round(
         round_id=latest_round_id,
@@ -758,7 +758,7 @@ end
 func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     description : felt
 ):
-    let (description) = description_.read()
+    let (description) = Aggregator_description.read()
     return (description)
 end
 
@@ -766,7 +766,7 @@ end
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
 ):
-    let (decimals) = decimals_.read()
+    let (decimals) = Aggregator_decimals.read()
     return (decimals)
 end
 
@@ -776,7 +776,7 @@ func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 ) -> (round : Round):
     # TODO: assert round_id fits in u32
 
-    let (transmission : Transmission) = transmissions_.read(round_id)
+    let (transmission : Transmission) = Aggregator_transmissions.read(round_id)
 
     let round = Round(
         round_id=round_id,
@@ -792,8 +792,8 @@ end
 func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     round : Round
 ):
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (transmission : Transmission) = transmissions_.read(latest_round_id)
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
+    let (transmission : Transmission) = Aggregator_transmissions.read(latest_round_id)
 
     let round = Round(
         round_id=latest_round_id,
@@ -808,7 +808,7 @@ end
 # --- Set LINK Token
 
 @storage_var
-func link_token_() -> (token : felt):
+func Aggregator_link_token() -> (token : felt):
 end
 
 @event
@@ -822,7 +822,7 @@ func set_link_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     alloc_locals
     Ownable_only_owner()
 
-    let (old_token) = link_token_.read()
+    let (old_token) = Aggregator_link_token.read()
     if link_token == old_token:
         return ()
     end
@@ -838,7 +838,7 @@ func set_link_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let (amount : Uint256) = IERC20.balanceOf(contract_address=link_token, account=contract_address)
     IERC20.transfer(contract_address=old_token, recipient=recipient, amount=amount)
 
-    link_token_.write(link_token)
+    Aggregator_link_token.write(link_token)
 
     LinkTokenSet.emit(old_link_token=old_token, new_link_token=link_token)
 
@@ -849,14 +849,14 @@ end
 func link_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     link_token : felt
 ):
-    let (link_token) = link_token_.read()
+    let (link_token) = Aggregator_link_token.read()
     return (link_token)
 end
 
 # --- Billing Access Controller
 
 @storage_var
-func billing_access_controller_() -> (access_controller : felt):
+func Aggregator_billing_access_controller() -> (access_controller : felt):
 end
 
 @event
@@ -869,9 +869,9 @@ func set_billing_access_controller{
 }(access_controller : felt):
     Ownable_only_owner()
 
-    let (old_controller) = billing_access_controller_.read()
+    let (old_controller) = Aggregator_billing_access_controller.read()
     if access_controller != old_controller:
-        billing_access_controller_.write(access_controller)
+        Aggregator_billing_access_controller.write(access_controller)
 
         BillingAccessControllerSet.emit(
             old_controller=old_controller, new_controller=access_controller
@@ -886,7 +886,7 @@ end
 @view
 func billing_access_controller{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (access_controller : felt):
-    let (access_controller) = billing_access_controller_.read()
+    let (access_controller) = Aggregator_billing_access_controller.read()
     return (access_controller)
 end
 
@@ -899,14 +899,14 @@ struct Billing:
 end
 
 @storage_var
-func billing_() -> (config : Billing):
+func Aggregator_billing() -> (config : Billing):
 end
 
 @view
 func billing{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     config : Billing
 ):
-    let (config : Billing) = billing_.read()
+    let (config : Billing) = Aggregator_billing.read()
     return (config)
 end
 
@@ -927,7 +927,7 @@ func set_billing{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     assert_nn_le(config.observation_payment_gjuels, UINT32_MAX)
     assert_nn_le(config.transmission_payment_gjuels, UINT32_MAX)
 
-    billing_.write(config)
+    Aggregator_billing.write(config)
 
     BillingSet.emit(config=config)
 
@@ -943,7 +943,7 @@ func has_billing_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
         return ()
     end
 
-    let (access_controller) = billing_access_controller_.read()
+    let (access_controller) = Aggregator_billing_access_controller.read()
 
     IAccessController.check_access(contract_address=access_controller, user=caller)
     return ()
@@ -966,8 +966,8 @@ func withdraw_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
         assert caller = payee
     end
 
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (link_token) = link_token_.read()
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
+    let (link_token) = Aggregator_link_token.read()
     pay_oracle(transmitter, latest_round_id, link_token)
     return ()
 end
@@ -976,15 +976,15 @@ end
 func owed_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     transmitter : felt
 ) -> (amount : felt):
-    let (oracle : Oracle) = transmitters_.read(transmitter)
+    let (oracle : Oracle) = Aggregator_transmitters.read(transmitter)
 
     if oracle.index == 0:
         return (0)
     end
 
-    let (billing : Billing) = billing_.read()
+    let (billing : Billing) = Aggregator_billing.read()
 
-    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
     let (from_round_id) = reward_from_aggregator_round_id_.read(oracle.index)
     let rounds = latest_round_id - from_round_id
 
@@ -997,7 +997,7 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 ):
     alloc_locals
 
-    let (oracle : Oracle) = transmitters_.read(transmitter)
+    let (oracle : Oracle) = Aggregator_transmitters.read(transmitter)
 
     if oracle.index == 0:
         return ()
@@ -1019,7 +1019,7 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 
     # Reset payment
     reward_from_aggregator_round_id_.write(oracle.index, latest_round_id)
-    transmitters_.write(transmitter, Oracle(index=oracle.index, payment_juels=0))
+    Aggregator_transmitters.write(transmitter, Oracle(index=oracle.index, payment_juels=0))
 
     OraclePaid.emit(transmitter=transmitter, payee=payee, amount=amount, link_token=link_token)
 
@@ -1027,9 +1027,9 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 end
 
 func pay_oracles{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    let (len) = oracles_len_.read()
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (link_token) = link_token_.read()
+    let (len) = Aggregator_oracles_len.read()
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
+    let (link_token) = Aggregator_link_token.read()
     pay_oracles_(len, latest_round_id, link_token)
     return ()
 end
@@ -1041,7 +1041,7 @@ func pay_oracles_{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
         return ()
     end
 
-    let (transmitter) = transmitters_list_.read(index)
+    let (transmitter) = Aggregator_transmitters_list.read(index)
     pay_oracle(transmitter, latest_round_id, link_token)
 
     return pay_oracles_(index - 1, latest_round_id, link_token)
@@ -1059,8 +1059,8 @@ end
 func total_link_due{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     due : felt
 ):
-    let (len) = oracles_len_.read()
-    let (latest_round_id) = latest_aggregator_round_id_.read()
+    let (len) = Aggregator_oracles_len.read()
+    let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
 
     let (amount) = total_link_due_(len, latest_round_id, 0, 0)
     return (amount)
@@ -1070,13 +1070,13 @@ func total_link_due_{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     index : felt, latest_round_id : felt, total_rounds : felt, payments_juels : felt
 ) -> (due : felt):
     if index == 0:
-        let (billing : Billing) = billing_.read()
+        let (billing : Billing) = Aggregator_billing.read()
         let amount = (total_rounds * billing.observation_payment_gjuels * GIGA) + payments_juels
         return (amount)
     end
 
-    let (transmitter) = transmitters_list_.read(index)
-    let (oracle : Oracle) = transmitters_.read(transmitter)
+    let (transmitter) = Aggregator_transmitters_list.read(index)
+    let (oracle : Oracle) = Aggregator_transmitters.read(transmitter)
     assert_not_zero(oracle.index)  # 0 == undefined
 
     let (from_round_id) = reward_from_aggregator_round_id_.read(oracle.index)
@@ -1092,7 +1092,7 @@ end
 func link_available_for_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (available : felt):
     alloc_locals
-    let (link_token) = link_token_.read()
+    let (link_token) = Aggregator_link_token.read()
     let (contract_address) = get_contract_address()
 
     let (balance_ : Uint256) = IERC20.balanceOf(
