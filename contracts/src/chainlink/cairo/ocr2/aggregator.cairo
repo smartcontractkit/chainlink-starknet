@@ -53,7 +53,7 @@ from chainlink.cairo.access.ownable import (
     Ownable_accept_ownership,
 )
 
-from chainlink.cairo.ocr2.IAggregator import Round
+from chainlink.cairo.ocr2.IAggregator import NewTransmission, Round
 
 # ---
 
@@ -499,22 +499,6 @@ func transmitters_inner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
 end
 
 # --- Transmission ---
-
-@event
-func NewTransmission(
-    round_id : felt,
-    answer : felt,
-    transmitter : felt,
-    observation_timestamp : felt,
-    observers : felt,
-    observations_len : felt,
-    observations : felt*,
-    juels_per_fee_coin : felt,
-    config_digest : felt,
-    epoch_and_round : felt,
-    reimbursement : felt,
-):
-end
 
 struct Signature:
     member r : felt
