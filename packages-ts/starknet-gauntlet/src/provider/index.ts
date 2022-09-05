@@ -1,11 +1,10 @@
 import { TransactionResponse } from '../transaction'
 import {
-  Provider as StarknetProvider,
-  AddTransactionResponse,
+  SequencerProvider as StarknetProvider,
+  api,
   CompiledContract,
   Account,
   Call,
-  InvocationsDetails,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -34,7 +33,7 @@ export const makeProvider = (url: string): IProvider<StarknetProvider> => {
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: AddTransactionResponse,
+  response: api.Sequencer.AddTransactionResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
