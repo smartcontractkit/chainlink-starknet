@@ -13,7 +13,7 @@ from starkware.cairo.common.bool import TRUE, FALSE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
-from chainlink.cairo.access.SimpleReadAccessController.library import simple_read_access_controller
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 from chainlink.cairo.access.ownable import Ownable_only_owner
 
 @event
@@ -69,7 +69,7 @@ end
 
 func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (address) = get_caller_address()
-    simple_read_access_controller.check_access(address)
+    SimpleReadAccessController.check_access(address)
 
     return ()
 end
@@ -93,13 +93,13 @@ func l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     return (address)
 end
 
-namespace sequencer_uptime_feed:
+namespace SequencerUptimeFeed:
     func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         initial_status : felt, owner_address : felt
     ):
         assert_boolean(initial_status)
 
-        simple_read_access_controller.initialize(owner_address)
+        SimpleReadAccessController.initialize(owner_address)
 
         let round_id = 1
         let (timestamp) = get_block_timestamp()
@@ -141,7 +141,7 @@ namespace sequencer_uptime_feed:
         require_access()
 
         let (latest_round_id) = s_latest_round_id.read()
-        let (latest_round) = sequencer_uptime_feed.round_data(latest_round_id)
+        let (latest_round) = SequencerUptimeFeed.round_data(latest_round_id)
 
         return (latest_round)
     end
