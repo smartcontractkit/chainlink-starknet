@@ -12,7 +12,7 @@ import {
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadContract_Ocr2, CONTRACT_LIST } from '../../src/lib/contracts'
-import { Contract } from 'starknet'
+import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 const signers = [
@@ -216,10 +216,12 @@ describe('OCR2 Contract', () => {
 
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
-      const receipt = await provider.getTransactionReceipt(report.responses[0].tx.hash)
+      const receipt = (await provider.getTransactionReceipt(
+        report.responses[0].tx.hash,
+      )) as InvokeTransactionReceiptResponse
 
       // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
-      const eventData = (receipt.events[0] as any).data // Workaround for incorrect typescript annotation, event isn't string
+      const eventData = receipt.events[0].data
       // reconstruct signers array from event
       let eventSigners = []
       for (let i = 0; i < signers.length; i++) {
