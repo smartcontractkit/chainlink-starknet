@@ -12,7 +12,10 @@ import {
   L2Commands as L2StarkgateCommands,
 } from '@chainlink/starknet-gauntlet-starkgate'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
-import { Commands as EmergencyProtocolCommands } from '@chainlink/starknet-gauntlet-emergency-protocol'
+import {
+  L1Commands as L1EmergencyProtocolCommands,
+  L2Commands as L2EmergencyProtocolCommands,
+} from '@chainlink/starknet-gauntlet-emergency-protocol'
 import {
   executeCommands as MultisigExecuteCommands,
   inspectionCommands as MultisigInspectionCommands,
@@ -107,7 +110,7 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const L1ExecuteCommands = [...L1StarkgateCommands]
+const L1ExecuteCommands = [...L1StarkgateCommands, ...L1EmergencyProtocolCommands]
 const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
@@ -115,7 +118,7 @@ const L2ExecuteCommands = [
   ...L2StarkgateCommands,
   ...ArgentCommands,
   ...MultisigExecuteCommands,
-  ...EmergencyProtocolCommands,
+  ...L2EmergencyProtocolCommands,
 ]
 const msigCommands = L2ExecuteCommands.map(c => registerExecuteCommand(c, true)).map(
   multisigWrapCommand,
