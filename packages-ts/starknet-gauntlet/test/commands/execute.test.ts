@@ -131,49 +131,6 @@ describe('Execute with network', () => {
     TIMEOUT,
   )
 
-  it(
-    'Command no wallet execution',
-    async () => {
-      const makeUserInput = async (flags, args) => {
-        return
-      }
-
-      const makeContractInput = async (userInput) => {
-        return [100]
-      }
-
-      const increaseCommandConfig: ExecuteCommandConfig<any, any> = {
-        contractId: '',
-        category: 'example',
-        action: 'increase_balance',
-        ux: {
-          description: '',
-          examples: [],
-        },
-        makeUserInput,
-        makeContractInput,
-        validations: [],
-        loadContract: loadExampleContract,
-      }
-
-      const command = registerExecuteCommand(makeExecuteCommand(increaseCommandConfig))
-
-      const commandInstance = await command.create({ noWallet: true }, [contractAddress])
-      const report = await commandInstance.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      const contract = new Contract(
-        loadExampleContract().abi,
-        contractAddress,
-        makeProvider(LOCAL_URL).provider,
-      )
-      const balance = await contract.get_balance()
-
-      expect(new BN(balance.res).toString()).toEqual('100')
-    },
-    TIMEOUT,
-  )
-
   afterAll(() => {
     network.stop()
   })
