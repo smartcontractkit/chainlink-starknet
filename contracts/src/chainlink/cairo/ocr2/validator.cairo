@@ -16,6 +16,8 @@ from starkware.cairo.common.uint256 import (
 
 const THRESHOLD_MULTIPLIER = 100000
 
+from chainlink.cairo.utils import felt_to_uint256
+
 from chainlink.cairo.access.ownable import Ownable_initializer, Ownable_only_owner
 
 @storage_var
@@ -73,11 +75,6 @@ func set_flags_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 end
 
 # ---
-
-func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
-    let (high, low) = split_felt(x)
-    return (Uint256(low=low, high=high))
-end
 
 # TODO: quadruple test the logic in this method to ensure it can never fail & revert
 func is_valid{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
