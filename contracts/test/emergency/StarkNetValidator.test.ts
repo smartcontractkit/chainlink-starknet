@@ -101,6 +101,9 @@ describe('StarkNetValidator', () => {
       const actual = getSelectorFromName('update_status')
       const expected = 1585322027166395525705364165097050997465692350398750944680096081848180365267n
       expect(BigInt(actual)).to.equal(expected)
+
+      const computedActual = await starkNetValidator.SELECTOR_STARK_UPDATE_STATUS()
+      expect(BigInt(computedActual)).to.equal(expected)
     })
 
     it('reverts if `StarkNetValidator.validate` called by account with no access', async () => {
