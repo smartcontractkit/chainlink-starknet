@@ -82,11 +82,11 @@ func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 ):
     Ownable_only_owner()
 
-    with_attr error_message("Bridge address out of range"):
+    with_attr error_message("L1 sender address out of range"):
         assert_lt_felt(address, ETH_ADDRESS_BOUND)
     end
 
-    with_attr error_message("Bridge address can not be null"):
+    with_attr error_message("L1 sender address can not be zero"):
         assert_not_zero(address)
     end
     _set_l1_sender(address)
