@@ -122,6 +122,7 @@ describe('ERC677', function () {
         expect(uint256.uint256ToBN(balance1)).to.deep.equal(toBN(0))
       }
     })
+
     it('throws an error when sending to 0 address', async () => {
       try {
         await sender.invoke(token, 'transferAndCall', {
