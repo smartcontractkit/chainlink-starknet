@@ -1,4 +1,6 @@
 import Token from './token'
-import Bridge from './bridge'
+import L1Bridge from './L1-bridge'
+import L2Bridge from './L2-bridge'
 
-export default [...Token, ...Bridge]
+export const L1Commands = [...L1Bridge]
+export const L2Commands = [...Token, ...L2Bridge]
