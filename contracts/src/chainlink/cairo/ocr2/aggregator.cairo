@@ -638,7 +638,7 @@ func transmit{
     )
 
     # pay transmitter
-    let (billing : Billing) = billing_.read()
+    let (billing : Billing) = Aggregator_billing.read()
     let payment = reimbursement_juels + (billing.transmission_payment_gjuels * GIGA)
     # TODO: check overflow
 
@@ -961,7 +961,7 @@ func withdraw_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 ):
     alloc_locals
     let (caller) = get_caller_address()
-    let (payee) = payees_.read(transmitter)
+    let (payee) = Aggregator_payees.read(transmitter)
     with_attr error_message("only payee can withdraw"):
         assert caller = payee
     end
@@ -1013,7 +1013,7 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     end
 
     let (amount : Uint256) = felt_to_uint256(amount_)
-    let (payee) = payees_.read(transmitter)
+    let (payee) = Aggregator_payees.read(transmitter)
 
     IERC20.transfer(contract_address=link_token, recipient=payee, amount=amount)
 
@@ -1118,11 +1118,11 @@ end
 # --- Payee Management
 
 @storage_var
-func payees_(transmitter : felt) -> (payment_address : felt):
+func Aggregator_payees(transmitter : felt) -> (payment_address : felt):
 end
 
 @storage_var
-func proposed_payees_(transmitter : felt) -> (payment_address : felt):
+func Aggregator_proposed_payees(transmitter : felt) -> (payment_address : felt):
 end
 
 @event
@@ -1165,7 +1165,7 @@ func set_payee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
         return ()
     end
 
-    let (current_payee) = payees_.read(payees.transmitter)
+    let (current_payee) = Aggregator_payees.read(payees.transmitter)
 
     # a more convoluted way of saying
     # require(current_payee == 0 || current_payee == payee, "payee already set")
@@ -1175,7 +1175,7 @@ func set_payee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
         assert (is_unset - 1) * (is_same - 1) = 0
     end
 
-    payees_.write(payees.transmitter, payees.payee)
+    Aggregator_payees.write(payees.transmitter, payees.payee)
 
     PayeeshipTransferred.emit(
         transmitter=payees.transmitter, previous=current_payee, current=payees.payee
@@ -1189,7 +1189,7 @@ func transfer_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     transmitter : felt, proposed : felt
 ):
     let (caller) = get_caller_address()
-    let (payee) = payees_.read(transmitter)
+    let (payee) = Aggregator_payees.read(transmitter)
     with_attr error_message("only current payee can update"):
         assert caller = payee
     end
@@ -1197,7 +1197,7 @@ func transfer_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
         assert_not_equal(caller, proposed)
     end
 
-    proposed_payees_.write(transmitter, proposed)
+    Aggregator_proposed_payees.write(transmitter, proposed)
 
     PayeeshipTransferRequested.emit(transmitter=transmitter, current=payee, proposed=proposed)
 
@@ -1209,14 +1209,14 @@ func accept_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     transmitter : felt
 ):
     let (caller) = get_caller_address()
-    let (proposed) = proposed_payees_.read(transmitter)
+    let (proposed) = Aggregator_proposed_payees.read(transmitter)
     with_attr error_message("only proposed payee can accept"):
         assert caller = proposed
     end
 
-    let (previous) = payees_.read(transmitter)
-    payees_.write(transmitter, caller)
-    proposed_payees_.write(transmitter, 0)
+    let (previous) = Aggregator_payees.read(transmitter)
+    Aggregator_payees.write(transmitter, caller)
+    Aggregator_proposed_payees.write(transmitter, 0)
 
     PayeeshipTransferred.emit(transmitter=transmitter, previous=previous, current=caller)
 
