@@ -7,7 +7,10 @@ import {
   inspectionCommands as ExampleInspectionsCommands,
 } from '@chainlink/starknet-gauntlet-example'
 import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
-import { Commands as StarkgateCommands } from '@chainlink/starknet-gauntlet-starkgate'
+import {
+  L1Commands as L1StarkgateCommands,
+  L2Commands as L2StarkgateCommands,
+} from '@chainlink/starknet-gauntlet-starkgate'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
   executeCommands as MultisigExecuteCommands,
@@ -28,6 +31,13 @@ import {
   makeProvider,
   makeWallet,
 } from '@chainlink/starknet-gauntlet'
+import {
+  EVMExecuteCommandInstance,
+  CommandCtor as EVMCommandCtor,
+  makeWallet as EVMMakeWallet,
+  makeProvider as EVMMakeProvider,
+  EVMDependencies,
+} from '@chainlink/evm-gauntlet'
 
 export const noopPrompt: typeof prompt = async () => {}
 
@@ -57,6 +67,25 @@ const registerExecuteCommand = <UI, CI>(
   return registerCommand(deps)
 }
 
+const registerEVMExecuteCommand = <UI, CI>(
+  registerCommand: (deps: EVMDependencies) => EVMCommandCtor<EVMExecuteCommandInstance<UI, CI>>,
+  gauntletConfig,
+) => {
+  const deps: EVMDependencies = {
+    logger: logger,
+    prompt: prompt,
+    makeEnv: (flags) => {
+      return {
+        providerUrl: process.env.NODE_URL || 'https://goerli.infura.io/v3/7c43471f9d604276a856f0cff1edb645',
+        pk: process.env.PRIVATE_KEY,
+      }
+    },
+    makeProvider: EVMMakeProvider,
+    makeWallet: EVMMakeWallet,
+  }
+  return registerCommand(deps)
+}
+
 const registerInspectionCommand = <QueryResult>(
   registerCommand: (deps: Omit<Dependencies, 'makeWallet'>) => CommandCtor<InspectCommandInstance<QueryResult>>,
 ) => {
@@ -74,15 +103,16 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const executeCommands = [
+const L1ExecuteCommands = [...L1StarkgateCommands]
+const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
   ...OZCommands,
-  ...StarkgateCommands,
+  ...L2StarkgateCommands,
   ...ArgentCommands,
   ...MultisigExecuteCommands,
 ]
-const msigCommands = executeCommands.map((c) => registerExecuteCommand(c, true)).map(multisigWrapCommand)
+const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(multisigWrapCommand)
 const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
@@ -91,7 +121,8 @@ const unregistedInspectionCommands = [
 
 const commands = {
   custom: [
-    ...executeCommands.map((c) => registerExecuteCommand(c)),
+    ...L2ExecuteCommands.map((c) => registerExecuteCommand(c)),
+    ...L1ExecuteCommands.map((c) => registerEVMExecuteCommand(c, null)),
     ...msigCommands.map((c) => registerExecuteCommand(c)),
     ...unregistedInspectionCommands.map(registerInspectionCommand),
   ],
