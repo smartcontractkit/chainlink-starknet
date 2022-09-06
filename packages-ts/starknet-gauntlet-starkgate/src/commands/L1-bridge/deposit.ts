@@ -1,32 +1,28 @@
-import {
-  BeforeExecute,
-  ExecuteCommandConfig,
-  makeExecuteCommand,
-  isValidAddress,
-} from '@chainlink/starknet-gauntlet' // todo: use @chainlink/evm-gauntlet
+import { EVMExecuteCommandConfig, EVMExecutionContext, makeEVMExecuteCommand } from '@chainlink/evm-gauntlet'
+import { isValidAddress } from '@chainlink/starknet-gauntlet'
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
 import { CATEGORIES } from '../../lib/categories'
 import { l1BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
-  recipient: string,
-  amount: string,
+  amount: string
+  recipient: string
 }
 
-type ContractInput = [recipient: string, amount: Uint256]
+type ContractInput = [amount: Uint256, recipient: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   return {
-    recipient: flags.recipient,
     amount: flags.amount,
+    recipient: flags.recipient,
   }
 }
 
-const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [input.recipient, bnToUint256(input.amount)]
+const makeContractInput = async (input: UserInput, context: EVMExecutionContext): Promise<ContractInput> => {
+  return [bnToUint256(input.amount), input.recipient]
 }
 
 const validateInput = async (input: UserInput): Promise<boolean> => {
@@ -36,13 +32,7 @@ const validateInput = async (input: UserInput): Promise<boolean> => {
   return true
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
-  deps.logger.info(`About to deposit to L1 Bridge with the following details:
-    ${input.contract}
-  `)
-}
-
-const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: CONTRACT_LIST.L1_BRIDGE,
   category: CATEGORIES.L1_BRIDGE,
   action: 'deposit',
@@ -56,9 +46,6 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   makeContractInput,
   validations: [validateInput],
   loadContract: l1BridgeContractLoader,
-  hooks: {
-    beforeExecute,
-  },
 }
 
-export default makeExecuteCommand(commandConfig)
+export default makeEVMExecuteCommand(commandConfig)
