@@ -10,7 +10,7 @@ import {
 import { shortString } from 'starknet'
 import { isContext } from 'vm'
 import { CATEGORIES } from '../../lib/categories'
-import { bridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
+import { l2BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   address?: string
@@ -51,19 +51,19 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  contractId: CONTRACT_LIST.BRIDGE,
-  category: CATEGORIES.BRIDGE,
+  contractId: CONTRACT_LIST.L2_BRIDGE,
+  category: CATEGORIES.L2_BRIDGE,
   action: 'set_l1_bridge',
   ux: {
     description: 'Sets L1 bridge on an L2 token bridge',
     examples: [
-      `${CATEGORIES.BRIDGE}:set_l1_bridge --network=<NETWORK> --address=[L1_BRIDGE_ADDRESS] [L2_BRIDGE_ADDRESS]`,
+      `${CATEGORIES.L2_BRIDGE}:set_l1_bridge --network=<NETWORK> --address=[L1_BRIDGE_ADDRESS] [L2_BRIDGE_ADDRESS]`,
     ],
   },
   makeUserInput,
   makeContractInput,
   validations: [validateInput],
-  loadContract: bridgeContractLoader,
+  loadContract: l2BridgeContractLoader,
   hooks: {
     beforeExecute,
   },

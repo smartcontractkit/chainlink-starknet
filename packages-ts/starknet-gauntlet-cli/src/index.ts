@@ -7,7 +7,10 @@ import {
   inspectionCommands as ExampleInspectionsCommands,
 } from '@chainlink/starknet-gauntlet-example'
 import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
-import { Commands as StarkgateCommands } from '@chainlink/starknet-gauntlet-starkgate'
+import {
+  L1Commands as L1StarkgateCommands,
+  L2Commands as L2StarkgateCommands,
+} from '@chainlink/starknet-gauntlet-starkgate'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import { Commands as EmergencyProtocolCommands } from '@chainlink/starknet-gauntlet-emergency-protocol'
 import {
@@ -29,6 +32,13 @@ import {
   makeProvider,
   makeWallet,
 } from '@chainlink/starknet-gauntlet'
+import {
+  EVMExecuteCommandInstance,
+  CommandCtor as EVMCommandCtor,
+  makeWallet as EVMMakeWallet,
+  makeProvider as EVMMakeProvider,
+  EVMDependencies,
+} from '@chainlink/evm-gauntlet'
 
 export const noopPrompt: typeof prompt = async () => {}
 
@@ -39,7 +49,7 @@ const registerExecuteCommand = <UI, CI>(
   const deps: Dependencies | Omit<Dependencies, 'makeWallet'> = {
     logger: logger,
     prompt: emptyPrompt ? noopPrompt : prompt,
-    makeEnv: (flags) => {
+    makeEnv: flags => {
       const env: Env = {
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
         pk: process.env.PRIVATE_KEY,
@@ -58,6 +68,26 @@ const registerExecuteCommand = <UI, CI>(
   return registerCommand(deps)
 }
 
+const registerEVMExecuteCommand = <UI, CI>(
+  registerCommand: (deps: EVMDependencies) => EVMCommandCtor<EVMExecuteCommandInstance<UI, CI>>,
+  gauntletConfig,
+) => {
+  const deps: EVMDependencies = {
+    logger: logger,
+    prompt: prompt,
+    makeEnv: flags => {
+      return {
+        providerUrl:
+          process.env.NODE_URL || 'https://goerli.infura.io/v3/7c43471f9d604276a856f0cff1edb645',
+        pk: process.env.PRIVATE_KEY,
+      }
+    },
+    makeProvider: EVMMakeProvider,
+    makeWallet: EVMMakeWallet,
+  }
+  return registerCommand(deps)
+}
+
 const registerInspectionCommand = <QueryResult>(
   registerCommand: (
     deps: Omit<Dependencies, 'makeWallet'>,
@@ -66,7 +96,7 @@ const registerInspectionCommand = <QueryResult>(
   const deps: Omit<Dependencies, 'makeWallet'> = {
     logger: logger,
     prompt: prompt,
-    makeEnv: (flags) => {
+    makeEnv: flags => {
       const env: Env = {
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
       }
@@ -77,18 +107,19 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const executeCommands = [
+const L1ExecuteCommands = [...L1StarkgateCommands]
+const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
   ...OZCommands,
-  ...StarkgateCommands,
+  ...L2StarkgateCommands,
   ...ArgentCommands,
   ...MultisigExecuteCommands,
   ...EmergencyProtocolCommands,
 ]
-const msigCommands = executeCommands
-  .map((c) => registerExecuteCommand(c, true))
-  .map(multisigWrapCommand)
+const msigCommands = L2ExecuteCommands.map(c => registerExecuteCommand(c, true)).map(
+  multisigWrapCommand,
+)
 const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
@@ -97,8 +128,9 @@ const unregistedInspectionCommands = [
 
 const commands = {
   custom: [
-    ...executeCommands.map((c) => registerExecuteCommand(c)),
-    ...msigCommands.map((c) => registerExecuteCommand(c)),
+    ...L2ExecuteCommands.map(c => registerExecuteCommand(c)),
+    ...L1ExecuteCommands.map(c => registerEVMExecuteCommand(c, null)),
+    ...msigCommands.map(c => registerExecuteCommand(c)),
     ...unregistedInspectionCommands.map(registerInspectionCommand),
   ],
   loadDefaultFlags: () => ({}),
@@ -107,14 +139,13 @@ const commands = {
     makeCommand: () => undefined,
   },
 }
-
 ;(async () => {
   try {
     const networkPossiblePaths = [
       path.join(process.cwd(), 'networks'),
       path.join(__dirname, '../networks'),
     ]
-    const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
+    const networkPath = networkPossiblePaths.filter(networkPath => existsSync(networkPath))[0]
     const result = await executeCLI(commands, networkPath)
     if (result) {
       io.saveJSON(result, process.env['REPORT_NAME'] ? process.env['REPORT_NAME'] : 'report')
