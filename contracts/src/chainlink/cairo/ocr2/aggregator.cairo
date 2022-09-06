@@ -45,6 +45,8 @@ from openzeppelin.token.erc20.IERC20 import IERC20
 
 from chainlink.cairo.access.IAccessController import IAccessController
 
+from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
+
 from chainlink.cairo.access.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
@@ -64,16 +66,6 @@ const GIGA = 10 ** 9
 const UINT32_MAX = 2 ** 32
 const INT192_MAX = 2 ** (192 - 1)
 const INT192_MIN = -(2 ** (192 - 1))
-
-func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
-    let (high, low) = split_felt(x)
-    return (Uint256(low=low, high=high))
-end
-
-func uint256_to_felt{range_check_ptr}(value : Uint256) -> (value : felt):
-    assert_lt_felt(value.high, 2 ** 123)
-    return (value.high * (2 ** 128) + value.low)
-end
 
 # Maximum number of faulty oracles
 @storage_var
