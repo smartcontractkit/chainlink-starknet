@@ -9,7 +9,7 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { shortString } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
+import { tokenContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   name: string
@@ -69,7 +69,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   makeUserInput,
   makeContractInput,
   validations: [],
-  loadContract: contractLoader,
+  loadContract: tokenContractLoader,
   hooks: {
     beforeExecute,
   },

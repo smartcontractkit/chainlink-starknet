@@ -8,7 +8,7 @@ import {
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
 import { CATEGORIES } from '../../lib/categories'
-import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
+import { tokenContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   recipient: string
@@ -57,7 +57,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   makeUserInput,
   makeContractInput,
   validations: [validateRecipient, validateAmount],
-  loadContract: contractLoader,
+  loadContract: tokenContractLoader,
   hooks: {
     beforeExecute,
   },
