@@ -20,6 +20,8 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   uint256 constant STARK_SELECTOR_UPDATE_STATUS =
     1585322027166395525705364165097050997465692350398750944680096081848180365267;
 
+  uint256 private s_fee;
+
   IStarknetMessaging public immutable STARKNET_CROSS_DOMAIN_MESSENGER;
   uint256 public immutable L2_UPTIME_FEED_ADDR;
 
@@ -29,11 +31,17 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   /// @notice StarkNet uptime feed address - the address is 0.
   error InvalidUptimeFeedAddress();
 
+  event FeeSet(uint256);
+
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract address
    * @param l2UptimeFeedAddr the address of the Sequencer Uptime Feed on L2
    */
-  constructor(address starkNetMessaging, uint256 l2UptimeFeedAddr) {
+  constructor(
+    address starkNetMessaging,
+    uint256 l2UptimeFeedAddr,
+    uint256 fee
+  ) {
     if (starkNetMessaging == address(0)) {
       revert InvalidStarkNetMessaging();
     }
@@ -44,6 +52,8 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
     STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
     L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
+
+    s_fee = fee;
   }
 
   /// @notice converts a bool to uint256.
@@ -61,6 +71,14 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
     return "StarkNetValidator 0.1.0";
+  }
+
+  function setFee(uint256 newFee) external onlyOwner {
+    s_fee = newFee;
+  }
+
+  function getFee() external view returns (uint256) {
+    return s_fee;
   }
 
   /**
@@ -82,7 +100,18 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     payload[1] = block.timestamp;
     // Make the StarkNet x-domain call.
     // NOTICE: we ignore the output of this call (msgHash, nonce), and we don't raise any events as the event LogMessageToL2 will be emitted from the messaging contract
-    STARKNET_CROSS_DOMAIN_MESSENGER.sendMessageToL2(L2_UPTIME_FEED_ADDR, STARK_SELECTOR_UPDATE_STATUS, payload);
+    STARKNET_CROSS_DOMAIN_MESSENGER.sendMessageToL2{value: s_fee}(
+      L2_UPTIME_FEED_ADDR,
+      STARK_SELECTOR_UPDATE_STATUS,
+      payload
+    );
     return true;
   }
+
+  /**
+   * @notice makes this contract payable
+   * @dev receives funds:
+   *  - funds are used to send cross chain messages to L2
+   */
+  receive() external payable {}
 }
