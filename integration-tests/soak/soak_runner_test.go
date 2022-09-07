@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-env/environment"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/remotetestrunner"
 	"github.com/smartcontractkit/chainlink-testing-framework/actions"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
@@ -34,11 +33,11 @@ func TestOCRSoak(t *testing.T) {
 	activeEVMNetwork := networks.GeneralEVM() // Environment currently being used to soak test on
 
 	baseEnvironmentConfig.NamespacePrefix = fmt.Sprintf(
-		"soak-ocr-%s",
+		"chainlink-soak-ocr-starknet-%s",
 		strings.ReplaceAll(strings.ToLower(activeEVMNetwork.Name), " ", "-"),
 	)
 	testEnvironment := environment.New(baseEnvironmentConfig)
-	soakTestHelper(t, "@ocr", testEnvironment, activeEVMNetwork)
+	soakTestHelper(t, "@soak", testEnvironment, activeEVMNetwork)
 }
 
 // builds tests, launches environment, and triggers the soak test to run
@@ -48,7 +47,7 @@ func soakTestHelper(
 	testEnvironment *environment.Environment,
 	activeEVMNetwork *blockchain.EVMNetwork,
 ) {
-	exeFile, exeFileSize, err := actions.BuildGoTests("./", "../smoke", "../../")
+	exeFile, exeFileSize, err := actions.BuildGoTests("./", "../soak/tests", "../../")
 	require.NoError(t, err, "Error building go tests")
 
 	remoteRunnerValues := map[string]interface{}{
@@ -81,19 +80,49 @@ func soakTestHelper(
 	}
 	err = testEnvironment.
 		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
-		AddHelm(ethereum.New(&ethereum.Props{
-			NetworkName: activeEVMNetwork.Name,
-			Simulated:   activeEVMNetwork.Simulated,
-			WsURLs:      activeEVMNetwork.URLs,
-		})).
+		//AddHelm(ethereum.New(&ethereum.Props{
+		//	NetworkName: activeEVMNetwork.Name,
+		//	Simulated:   activeEVMNetwork.Simulated,
+		//	WsURLs:      activeEVMNetwork.URLs,
+		//})).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, clConfig)).
 		Run()
+
 	testEnvironment.Client.CopyToPod(
 		testEnvironment.Cfg.Namespace,
 		"../../ops",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
+		"../../package.json",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
+		"../../package-lock.json",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
+		"../../tsconfig.json",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
+		"../../tsconfig.base.json",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
+		"../../packages-ts",
 		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
 		"remote-test-runner")
 	require.NoError(t, err, "Error launching test environment")
