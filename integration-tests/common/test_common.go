@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
 	"os"
 	"strings"
 
@@ -36,12 +35,13 @@ var (
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
 	defaultWalletAddress string // derived in init()
+	soakNetwork          *blockchain.EVMNetwork
 )
 
 func init() {
 	// pass in flags to override default chainlink image & version
-	flag.StringVar(&clImage, "chainlink-image", "", "specify chainlink image to be used")
-	flag.StringVar(&clVersion, "chainlink-version", "", "specify chainlink version to be used")
+	flag.StringVar(&clImage, "chainlink-image", "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink", "specify chainlink image to be used")
+	flag.StringVar(&clVersion, "chainlink-version", "develop-root", "specify chainlink version to be used")
 
 	// wallet contract derivation
 	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
@@ -110,31 +110,23 @@ func (t *Test) DeployEnv(nodes int) {
 	if clImage != "" && clVersion != "" {
 		clConfig["chainlink"] = map[string]interface{}{
 			"image": map[string]interface{}{
-				"image":   clImage,
-				"version": clVersion,
+				"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
+				"version": "develop-root",
 			},
 		}
 	}
-
+	if t.InsideK8s {
+		soakNetwork = blockchain.LoadNetworkFromEnvironment()
+	}
 	t.Env = environment.New(&environment.Config{
-		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
-		InsideK8s:       t.InsideK8s,
+
+		InsideK8s: t.InsideK8s,
 	}).
 		// AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, clConfig))
-
-	// Checking if tests are run on remote runner
-	if t.InsideK8s {
-		soakNetwork := blockchain.LoadNetworkFromEnvironment()
-		t.Env.AddHelm(ethereum.New(&ethereum.Props{
-			NetworkName: soakNetwork.Name,
-			Simulated:   soakNetwork.Simulated,
-			WsURLs:      soakNetwork.URLs,
-		}))
-	}
 
 	err := t.Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
@@ -198,7 +190,7 @@ func (t *Test) GetStarkNetName() string {
 
 // GetStarkNetAddress Returns the local StarkNET address
 func (t *Test) GetStarkNetAddress() string {
-	return t.Env.URLs[t.Common.ServiceKeyL2][0]
+	return t.Env.URLs[t.Common.ServiceKeyL2][1]
 }
 
 // GetNodeKeys Returns the node key bundles
