@@ -70,7 +70,7 @@ describe('aggregator.cairo', function () {
   let oracles: Oracle[] = []
   let config_digest: number
 
-  before(async function () {
+  before(async () => {
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorFactory = await starknet.getContractFactory('ocr2/aggregator')
 

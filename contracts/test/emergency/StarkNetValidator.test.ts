@@ -10,8 +10,11 @@ import {
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
+import { TIMEOUT } from '../constants'
 
-describe('StarkNetValidator', () => {
+describe('StarkNetValidator', function () {
+  this.timeout(TIMEOUT)
+
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
 
