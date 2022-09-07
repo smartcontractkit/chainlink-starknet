@@ -371,6 +371,7 @@ github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
+github.com/julienschmidt/httprouter v1.3.0 h1:U0609e9tgbseu3rBINet9P48AI/D3oJs4dN7jwJOQ1U=
 github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8IZAc4RVcycCCAKdM=
 github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dvMUtDTo2cv8=
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
@@ -541,12 +542,8 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrfsX/uA88=
 github.com/slack-go/slack v0.11.2 h1:IWl90Rk+jqPEVyiBytH27CSN/TFAg2vuDDfoPRog/nc=
 github.com/slack-go/slack v0.11.2/go.mod h1:hlGi5oXA+Gt+yWTPP0plCdRKmjsDxecdHxYQdlMQKOw=
-github.com/smartcontractkit/chainlink-env v0.2.35 h1:xveefHkVsyavsEQAI7pO9uCAfoED7izhqnme1lGeFI4=
-github.com/smartcontractkit/chainlink-env v0.2.35/go.mod h1:pPMIcVvyS9owsJ2e1zqFsfaDjeoUlpsWtV+Ndm3/JN8=
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee h1:KRveIloJFp3i6QGtr5HPubZDaOdxTyl43QmDvzVjmEw=
 github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee/go.mod h1:ODzTQ5y/i3/9EQzfv1MxKXG9N+BUGOSw/xTNkdY1kcw=
-github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220822173222-d6c1c758059c h1:CcZPUcalJGH/Ln3B1wLixtRH2ewodoMMGGijvGGYdYw=
-github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220822173222-d6c1c758059c/go.mod h1:Jp+QKghWWY7e/sqy90iwGcPsW1biTUyCok/lD59Vx0M=
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220822173222-d6c1c758059c h1:h1/DtPsKY25j8+ZkMiXAtXz5LfjpLmr9yX91z+7kWIY=
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220822173222-d6c1c758059c/go.mod h1:ckAQc5Lg30zEMNixdiwFxn1ABvggkcSPod44VWdS64s=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8 h1:bAOP5KcHXwbcysScCXq4Ovgufs4HyDxWkUkyVhGhcfY=
