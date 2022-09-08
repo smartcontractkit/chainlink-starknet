@@ -1,5 +1,6 @@
 import { assert } from 'chai'
 import { starknet } from 'hardhat'
+import { number } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 
@@ -28,8 +29,6 @@ describe('proxy.cairo', function () {
     })
 
     console.log(proxy.address)
-
-    // await owner.invoke(aggregator, 'set_config', config)
   })
 
   it('works', async () => {
@@ -77,6 +76,12 @@ describe('proxy.cairo', function () {
     await owner.invoke(proxy, 'confirm_aggregator', {
       address: new_aggregator.address,
     })
+
+    const phase_aggregator = await owner.call(proxy, 'aggregator', {})
+    assert.equal(phase_aggregator.aggregator, number.toBN(new_aggregator.address))
+
+    const phase_id = await owner.call(proxy, 'phase_id', {})
+    assert.equal(phase_id.phase_id, 2n)
 
     // query latest round, it should now point to the new aggregator
     round = (await proxy.call('latest_round_data')).round
