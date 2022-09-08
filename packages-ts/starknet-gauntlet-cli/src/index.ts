@@ -52,7 +52,7 @@ const registerExecuteCommand = <UI, CI>(
   const deps: Dependencies | Omit<Dependencies, 'makeWallet'> = {
     logger: logger,
     prompt: emptyPrompt ? noopPrompt : prompt,
-    makeEnv: flags => {
+    makeEnv: (flags) => {
       const env: Env = {
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
         pk: process.env.PRIVATE_KEY,
@@ -71,14 +71,14 @@ const registerExecuteCommand = <UI, CI>(
   return registerCommand(deps)
 }
 
-const registerEVMExecuteCommand = <UI, CI>(
+const registerEVMExecuteCommand = <UI, CI extends Iterable<any>>(
   registerCommand: (deps: EVMDependencies) => EVMCommandCtor<EVMExecuteCommandInstance<UI, CI>>,
   gauntletConfig,
 ) => {
   const deps: EVMDependencies = {
     logger: logger,
     prompt: prompt,
-    makeEnv: flags => {
+    makeEnv: (flags) => {
       return {
         providerUrl:
           process.env.NODE_URL || 'https://goerli.infura.io/v3/7c43471f9d604276a856f0cff1edb645',
@@ -99,7 +99,7 @@ const registerInspectionCommand = <QueryResult>(
   const deps: Omit<Dependencies, 'makeWallet'> = {
     logger: logger,
     prompt: prompt,
-    makeEnv: flags => {
+    makeEnv: (flags) => {
       const env: Env = {
         providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
       }
@@ -120,7 +120,7 @@ const L2ExecuteCommands = [
   ...MultisigExecuteCommands,
   ...L2EmergencyProtocolCommands,
 ]
-const msigCommands = L2ExecuteCommands.map(c => registerExecuteCommand(c, true)).map(
+const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(
   multisigWrapCommand,
 )
 const unregistedInspectionCommands = [
@@ -131,9 +131,9 @@ const unregistedInspectionCommands = [
 
 const commands = {
   custom: [
-    ...L2ExecuteCommands.map(c => registerExecuteCommand(c)),
-    ...L1ExecuteCommands.map(c => registerEVMExecuteCommand(c, null)),
-    ...msigCommands.map(c => registerExecuteCommand(c)),
+    ...L2ExecuteCommands.map((c) => registerExecuteCommand(c)),
+    ...L1ExecuteCommands.map((c) => registerEVMExecuteCommand(c, null)),
+    ...msigCommands.map((c) => registerExecuteCommand(c)),
     ...unregistedInspectionCommands.map(registerInspectionCommand),
   ],
   loadDefaultFlags: () => ({}),
@@ -148,7 +148,7 @@ const commands = {
       path.join(process.cwd(), 'networks'),
       path.join(__dirname, '../networks'),
     ]
-    const networkPath = networkPossiblePaths.filter(networkPath => existsSync(networkPath))[0]
+    const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
     const result = await executeCLI(commands, networkPath)
     if (result) {
       io.saveJSON(result, process.env['REPORT_NAME'] ? process.env['REPORT_NAME'] : 'report')
