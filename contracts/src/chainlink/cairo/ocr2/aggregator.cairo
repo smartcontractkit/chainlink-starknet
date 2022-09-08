@@ -491,7 +491,6 @@ func transmit{
     let (caller) = get_caller_address()
     let (oracle : Oracle) = Aggregator_transmitters.read(caller)
     assert_not_zero(oracle.index)  # 0 index = uninitialized
-    # ERROR: caller seems to be the account contract address, not the underlying transmitter key
 
     # Validate config digest matches latest_config_digest
     let (config_digest) = Aggregator_latest_config_digest.read()
@@ -555,29 +554,7 @@ func transmit{
         ),
     )
 
-    # NOTE: disabled
-    # validate via validator
-    # let (validator) = validator_.read()
-    # if validator != 0:
-    #     let (prev_transmission) = Aggregator_transmissions.read(prev_round_id)
-    #     IValidator.validate(
-    #         contract_address=validator,
-    #         prev_round_id=prev_round_id,
-    #         prev_answer=prev_transmission.answer,
-    #         round_id=round_id,
-    #         answer=median
-    #     )
-    #     tempvar syscall_ptr = syscall_ptr
-    #     tempvar range_check_ptr = range_check_ptr
-    #     tempvar pedersen_ptr = pedersen_ptr
-    # else:
-    #     tempvar syscall_ptr = syscall_ptr
-    #     tempvar range_check_ptr = range_check_ptr
-    #     tempvar pedersen_ptr = pedersen_ptr
-    # end
-    # tempvar syscall_ptr = syscall_ptr
-    # tempvar range_check_ptr = range_check_ptr
-    # tempvar pedersen_ptr = pedersen_ptr
+    # NOTE: Usually validating via validator would happen here, currently disabled
 
     let (reimbursement_juels) = calculate_reimbursement(
         juels_per_fee_coin, signatures_len, gas_price
