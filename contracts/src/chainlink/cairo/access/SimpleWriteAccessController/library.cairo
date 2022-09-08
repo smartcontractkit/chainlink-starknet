@@ -23,20 +23,20 @@ func CheckAccessDisabled():
 end
 
 @storage_var
-func s_check_enabled() -> (checkEnabled : felt):
+func SimpleWriteAccessController_check_enabled() -> (checkEnabled : felt):
 end
 
 @storage_var
-func s_access_list(address : felt) -> (bool : felt):
+func SimpleWriteAccessController_access_list(address : felt) -> (bool : felt):
 end
 
 # Adds an address to the access list
 @external
 func add_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     Ownable_only_owner()
-    let (has_access) = s_access_list.read(user)
+    let (has_access) = SimpleWriteAccessController_access_list.read(user)
     if has_access == FALSE:
-        s_access_list.write(user, TRUE)
+        SimpleWriteAccessController_access_list.write(user, TRUE)
         AddedAccess.emit(user)
         return ()
     end
@@ -48,9 +48,9 @@ end
 @external
 func remove_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     Ownable_only_owner()
-    let (has_access) = s_access_list.read(user)
+    let (has_access) = SimpleWriteAccessController_access_list.read(user)
     if has_access == TRUE:
-        s_access_list.write(user, FALSE)
+        SimpleWriteAccessController_access_list.write(user, FALSE)
         RemovedAccess.emit(user)
         return ()
     end
@@ -62,9 +62,9 @@ end
 @external
 func enable_access_check{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     Ownable_only_owner()
-    let (check_enabled) = s_check_enabled.read()
+    let (check_enabled) = SimpleWriteAccessController_check_enabled.read()
     if check_enabled == FALSE:
-        s_check_enabled.write(TRUE)
+        SimpleWriteAccessController_check_enabled.write(TRUE)
         CheckAccessEnabled.emit()
         return ()
     end
@@ -76,9 +76,9 @@ end
 @external
 func disable_access_check{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     Ownable_only_owner()
-    let (check_enabled) = s_check_enabled.read()
+    let (check_enabled) = SimpleWriteAccessController_check_enabled.read()
     if check_enabled == TRUE:
-        s_check_enabled.write(FALSE)
+        SimpleWriteAccessController_check_enabled.write(FALSE)
         CheckAccessDisabled.emit()
         return ()
     end
@@ -91,7 +91,7 @@ namespace SimpleWriteAccessController:
         owner_address : felt
     ):
         Ownable_initializer(owner_address)
-        s_check_enabled.write(TRUE)
+        SimpleWriteAccessController_check_enabled.write(TRUE)
 
         return ()
     end
@@ -99,12 +99,12 @@ namespace SimpleWriteAccessController:
     func has_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, data_len : felt, data : felt*
     ) -> (bool : felt):
-        let (has_access) = s_access_list.read(user)
+        let (has_access) = SimpleWriteAccessController_access_list.read(user)
         if has_access == TRUE:
             return (TRUE)
         end
 
-        let (check_enabled) = s_check_enabled.read()
+        let (check_enabled) = SimpleWriteAccessController_check_enabled.read()
         if check_enabled == FALSE:
             return (TRUE)
         end

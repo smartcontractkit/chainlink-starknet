@@ -21,11 +21,11 @@ from chainlink.cairo.utils import felt_to_uint256
 from chainlink.cairo.access.ownable import Ownable_initializer, Ownable_only_owner
 
 @storage_var
-func flags_() -> (address : felt):
+func Validator_flags() -> (address : felt):
 end
 
 @storage_var
-func threshold_() -> (threshold : felt):
+func Validator_threshold() -> (threshold : felt):
 end
 
 @constructor
@@ -33,8 +33,8 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     owner : felt, flags : felt, threshold : felt
 ):
     Ownable_initializer(owner)
-    flags_.write(flags)
-    threshold_.write(threshold)
+    Validator_flags.write(flags)
+    Validator_threshold.write(threshold)
     return ()
 end
 
@@ -61,7 +61,7 @@ func set_flagging_threshold{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     threshold : felt
 ):
     Ownable_only_owner()
-    threshold_.write(threshold)
+    Validator_threshold.write(threshold)
     return ()
 end
 
@@ -70,7 +70,7 @@ func set_flags_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     flags : felt
 ):
     Ownable_only_owner()
-    flags_.write(flags)
+    Validator_flags.write(flags)
     return ()
 end
 
@@ -110,7 +110,7 @@ func is_valid{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     let (local ratio) = uint256_cond_neg(ratio, should_neg=ratio_sign)
     # TODO: can it be simplified via sign()?
 
-    let (threshold_felt) = threshold_.read()
+    let (threshold_felt) = Validator_threshold.read()
     let (threshold : Uint256) = felt_to_uint256(threshold_felt)
     # ratio <= threshold
     let (is_le_) = uint256_le(ratio, threshold)
