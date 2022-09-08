@@ -26,7 +26,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Transfers ownership of the StarknetValidator contract',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:transferOwnership --to=0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4 --network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:transferOwnership --to=0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4 0xAD6F411BF8559002CC9800A2E9aA87A0ff1b464e --network=<NETWORK>`,
     ],
   },
   makeUserInput,

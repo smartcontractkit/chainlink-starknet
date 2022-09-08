@@ -341,18 +341,18 @@
   dependencies:
     "@eth-optimism/contracts" "^0.5.21"
 
-"@chainlink/evm-gauntlet@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.0.2.tgz#8827070c228aa466bfe069ff92ac9b661097bdcb"
-  integrity sha512-e6uDeoVluro5QBFcK2N0Ctk2g0daY0SUDfZblKb64QeIE7X+d5SoRMFgwhr20L4pL8ihvLkkXDETsIgT/r9cpw==
+"@chainlink/evm-gauntlet@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.1.0.tgz#cf5cdbf66f1126b5b1d23fa8d494ab4598317674"
+  integrity sha512-59/1BoS0ENuE8jQTenSM3ymvWVHmElF2rwb+LlRMhqNjnvYy3zRTwx2dlCXGf2j0H6E4NJFs+naBq2cJr43Eag==
   dependencies:
     "@chainlink/gauntlet-core" "0.3.1"
     ethers "^5.6.9"
 
-"@chainlink/evm-gauntlet@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.0.1.tgz#2b9ee322e62c9e469f21c8d360bafd67ebf23930"
-  integrity sha512-5kSVef8FP9MCYrj0FcmCfh7x0zYZ4R9SWm9ABjOmerRc9H+6f0u018AX5RA1V8hukS1uaFnTZ6ZzxlGTQ1ZQyA==
+"@chainlink/evm-gauntlet@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.0.2.tgz#8827070c228aa466bfe069ff92ac9b661097bdcb"
+  integrity sha512-e6uDeoVluro5QBFcK2N0Ctk2g0daY0SUDfZblKb64QeIE7X+d5SoRMFgwhr20L4pL8ihvLkkXDETsIgT/r9cpw==
   dependencies:
     "@chainlink/gauntlet-core" "0.3.1"
     ethers "^5.6.9"

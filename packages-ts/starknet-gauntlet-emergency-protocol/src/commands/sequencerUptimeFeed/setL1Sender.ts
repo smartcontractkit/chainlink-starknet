@@ -26,7 +26,7 @@ const commandConfig: ExecuteCommandConfig<SetL1SenderInput, ContractInput> = {
   ux: {
     description: 'Sets the L1 sender address on the SequencerUptimeFeed contract',
     examples: [
-      `${CATEGORIES.SEQUENCER_UPTIME_FEED}:set_l1_sender --l1Sender=0x31982C9e5edd99bb923a948252167ea4BbC38AC1 --network=<NETWORK>`,
+      `${CATEGORIES.SEQUENCER_UPTIME_FEED}:set_l1_sender --l1Sender=0x31982C9e5edd99bb923a948252167ea4BbC38AC1 0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f --network=<NETWORK>`,
     ],
   },
   makeUserInput,
