@@ -2,23 +2,27 @@ import { EVMExecuteCommandConfig, makeEVMExecuteCommand } from '@chainlink/evm-g
 import { CONTRACT_LIST, starknetValidatorContractLoader } from '../../lib/contracts'
 import { CATEGORIES } from '../../lib/categories'
 
-export interface ContractInput {}
+export type ContractInput = []
+
+export interface UserInput {}
 
 const makeContractInput = async (input: ContractInput): Promise<ContractInput> => {
   return input
 }
 
-const makeUserInput = async (flags): Promise<ContractInput> => {
+const makeUserInput = async (flags): Promise<UserInput> => {
   return {}
 }
 
-const commandConfig: EVMExecuteCommandConfig<ContractInput, ContractInput> = {
+const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: CONTRACT_LIST.STARKNET_VALIDATOR,
   category: CATEGORIES.STARKNET_VALIDATOR,
   action: 'acceptOwnership',
   ux: {
     description: 'Accepts ownership of the StarknetValidator contract',
-    examples: [`${CATEGORIES.STARKNET_VALIDATOR}:acceptOwnership --network=<NETWORK>`],
+    examples: [
+      `${CATEGORIES.STARKNET_VALIDATOR}:acceptOwnership 0xAD6F411BF8559002CC9800A2E9aA87A0ff1b464e --network=<NETWORK>`,
+    ],
   },
   makeUserInput,
   makeContractInput,
