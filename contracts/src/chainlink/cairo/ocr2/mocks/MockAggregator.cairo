@@ -12,26 +12,22 @@ struct Transmission:
 end
 
 @storage_var
-func transmissions_(round_id : felt) -> (transmission : Transmission):
+func MockAggregator_transmissions(round_id : felt) -> (transmission : Transmission):
 end
 
 @storage_var
-func latest_aggregator_round_id_() -> (round_id : felt):
+func MockAggregator_latest_aggregator_round_id() -> (round_id : felt):
 end
 
 @storage_var
-func decimals_() -> (decimals : felt):
-end
-
-@storage_var
-func answer_() -> (answer : felt):
+func MockAggregator_decimals() -> (decimals : felt):
 end
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     decimals : felt
 ):
-    decimals_.write(decimals)
+    MockAggregator_decimals.write(decimals)
     return ()
 end
 
@@ -40,10 +36,10 @@ func set_latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     answer : felt, block_num : felt, observation_timestamp : felt, transmission_timestamp : felt
 ):
     alloc_locals
-    let (prev_round_id) = latest_aggregator_round_id_.read()
+    let (prev_round_id) = MockAggregator_latest_aggregator_round_id.read()
     let round_id = prev_round_id + 1
-    latest_aggregator_round_id_.write(round_id)
-    transmissions_.write(
+    MockAggregator_latest_aggregator_round_id.write(round_id)
+    MockAggregator_transmissions.write(
         round_id,
         Transmission(
         answer=answer,
@@ -77,8 +73,8 @@ func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     round : Round
 ):
     alloc_locals
-    let (latest_round_id) = latest_aggregator_round_id_.read()
-    let (transmission : Transmission) = transmissions_.read(latest_round_id)
+    let (latest_round_id) = MockAggregator_latest_aggregator_round_id.read()
+    let (transmission : Transmission) = MockAggregator_transmissions.read(latest_round_id)
 
     let round = Round(
         round_id=latest_round_id,
@@ -110,6 +106,6 @@ end
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
 ):
-    let (decimals) = decimals_.read()
+    let (decimals) = MockAggregator_decimals.read()
     return (decimals)
 end
