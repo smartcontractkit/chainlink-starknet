@@ -2,24 +2,26 @@ import { EVMExecuteCommandConfig, makeEVMExecuteCommand } from '@chainlink/evm-g
 import { CONTRACT_LIST, starknetValidatorContractLoader } from '../../lib/contracts'
 import { CATEGORIES } from '../../lib/categories'
 
-export interface ContractInput {
+export interface UserInput {
   starkNetMessaging: number
   l2UptimeFeedAddr: string
 }
 
-const makeContractInput = async (input: ContractInput): Promise<ContractInput> => {
-  return input
+type ContractInput = [starkNetMessaging: number, l2UptimeFeedAddr: string]
+
+const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
+  return [input.starkNetMessaging, input.l2UptimeFeedAddr]
 }
 
-const makeUserInput = async (flags): Promise<ContractInput> => {
-  if (flags.input) return flags.input as ContractInput
+const makeUserInput = async (flags): Promise<UserInput> => {
+  if (flags.input) return flags.input as UserInput
   return {
     l2UptimeFeedAddr: flags.l2UptimeFeedAddr,
     starkNetMessaging: flags.starkNetMessaging,
   }
 }
 
-const commandConfig: EVMExecuteCommandConfig<ContractInput, ContractInput> = {
+const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: CONTRACT_LIST.STARKNET_VALIDATOR,
   category: CATEGORIES.STARKNET_VALIDATOR,
   action: 'deploy',
