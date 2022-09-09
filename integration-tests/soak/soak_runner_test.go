@@ -63,6 +63,10 @@ func soakTestHelper(
 	}
 	remoteRunnerWrapper := map[string]interface{}{"remote_test_runner": remoteRunnerValues}
 	clConfig := map[string]interface{}{
+		"image": map[string]interface{}{
+			"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
+			"version": "custom.ef9353a3ade7b67a733a086931cd8403911ac690",
+		},
 		"replicas": 5,
 		"env": map[string]interface{}{
 			"STARKNET_ENABLED":            "true",
@@ -80,11 +84,6 @@ func soakTestHelper(
 	}
 	err = testEnvironment.
 		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
-		//AddHelm(ethereum.New(&ethereum.Props{
-		//	NetworkName: activeEVMNetwork.Name,
-		//	Simulated:   activeEVMNetwork.Simulated,
-		//	WsURLs:      activeEVMNetwork.URLs,
-		//})).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
@@ -123,6 +122,11 @@ func soakTestHelper(
 	testEnvironment.Client.CopyToPod(
 		testEnvironment.Cfg.Namespace,
 		"../../packages-ts",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
+		"../../contracts",
 		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
 		"remote-test-runner")
 	require.NoError(t, err, "Error launching test environment")

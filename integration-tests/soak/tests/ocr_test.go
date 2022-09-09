@@ -19,6 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 	"math/big"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -150,9 +151,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	})
 
 	Describe("with OCRv2 job @soak", func() {
+
 		It("works", func() {
 			lggr := logger.Nop()
-			url := t.Env.URLs[serviceKeyL2][0]
+			url := t.Env.URLs[serviceKeyL2][1]
+			roundWaitTimeout = t.Env.Cfg.TTL
 
 			// build client
 			reader, err := starknet.NewClient(chainId, url, lggr, &rpcRequestTimeout)
@@ -172,20 +175,29 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			var negative bool
 
 			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
+				rand.Seed(time.Now().UnixNano())
+
+				err = t.SetMockServerValue("", rand.Intn(mockServerVal-0+1)+0)
+				if err != nil {
+					log.Error().Err(err)
+				}
 				// end condition: enough rounds have occured, and positive and negative answers have been seen
 				if increasing >= increasingCountMax && positive && negative {
 					break
 				}
 
 				// end condition: rounds have been stuck
-				if stuck && stuckCount > 10 {
+				if stuck && stuckCount > 20 {
 					log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 					break
 				}
 
 				// once progression has reached halfway, change to negative values
 				if increasing == increasingCountMax/2 {
-					t.SetMockServerValue("", -1*mockServerVal)
+					err = t.SetMockServerValue("", -1*mockServerVal)
+					if err != nil {
+						log.Error().Err(err)
+					}
 				}
 
 				// try to fetch rounds
@@ -220,7 +232,10 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				}
 
 				// check increasing rounds
-				Expect(res.Digest == details.Digest).To(BeTrue(), "Config digest should not change")
+				if !(res.Digest == details.Digest) {
+					stuckCount += 1
+					log.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
+				}
 				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
 					increasing += 1
 					stuck = false
@@ -234,6 +249,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 					stuck = true
 					increasing = 0
 				}
+
 			}
 
 			Expect(increasing >= increasingCountMax).To(BeTrue(), "Round + epochs should be increasing")
