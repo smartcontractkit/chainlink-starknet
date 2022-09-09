@@ -26,12 +26,25 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   uint256 public immutable L2_UPTIME_FEED_ADDR;
 
   GasConfig private s_gasConfig;
+  AggregatorV3Interface private s_aggregator;
   AccessControllerInterface private s_configAC;
+
+  /// @notice This event is emitted when the gas config is set.
+  event GasConfigSet(uint256 gasUsed, address indexed gasPriceL1FeedAddr);
+
+  /**
+   * @notice emitted when a new gas access-control contract is set
+   * @param previous the address prior to the current setting
+   * @param current the address of the new access-control contract
+   */
+  event ConfigACSet(address indexed previous, address indexed current);
 
   /// @notice StarkNet messaging contract address - the address is 0.
   error InvalidStarkNetMessaging();
   /// @notice StarkNet uptime feed address - the address is 0.
   error InvalidUptimeFeedAddress();
+  /// @notice Error thrown when the aggregator address is 0
+  error InvalidAggregatorAddress();
 
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract address
@@ -41,6 +54,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address starkNetMessaging,
     address configACAddr,
     address l1GasPriceFeedAddr,
+    address aggregator,
     uint256 l2UptimeFeedAddr,
     uint256 gasUsed
   ) {
@@ -52,9 +66,14 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
       revert InvalidUptimeFeedAddress();
     }
 
+    if (aggregator == address(0)) {
+      revert InvalidAggregatorAddress();
+    }
+
     STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
     L2_UPTIME_FEED_ADDR = l2UptimeFeedAddr;
 
+    s_aggregator = AggregatorV3Interface(aggregator);
     _setConfigAC(configACAddr);
     _setGasConfig(gasUsed, l1GasPriceFeedAddr);
   }
@@ -99,6 +118,19 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     uint256, /* currentRoundId */
     int256 currentAnswer
   ) external override checkAccess returns (bool) {
+    return _sendStatusToL2(currentAnswer);
+  }
+
+  /**
+   * @notice retry function for the contract owner to send latest status
+   * to the L2 uptime feed in case a cross chain message failed to send.
+   */
+  function retry() onlyOwner {
+    (, int256 latestStatus, , , ) = AggregatorV3Interface(s_aggregator).latestRoundData();
+    _sendStatusToL2(latestStatus);
+  }
+
+  function _sendStatusToL2(uint256 status) internal returns (bool) {
     bool status = currentAnswer == ANSWER_SEQ_OFFLINE;
     uint256[] memory payload = new uint256[](2);
 
@@ -116,4 +148,55 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     );
     return true;
   }
+
+  function _approximateFee() internal view returns (uint256) {
+    (, int256 fastGasPriceInWei, , , ) = AggregatorV3Interface(s_gasConfig.l1GasPriceFeedAddr).latestRoundData();
+    return uint256(fastGasPriceInWei) * s_gasConfig.gasUsed;
+  }
+
+  function setGasConfig(uint256 gasUsed, address gasPriceL1FeedAddr) external onlyOwnerOrConfigAccess {
+    _setGasConfig(gasUsed, gasPriceL1FeedAddr);
+    emit GasConfigSet(gasUsed, gasPriceL1FeedAddr);
+  }
+
+  /// @notice internal method that stores the gas configuration
+  function _setGasConfig(uint256 gasUsed, address gasPriceL1FeedAddr) internal {
+    require(gasPriceL1FeedAddr != address(0), "Gas price Aggregator is zero address");
+    s_gasConfig = GasConfig(gasUsed, gasPriceL1FeedAddr);
+    emit GasConfigSet(gasUsed, gasPriceL1FeedAddr);
+  }
+
+  /**
+   * @notice sets config AccessControllerInterface contract
+   * @dev only owner can call this
+   * @param accessController new AccessControllerInterface contract address
+   */
+  function setConfigAC(address accessController) external onlyOwner {
+    _setConfigAC(accessController);
+  }
+
+  /// @notice Internal method that stores the configuration access controller
+  function _setConfigAC(address accessController) internal {
+    address previousAccessController = address(s_configAC);
+    if (accessController != previousAccessController) {
+      s_configAC = AccessControllerInterface(accessController);
+      emit ConfigACSet(previousAccessController, accessController);
+    }
+  }
+
+  /// @dev reverts if the caller does not have access to change the configuration
+  modifier onlyOwnerOrConfigAccess() {
+    require(
+      msg.sender == owner() || (address(s_configAC) == address(0) || s_configAC.hasAccess(msg.sender, msg.data)),
+      "No access"
+    );
+    _;
+  }
+
+  /**
+   * @notice makes this contract payable
+   * @dev receives funds:
+   *  - funds are used to send cross chain messages to L2
+   */
+  receive() external payable {}
 }
