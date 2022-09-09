@@ -13,6 +13,7 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
+import exp from 'constants'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
@@ -89,6 +90,7 @@ describe('StarkNetValidator', () => {
         mockAggregator.address,
         l2Contract.address,
         0,
+        1,
       )
 
     // Point the L2 feed contract to receive from the L1 StarkNetValidator contract
@@ -244,7 +246,7 @@ describe('StarkNetValidator', () => {
 
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
+          starkNetValidator.connect(eoaValidator).setGasConfig(0, 1, mockGasPriceFeed.address),
         ).to.be.revertedWith('AccessForbidden()')
       })
     })
@@ -252,19 +254,22 @@ describe('StarkNetValidator', () => {
     describe('when called by owner', () => {
       it('correctly sets the gas config', async () => {
         const newGasUnits = 25000
+        const newBuffer = 2
         const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        await starkNetValidator.connect(deployer).setGasConfig(newGasUnits, newFeedAddr)
+        await starkNetValidator.connect(deployer).setGasConfig(newGasUnits, newBuffer, newFeedAddr)
         const gasConfig = await starkNetValidator.getGasConfig()
         expect(gasConfig.gasUsed).to.equal(newGasUnits)
+        expect(gasConfig.buffer).to.equal(newBuffer)
         expect(gasConfig.l1GasPriceFeedAddr).to.equal(newFeedAddr)
       })
 
       it('emits an event', async () => {
         const newGasUnits = 25000
+        const newBuffer = 2
         const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
         await expect(starkNetValidator.connect(deployer).setGasConfig(newGasUnits, newFeedAddr))
           .to.emit(starkNetValidator, 'GasConfigSet')
-          .withArgs(newGasUnits, newFeedAddr)
+          .withArgs(newGasUnits, newBuffer, newFeedAddr)
       })
 
       describe('when l1 gas price feed address is the zero address', () => {
@@ -283,22 +288,27 @@ describe('StarkNetValidator', () => {
         })
 
         it('correctly sets the gas config', async () => {
+          const newBuffer = 2
           const newGasUnits = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          await starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newFeedAddr)
+          await starkNetValidator
+            .connect(eoaValidator)
+            .setGasConfig(newGasUnits, newBuffer, newFeedAddr)
           const gasConfig = await starkNetValidator.getGasConfig()
           expect(gasConfig.gasUsed).to.equal(newGasUnits)
           expect(gasConfig.l1GasPriceFeedAddr).to.equal(newFeedAddr)
+          expect(gasConfig.buffer).to.equal(newBuffer)
         })
 
         it('emits an event', async () => {
+          const newBuffer = 2
           const newGasUnits = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
           await expect(
             starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newFeedAddr),
           )
             .to.emit(starkNetValidator, 'GasConfigSet')
-            .withArgs(newGasUnits, newFeedAddr)
+            .withArgs(newGasUnits, newBuffer, newFeedAddr)
         })
 
         describe('when l1 gas price feed address is the zero address', () => {
@@ -306,7 +316,7 @@ describe('StarkNetValidator', () => {
             await expect(
               starkNetValidator
                 .connect(eoaValidator)
-                .setGasConfig(25000, ethers.constants.AddressZero),
+                .setGasConfig(25000, 2, ethers.constants.AddressZero),
             ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
           })
         })
@@ -324,22 +334,27 @@ describe('StarkNetValidator', () => {
         })
 
         it('correctly sets the gas config', async () => {
+          const newBuffer = 2
           const newGasUnits = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          await starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newFeedAddr)
+          await starkNetValidator
+            .connect(eoaValidator)
+            .setGasConfig(newGasUnits, newBuffer, newFeedAddr)
           const gasConfig = await starkNetValidator.getGasConfig()
           expect(gasConfig.gasUsed).to.equal(newGasUnits)
           expect(gasConfig.l1GasPriceFeedAddr).to.equal(newFeedAddr)
+          expect(gasConfig.buffer).to.equal(newBuffer)
         })
 
         it('emits an event', async () => {
+          const newBuffer = 2
           const newGasUnits = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
           await expect(
-            starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newFeedAddr),
+            starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newBuffer newFeedAddr),
           )
             .to.emit(starkNetValidator, 'GasConfigSet')
-            .withArgs(newGasUnits, newFeedAddr)
+            .withArgs(newGasUnits, newBuffer, newFeedAddr)
         })
 
         describe('when l1 gas price feed address is the zero address', () => {
