@@ -55,7 +55,7 @@ const MAX_ORACLES = 31
 
 const GIGA = 10 ** 9
 
-const UINT32_MAX = 2 ** 32
+const UINT32_MAX = (2 ** 32) - 1
 const INT192_MAX = 2 ** (192 - 1)
 const INT192_MIN = -(2 ** (192 - 1))
 
