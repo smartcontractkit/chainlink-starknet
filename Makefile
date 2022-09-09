@@ -162,7 +162,7 @@ test-unit-go:
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-integration-smoke
-test-integration-smoke:
+test-integration-smoke: build-ts-contracts
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
 .PHONY: test-integration-contracts
