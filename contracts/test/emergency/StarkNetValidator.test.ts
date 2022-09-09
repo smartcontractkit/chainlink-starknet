@@ -206,7 +206,7 @@ describe('StarkNetValidator', () => {
     describe('when called by non owner', () => {
       it('reverts', async () => {
         await expect(starkNetValidator.connect(eoaValidator).retry()).to.be.revertedWith(
-          'No access',
+          'Only callable by owner',
         )
       })
     })
@@ -217,7 +217,7 @@ describe('StarkNetValidator', () => {
       it('reverts', async () => {
         await expect(
           starkNetValidator.connect(eoaValidator).setConfigAC(ethers.constants.AddressZero),
-        ).to.be.revertedWith('No access')
+        ).to.be.revertedWith('Only callable by owner')
       })
     })
 
@@ -266,7 +266,9 @@ describe('StarkNetValidator', () => {
         const newGasUnits = 25000
         const newBuffer = 2
         const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        await expect(starkNetValidator.connect(deployer).setGasConfig(newGasUnits, newFeedAddr))
+        await expect(
+          starkNetValidator.connect(deployer).setGasConfig(newGasUnits, newBuffer, newFeedAddr),
+        )
           .to.emit(starkNetValidator, 'GasConfigSet')
           .withArgs(newGasUnits, newBuffer, newFeedAddr)
       })
@@ -274,7 +276,9 @@ describe('StarkNetValidator', () => {
       describe('when l1 gas price feed address is the zero address', () => {
         it('reverts', async () => {
           await expect(
-            starkNetValidator.connect(deployer).setGasConfig(25000, ethers.constants.AddressZero),
+            starkNetValidator
+              .connect(deployer)
+              .setGasConfig(25000, 2, ethers.constants.AddressZero),
           ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
         })
       })
@@ -304,7 +308,9 @@ describe('StarkNetValidator', () => {
           const newGasUnits = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
           await expect(
-            starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newFeedAddr),
+            starkNetValidator
+              .connect(eoaValidator)
+              .setGasConfig(newGasUnits, newBuffer, newFeedAddr),
           )
             .to.emit(starkNetValidator, 'GasConfigSet')
             .withArgs(newGasUnits, newBuffer, newFeedAddr)
@@ -363,7 +369,7 @@ describe('StarkNetValidator', () => {
             await expect(
               starkNetValidator
                 .connect(eoaValidator)
-                .setGasConfig(25000, ethers.constants.AddressZero),
+                .setGasConfig(25000, 2, ethers.constants.AddressZero),
             ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
           })
         })
