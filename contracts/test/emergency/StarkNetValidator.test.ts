@@ -165,4 +165,30 @@ describe('StarkNetValidator', () => {
       expect(res.round.answer).to.equal(0n) // final status 0
     })
   })
+
+  describe('#setGasConfig', function () {
+    describe('when called by non owner', () => {
+      it('reverts', async () => {})
+    })
+
+    describe('when called by owner', () => {
+      it('correctly sets the gas config', async () => {})
+
+      it('emits an event', async () => {})
+
+      describe('when l1 gas price feed address is the zero address', () => {
+        it('reverts', async () => {})
+      })
+    })
+
+    describe('when called by an address with access', () => {
+      it('correctly sets the gas config', async () => {})
+
+      it('emits an event', async () => {})
+
+      describe('when l1 gas price feed address is the zero address', () => {
+        it('reverts', async () => {})
+      })
+    })
+  })
 })
