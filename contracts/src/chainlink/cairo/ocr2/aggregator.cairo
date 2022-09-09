@@ -56,8 +56,7 @@ const MAX_ORACLES = 31
 const GIGA = 10 ** 9
 
 const UINT32_MAX = (2 ** 32) - 1
-const INT192_MAX = 2 ** (192 - 1)
-const INT192_MIN = -(2 ** (192 - 1))
+const INT128_MAX = (2 ** (128 - 1)) - 1
 
 # Maximum number of faulty oracles
 @storage_var
@@ -524,11 +523,11 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
-    # Check abs(median) is in i192 range.
-    # NOTE: (assert_lt_felt(-i192::MAX, median) doesn't work correctly so we have to use abs!)
+    # Check abs(median) is in i128 range.
+    # NOTE: (assert_lt_felt(-i128::MAX, median) doesn't work correctly so we have to use abs!)
     let (value) = abs_value(median)
-    with_attr error_message("value not in int192 range: {median}"):
-        assert_lt_felt(value, INT192_MAX)
+    with_attr error_message("value not in int128 range: {median}"):
+        assert_lt_felt(value, INT128_MAX)
     end
 
     # Validate median in min-max range
