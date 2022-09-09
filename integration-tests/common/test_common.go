@@ -41,7 +41,7 @@ var (
 func init() {
 	// pass in flags to override default chainlink image & version
 	flag.StringVar(&clImage, "chainlink-image", "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink", "specify chainlink image to be used")
-	flag.StringVar(&clVersion, "chainlink-version", "develop-root", "specify chainlink version to be used")
+	flag.StringVar(&clVersion, "chainlink-version", "custom.ef9353a3ade7b67a733a086931cd8403911ac690", "specify chainlink version to be used")
 
 	// wallet contract derivation
 	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
@@ -111,7 +111,7 @@ func (t *Test) DeployEnv(nodes int) {
 		clConfig["chainlink"] = map[string]interface{}{
 			"image": map[string]interface{}{
 				"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-				"version": "develop-root",
+				"version": "custom.ef9353a3ade7b67a733a086931cd8403911ac690",
 			},
 		}
 	}
