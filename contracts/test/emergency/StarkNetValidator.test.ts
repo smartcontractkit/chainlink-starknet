@@ -13,7 +13,6 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import exp from 'constants'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
@@ -351,7 +350,9 @@ describe('StarkNetValidator', () => {
           const newGasUnits = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
           await expect(
-            starkNetValidator.connect(eoaValidator).setGasConfig(newGasUnits, newBuffer newFeedAddr),
+            starkNetValidator
+              .connect(eoaValidator)
+              .setGasConfig(newGasUnits, newBuffer, newFeedAddr),
           )
             .to.emit(starkNetValidator, 'GasConfigSet')
             .withArgs(newGasUnits, newBuffer, newFeedAddr)
