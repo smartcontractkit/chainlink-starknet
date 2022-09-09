@@ -132,13 +132,13 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @notice retry function for the contract owner to send latest status
    * to the L2 uptime feed in case a cross chain message failed to send.
    */
-  function retry() onlyOwner {
+  function retry() external onlyOwner {
     (, int256 latestStatus, , , ) = AggregatorV3Interface(s_aggregator).latestRoundData();
     _sendStatusToL2(latestStatus);
   }
 
-  function _sendStatusToL2(uint256 status) internal returns (bool) {
-    bool status = currentAnswer == ANSWER_SEQ_OFFLINE;
+  function _sendStatusToL2(int256 newStatus) internal returns (bool) {
+    bool status = newStatus == ANSWER_SEQ_OFFLINE;
     uint256[] memory payload = new uint256[](2);
 
     // Fill payload with `status` and `timestamp`
@@ -158,21 +158,27 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   function _approximateFee() internal view returns (uint256) {
     (, int256 fastGasPriceInWei, , , ) = AggregatorV3Interface(s_gasConfig.l1GasPriceFeedAddr).latestRoundData();
-    return (uint256(fastGasPriceInWei) * s_gasConfig.gasUsed * s_gasConfig.buffer) / MULTIPIER;
+    return (uint256(fastGasPriceInWei) * s_gasConfig.gasUsed * s_gasConfig.buffer) / MULTIPLIER;
   }
 
-  function setGasConfig(uint256 gasUsed, uint256 buffer, address gasPriceL1FeedAddr) external onlyOwnerOrConfigAccess {
-    _setGasConfig(gasUsed, gasPriceL1FeedAddr);
-    emit GasConfigSet(gasUsed, buffer gasPriceL1FeedAddr);
+  function setGasConfig(
+    uint256 gasUsed,
+    uint256 buffer,
+    address gasPriceL1FeedAddr
+  ) external onlyOwnerOrConfigAccess {
+    _setGasConfig(gasUsed, buffer, gasPriceL1FeedAddr);
+    emit GasConfigSet(gasUsed, buffer, gasPriceL1FeedAddr);
   }
 
   /// @notice internal method that stores the gas configuration
   function _setGasConfig(
     uint256 gasUsed,
-    address gasPriceL1FeedAddr,
-    uint256 buffer
+    uint256 buffer,
+    address gasPriceL1FeedAddr
   ) internal {
-    require(gasPriceL1FeedAddr != address(0), "Gas price Aggregator is zero address");
+    if (gasPriceL1FeedAddr == address(0)) {
+      revert InvalidL1GasPriceFeedAddress();
+    }
     s_gasConfig = GasConfig(gasUsed, buffer, gasPriceL1FeedAddr);
     emit GasConfigSet(gasUsed, buffer, gasPriceL1FeedAddr);
   }
