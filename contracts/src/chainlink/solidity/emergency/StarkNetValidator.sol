@@ -6,9 +6,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/TypeAndVersionInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
-
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
-
 import "../../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
 /**
@@ -97,6 +95,11 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     return s_gasConfig;
   }
 
+  /// @return config AccessControllerInterface contract address
+  function getConfigAC() external view virtual returns (address) {
+    return address(s_configAC);
+  }
+
   /**
    * @notice validate method sends an xDomain L2 tx to update Uptime Feed contract on L2.
    * @dev A message is sent using the L1CrossDomainMessenger. This method is accessed controlled.
@@ -164,7 +167,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   /// @dev reverts if the caller does not have access to change the configuration
   modifier onlyOwnerOrConfigAccess() {
     require(
-      msg.sender == owner() || (address(s_configAC) != address(0) && s_configAC.hasAccess(msg.sender, msg.data)),
+      msg.sender == owner() || (address(s_configAC) == address(0) || s_configAC.hasAccess(msg.sender, msg.data)),
       "No access"
     );
     _;
