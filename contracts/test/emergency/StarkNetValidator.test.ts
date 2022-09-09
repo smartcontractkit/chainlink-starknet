@@ -27,6 +27,7 @@ describe('StarkNetValidator', () => {
   let mockStarkNetMessaging: Contract
   let mockGasPriceFeed: MockContract
   let mockAccessController: MockContract
+  let mockAggregator: MockContract
 
   let l2ContractFactory: StarknetContractFactory
   let l2Contract: StarknetContract
@@ -67,6 +68,16 @@ describe('StarkNetValidator', () => {
     // Deploy the mock access controller
     mockAccessController = await deployMockContract(deployer, accessControllerAbi)
 
+    // Deploy the mock aggregator
+    mockAggregator = await deployMockContract(deployer, aggregatorAbi)
+    await mockAggregator.mock.latestRoundData.returns(
+      '73786976294838220258' /** roundId */,
+      1 /** answer */,
+      '163826896' /** startedAt */,
+      '1638268960' /** updatedAt */,
+      '73786976294838220258' /** answeredInRound */,
+    )
+
     // Deploy the L1 StarkNetValidator
     const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
     starkNetValidator = await starknetValidatorFactory
@@ -75,6 +86,7 @@ describe('StarkNetValidator', () => {
         mockStarkNetMessaging.address,
         mockAccessController.address,
         mockGasPriceFeed.address,
+        mockAggregator.address,
         l2Contract.address,
         0,
       )
@@ -186,6 +198,16 @@ describe('StarkNetValidator', () => {
       // Assert L2 effects
       const res = await account.call(l2Contract, 'latest_round_data')
       expect(res.round.answer).to.equal(0n) // final status 0
+    })
+  })
+
+  describe('#retry', () => {
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(starkNetValidator.connect(eoaValidator).retry()).to.be.revertedWith(
+          'No access',
+        )
+      })
     })
   })
 
