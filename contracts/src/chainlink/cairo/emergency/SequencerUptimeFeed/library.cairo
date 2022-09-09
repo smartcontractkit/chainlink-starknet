@@ -6,7 +6,7 @@ from starkware.starknet.common.syscalls import (
     get_caller_address,
     get_block_number,
 )
-from starkware.cairo.common.math import assert_not_zero, assert_le
+from starkware.cairo.common.math import assert_not_zero, assert_le, assert_lt_felt
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.bool import TRUE, FALSE
 
@@ -14,6 +14,8 @@ from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 from chainlink.cairo.access.ownable import Ownable_only_owner
+
+const ETH_ADDRESS_BOUND = 2 ** 160
 
 @event
 func RoundUpdated(status : felt, updated_at : felt):
@@ -79,6 +81,14 @@ func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     address : felt
 ):
     Ownable_only_owner()
+
+    with_attr error_message("L1 sender address out of range"):
+        assert_lt_felt(address, ETH_ADDRESS_BOUND)
+    end
+
+    with_attr error_message("L1 sender address can not be zero"):
+        assert_not_zero(address)
+    end
     _set_l1_sender(address)
 
     return ()

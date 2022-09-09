@@ -45,6 +45,8 @@ from openzeppelin.token.erc20.IERC20 import IERC20
 
 from chainlink.cairo.access.IAccessController import IAccessController
 
+from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
+
 from chainlink.cairo.access.ownable import (
     Ownable_initializer,
     Ownable_only_owner,
@@ -53,7 +55,7 @@ from chainlink.cairo.access.ownable import (
     Ownable_accept_ownership,
 )
 
-from chainlink.cairo.ocr2.IAggregator import Round
+from chainlink.cairo.ocr2.IAggregator import NewTransmission, Round
 
 # ---
 
@@ -64,16 +66,6 @@ const GIGA = 10 ** 9
 const UINT32_MAX = 2 ** 32
 const INT192_MAX = 2 ** (192 - 1)
 const INT192_MIN = -(2 ** (192 - 1))
-
-func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
-    let (high, low) = split_felt(x)
-    return (Uint256(low=low, high=high))
-end
-
-func uint256_to_felt{range_check_ptr}(value : Uint256) -> (value : felt):
-    assert_lt_felt(value.high, 2 ** 123)
-    return (value.high * (2 ** 128) + value.low)
-end
 
 # Maximum number of faulty oracles
 @storage_var
@@ -255,7 +247,7 @@ end
 # --- Configuration
 
 @event
-func config_set(
+func ConfigSet(
     previous_config_block_number : felt,
     latest_config_digest : felt,
     config_count : felt,
@@ -349,7 +341,7 @@ func set_config{
     # reset epoch & round
     latest_epoch_and_round_.write(0)
 
-    config_set.emit(
+    ConfigSet.emit(
         previous_config_block_number=prev_block_num,
         latest_config_digest=digest,
         config_count=config_count,
@@ -500,22 +492,6 @@ end
 
 # --- Transmission ---
 
-@event
-func new_transmission(
-    round_id : felt,
-    answer : felt,
-    transmitter : felt,
-    observation_timestamp : felt,
-    observers : felt,
-    observations_len : felt,
-    observations : felt*,
-    juels_per_fee_coin : felt,
-    config_digest : felt,
-    epoch_and_round : felt,
-    reimbursement : felt,
-):
-end
-
 struct Signature:
     member r : felt
     member s : felt
@@ -647,7 +623,7 @@ func transmit{
 
     # end report()
 
-    new_transmission.emit(
+    NewTransmission.emit(
         round_id=round_id,
         answer=median,
         transmitter=caller,
@@ -836,7 +812,7 @@ func link_token_() -> (token : felt):
 end
 
 @event
-func link_token_set(old_link_token : felt, new_link_token : felt):
+func LinkTokenSet(old_link_token : felt, new_link_token : felt):
 end
 
 @external
@@ -864,7 +840,7 @@ func set_link_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     link_token_.write(link_token)
 
-    link_token_set.emit(old_link_token=old_token, new_link_token=link_token)
+    LinkTokenSet.emit(old_link_token=old_token, new_link_token=link_token)
 
     return ()
 end
@@ -884,7 +860,7 @@ func billing_access_controller_() -> (access_controller : felt):
 end
 
 @event
-func billing_access_controller_set(old_controller : felt, new_controller : felt):
+func BillingAccessControllerSet(old_controller : felt, new_controller : felt):
 end
 
 @external
@@ -897,7 +873,7 @@ func set_billing_access_controller{
     if access_controller != old_controller:
         billing_access_controller_.write(access_controller)
 
-        billing_access_controller_set.emit(
+        BillingAccessControllerSet.emit(
             old_controller=old_controller, new_controller=access_controller
         )
 
@@ -935,7 +911,7 @@ func billing{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 end
 
 @event
-func billing_set(config : Billing):
+func BillingSet(config : Billing):
 end
 
 @external
@@ -953,7 +929,7 @@ func set_billing{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 
     billing_.write(config)
 
-    billing_set.emit(config=config)
+    BillingSet.emit(config=config)
 
     return ()
 end
@@ -976,7 +952,7 @@ end
 # --- Payments and Withdrawals
 
 @event
-func oracle_paid(transmitter : felt, payee : felt, amount : Uint256, link_token : felt):
+func OraclePaid(transmitter : felt, payee : felt, amount : Uint256, link_token : felt):
 end
 
 @external
@@ -1045,7 +1021,7 @@ func pay_oracle{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     reward_from_aggregator_round_id_.write(oracle.index, latest_round_id)
     transmitters_.write(transmitter, Oracle(index=oracle.index, payment_juels=0))
 
-    oracle_paid.emit(transmitter=transmitter, payee=payee, amount=amount, link_token=link_token)
+    OraclePaid.emit(transmitter=transmitter, payee=payee, amount=amount, link_token=link_token)
 
     return ()
 end
@@ -1150,11 +1126,11 @@ func proposed_payees_(transmitter : felt) -> (payment_address : felt):
 end
 
 @event
-func payeeship_transfer_requested(transmitter : felt, current : felt, proposed : felt):
+func PayeeshipTransferRequested(transmitter : felt, current : felt, proposed : felt):
 end
 
 @event
-func payeeship_transferred(transmitter : felt, previous : felt, current : felt):
+func PayeeshipTransferred(transmitter : felt, previous : felt, current : felt):
 end
 
 struct PayeeConfig:
@@ -1201,7 +1177,7 @@ func set_payee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 
     payees_.write(payees.transmitter, payees.payee)
 
-    payeeship_transferred.emit(
+    PayeeshipTransferred.emit(
         transmitter=payees.transmitter, previous=current_payee, current=payees.payee
     )
 
@@ -1223,7 +1199,7 @@ func transfer_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
 
     proposed_payees_.write(transmitter, proposed)
 
-    payeeship_transfer_requested.emit(transmitter=transmitter, current=payee, proposed=proposed)
+    PayeeshipTransferRequested.emit(transmitter=transmitter, current=payee, proposed=proposed)
 
     return ()
 end
@@ -1242,7 +1218,7 @@ func accept_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     payees_.write(transmitter, caller)
     proposed_payees_.write(transmitter, 0)
 
-    payeeship_transferred.emit(transmitter=transmitter, previous=previous, current=caller)
+    PayeeshipTransferred.emit(transmitter=transmitter, previous=previous, current=caller)
 
     return ()
 end

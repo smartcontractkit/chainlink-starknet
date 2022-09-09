@@ -1,4 +1,3 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import {
   InspectCommandConfig,
   IStarknetProvider,
