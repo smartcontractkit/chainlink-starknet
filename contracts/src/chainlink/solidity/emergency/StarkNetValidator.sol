@@ -45,6 +45,10 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   error InvalidUptimeFeedAddress();
   /// @notice Error thrown when the aggregator address is 0
   error InvalidAggregatorAddress();
+  /// @notice Error thrown when the l1 gas price feed address i 0
+  error InvalidL1GasPriceFeedAddress();
+  /// @notice Error thrown when caller is not the owner and does not have access
+  error AccessForbidden();
 
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract address
@@ -186,10 +190,9 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @dev reverts if the caller does not have access to change the configuration
   modifier onlyOwnerOrConfigAccess() {
-    require(
-      msg.sender == owner() || (address(s_configAC) == address(0) || s_configAC.hasAccess(msg.sender, msg.data)),
-      "No access"
-    );
+    if (msg.sender != owner() && (address(s_configAC) != address(0) && !s_configAC.hasAccess(msg.sender, msg.data))) {
+      revert AccessForbidden();
+    }
     _;
   }
 

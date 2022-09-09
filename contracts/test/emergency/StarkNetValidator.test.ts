@@ -212,7 +212,7 @@ describe('StarkNetValidator', () => {
   })
 
   describe('#setConfigAC', () => {
-    describe('when called by non owner without access', () => {
+    describe('when called by non owner', () => {
       it('reverts', async () => {
         await expect(
           starkNetValidator.connect(eoaValidator).setConfigAC(ethers.constants.AddressZero),
@@ -245,7 +245,7 @@ describe('StarkNetValidator', () => {
       it('reverts', async () => {
         await expect(
           starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
-        ).to.be.revertedWith('No access')
+        ).to.be.revertedWith('AccessForbidden()')
       })
     })
 
@@ -271,7 +271,7 @@ describe('StarkNetValidator', () => {
         it('reverts', async () => {
           await expect(
             starkNetValidator.connect(deployer).setGasConfig(25000, ethers.constants.AddressZero),
-          ).to.be.revertedWith('Gas price Aggregator is zero address')
+          ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
         })
       })
     })
@@ -307,7 +307,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('Gas price Aggregator is zero address')
+            ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
           })
         })
       })
@@ -348,7 +348,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('Gas price Aggregator is zero address')
+            ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
           })
         })
       })
