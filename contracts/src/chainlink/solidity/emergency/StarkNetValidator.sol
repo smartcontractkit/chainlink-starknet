@@ -16,9 +16,11 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   // Notice: hardcoded b/c starknet_keccak is not available in this environment.
   uint256 constant STARK_SELECTOR_UPDATE_STATUS =
     1585322027166395525705364165097050997465692350398750944680096081848180365267;
+  uint256 constant MULTIPLIER = 1e18;
 
   struct GasConfig {
     uint256 gasUsed;
+    uint256 buffer;
     address l1GasPriceFeedAddr;
   }
 
@@ -30,7 +32,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   AccessControllerInterface private s_configAC;
 
   /// @notice This event is emitted when the gas config is set.
-  event GasConfigSet(uint256 gasUsed, address indexed gasPriceL1FeedAddr);
+  event GasConfigSet(uint256 gasUsed, uint256 buffer, address indexed gasPriceL1FeedAddr);
 
   /**
    * @notice emitted when a new gas access-control contract is set
@@ -60,7 +62,8 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address l1GasPriceFeedAddr,
     address aggregator,
     uint256 l2UptimeFeedAddr,
-    uint256 gasUsed
+    uint256 gasUsed,
+    uint256 buffer
   ) {
     if (starkNetMessaging == address(0)) {
       revert InvalidStarkNetMessaging();
@@ -79,7 +82,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
     s_aggregator = AggregatorV3Interface(aggregator);
     _setConfigAC(configACAddr);
-    _setGasConfig(gasUsed, l1GasPriceFeedAddr);
+    _setGasConfig(gasUsed, buffer, l1GasPriceFeedAddr);
   }
 
   /// @notice converts a bool to uint256.
@@ -155,19 +158,23 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   function _approximateFee() internal view returns (uint256) {
     (, int256 fastGasPriceInWei, , , ) = AggregatorV3Interface(s_gasConfig.l1GasPriceFeedAddr).latestRoundData();
-    return uint256(fastGasPriceInWei) * s_gasConfig.gasUsed;
+    return (uint256(fastGasPriceInWei) * s_gasConfig.gasUsed * s_gasConfig.buffer) / MULTIPIER;
   }
 
-  function setGasConfig(uint256 gasUsed, address gasPriceL1FeedAddr) external onlyOwnerOrConfigAccess {
+  function setGasConfig(uint256 gasUsed, uint256 buffer, address gasPriceL1FeedAddr) external onlyOwnerOrConfigAccess {
     _setGasConfig(gasUsed, gasPriceL1FeedAddr);
-    emit GasConfigSet(gasUsed, gasPriceL1FeedAddr);
+    emit GasConfigSet(gasUsed, buffer gasPriceL1FeedAddr);
   }
 
   /// @notice internal method that stores the gas configuration
-  function _setGasConfig(uint256 gasUsed, address gasPriceL1FeedAddr) internal {
+  function _setGasConfig(
+    uint256 gasUsed,
+    address gasPriceL1FeedAddr,
+    uint256 buffer
+  ) internal {
     require(gasPriceL1FeedAddr != address(0), "Gas price Aggregator is zero address");
-    s_gasConfig = GasConfig(gasUsed, gasPriceL1FeedAddr);
-    emit GasConfigSet(gasUsed, gasPriceL1FeedAddr);
+    s_gasConfig = GasConfig(gasUsed, buffer, gasPriceL1FeedAddr);
+    emit GasConfigSet(gasUsed, buffer, gasPriceL1FeedAddr);
   }
 
   /**
