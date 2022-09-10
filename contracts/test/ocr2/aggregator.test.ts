@@ -4,8 +4,8 @@ import { starknet } from 'hardhat'
 import { ec, hash, number, uint256, KeyPair } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
+import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-
 import { toFelt, hexPadStart } from '../utils'
 
 interface Oracle {
@@ -155,228 +155,236 @@ describe('aggregator.cairo', function () {
     assert.equal(e.name, 'ConfigSet')
   })
 
-  let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
-    let extra_hash = 1
-    let observation_timestamp = 1
-    let juels_per_fee_coin = 1
-    let gas_price = 1
+  shouldBehaveLikeOwnableContract(async () => {
+    const alice = owner
+    const bob = await starknet.deployAccount('OpenZeppelin')
+    return { ownable: aggregator, alice, bob }
+  })
 
-    let observers_buf = Buffer.alloc(31)
-    let observations = []
+  describe('OCR aggregator behavior', function () {
+    let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
+      let extra_hash = 1
+      let observation_timestamp = 1
+      let juels_per_fee_coin = 1
+      let gas_price = 1
 
-    for (const [index, _] of oracles.entries()) {
-      observers_buf[index] = index
-      observations.push(answer)
-    }
+      let observers_buf = Buffer.alloc(31)
+      let observations = []
 
-    // convert to a single value that will be decoded by toBN
-    let observers = `0x${observers_buf.toString('hex')}`
-    assert.equal(observers, OBSERVERS_HEX)
+      for (const [index, _] of oracles.entries()) {
+        observers_buf[index] = index
+        observations.push(answer)
+      }
 
-    const reportData = [
-      // report_context
-      config_digest,
-      epoch_and_round,
-      extra_hash,
-      // raw_report
-      observation_timestamp,
-      observers,
-      observations.length,
-      ...observations,
-      juels_per_fee_coin,
-      gas_price,
-    ]
-    let reportDigest = hash.computeHashOnElements(reportData)
-    console.log('Report data: %O', reportData)
-    console.log(`Report digest: ${reportDigest}`)
+      // convert to a single value that will be decoded by toBN
+      let observers = `0x${observers_buf.toString('hex')}`
+      assert.equal(observers, OBSERVERS_HEX)
 
-    console.log('Report signatures - START')
-    let signatures = []
-    for (let { signer } of oracles.slice(0, f + 1)) {
-      let [r, s] = ec.sign(signer, reportDigest)
-      const privKey = signer.getPrivate()
-      const pubKey = number.toBN(ec.getStarkKey(signer))
-      signatures.push({ r, s, public_key: pubKey })
-      console.log({ pubKey, privKey, r, s })
-    }
-    console.log('Report signatures - END\n')
-
-    const transmitter = oracles[0].transmitter
-    return await transmitter.invoke(aggregator, 'transmit', {
-      report_context: {
+      const reportData = [
+        // report_context
         config_digest,
         epoch_and_round,
         extra_hash,
-      },
-      observation_timestamp,
-      observers,
-      observations,
-      juels_per_fee_coin,
-      gas_price,
-      signatures,
-    })
-  }
+        // raw_report
+        observation_timestamp,
+        observers,
+        observations.length,
+        ...observations,
+        juels_per_fee_coin,
+        gas_price,
+      ]
+      let reportDigest = hash.computeHashOnElements(reportData)
+      console.log('Report data: %O', reportData)
+      console.log(`Report digest: ${reportDigest}`)
 
-  it("should 'set_billing' successfully", async () => {
-    await owner.invoke(aggregator, 'set_billing', {
-      config: {
-        observation_payment_gjuels: 1,
-        transmission_payment_gjuels: 5,
-      },
-    })
-  })
+      console.log('Report signatures - START')
+      let signatures = []
+      for (let { signer } of oracles.slice(0, f + 1)) {
+        let [r, s] = ec.sign(signer, reportDigest)
+        const privKey = signer.getPrivate()
+        const pubKey = number.toBN(ec.getStarkKey(signer))
+        signatures.push({ r, s, public_key: pubKey })
+        console.log({ pubKey, privKey, r, s })
+      }
+      console.log('Report signatures - END\n')
 
-  it("should emit 'NewTransmission' event on transmit", async () => {
-    const txHash = await transmit(1, 99)
-    const receipt = await starknet.getTransactionReceipt(txHash)
-
-    assert.isNotEmpty(receipt.events)
-    console.log("Log raw 'NewTransmission' event: %O", receipt.events[0])
-
-    const decodedEvents = await aggregator.decodeEvents(receipt.events)
-    assert.isNotEmpty(decodedEvents)
-    console.log("Log decoded 'NewTransmission' event: %O", decodedEvents[0])
-
-    const e = decodedEvents[0]
-    const transmitter = oracles[0].transmitter.address
-
-    assert.equal(e.name, 'NewTransmission')
-    assert.equal(e.data.round_id, 1n)
-    assert.equal(e.data.observation_timestamp, 1n)
-    assert.equal(e.data.epoch_and_round, 1n)
-    // assert.equal(e.data.reimbursement, 0n)
-
-    const len = 32 * 2 // 32 bytes (hex)
-    assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
-
-    const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
-    assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)
-    assert.equal(e.data.observations_len, 4n)
-
-    assert.equal(hexPadStart(e.data.config_digest, len), hexPadStart(config_digest, len))
-  })
-
-  it('should transmit correctly', async () => {
-    await transmit(2, 99)
-
-    let { round } = await aggregator.call('latest_round_data')
-    assert.equal(round.round_id, 2)
-    assert.equal(round.answer, 99)
-
-    await transmit(3, toFelt(-10))
-    ;({ round } = await aggregator.call('latest_round_data'))
-    assert.equal(round.round_id, 3)
-    assert.equal(round.answer, -10)
-
-    try {
-      await transmit(4, -100)
-      expect.fail()
-    } catch (err: any) {
-      // Round should be unchanged
-      let { round: new_round } = await aggregator.call('latest_round_data')
-      assert.deepEqual(round, new_round)
-    }
-  })
-
-  it('payee management', async () => {
-    let payees = oracles.map((oracle) => ({
-      transmitter: oracle.transmitter.starknetContract.address,
-      payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
-    }))
-    // call set_payees, should succeed because all payees are zero
-    await owner.invoke(aggregator, 'set_payees', { payees })
-    // call set_payees, should succeed because values are unchanged
-    await owner.invoke(aggregator, 'set_payees', { payees })
-
-    let oracle = oracles[0].transmitter
-    let transmitter = oracle.starknetContract.address
-    let payee = transmitter
-
-    let proposed_oracle = oracles[1].transmitter
-    let proposed_transmitter = proposed_oracle.starknetContract.address
-    let proposed_payee = proposed_transmitter
-
-    // can't transfer to self
-    try {
-      await oracle.invoke(aggregator, 'transfer_payeeship', {
-        transmitter,
-        proposed: payee,
+      const transmitter = oracles[0].transmitter
+      return await transmitter.invoke(aggregator, 'transmit', {
+        report_context: {
+          config_digest,
+          epoch_and_round,
+          extra_hash,
+        },
+        observation_timestamp,
+        observers,
+        observations,
+        juels_per_fee_coin,
+        gas_price,
+        signatures,
       })
-      expect.fail()
-    } catch (err: any) {
-      // TODO: expect(err.message).to.contain("");
     }
 
-    // only payee can transfer
-    try {
-      await proposed_oracle.invoke(aggregator, 'transfer_payeeship', {
+    it("should 'set_billing' successfully", async () => {
+      await owner.invoke(aggregator, 'set_billing', {
+        config: {
+          observation_payment_gjuels: 1,
+          transmission_payment_gjuels: 5,
+        },
+      })
+    })
+
+    it("should emit 'NewTransmission' event on transmit", async () => {
+      const txHash = await transmit(1, 99)
+      const receipt = await starknet.getTransactionReceipt(txHash)
+
+      assert.isNotEmpty(receipt.events)
+      console.log("Log raw 'NewTransmission' event: %O", receipt.events[0])
+
+      const decodedEvents = await aggregator.decodeEvents(receipt.events)
+      assert.isNotEmpty(decodedEvents)
+      console.log("Log decoded 'NewTransmission' event: %O", decodedEvents[0])
+
+      const e = decodedEvents[0]
+      const transmitter = oracles[0].transmitter.address
+
+      assert.equal(e.name, 'NewTransmission')
+      assert.equal(e.data.round_id, 1n)
+      assert.equal(e.data.observation_timestamp, 1n)
+      assert.equal(e.data.epoch_and_round, 1n)
+      // assert.equal(e.data.reimbursement, 0n)
+
+      const len = 32 * 2 // 32 bytes (hex)
+      assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
+
+      const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
+      assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)
+      assert.equal(e.data.observations_len, 4n)
+
+      assert.equal(hexPadStart(e.data.config_digest, len), hexPadStart(config_digest, len))
+    })
+
+    it('should transmit correctly', async () => {
+      await transmit(2, 99)
+
+      let { round } = await aggregator.call('latest_round_data')
+      assert.equal(round.round_id, 2)
+      assert.equal(round.answer, 99)
+
+      await transmit(3, toFelt(-10))
+      ;({ round } = await aggregator.call('latest_round_data'))
+      assert.equal(round.round_id, 3)
+      assert.equal(round.answer, -10)
+
+      try {
+        await transmit(4, -100)
+        expect.fail()
+      } catch (err: any) {
+        // Round should be unchanged
+        let { round: new_round } = await aggregator.call('latest_round_data')
+        assert.deepEqual(round, new_round)
+      }
+    })
+
+    it('payee management', async () => {
+      let payees = oracles.map((oracle) => ({
+        transmitter: oracle.transmitter.starknetContract.address,
+        payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
+      }))
+      // call set_payees, should succeed because all payees are zero
+      await owner.invoke(aggregator, 'set_payees', { payees })
+      // call set_payees, should succeed because values are unchanged
+      await owner.invoke(aggregator, 'set_payees', { payees })
+
+      let oracle = oracles[0].transmitter
+      let transmitter = oracle.starknetContract.address
+      let payee = transmitter
+
+      let proposed_oracle = oracles[1].transmitter
+      let proposed_transmitter = proposed_oracle.starknetContract.address
+      let proposed_payee = proposed_transmitter
+
+      // can't transfer to self
+      try {
+        await oracle.invoke(aggregator, 'transfer_payeeship', {
+          transmitter,
+          proposed: payee,
+        })
+        expect.fail()
+      } catch (err: any) {
+        // TODO: expect(err.message).to.contain("");
+      }
+
+      // only payee can transfer
+      try {
+        await proposed_oracle.invoke(aggregator, 'transfer_payeeship', {
+          transmitter,
+          proposed: proposed_payee,
+        })
+        expect.fail()
+      } catch (err: any) {}
+
+      // successful transfer
+      await oracle.invoke(aggregator, 'transfer_payeeship', {
         transmitter,
         proposed: proposed_payee,
       })
-      expect.fail()
-    } catch (err: any) {}
 
-    // successful transfer
-    await oracle.invoke(aggregator, 'transfer_payeeship', {
-      transmitter,
-      proposed: proposed_payee,
+      // only proposed payee can accept
+      try {
+        await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
+        expect.fail()
+      } catch (err: any) {}
+
+      // successful accept
+      await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
+        transmitter,
+      })
     })
 
-    // only proposed payee can accept
-    try {
-      await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
-      expect.fail()
-    } catch (err: any) {}
+    it('payments and withdrawals', async () => {
+      let oracle = oracles[0]
+      // NOTE: previous test changed oracle0's payee to oracle1
+      let payee = oracles[1].transmitter
 
-    // successful accept
-    await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
-      transmitter,
-    })
-  })
-
-  it('payments and withdrawals', async () => {
-    let oracle = oracles[0]
-    // NOTE: previous test changed oracle0's payee to oracle1
-    let payee = oracles[1].transmitter
-
-    let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
-      transmitter: oracle.transmitter.starknetContract.address,
-    })
-    // several rounds happened so we are owed payment
-    assert.ok(owed > 0)
-
-    // no funds on contract, so no LINK available for payment
-    let { available } = await aggregator.call('link_available_for_payment')
-    assert.ok(available < 0) // should be negative: we owe payments
-
-    // deposit LINK to contract
-    await owner.invoke(token, 'transfer', {
-      recipient: aggregator.address,
-      amount: uint256.bnToUint256(100_000_000_000),
-    })
-
-    // we have enough funds available now
-    available = (await aggregator.call('link_available_for_payment')).available
-    assert.ok(available > 0)
-
-    // attempt to withdraw the payment
-    await payee.invoke(aggregator, 'withdraw_payment', {
-      transmitter: oracle.transmitter.starknetContract.address,
-    })
-
-    // balance as transferred to payee
-    let { balance } = await token.call('balanceOf', {
-      account: payee.starknetContract.address,
-    })
-
-    assert.ok(number.toBN(owed).eq(uint256.uint256ToBN(balance)))
-
-    // owed payment is now zero
-    {
       let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })
-      assert.ok(owed == 0)
-    }
+      // several rounds happened so we are owed payment
+      assert.ok(owed > 0)
+
+      // no funds on contract, so no LINK available for payment
+      let { available } = await aggregator.call('link_available_for_payment')
+      assert.ok(available < 0) // should be negative: we owe payments
+
+      // deposit LINK to contract
+      await owner.invoke(token, 'transfer', {
+        recipient: aggregator.address,
+        amount: uint256.bnToUint256(100_000_000_000),
+      })
+
+      // we have enough funds available now
+      available = (await aggregator.call('link_available_for_payment')).available
+      assert.ok(available > 0)
+
+      // attempt to withdraw the payment
+      await payee.invoke(aggregator, 'withdraw_payment', {
+        transmitter: oracle.transmitter.starknetContract.address,
+      })
+
+      // balance as transferred to payee
+      let { balance } = await token.call('balanceOf', {
+        account: payee.starknetContract.address,
+      })
+
+      assert.ok(number.toBN(owed).eq(uint256.uint256ToBN(balance)))
+
+      // owed payment is now zero
+      {
+        let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
+          transmitter: oracle.transmitter.starknetContract.address,
+        })
+        assert.ok(owed == 0)
+      }
+    })
   })
 })

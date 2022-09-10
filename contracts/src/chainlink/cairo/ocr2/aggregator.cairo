@@ -173,26 +173,6 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-# --- Ownership ---
-
-@view
-func owner{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}() -> (owner : felt):
-    let (owner) = Ownable.get_owner()
-    return (owner=owner)
-end
-
-@external
-func transfer_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    new_owner : felt
-) -> ():
-    return Ownable.transfer_ownership(new_owner)
-end
-
-@external
-func accept_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    return Ownable.accept_ownership()
-end
-
 # --- Validation ---
 
 # NOTE: Currently unimplemented:

@@ -58,6 +58,12 @@ namespace Ownable:
         return (owner=owner)
     end
 
+    func get_proposed_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        ) -> (proposed_owner : felt):
+        let (proposed_owner) = Ownable_proposed_owner.read()
+        return (proposed_owner=proposed_owner)
+    end
+
     func transfer_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         new_owner : felt
     ) -> ():
@@ -98,6 +104,7 @@ namespace Ownable:
     ):
         let (previous_owner : felt) = Ownable_owner.read()
         Ownable_owner.write(new_owner)
+        Ownable_proposed_owner.write(0)
         OwnershipTransferred.emit(previous_owner, new_owner)
         return ()
     end
