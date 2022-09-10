@@ -3,6 +3,7 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
 import { expectInvokeError, expectCallError } from '../utils'
+import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
@@ -14,6 +15,17 @@ describe('SequencerUptimeFeed', function () {
   before(async function () {
     owner = await starknet.deployAccount('OpenZeppelin')
     nonOwner = await starknet.deployAccount('OpenZeppelin')
+  })
+
+  shouldBehaveLikeOwnableContract(async () => {
+    const alice = owner
+    const bob = await starknet.deployAccount('OpenZeppelin')
+    const feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
+    const feed = await feedFactory.deploy({
+      initial_status: 0,
+      owner_address: number.toBN(alice.starknetContract.address),
+    })
+    return { ownable: feed, alice, bob }
   })
 
   describe('Test access control via inherited `SimpleReadAccessController`', function () {
