@@ -26,26 +26,23 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   IStarknetMessaging public immutable STARKNET_CROSS_DOMAIN_MESSENGER;
 
-  GasConfig private s_gasConfig;
-  AggregatorV3Interface private s_aggregator;
+  AggregatorV3Interface private s_source;
   AccessControllerInterface private s_configAC;
+  GasConfig private s_gasConfig;
 
   /// @notice This event is emitted when the gas config is set.
   event GasConfigSet(uint256 gasUsed, uint256 buffer, address indexed gasPriceL1Feed);
-
-  /**
-   * @notice emitted when a new gas access-control contract is set
-   * @param previous the address prior to the current setting
-   * @param current the address of the new access-control contract
-   */
+  /// @notice emitted when a new gas access-control contract is set
   event ConfigACSet(address indexed previous, address indexed current);
+  /// @notice emitted when a new source aggregator contract is set
+  event SourceAggregatorSet(address indexed previous, address indexed current);
 
   /// @notice StarkNet messaging contract address - the address is 0.
   error InvalidStarkNetMessagingAddress();
   /// @notice StarkNet uptime feed address - the address is 0.
   error InvalidL2FeedAddress();
-  /// @notice Error thrown when the aggregator address is 0
-  error InvalidAggregatorAddress();
+  /// @notice Error thrown when the source aggregator address is 0
+  error InvalidSourceAggregatorAddress();
   /// @notice Error thrown when the l1 gas price feed address is 0
   error InvalidGasPriceL1FeedAddress();
   /// @notice Error thrown when caller is not the owner and does not have access
@@ -55,13 +52,14 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param starkNetMessaging the address of the StarkNet Messaging contract
    * @param configAC the address of the AccessController contract managing config access
    * @param gasPriceL1Feed address of the L1 gas price feed (used to approximate bridge L1 -> L2 message cost)
+   * @param source the source aggregator that we'll read data from (on retries)
    * @param l2Feed the address of the target L2 contract (Sequencer Uptime Feed)
    */
   constructor(
     address starkNetMessaging,
     address configAC,
     address gasPriceL1Feed,
-    address aggregator,
+    address source,
     uint256 l2Feed,
     uint256 gasUsed,
     uint256 buffer
@@ -74,14 +72,14 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
       revert InvalidL2FeedAddress();
     }
 
-    if (aggregator == address(0)) {
-      revert InvalidAggregatorAddress();
+    if (source == address(0)) {
+      revert InvalidSourceAggregatorAddress();
     }
 
     STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
     L2_UPTIME_FEED_ADDR = l2Feed;
 
-    s_aggregator = AggregatorV3Interface(aggregator);
+    _setSourceAggregator(source);
     _setConfigAC(configAC);
     _setGasConfig(gasUsed, buffer, gasPriceL1Feed);
   }
@@ -128,14 +126,15 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   }
 
   /**
-   * @notice retry function for the contract owner to send latest status
-   * to the L2 uptime feed in case a cross chain message failed to send.
+   * @notice retries to send the latest answer as update message to L2
+   * @dev only with access, useful in cases where a previous x-domain message was handeled unsuccessfully.
    */
-  function retry() external onlyOwner {
-    (, int256 latestStatus, , , ) = AggregatorV3Interface(s_aggregator).latestRoundData();
-    _sendUpdateMessageToL2(latestStatus);
+  function retry() external checkAccess returns (bool) {
+    (, int256 latestAnswer, , , ) = AggregatorV3Interface(s_source).latestRoundData();
+    return _sendUpdateMessageToL2(latestAnswer);
   }
 
+  /// @notice sends the 'update_status(answer, timestamp)' message via the L1 -> L2 bridge to the L2 feed contract
   function _sendUpdateMessageToL2(int256 answer) internal returns (bool) {
     // Bridge fees are paid on L1
     uint256 fee = _approximateFee();
@@ -211,6 +210,30 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     if (accessController != previousAccessController) {
       s_configAC = AccessControllerInterface(accessController);
       emit ConfigACSet(previousAccessController, accessController);
+    }
+  }
+
+  /**
+   * @notice sets the source aggregator AggregatorInterface contract
+   * @dev only owner can call this
+   * @param source the source aggregator that we'll read data from (on retries)
+   */
+  function setSourceAggregator(address source) external onlyOwner {
+    _setSourceAggregator(source);
+  }
+
+  /// @notice Internal method that sets the source aggregator AggregatorInterface contract
+  function _setSourceAggregator(address source) internal {
+    address previousSource = address(s_source);
+    if (source != previousSource) {
+      s_source = AggregatorV3Interface(source);
+      // NOTICE: we give access to the new source aggregator, remove access for the previous one
+      // It is not always the case that the source aggregator is also the sender for the 'validate' invocation
+      // as we usually deploy an additonaly proxy in between (owner can give access):
+      //   https://github.com/smartcontractkit/chainlink/blob/develop/contracts/src/v0.8/ValidatorProxy.sol
+      this.addAccess(source);
+      this.removeAccess(previousSource);
+      emit SourceAggregatorSet(previousSource, source);
     }
   }
 
