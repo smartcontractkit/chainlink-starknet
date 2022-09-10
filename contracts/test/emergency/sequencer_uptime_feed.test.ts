@@ -106,7 +106,7 @@ describe('SequencerUptimeFeed', function () {
         owner_address: number.toBN(owner.starknetContract.address),
       })
 
-      const proxyFactory = await starknet.getContractFactory('proxy')
+      const proxyFactory = await starknet.getContractFactory('aggregator_proxy')
       proxyContract = await proxyFactory.deploy({
         owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
@@ -131,7 +131,7 @@ describe('SequencerUptimeFeed', function () {
       )
     })
 
-    it('should respond via a Proxy', async function () {
+    it('should respond via an aggregator_proxy contract', async function () {
       {
         const res = await proxyContract.call('latest_round_data')
         expect(res.round.answer).to.equal(0n)
