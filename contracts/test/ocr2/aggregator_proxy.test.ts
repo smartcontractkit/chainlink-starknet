@@ -5,7 +5,7 @@ import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/type
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 
-describe('proxy.cairo', function () {
+describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
 
   let aggregatorContractFactory: StarknetContractFactory
@@ -18,7 +18,7 @@ describe('proxy.cairo', function () {
   before(async function () {
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
-    proxyContractFactory = await starknet.getContractFactory('ocr2/proxy')
+    proxyContractFactory = await starknet.getContractFactory('ocr2/aggregator_proxy')
 
     owner = await starknet.deployAccount('OpenZeppelin')
 

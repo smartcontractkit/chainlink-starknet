@@ -227,8 +227,11 @@ func set_config{
     assert_nn_le(oracles_len, MAX_ORACLES)  # oracles_len <= MAX_ORACLES
     assert_lt(3 * f, oracles_len)  # 3 * f < oracles_len
     assert_nn(f)  # f is positive
+
+    # Notice: onchain_config is always zero since we don't allow configuring it yet after deployment.
+    # The contract still computes the onchain_config while digesting the config using min/maxAnswer set on construction.
     with_attr error_message("onchain_config must be empty"):
-        assert onchain_config_len = 0  # empty onchain config provided
+        assert onchain_config_len = 0
     end
 
     let (answer_range : Range) = Aggregator_answer_range.read()
