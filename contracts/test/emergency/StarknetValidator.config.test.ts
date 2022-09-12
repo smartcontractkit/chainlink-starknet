@@ -16,9 +16,6 @@ describe('StarkNetValidator (config)', () => {
   let mockAggregator: MockContract
 
   beforeEach(async () => {
-    // Deploy L2 account
-    // account = await starknet.deployAccount('OpenZeppelin')
-    // Fetch predefined L1 EOA accounts
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
     eoaValidator = accounts[1]
