@@ -7,7 +7,7 @@
     "compile:cairo": "hardhat starknet-compile",
     "compile:solidity": "hardhat compile",
     "compile": "yarn compile:cairo && yarn compile:solidity",
-    "test": "hardhat test"
+    "test": "hardhat --network localhost test"
   },
   "author": "",
   "license": "MIT",
