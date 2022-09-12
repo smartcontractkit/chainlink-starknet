@@ -1,6 +1,5 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-// TODO: Import from package
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
+import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/ocr2/deploy'
 import setBillingCommand from '../../src/commands/ocr2/setBilling'
 import setConfigCommand from '../../src/commands/ocr2/setConfig'
