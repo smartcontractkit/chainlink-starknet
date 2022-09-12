@@ -553,10 +553,10 @@ func transmit{
         observations_len=observations_len,
         observations=observations,
         juels_per_fee_coin=juels_per_fee_coin,
+        gas_price=gas_price,
         config_digest=report_context.config_digest,
         epoch_and_round=report_context.epoch_and_round,
         reimbursement=reimbursement_juels,
-        gas_price=gas_price,
     )
 
     # pay transmitter

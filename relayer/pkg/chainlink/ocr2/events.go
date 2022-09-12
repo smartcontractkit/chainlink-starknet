@@ -32,6 +32,7 @@ type NewTransmissionEvent struct {
 	ObservationsLen uint32
 	Observations    []*big.Int
 	JuelsPerFeeCoin *big.Int
+	GasPrice        *big.Int
 	ConfigDigest    types.ConfigDigest
 	Epoch           uint32
 	Round           uint8
@@ -81,6 +82,10 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	index += int(observationsLen) + 1
 	juelsPerFeeCoin := eventData[index].Big()
 
+	// juels_per_fee_coin
+	index += 1
+	gasPrice := eventData[index].Big()
+
 	// config digest
 	index += 1
 	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
@@ -105,6 +110,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 		ObservationsLen: observationsLen,
 		Observations:    observations,
 		JuelsPerFeeCoin: juelsPerFeeCoin,
+		GasPrice:        gasPrice,
 		ConfigDigest:    digest,
 		Epoch:           epoch,
 		Round:           round,
