@@ -32,7 +32,7 @@ describe('StarkNetValidator', () => {
   let l2ContractFactory: StarknetContractFactory
   let l2Contract: StarknetContract
 
-  beforeEach(async () => {
+  before(async () => {
     // Deploy L2 account
     account = await starknet.deployAccount('OpenZeppelin')
     // Fetch predefined L1 EOA accounts
@@ -77,7 +77,9 @@ describe('StarkNetValidator', () => {
       '1638268960' /** updatedAt */,
       '73786976294838220258' /** answeredInRound */,
     )
+  })
 
+  beforeEach(async () => {
     // Deploy the L1 StarkNetValidator
     const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
     starkNetValidator = await starknetValidatorFactory
