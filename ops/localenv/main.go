@@ -30,7 +30,7 @@ func main() {
 	switch strings.ToLower(os.Args[1]) {
 	// create k8s cluster + resources
 	case "create":
-		run("create registry", "k3d", "registry", "create", "registry.localhost", "--port", "12345", "--default-network", "podman")
+		run("create registry", "k3d", "registry", "create", "registry.localhost", "--port", "12345")
 		run("create k8s cluster", "k3d", "cluster", "create", "local", "--registry-use", "k3d-registry.localhost:12345")
 		run("switch k8s context", "kubectl", "config", "use-context", "k3d-local")
 	// build and upload image to local registry
