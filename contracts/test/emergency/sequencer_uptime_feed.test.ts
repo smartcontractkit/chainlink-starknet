@@ -3,6 +3,7 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
 import { expectInvokeError, expectCallError } from '../utils'
+import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
@@ -14,6 +15,17 @@ describe('SequencerUptimeFeed', function () {
   before(async function () {
     owner = await starknet.deployAccount('OpenZeppelin')
     nonOwner = await starknet.deployAccount('OpenZeppelin')
+  })
+
+  shouldBehaveLikeOwnableContract(async () => {
+    const alice = owner
+    const bob = await starknet.deployAccount('OpenZeppelin')
+    const feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
+    const feed = await feedFactory.deploy({
+      initial_status: 0,
+      owner_address: number.toBN(alice.starknetContract.address),
+    })
+    return { ownable: feed, alice, bob }
   })
 
   describe('Test access control via inherited `SimpleReadAccessController`', function () {
@@ -57,6 +69,30 @@ describe('SequencerUptimeFeed', function () {
         'AccessController: address does not have access',
       )
     })
+
+    it('should disable access check', async function () {
+      await owner.invoke(uptimeFeedContract, 'disable_access_check', {})
+
+      const res = await uptimeFeedContract.call('has_access', { user: user + 1, data: [] })
+      expect(res.bool).to.equal(1n)
+    })
+
+    it('should enable access check', async function () {
+      await owner.invoke(uptimeFeedContract, 'enable_access_check', {})
+
+      const res = await uptimeFeedContract.call('has_access', { user: user + 1, data: [] })
+      expect(res.bool).to.equal(0n)
+    })
+
+    it('should remove user access', async function () {
+      const res = await uptimeFeedContract.call('has_access', { user: user, data: [] })
+      expect(res.bool).to.equal(1n)
+
+      await owner.invoke(uptimeFeedContract, 'remove_access', { user: user })
+
+      const new_res = await uptimeFeedContract.call('has_access', { user: user, data: [] })
+      expect(new_res.bool).to.equal(0n)
+    })
   })
 
   describe('Test IAggregator interface using a Proxy', function () {
@@ -70,7 +106,7 @@ describe('SequencerUptimeFeed', function () {
         owner_address: number.toBN(owner.starknetContract.address),
       })
 
-      const proxyFactory = await starknet.getContractFactory('proxy')
+      const proxyFactory = await starknet.getContractFactory('aggregator_proxy')
       proxyContract = await proxyFactory.deploy({
         owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
@@ -95,7 +131,7 @@ describe('SequencerUptimeFeed', function () {
       )
     })
 
-    it('should respond via a Proxy', async function () {
+    it('should respond via an aggregator_proxy contract', async function () {
       {
         const res = await proxyContract.call('latest_round_data')
         expect(res.round.answer).to.equal(0n)

@@ -8,12 +8,12 @@ from starkware.starknet.common.syscalls import (
 )
 from starkware.cairo.common.math import assert_not_zero, assert_le, assert_lt_felt
 from starkware.cairo.common.math_cmp import is_le
-from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.bool import TRUE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
-from chainlink.cairo.access.ownable import Ownable_only_owner
+from chainlink.cairo.access.ownable import Ownable
 
 const ETH_ADDRESS_BOUND = 2 ** 160
 
@@ -32,21 +32,21 @@ func L1SenderTransferred(from_addr : felt, to_addr : felt):
 end
 
 @storage_var
-func s_l1_sender() -> (address : felt):
+func SequencerUptimeFeed_l1_sender() -> (address : felt):
 end
 
 @storage_var
-func s_rounds(id : felt, field : felt) -> (res : felt):
+func SequencerUptimeFeed_rounds(id : felt, field : felt) -> (res : felt):
 end
 
 @storage_var
-func s_latest_round_id() -> (res : felt):
+func SequencerUptimeFeed_latest_round_id() -> (res : felt):
 end
 
 func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    let (l1_sender) = s_l1_sender.read()
+    let (l1_sender) = SequencerUptimeFeed_l1_sender.read()
     with_attr error_message("invalid sender"):
         assert l1_sender = address
     end
@@ -57,7 +57,7 @@ end
 func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt
 ):
-    let (latest_round_id) = s_latest_round_id.read()
+    let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
 
     with_attr error_message("invalid round_id"):
         assert_not_zero(round_id)
@@ -80,7 +80,7 @@ end
 func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
 
     with_attr error_message("L1 sender address out of range"):
         assert_lt_felt(address, ETH_ADDRESS_BOUND)
@@ -98,7 +98,7 @@ end
 func l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     address : felt
 ):
-    let (address) = s_l1_sender.read()
+    let (address) = SequencerUptimeFeed_l1_sender.read()
     return (address)
 end
 
@@ -124,9 +124,9 @@ namespace SequencerUptimeFeed:
         require_l1_sender(from_address)
         assert_boolean(status)
 
-        let (latest_round_id) = s_latest_round_id.read()
-        let (latest_started_at) = s_rounds.read(latest_round_id, Round.started_at)
-        let (local latest_status) = s_rounds.read(latest_round_id, Round.answer)
+        let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
+        let (latest_started_at) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.started_at)
+        let (local latest_status) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.answer)
 
         let (lt) = is_le(timestamp, latest_started_at - 1)  # timestamp < latest_started_at
         if lt == TRUE:
@@ -149,7 +149,7 @@ namespace SequencerUptimeFeed:
     ):
         require_access()
 
-        let (latest_round_id) = s_latest_round_id.read()
+        let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
         let (latest_round) = SequencerUptimeFeed.round_data(latest_round_id)
 
         return (latest_round)
@@ -188,10 +188,10 @@ end
 func _set_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt, value : Round
 ):
-    s_rounds.write(id=round_id, field=Round.answer, value=value.answer)
-    s_rounds.write(id=round_id, field=Round.block_num, value=value.block_num)
-    s_rounds.write(id=round_id, field=Round.started_at, value=value.started_at)
-    s_rounds.write(id=round_id, field=Round.updated_at, value=value.updated_at)
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.answer, value=value.answer)
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.block_num, value=value.block_num)
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.started_at, value=value.started_at)
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.updated_at, value=value.updated_at)
 
     return ()
 end
@@ -199,10 +199,10 @@ end
 func _get_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt
 ) -> (round : Round):
-    let (answer) = s_rounds.read(id=round_id, field=Round.answer)
-    let (block_num) = s_rounds.read(id=round_id, field=Round.block_num)
-    let (started_at) = s_rounds.read(id=round_id, field=Round.started_at)
-    let (updated_at) = s_rounds.read(id=round_id, field=Round.updated_at)
+    let (answer) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.answer)
+    let (block_num) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.block_num)
+    let (started_at) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.started_at)
+    let (updated_at) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.updated_at)
 
     return (Round(round_id, answer, block_num, started_at, updated_at))
 end
@@ -210,10 +210,10 @@ end
 func _set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     address : felt
 ):
-    let (old_address) = s_l1_sender.read()
+    let (old_address) = SequencerUptimeFeed_l1_sender.read()
 
     if old_address != address:
-        s_l1_sender.write(address)
+        SequencerUptimeFeed_l1_sender.write(address)
         L1SenderTransferred.emit(old_address, address)
         return ()
     end
@@ -224,7 +224,7 @@ end
 func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     round_id : felt, status : felt, timestamp : felt
 ):
-    s_latest_round_id.write(round_id)
+    SequencerUptimeFeed_latest_round_id.write(round_id)
 
     let (block_num) = get_block_number()
     let (updated_at) = get_block_timestamp()
@@ -239,7 +239,7 @@ func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     _set_round(round_id, round)
 
     let (sender) = get_caller_address()
-    NewRound.emit(round)
+    NewRound.emit(round_id=round_id, started_by=sender, started_at=timestamp)
     AnswerUpdated.emit(status, round_id, timestamp)
 
     return ()
@@ -249,7 +249,7 @@ func _update_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     round_id : felt, status : felt
 ):
     let (updated_at) = get_block_timestamp()
-    s_rounds.write(round_id, Round.updated_at, updated_at)
+    SequencerUptimeFeed_rounds.write(round_id, Round.updated_at, updated_at)
 
     RoundUpdated.emit(status, updated_at)
     return ()

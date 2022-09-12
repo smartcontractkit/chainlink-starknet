@@ -30,6 +30,7 @@ var (
 		"0x63",
 		"0x63",
 		"0x1",
+		"0x1",
 		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453",
 		"0x1",
 		"0x0",
@@ -72,6 +73,9 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 	require.Equal(t, e.Epoch, uint32(0))
 	require.Equal(t, e.Round, uint8(1))
 	require.Equal(t, e.Reimbursement, big.NewInt(0))
+
+	require.Equal(t, e.JuelsPerFeeCoin, big.NewInt(1))
+	require.Equal(t, e.GasPrice, big.NewInt(1))
 
 	transmitterHex := "0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d"
 	require.Equal(t, len(transmitterHex), int(2+31.5*2)) // len('0x') + len(max_felt_len)

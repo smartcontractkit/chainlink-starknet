@@ -12,3 +12,4 @@ vendor
 
 # Python virtual env
 .venv
+.direnv
