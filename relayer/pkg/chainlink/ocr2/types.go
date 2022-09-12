@@ -69,7 +69,7 @@ type RoundData struct {
 }
 
 func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
-	if len(felts) < 5 {
+	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}
 	data.RoundID = binary.BigEndian.Uint32(felts[0][:])
@@ -84,7 +84,7 @@ func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
 		return data, fmt.Errorf("startedAt '%s' does not fit into int64", startedAt.String())
 	}
 	data.StartedAt = time.Unix(startedAt.Int64(), 0)
-	updatedAt := felts[3].Big()
+	updatedAt := felts[4].Big()
 	if !updatedAt.IsInt64() {
 		return data, fmt.Errorf("updatedAt '%s' does not fit into int64", startedAt.String())
 	}
