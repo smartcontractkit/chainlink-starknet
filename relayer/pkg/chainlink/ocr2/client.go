@@ -3,6 +3,7 @@ package ocr2
 import (
 	"context"
 	"encoding/json"
+	"math/big"
 	"time"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
@@ -20,6 +21,7 @@ type OCR2Reader interface {
 	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
 	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
 	LatestRoundData(context.Context, string) (RoundData, error)
+	LinkAvailableForPayment(context.Context, string) (*big.Int, error)
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
 	NewTransmissionEventAt(context.Context, string, uint64) (NewTransmissionEvent, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
@@ -155,6 +157,20 @@ func (c *Client) LatestRoundData(ctx context.Context, address string) (round Rou
 		return round, errors.Wrap(err, "unable to decode RoundData")
 	}
 	return round, nil
+}
+
+func (c *Client) LinkAvailableForPayment(ctx context.Context, address string) (*big.Int, error) {
+	results, err := c.r.CallContract(ctx, starknet.CallOps{
+		ContractAddress: address,
+		Selector:        "link_available_for_payments",
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payments'")
+	}
+	if len(results) != 1 {
+		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payments'")
+	}
+	return junotypes.HexToFelt(results[0]).Big(), nil
 }
 
 func (c *Client) fetchEventsAt(ctx context.Context, address, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
