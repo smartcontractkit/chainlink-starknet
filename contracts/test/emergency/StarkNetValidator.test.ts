@@ -89,7 +89,6 @@ describe('StarkNetValidator', () => {
         mockAggregator.address,
         l2Contract.address,
         0,
-        1,
       )
 
     // Point the L2 feed contract to receive from the L1 StarkNetValidator contract
