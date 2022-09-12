@@ -87,14 +87,14 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 	})
 
 	subs.Go(func() {
-		linkAvailable, err := s.fetchLinkAvailableForPayment(ctx, s.contractAddress)
+		availableLink, err := s.ocr2Reader.LinkAvailableForPayment(ctx, s.contractAddress)
 		envelopeMu.Lock()
 		defer envelopeMu.Unlock()
 		if err != nil {
 			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchLinkAvailableForPayment failed: %w", err))
 			return
 		}
-		envelope.LinkAvailableForPayment = linkAvailable
+		envelope.LinkAvailableForPayment = availableLink
 	})
 
 	subs.Go(func() {
@@ -134,20 +134,6 @@ func (s *envelopeSource) fetchContractConfig(ctx context.Context, contractAddres
 		return config, fmt.Errorf("couldn't fetch config at block '%d' for contract '%s': %w", configDetails.Block, contractAddress, err)
 	}
 	return config, nil
-}
-
-func (s *envelopeSource) fetchLinkAvailableForPayment(ctx context.Context, contractAddress string) (*big.Int, error) {
-	results, err := s.ocr2Reader.BaseReader().CallContract(ctx, starknet.CallOps{
-		ContractAddress: contractAddress,
-		Selector:        "link_available_for_payments",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("couldn't call the contract '%s' with selector 'link_available_for_payments': %w", contractAddress, err)
-	}
-	if len(results) < 1 {
-		return nil, fmt.Errorf("insufficient data from contract %s with selector 'link_available_for_payments'. Expected 1 got %d", contractAddress, len(results))
-	}
-	return junotypes.HexToFelt(results[0]).Big(), nil
 }
 
 func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress string) (*big.Int, error) {
