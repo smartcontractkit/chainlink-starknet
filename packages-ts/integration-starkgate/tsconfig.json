@@ -11,5 +11,8 @@
         "dist",
         "**/*.spec.ts",
         "**/*.test.ts"
+    ],
+    "files": [
+        "./hardhat.config.ts"
     ]
 }

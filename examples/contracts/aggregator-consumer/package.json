@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "echo",
     "compile:cairo": "hardhat starknet-compile",
     "compile": "yarn compile:cairo",
     "test": "npx hardhat --network localhost test",

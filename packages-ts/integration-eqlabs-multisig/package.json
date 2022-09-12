@@ -7,6 +7,7 @@
     "test": "test"
   },
   "scripts": {
+    "lint": "echo",
     "test": "npx hardhat --network localhost test"
   },
   "devDependencies": {

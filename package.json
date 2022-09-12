@@ -19,7 +19,7 @@
     "test": "yarn build && yarn workspaces run test",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
-    "lint": "tsc -b ./tsconfig.json",
+    "lint": "yarn workspaces run lint",
     "format": "yarn prettier --write .",
     "format:check": "yarn prettier --check .",
     "clean": "tsc -b --clean ./tsconfig.json",

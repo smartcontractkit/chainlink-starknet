@@ -13,7 +13,7 @@
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    /* "strict": true, */ /* Enable all strict type-checking options. */
+    "strict": true, /* Enable all strict type-checking options. */
 
     /* Additional Checks */
     /* "noUnusedParameters":  true, */ /* Report errors on unused parameters. */
