@@ -217,13 +217,6 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address previousSource = address(s_source);
     if (source != previousSource) {
       s_source = AggregatorV3Interface(source);
-      // NOTICE: we give access to the new source aggregator, remove access for the previous one
-      // It is not always the case that the source aggregator is also the sender for the 'validate' invocation
-      // as we usually deploy an additonaly proxy in between (owner can give access):
-      //   https://github.com/smartcontractkit/chainlink/blob/develop/contracts/src/v0.8/ValidatorProxy.sol
-      this.addAccess(source);
-      this.removeAccess(previousSource);
-      emit SourceAggregatorSet(previousSource, source);
     }
   }
 
