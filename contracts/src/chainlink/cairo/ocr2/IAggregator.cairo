@@ -18,10 +18,10 @@ func NewTransmission(
     observations_len : felt,
     observations : felt*,
     juels_per_fee_coin : felt,
+    gas_price : felt,
     config_digest : felt,
     epoch_and_round : felt,
     reimbursement : felt,
-    gas_price : felt,
 ):
 end
 

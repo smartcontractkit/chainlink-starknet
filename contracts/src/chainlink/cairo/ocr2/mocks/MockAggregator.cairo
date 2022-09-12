@@ -61,10 +61,10 @@ func set_latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
         observations_len=2,
         observations=observations,
         juels_per_fee_coin=18,
+        gas_price=1,
         config_digest=34,
         epoch_and_round=20,
         reimbursement=100,
-        gas_price=1,
     )
     return ()
 end
