@@ -1,5 +1,5 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
+import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployTokenCommand from '../../src/commands/token/deploy'
 import deployCommand from '../../src/commands/bridge/deploy'
 import setL1Bridge from '../../src/commands/bridge/setL1Bridge'

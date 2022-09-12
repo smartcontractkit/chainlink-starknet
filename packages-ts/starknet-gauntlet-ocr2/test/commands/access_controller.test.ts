@@ -1,5 +1,4 @@
-// TODO: Import from package
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
+import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/accessController/deploy'
 import {
   registerExecuteCommand,
