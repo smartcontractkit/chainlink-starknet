@@ -14,7 +14,7 @@ import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 
-describe('StarkNetValidator', () => {
+describe.only('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
 
@@ -32,7 +32,7 @@ describe('StarkNetValidator', () => {
   let l2ContractFactory: StarknetContractFactory
   let l2Contract: StarknetContract
 
-  before(async () => {
+  beforeEach(async () => {
     // Deploy L2 account
     account = await starknet.deployAccount('OpenZeppelin')
     // Fetch predefined L1 EOA accounts
@@ -93,6 +93,160 @@ describe('StarkNetValidator', () => {
 
     // Point the L2 feed contract to receive from the L1 StarkNetValidator contract
     await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
+  })
+
+  describe('#retry', () => {
+    describe('when called by account with no access', () => {
+      it('reverts', async () => {
+        await expect(starkNetValidator.connect(eoaValidator).retry()).to.be.revertedWith(
+          'No access',
+        )
+      })
+    })
+  })
+
+  describe('#setConfigAC', () => {
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(eoaValidator).setConfigAC(ethers.constants.AddressZero),
+        ).to.be.revertedWith('Only callable by owner')
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        const newACAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+        await expect(starkNetValidator.setConfigAC(newACAddr))
+          .to.emit(starkNetValidator, 'ConfigACSet')
+          .withArgs(mockAccessController.address, newACAddr)
+      })
+
+      it('sets the access controller address', async () => {
+        const newACAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+        await starkNetValidator.connect(deployer).setConfigAC(newACAddr)
+        expect(await starkNetValidator.getConfigAC()).to.equal(newACAddr)
+      })
+    })
+  })
+
+  describe('#setGasConfig', () => {
+    describe('when called by non owner without access', () => {
+      beforeEach(async () => {
+        await mockAccessController.mock.hasAccess.returns(false)
+      })
+
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
+        ).to.be.revertedWith('AccessForbidden()')
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('correctly sets the gas config', async () => {
+        const newGasEstimate = 25000
+        const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+        await starkNetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr)
+        const gasConfig = await starkNetValidator.getGasConfig()
+        expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
+        expect(gasConfig.gasPriceL1Feed).to.equal(newFeedAddr)
+      })
+
+      it('emits an event', async () => {
+        const newGasEstimate = 25000
+        const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+        await expect(starkNetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr))
+          .to.emit(starkNetValidator, 'GasConfigSet')
+          .withArgs(newGasEstimate, newFeedAddr)
+      })
+
+      describe('when l1 gas price feed address is the zero address', () => {
+        it('reverts', async () => {
+          await expect(
+            starkNetValidator.connect(deployer).setGasConfig(25000, ethers.constants.AddressZero),
+          ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+        })
+      })
+    })
+
+    describe('when access controller address is set', () => {
+      describe('when called by an address with access', () => {
+        beforeEach(async () => {
+          await mockAccessController.mock.hasAccess.returns(true)
+        })
+
+        it('correctly sets the gas config', async () => {
+          const newGasEstimate = 25000
+          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+          await starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr)
+          const gasConfig = await starkNetValidator.getGasConfig()
+          expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
+          expect(gasConfig.gasPriceL1Feed).to.equal(newFeedAddr)
+        })
+
+        it('emits an event', async () => {
+          const newGasEstimate = 25000
+          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+          await expect(
+            starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr),
+          )
+            .to.emit(starkNetValidator, 'GasConfigSet')
+            .withArgs(newGasEstimate, newFeedAddr)
+        })
+
+        describe('when l1 gas price feed address is the zero address', () => {
+          it('reverts', async () => {
+            await expect(
+              starkNetValidator
+                .connect(eoaValidator)
+                .setGasConfig(25000, ethers.constants.AddressZero),
+            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+          })
+        })
+      })
+    })
+
+    describe('when access controller address is not set', () => {
+      beforeEach(async () => {
+        await starkNetValidator.connect(deployer).setConfigAC(ethers.constants.AddressZero)
+      })
+
+      describe('when called by an address without access', () => {
+        beforeEach(async () => {
+          await mockAccessController.mock.hasAccess.returns(false)
+        })
+
+        it('correctly sets the gas config', async () => {
+          const newGasEstimate = 25000
+          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+          await starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr)
+          const gasConfig = await starkNetValidator.getGasConfig()
+          expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
+          expect(gasConfig.gasPriceL1Feed).to.equal(newFeedAddr)
+        })
+
+        it('emits an event', async () => {
+          const newGasEstimate = 25000
+          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+          await expect(
+            starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr),
+          )
+            .to.emit(starkNetValidator, 'GasConfigSet')
+            .withArgs(newGasEstimate, newFeedAddr)
+        })
+
+        describe('when l1 gas price feed address is the zero address', () => {
+          it('reverts', async () => {
+            await expect(
+              starkNetValidator
+                .connect(eoaValidator)
+                .setGasConfig(25000, ethers.constants.AddressZero),
+            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+          })
+        })
+      })
+    })
   })
 
   describe('StarkNetValidator', () => {
@@ -201,162 +355,6 @@ describe('StarkNetValidator', () => {
       // Assert L2 effects
       const res = await account.call(l2Contract, 'latest_round_data')
       expect(res.round.answer).to.equal(0n) // final status 0
-    })
-  })
-
-  describe('#retry', () => {
-    describe('when called by non owner', () => {
-      it('reverts', async () => {
-        await expect(starkNetValidator.connect(eoaValidator).retry()).to.be.revertedWith(
-          'Only callable by owner',
-        )
-      })
-    })
-  })
-
-  describe('#setConfigAC', () => {
-    describe('when called by non owner', () => {
-      it('reverts', async () => {
-        await expect(
-          starkNetValidator.connect(eoaValidator).setConfigAC(ethers.constants.AddressZero),
-        ).to.be.revertedWith('Only callable by owner')
-      })
-    })
-
-    describe('when called by owner', () => {
-      it('emits an event', async () => {
-        const newACAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        await expect(starkNetValidator.setConfigAC(newACAddr))
-          .to.emit(starkNetValidator, 'ConfigACSet')
-          .withArgs(mockAccessController.address, newACAddr)
-      })
-
-      it('sets the access controller address', async () => {
-        const newACAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        await starkNetValidator.connect(deployer).setConfigAC(newACAddr)
-        expect(await starkNetValidator.getConfigAC()).to.equal(newACAddr)
-      })
-    })
-  })
-
-  describe('#setGasConfig', () => {
-    describe('when called by non owner without access', () => {
-      beforeEach(async () => {
-        await mockAccessController.mock.hasAccess.returns(false)
-      })
-
-      it('reverts', async () => {
-        await expect(
-          starkNetValidator.connect(eoaValidator).setGasConfig(0, 1, mockGasPriceFeed.address),
-        ).to.be.revertedWith('AccessForbidden()')
-      })
-    })
-
-    describe('when called by owner', () => {
-      it('correctly sets the gas config', async () => {
-        const newGasEstimate = 25000
-        const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        await starkNetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr)
-        const gasConfig = await starkNetValidator.getGasConfig()
-        expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
-        expect(gasConfig.l1GasPriceFeedAddr).to.equal(newFeedAddr)
-      })
-
-      it('emits an event', async () => {
-        const newGasEstimate = 25000
-        const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        await expect(starkNetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr))
-          .to.emit(starkNetValidator, 'GasConfigSet')
-          .withArgs(newGasEstimate, newFeedAddr)
-      })
-
-      describe('when l1 gas price feed address is the zero address', () => {
-        it('reverts', async () => {
-          await expect(
-            starkNetValidator
-              .connect(deployer)
-              .setGasConfig(25000, 2, ethers.constants.AddressZero),
-          ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
-        })
-      })
-    })
-
-    describe('when access controller address is set', () => {
-      describe('when called by an address with access', () => {
-        beforeEach(async () => {
-          await mockAccessController.mock.hasAccess.returns(true)
-        })
-
-        it('correctly sets the gas config', async () => {
-          const newGasEstimate = 25000
-          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          await starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr)
-          const gasConfig = await starkNetValidator.getGasConfig()
-          expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
-          expect(gasConfig.l1GasPriceFeedAddr).to.equal(newFeedAddr)
-        })
-
-        it('emits an event', async () => {
-          const newGasEstimate = 25000
-          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          await expect(
-            starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr),
-          )
-            .to.emit(starkNetValidator, 'GasConfigSet')
-            .withArgs(newGasEstimate, newFeedAddr)
-        })
-
-        describe('when l1 gas price feed address is the zero address', () => {
-          it('reverts', async () => {
-            await expect(
-              starkNetValidator
-                .connect(eoaValidator)
-                .setGasConfig(25000, 2, ethers.constants.AddressZero),
-            ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
-          })
-        })
-      })
-    })
-
-    describe('when access controller address is not set', () => {
-      beforeEach(async () => {
-        await starkNetValidator.connect(deployer).setConfigAC(ethers.constants.AddressZero)
-      })
-
-      describe('when called by an address without access', () => {
-        beforeEach(async () => {
-          await mockAccessController.mock.hasAccess.returns(false)
-        })
-
-        it('correctly sets the gas config', async () => {
-          const newGasEstimate = 25000
-          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          await starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr)
-          const gasConfig = await starkNetValidator.getGasConfig()
-          expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
-          expect(gasConfig.l1GasPriceFeedAddr).to.equal(newFeedAddr)
-        })
-
-        it('emits an event', async () => {
-          const newGasEstimate = 25000
-          const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          await expect(
-            starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr),
-          )
-            .to.emit(starkNetValidator, 'GasConfigSet')
-            .withArgs(newGasEstimate, newFeedAddr)
-        })
-
-        describe('when l1 gas price feed address is the zero address', () => {
-          it('reverts', async () => {
-            await expect(
-              starkNetValidator
-                .connect(eoaValidator)
-                .setGasConfig(25000, 2, ethers.constants.AddressZero),
-            ).to.be.revertedWith('InvalidL1GasPriceFeedAddress()')
-          })
-        })
-      })
     })
   })
 })
