@@ -7,6 +7,8 @@ type ContractInput = [
   {
     observation_payment_gjuels: number
     transmission_payment_gjuels: number
+    gas_base: number,
+    gas_per_signature: number,
   },
 ]
 
@@ -15,6 +17,8 @@ const makeContractInput = async (input: SetBillingInput): Promise<ContractInput>
     {
       observation_payment_gjuels: new BN(input.observationPaymentGjuels).toNumber(),
       transmission_payment_gjuels: new BN(input.transmissionPaymentGjuels).toNumber(),
+      gas_base: new BN(input.gasBase).toNumber(),
+      gas_per_signature: new BN(input.gasPerSignature).toNumber(),
     },
   ]
 }
