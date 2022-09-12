@@ -174,6 +174,8 @@ describe('OCR2 Contract', () => {
           input: {
             observationPaymentGjuels: 1,
             transmissionPaymentGjuels: 1,
+            gasBase: 14951,
+            gasPerSignature: 13,
           },
         },
         [contractAddress],
