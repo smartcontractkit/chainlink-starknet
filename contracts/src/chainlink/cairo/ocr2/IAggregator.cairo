@@ -18,6 +18,7 @@ func NewTransmission(
     observations_len : felt,
     observations : felt*,
     juels_per_fee_coin : felt,
+    gas_price : felt,
     config_digest : felt,
     epoch_and_round : felt,
     reimbursement : felt,
@@ -29,7 +30,7 @@ func AnswerUpdated(current : felt, round_id : felt, timestamp : felt):
 end
 
 @event
-func NewRound(round : Round):
+func NewRound(round_id : felt, started_by : felt, started_at : felt):
 end
 
 @contract_interface
