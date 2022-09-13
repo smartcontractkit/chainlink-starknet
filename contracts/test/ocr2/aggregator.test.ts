@@ -229,6 +229,8 @@ describe('aggregator.cairo', function () {
         config: {
           observation_payment_gjuels: 1,
           transmission_payment_gjuels: 5,
+          gas_base: 1,
+          gas_per_signature: 1,
         },
       })
     })

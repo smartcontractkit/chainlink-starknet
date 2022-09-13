@@ -1,6 +1,5 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-// TODO: Import from package
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
+import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/ocr2/deploy'
 import setBillingCommand from '../../src/commands/ocr2/setBilling'
 import setConfigCommand from '../../src/commands/ocr2/setConfig'
@@ -13,7 +12,7 @@ import {
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadContract_Ocr2, CONTRACT_LIST } from '../../src/lib/contracts'
-import { Contract } from 'starknet'
+import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 const signers = [
@@ -97,8 +96,7 @@ describe('OCR2 Contract', () => {
 
       // Fund the newly allocated account
       let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
-      let balance = 100_000_000_000_000
-      // let balance = 1e21
+      let balance = 1e21
       const body = {
         address: account,
         amount: balance,
@@ -217,10 +215,12 @@ describe('OCR2 Contract', () => {
 
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
-      const receipt = await provider.getTransactionReceipt(report.responses[0].tx.hash)
+      const receipt = (await provider.getTransactionReceipt(
+        report.responses[0].tx.hash,
+      )) as InvokeTransactionReceiptResponse
 
       // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
-      const eventData = (receipt.events[0] as any).data // Workaround for incorrect typescript annotation, event isn't string
+      const eventData = receipt.events[0].data
       // reconstruct signers array from event
       let eventSigners = []
       for (let i = 0; i < signers.length; i++) {

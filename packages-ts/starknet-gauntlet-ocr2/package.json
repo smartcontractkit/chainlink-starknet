@@ -27,6 +27,7 @@
   "dependencies": {
     "@chainlink/gauntlet-contracts-ocr2": "0.2.2",
     "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/starknet-gauntlet": "*"
+    "@chainlink/starknet-gauntlet": "*",
+    "@chainlink/starknet-gauntlet-oz": "*"
   }
 }
