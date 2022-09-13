@@ -27,6 +27,7 @@
   "dependencies": {
     "@chainlink-dev/starkgate-contracts": "^0.0.3",
     "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/starknet-gauntlet": "*"
+    "@chainlink/starknet-gauntlet": "*",
+    "@chainlink/starknet-gauntlet-oz": "*"
   }
 }

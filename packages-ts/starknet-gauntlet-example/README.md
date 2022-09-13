@@ -17,7 +17,7 @@ This will result in a new contract address
 Will increase the current balance with the amount specified with the `--balance` flag
 
 ```bash
-yarn gauntlet example:increase_balance --network=<NETWORK> --balance=<NUMBER> (--noWallet) <CONTRACT_ADDRESS>
+yarn gauntlet example:increase_balance --network=<NETWORK> --balance=<NUMBER> <CONTRACT_ADDRESS>
 ```
 
 - Inspect the contract

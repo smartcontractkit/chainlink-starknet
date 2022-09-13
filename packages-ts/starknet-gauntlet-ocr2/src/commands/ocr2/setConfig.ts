@@ -8,6 +8,7 @@ import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
 import { bytesToFelts, decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
+import { InvokeTransactionReceiptResponse } from 'starknet'
 
 type Oracle = {
   signer: string
@@ -54,11 +55,13 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
   result,
 ) => {
   const txHash = result.responses[0].tx.hash
-  const txInfo = await context.provider.provider.getTransactionReceipt(txHash)
+  const txInfo = (await context.provider.provider.getTransactionReceipt(
+    txHash,
+  )) as InvokeTransactionReceiptResponse
   if (txInfo.status === 'REJECTED') {
     return { successfulConfiguration: false }
   }
-  const eventData = (txInfo.events[0] as any).data
+  const eventData = txInfo.events[0].data
 
   const offchainConfig = decodeOffchainConfigFromEventData(eventData)
   try {
