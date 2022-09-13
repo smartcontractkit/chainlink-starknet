@@ -13,6 +13,7 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
+import { addCompilationToNetwork } from '../utils'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
@@ -33,24 +34,9 @@ describe('StarkNetValidator', () => {
   let l2Contract: StarknetContract
 
   before(async () => {
-    if (network.name !== 'hardhat') {
-      // This is so that the network can know about custom errors.
-      // Running against the provided hardhat node does this automatically.
-
-      const buildInfo = await artifacts.getBuildInfo(
-        'src/chainlink/solidity/emergency/StarkNetValidator.sol:StarkNetValidator',
-      )
-      if (!buildInfo) {
-        throw Error('Cannot find build info')
-      }
-      const { solcVersion, input, output } = buildInfo
-      console.log('Sending compilation result for StarkNetValidator test')
-      await network.provider.request({
-        method: 'hardhat_addCompilationResult',
-        params: [solcVersion, input, output],
-      })
-      console.log('Successfully sent compilation result for StarkNetValidator test')
-    }
+    await addCompilationToNetwork(
+      'src/chainlink/solidity/emergency/StarkNetValidator.sol:StarkNetValidator',
+    )
 
     // Deploy L2 account
     account = await starknet.deployAccount('OpenZeppelin')
@@ -102,16 +88,14 @@ describe('StarkNetValidator', () => {
   beforeEach(async () => {
     // Deploy the L1 StarkNetValidator
     const starknetValidatorFactory = await ethers.getContractFactory('StarkNetValidator', deployer)
-    starkNetValidator = await starknetValidatorFactory
-      .connect(deployer)
-      .deploy(
-        mockStarkNetMessaging.address,
-        mockAccessController.address,
-        mockGasPriceFeed.address,
-        mockAggregator.address,
-        l2Contract.address,
-        0,
-      )
+    starkNetValidator = await starknetValidatorFactory.deploy(
+      mockStarkNetMessaging.address,
+      mockAccessController.address,
+      mockGasPriceFeed.address,
+      mockAggregator.address,
+      l2Contract.address,
+      0,
+    )
 
     // Point the L2 feed contract to receive from the L1 StarkNetValidator contract
     await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
@@ -129,7 +113,7 @@ describe('StarkNetValidator', () => {
           l2Contract.address,
           0,
         ),
-      ).to.be.revertedWith('InvalidStarkNetMessagingAddress()')
+      ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidStarkNetMessagingAddress')
     })
 
     it('reverts when the L2 feed is zero', async () => {
@@ -143,7 +127,7 @@ describe('StarkNetValidator', () => {
           0,
           0,
         ),
-      ).to.be.revertedWith('InvalidL2FeedAddress()')
+      ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidL2FeedAddress')
     })
 
     it('reverts when the Aggregator address is zero', async () => {
@@ -157,7 +141,7 @@ describe('StarkNetValidator', () => {
           l2Contract.address,
           0,
         ),
-      ).to.be.revertedWith('InvalidSourceAggregatorAddress()')
+      ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidSourceAggregatorAddress')
     })
 
     it('reverts when the L1 Gas Price feed address is zero', async () => {
@@ -171,7 +155,7 @@ describe('StarkNetValidator', () => {
           l2Contract.address,
           0,
         ),
-      ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+      ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidGasPriceL1FeedAddress')
     })
 
     it('is initialized with the correct gas config', async () => {
@@ -183,6 +167,11 @@ describe('StarkNetValidator', () => {
     it('is initialized with the correct access controller address', async () => {
       const acAddr = await starkNetValidator.getConfigAC()
       expect(acAddr).to.equal(mockAccessController.address)
+    })
+
+    it('is initialized with the correct source aggregator address', async () => {
+      const aggregatorAddr = await starkNetValidator.getSourceAggregator()
+      expect(aggregatorAddr).to.equal(mockAggregator.address)
     })
 
     it('should get the selector from the name successfully', async () => {
@@ -239,7 +228,7 @@ describe('StarkNetValidator', () => {
       it('reverts', async () => {
         await expect(
           starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
-        ).to.be.revertedWith('AccessForbidden()')
+        ).to.be.revertedWithCustomError(starkNetValidator, 'AccessForbidden')
       })
     })
 
@@ -265,7 +254,7 @@ describe('StarkNetValidator', () => {
         it('reverts', async () => {
           await expect(
             starkNetValidator.connect(deployer).setGasConfig(25000, ethers.constants.AddressZero),
-          ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+          ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidGasPriceL1FeedAddress')
         })
       })
     })
@@ -301,7 +290,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+            ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidGasPriceL1FeedAddress')
           })
         })
       })
@@ -342,7 +331,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+            ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidGasPriceL1FeedAddress')
           })
         })
       })

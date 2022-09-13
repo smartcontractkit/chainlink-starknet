@@ -43,8 +43,6 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed);
   /// @notice emitted when a new gas access-control contract is set
   event ConfigACSet(address indexed previous, address indexed current);
-  /// @notice emitted when a new source aggregator contract is set
-  event SourceAggregatorSet(address indexed previous, address indexed current);
 
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract
@@ -100,15 +98,21 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     return s_gasConfig;
   }
 
-  /// @return config AccessControllerInterface contract address
-  function getConfigAC() external view virtual returns (address) {
+  /// @return address AccessControllerInterface contract address
+  function getConfigAC() external view returns (address) {
     return address(s_configAC);
+  }
+
+  /// @return address Aggregator contract address
+  function getSourceAggregator() external view returns (address) {
+    return address(s_source);
   }
 
   /**
    * @notice validate method sends an xDomain L2 tx to update Uptime Feed contract on L2.
    * @dev A message is sent using the L1CrossDomainMessenger. This method is accessed controlled.
    * @param currentAnswer new aggregator answer - value of 1 considers the sequencer offline.
+   * @return bool true if transaction succeeds.
    */
   function validate(
     uint256, /* previousRoundId */
@@ -158,7 +162,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   /// @notice L1 oracle is asked for a fast L1 gas price, and the price multiplied by the configured gas estimate
   function _approximateFee() internal view returns (uint256) {
     (, int256 fastGasPriceInWei, , , ) = AggregatorV3Interface(s_gasConfig.gasPriceL1Feed).latestRoundData();
-    return (uint256(fastGasPriceInWei) * s_gasConfig.gasEstimate);
+    return uint256(fastGasPriceInWei) * s_gasConfig.gasEstimate;
   }
 
   /**
@@ -212,6 +216,10 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   function _setConfigAC(address accessController) internal {
     address previousAccessController = address(s_configAC);
     if (accessController != previousAccessController) {
+      // NOTICE: we don't give access to the new source aggregator
+      // It is not always the case that the source aggregator is also the sender for the 'validate' invocation
+      // as we usually deploy an additional proxy in between (owner can give access):
+      //   https://github.com/smartcontractkit/chainlink/blob/develop/contracts/src/v0.8/ValidatorProxy.sol
       s_configAC = AccessControllerInterface(accessController);
       emit ConfigACSet(previousAccessController, accessController);
     }
