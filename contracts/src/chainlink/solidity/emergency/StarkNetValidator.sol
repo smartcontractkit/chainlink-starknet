@@ -28,6 +28,17 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   AccessControllerInterface private s_configAC;
   GasConfig private s_gasConfig;
 
+  /// @notice StarkNet messaging contract address - the address is 0.
+  error InvalidStarkNetMessagingAddress();
+  /// @notice StarkNet uptime feed address - the address is 0.
+  error InvalidL2FeedAddress();
+  /// @notice Error thrown when the source aggregator address is 0
+  error InvalidSourceAggregatorAddress();
+  /// @notice Error thrown when the l1 gas price feed address is 0
+  error InvalidGasPriceL1FeedAddress();
+  /// @notice Error thrown when caller is not the owner and does not have access
+  error AccessForbidden();
+
   /// @notice This event is emitted when the gas config is set.
   event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed);
   /// @notice emitted when a new gas access-control contract is set
@@ -51,8 +62,13 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     uint256 l2Feed,
     uint256 gasEstimate
   ) {
-    require(starkNetMessaging != address(0), "invalid StarkNetMessaging");
-    require(l2Feed != 0, "invalid L2 Uptime Feed");
+    if (starkNetMessaging == address(0)) {
+      revert InvalidStarkNetMessagingAddress();
+    }
+
+    if (l2Feed == 0) {
+      revert InvalidL2FeedAddress();
+    }
 
     STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
     L2_UPTIME_FEED_ADDR = l2Feed;
@@ -173,7 +189,9 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param gasPriceL1Feed The address of the fast gas L1 feed on L1.
    */
   function _setGasConfig(uint256 gasEstimate, address gasPriceL1Feed) internal {
-    require(gasPriceL1Feed != address(0), "invalid gas price L1 feed");
+    if (gasPriceL1Feed == address(0)) {
+      revert InvalidGasPriceL1FeedAddress();
+    }
     s_gasConfig = GasConfig(gasEstimate, gasPriceL1Feed);
     emit GasConfigSet(gasEstimate, gasPriceL1Feed);
   }
@@ -210,7 +228,9 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @notice Internal method that sets the source aggregator AggregatorInterface contract
   function _setSourceAggregator(address source) internal {
-    require(source != address(0), "invalid source aggregator");
+    if (source == address(0)) {
+      revert InvalidSourceAggregatorAddress();
+    }
     address previousSource = address(s_source);
     if (source != previousSource) {
       s_source = AggregatorV3Interface(source);
@@ -219,10 +239,9 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @dev reverts if the caller does not have access to change the configuration
   modifier onlyOwnerOrConfigAccess() {
-    require(
-      msg.sender == owner() || (address(s_configAC) == address(0) || s_configAC.hasAccess(msg.sender, msg.data)),
-      "No access"
-    );
+    if (msg.sender != owner() && (address(s_configAC) != address(0) && !s_configAC.hasAccess(msg.sender, msg.data))) {
+      revert AccessForbidden();
+    }
     _;
   }
 
