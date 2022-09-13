@@ -35,6 +35,8 @@ describe.only('StarkNetValidator', () => {
 
   before(async () => {
     if (network.name !== 'hardhat') {
+      // This is so that the network can know about custom errors.
+      // Running against the provided hardhat node does this automatically.
       const buildInfoParts = buildInfo.split('/')
       const buildInfoFileName = buildInfoParts[buildInfoParts.length - 1]
       const {
