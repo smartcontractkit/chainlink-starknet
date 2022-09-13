@@ -36,23 +36,13 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   /// @notice emitted when a new source aggregator contract is set
   event SourceAggregatorSet(address indexed previous, address indexed current);
 
-  /// @notice StarkNet messaging contract address - the address is 0.
-  error InvalidStarkNetMessagingAddress();
-  /// @notice StarkNet uptime feed address - the address is 0.
-  error InvalidL2FeedAddress();
-  /// @notice Error thrown when the source aggregator address is 0
-  error InvalidSourceAggregatorAddress();
-  /// @notice Error thrown when the l1 gas price feed address is 0
-  error InvalidGasPriceL1FeedAddress();
-  /// @notice Error thrown when caller is not the owner and does not have access
-  error AccessForbidden();
-
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract
    * @param configAC the address of the AccessController contract managing config access
    * @param gasPriceL1Feed address of the L1 gas price feed (used to approximate bridge L1 -> L2 message cost)
    * @param source the source aggregator that we'll read data from (on retries)
    * @param l2Feed the address of the target L2 contract (Sequencer Uptime Feed)
+   * @param gasEstimate the initial gas estimate for sending a message from L1 -> L2
    */
   constructor(
     address starkNetMessaging,
@@ -62,17 +52,8 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     uint256 l2Feed,
     uint256 gasEstimate
   ) {
-    if (starkNetMessaging == address(0)) {
-      revert InvalidStarkNetMessagingAddress();
-    }
-
-    if (l2Feed == 0) {
-      revert InvalidL2FeedAddress();
-    }
-
-    if (source == address(0)) {
-      revert InvalidSourceAggregatorAddress();
-    }
+    require(starkNetMessaging != address(0), "invalid StarkNetMessaging");
+    require(l2Feed != 0, "invalid L2 Uptime Feed");
 
     STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
     L2_UPTIME_FEED_ADDR = l2Feed;
@@ -178,9 +159,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @notice internal method that stores the gas configuration
   function _setGasConfig(uint256 gasEstimate, address gasPriceL1Feed) internal {
-    if (gasPriceL1Feed == address(0)) {
-      revert InvalidGasPriceL1FeedAddress();
-    }
+    require(gasPriceL1Feed != address(0), "invalid gas price L1 feed");
     s_gasConfig = GasConfig(gasEstimate, gasPriceL1Feed);
     emit GasConfigSet(gasEstimate, gasPriceL1Feed);
   }
@@ -214,6 +193,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @notice Internal method that sets the source aggregator AggregatorInterface contract
   function _setSourceAggregator(address source) internal {
+    require(source != address(0), "invalid source aggregator");
     address previousSource = address(s_source);
     if (source != previousSource) {
       s_source = AggregatorV3Interface(source);
@@ -222,9 +202,10 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @dev reverts if the caller does not have access to change the configuration
   modifier onlyOwnerOrConfigAccess() {
-    if (msg.sender != owner() && (address(s_configAC) != address(0) && !s_configAC.hasAccess(msg.sender, msg.data))) {
-      revert AccessForbidden();
-    }
+    require(
+      msg.sender == owner() || (address(s_configAC) == address(0) || s_configAC.hasAccess(msg.sender, msg.data)),
+      "No access"
+    );
     _;
   }
 
