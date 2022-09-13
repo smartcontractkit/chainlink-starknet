@@ -7,7 +7,6 @@ import "@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
-
 import "../../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
 /// @title StarkNetValidator - makes cross chain calls to update the Sequencer Uptime Feed on L2
@@ -113,7 +112,12 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     return _sendUpdateMessageToL2(latestAnswer);
   }
 
-  /// @notice sends the 'update_status(answer, timestamp)' message via the L1 -> L2 bridge to the L2 feed contract
+  /**
+   * @notice sends the 'update_status(answer, timestamp)' message
+   * via the L1 -> L2 bridge to the L2 feed contract
+   * @param answer The latest Sequencer status.  0 if the Sequencer is up and
+   * 1 if it is down.
+   */
   function _sendUpdateMessageToL2(int256 answer) internal returns (bool) {
     // Bridge fees are paid on L1
     uint256 fee = _approximateFee();
@@ -152,12 +156,22 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     return uint256(digest) % 2**250; // get last 250 bits
   }
 
+  /**
+   * @notice Sets the gas configuration for sending cross chain messages
+   * @param gasEstimate The estimated units of gas to execute the transaction on L2.
+   * This value should include any buffer to include.
+   * @param gasPriceL1Feed The address of the fast gas L1 feed on L1.
+   */
   function setGasConfig(uint256 gasEstimate, address gasPriceL1Feed) external onlyOwnerOrConfigAccess {
     _setGasConfig(gasEstimate, gasPriceL1Feed);
-    emit GasConfigSet(gasEstimate, gasPriceL1Feed);
   }
 
-  /// @notice internal method that stores the gas configuration
+  /**
+   * @notice Sets the gas configuration for sending cross chain messages
+   * @param gasEstimate The estimated units of gas to execute the transaction on L2.
+   * This value should include any buffer to include.
+   * @param gasPriceL1Feed The address of the fast gas L1 feed on L1.
+   */
   function _setGasConfig(uint256 gasEstimate, address gasPriceL1Feed) internal {
     require(gasPriceL1Feed != address(0), "invalid gas price L1 feed");
     s_gasConfig = GasConfig(gasEstimate, gasPriceL1Feed);
@@ -173,7 +187,10 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     _setConfigAC(accessController);
   }
 
-  /// @notice Internal method that stores the configuration access controller
+  /**
+   * @notice Internal method that stores the configuration access controller
+   * @param accessController The address of the Access Controller for this contract
+   */
   function _setConfigAC(address accessController) internal {
     address previousAccessController = address(s_configAC);
     if (accessController != previousAccessController) {
