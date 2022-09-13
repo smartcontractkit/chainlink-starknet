@@ -97,6 +97,84 @@ describe('StarkNetValidator', () => {
     await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
   })
 
+  describe('#constructor', () => {
+    it('reverts when the StarknetMessaging address is zero', async () => {
+      const factory = await ethers.getContractFactory('StarkNetValidator', deployer)
+      await expect(
+        factory.deploy(
+          ethers.constants.AddressZero,
+          mockAccessController.address,
+          mockGasPriceFeed.address,
+          mockAggregator.address,
+          l2Contract.address,
+          0,
+        ),
+      ).to.be.revertedWith('invalid StarkNetMessaging')
+    })
+
+    it('reverts when the L2 feed is zero', async () => {
+      const factory = await ethers.getContractFactory('StarkNetValidator', deployer)
+      await expect(
+        factory.deploy(
+          mockStarkNetMessaging.address,
+          mockAccessController.address,
+          mockGasPriceFeed.address,
+          mockAggregator.address,
+          0,
+          0,
+        ),
+      ).to.be.revertedWith('invalid L2 Uptime Feed')
+    })
+
+    it('reverts when the Aggregator address is zero', async () => {
+      const factory = await ethers.getContractFactory('StarkNetValidator', deployer)
+      await expect(
+        factory.deploy(
+          mockStarkNetMessaging.address,
+          mockAccessController.address,
+          mockGasPriceFeed.address,
+          ethers.constants.AddressZero,
+          l2Contract.address,
+          0,
+        ),
+      ).to.be.revertedWith('invalid source aggregator')
+    })
+
+    it('reverts when the L1 Gas Price feed address is zero', async () => {
+      const factory = await ethers.getContractFactory('StarkNetValidator', deployer)
+      await expect(
+        factory.deploy(
+          mockStarkNetMessaging.address,
+          mockAccessController.address,
+          ethers.constants.AddressZero,
+          mockAggregator.address,
+          l2Contract.address,
+          0,
+        ),
+      ).to.be.revertedWith('invalid gas price L1 feed')
+    })
+
+    it('is initialized with the correct gas config', async () => {
+      const gasConfig = await starkNetValidator.getGasConfig()
+      expect(gasConfig.gasEstimate).to.equal(0) // Initialized with 0 in before function
+      expect(gasConfig.gasPriceL1Feed).to.equal(mockGasPriceFeed.address)
+    })
+
+    it('is initialized with the correct access controller address', async () => {
+      const acAddr = await starkNetValidator.getConfigAC()
+      expect(acAddr).to.equal(mockAccessController.address)
+    })
+
+    it('should get the selector from the name successfully', async () => {
+      const actual = getSelectorFromName('update_status')
+      const expected = 1585322027166395525705364165097050997465692350398750944680096081848180365267n
+      expect(BigInt(actual)).to.equal(expected)
+
+      const computedActual = await starkNetValidator.SELECTOR_STARK_UPDATE_STATUS()
+      expect(BigInt(computedActual)).to.equal(expected)
+    })
+  })
+
   describe('#retry', () => {
     describe('when called by account with no access', () => {
       it('reverts', async () => {
@@ -141,7 +219,7 @@ describe('StarkNetValidator', () => {
       it('reverts', async () => {
         await expect(
           starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
-        ).to.be.revertedWith('AccessForbidden()')
+        ).to.be.revertedWith('No access')
       })
     })
 
@@ -167,7 +245,7 @@ describe('StarkNetValidator', () => {
         it('reverts', async () => {
           await expect(
             starkNetValidator.connect(deployer).setGasConfig(25000, ethers.constants.AddressZero),
-          ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+          ).to.be.revertedWith('invalid gas price L1 feed')
         })
       })
     })
@@ -203,7 +281,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+            ).to.be.revertedWith('invalid gas price L1 feed')
           })
         })
       })
@@ -244,23 +322,14 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
+            ).to.be.revertedWith('invalid gas price L1 feed')
           })
         })
       })
     })
   })
 
-  describe('StarkNetValidator', () => {
-    it('should get the selector from the name successfully', async () => {
-      const actual = getSelectorFromName('update_status')
-      const expected = 1585322027166395525705364165097050997465692350398750944680096081848180365267n
-      expect(BigInt(actual)).to.equal(expected)
-
-      const computedActual = await starkNetValidator.SELECTOR_STARK_UPDATE_STATUS()
-      expect(BigInt(computedActual)).to.equal(expected)
-    })
-
+  describe('#validate', () => {
     it('reverts if `StarkNetValidator.validate` called by account with no access', async () => {
       const c = starkNetValidator.connect(eoaValidator)
       await expect(c.validate(0, 0, 1, 1)).to.be.revertedWith('No access')
