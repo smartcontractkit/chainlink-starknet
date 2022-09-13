@@ -1,4 +1,4 @@
-import { ethers, starknet, network } from 'hardhat'
+import { ethers, starknet, network, artifacts } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
 import { number } from 'starknet'
 import {
@@ -37,17 +37,20 @@ describe.only('StarkNetValidator', () => {
     if (network.name !== 'hardhat') {
       // This is so that the network can know about custom errors.
       // Running against the provided hardhat node does this automatically.
-      const buildInfoParts = buildInfo.split('/')
-      const buildInfoFileName = buildInfoParts[buildInfoParts.length - 1]
-      const {
-        solcVersion,
-        input,
-        output,
-      } = require(`../../artifacts/build-info/${buildInfoFileName}`)
+
+      const buildInfo = await artifacts.getBuildInfo(
+        'src/chainlink/solidity/emergency/StarkNetValidator.sol:StarkNetValidator',
+      )
+      if (!buildInfo) {
+        throw Error('Cannot find build info')
+      }
+      const { solcVersion, input, output } = buildInfo
+      console.log('Sending compilation result for StarkNetValidator test')
       await network.provider.request({
         method: 'hardhat_addCompilationResult',
         params: [solcVersion, input, output],
       })
+      console.log('Successfully sent compilation result for StarkNetValidator test')
     }
 
     // Deploy L2 account
