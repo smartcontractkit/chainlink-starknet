@@ -14,7 +14,7 @@ import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 
-describe('StarkNetValidator', () => {
+describe.only('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
 
