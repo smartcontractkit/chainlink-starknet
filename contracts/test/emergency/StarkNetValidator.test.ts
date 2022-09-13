@@ -10,11 +10,12 @@ import {
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
+import { buildInfo } from '../../artifacts/src/chainlink/solidity/emergency/StarkNetValidator.sol/StarkNetValidator.dbg.json'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 
-describe('StarkNetValidator', () => {
+describe.only('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
 
@@ -33,8 +34,23 @@ describe('StarkNetValidator', () => {
   let l2Contract: StarknetContract
 
   before(async () => {
+    if (network.name !== 'hardhat') {
+      const buildInfoParts = buildInfo.split('/')
+      const buildInfoFileName = buildInfoParts[buildInfoParts.length - 1]
+      const {
+        solcVersion,
+        input,
+        output,
+      } = require(`../../artifacts/build-info/${buildInfoFileName}`)
+      await network.provider.request({
+        method: 'hardhat_addCompilationResult',
+        params: [solcVersion, input, output],
+      })
+    }
+
     // Deploy L2 account
     account = await starknet.deployAccount('OpenZeppelin')
+
     // Fetch predefined L1 EOA accounts
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
@@ -109,7 +125,7 @@ describe('StarkNetValidator', () => {
           l2Contract.address,
           0,
         ),
-      ).to.be.revertedWith('invalid StarkNetMessaging')
+      ).to.be.revertedWith('InvalidStarkNetMessagingAddress()')
     })
 
     it('reverts when the L2 feed is zero', async () => {
@@ -123,7 +139,7 @@ describe('StarkNetValidator', () => {
           0,
           0,
         ),
-      ).to.be.revertedWith('invalid L2 Uptime Feed')
+      ).to.be.revertedWith('InvalidL2FeedAddress()')
     })
 
     it('reverts when the Aggregator address is zero', async () => {
@@ -137,7 +153,7 @@ describe('StarkNetValidator', () => {
           l2Contract.address,
           0,
         ),
-      ).to.be.revertedWith('invalid source aggregator')
+      ).to.be.revertedWith('InvalidSourceAggregatorAddress()')
     })
 
     it('reverts when the L1 Gas Price feed address is zero', async () => {
@@ -151,7 +167,7 @@ describe('StarkNetValidator', () => {
           l2Contract.address,
           0,
         ),
-      ).to.be.revertedWith('invalid gas price L1 feed')
+      ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
     })
 
     it('is initialized with the correct gas config', async () => {
@@ -219,7 +235,7 @@ describe('StarkNetValidator', () => {
       it('reverts', async () => {
         await expect(
           starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
-        ).to.be.revertedWith('No access')
+        ).to.be.revertedWith('AccessForbidden()')
       })
     })
 
@@ -245,7 +261,7 @@ describe('StarkNetValidator', () => {
         it('reverts', async () => {
           await expect(
             starkNetValidator.connect(deployer).setGasConfig(25000, ethers.constants.AddressZero),
-          ).to.be.revertedWith('invalid gas price L1 feed')
+          ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
         })
       })
     })
@@ -281,7 +297,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('invalid gas price L1 feed')
+            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
           })
         })
       })
@@ -322,7 +338,7 @@ describe('StarkNetValidator', () => {
               starkNetValidator
                 .connect(eoaValidator)
                 .setGasConfig(25000, ethers.constants.AddressZero),
-            ).to.be.revertedWith('invalid gas price L1 feed')
+            ).to.be.revertedWith('InvalidGasPriceL1FeedAddress()')
           })
         })
       })
