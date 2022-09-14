@@ -1,4 +1,8 @@
-import { EVMExecuteCommandConfig, EVMExecutionContext, makeEVMExecuteCommand } from '@chainlink/evm-gauntlet'
+import {
+  EVMExecuteCommandConfig,
+  EVMExecutionContext,
+  makeEVMExecuteCommand,
+} from '@chainlink/evm-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { l1BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
@@ -11,7 +15,10 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   return {}
 }
 
-const makeContractInput = async (input: UserInput, context: EVMExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: EVMExecutionContext,
+): Promise<ContractInput> => {
   return []
 }
 
