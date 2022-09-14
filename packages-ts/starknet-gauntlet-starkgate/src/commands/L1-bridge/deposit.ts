@@ -1,4 +1,8 @@
-import { EVMExecuteCommandConfig, EVMExecutionContext, makeEVMExecuteCommand } from '@chainlink/evm-gauntlet'
+import {
+  EVMExecuteCommandConfig,
+  EVMExecutionContext,
+  makeEVMExecuteCommand,
+} from '@chainlink/evm-gauntlet'
 import { isValidAddress } from '@chainlink/starknet-gauntlet'
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
@@ -21,7 +25,10 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   }
 }
 
-const makeContractInput = async (input: UserInput, context: EVMExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: EVMExecutionContext,
+): Promise<ContractInput> => {
   return [bnToUint256(input.amount), input.recipient]
 }
 

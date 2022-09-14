@@ -76,7 +76,8 @@ const registerEVMExecuteCommand = <UI, CI>(
     prompt: prompt,
     makeEnv: (flags) => {
       return {
-        providerUrl: process.env.NODE_URL || 'https://goerli.infura.io/v3/7c43471f9d604276a856f0cff1edb645',
+        providerUrl:
+          process.env.NODE_URL || 'https://goerli.infura.io/v3/7c43471f9d604276a856f0cff1edb645',
         pk: process.env.PRIVATE_KEY,
       }
     },
@@ -115,7 +116,9 @@ const L2ExecuteCommands = [
   ...MultisigExecuteCommands,
 ]
 
-const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(multisigWrapCommand)
+const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(
+  multisigWrapCommand,
+)
 const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
