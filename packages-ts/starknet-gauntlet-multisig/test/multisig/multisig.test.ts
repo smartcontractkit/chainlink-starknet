@@ -8,8 +8,11 @@ import {
   TIMEOUT,
   startNetwork,
   IntegratedDevnet,
+  LOCAL_URL,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
+import { CONTRACT_LIST, loadContract } from '../../src/lib/contracts'
+import { Contract } from 'starknet'
 
 describe('Multisig', () => {
   let network: IntegratedDevnet
@@ -39,7 +42,7 @@ describe('Multisig', () => {
 
   beforeAll(async () => {
     network = await startNetwork({ seed: SEED })
-  }, 5000)
+  }, TIMEOUT)
 
   it(
     'Deployment',
@@ -69,7 +72,7 @@ describe('Multisig', () => {
         prompt: prompt,
         makeEnv: (flags) => {
           return {
-            providerUrl: 'http://127.0.0.1:5050',
+            providerUrl: LOCAL_URL,
             pk: privateKeys[0],
             publicKey: publicKeys[0],
             account: accounts[0],
@@ -90,7 +93,7 @@ describe('Multisig', () => {
 
       let report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-      const multisigProposalId = report.data
+      const multisigProposalId = report.data.proposalId
 
       // Approve Multisig Proposal
       const approveCommand = await wrapCommand(registerExecuteCommand(setThreshold))(deps).create(
@@ -115,6 +118,15 @@ describe('Multisig', () => {
 
       report = await executeCommand.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      const multisig = loadContract(CONTRACT_LIST.MULTISIG)
+      const multisigContract = new Contract(
+        multisig.abi,
+        multisigContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
+      const { threshold } = await multisigContract.get_threshold()
+      expect(threshold.toNumber()).toEqual(2)
     },
     TIMEOUT,
   )
@@ -122,26 +134,28 @@ describe('Multisig', () => {
   it(
     'Set Signers with multisig',
     async () => {
-      const deps: Dependencies = {
-        logger: logger,
-        prompt: prompt,
-        makeEnv: (flags) => {
-          return {
-            providerUrl: 'http://127.0.0.1:5050',
-            pk: privateKeys[0],
-            publicKey: publicKeys[0],
-            account: accounts[0],
-            multisig: multisigContractAddress,
-          }
-        },
-        makeProvider: makeProvider,
-        makeWallet: makeWallet,
+      let deps = (index: number): Dependencies => {
+        return {
+          logger: logger,
+          prompt: prompt,
+          makeEnv: (flags) => {
+            return {
+              providerUrl: LOCAL_URL,
+              pk: privateKeys[index],
+              publicKey: publicKeys[index],
+              account: accounts[index],
+              multisig: multisigContractAddress,
+            }
+          },
+          makeProvider: makeProvider,
+          makeWallet: makeWallet,
+        }
       }
 
       accounts.push(newSignerAccount.account)
 
       // Create Multisig Proposal
-      const command = await wrapCommand(registerExecuteCommand(setSigners))(deps).create(
+      const command = await wrapCommand(registerExecuteCommand(setSigners))(deps(0)).create(
         {
           signers: accounts,
         },
@@ -150,10 +164,22 @@ describe('Multisig', () => {
 
       let report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-      const multisigProposalId = report.data
+      const multisigProposalId = report.data.proposalId
 
-      // Approve Multisig Proposal
-      const approveCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps).create(
+      // Approve Multisig Proposal (with account 0)
+      let approveCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps(0)).create(
+        {
+          signers: accounts,
+          multisigProposal: multisigProposalId,
+        },
+        [multisigContractAddress],
+      )
+
+      report = await approveCommand.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      // Approve Multisig Proposal (with account 1)
+      approveCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps(1)).create(
         {
           signers: accounts,
           multisigProposal: multisigProposalId,
@@ -165,7 +191,7 @@ describe('Multisig', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       // Execute Multisig Proposal
-      const executeCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps).create(
+      const executeCommand = await wrapCommand(registerExecuteCommand(setSigners))(deps(0)).create(
         {
           signers: accounts,
           multisigProposal: multisigProposalId,
@@ -175,6 +201,15 @@ describe('Multisig', () => {
 
       report = await executeCommand.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      const multisig = loadContract(CONTRACT_LIST.MULTISIG)
+      const multisigContract = new Contract(
+        multisig.abi,
+        multisigContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
+      const { signers } = await multisigContract.get_signers()
+      expect(signers).toHaveLength(4)
     },
     TIMEOUT,
   )

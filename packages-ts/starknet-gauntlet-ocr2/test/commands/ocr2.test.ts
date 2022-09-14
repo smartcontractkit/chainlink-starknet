@@ -1,4 +1,5 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
+import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/ocr2/deploy'
 import setBillingCommand from '../../src/commands/ocr2/setBilling'
 import setConfigCommand from '../../src/commands/ocr2/setConfig'
@@ -10,8 +11,8 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
-import { Contract } from 'starknet'
+import { loadContract_Ocr2, CONTRACT_LIST } from '../../src/lib/contracts'
+import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 const signers = [
@@ -60,6 +61,12 @@ const validInput = {
     maxDurationReportNanoseconds: 200000000,
     maxDurationShouldAcceptFinalizedReportNanoseconds: 200000000,
     maxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
+    configPublicKeys: [
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852094',
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852095',
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852096',
+      'af400004fa5d02cd5170b5261032e71f2847ead36159cf8dee68affc3c852097',
+    ],
   },
   offchainConfigVersion: 2,
   secret: 'awe accuse polygon tonic depart acuity onyx inform bound gilbert expire',
@@ -67,24 +74,74 @@ const validInput = {
 
 describe('OCR2 Contract', () => {
   let network: IntegratedDevnet
+  let account: string
+  let privateKey: string
   let contractAddress: string
   let accessController: string
 
   beforeAll(async () => {
     network = await startNetwork()
-
-    const command = await registerExecuteCommand(deployACCommand).create({}, [])
-
-    const report = await command.execute()
-    accessController = report.responses[0].contract
   }, TIMEOUT)
+
+  it(
+    'Deploy OZ Account',
+    async () => {
+      const command = await registerExecuteCommand(deployOZCommand).create({}, [])
+
+      const report = await command.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+
+      account = report.responses[0].contract
+      privateKey = report.data.privateKey
+
+      // Fund the newly allocated account
+      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
+      let balance = 1e21
+      const body = {
+        address: account,
+        amount: balance,
+        lite: true,
+      }
+      const response = await fetch(`${gateway_url}/mint`, {
+        method: 'post',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const data = await response.json()
+      expect(data.new_balance).toEqual(balance)
+    },
+    TIMEOUT,
+  )
+
+  it(
+    'Deploy AC',
+    async () => {
+      // TODO: owner can't be 0 anymore
+      const command = await registerExecuteCommand(deployACCommand).create(
+        {
+          account: account,
+          pk: privateKey,
+        },
+        [],
+      )
+
+      const report = await command.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+      accessController = report.responses[0].contract
+    },
+    TIMEOUT,
+  )
 
   it(
     'Deployment',
     async () => {
       const command = await registerExecuteCommand(deployCommand).create(
         {
+          account: account,
+          pk: privateKey,
           input: {
+            owner: account,
             maxAnswer: 10000,
             minAnswer: 1,
             decimals: 18,
@@ -105,13 +162,19 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Set billing with no wallet',
+    'Set billing',
     async () => {
+      // transfer overflow on set billing
       const command = await registerExecuteCommand(setBillingCommand).create(
         {
-          observationPaymentGjuels: 1,
-          transmissionPaymentGjuels: 1,
-          noWallet: true,
+          account: account,
+          pk: privateKey,
+          input: {
+            observationPaymentGjuels: 1,
+            transmissionPaymentGjuels: 1,
+            gasBase: 14951,
+            gasPerSignature: 13,
+          },
         },
         [contractAddress],
       )
@@ -119,7 +182,7 @@ describe('OCR2 Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const ocr2 = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
       const response = await ocr2Contract.billing()
       const billing = response[0]
@@ -130,11 +193,12 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Set config using --input with no wallet',
+    'Set config using --input',
     async () => {
       const command = await registerExecuteCommand(setConfigCommand).create(
         {
-          noWallet: true,
+          account: account,
+          pk: privateKey,
           input: validInput,
         },
         [contractAddress],
@@ -144,15 +208,19 @@ describe('OCR2 Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const provider = makeProvider(LOCAL_URL).provider
-      const ocr2 = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, provider)
       const response = await ocr2Contract.transmitters()
       const resultTrasmitters = response[0]
 
       // retrieve signer keys from transaction event
-      // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/contracts/ocr2/aggregator.cairo#L260
-      const trace = await provider.getTransactionTrace(report.responses[0].tx.hash)
-      const eventData = trace.function_invocation.events[0].data
+      // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
+      const receipt = (await provider.getTransactionReceipt(
+        report.responses[0].tx.hash,
+      )) as InvokeTransactionReceiptResponse
+
+      // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
+      const eventData = receipt.events[0].data
       // reconstruct signers array from event
       let eventSigners = []
       for (let i = 0; i < signers.length; i++) {
@@ -160,8 +228,12 @@ describe('OCR2 Contract', () => {
         eventSigners.push(signer)
       }
 
-      expect(eventSigners).toEqual(signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16))) // remove all prefixes
-      expect(resultTrasmitters).toEqual(transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)))
+      expect(eventSigners).toEqual(
+        signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16)),
+      ) // remove all prefixes
+      expect(resultTrasmitters).toEqual(
+        transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)),
+      )
     },
     TIMEOUT,
   )

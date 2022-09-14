@@ -1,0 +1,26 @@
+name: Integration Gauntlet
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+
+jobs:
+  integration_gauntlet_run_tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - name: Install Nix
+        uses: cachix/install-nix-action@d64e0553100205688c0fb2fa16edb0fc8663c590 # v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Test
+        run: nix develop -c make test-integration-gauntlet
+
+      - name: Test - Run Gauntlet CLI via Yarn
+        run: nix develop -c yarn gauntlet

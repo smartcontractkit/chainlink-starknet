@@ -39,7 +39,10 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   }
 }
 
-const makeContractInput = async (input: UserInput, context: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: ExecutionContext,
+): Promise<ContractInput> => {
   const defaultWallet = context.wallet.getAccountPublicKey()
   return [
     shortString.encodeShortString(input.name),
@@ -49,7 +52,11 @@ const makeContractInput = async (input: UserInput, context: ExecutionContext): P
   ]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to deploy an ERC20 Token Contract with the following details:
     ${input.contract}
   `)

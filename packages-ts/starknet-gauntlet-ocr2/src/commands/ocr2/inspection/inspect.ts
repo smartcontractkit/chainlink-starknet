@@ -1,5 +1,9 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { InspectCommandConfig, IStarknetProvider, makeInspectionCommand } from '@chainlink/starknet-gauntlet'
+import {
+  InspectCommandConfig,
+  IStarknetProvider,
+  makeInspectionCommand,
+} from '@chainlink/starknet-gauntlet'
+import { InvokeTransactionReceiptResponse } from 'starknet'
 import { CATEGORIES } from '../../../lib/categories'
 import { ocr2ContractLoader } from '../../../lib/contracts'
 
@@ -13,9 +17,9 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   toCompare: null
   result: QueryResult
 }> => {
-  const tx = await provider.provider.getTransactionReceipt(
+  const tx = (await provider.provider.getTransactionReceipt(
     '0x475c15d6836972234c0542044fce7784cc61e8c5654d050aacadb918d8f3021',
-  )
+  )) as InvokeTransactionReceiptResponse
   console.log(tx.events)
   return {
     toCompare: null,

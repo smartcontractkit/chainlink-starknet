@@ -50,7 +50,7 @@ class VenvDevnet extends IntegratedDevnet {
   }
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
-    let args = ['--port', this.port, '--gas-price', '1']
+    let args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
     if (this.opts?.seed) {
       args.push('--seed', this.opts.seed.toString())
     }
@@ -66,6 +66,9 @@ export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
   const devnet = new VenvDevnet('5050', opts)
 
   await devnet.start()
+
+  // Starting to poll devnet too soon can result in ENOENT
+  await new Promise((f) => setTimeout(f, 2000))
 
   return devnet
 }

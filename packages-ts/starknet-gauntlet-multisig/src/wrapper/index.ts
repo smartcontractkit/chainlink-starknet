@@ -10,7 +10,15 @@ import {
   IStarknetWallet,
 } from '@chainlink/starknet-gauntlet'
 import { TransactionResponse } from '@chainlink/starknet-gauntlet/dist/transaction'
-import { Call, CompiledContract, Contract, addAddressPadding, number, encode, validateAndParseAddress } from 'starknet'
+import {
+  Call,
+  CompiledContract,
+  Contract,
+  addAddressPadding,
+  number,
+  validateAndParseAddress,
+  InvokeTransactionReceiptResponse,
+} from 'starknet'
 import { addHexPrefix } from 'starknet/dist/utils/encode'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { toBN, toHex } from 'starknet/dist/utils/number'
@@ -23,7 +31,9 @@ type UserInput = {
 
 type ContractInput = {}
 
-type UnregisteredCommand<UI, CI> = (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>
+type UnregisteredCommand<UI, CI> = (
+  deps: Dependencies,
+) => CommandCtor<ExecuteCommandInstance<UI, CI>>
 
 type ProposalAction = (message: Call, proposalId?: number) => Call
 
@@ -34,7 +44,10 @@ export const wrapCommand = <UI, CI>(
 ): CommandCtor<ExecuteCommandInstance<UserInput, ContractInput>> => {
   const id = `${registeredCommand.id}:multisig`
 
-  const msigCommand: CommandCtor<ExecuteCommandInstance<UserInput, ContractInput>> = class MsigCommand
+  const msigCommand: CommandCtor<ExecuteCommandInstance<
+    UserInput,
+    ContractInput
+  >> = class MsigCommand
     extends WriteCommand<TransactionResponse>
     implements ExecuteCommandInstance<UserInput, ContractInput> {
     wallet: IStarknetWallet
@@ -80,7 +93,9 @@ export const wrapCommand = <UI, CI>(
       }
 
       c.input = {
-        user: flags.input || { proposalId: Number(flags.proposalId || flags.multisigProposal) },
+        user: flags.input || {
+          proposalId: Number(flags.proposalId || flags.multisigProposal),
+        },
         contract: {},
       }
 
@@ -109,7 +124,7 @@ export const wrapCommand = <UI, CI>(
         multisig,
         proposal: {
           id: proposalId,
-          approvers: proposal.tx.threshold,
+          confirmations: proposal.tx.confirmations,
           data: {
             contractAddress: addAddressPadding(proposal.tx.to),
             entrypoint: addHexPrefix(toBN(proposal.tx.function_selector).toString('hex')),
@@ -118,7 +133,7 @@ export const wrapCommand = <UI, CI>(
           nextAction:
             toBN(proposal.tx.executed).toNumber() !== 0
               ? Action.NONE
-              : proposal.tx.threshold >= multisig.threshold
+              : proposal.tx.confirmations >= multisig.threshold
               ? Action.EXECUTE
               : Action.APPROVE,
         },
@@ -145,12 +160,16 @@ export const wrapCommand = <UI, CI>(
     }
 
     makeAcceptMessage: ProposalAction = (_, proposalId) => {
-      const invocation = this.executionContext.contract.populate('confirm_transaction', [proposalId])
+      const invocation = this.executionContext.contract.populate('confirm_transaction', [
+        proposalId,
+      ])
       return invocation
     }
 
     makeExecuteMessage: ProposalAction = (_, proposalId) => {
-      const invocation = this.executionContext.contract.populate('execute_transaction', [proposalId])
+      const invocation = this.executionContext.contract.populate('execute_transaction', [
+        proposalId,
+      ])
       return invocation
     }
 
@@ -174,7 +193,12 @@ export const wrapCommand = <UI, CI>(
 
       deps.logger.success('Generated proposal matches with the one provided')
 
-      return [operations[this.initialState.proposal.nextAction](message[0], this.initialState.proposal.id)]
+      return [
+        operations[this.initialState.proposal.nextAction](
+          message[0],
+          this.initialState.proposal.id,
+        ),
+      ]
     }
 
     beforeExecute = async () => {
@@ -189,14 +213,14 @@ export const wrapCommand = <UI, CI>(
     }
 
     afterExecute = async (result: Result<TransactionResponse>, proposalId?: number) => {
-      if (!proposalId) deps.logger.warn('Proposal ID not found')
+      if (proposalId === undefined) deps.logger.warn('Proposal ID not found')
       deps.logger.loading('Fetching latest multisig and proposal state...')
       const state = await this.fetchMultisigState(this.multisigAddress, proposalId)
       if (!state.proposal) {
         deps.logger.error(`Multisig proposal ${proposalId} not found`)
         return
       }
-      const approvalsLeft = state.multisig.threshold - state.proposal.approvers
+      const approvalsLeft = state.multisig.threshold - state.proposal.confirmations
       const messages = {
         [Action.EXECUTE]: `The multisig proposal reached the threshold and can be executed. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
         [Action.APPROVE]: `The multisig proposal needs ${approvalsLeft} more approvals. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
@@ -205,7 +229,7 @@ export const wrapCommand = <UI, CI>(
       deps.logger.line()
       deps.logger.info(`${messages[state.proposal.nextAction]}`)
       deps.logger.line()
-      return {}
+      return { proposalId }
     }
 
     execute = async () => {
@@ -217,7 +241,7 @@ export const wrapCommand = <UI, CI>(
       if (this.initialState.proposal) {
         deps.logger.info(`Proposal State:
         - ID: ${this.initialState.proposal.id}
-        - Appovals: ${this.initialState.proposal.approvers}
+        - Approvals: ${this.initialState.proposal.confirmations}
         - Next action: ${this.initialState.proposal.nextAction}
       `)
       }
@@ -249,7 +273,9 @@ export const wrapCommand = <UI, CI>(
 
       let proposalId = this.input.user.proposalId
       if (!this.initialState.proposal) {
-        const txInfo = await this.provider.provider.getTransactionReceipt(tx.hash)
+        const txInfo = (await this.provider.provider.getTransactionReceipt(
+          tx.hash,
+        )) as InvokeTransactionReceiptResponse
         proposalId = Number(number.hexToDecimalString((txInfo.events[0] as any).data[1]))
       }
 

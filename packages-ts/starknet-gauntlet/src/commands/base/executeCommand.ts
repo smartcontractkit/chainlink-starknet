@@ -56,7 +56,9 @@ export interface ExecuteCommandInstance<UI, CI> {
   afterExecute: (response: Result<TransactionResponse>) => Promise<any>
 }
 
-export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (deps: Dependencies) => {
+export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>) => (
+  deps: Dependencies,
+) => {
   const command: CommandCtor<ExecuteCommandInstance<UI, CI>> = class ExecuteCommand
     extends WriteCommand<TransactionResponse>
     implements ExecuteCommandInstance<UI, CI> {
@@ -99,18 +101,26 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.input = await c.buildCommandInput(flags, args, env)
 
       c.beforeExecute = config.hooks?.beforeExecute
-        ? config.hooks.beforeExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
+        ? config.hooks.beforeExecute(c.executionContext, c.input, {
+            logger: deps.logger,
+            prompt: deps.prompt,
+          })
         : c.defaultBeforeExecute(c.executionContext, c.input)
 
       c.afterExecute = config.hooks?.afterExecute
-        ? config.hooks.afterExecute(c.executionContext, c.input, { logger: deps.logger, prompt: deps.prompt })
+        ? config.hooks.afterExecute(c.executionContext, c.input, {
+            logger: deps.logger,
+            prompt: deps.prompt,
+          })
         : c.defaultAfterExecute()
 
       return c
     }
 
     runValidations = async (validations: Validation<UI, ExecutionContext>[], input: UI) => {
-      const result = await Promise.all(validations.map((validation) => validation(input, this.executionContext)))
+      const result = await Promise.all(
+        validations.map((validation) => validation(input, this.executionContext)),
+      )
       return result
     }
 
@@ -147,7 +157,10 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = await contract.populate(config.internalFunction || config.action, this.input.contract as any)
+      const invocation = await contract.populate(
+        config.internalFunction || config.action,
+        this.input.contract as any,
+      )
 
       return [invocation]
     }
@@ -195,17 +208,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
-    executeWithoutSigner = async (): Promise<TransactionResponse> => {
-      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      await deps.prompt(`Continue?`)
-      deps.logger.loading(`Sending transaction...`)
-      const tx = await contract[config.internalFunction || config.action](...(this.input.contract as any))
-      const response = wrapResponse(this.provider, tx, this.contractAddress)
-      deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
-      await response.wait()
-      return response
-    }
-
     execute = async () => {
       let tx: TransactionResponse
 
@@ -214,11 +216,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       if (config.action === 'deploy') {
         tx = await this.deployContract()
       } else {
-        if (this.flags.noWallet) {
-          tx = await this.executeWithoutSigner()
-        } else {
-          tx = await this.executeWithSigner()
-        }
+        tx = await this.executeWithSigner()
       }
 
       let result = {

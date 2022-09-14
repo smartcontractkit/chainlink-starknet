@@ -7,7 +7,7 @@ import (
 	"io"
 	"math/big"
 
-	starksig "github.com/NethermindEth/juno/pkg/crypto/signature"
+	"github.com/dontpanicdao/caigo"
 )
 
 // Raw represents the Stark private key
@@ -15,14 +15,15 @@ type Raw []byte
 
 // Key gets the Key
 func (raw Raw) Key() Key {
-	privKey := starksig.PrivateKey{}
-	privKey.D = new(big.Int).SetBytes(raw)
-	privKey.PublicKey.Curve = curve
-	privKey.PublicKey.X, privKey.PublicKey.Y = curve.ScalarBaseMult(raw)
+	k := Key{}
+	var err error
 
-	return Key{
-		privkey: privKey,
+	k.priv = new(big.Int).SetBytes(raw)
+	k.pub.X, k.pub.Y, err = caigo.Curve.PrivateToPoint(k.priv)
+	if err != nil {
+		panic(err) // key not generated
 	}
+	return k
 }
 
 // String returns description
@@ -37,9 +38,14 @@ func (raw Raw) GoString() string {
 
 var _ fmt.GoStringer = &Key{}
 
+type PublicKey struct {
+	X, Y *big.Int
+}
+
 // Key represents StarkNet key
 type Key struct {
-	privkey starksig.PrivateKey
+	priv *big.Int
+	pub  PublicKey
 }
 
 // New creates new Key
@@ -57,13 +63,7 @@ func MustNewInsecure(reader io.Reader) Key {
 }
 
 func newFrom(reader io.Reader) (Key, error) {
-	privKey, err := starksig.GenerateKey(curve, reader)
-	if err != nil {
-		return Key{}, err
-	}
-	return Key{
-		privkey: *privKey,
-	}, nil
+	return GenerateKey(reader)
 }
 
 // ID gets Key ID
@@ -75,19 +75,19 @@ func (key Key) ID() string {
 // This is the primary identifier for onchain interactions
 // the private key is identified by this
 func (key Key) AccountAddressStr() string {
-	return "0x" + hex.EncodeToString(PubKeyToAccount(key.privkey.PublicKey, defaultContractHash, defaultSalt))
+	return "0x" + hex.EncodeToString(PubKeyToAccount(key.pub, defaultContractHash, defaultSalt))
 }
 
 // StarkKeyStr is the starknet public key associated to the private key
 // it is the X component of the ECDSA pubkey and used in the deployment of the account contract
 // this func is used in exporting it via CLI and API
 func (key Key) StarkKeyStr() string {
-	return "0x" + hex.EncodeToString(PubKeyToStarkKey(key.privkey.PublicKey))
+	return "0x" + hex.EncodeToString(PubKeyToStarkKey(key.pub))
 }
 
 // Raw from private key
 func (key Key) Raw() Raw {
-	return key.privkey.D.Bytes()
+	return key.priv.Bytes()
 }
 
 // String is the print-friendly format of the Key
@@ -101,11 +101,11 @@ func (key Key) GoString() string {
 }
 
 // ToPrivKey returns the key usable for signing.
-func (key Key) ToPrivKey() starksig.PrivateKey {
-	return key.privkey
+func (key Key) ToPrivKey() *big.Int {
+	return key.priv
 }
 
 // PublicKey copies public key object
-func (key Key) PublicKey() starksig.PublicKey {
-	return key.privkey.PublicKey
+func (key Key) PublicKey() PublicKey {
+	return key.pub
 }

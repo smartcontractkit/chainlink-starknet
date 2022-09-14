@@ -7,7 +7,12 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract, CONTRACT_LIST, calculateAddress, equalAddress } from '../../src/lib/contracts'
+import {
+  loadContract,
+  CONTRACT_LIST,
+  calculateAddress,
+  equalAddress,
+} from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
@@ -18,7 +23,7 @@ describe('OZ Account Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 5000)
+  }, 15000)
 
   it(
     'Deployment',

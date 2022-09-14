@@ -1,4 +1,9 @@
-import { BeforeExecute, ExecuteCommandConfig, ExecutionContext, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
+import {
+  BeforeExecute,
+  ExecuteCommandConfig,
+  ExecutionContext,
+  makeExecuteCommand,
+} from '@chainlink/starknet-gauntlet'
 import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
@@ -27,7 +32,11 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [number.toFelt(input.threshold)]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger
     .info(`About to set a new threshold on the Multisig Contract (${context.contractAddress}) with the following details:
     - New Threshold: ${input.user.threshold}

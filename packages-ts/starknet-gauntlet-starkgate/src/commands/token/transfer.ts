@@ -31,7 +31,8 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 }
 
 const validateRecipient = async (input) => {
-  if (!isValidAddress(input.recipient)) throw new Error(`Invalid recipient address: ${input.recipient}`)
+  if (!isValidAddress(input.recipient))
+    throw new Error(`Invalid recipient address: ${input.recipient}`)
   return true
 }
 
@@ -40,7 +41,11 @@ const validateAmount = async (input) => {
   return true
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to tranfer ${input.user.amount} ERC20 tokens to ${input.user.recipient}`)
 }
 
