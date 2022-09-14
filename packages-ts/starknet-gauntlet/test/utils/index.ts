@@ -36,7 +36,7 @@ export const noopLogger: typeof logger = {
 
 export const noopPrompt: typeof prompt = async () => {}
 
-export const TIMEOUT = 100000
+export const TIMEOUT = 200000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 export const registerExecuteCommand = <UI, CI>(
@@ -59,7 +59,9 @@ export const registerExecuteCommand = <UI, CI>(
 }
 
 export const registerInspectCommand = <QueryResult>(
-  registerCommand: (deps: Omit<Dependencies, 'makeWallet'>) => CommandCtor<InspectCommandInstance<QueryResult>>,
+  registerCommand: (
+    deps: Omit<Dependencies, 'makeWallet'>,
+  ) => CommandCtor<InspectCommandInstance<QueryResult>>,
 ) => {
   const deps: Omit<Dependencies, 'makeWallet'> = {
     logger: noopLogger,

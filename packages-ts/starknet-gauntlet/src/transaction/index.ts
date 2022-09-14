@@ -1,10 +1,10 @@
-import { AddTransactionResponse } from 'starknet'
+import { api } from 'starknet'
 
 export type TransactionResponse = {
   hash: string
   address?: string
   wait: () => Promise<{ success: boolean }>
-  tx?: AddTransactionResponse
+  tx?: api.Sequencer.AddTransactionResponse
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
   errorMessage?: string
 }

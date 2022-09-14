@@ -1,11 +1,12 @@
 import { HardhatUserConfig } from 'hardhat/types'
 import '@shardlabs/starknet-hardhat-plugin'
+import '@nomiclabs/hardhat-ethers'
 
 const config: HardhatUserConfig = {
   solidity: '0.8.14',
   starknet: {
     venv: 'active',
-    network: 'integrated-devnet',
+    network: 'devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',
@@ -24,6 +25,9 @@ const config: HardhatUserConfig = {
       args: ['--lite-mode'],
       // dockerizedVersion: "0.2.0"
     },
+  },
+  paths: {
+    cairoPaths: ['../../../contracts/src'],
   },
 }
 

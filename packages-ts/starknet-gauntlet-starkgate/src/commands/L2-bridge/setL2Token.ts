@@ -26,7 +26,10 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   }
 }
 
-const makeContractInput = async (input: UserInput, context: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  context: ExecutionContext,
+): Promise<ContractInput> => {
   return [input.address]
 }
 
@@ -37,7 +40,11 @@ const validateInput = async (input: UserInput): Promise<boolean> => {
   return true
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to set L2 Token of an L2 Bridge Contract with the following details:
     ${input.contract}
   `)

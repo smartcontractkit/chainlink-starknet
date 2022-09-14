@@ -1,11 +1,11 @@
 import { TransactionResponse } from '../transaction'
 import {
-  Provider as StarknetProvider,
-  AddTransactionResponse,
+  SequencerProvider as StarknetProvider,
+  DeployContractResponse,
+  api,
   CompiledContract,
   Account,
   Call,
-  InvocationsDetails,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -19,7 +19,11 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
-  signAndSend: (accountAddress: string, wallet: IStarknetWallet, calls: Call[]) => Promise<TransactionResponse>
+  signAndSend: (
+    accountAddress: string,
+    wallet: IStarknetWallet,
+    calls: Call[],
+  ) => Promise<TransactionResponse>
 }
 
 export interface IStarknetProvider extends IProvider<StarknetProvider> {}
@@ -30,17 +34,19 @@ export const makeProvider = (url: string): IProvider<StarknetProvider> => {
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: AddTransactionResponse,
+  response: api.Sequencer.AddTransactionResponse | DeployContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
     hash: response.transaction_hash,
-    address: address || response.address,
+    // HACK: Work around the response being either AddTransactionResponse or DeployContractResponse
+    address: address || (response as any).address || (response as any).contract_address,
     wait: async () => {
       // Success if does not throw
       let success: boolean
       try {
-        success = (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+        success =
+          (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
         txResponse.status = 'ACCEPTED'
       } catch (e) {
         txResponse.status = 'REJECTED'
@@ -69,7 +75,12 @@ class Provider implements IStarknetProvider {
     return {} as TransactionResponse
   }
 
-  deployContract = async (contract: CompiledContract, input: any = [], wait = true, salt = undefined) => {
+  deployContract = async (
+    contract: CompiledContract,
+    input: any = [],
+    wait = true,
+    salt = undefined,
+  ) => {
     const tx = await this.provider.deployContract({
       contract,
       addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
@@ -83,11 +94,18 @@ class Provider implements IStarknetProvider {
     return response
   }
 
-  signAndSend = async (accountAddress: string, wallet: IStarknetWallet, calls: Call[], wait = false) => {
+  signAndSend = async (
+    accountAddress: string,
+    wallet: IStarknetWallet,
+    calls: Call[],
+    wait = false,
+  ) => {
     const account = new Account(this.provider, accountAddress, wallet.wallet)
 
     const maxFee = await account.estimateFee(calls)
-    const tx = await account.execute(calls, undefined, { maxFee: maxFee.suggestedMaxFee })
+    const tx = await account.execute(calls, undefined, {
+      maxFee: maxFee.suggestedMaxFee,
+    })
     const response = wrapResponse(this, tx)
     if (!wait) return response
 

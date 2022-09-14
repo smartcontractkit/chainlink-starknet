@@ -1,5 +1,5 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
+import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployTokenCommand from '../../src/commands/token/deploy'
 import deployCommand from '../../src/commands/bridge/deploy'
 import setL1Bridge from '../../src/commands/bridge/setL1Bridge'
@@ -27,7 +27,7 @@ describe('Bridge Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 5000)
+  }, 15000)
 
   it(
     'Deploy OZ Account',
@@ -42,22 +42,26 @@ describe('Bridge Contract', () => {
       publicKey = report.data.publicKey
 
       // Fund the newly allocated account
-      let gateway_url = process.env.NODE_URL || 'http://localhost:5050'
-      let balance = 100_000_000_000_000
-      // let balance = 1e21
+      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
+      let balance = 1e21
       const body = {
         address: account,
         amount: balance,
         lite: true,
       }
-      const response = await fetch(`${gateway_url}/mint`, {
-        method: 'post',
-        body: JSON.stringify(body),
-        headers: { 'Content-Type': 'application/json' },
-      })
 
-      const data = await response.json()
-      expect(data.new_balance).toEqual(balance)
+      try {
+        const response = await fetch(`${gateway_url}/mint`, {
+          method: 'post',
+          body: JSON.stringify(body),
+          headers: { 'Content-Type': 'application/json' },
+        })
+
+        const data = await response.json()
+        expect(data.new_balance).toEqual(balance)
+      } catch (e) {
+        console.log(e)
+      }
     },
     TIMEOUT,
   )
@@ -79,7 +83,11 @@ describe('Bridge Contract', () => {
       bridgeContractAddress = report.responses[0].contract
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const bridgeContract = new Contract(
+        bridge.abi,
+        bridgeContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const response = await bridgeContract.get_governor()
       const governor = response[0]
       expect(governor).toEqual(new BN(account.split('x')[1], 16))
@@ -123,7 +131,11 @@ describe('Bridge Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const bridgeContract = new Contract(
+        bridge.abi,
+        bridgeContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const response = await bridgeContract.get_l1_bridge()
 
       // TODO: Process response
@@ -148,7 +160,11 @@ describe('Bridge Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const bridge = loadContract(CONTRACT_LIST.BRIDGE)
-      const bridgeContract = new Contract(bridge.abi, bridgeContractAddress, makeProvider(LOCAL_URL).provider)
+      const bridgeContract = new Contract(
+        bridge.abi,
+        bridgeContractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
       const response = await bridgeContract.get_l2_token()
 
       // TODO: Process response

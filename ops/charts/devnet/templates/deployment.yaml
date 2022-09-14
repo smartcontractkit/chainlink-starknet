@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: starknet-dev
+  labels:
+    release: {{ .Release.Name }}
+    app: starknet-dev
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      release: {{ .Release.Name }}
+      app: starknet-dev
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name }}
+        app: starknet-dev
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+{{- if eq .Values.real_node true }}
+        image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
+{{- else }}
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.2.11"}}"
+        args: ["--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+{{- end }}
+        imagePullPolicy: IfNotPresent
+{{- if eq .Values.real_node true }}
+        env:
+          - name: PATHFINDER_HTTP_RPC_ADDRESS
+            value: "0.0.0.0:5000"
+          - name: RUSTLOG
+            value: "info"
+          - name: PATHFINDER_ETHEREUM_API_URL
+            value: {{ .Values.url_http_L1 }}
+{{- else }}
+        env:
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: PATHFINDER_ETHEREUM_API_URL
+            value: {{ .Values.url_http_L1 }}
+{{- end }}
+        ports:
+          - name: http
+            containerPort: {{ .Values.service.internalPort }}
+        livenessProbe:
+          httpGet:
+            path: /is_alive
+            port: {{ .Values.service.externalPort }}
+          initialDelaySeconds: 1
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /is_alive
+            port: {{ .Values.service.externalPort }}
+          initialDelaySeconds: 2
+          periodSeconds: 1
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory }}
+            cpu: {{ .Values.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.resources.limits.memory }}
+            cpu: {{ .Values.resources.limits.cpu }}

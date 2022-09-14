@@ -4,10 +4,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/NethermindEth/juno/pkg/rpc"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -17,11 +19,11 @@ const ConfigDigestPrefixStarknet types.ConfigDigestPrefix = 4
 var _ types.OffchainConfigDigester = (*offchainConfigDigester)(nil)
 
 type offchainConfigDigester struct {
-	chainID  rpc.ChainID
-	contract rpc.Address
+	chainID  string
+	contract string
 }
 
-func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offchainConfigDigester {
+func NewOffchainConfigDigester(chainID, contract string) offchainConfigDigester {
 	return offchainConfigDigester{
 		chainID:  chainID,
 		contract: contract,
@@ -32,7 +34,7 @@ func NewOffchainConfigDigester(chainID rpc.ChainID, contract rpc.Address) offcha
 func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
-	contract_address, valid := new(big.Int).SetString(string(d.contract), 16)
+	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(d.contract, "0x"), 16)
 	if !valid {
 		return configDigest, errors.New("invalid contract address")
 	}
@@ -48,14 +50,19 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	oracles := []*big.Int{}
 	for i := range cfg.Signers {
 		signer := new(big.Int).SetBytes(cfg.Signers[i])
-		transmitter, valid := new(big.Int).SetString(string(cfg.Transmitters[i]), 16)
+		transmitter, valid := new(big.Int).SetString(strings.TrimPrefix(string(cfg.Transmitters[i]), "0x"), 16)
 		if !valid {
 			return configDigest, errors.New("invalid transmitter")
 		}
 		oracles = append(oracles, signer, transmitter)
 	}
 
-	offchainConfig := EncodeBytes(cfg.OffchainConfig)
+	offchainConfig := starknet.EncodeFelts(cfg.OffchainConfig)
+
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.DecodeToFelts(cfg.OnchainConfig)
+	if err != nil {
+		return configDigest, err
+	}
 
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
 	msg := []*big.Int{
@@ -67,8 +74,12 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	msg = append(msg, oracles...)
 	msg = append(
 		msg,
-		big.NewInt(int64(cfg.F)), // f
-		big.NewInt(0),            // TODO: onchain_config
+		big.NewInt(int64(cfg.F)),              // f
+		big.NewInt(int64(len(onchainConfig))), // onchain_config_len
+	)
+	msg = append(msg, onchainConfig...)
+	msg = append(
+		msg,
 		new(big.Int).SetUint64(cfg.OffchainConfigVersion), // offchain_config_version
 		big.NewInt(int64(len(offchainConfig))),            // offchain_config_len
 	)

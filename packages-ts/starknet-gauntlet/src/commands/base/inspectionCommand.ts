@@ -58,7 +58,10 @@ export interface InspectCommandConfig<UI, CI, CompareInput, QueryResult> {
 }
 
 export interface InspectCommandInstance<QueryResult> {
-  execute: () => Promise<{ data: InspectionReport<QueryResult>; responses: any[] }>
+  execute: () => Promise<{
+    data: InspectionReport<QueryResult>
+    responses: any[]
+  }>
 }
 
 export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
@@ -94,9 +97,13 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
       return c
     }
 
-    buildCommandInput = async (flags, args): Promise<Input<InspectUserInput<UI, CompareInput>, CI>> => {
+    buildCommandInput = async (
+      flags,
+      args,
+    ): Promise<Input<InspectUserInput<UI, CompareInput>, CI>> => {
       const userInput = config.makeUserInput && (await config.makeUserInput(flags, args))
-      const contractInput = config.makeContractInput && (await config.makeContractInput(userInput.input))
+      const contractInput =
+        config.makeContractInput && (await config.makeContractInput(userInput.input))
 
       return {
         user: userInput || {
@@ -121,7 +128,11 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
 
     execute = async () => {
       const results = await this.runQueries(config.queries, this.input.contract)
-      const data = await config.makeComparisionData(this.provider)(results, this.input.user.input, this.contractAddress)
+      const data = await config.makeComparisionData(this.provider)(
+        results,
+        this.input.user.input,
+        this.contractAddress,
+      )
       const inspectionResults = config.inspect ? config.inspect(this.input.user, data) : []
 
       deps.logger.info('Inspection Results:')

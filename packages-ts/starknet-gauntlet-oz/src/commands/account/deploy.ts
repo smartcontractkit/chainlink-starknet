@@ -3,11 +3,15 @@ import {
   BeforeExecute,
   ExecuteCommandConfig,
   makeExecuteCommand,
-  Validation,
 } from '@chainlink/starknet-gauntlet'
 import { ec, hash } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader, CONTRACT_LIST, calculateAddress, equalAddress } from '../../lib/contracts'
+import {
+  accountContractLoader,
+  CONTRACT_LIST,
+  calculateAddress,
+  equalAddress,
+} from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
@@ -17,7 +21,7 @@ type UserInput = {
 
 type ContractInput = [publicKey: string]
 
-const makeUserInput = async (flags, args, env): Promise<UserInput> => {
+const makeUserInput = async (flags, _, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   // If public key is not provided, generate a new address
@@ -36,7 +40,11 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.publicKey]
 }
 
-const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, deps) => async () => {
+const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
   deps.logger.info(`About to deploy an Account Contract with:
     public key: ${input.contract[0]}
     salt: ${input.user.salt || 'randomly generated'}`)
@@ -51,7 +59,9 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (context, input, 
   }
 }
 
-const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (result) => {
+const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, deps) => async (
+  result,
+) => {
   const contract = result.responses[0].tx.address
   contract
     ? deps.logger.success(`Account contract located at ${contract}`)
@@ -65,7 +75,9 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
       deps.logger
         .error(`Deployed account contract address (${contract}) does not match calculated account contract address (${calcAddr}).
         There is likely a difference in hash of the deployed contract and the CONTRACT_HASH constant`)
-      deps.logger.warn(`Account addresses must match otherwise this could cause mismatched keys with chainlink node.`)
+      deps.logger.warn(
+        `Account addresses must match otherwise this could cause mismatched keys with chainlink node.`,
+      )
     } else {
       deps.logger.success(`Deployed account matches expected contract address`)
     }
@@ -83,7 +95,9 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys an OpenZeppelin Account contract',
-    examples: [`${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`],
+    examples: [
+      `${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`,
+    ],
   },
   makeUserInput,
   makeContractInput,

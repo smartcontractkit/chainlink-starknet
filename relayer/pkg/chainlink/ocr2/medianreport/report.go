@@ -5,10 +5,11 @@ import (
 	"math/big"
 	"sort"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
-
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -21,6 +22,7 @@ const (
 	observationsLenBytes     = junotypes.FeltLength
 	prefixSizeBytes          = timestampSizeBytes + observersSizeBytes + observationsLenBytes
 	juelsPerFeeCoinSizeBytes = junotypes.FeltLength
+	gasPriceSizeBytes        = junotypes.FeltLength
 	observationSizeBytes     = junotypes.FeltLength
 )
 
@@ -48,7 +50,12 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 		return oo[i].JuelsPerFeeCoin.Cmp(oo[j].JuelsPerFeeCoin) < 0
 	})
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
+	juelsPerFeeCoin = starknet.SignedBigToFelt(juelsPerFeeCoin) // converts negative bigInts to corresponding felt in bigInt form
 	juelsPerFeeCoinFelt := junotypes.BigToFelt(juelsPerFeeCoin)
+
+	// TODO: source from observations
+	gasPrice := big.NewInt(1) // := oo[num/2].GasPrice
+	gasPriceFelt := junotypes.BigToFelt(gasPrice)
 
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
@@ -59,7 +66,8 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	var observations []junotypes.Felt
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
-		observations = append(observations, junotypes.BigToFelt(o.Value))
+		obs := starknet.SignedBigToFelt(o.Value) // converst negative bigInts to corresponding felt in bigInt form
+		observations = append(observations, junotypes.BigToFelt(obs))
 	}
 
 	var report []byte
@@ -70,6 +78,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 		report = append(report, o.Bytes()...)
 	}
 	report = append(report, juelsPerFeeCoinFelt.Bytes()...)
+	report = append(report, gasPriceFelt.Bytes()...)
 
 	return report, nil
 }
@@ -103,6 +112,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 		start := prefixSizeBytes + observationSizeBytes*i
 		end := start + observationSizeBytes
 		o := junotypes.BytesToFelt(report[start:end]).Big()
+		o = starknet.FeltToSignedBig(&caigotypes.Felt{Int: o})
 		observations = append(observations, o)
 	}
 
@@ -110,7 +120,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 }
 
 func (c ReportCodec) MaxReportLength(n int) int {
-	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes
+	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes + gasPriceSizeBytes
 }
 
 func SplitReport(report types.Report) ([][]byte, error) {

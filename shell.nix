@@ -8,7 +8,7 @@
     python39Packages.fastecdsa # so libgmp is correctly sourced
     gmp
     nodejs-18_x
-    (yarn.override { nodejs = nodejs-16_x; })
+    (yarn.override { nodejs = nodejs-18_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
@@ -18,6 +18,11 @@
     delve
     golangci-lint
     gotools
+
+    kube3d
+    kubectl
+    k9s
+    kubernetes-helm
   ];
 
   LD_LIBRARY_PATH="${stdenv.cc.cc.lib}/lib64:$LD_LIBRARY_PATH";
@@ -25,6 +30,7 @@
   venvDir = "./.venv";
 
   postShellHook = ''
+    pip install --upgrade pip
     pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
   '';
 }

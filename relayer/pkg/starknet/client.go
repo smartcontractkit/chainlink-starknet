@@ -27,10 +27,10 @@ type Reader interface {
 
 type Writer interface {
 	AccountNonce(context.Context, string) (*big.Int, error)
-	Invoke(context.Context, caigotypes.Transaction) (*caigotypes.AddTxResponse, error)
+	Invoke(context.Context, caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error)
 	TransactionByHash(context.Context, string) (*caigotypes.Transaction, error)
 	TransactionReceipt(context.Context, string) (*caigotypes.TransactionReceipt, error)
-	EstimateFee(context.Context, caigotypes.Transaction) (*caigotypes.FeeEstimate, error)
+	EstimateFee(context.Context, caigotypes.FunctionInvoke, string) (*caigotypes.FeeEstimate, error)
 }
 
 type Unimplemented interface {
@@ -52,16 +52,24 @@ var _ caigotypes.Provider = (*Client)(nil)
 type Client struct {
 	gw             *caigogw.GatewayProvider
 	lggr           logger.Logger
-	defaultTimeout *time.Duration
+	defaultTimeout time.Duration
 }
 
-// pass nil to timeout to not use built in default timeout
+// pass nil or 0 to timeout to not use built in default timeout
 func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	client := &Client{
-		gw:             caigogw.NewProvider(caigogw.WithChain(chainID)),
-		lggr:           lggr,
-		defaultTimeout: timeout,
+		gw:   caigogw.NewProvider(caigogw.WithChain(chainID)),
+		lggr: lggr,
 	}
+
+	// make copy to preserve value
+	// defensive in case the timeout reference is ever garbage collected or removed
+	if timeout == nil {
+		client.defaultTimeout = 0
+	} else {
+		client.defaultTimeout = *timeout
+	}
+
 	client.setURL(baseURL) // hack: change the base URL (not supported in caigo)
 
 	return client, nil
@@ -95,9 +103,9 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, e
 }
 
 func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -110,9 +118,9 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 }
 
 func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (block *caigogw.Block, err error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -122,6 +130,9 @@ func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (blo
 	if err != nil {
 		return block, errors.Wrap(err, "couldn't get block by number")
 	}
+	if block == nil {
+		return block, NilResultError("client.BlockByNumberGateway")
+	}
 
 	return block, nil
 }
@@ -129,9 +140,9 @@ func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (blo
 // -- caigo.Provider interface --
 
 func (c *Client) BlockByHash(ctx context.Context, hash string, _ string) (*caigotypes.Block, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -139,14 +150,16 @@ func (c *Client) BlockByHash(ctx context.Context, hash string, _ string) (*caigo
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.BlockByHash")
 	}
+	if out == nil {
+		return out, NilResultError("client.BlockByHash")
+	}
 	return out, nil
-
 }
 
 func (c *Client) BlockByNumber(ctx context.Context, num *big.Int, _ string) (*caigotypes.Block, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -154,14 +167,17 @@ func (c *Client) BlockByNumber(ctx context.Context, num *big.Int, _ string) (*ca
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.BlockByNumber")
 	}
+	if out == nil {
+		return out, NilResultError("client.BlockByNumber")
+	}
 	return out, nil
 
 }
 
 func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockHashOrTag string) ([]string, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -169,14 +185,17 @@ func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockH
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Call")
 	}
+	if out == nil {
+		return out, NilResultError("client.Call")
+	}
 	return out, nil
 
 }
 
 func (c *Client) ChainID(ctx context.Context) (string, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -189,9 +208,9 @@ func (c *Client) ChainID(ctx context.Context) (string, error) {
 }
 
 func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -199,29 +218,37 @@ func (c *Client) AccountNonce(ctx context.Context, address string) (*big.Int, er
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.AccountNonce")
 	}
+
+	if out == nil {
+		return out, NilResultError("client.AccountNonce")
+	}
+
 	return out, nil
 
 }
 
-func (c *Client) Invoke(ctx context.Context, txs caigotypes.Transaction) (*caigotypes.AddTxResponse, error) {
-	if c.defaultTimeout != nil {
+func (c *Client) Invoke(ctx context.Context, invoke caigotypes.FunctionInvoke) (*caigotypes.AddTxResponse, error) {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
-	out, err := c.gw.Invoke(ctx, txs)
+	out, err := c.gw.Invoke(ctx, invoke)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Invoke")
+	}
+	if out == nil {
+		return out, NilResultError("client.Invoke")
 	}
 	return out, nil
 
 }
 
 func (c *Client) TransactionByHash(ctx context.Context, hash string) (*caigotypes.Transaction, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -229,14 +256,17 @@ func (c *Client) TransactionByHash(ctx context.Context, hash string) (*caigotype
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.TransactionByHash")
 	}
+	if out == nil {
+		return out, NilResultError("client.TransactionByHash")
+	}
 	return out, nil
 
 }
 
 func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotypes.TransactionReceipt, error) {
-	if c.defaultTimeout != nil {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
@@ -244,20 +274,26 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash string) (*caigotyp
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.TransactionReceipt")
 	}
+	if out == nil {
+		return out, NilResultError("client.TransactionReceipt")
+	}
 	return out, nil
 
 }
 
-func (c *Client) EstimateFee(ctx context.Context, txs caigotypes.Transaction) (*caigotypes.FeeEstimate, error) {
-	if c.defaultTimeout != nil {
+func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke, hash string) (*caigotypes.FeeEstimate, error) {
+	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *c.defaultTimeout)
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
-	out, err := c.gw.EstimateFee(ctx, txs)
+	out, err := c.gw.EstimateFee(ctx, call, hash)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.EstimateFee")
+	}
+	if out == nil {
+		return out, NilResultError("client.EstimateFee")
 	}
 	return out, nil
 
