@@ -51,7 +51,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		mockServerVal           = 900000000
 		rpcRequestTimeout       = 10 * time.Second
 		roundWaitTimeout        = 10 * time.Minute
-		increasingCountMax      = 10
 	)
 
 	BeforeEach(func() {
@@ -77,7 +76,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			t.DeployCluster(5, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][1])
-			sg.SetupNetwork(t.GetStarkNetAddress())
+			sg.SetupNetwork(t.GetStarkNetAddressRemote())
 		})
 
 		By("Funding nodes", func() {
@@ -151,11 +150,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	})
 
 	Describe("with OCRv2 job @soak", func() {
-
 		It("works", func() {
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][1]
 			roundWaitTimeout = t.Env.Cfg.TTL
+			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", roundWaitTimeout))
 
 			// build client
 			reader, err := starknet.NewClient(chainId, url, lggr, &rpcRequestTimeout)
@@ -173,31 +172,23 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			// assert both positive and negative values have been seen
 			var positive bool
 			var negative bool
+			var sign = -1
 
 			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
+				log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), roundWaitTimeout))
 				rand.Seed(time.Now().UnixNano())
+				sign *= -1
+				var newValue = (rand.Intn(mockServerVal-0+1) + 0) * sign
 
-				err = t.SetMockServerValue("", rand.Intn(mockServerVal-0+1)+0)
+				err = t.SetMockServerValue("", newValue)
 				if err != nil {
 					log.Error().Err(err)
 				}
-				// end condition: enough rounds have occured, and positive and negative answers have been seen
-				if increasing >= increasingCountMax && positive && negative {
-					break
-				}
 
 				// end condition: rounds have been stuck
-				if stuck && stuckCount > 20 {
+				if stuck && stuckCount > 50 {
 					log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 					break
-				}
-
-				// once progression has reached halfway, change to negative values
-				if increasing == increasingCountMax/2 {
-					err = t.SetMockServerValue("", -1*mockServerVal)
-					if err != nil {
-						log.Error().Err(err)
-					}
 				}
 
 				// try to fetch rounds
@@ -249,12 +240,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 					stuck = true
 					increasing = 0
 				}
-
 			}
-
-			Expect(increasing >= increasingCountMax).To(BeTrue(), "Round + epochs should be increasing")
+			log.Info().Msg(fmt.Sprintf("Reached the end of run"))
+			Expect(increasing >= 0).To(BeTrue(), "Round + epochs should be increasing")
+			Expect(negative).To(BeTrue(), "Positive value should have been submitted")
 			Expect(positive).To(BeTrue(), "Positive value should have been submitted")
-			Expect(negative).To(BeTrue(), "Negative value should have been submitted")
 			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
 		})
 	})
