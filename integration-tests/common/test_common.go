@@ -190,6 +190,11 @@ func (t *Test) GetStarkNetName() string {
 
 // GetStarkNetAddress Returns the local StarkNET address
 func (t *Test) GetStarkNetAddress() string {
+	return t.Env.URLs[t.Common.ServiceKeyL2][0]
+}
+
+// GetStarkNetAddressRemote Returns the remote StarkNET address
+func (t *Test) GetStarkNetAddressRemote() string {
 	return t.Env.URLs[t.Common.ServiceKeyL2][1]
 }
 
