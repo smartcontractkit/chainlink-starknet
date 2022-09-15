@@ -6,24 +6,22 @@
   "directories": {
     "test": "test"
   },
-  "devDependencies": {
-    "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
-    "@types/chai": "^4.3.1",
-    "@types/jest": "^28.1.0",
-    "@types/mocha": "^9.1.1",
-    "bn.js": "^5.2.1",
-    "chai": "^4.3.6",
-    "hardhat": "^2.10.2",
-    "ts-node": "^10.8.0",
-    "typescript": "^4.7.2"
-  },
   "scripts": {
-    "test": "npx hardhat test --starknet-network devnet"
+    "test": "npx hardhat --network localhost test"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "devDependencies": {
+    "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
+    "@types/chai": "^4.3.3",
+    "@types/mocha": "^9.1.1",
+    "chai": "^4.3.6",
+    "hardhat": "^2.10.2"
+  },
   "dependencies": {
-    "@chainlink-dev/starkgate-contracts": "^0.0.3"
+    "@chainlink-dev/starkgate-contracts": "^0.0.3",
+    "@openzeppelin/contracts": "^4.7.3",
+    "internals-starkgate-contracts": "^0.0.3"
   }
 }

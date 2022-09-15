@@ -2,6 +2,7 @@ package starknet
 
 import (
 	"crypto/rand"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,6 @@ func TestPadBytes(t *testing.T) {
 		}
 		assert.Equal(t, in, out[start:])
 	}
-
 }
 
 func TestEnsureFelt(t *testing.T) {
@@ -56,4 +56,14 @@ func TestEnsureFelt(t *testing.T) {
 	// validate always fills 64 characters
 	out = EnsureFelt([32]byte{})
 	assert.Equal(t, 32, len(out))
+}
+
+func TestHexToSignedBig(t *testing.T) {
+	// Positive value (99)
+	answer := HexToSignedBig("0x63")
+	assert.Equal(t, big.NewInt(99), answer)
+
+	// Negative value (-10)
+	answer = HexToSignedBig("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
+	assert.Equal(t, big.NewInt(-10), answer)
 }

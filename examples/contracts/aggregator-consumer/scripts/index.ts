@@ -9,7 +9,7 @@ export const loadContract = (name: string): CompiledContract => {
   )
 }
 
-export const loadAccount = (name: string): CompiledContract => {
+export const loadContract_Account = (name: string): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
