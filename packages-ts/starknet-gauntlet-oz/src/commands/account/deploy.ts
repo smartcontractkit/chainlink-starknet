@@ -3,7 +3,6 @@ import {
   BeforeExecute,
   ExecuteCommandConfig,
   makeExecuteCommand,
-  Validation,
 } from '@chainlink/starknet-gauntlet'
 import { ec, hash } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
@@ -22,7 +21,7 @@ type UserInput = {
 
 type ContractInput = [publicKey: string]
 
-const makeUserInput = async (flags, args, env): Promise<UserInput> => {
+const makeUserInput = async (flags, _, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   // If public key is not provided, generate a new address
