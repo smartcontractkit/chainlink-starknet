@@ -42,7 +42,7 @@ describe('Multisig', () => {
 
   beforeAll(async () => {
     network = await startNetwork({ seed: SEED })
-  }, 15000)
+  }, TIMEOUT)
 
   it(
     'Deployment',

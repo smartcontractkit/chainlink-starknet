@@ -16,8 +16,8 @@ import {
   Contract,
   addAddressPadding,
   number,
-  encode,
   validateAndParseAddress,
+  InvokeTransactionReceiptResponse,
 } from 'starknet'
 import { addHexPrefix } from 'starknet/dist/utils/encode'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
@@ -273,7 +273,9 @@ export const wrapCommand = <UI, CI>(
 
       let proposalId = this.input.user.proposalId
       if (!this.initialState.proposal) {
-        const txInfo = await this.provider.provider.getTransactionReceipt(tx.hash)
+        const txInfo = (await this.provider.provider.getTransactionReceipt(
+          tx.hash,
+        )) as InvokeTransactionReceiptResponse
         proposalId = Number(number.hexToDecimalString((txInfo.events[0] as any).data[1]))
       }
 

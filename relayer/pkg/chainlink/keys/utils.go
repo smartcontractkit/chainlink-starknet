@@ -2,11 +2,9 @@ package keys
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"math/big"
-	"strings"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	"github.com/dontpanicdao/caigo"
@@ -33,12 +31,12 @@ func PubKeyToAccount(pubkey PublicKey, classHash, salt *big.Int) []byte {
 	)
 
 	// pad big.Int to 32 bytes if needed
-	return starknet.PadBytesBigInt(hash, byteLen)
+	return starknet.PadBytes(hash.Bytes(), byteLen)
 }
 
 // PubToStarkKey implements the pubkey to starkkey functionality: https://github.com/0xs34n/starknet.js/blob/cd61356974d355aa42f07a3d63f7ccefecbd913c/src/utils/ellipticCurve.ts#L49
 func PubKeyToStarkKey(pubkey PublicKey) []byte {
-	return starknet.PadBytesBigInt(pubkey.X, byteLen)
+	return starknet.PadBytes(pubkey.X.Bytes(), byteLen)
 }
 
 // reimplements: https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
@@ -58,14 +56,4 @@ func GenerateKey(material io.Reader) (k Key, err error) {
 	}
 
 	return k, nil
-}
-
-// trim "0x" prefix(if exists) and converts hexidecimal string to byte slice
-func HexToBytes(hexString string) ([]byte, error) {
-	numStr := strings.Replace(hexString, "0x", "", -1)
-	if (len(numStr) % 2) != 0 {
-		numStr = fmt.Sprintf("%s%s", "0", numStr)
-	}
-
-	return hex.DecodeString(numStr)
 }

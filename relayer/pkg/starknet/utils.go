@@ -1,20 +1,20 @@
 package starknet
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
+	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
 )
 
 const chunkSize = 31
-
-// convert big into padded bytes
-func PadBytesBigInt(a *big.Int, length int) []byte {
-	return PadBytes(a.Bytes(), length)
-}
 
 // padd bytes to specific length
 func PadBytes(a []byte, length int) []byte {
@@ -106,10 +106,49 @@ func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
 	return num
 }
 
-func CaigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
-	for _, felt := range cFelts {
-		jFelts = append(jFelts, felt.Int)
+func HexToSignedBig(str string) (num *big.Int) {
+	felt := junotypes.HexToFelt(str)
+	return FeltToSignedBig(&caigotypes.Felt{Int: felt.Big()})
+}
+
+func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
+	for _, f := range in {
+		out = append(out, f.Int)
 	}
 
-	return jFelts
+	return out
+}
+
+// StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
+func StringsToFelt(in []string) (out []*caigotypes.Felt) {
+	for _, f := range in {
+		out = append(out, caigotypes.StrToFelt(f))
+	}
+
+	return out
+}
+
+// CompareAddress compares different hex starknet addresses with potentially different 0 padding
+func CompareAddress(a, b string) bool {
+	aBytes, err := caigo.HexToBytes(a)
+	if err != nil {
+		return false
+	}
+
+	bBytes, err := caigo.HexToBytes(b)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Compare(PadBytes(aBytes, 32), PadBytes(bBytes, 32)) == 0
+}
+
+/* Testing utils - do not use (XXX) outside testing context */
+
+func XXXMustHexDecodeString(data string) []byte {
+	bytes, err := hex.DecodeString(data)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
 }
