@@ -4,6 +4,8 @@
 
 The purpose of the Starknet Sequencer Emergency Protocol is to track the last known status of the Starknet Sequencer at a given point in time.
 
+[Official Docs](https://docs.chain.link/docs/l2-sequencer-flag/)
+
 ## Architecture
 
 The diagram above illustrates the general path of how the Sequencer’s status is relayed from L1 to L2.
@@ -57,7 +59,40 @@ In the event that the Sequencer is down, messages will not be transmitted from L
 - Transactions in the pending queue are processed chronologically so **Tx1** is processed before **Tx2.**
 - As **Tx1** happens before **Tx2, Tx2** will read the status of the Sequencer as being down
 
+### Bridge Fees (In Progress)
+
+As of version v0.10.0, Starknet has begun introducing fees to send messages from L1 to L2. These fees are used to pay for the transaction
+on L2. This has been done so that the Sequencer has an incentive to process L2 messags. Whilst today `v0.10.0` still processes messages sent
+with `msg.value = 0`, Starknet has plans to charge a non 0 fee in the upcoming release. As the Emergency Protocol needs to send messages cross chain,
+the protocol needs a way to estimate gas fees. Currently, the `StarkwareValidator` contract on L1 does the following to estimate the amount of required
+gas.
+
+1. Estimate gas fees by running the command below. The command is from Starkware's standard CLI.
+
+```
+starknet estimate_message_fee \
+  --feeder_gateway_url=https://alpha4.starknet.io/feeder_gateway/ \
+  --abi=contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed/sequencer_uptime_feed.cairo/sequencer_uptime_feed.json \
+  --from_address ${FROM} \
+  --address ${TO} \
+  --function update_status \
+  --inputs ${STATUS} ${TIMESTAMP}
+```
+
+In order to reliably ensure that cross chain messages are sent with sufficient gas, the estimate is multiplied by a buffer. This buffer
+is arbitrarily chosen depending on what the Ops team determines to be a sufficient buffer.
+
+2. Read the current L1 gas price from Chainlink's L1 gas price feed
+
+3. Estimate gas as the product of the steps above.
+
+```
+gasFee = gasUnitsIncludingBuffer * l1GasPrice
+```
+
 ### Layer2 Sequencer Health External Adapter
+
+[Code](https://github.com/smartcontractkit/external-adapters-js/tree/develop/packages/sources/layer2-sequencer-health)
 
 The emergency protocol requires an off chain component to tracks the health of the centralized Starkware sequencer. Today, this is made up by a DON (Decentralized Oracle Network) that triggers using OCR (Offchain Reporting). A new OCR round is initiated every 30s whereby each node in the DON checks the health of the Sequencer using the Layer2 Sequencer Health External Adapter. If the nodes in the DON determine that the Sequencer’s health has changed, they elect a new leader to write the updated result onto chain as shown in the diagram above.
 
@@ -95,18 +130,7 @@ Checking the Starkware Sequencer’s health is currently a two step process
    1. `StarknetErrorCode.UNINITIALIZED_CONTRACT` if the dummy contract has not been initialized
    2. `StarknetErrorCode.OUT_OF_RANGE_FEE` if the dummy contract has been initialized by accident. As Starknet is a permissionless network, we cannot guarantee that a user deploys and initializes a contract at the dummy address. As a result, the EA will set the `maxFee` to 0 so that the transaction will fail with the `StarknetErrorCode.OUT_OF_RANGE_FEE` status code.
 
-## **Deployed Addresses**
+## Contracts
 
-**Goerli**
-
-```jsx
-StarknetValidator: 0x8bbdd71755e163a2c1178811ab82e424cf6fc281
-ValidatorProxy: 0x404f71afcfb23590f9b54647bcf1f61284061557
-StarknetCore: 0xde29d060d45901fb19ed6c6e959eb22d8626708e
-```
-
-**Starknet Goerli**
-
-```jsx
-StarknetSequencerUptimeFeed: 0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f
-```
+[StarknetValidator](https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/solidity/emergency/StarkNetValidator.sol)
+[SequencerUptimeFeed](https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/cairo/emergency/SequencerUptimeFeed/sequencer_uptime_feed.cairo)
