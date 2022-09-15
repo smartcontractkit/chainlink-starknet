@@ -1,6 +1,29 @@
 import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
 import { expect } from 'chai'
+import { artifacts, network } from 'hardhat'
+
+// This function adds the build info to the test network so that the network knows
+// how to handle custom errors.  It is automatically done when testing
+// against the default hardhat network.
+export const addCompilationToNetwork = async (fullyQualifiedName: string) => {
+  if (network.name !== 'hardhat') {
+    // This is so that the network can know about custom errors.
+    // Running against the provided hardhat node does this automatically.
+
+    const buildInfo = await artifacts.getBuildInfo(fullyQualifiedName)
+    if (!buildInfo) {
+      throw Error('Cannot find build info')
+    }
+    const { solcVersion, input, output } = buildInfo
+    console.log('Sending compilation result for StarkNetValidator test')
+    await network.provider.request({
+      method: 'hardhat_addCompilationResult',
+      params: [solcVersion, input, output],
+    })
+    console.log('Successfully sent compilation result for StarkNetValidator test')
+  }
+}
 
 export const expectInvokeError = async (invoke: Promise<any>, expected?: string) => {
   try {

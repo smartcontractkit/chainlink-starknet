@@ -1,6 +1,6 @@
 name: E2E Custom image build tests
 on:
-  push:
+  pull_request:
   workflow_dispatch:
     inputs:
       cl_branch_ref:
@@ -8,6 +8,11 @@ on:
         required: true
         default: develop
         type: string
+
+# Only run 1 of this workflow at a time per PR
+concurrency:
+  group: integration-tests-starknet-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   e2e_custom_build_custom_chainlink_image:
@@ -19,14 +24,14 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@e3bf7a2d54543beb94ad4151ca2a3837d62c2592 # v2.0.8+
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@1f3c81b148e53caaa0563f8963f884f0e5a4f82d # v2.0.15
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
           # cl_ref: ${{ github.event.inputs.cl_branch_ref }}
           cl_ref: 22c6ac0237a85010b91154277533dfd6acc8912c # https://github.com/smartcontractkit/chainlink/pull/7366
           # commit of the caller branch
-          dep_starknet_sha: ${{ github.sha }}
+          dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
@@ -48,8 +53,12 @@ jobs:
         uses: actions/checkout@v3.0.2
       - name: Install Yarn dependencies
         run: yarn install --frozen-lockfile
+      - name: Install Nix
+        uses: cachix/install-nix-action@d64e0553100205688c0fb2fa16edb0fc8663c590 # v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fd70f970827d80a1ee4bbafc2d5685dceb303fb3 # v2.0.16+
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@1f3c81b148e53caaa0563f8963f884f0e5a4f82d # v2.0.15
         with:
           test_command_to_run: nix develop -c make test-integration-smoke
           test_download_vendor_packages_command: cd integration-tests && go mod download
