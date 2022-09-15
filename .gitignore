@@ -158,4 +158,5 @@ tmp-manifest-*
 integration-tests/logs
 integration-tests/smoke/logs
 integration-tests/soak/logs
+remote.test
 
