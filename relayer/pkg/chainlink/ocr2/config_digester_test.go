@@ -1,7 +1,6 @@
 package ocr2_test
 
 import (
-	"encoding/hex"
 	"strings"
 	"testing"
 
@@ -12,21 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func mustHex(data string) []byte {
-	bytes, err := hex.DecodeString(data)
-	if err != nil {
-		panic(err)
-	}
-	return bytes
-}
-
 var testConfig = types.ContractConfig{
 	ConfigCount: 1,
 	Signers: []types.OnchainPublicKey{
-		mustHex("03f5df103ef3ae4d8e5ec708abf48bfdbff08f9e8deacc1a0bedf3e93cffd2a3"),
-		mustHex("0312c009b6d4cad9bd653450bb81eec18e81733052ee3f6cb3a2c182082db173"),
-		mustHex("02fc4861ccb51c1548dee618ed1103fbc1c01be0144da8950ad1d80c1a7bc3ba"),
-		mustHex("0331d8d682d098b685a929e0ad1d89a768ea8a1ca254c2dcbddf57521623729e"),
+		starknet.XXXMustHexDecodeString("03f5df103ef3ae4d8e5ec708abf48bfdbff08f9e8deacc1a0bedf3e93cffd2a3"),
+		starknet.XXXMustHexDecodeString("0312c009b6d4cad9bd653450bb81eec18e81733052ee3f6cb3a2c182082db173"),
+		starknet.XXXMustHexDecodeString("02fc4861ccb51c1548dee618ed1103fbc1c01be0144da8950ad1d80c1a7bc3ba"),
+		starknet.XXXMustHexDecodeString("0331d8d682d098b685a929e0ad1d89a768ea8a1ca254c2dcbddf57521623729e"),
 	},
 	Transmitters: []types.Account{
 		"01ccc16a80a22f0643b217d32798fe6994c823b7838262db80b4e2a867c61caa",

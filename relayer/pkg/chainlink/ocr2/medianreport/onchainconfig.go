@@ -73,6 +73,7 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	return median.OnchainConfig{Min: min, Max: max}, nil
 }
 
+// TODO: both 'EncodeFromBigInt' and 'EncodeFromFelt' have the same signature - we need a custom type to represent Felts
 // EncodeFromBigInt encodes the config where min & max are big Ints with positive or negative values
 func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]byte, error) {
 	return codec.EncodeFromFelt(version, starknet.SignedBigToFelt(min), starknet.SignedBigToFelt(max))
