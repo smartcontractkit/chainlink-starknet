@@ -63,10 +63,6 @@ func soakTestHelper(
 	}
 	remoteRunnerWrapper := map[string]interface{}{"remote_test_runner": remoteRunnerValues}
 	clConfig := map[string]interface{}{
-		"image": map[string]interface{}{
-			"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
-			"version": "custom.ef9353a3ade7b67a733a086931cd8403911ac690",
-		},
 		"replicas": 5,
 		"env": map[string]interface{}{
 			"STARKNET_ENABLED":            "true",
@@ -110,6 +106,12 @@ func soakTestHelper(
 
 	testEnvironment.Client.CopyToPod(
 		testEnvironment.Cfg.Namespace,
+		"../../yarn.lock",
+		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
+		"remote-test-runner")
+
+	testEnvironment.Client.CopyToPod(
+		testEnvironment.Cfg.Namespace,
 		"../../tsconfig.json",
 		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
 		"remote-test-runner")
@@ -129,6 +131,7 @@ func soakTestHelper(
 		"../../contracts",
 		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
 		"remote-test-runner")
+	testEnvironment.Client.ExecuteInPod(testEnvironment.Cfg.Namespace, "remote-test-runner", "remote-test-runner", []string{"yarn", "install"})
 	require.NoError(t, err, "Error launching test environment")
 	err = actions.TriggerRemoteTest(exeFile, testEnvironment)
 	require.NoError(t, err, "Error activating remote test")
