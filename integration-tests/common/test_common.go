@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
+	"os"
 	"strings"
 
 	"github.com/dontpanicdao/caigo/gateway"
@@ -34,12 +35,13 @@ var (
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
 	defaultWalletAddress string // derived in init()
+	soakNetwork          *blockchain.EVMNetwork
 )
 
 func init() {
 	// pass in flags to override default chainlink image & version
-	flag.StringVar(&clImage, "chainlink-image", "", "specify chainlink image to be used")
-	flag.StringVar(&clVersion, "chainlink-version", "", "specify chainlink version to be used")
+	flag.StringVar(&clImage, "chainlink-image", "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink", "specify chainlink image to be used")
+	flag.StringVar(&clVersion, "chainlink-version", "custom.ef9353a3ade7b67a733a086931cd8403911ac690", "specify chainlink version to be used")
 
 	// wallet contract derivation
 	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
@@ -55,6 +57,7 @@ type Test struct {
 	mockServer *ctfClient.MockserverClient
 	Env        *environment.Environment
 	Common     *Common
+	InsideK8s  bool
 }
 
 type StarkNetDevnetClient struct {
@@ -72,6 +75,8 @@ type ChainlinkClient struct {
 
 // DeployCluster Deploys and sets up config of the environment and nodes
 func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
+	// Checking if tests need to run on remote runner
+	_, t.InsideK8s = os.LookupEnv("INSIDE_K8")
 	t.Common = SetConfig(commonConfig)
 	t.cc = &ChainlinkClient{}
 	t.sc = &StarkNetDevnetClient{}
@@ -105,21 +110,24 @@ func (t *Test) DeployEnv(nodes int) {
 	if clImage != "" && clVersion != "" {
 		clConfig["chainlink"] = map[string]interface{}{
 			"image": map[string]interface{}{
-				"image":   clImage,
-				"version": clVersion,
+				"image":   "795953128386.dkr.ecr.us-west-2.amazonaws.com/chainlink",
+				"version": "custom.ef9353a3ade7b67a733a086931cd8403911ac690",
 			},
 		}
 	}
-
+	if t.InsideK8s {
+		soakNetwork = blockchain.LoadNetworkFromEnvironment()
+	}
 	t.Env = environment.New(&environment.Config{
-		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
-		InsideK8s:       false,
+
+		InsideK8s: t.InsideK8s,
 	}).
 		// AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, clConfig))
+
 	err := t.Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
 	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)
@@ -183,6 +191,11 @@ func (t *Test) GetStarkNetName() string {
 // GetStarkNetAddress Returns the local StarkNET address
 func (t *Test) GetStarkNetAddress() string {
 	return t.Env.URLs[t.Common.ServiceKeyL2][0]
+}
+
+// GetStarkNetAddressRemote Returns the remote StarkNET address
+func (t *Test) GetStarkNetAddressRemote() string {
+	return t.Env.URLs[t.Common.ServiceKeyL2][1]
 }
 
 // GetNodeKeys Returns the node key bundles
