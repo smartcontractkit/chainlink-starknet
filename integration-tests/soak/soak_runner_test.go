@@ -131,7 +131,6 @@ func soakTestHelper(
 		"../../contracts",
 		fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, "remote-test-runner"),
 		"remote-test-runner")
-	testEnvironment.Client.ExecuteInPod(testEnvironment.Cfg.Namespace, "remote-test-runner", "remote-test-runner", []string{"yarn", "install"})
 	require.NoError(t, err, "Error launching test environment")
 	err = actions.TriggerRemoteTest(exeFile, testEnvironment)
 	require.NoError(t, err, "Error activating remote test")
