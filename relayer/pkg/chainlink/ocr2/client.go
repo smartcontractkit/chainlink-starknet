@@ -3,6 +3,7 @@ package ocr2
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -173,7 +174,7 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address string) (*
 	return junotypes.HexToFelt(results[0]).Big(), nil
 }
 
-func (c *Client) fetchEventsAt(ctx context.Context, address, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
+func (c *Client) fetchEventsFromBlock(ctx context.Context, address, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
 	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch block by number")
@@ -205,11 +206,15 @@ func (c *Client) fetchEventsAt(ctx context.Context, address, eventType string, b
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
-	eventsAsFeltArrs, err := c.fetchEventsAt(ctx, address, "ConfigSet", blockNum)
+	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "failed to fetch config_set events")
 	}
-	config, err := ParseConfigSetEvent(eventsAsFeltArrs[0])
+	if len(eventsAsFeltArrs) != 1 {
+		return cc, fmt.Errorf("expected to find one config_set event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	}
+	configAtEvent := eventsAsFeltArrs[0]
+	config, err := ParseConfigSetEvent(configAtEvent)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't parse config event")
 	}
@@ -220,11 +225,15 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 }
 
 func (c *Client) NewTransmissionEventAt(ctx context.Context, address string, blockNum uint64) (event NewTransmissionEvent, err error) {
-	eventsAsFeltArrs, err := c.fetchEventsAt(ctx, address, "NewTransmission", blockNum)
+	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
 	if err != nil {
 		return event, errors.Wrap(err, "failed to fetch new_transmission events")
 	}
-	event, err = ParseNewTransmissionEvent(eventsAsFeltArrs[0])
+	if len(eventsAsFeltArrs) != 1 {
+		return event, fmt.Errorf("expected to find one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	}
+	newTransmissionEvent := eventsAsFeltArrs[0]
+	event, err = ParseNewTransmissionEvent(newTransmissionEvent)
 	if err != nil {
 		return event, errors.Wrap(err, "couldn't parse new_transmission event")
 	}
