@@ -31,11 +31,12 @@ func main() {
 		return
 	}
 
+	readTimeout := starknetConfig.GetReadTimeout()
 	starknetClient, err := starknet.NewClient(
-		starknetConfig.ChainID,
-		starknetConfig.RPCEndpoint,
+		starknetConfig.GetChainID(),
+		starknetConfig.GetRPCEndpoint(),
 		logger.With(log, "component", "starknet-client"),
-		&starknetConfig.ReadTimeout,
+		&readTimeout,
 	)
 	if err != nil {
 		log.Fatalw("failed to build a starknet.Client", "error", err)
