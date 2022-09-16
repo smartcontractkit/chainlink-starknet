@@ -36,7 +36,7 @@ func (s *envelopeSourceFactory) NewSource(
 	}
 	return &envelopeSource{
 		feedConfig.GetContractAddress(),
-		starknetChainConfig.LinkTokenAddress,
+		starknetChainConfig.GetLinkTokenAddress(),
 		s.ocr2Reader,
 	}, nil
 }
@@ -91,7 +91,7 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 		envelopeMu.Lock()
 		defer envelopeMu.Unlock()
 		if err != nil {
-			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchLinkAvailableForPayment failed: %w", err))
+			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetch LinkAvailableForPayment failed: %w", err))
 			return
 		}
 		envelope.LinkAvailableForPayment = availableLink
