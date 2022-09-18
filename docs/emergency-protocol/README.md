@@ -10,7 +10,7 @@ The purpose of the Starknet Sequencer Emergency Protocol is to track the last kn
 
 The diagram above illustrates the general path of how the Sequencer’s status is relayed from L1 to L2.
 
-![L2 Emergency Protocol Diagram](./Starknet-L2EP.png)
+[![](https://mermaid.ink/img/pako:eNqNk99PwjAQx_-VprxCwo8YtSQmOtgTCQaiL46H2l1HQ9fOrosSwv9u59aBzBH3svXu8737Xi87YKZjwARzqT_ZlhqLFqtIIfcwSfN8Bhy5sFBSqB3iQkrSm0wmQRhOUSfGtNSG9DjnLSi31OwU2LrU03B0G46nXdCVQkyrvEjB1IXC-9Hd8GbaBbULLYMVIeTkeTB4QI9JYiCh1qFnqYpf155cxtsrJWv4KEAxMGfxWuAzP6W9_CWzIoUQIK6ovHhPDM22aDFumCoT1N7d2xrKysZ-nAr47fjZ6K992_bfvdscqEtDXoWWnAclfDFWl24xQnO7BQNFWmWu3aqz90qliP85QcNexzqtQdIEAy8PdJppBcq-NaFN9_pPtI9sWpv3m2ttzDXHfeyOKRWx--cOZTjC7rZSiDBxn7GrE-FIHR1XZG5UmMfCzYuJNQX0MS2sXu8V8-eKmQnqBkwx4VTmcPwGV_dK6g)](https://mermaid.live/edit#pako:eNqNk99PwjAQx_-VprxCwo8YtSQmOtgTCQaiL46H2l1HQ9fOrosSwv9u59aBzBH3svXu8737Xi87YKZjwARzqT_ZlhqLFqtIIfcwSfN8Bhy5sFBSqB3iQkrSm0wmQRhOUSfGtNSG9DjnLSi31OwU2LrU03B0G46nXdCVQkyrvEjB1IXC-9Hd8GbaBbULLYMVIeTkeTB4QI9JYiCh1qFnqYpf155cxtsrJWv4KEAxMGfxWuAzP6W9_CWzIoUQIK6ovHhPDM22aDFumCoT1N7d2xrKysZ-nAr47fjZ6K992_bfvdscqEtDXoWWnAclfDFWl24xQnO7BQNFWmWu3aqz90qliP85QcNexzqtQdIEAy8PdJppBcq-NaFN9_pPtI9sWpv3m2ttzDXHfeyOKRWx--cOZTjC7rZSiDBxn7GrE-FIHR1XZG5UmMfCzYuJNQX0MS2sXu8V8-eKmQnqBkwx4VTmcPwGV_dK6g)
 
 **L1**
 
@@ -51,7 +51,7 @@ In the event that the Sequencer is down, messages will not be transmitted from L
 - **Tx1** contains Chainlink’s transaction to set the status of the Sequencer as being down on L2.
 - **Tx2** is a transaction made by a consumer that is dependent on
 
-![Starknet Sequencer Pending](.//Starknet-Pending.png)
+[![](https://mermaid.ink/img/pako:eNo1jrEOwjAMRH8l8twFxsywMQBlzOImbhPRJMWNBajqvxNU1dO709PJC9jsCDT0Y35bj1zU5W6SqjdLNzBOXrX0EkqWWF0puZAGdRMS2qzH57DDcYPqQAOROGJwdXn51waKp0gGdEWH_DRg0lo9mRwWOrtQMoMuLNQASsntN9k9b84pYP0ngu5xnGn9ATwDPgo)](https://mermaid.live/edit#pako:eNo1jrEOwjAMRH8l8twFxsywMQBlzOImbhPRJMWNBajqvxNU1dO709PJC9jsCDT0Y35bj1zU5W6SqjdLNzBOXrX0EkqWWF0puZAGdRMS2qzH57DDcYPqQAOROGJwdXn51waKp0gGdEWH_DRg0lo9mRwWOrtQMoMuLNQASsntN9k9b84pYP0ngu5xnGn9ATwDPgo)
 
 **After Sequencer comes back online**
 
@@ -59,7 +59,7 @@ In the event that the Sequencer is down, messages will not be transmitted from L
 - Transactions in the pending queue are processed chronologically so **Tx1** is processed before **Tx2.**
 - As **Tx1** happens before **Tx2, Tx2** will read the status of the Sequencer as being down
 
-### Bridge Fees (In Progress)
+### Bridge Fees
 
 As of version v0.10.0, Starknet has begun introducing fees to send messages from L1 to L2. These fees are used to pay for the transaction
 on L2. This has been done so that the Sequencer has an incentive to process L2 messags. Whilst today `v0.10.0` still processes messages sent
