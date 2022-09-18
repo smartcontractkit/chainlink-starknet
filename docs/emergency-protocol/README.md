@@ -2,7 +2,9 @@
 
 ## Background
 
-The purpose of the Starknet Sequencer Emergency Protocol is to track the last known status of the Starknet Sequencer at a given point in time.
+Today Chainlink price feeds are used by many DeFi protocols to secure billions of dollars. Whilst feeds report fresh prices the majority of the time, L2 feeds will report stale price data whenever the L2 chain stops producing new blocks. This can happen whenever the L2 Sequencer fails to process any new transactions. Whenever this happens, an arbitrage opportunity is created for malicious actors to take advantage of the price difference between the price inside and outside the L2 chain.
+
+The Starknet Emergency Protocol provides a way for Chainlink price feed consumers to guard against the scenario described above. The protocol tracks the last known health of the Sequencer and reports it's health on chain along with the timestamp of when it either comes back online or goes offline. This allows consuming contracts to implement a grace period in their contracts to revert transactions whenever the Sequencer is down.
 
 [Official Docs](https://docs.chain.link/docs/l2-sequencer-flag/)
 
