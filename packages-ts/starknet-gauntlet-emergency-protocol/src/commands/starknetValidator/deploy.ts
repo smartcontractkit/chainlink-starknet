@@ -4,20 +4,42 @@ import { CATEGORIES } from '../../lib/categories'
 
 export interface UserInput {
   starkNetMessaging: number
-  l2UptimeFeedAddr: string
+  configAC: string
+  gasPriceL1Feed: string
+  source: string
+  gasEstimate: number
+  l2Feed: string
 }
 
-type ContractInput = [starkNetMessaging: number, l2UptimeFeedAddr: string]
+type ContractInput = [
+  starkNetMessaging: number,
+  configAC: string,
+  gasPriceL1Feed: string,
+  source: string,
+  l2Feed: string,
+  gasEstimate: number,
+]
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [input.starkNetMessaging, input.l2UptimeFeedAddr]
+  return [
+    input.starkNetMessaging,
+    input.configAC,
+    input.gasPriceL1Feed,
+    input.source,
+    input.l2Feed,
+    input.gasEstimate,
+  ]
 }
 
 const makeUserInput = async (flags): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
   return {
-    l2UptimeFeedAddr: flags.l2UptimeFeedAddr,
     starkNetMessaging: flags.starkNetMessaging,
+    configAC: flags.configAC,
+    gasPriceL1Feed: flags.gasPriceL1Feed,
+    source: flags.source,
+    gasEstimate: flags.gasEstimate,
+    l2Feed: flags.l2Feed,
   }
 }
 
@@ -28,7 +50,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Deploys a StarknetValidator contract',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4 --l2UptimeFeedAddr=0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f --network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=0xde29d060D45901Fb19ED6C6e959EB22d8626708e --configAC=0x42f4802128C56740D77824046bb13E6a38874331 --gasPriceL1Feed=0xdcb95Cd00d32d02b5689CE020Ed67f4f91ee5942 --source=0x42f4802128C56740D77824046bb13E6a38874331 --gasEstimate=0 --l2Feed=0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f --network=<NETWORK>`,
     ],
   },
   makeUserInput,
