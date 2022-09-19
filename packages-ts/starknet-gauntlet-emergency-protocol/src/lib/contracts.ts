@@ -9,13 +9,21 @@ export enum CONTRACT_LIST {
 
 export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(
-    fs.readFileSync(`${__dirname}/../../contract_artifacts/abi/${name}.json`).toString('ascii'),
+    fs
+      .readFileSync(
+        `${__dirname}/../../../../contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed/${name}.cairo/${name}.json`,
+      )
+      .toString('ascii'),
   )
 }
 
 export const loadStarknetValidatorContract = (name: CONTRACT_LIST): ContractFactory => {
   const abi = JSON.parse(
-    fs.readFileSync(`${__dirname}/../../contract_artifacts/abi/${name}.json`).toString('ascii'),
+    fs
+      .readFileSync(
+        `${__dirname}/../../../../contracts/artifacts/src/chainlink/solidity/emergency/${name}.sol/${name}.json`,
+      )
+      .toString('ascii'),
   )
   return new ContractFactory(abi?.abi, abi?.bytecode)
 }
