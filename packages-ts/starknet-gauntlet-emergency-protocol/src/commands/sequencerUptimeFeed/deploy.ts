@@ -30,7 +30,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
     description: 'Deploys a SequencerUptimeFeed contract',
     examples: [
       `${CATEGORIES.SEQUENCER_UPTIME_FEED}:deploy --initialStatus=false --network=<NETWORK>`,
-      `${CATEGORIES.SEQUENCER_UPTIME_FEED}:deploy --initialStatus=false --ownerAddress=<STARKNET_ADDRESS> --network=<NETWORK>`,
+      `${CATEGORIES.SEQUENCER_UPTIME_FEED}:deploy --initialStatus=false --owner=<STARKNET_ADDRESS> --network=<NETWORK>`,
     ],
   },
   makeUserInput,

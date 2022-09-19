@@ -24,7 +24,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   category: CATEGORIES.STARKNET_VALIDATOR,
   action: 'addAccess',
   ux: {
-    description: 'Deploys a StarknetValidator contract',
+    description: 'Allow addres to access StarknetValidator',
     examples: [
       `${CATEGORIES.STARKNET_VALIDATOR}:addAccess --user=0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4 0x6B5b7121C4F4B186e8C018a65CF379260B0Dba04 --network=<NETWORK>`,
     ],
