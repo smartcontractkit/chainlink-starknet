@@ -41,7 +41,8 @@ func TestPadBytes(t *testing.T) {
 func TestEnsureFelt(t *testing.T) {
 	// create random bytes
 	random := make([]byte, 32)
-	rand.Read(random)
+	_, err := rand.Read(random)
+	require.NoError(t, err)
 
 	// fit into [32]byte
 	val := [32]byte{}

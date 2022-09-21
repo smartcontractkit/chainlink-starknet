@@ -5,11 +5,12 @@ import (
 	"math/big"
 	"sort"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -66,7 +67,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	var observations []junotypes.Felt
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
-		obs := starknet.SignedBigToFelt(o.Value) // converst negative bigInts to corresponding felt in bigInt form
+		obs := starknet.SignedBigToFelt(o.Value) // converts negative bigInts to corresponding felt in bigInt form
 		observations = append(observations, junotypes.BigToFelt(obs))
 	}
 
