@@ -15,10 +15,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  checking_setup:
+    name: checking setup
+    environment: integration
+    permissions:
+      checks: write
+      pull-requests: write
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+      - name: Setup environment
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/setup-run-tests-environment@7304bf22b7ddeef2a7da6aca05b2a7c7f0b90104 # v2.0.14
+        with:
+          QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
+          QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+          QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
   e2e_custom_build_custom_chainlink_image:
     name: E2E Custom Build Custom CL Image
     runs-on: ubuntu-latest
     environment: integration
+    needs: [checking_setup]
     permissions:
       id-token: write
       contents: read
