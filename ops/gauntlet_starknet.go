@@ -136,6 +136,18 @@ func (sg *StarknetGauntlet) DeployAccessControllerContract() (string, error) {
 	return sg.gr.Responses[0].Contract, nil
 }
 
+func (sg *StarknetGauntlet) DeployOCR2ProxyContract(aggregator string) (string, error) {
+	_, err := sg.g.ExecCommand([]string{"proxy:deploy", fmt.Sprintf("--address=%s", aggregator)}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
 func (sg *StarknetGauntlet) SetOCRBilling(observationPaymentGjuels int64, transmissionPaymentGjuels int64, ocrAddress string) (string, error) {
 	_, err := sg.g.ExecCommand([]string{"ocr2:set_billing", fmt.Sprintf("--observationPaymentGjuels=%d", observationPaymentGjuels), fmt.Sprintf("--transmissionPaymentGjuels=%d", transmissionPaymentGjuels), ocrAddress}, *sg.options)
 	if err != nil {
