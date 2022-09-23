@@ -27,10 +27,10 @@ describe('Proxy Contract', () => {
   beforeAll(async () => {
     network = await startNetwork()
   }, TIMEOUT)
-  
+
   afterAll(async () => {
     network.stop()
-})
+  })
 
   it(
     'Deploy OZ Account',
