@@ -12,6 +12,12 @@ from the root of the repo, install ginkgo
 make install
 ```
 
+make sure gauntlet and contract artifacts are properly compiled
+```
+yarn
+make build-ts-contracts
+```
+
 ## Commands
 ```bash
 
