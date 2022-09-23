@@ -71,7 +71,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				ServiceKeyL1:        serviceKeyL1,
 				ServiceKeyL2:        serviceKeyL2,
 			}
-			//soakNetwork = blockchain.LoadNetworkFromEnvironment()
 			t = &common.Test{}
 			t.DeployCluster(5, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
@@ -150,7 +149,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	})
 
 	Describe("with OCRv2 job @soak", func() {
-		It("works", func() {
+		It("Soak test OCRv2", func() {
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][1]
 			roundWaitTimeout = t.Env.Cfg.TTL

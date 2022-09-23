@@ -35,7 +35,6 @@ var (
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
 	defaultWalletAddress string // derived in init()
-	soakNetwork          *blockchain.EVMNetwork
 )
 
 func init() {
@@ -115,11 +114,8 @@ func (t *Test) DeployEnv(nodes int) {
 			},
 		}
 	}
-	if t.InsideK8s {
-		soakNetwork = blockchain.LoadNetworkFromEnvironment()
-	}
-	t.Env = environment.New(&environment.Config{
 
+	t.Env = environment.New(&environment.Config{
 		InsideK8s: t.InsideK8s,
 	}).
 		// AddHelm(hardhat.New(nil)).
