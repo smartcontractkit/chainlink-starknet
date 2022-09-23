@@ -163,13 +163,13 @@ func (c *Client) LatestRoundData(ctx context.Context, address string) (round Rou
 func (c *Client) LinkAvailableForPayment(ctx context.Context, address string) (*big.Int, error) {
 	results, err := c.r.CallContract(ctx, starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "link_available_for_payments",
+		Selector:        "link_available_for_payment",
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payments'")
+		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payment'")
 	}
 	if len(results) != 1 {
-		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payments'")
+		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
 	}
 	return junotypes.HexToFelt(results[0]).Big(), nil
 }
