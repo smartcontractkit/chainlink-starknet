@@ -77,16 +77,20 @@ func parseEnvVars(cfg *StarknetConfig) error {
 		}
 		cfg.pollInterval = pollInterval
 	}
+	if value, isPresent := os.LookupEnv("STARKNET_LINK_TOKEN_ADDRESS"); isPresent {
+		cfg.linkTokenAddress = value
+	}
 	return nil
 }
 
 func validateConfig(cfg StarknetConfig) error {
 	// Required config
 	for envVarName, currentValue := range map[string]string{
-		"STARKNET_RPC_ENDPOINT": cfg.rpcEndpoint,
-		"STARKNET_NETWORK_NAME": cfg.networkName,
-		"STARKNET_NETWORK_ID":   cfg.networkID,
-		"STARKNET_CHAIN_ID":     cfg.chainID,
+		"STARKNET_RPC_ENDPOINT":       cfg.rpcEndpoint,
+		"STARKNET_NETWORK_NAME":       cfg.networkName,
+		"STARKNET_NETWORK_ID":         cfg.networkID,
+		"STARKNET_CHAIN_ID":           cfg.chainID,
+		"STARKNET_LINK_TOKEN_ADDRESS": cfg.linkTokenAddress,
 	} {
 		if currentValue == "" {
 			return fmt.Errorf("'%s' env var is required", envVarName)
