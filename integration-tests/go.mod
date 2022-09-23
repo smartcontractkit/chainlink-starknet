@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.20.0
 	github.com/rs/zerolog v1.27.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220822173222-d6c1c758059c
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220923165823-d5900e20cec4
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220822173222-d6c1c758059c
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220822181847-8f75df66a5f1

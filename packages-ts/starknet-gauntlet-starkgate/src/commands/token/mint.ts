@@ -3,7 +3,7 @@ import {
   ExecuteCommandConfig,
   makeExecuteCommand,
   Validation,
-  isValidAddress
+  isValidAddress,
 } from '@chainlink/starknet-gauntlet'
 import { Uint256 } from 'starknet/dist/utils/uint256'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
@@ -27,8 +27,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const validateAccount = async (input) => {
-  if (!isValidAddress(input.account))
-    throw new Error(`Invalid account address: ${input.account}`)
+  if (!isValidAddress(input.account)) throw new Error(`Invalid account address: ${input.account}`)
   return true
 }
 
@@ -36,7 +35,6 @@ const validateAmount = async (input) => {
   if (isNaN(Number(input.amount))) throw new Error(`Invalid amount: ${input.amount}`)
   return true
 }
-
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
   return [input.account, bnToUint256(input.amount)]

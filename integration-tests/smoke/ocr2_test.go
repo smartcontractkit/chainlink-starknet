@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dontpanicdao/caigo"
 	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -94,7 +95,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying LINK token contract", func() {
-			linkTokenAddress, err := sg.DeployLinkTokenContract()
+			linkTokenAddress, err = sg.DeployLinkTokenContract()
 			Expect(err).ShouldNot(HaveOccurred(), "LINK Contract deployment should not fail")
 			err = os.Setenv("LINK", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
@@ -112,6 +113,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		By("Deploying OCR2 contract", func() {
 			ocrAddress, err = sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
+		})
+
+		By("Fund OCR2 contract", func() {
+			_, err = sg.MintLinkToken(linkTokenAddress, ocrAddress, "100000000000000000000")
+			Expect(err).ShouldNot(HaveOccurred(), "Funding OCR2 contract should not fail")
 		})
 
 		By("Setting OCR2 billing", func() {
@@ -153,6 +159,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
+			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][0]
 
@@ -162,12 +169,28 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			client, err := ocr2.NewClient(reader, lggr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
 
+			// validate balance in aggregator
+			resLINK, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: linkTokenAddress,
+				Selector:        "balanceOf",
+				Calldata:        []string{caigo.HexToBN(ocrAddress).String()},
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			resAgg, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: ocrAddress,
+				Selector:        "link_available_for_payment",
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
+			balAgg, _ := new(big.Int).SetString(resAgg[0], 0)
+			Expect(balLINK.Cmp(big.NewInt(0)) == 1).To(BeTrue(), "Aggregator should have non-zero balance")
+			Expect(balLINK.Cmp(balAgg) >= 0).To(BeTrue(), "Aggregator payment balance should be <= actual LINK balance")
+
 			// assert new rounds are occuring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
 			var stuck bool
 			stuckCount := 0
-			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 
 			// assert both positive and negative values have been seen
 			var positive bool
