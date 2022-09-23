@@ -40,6 +40,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		linkTokenAddress        string
 		accessControllerAddress string
 		ocrAddress              string
+		proxyAddress            string
 		sg                      *ops.StarknetGauntlet
 		t                       *common.Test
 		nAccounts               []string
@@ -113,6 +114,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		By("Deploying OCR2 contract", func() {
 			ocrAddress, err = sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
+		})
+
+		By("Deploy proxy contract", func() {
+			proxyAddress, err = sg.DeployOCR2ProxyContract(ocrAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy deployment should not fail")
 		})
 
 		By("Fund OCR2 contract", func() {
@@ -265,6 +271,17 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(positive).To(BeTrue(), "Positive value should have been submitted")
 			Expect(negative).To(BeTrue(), "Negative value should have been submitted")
 			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
+
+			// Test proxy reading
+			// TODO: would be good to test proxy switching underlying feeds
+			roundDataRaw, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: proxyAddress,
+				Selector:        "latest_round_data",
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")
+			Expect(len(roundDataRaw) == 5).Should(BeTrue(), "Round data from proxy should match expected size")
+			value := starknet.HexToSignedBig(roundDataRaw[1]).Int64()
+			Expect(value == int64(mockServerVal) || value == int64(-1*mockServerVal)).Should(BeTrue(), "Reading from proxy should return correct value")
 		})
 	})
 
