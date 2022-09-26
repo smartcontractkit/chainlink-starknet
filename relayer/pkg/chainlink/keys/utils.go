@@ -8,6 +8,7 @@ import (
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	"github.com/dontpanicdao/caigo"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -50,6 +51,9 @@ func GenerateKey(material io.Reader) (k Key, err error) {
 	}
 
 	k.pub.X, k.pub.Y, err = caigo.Curve.PrivateToPoint(k.priv)
+	if err != nil {
+		return k, err
+	}
 
 	if !caigo.Curve.IsOnCurve(k.pub.X, k.pub.Y) {
 		return k, fmt.Errorf("key gen is not on stark curve")

@@ -9,8 +9,9 @@ import (
 	"github.com/pkg/errors"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )

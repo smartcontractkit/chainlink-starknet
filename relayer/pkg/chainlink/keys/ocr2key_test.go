@@ -70,6 +70,7 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 
 	// check that report hash matches expected
 	msg, err := ReportToSigData(ctx, report)
+	require.NoError(t, err)
 
 	expected, err := caigo.HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
 	require.NoError(t, err)

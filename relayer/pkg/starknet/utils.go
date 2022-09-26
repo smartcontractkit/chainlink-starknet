@@ -74,12 +74,12 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	length := int(felts[0].Int64())
 
 	for _, felt := range felts[1:] {
-		buf := buf[:Min(chunkSize, length)]
+		bytesBuffer := buf[:Min(chunkSize, length)]
 
-		felt.FillBytes(buf)
-		data = append(data, buf...)
+		felt.FillBytes(bytesBuffer)
+		data = append(data, bytesBuffer...)
 
-		length -= len(buf)
+		length -= len(bytesBuffer)
 	}
 
 	if length != 0 {
@@ -140,7 +140,7 @@ func CompareAddress(a, b string) bool {
 		return false
 	}
 
-	return bytes.Compare(PadBytes(aBytes, 32), PadBytes(bBytes, 32)) == 0
+	return bytes.Equal(PadBytes(aBytes, 32), PadBytes(bBytes, 32))
 }
 
 /* Testing utils - do not use (XXX) outside testing context */

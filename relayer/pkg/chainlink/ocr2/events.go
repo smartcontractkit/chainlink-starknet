@@ -9,9 +9,10 @@ import (
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 var (
@@ -46,24 +47,24 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	roundId := uint32(eventData[index].Uint64())
 
 	// answer
-	index += 1
+	index++
 	latestAnswer := starknet.HexToSignedBig(eventData[index].String())
 
 	// transmitter
-	index += 1
+	index++
 	transmitter := eventData[index]
 
 	// observation_timestamp
-	index += 1
+	index++
 	unixTime := eventData[index].Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
 	// observers (raw) max 31
-	index += 1
+	index++
 	observersRaw := starknet.PadBytes(eventData[index].Big().Bytes(), MaxObservers)
 
 	// observation_len
-	index += 1
+	index++
 	observationsLen := uint32(eventData[index].Uint64())
 
 	// observers (based on observationsLen)
@@ -83,22 +84,22 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	juelsPerFeeCoin := eventData[index].Big()
 
 	// juels_per_fee_coin
-	index += 1
+	index++
 	gasPrice := eventData[index].Big()
 
 	// config digest
-	index += 1
+	index++
 	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
 	if err != nil {
 		return NewTransmissionEvent{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
 	}
 
 	// epoch_and_round
-	index += 1
+	index++
 	epoch, round := parseEpochAndRound(eventData[index].Big())
 
 	// reimbursement
-	index += 1
+	index++
 	reimbursement := eventData[index].Big()
 
 	return NewTransmissionEvent{
@@ -124,22 +125,22 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	// previous_config_block_number - skip
 
 	// latest_config_digest
-	index += 1
+	index++
 	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
 	}
 
 	// config_count
-	index += 1
+	index++
 	configCount := eventData[index].Uint64()
 
 	// oracles_len
-	index += 1
+	index++
 	oraclesLen := eventData[index].Uint64()
 
 	// oracles
-	index += 1
+	index++
 	oracleMembers := eventData[index:(index + int(oraclesLen)*2)]
 	var signers []types.OnchainPublicKey
 	var transmitters []types.Account
@@ -156,11 +157,11 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	f := eventData[index].Uint64()
 
 	// onchain_config length
-	index += 1
+	index++
 	onchainConfigLen := eventData[index].Uint64()
 
 	// onchain_config (version=1, min, max)
-	index += 1
+	index++
 	onchainConfigFelts := eventData[index:(index + int(onchainConfigLen))]
 	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
 		onchainConfigFelts[0].Big(),
@@ -176,11 +177,11 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	offchainConfigVersion := eventData[index].Uint64()
 
 	// offchain_config_len
-	index += 1
+	index++
 	offchainConfigLen := eventData[index].Uint64()
 
 	// offchain_config
-	index += 1
+	index++
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
 	// todo: get rid of caigoToJuno workaround
 	offchainConfig, err := starknet.DecodeFelts(starknet.FeltsToBig(offchainConfigFelts))
