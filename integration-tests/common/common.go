@@ -4,9 +4,19 @@ import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
+	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
+	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
+	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
+
+// 1. Deploy EVM nodes with OCRv2 config
+// 2. Deploy contracts to EVM chain
+// 3. Create bootstrap job spec for bootstrap node
+// 4. Create job specs for child nodes
+// 5. Create P2P keys
 
 type Common struct {
 	P2PPort             string
@@ -123,4 +133,29 @@ func SetConfig(cfg *Common) *Common {
 		ChainId:             cfg.ChainId,
 		ChainName:           cfg.ChainName,
 	}
+}
+
+func GetDefaultCoreConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"STARKNET_ENABLED":            "true",
+		"EVM_ENABLED":                 "false",
+		"EVM_RPC_ENABLED":             "false",
+		"CHAINLINK_DEV":               "false",
+		"FEATURE_OFFCHAIN_REPORTING2": "true",
+		"feature_offchain_reporting":  "false",
+		"P2P_NETWORKING_STACK":        "V2",
+		"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
+		"P2PV2_DELTA_DIAL":            "5s",
+		"P2PV2_DELTA_RECONCILE":       "5s",
+		"p2p_listen_port":             "0",
+	}
+}
+
+func GetDefaultEnvSetup(envConfig *environment.Config, clConfig map[string]interface{}) *environment.Environment {
+	return environment.New(envConfig).
+		// AddHelm(hardhat.New(nil)).
+		AddHelm(devnet.New(nil)).
+		AddHelm(mockservercfg.New(nil)).
+		AddHelm(mockserver.New(nil)).
+		AddHelm(chainlink.New(0, clConfig))
 }
