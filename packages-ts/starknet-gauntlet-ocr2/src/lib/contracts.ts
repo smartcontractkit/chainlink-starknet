@@ -4,6 +4,7 @@ import { CompiledContract, json } from 'starknet'
 export enum CONTRACT_LIST {
   OCR2 = 'aggregator',
   ACCESS_CONTROLLER = 'simple_write_access_controller',
+  AGGREGATOR_PROXY = 'aggregator_proxy',
 }
 
 export const loadContract_Ocr2 = (name: CONTRACT_LIST): CompiledContract => {
@@ -26,6 +27,7 @@ export const loadContract_AccessController = (name: CONTRACT_LIST): CompiledCont
   )
 }
 
+export const aggregatorProxyLoader = () => loadContract_Ocr2(CONTRACT_LIST.AGGREGATOR_PROXY)
 export const ocr2ContractLoader = () => loadContract_Ocr2(CONTRACT_LIST.OCR2)
 export const accessControllerContractLoader = () =>
   loadContract_AccessController(CONTRACT_LIST.ACCESS_CONTROLLER)
