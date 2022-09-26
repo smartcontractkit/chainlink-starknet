@@ -1,8 +1,8 @@
 package ocr2
 
 import (
-	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -72,7 +72,10 @@ func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}
-	data.RoundID = binary.BigEndian.Uint32(felts[0][:])
+	if !felts[0].Big().IsUint64() && felts[0].Big().Uint64() > math.MaxUint32 {
+		return data, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", felts[0].Big())
+	}
+	data.RoundID = uint32(felts[0].Big().Uint64())
 	data.Answer = felts[1].Big()
 	blockNumber := felts[2].Big()
 	if !blockNumber.IsUint64() {

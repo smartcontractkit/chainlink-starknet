@@ -45,11 +45,11 @@ type proxySource struct {
 }
 
 func (s *proxySource) Fetch(ctx context.Context) (interface{}, error) {
-	latestTransmissionDetails, err := s.ocr2Reader.LatestTransmissionDetails(ctx, s.contractAddress)
+	latestTransmission, err := s.ocr2Reader.LatestTransmissionDetails(ctx, s.contractAddress)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch latest_transmission_details: %w", err)
 	}
 	return ProxyData{
-		Answer: latestTransmissionDetails.LatestAnswer,
+		Answer: latestTransmission.LatestAnswer,
 	}, nil
 }

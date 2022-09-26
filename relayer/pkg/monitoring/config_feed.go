@@ -82,6 +82,11 @@ func (s StarknetFeedConfig) ToMapping() map[string]interface{} {
 		"contract_type":    s.ContractType,
 		"contract_status":  s.ContractStatus,
 		"contract_address": []byte(s.ContractAddress),
+
+		// These fields are legacy. They are required in the schema but they
+		// should be set to a zero value for any other chain.
+		"transmissions_account": []byte{},
+		"state_account":         []byte{},
 	}
 }
 

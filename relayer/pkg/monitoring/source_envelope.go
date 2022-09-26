@@ -7,10 +7,12 @@ import (
 	"sync"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
+	"github.com/dontpanicdao/caigo"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
 	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"go.uber.org/multierr"
 )
 
@@ -66,6 +68,9 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 			return
 		}
 		envelope.BlockNumber = latestRoundData.BlockNumber
+		if newTransmissionEvent.Transmitter != nil {
+			envelope.Transmitter = types.Account(newTransmissionEvent.Transmitter.String())
+		}
 		envelope.AggregatorRoundID = latestRoundData.RoundID
 		envelope.ConfigDigest = newTransmissionEvent.ConfigDigest
 		envelope.Epoch = newTransmissionEvent.Epoch
@@ -140,7 +145,9 @@ func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress,
 	results, err := s.ocr2Reader.BaseReader().CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkTokenAddress,
 		Selector:        "balanceOf",
-		Calldata:        []string{contractAddress},
+		Calldata: []string{
+			caigo.HexToBN(contractAddress).String(),
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed call to ECR20 contract, balanceOf method: %w", err)
