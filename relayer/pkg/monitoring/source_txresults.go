@@ -57,5 +57,6 @@ func (s *txResultsSource) Fetch(ctx context.Context) (interface{}, error) {
 		numSucceeded = latestRoundData.RoundID - s.prevRoundID
 		s.prevRoundID = latestRoundData.RoundID
 	}
+	// Note that failed/rejected transactions count is always set to 0 because there is no way to count them.
 	return relayMonitoring.TxResults{NumSucceeded: uint64(numSucceeded), NumFailed: 0}, nil
 }
