@@ -74,12 +74,12 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	length := int(felts[0].Int64())
 
 	for _, felt := range felts[1:] {
-		bytes := buf[:Min(chunkSize, length)]
+		bytesBuffer := buf[:Min(chunkSize, length)]
 
-		felt.FillBytes(bytes)
-		data = append(data, bytes...)
+		felt.FillBytes(bytesBuffer)
+		data = append(data, bytesBuffer...)
 
-		length -= len(bytes)
+		length -= len(bytesBuffer)
 	}
 
 	if length != 0 {
