@@ -20,7 +20,6 @@ var _ median.MedianContract = (*transmissionsCache)(nil)
 type transmissionsCache struct {
 	transmissionDetails TransmissionDetails
 	tdLock              sync.RWMutex
-	tdTime              time.Time
 
 	stop, done chan struct{}
 
