@@ -34,33 +34,34 @@ func init() {
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err                     error
-		linkTokenAddress        string
-		accessControllerAddress string
-		ocrAddress              string
-		sg                      *ops.StarknetGauntlet
-		t                       *common.Test
-		nAccounts               []string
-		serviceKeyL1            = "Hardhat"
-		serviceKeyL2            = "starknet-dev"
-		serviceKeyChainlink     = "chainlink"
-		chainName               = "starknet"
-		chainId                 = gateway.GOERLI_ID
-		cfg                     *common.Common
-		decimals                = 9
-		mockServerVal           = 900000000
-		rpcRequestTimeout       = 10 * time.Second
-		roundWaitTimeout        = 10 * time.Minute
+		err              error
+		linkTokenAddress string
+		//accessControllerAddress string
+		ocrAddress string
+		t          *common.Test
+		//nAccounts               []string
+		serviceKeyL1        = "Hardhat"
+		serviceKeyL2        = "starknet-dev"
+		serviceKeyChainlink = "chainlink"
+		chainName           = "starknet"
+		chainId             = gateway.GOERLI_ID
+		cfg                 *common.Common
+		decimals            = 9
+		mockServerVal       = 900000000
+		rpcRequestTimeout   = 10 * time.Second
+		roundWaitTimeout    = 10 * time.Minute
 	)
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
+			t = &common.Test{}
+			// Setting this to the root of the repo for cmd exec func for Gauntlet
+			sg, err := ops.NewStarknetGauntlet("/root/")
+			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
+			t.Sg = sg
 			err = os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
 			err = os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
-			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err = ops.NewStarknetGauntlet("/root/")
-			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
 		By("Deploying the environment", func() {
@@ -71,48 +72,35 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				ServiceKeyL1:        serviceKeyL1,
 				ServiceKeyL2:        serviceKeyL2,
 			}
-			t = &common.Test{}
+
 			t.DeployCluster(5, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][1])
-			sg.SetupNetwork(t.GetStarkNetAddressRemote())
+			t.Sg.SetupNetwork(t.GetStarkNetAddressRemote())
 		})
 
 		By("Funding nodes", func() {
-			for _, key := range t.GetNodeKeys() {
-				Expect(key.TXKey.Data.Attributes.StarkKey).NotTo(Equal(""))
-				nAccount, _ := sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
-				Expect(err).ShouldNot(HaveOccurred(), "Funding node should not fail")
-				Expect(nAccount).To(Equal(key.TXKey.Data.Attributes.AccountAddr))
-				nAccounts = append(nAccounts, nAccount)
-			}
-			err = devnet.FundAccounts(nAccounts)
-			Expect(err).ShouldNot(HaveOccurred(), "Funding accounts should not fail")
+			err = t.FundNodes()
+			Expect(err).ShouldNot(HaveOccurred(), "Funding nodes should not fail")
 		})
 
 		By("Deploying LINK token contract", func() {
-			linkTokenAddress, err := sg.DeployLinkTokenContract()
-			Expect(err).ShouldNot(HaveOccurred(), "LINK Contract deployment should not fail")
-			err = os.Setenv("LINK", linkTokenAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
-
+			linkTokenAddress, err = t.DeployLinkToken()
+			Expect(err).ShouldNot(HaveOccurred(), "LINK token should not fail")
 		})
 
 		By("Deploying access controller contract", func() {
-			accessControllerAddress, err = sg.DeployAccessControllerContract()
-			Expect(err).ShouldNot(HaveOccurred(), "Access controller contract deployment should not fail")
-			err = os.Setenv("BILLING_ACCESS_CONTROLLER", accessControllerAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
-
+			accessControllerAddress, err := t.DeployAccessController()
+			Expect(err).ShouldNot(HaveOccurred(), "Deploying access controller should not fail"+accessControllerAddress)
 		})
 
 		By("Deploying OCR2 contract", func() {
-			ocrAddress, err = sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
+			ocrAddress, err = t.Sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
 		})
 
 		By("Setting OCR2 billing", func() {
-			_, err = sg.SetOCRBilling(1, 1, ocrAddress)
+			_, err = t.Sg.SetOCRBilling(1, 1, ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR billing should not fail")
 		})
 
@@ -121,7 +109,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR config should not fail")
 			parsedConfig, err := json.Marshal(cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR config should not fail")
-			_, err = sg.SetConfigDetails(string(parsedConfig), ocrAddress)
+			_, err = t.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config should not fail")
 		})
 

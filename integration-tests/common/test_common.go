@@ -11,9 +11,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-env/environment"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
-	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
@@ -53,6 +50,7 @@ func init() {
 type Test struct {
 	sc         *StarkNetDevnetClient
 	cc         *ChainlinkClient
+	Sg         *ops.StarknetGauntlet
 	mockServer *ctfClient.MockserverClient
 	Env        *environment.Environment
 	Common     *Common
@@ -89,19 +87,7 @@ func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
 func (t *Test) DeployEnv(nodes int) {
 	clConfig := map[string]interface{}{
 		"replicas": nodes,
-		"env": map[string]interface{}{
-			"STARKNET_ENABLED":            "true",
-			"EVM_ENABLED":                 "false",
-			"EVM_RPC_ENABLED":             "false",
-			"CHAINLINK_DEV":               "false",
-			"FEATURE_OFFCHAIN_REPORTING2": "true",
-			"feature_offchain_reporting":  "false",
-			"P2P_NETWORKING_STACK":        "V2",
-			"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
-			"P2PV2_DELTA_DIAL":            "5s",
-			"P2PV2_DELTA_RECONCILE":       "5s",
-			"p2p_listen_port":             "0",
-		},
+		"env":      GetDefaultCoreConfig(),
 	}
 
 	// if image is specified, include in config data
@@ -114,16 +100,7 @@ func (t *Test) DeployEnv(nodes int) {
 			},
 		}
 	}
-
-	t.Env = environment.New(&environment.Config{
-		InsideK8s: t.InsideK8s,
-	}).
-		// AddHelm(hardhat.New(nil)).
-		AddHelm(devnet.New(nil)).
-		AddHelm(mockservercfg.New(nil)).
-		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.New(0, clConfig))
-
+	t.Env = GetDefaultEnvSetup(&environment.Config{InsideK8s: t.InsideK8s}, clConfig)
 	err := t.Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
 	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)
