@@ -4,7 +4,7 @@ import { validateAndParseAddress } from 'starknet'
 export const isValidAddress = (address: string): boolean => {
   try {
     validateAndParseAddress(address)
-    return true
+    return !!address // check value is not falsy (undefined, "", etc)
   } catch (e) {}
   return false
 }
