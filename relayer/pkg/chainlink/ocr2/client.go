@@ -18,6 +18,8 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
+//go:generate mockery --name OCR2Reader --output ./mocks/
+
 type OCR2Reader interface {
 	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
 	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
