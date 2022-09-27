@@ -98,6 +98,12 @@ func StarknetFeedsParser(buf io.ReadCloser) ([]relayMonitoring.FeedConfig, error
 	}
 	feeds := make([]relayMonitoring.FeedConfig, len(rawFeeds))
 	for i, rawFeed := range rawFeeds {
+		multiply, ok := new(big.Int).SetString(rawFeed.MultiplyRaw, 10)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse multiply '%s' into a big.Int", rawFeed.MultiplyRaw)
+		}
+		// NOTE: multiply is not required so if a parse error occurs, we'll use 0.
+		rawFeed.Multiply = multiply
 		feeds[i] = relayMonitoring.FeedConfig(rawFeed)
 	}
 	return feeds, nil
