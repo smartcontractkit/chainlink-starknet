@@ -3,7 +3,6 @@ package smoke_test
 // revive:disable:dot-imports
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"math/big"
@@ -36,25 +35,21 @@ func init() {
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err                     error
-		linkTokenAddress        string
-		accessControllerAddress string
-		ocrAddress              string
-		proxyAddress            string
-		sg                      *ops.StarknetGauntlet
-		t                       *common.Test
-		nAccounts               []string
-		serviceKeyL1            = "Hardhat"
-		serviceKeyL2            = "starknet-dev"
-		serviceKeyChainlink     = "chainlink"
-		chainName               = "starknet"
-		chainId                 = gateway.GOERLI_ID
-		cfg                     *common.Common
-		decimals                = 9
-		rpcRequestTimeout       = 10 * time.Second
-		roundWaitTimeout        = 10 * time.Minute
-		increasingCountMax      = 10
-		mockServerVal           = 900000000
+		err                 error
+		proxyAddress        string
+		sg                  *ops.StarknetGauntlet
+		t                   *common.Test
+		serviceKeyL1        = "Hardhat"
+		serviceKeyL2        = "starknet-dev"
+		serviceKeyChainlink = "chainlink"
+		chainName           = "starknet"
+		chainId             = gateway.GOERLI_ID
+		cfg                 *common.Common
+		decimals            = 9
+		rpcRequestTimeout   = 10 * time.Second
+		roundWaitTimeout    = 10 * time.Minute
+		increasingCountMax  = 10
+		mockServerVal       = 900000000
 	)
 
 	BeforeEach(func() {
@@ -81,63 +76,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][0])
 			sg.SetupNetwork(t.GetStarkNetAddress())
-		})
-
-		By("Funding nodes", func() {
-			for _, key := range t.GetNodeKeys() {
-				Expect(key.TXKey.Data.Attributes.StarkKey).NotTo(Equal(""))
-				nAccount, err := sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
-				Expect(err).ShouldNot(HaveOccurred(), "Funding node should not fail")
-				Expect(nAccount).To(Equal(key.TXKey.Data.Attributes.AccountAddr))
-				nAccounts = append(nAccounts, nAccount)
-			}
-			err = devnet.FundAccounts(nAccounts)
-			Expect(err).ShouldNot(HaveOccurred(), "Funding accounts should not fail")
-		})
-
-		By("Deploying LINK token contract", func() {
-			linkTokenAddress, err = sg.DeployLinkTokenContract()
-			Expect(err).ShouldNot(HaveOccurred(), "LINK Contract deployment should not fail")
-			err = os.Setenv("LINK", linkTokenAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
-
-		})
-
-		By("Deploying access controller contract", func() {
-			accessControllerAddress, err = sg.DeployAccessControllerContract()
-			Expect(err).ShouldNot(HaveOccurred(), "Access controller contract deployment should not fail")
-			err = os.Setenv("BILLING_ACCESS_CONTROLLER", accessControllerAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
-
-		})
-
-		By("Deploying OCR2 contract", func() {
-			ocrAddress, err = sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
-		})
-
-		By("Deploy proxy contract", func() {
-			proxyAddress, err = sg.DeployOCR2ProxyContract(ocrAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy deployment should not fail")
-		})
-
-		By("Fund OCR2 contract", func() {
-			_, err = sg.MintLinkToken(linkTokenAddress, ocrAddress, "100000000000000000000")
-			Expect(err).ShouldNot(HaveOccurred(), "Funding OCR2 contract should not fail")
-		})
-
-		By("Setting OCR2 billing", func() {
-			_, err = sg.SetOCRBilling(1, 1, ocrAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR billing should not fail")
-		})
-
-		By("Setting the Config Details on OCR2 Contract", func() {
-			cfg, err := t.LoadOCR2Config()
-			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR config should not fail")
-			parsedConfig, err := json.Marshal(cfg)
-			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR config should not fail")
-			_, err = sg.SetConfigDetails(string(parsedConfig), ocrAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config should not fail")
+			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
+			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
@@ -156,8 +96,9 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				Name: "bridge-mockserver",
 				URL:  t.GetMockServerURL(),
 			})
-			t.SetMockServerValue("", mockServerVal)
-			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, ocrAddress)
+			err = t.SetMockServerValue("", mockServerVal)
+			Expect(err).ShouldNot(HaveOccurred(), "Setting mock server value should not fail")
+			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, t.OCRAddr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
 
@@ -177,13 +118,13 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			// validate balance in aggregator
 			resLINK, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: linkTokenAddress,
+				ContractAddress: t.LinkTokenAddr,
 				Selector:        "balanceOf",
-				Calldata:        []string{caigo.HexToBN(ocrAddress).String()},
+				Calldata:        []string{caigo.HexToBN(t.OCRAddr).String()},
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
 			resAgg, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: ocrAddress,
+				ContractAddress: t.OCRAddr,
 				Selector:        "link_available_for_payment",
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
@@ -222,7 +163,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
+				res, err := client.LatestTransmissionDetails(ctx, t.OCRAddr)
 				if err != nil {
 					log.Error().Err(err)
 					continue
