@@ -95,4 +95,26 @@ func TestOCR2Client(t *testing.T) {
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", transmissions)
 	})
+
+	t.Run("get latest round data", func(t *testing.T) {
+		round, err := client.LatestRoundData(context.Background(), ocr2ContractAddress)
+		require.NoError(t, err)
+		fmt.Printf("%+v\n", round)
+	})
+
+	t.Run("get link available for payment", func(t *testing.T) {
+		available, err := client.LinkAvailableForPayment(context.Background(), ocr2ContractAddress)
+		require.NoError(t, err)
+		fmt.Printf("%+v\n", available)
+	})
+
+	t.Run("get latest transmission", func(t *testing.T) {
+		round, err := client.LatestRoundData(context.Background(), ocr2ContractAddress)
+		assert.NoError(t, err)
+		fmt.Printf("%+v\n", round)
+
+		transmission, err := client.NewTransmissionEventAt(context.Background(), ocr2ContractAddress, round.BlockNumber)
+		assert.NoError(t, err)
+		fmt.Printf("%+v\n", transmission)
+	})
 }
