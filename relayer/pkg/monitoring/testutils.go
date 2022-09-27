@@ -5,13 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"time"
-
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
-
-func newNullLogger() logger.Logger {
-	return logger.Nop()
-}
 
 func generateChainConfig() StarknetConfig {
 	return StarknetConfig{
