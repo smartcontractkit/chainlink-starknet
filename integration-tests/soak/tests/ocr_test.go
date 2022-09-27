@@ -3,7 +3,6 @@ package soak_test
 // revive:disable:dot-imports
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/dontpanicdao/caigo/gateway"
@@ -34,12 +33,9 @@ func init() {
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err              error
-		linkTokenAddress string
-		//accessControllerAddress string
-		ocrAddress string
-		t          *common.Test
-		//nAccounts               []string
+		err                 error
+		ocrAddress          string
+		t                   *common.Test
 		serviceKeyL1        = "Hardhat"
 		serviceKeyL2        = "starknet-dev"
 		serviceKeyChainlink = "chainlink"
@@ -77,40 +73,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][1])
 			t.Sg.SetupNetwork(t.GetStarkNetAddressRemote())
-		})
-
-		By("Funding nodes", func() {
-			err = t.FundNodes()
-			Expect(err).ShouldNot(HaveOccurred(), "Funding nodes should not fail")
-		})
-
-		By("Deploying LINK token contract", func() {
-			linkTokenAddress, err = t.DeployLinkToken()
-			Expect(err).ShouldNot(HaveOccurred(), "LINK token should not fail")
-		})
-
-		By("Deploying access controller contract", func() {
-			accessControllerAddress, err := t.DeployAccessController()
-			Expect(err).ShouldNot(HaveOccurred(), "Deploying access controller should not fail"+accessControllerAddress)
-		})
-
-		By("Deploying OCR2 contract", func() {
-			ocrAddress, err = t.Sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
-		})
-
-		By("Setting OCR2 billing", func() {
-			_, err = t.Sg.SetOCRBilling(1, 1, ocrAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR billing should not fail")
-		})
-
-		By("Setting the Config Details on OCR2 Contract", func() {
-			cfg, err := t.LoadOCR2Config()
-			Expect(err).ShouldNot(HaveOccurred(), "Loading OCR config should not fail")
-			parsedConfig, err := json.Marshal(cfg)
-			Expect(err).ShouldNot(HaveOccurred(), "Parsing OCR config should not fail")
-			_, err = t.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting OCR config should not fail")
+			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
+			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fial")
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
@@ -119,7 +83,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			parse [type="jsonparse" path="data,result"]
 			val -> parse
 			`
-
 			// TODO: validate juels per fee coin calculation
 			juelsPerFeeCoinSource := ` 
 			sum  [type="sum" values=<[451000]> ]
@@ -129,7 +92,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				Name: "bridge-mockserver",
 				URL:  t.GetMockServerURL(),
 			})
-			t.SetMockServerValue("", mockServerVal)
+			err = t.SetMockServerValue("", mockServerVal)
+			Expect(err).ShouldNot(HaveOccurred(), "Setting mock server value should not fail")
 			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
@@ -169,7 +133,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 				err = t.SetMockServerValue("", newValue)
 				if err != nil {
-					log.Error().Err(err)
+					log.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
 				}
 
 				// end condition: rounds have been stuck
@@ -181,9 +145,9 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
+				res, err := client.LatestTransmissionDetails(ctx, t.OCRAddr)
 				if err != nil {
-					log.Error().Err(err)
+					log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 					continue
 				}
 				log.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
