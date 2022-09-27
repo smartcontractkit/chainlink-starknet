@@ -11,7 +11,13 @@ import (
 
 func TestNewRoundData(t *testing.T) {
 	// TODO (dru) add a snapshot of the response.
-	raw := []string{"0x121e", "0x800000000000010ffffffffffffffffffffffffffffffffffffffffca5b1701", "0x1087", "0x633344a3", "0x633344a5"}
+	raw := []string{
+		"0x121e",
+		"0x800000000000010ffffffffffffffffffffffffffffffffffffffffca5b1701",
+		"0x1087",
+		"0x633344a3",
+		"0x633344a5",
+	}
 
 	felts := rawToFelts(raw)
 	actualRound, err := NewRoundData(felts)
@@ -20,8 +26,8 @@ func TestNewRoundData(t *testing.T) {
 		RoundID:     0x121e,
 		Answer:      bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
 		BlockNumber: 0x1087,
-		StartedAt:   time.Date(2022, time.September, 27, 19, 44, 51, 0, time.Local),
-		UpdatedAt:   time.Date(2022, time.September, 27, 19, 44, 53, 0, time.Local),
+		StartedAt:   time.Unix(int64(0x633344a3), 0),
+		UpdatedAt:   time.Unix(int64(0x633344a5), 0),
 	}
 	require.Equal(t, expectedRound, actualRound)
 }
