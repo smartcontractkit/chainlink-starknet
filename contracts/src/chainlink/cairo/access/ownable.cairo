@@ -72,6 +72,8 @@ namespace Ownable:
         end
         assert_only_owner()
         Ownable_proposed_owner.write(new_owner)
+        let (previous_owner : felt) = Ownable_owner.read()
+        OwnershipTransferred.emit(previous_owner, new_owner)
         return ()
     end
 
