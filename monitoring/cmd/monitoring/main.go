@@ -9,7 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/monitoring"
+	"github.com/smartcontractkit/chainlink-starknet/monitoring/pkg/monitoring"
 )
 
 func main() {
