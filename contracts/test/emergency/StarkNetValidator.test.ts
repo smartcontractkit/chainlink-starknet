@@ -1,4 +1,4 @@
-import { ethers, starknet, network, artifacts } from 'hardhat'
+import { ethers, starknet, network } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
 import { number } from 'starknet'
 import {
@@ -219,6 +219,38 @@ describe('StarkNetValidator', () => {
     })
   })
 
+  describe('#setSourceAggregator', () => {
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(eoaValidator).setSourceAggregator(ethers.constants.AddressZero),
+        ).to.be.revertedWith('Only callable by owner')
+      })
+    })
+
+    describe('when source address is the zero address', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(deployer).setSourceAggregator(ethers.constants.AddressZero),
+        ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidSourceAggregatorAddress')
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        const newSourceAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+        await expect(starkNetValidator.setSourceAggregator(newSourceAddr))
+          .to.emit(starkNetValidator, 'SourceAggregatorSet')
+          .withArgs(mockAggregator.address, newSourceAddr)
+      })
+
+      it('sets the source aggregator address', async () => {
+        await starkNetValidator.connect(deployer).setSourceAggregator(mockAggregator.address)
+        expect(await starkNetValidator.getSourceAggregator()).to.equal(mockAggregator.address)
+      })
+    })
+  })
+
   describe('#setGasConfig', () => {
     describe('when called by non owner without access', () => {
       beforeEach(async () => {
@@ -435,6 +467,66 @@ describe('StarkNetValidator', () => {
       // Assert L2 effects
       const res = await account.call(l2Contract, 'latest_round_data')
       expect(res.round.answer).to.equal(0n) // final status 0
+    })
+  })
+
+  describe('#withdrawFunds', () => {
+    beforeEach(async () => {
+      await deployer.sendTransaction({ to: starkNetValidator.address, value: 10 })
+      const balance = await ethers.provider.getBalance(starkNetValidator.address)
+      expect(balance).to.equal(10n)
+    })
+
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(starkNetValidator.connect(eoaValidator).withdrawFunds()).to.be.revertedWith(
+          'Only callable by owner',
+        )
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        await expect(starkNetValidator.connect(deployer).withdrawFunds())
+          .to.emit(starkNetValidator, 'WithdrawFunds')
+          .withArgs(deployer.address, 10)
+      })
+
+      it('withdraws all funds to deployer', async () => {
+        await starkNetValidator.connect(deployer).withdrawFunds()
+        const balance = await ethers.provider.getBalance(starkNetValidator.address)
+        expect(balance).to.equal(0n)
+      })
+    })
+  })
+
+  describe('#withdrawFundsTo', () => {
+    beforeEach(async () => {
+      await deployer.sendTransaction({ to: starkNetValidator.address, value: 10 })
+      const balance = await ethers.provider.getBalance(starkNetValidator.address)
+      expect(balance).to.equal(10n)
+    })
+
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(eoaValidator).withdrawFundsTo(eoaValidator.address),
+        ).to.be.revertedWith('Only callable by owner')
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        await expect(starkNetValidator.connect(deployer).withdrawFundsTo(eoaValidator.address))
+          .to.emit(starkNetValidator, 'WithdrawFunds')
+          .withArgs(eoaValidator.address, 10)
+      })
+
+      it('withdraws all funds to deployer', async () => {
+        await starkNetValidator.connect(deployer).withdrawFunds()
+        const balance = await ethers.provider.getBalance(starkNetValidator.address)
+        expect(balance).to.equal(0n)
+      })
     })
   })
 })
