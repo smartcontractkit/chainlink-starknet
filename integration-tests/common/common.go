@@ -12,12 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
-// 1. Deploy EVM nodes with OCRv2 config
-// 2. Deploy contracts to EVM chain
-// 3. Create bootstrap job spec for bootstrap node
-// 4. Create job specs for child nodes
-// 5. Create P2P keys
-
 type Common struct {
 	P2PPort             string
 	ServiceKeyL1        string
@@ -153,7 +147,6 @@ func GetDefaultCoreConfig() map[string]interface{} {
 
 func GetDefaultEnvSetup(envConfig *environment.Config, clConfig map[string]interface{}) *environment.Environment {
 	return environment.New(envConfig).
-		// AddHelm(hardhat.New(nil)).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).

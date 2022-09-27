@@ -48,13 +48,16 @@ func init() {
 }
 
 type Test struct {
-	sc         *StarkNetDevnetClient
-	cc         *ChainlinkClient
-	Sg         *ops.StarknetGauntlet
-	mockServer *ctfClient.MockserverClient
-	Env        *environment.Environment
-	Common     *Common
-	InsideK8s  bool
+	sc                   *StarkNetDevnetClient
+	cc                   *ChainlinkClient
+	Sg                   *ops.StarknetGauntlet
+	mockServer           *ctfClient.MockserverClient
+	Env                  *environment.Environment
+	Common               *Common
+	InsideK8s            bool
+	LinkTokenAddr        string
+	OCRAddr              string
+	AccessControllerAddr string
 }
 
 type StarkNetDevnetClient struct {

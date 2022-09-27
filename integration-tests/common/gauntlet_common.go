@@ -1,11 +1,12 @@
 package common
 
 import (
+	"encoding/json"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"os"
 )
 
-func (t *Test) FundNodes() error {
+func (t *Test) fundNodes() error {
 	var nAccounts []string
 	for _, key := range t.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
@@ -25,38 +26,73 @@ func (t *Test) FundNodes() error {
 	return nil
 }
 
-func (t *Test) DeployLinkToken() (string, error) {
-	linkTokenAddress, err := t.Sg.DeployLinkTokenContract()
+func (t *Test) deployLinkToken() error {
+	t.LinkTokenAddr, err = t.Sg.DeployLinkTokenContract()
 	if err != nil {
-		return "", err
+		return err
 	}
-	err = os.Setenv("LINK", linkTokenAddress)
+	err = os.Setenv("LINK", t.LinkTokenAddr)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return linkTokenAddress, nil
+	return nil
 }
 
-func (t *Test) DeployAccessController() (string, error) {
-	accessControllerAddress, err := t.Sg.DeployAccessControllerContract()
+func (t *Test) deployAccessController() error {
+	t.AccessControllerAddr, err = t.Sg.DeployAccessControllerContract()
 	if err != nil {
-		return "", err
+		return err
 	}
-	err = os.Setenv("BILLING_ACCESS_CONTROLLER", accessControllerAddress)
+	err = os.Setenv("BILLING_ACCESS_CONTROLLER", t.AccessControllerAddr)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return accessControllerAddress, nil
+	return nil
 }
 
-//func (t *Test) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64) (string, error) {
-//	ocrAddress, err := t.Sg.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, "auto", linkTokenAddress)
-//	if err != nil {
-//		return "", err
-//	}
-//	err = os.Setenv("BILLING_ACCESS_CONTROLLER", ocrAddress)
-//	if err != nil {
-//		return "", err
-//	}
-//	return ocrAddress, nil
-//}
+func (t *Test) setConfigDetails(ocrAddress string) error {
+	cfg, err := t.LoadOCR2Config()
+	if err != nil {
+		return err
+	}
+	parsedConfig, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	_, err = t.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
+	return nil
+}
+
+func (t *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
+	err = t.fundNodes()
+	if err != nil {
+		return err
+	}
+
+	err = t.deployLinkToken()
+	if err != nil {
+		return err
+	}
+
+	err = t.deployAccessController()
+	if err != nil {
+		return err
+	}
+
+	t.OCRAddr, err = t.Sg.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, t.LinkTokenAddr)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, t.OCRAddr)
+	if err != nil {
+		return err
+	}
+
+	err = t.setConfigDetails(t.OCRAddr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

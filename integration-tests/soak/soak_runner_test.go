@@ -32,12 +32,6 @@ var (
 // Run the OCR soak test defined in ./tests/ocr_test.go
 func TestOCRSoak(t *testing.T) {
 	activeEVMNetwork := networks.GeneralEVM() // Environment currently being used to soak test on
-
-	baseEnvironmentConfig.NamespacePrefix = fmt.Sprintf(
-		"chainlink-soak-ocr-starknet-%s",
-		strings.ReplaceAll(strings.ToLower(activeEVMNetwork.Name), " ", "-"),
-	)
-
 	soakTestHelper(t, "@soak", activeEVMNetwork)
 }
 
@@ -49,6 +43,10 @@ func soakTestHelper(
 ) {
 	exeFile, exeFileSize, err := actions.BuildGoTests("./", "../soak/tests", "../../")
 	require.NoError(t, err, "Error building go tests")
+	baseEnvironmentConfig.NamespacePrefix = fmt.Sprintf(
+		"chainlink-soak-ocr-starknet-%s",
+		strings.ReplaceAll(strings.ToLower(activeEVMNetwork.Name), " ", "-"),
+	)
 	clConfig := map[string]interface{}{
 		"replicas": 5,
 		"env":      common.GetDefaultCoreConfig(),
@@ -71,7 +69,7 @@ func soakTestHelper(
 	err = testEnvironment.
 		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
 		Run()
-
+	require.NoError(t, err, "Error launching test environment")
 	// Copying required files / folders to pod
 	for _, file := range remoteFileList {
 		_, _, _, err = testEnvironment.Client.CopyToPod(
@@ -85,7 +83,6 @@ func soakTestHelper(
 		}
 	}
 
-	require.NoError(t, err, "Error launching test environment")
 	err = actions.TriggerRemoteTest(exeFile, testEnvironment)
 	require.NoError(t, err, "Error activating remote test")
 }
