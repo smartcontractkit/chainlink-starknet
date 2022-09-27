@@ -83,8 +83,8 @@ var (
 		RoundID:     0xf5b,
 		Answer:      bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
 		BlockNumber: 0xe07,
-		StartedAt:   time.Date(2022, time.September, 27, 18, 51, 0, 0, time.Local),
-		UpdatedAt:   time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
+		StartedAt:   time.Date(2022, time.September, 27, 18, 50, 0, 0, time.Local),
+		UpdatedAt:   time.Date(2022, time.September, 27, 18, 51, 0, 0, time.Local),
 	}
 	ocr2ClientNewTransmissionEventAtResponse = ocr2.NewTransmissionEvent{
 		RoundId:      0xf5b,

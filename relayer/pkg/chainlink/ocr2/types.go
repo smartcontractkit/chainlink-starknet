@@ -91,6 +91,6 @@ func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
 	if !updatedAt.IsInt64() {
 		return data, fmt.Errorf("updatedAt '%s' does not fit into int64", startedAt.String())
 	}
-	data.StartedAt = time.Unix(startedAt.Int64(), 0)
+	data.UpdatedAt = time.Unix(updatedAt.Int64(), 0)
 	return data, nil
 }
