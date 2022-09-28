@@ -46,7 +46,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   /// @notice emitted when a new source aggregator contract is set
   event SourceAggregatorSet(address indexed previous, address indexed current);
   /// @notice emitted when withdrawFunds or withdrawFundsTo is call
-  event WithdrawFunds(address indexed recipient, uint256 amount);
+  event FundsWithdrawn(address indexed recipient, uint256 amount);
 
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract
@@ -272,7 +272,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address payable recipient = payable(msg.sender);
     uint256 amount = address(this).balance;
     Address.sendValue(recipient, amount);
-    emit WithdrawFunds(recipient, amount);
+    emit FundsWithdrawn(recipient, amount);
   }
 
   /**
@@ -283,6 +283,6 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   function withdrawFundsTo(address payable recipient) external onlyOwner {
     uint256 amount = address(this).balance;
     Address.sendValue(recipient, amount);
-    emit WithdrawFunds(recipient, amount);
+    emit FundsWithdrawn(recipient, amount);
   }
 }
