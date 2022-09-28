@@ -22,6 +22,7 @@ describe('StarkNetValidator', () => {
   let account: Account
   let deployer: SignerWithAddress
   let eoaValidator: SignerWithAddress
+  let alice: SignerWithAddress
 
   let starkNetValidator: Contract
   let mockStarkNetMessagingFactory: ContractFactory
@@ -45,6 +46,7 @@ describe('StarkNetValidator', () => {
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
     eoaValidator = accounts[1]
+    alice = accounts[2]
 
     // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
@@ -187,9 +189,7 @@ describe('StarkNetValidator', () => {
   describe('#retry', () => {
     describe('when called by account with no access', () => {
       it('reverts', async () => {
-        await expect(starkNetValidator.connect(eoaValidator).retry()).to.be.revertedWith(
-          'No access',
-        )
+        await expect(starkNetValidator.connect(alice).retry()).to.be.revertedWith('No access')
       })
     })
   })
@@ -198,7 +198,7 @@ describe('StarkNetValidator', () => {
     describe('when called by non owner', () => {
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).setConfigAC(ethers.constants.AddressZero),
+          starkNetValidator.connect(alice).setConfigAC(ethers.constants.AddressZero),
         ).to.be.revertedWith('Only callable by owner')
       })
     })
@@ -223,7 +223,7 @@ describe('StarkNetValidator', () => {
     describe('when called by non owner', () => {
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).setSourceAggregator(ethers.constants.AddressZero),
+          starkNetValidator.connect(alice).setSourceAggregator(ethers.constants.AddressZero),
         ).to.be.revertedWith('Only callable by owner')
       })
     })
@@ -259,7 +259,7 @@ describe('StarkNetValidator', () => {
 
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
+          starkNetValidator.connect(alice).setGasConfig(0, mockGasPriceFeed.address),
         ).to.be.revertedWithCustomError(starkNetValidator, 'AccessForbidden')
       })
     })
@@ -479,7 +479,7 @@ describe('StarkNetValidator', () => {
 
     describe('when called by non owner', () => {
       it('reverts', async () => {
-        await expect(starkNetValidator.connect(eoaValidator).withdrawFunds()).to.be.revertedWith(
+        await expect(starkNetValidator.connect(alice).withdrawFunds()).to.be.revertedWith(
           'Only callable by owner',
         )
       })
@@ -510,7 +510,7 @@ describe('StarkNetValidator', () => {
     describe('when called by non owner', () => {
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).withdrawFundsTo(eoaValidator.address),
+          starkNetValidator.connect(alice).withdrawFundsTo(alice.address),
         ).to.be.revertedWith('Only callable by owner')
       })
     })

@@ -13,6 +13,10 @@ from starkware.cairo.common.math import assert_not_zero
 func OwnershipTransferred(previousOwner : felt, newOwner : felt):
 end
 
+@event
+func OwnershipTransferRequested(from_address : felt, to : felt):
+end
+
 #
 # Storage
 #
@@ -35,7 +39,7 @@ namespace Ownable:
         with_attr error_message("Ownable: Cannot transfer to zero address"):
             assert_not_zero(owner)
         end
-        _transfer_ownership(owner)
+        _accept_ownership_transfer(owner)
         return ()
     end
 
@@ -73,7 +77,7 @@ namespace Ownable:
         assert_only_owner()
         Ownable_proposed_owner.write(new_owner)
         let (previous_owner : felt) = Ownable_owner.read()
-        OwnershipTransferred.emit(previous_owner, new_owner)
+        OwnershipTransferRequested.emit(previous_owner, new_owner)
         return ()
     end
 
@@ -87,13 +91,13 @@ namespace Ownable:
         with_attr error_message("Ownable: caller is not the proposed owner"):
             assert proposed_owner = caller
         end
-        _transfer_ownership(proposed_owner)
+        _accept_ownership_transfer(proposed_owner)
         return ()
     end
 
     func renounce_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
         assert_only_owner()
-        _transfer_ownership(0)
+        _accept_ownership_transfer(0)
         return ()
     end
 
@@ -101,9 +105,9 @@ namespace Ownable:
     # Internal
     #
 
-    func _transfer_ownership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        new_owner : felt
-    ):
+    func _accept_ownership_transfer{
+        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+    }(new_owner : felt):
         let (previous_owner : felt) = Ownable_owner.read()
         Ownable_owner.write(new_owner)
         Ownable_proposed_owner.write(0)
