@@ -13,7 +13,7 @@ Soak tests will run a modified version of the smoke test via a remote runner for
 error appears, but instead log it.
 ##### Run
 `go test ./integration-test/soak/tests`
-##### Env vars
+##### Env vars 
 `TTL=72h` - duration of soak (72h default)
 
 `NODE_COUNT` - number of OCR nodes (5 default)
