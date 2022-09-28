@@ -166,7 +166,8 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     Aggregator_answer_range.write(range)
 
     with_attr error_message("decimals exceed 2^8"):
-        assert_lt(decimals, UINT8_MAX)
+        assert_not_equal(decimals, , UINT8_MAX)
+        assert_nn_le(decimals, UINT8_MAX)
     end
     Aggregator_decimals.write(decimals)
     Aggregator_description.write(description)
