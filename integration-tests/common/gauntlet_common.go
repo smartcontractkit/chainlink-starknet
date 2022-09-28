@@ -84,6 +84,15 @@ func (t *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64
 		return err
 	}
 
+	t.ProxyAddr, err = t.Sg.DeployOCR2ProxyContract(t.OCRAddr)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.Sg.MintLinkToken(t.LinkTokenAddr, t.OCRAddr, "100000000000000000000")
+	if err != nil {
+		return err
+	}
 	_, err = t.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, t.OCRAddr)
 	if err != nil {
 		return err

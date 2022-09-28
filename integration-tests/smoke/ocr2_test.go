@@ -36,7 +36,6 @@ func init() {
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
 		err                 error
-		proxyAddress        string
 		sg                  *ops.StarknetGauntlet
 		t                   *common.Test
 		serviceKeyL1        = "Hardhat"
@@ -216,7 +215,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			// Test proxy reading
 			// TODO: would be good to test proxy switching underlying feeds
 			roundDataRaw, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: proxyAddress,
+				ContractAddress: t.ProxyAddr,
 				Selector:        "latest_round_data",
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")

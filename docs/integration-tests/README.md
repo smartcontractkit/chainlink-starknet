@@ -1,8 +1,22 @@
 ## Integration tests
 
 ### Run tests
+### Prerequisites
+1. `yarn install`
+2. `yarn build`
 
-1. `ginkgo -r --focus @ocr integration-tests/smoke` (from core of repo)
+#### Smoke
+`ginkgo -r --focus @ocr integration-tests/smoke` (from core of repo)
+
+#### Soak
+Soak tests will run a modified version of the smoke test via a remote runner for the set period. The difference is that there is no panic when an
+error appears, but instead log it.
+##### Run
+`go test ./integration-test/soak/tests`
+##### Env vars
+`TTL=72h` - duration of soak (72h default)
+
+`NODE_COUNT` - number of OCR nodes (5 default)
 
 ### Structure
 
@@ -18,7 +32,9 @@
 
 ### Writing tests
 
-See examples [here](../../integration-tests/smoke/ocr2_test.go)
+See smoke examples [here](../../integration-tests/smoke/ocr2_test.go)
+
+See soak examples [here](../../integration-tests/soak/tests/ocr_test.go) and [here](../../integration-tests/soak/soak_runner_test.go)
 
 1. Instantiate Gauntlet
 2. Deploy Cluster
