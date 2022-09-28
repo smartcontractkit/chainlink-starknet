@@ -488,7 +488,7 @@ describe('StarkNetValidator', () => {
     describe('when called by owner', () => {
       it('emits an event', async () => {
         await expect(starkNetValidator.connect(deployer).withdrawFunds())
-          .to.emit(starkNetValidator, 'WithdrawFunds')
+          .to.emit(starkNetValidator, 'FundsWithdrawn')
           .withArgs(deployer.address, 10)
       })
 
@@ -518,7 +518,7 @@ describe('StarkNetValidator', () => {
     describe('when called by owner', () => {
       it('emits an event', async () => {
         await expect(starkNetValidator.connect(deployer).withdrawFundsTo(eoaValidator.address))
-          .to.emit(starkNetValidator, 'WithdrawFunds')
+          .to.emit(starkNetValidator, 'FundsWithdrawn')
           .withArgs(eoaValidator.address, 10)
       })
 
