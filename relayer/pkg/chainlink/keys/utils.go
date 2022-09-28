@@ -40,10 +40,11 @@ func PubKeyToStarkKey(pubkey PublicKey) []byte {
 	return starknet.PadBytes(pubkey.X.Bytes(), byteLen)
 }
 
-// reimplements: https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// reimplements parts of https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// generate the PK as a pseudo-random number in the interval [1, CurveOrder - 1]
 // using io.Reader, and Key struct
 func GenerateKey(material io.Reader) (k Key, err error) {
-	max := new(big.Int).Sub(caigo.Curve.Max, big.NewInt(1))
+	max := new(big.Int).Sub(caigo.Curve.N, big.NewInt(1))
 
 	k.priv, err = rand.Int(material, max)
 	if err != nil {
