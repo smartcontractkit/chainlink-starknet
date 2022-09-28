@@ -159,7 +159,7 @@ test-unit-go:
 	cd ./relayer && go test -v ./... -race -count=10
 
 .PHONY: test-integration
-test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
+test-integration: test-integration-smoke test-integration-smoke test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-integration-smoke
 test-integration-smoke: build-ts-contracts
