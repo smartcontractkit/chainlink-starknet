@@ -29,7 +29,7 @@ var (
 	}
 	nodeCount           = 5
 	remoteContainerName = "remote-test-runner"
-	remoteFileList      = []string{"../../ops", "../../package.json", "../../package-lock.json", "../../yarn.lock", "../../tsconfig.json", "../../tsconfig.base.json", "../../packages-ts", "../../contracts"}
+	remoteFileList      = []string{"../../ops", "../../package.json", "../../yarn.lock", "../../tsconfig.json", "../../tsconfig.base.json", "../../packages-ts", "../../contracts"}
 )
 
 // Run the OCR soak test defined in ./tests/ocr_test.go
