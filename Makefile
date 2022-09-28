@@ -166,7 +166,7 @@ test-integration-smoke: build-ts-contracts
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
 .PHONY: test-integration-soak
-test-integration-smoke: build-ts-contracts
+test-integration-soak: build-ts-contracts
 	cd integration-tests/soak/ && \
 		go test
 
