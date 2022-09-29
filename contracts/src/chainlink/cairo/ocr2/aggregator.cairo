@@ -25,7 +25,7 @@ from starkware.cairo.common.math import (
     unsigned_div_rem,
 )
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt
+from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_check
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
@@ -991,7 +991,7 @@ func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 ):
     alloc_locals
     has_billing_access()
-
+    uint256_check(amount)
     let (link_token) = Aggregator_link_token.read()
     let (contract_address) = get_contract_address()
 

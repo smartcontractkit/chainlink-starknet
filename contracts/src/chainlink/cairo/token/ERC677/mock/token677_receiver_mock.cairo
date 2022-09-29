@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.bool import TRUE, FALSE
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import Uint256, uint256_check
 from openzeppelin.introspection.erc165.library import ERC165
 
 const IERC677_RECEIVER_ID = 0x4f3dcd
@@ -38,6 +38,7 @@ end
 func onTokenTransfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     sender : felt, value : Uint256, data_len : felt, data : felt*
 ):
+    uint256_check(value)
     token677ReceiverMock_called_fallback_.write(TRUE)
     token677ReceiverMock_token_sender_.write(sender)
     token677ReceiverMock_sent_value_.write(value)
