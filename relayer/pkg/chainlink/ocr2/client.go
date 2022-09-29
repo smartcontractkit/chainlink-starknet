@@ -54,7 +54,8 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		return bd, errors.Wrap(err, "couldn't call the contract")
 	}
 
-	if len(res) != 2 {
+	// [0] - observation payment, [1] - transmission payment, [2] - gas base, [3] - gas per signature
+	if len(res) != 4 {
 		return bd, errors.New("unexpected result length")
 	}
 
