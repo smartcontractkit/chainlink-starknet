@@ -232,8 +232,8 @@ func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address strin
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch new_transmission events")
 	}
-	if len(eventsAsFeltArrs) != 1 {
-		return nil, fmt.Errorf("expected to find one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	if len(eventsAsFeltArrs) == 0 {
+		return nil, fmt.Errorf("expected to find at least one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
 	}
 	events = []NewTransmissionEvent{}
 	for _, felts := range eventsAsFeltArrs {
