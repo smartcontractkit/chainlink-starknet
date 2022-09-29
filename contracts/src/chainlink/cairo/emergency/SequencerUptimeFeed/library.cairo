@@ -10,7 +10,7 @@ from starkware.cairo.common.math import assert_not_zero, assert_le, assert_nn_le
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.bool import TRUE
 
-from chainlink.cairo.utils import assert_boolean, assert_nn_lt
+from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
 from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
 from chainlink.cairo.access.ownable import Ownable
@@ -62,7 +62,7 @@ func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     with_attr error_message("invalid round_id"):
         assert_not_zero(round_id)
         # TODO: do we need to check if uint80 is overflown?
-        assert_nn_lt(round_id, latest_round_id)
+        assert_nn_le(round_id, latest_round_id)
     end
 
     return ()

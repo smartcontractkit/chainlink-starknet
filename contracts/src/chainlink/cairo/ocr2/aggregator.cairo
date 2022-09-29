@@ -165,7 +165,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     let range : Range = (min=min_answer, max=max_answer)
     Aggregator_answer_range.write(range)
 
-    with_attr error_message("decimals is negative or exceed 2^8"):
+    with_attr error_message("decimals are negative or exceed 2^8"):
         assert_nn_lt(decimals, UINT8_MAX)
     end
     Aggregator_decimals.write(decimals)
