@@ -3,4 +3,8 @@ fastecdsa
 sympy
 cairo-lang==0.10.0
 starknet-devnet>=0.3.3
-openzeppelin-cairo-contracts==0.4.0
+openzeppelin-cairo-contracts>=0.4.0
+setuptools>=46.1.0
+setuptools_scm[toml]>=5
+twine
+build

@@ -4,5 +4,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "explorer.autoReveal": false
 }
