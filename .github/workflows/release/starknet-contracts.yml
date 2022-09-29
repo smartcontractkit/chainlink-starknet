@@ -26,13 +26,14 @@ jobs:
         run: nix develop -c make test-ts-contracts
 
       - name: Build
-        run: nix develop -c python -m build . -o dist
+        run: nix develop -c cd contracts && python -m build . -o dist
      
       - name: Check distribution
-        run: nix develop -c twine check --strict dist/*
+        run: nix develop -c twine check --strict contracts/dist/*
 
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
           password: ${{ secrets.pypi_token }}
+          packages_dir: contracts/dist
