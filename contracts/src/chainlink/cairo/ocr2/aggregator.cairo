@@ -41,7 +41,7 @@ from openzeppelin.token.erc20.IERC20 import IERC20
 
 from chainlink.cairo.access.IAccessController import IAccessController
 
-from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
+from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt, assert_nn_lt
 
 from chainlink.cairo.access.ownable import Ownable
 
@@ -165,9 +165,8 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     let range : Range = (min=min_answer, max=max_answer)
     Aggregator_answer_range.write(range)
 
-    with_attr error_message("decimals exceed 2^8"):
-        assert_not_equal(decimals, , UINT8_MAX)
-        assert_nn_le(decimals, UINT8_MAX)
+    with_attr error_message("decimals is negative or exceed 2^8"):
+        assert_nn_lt(decimals, UINT8_MAX)
     end
     Aggregator_decimals.write(decimals)
     Aggregator_description.write(description)

@@ -1,4 +1,9 @@
-from starkware.cairo.common.math import assert_in_range, assert_lt_felt
+from starkware.cairo.common.math import (
+    assert_in_range,
+    assert_lt_felt,
+    assert_not_equal,
+    assert_nn_le,
+)
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.math import split_felt
 
@@ -9,6 +14,12 @@ func assert_boolean{range_check_ptr}(value : felt):
         assert_in_range(value, lower_bound, upper_bound)
     end
 
+    return ()
+end
+
+func assert_nn_lt{range_check_ptr}(a : felt, b : felt):
+    assert_not_equal(a, b)
+    assert_nn_le(a, b)
     return ()
 end
 
