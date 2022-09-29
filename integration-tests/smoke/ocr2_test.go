@@ -19,8 +19,8 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
@@ -41,7 +41,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		accessControllerAddress string
 		ocrAddress              string
 		proxyAddress            string
-		sg                      *ops.StarknetGauntlet
+		sg                      *gauntlet.StarknetGauntlet
 		t                       *common.Test
 		nAccounts               []string
 		serviceKeyL1            = "Hardhat"
@@ -64,7 +64,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
 
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err = ops.NewStarknetGauntlet("../../")
+			sg, err = gauntlet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
