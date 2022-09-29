@@ -22,7 +22,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
-func TestTxm(t *testing.T) {
+func TestIntegration_Txm(t *testing.T) {
 	url := ops.SetupLocalStarkNetNode(t)
 	rawLocalKeys := ops.TestKeys(t, 2) // generate 2 keys
 

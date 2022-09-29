@@ -150,6 +150,9 @@ format-ts:
 format-ts-check:
 	yarn format:check
 
+.PHONY: test-go
+test-go: test-unit-go test-integration-go
+
 .PHONY: test-unit
 test-unit: test-unit-go
 
@@ -157,6 +160,11 @@ test-unit: test-unit-go
 test-unit-go:
 	cd ./relayer && go test -v ./...
 	cd ./relayer && go test -v ./... -race -count=10
+
+.PHONY: test-integration-go
+# only runs tests with TestIntegration_* + //go:build integration
+test-integration-go:
+	cd ./relayer && go test -v ./... -run TestIntegration -tags integration
 
 .PHONY: test-integration
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
