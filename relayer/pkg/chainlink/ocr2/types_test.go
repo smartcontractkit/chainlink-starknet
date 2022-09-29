@@ -32,7 +32,8 @@ func TestNewRoundData(t *testing.T) {
 	require.Equal(t, expectedRound, actualRound)
 }
 
-// Helper
+// Helpers
+
 func rawToFelts(raw []string) []junotypes.Felt {
 	out := make([]junotypes.Felt, len(raw))
 	for i := 0; i < len(raw); i++ {

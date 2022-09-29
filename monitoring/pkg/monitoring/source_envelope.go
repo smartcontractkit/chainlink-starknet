@@ -10,10 +10,11 @@ import (
 	"github.com/dontpanicdao/caigo"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
 	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"go.uber.org/multierr"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 func NewEnvelopeSourceFactory(
@@ -60,11 +61,11 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 	subs := &relayUtils.Subprocesses{}
 
 	subs.Go(func() {
-		latestRoundData, newTransmissionEvent, err := s.fetchNewTransmissionEvent(ctx, s.contractAddress)
+		latestRoundData, newTransmissionEvent, err := s.fetchLatestNewTransmissionEvent(ctx, s.contractAddress)
 		envelopeMu.Lock()
 		defer envelopeMu.Unlock()
 		if err != nil {
-			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchNewTransmissionEvent failed: %w", err))
+			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchLatestNewTransmissionEvent failed: %w", err))
 			return
 		}
 		envelope.BlockNumber = latestRoundData.BlockNumber
@@ -117,16 +118,30 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 	return envelope, envelopeErr
 }
 
-func (s *envelopeSource) fetchNewTransmissionEvent(ctx context.Context, contractAddress string) (latestRound ocr2.RoundData, transmission ocr2.NewTransmissionEvent, err error) {
+func (s *envelopeSource) fetchLatestNewTransmissionEvent(ctx context.Context, contractAddress string) (
+	latestRound ocr2.RoundData,
+	transmission ocr2.NewTransmissionEvent,
+	err error,
+) {
 	latestRound, err = s.ocr2Reader.LatestRoundData(ctx, contractAddress)
 	if err != nil {
 		return latestRound, transmission, fmt.Errorf("failed to fetch latest_round_data: %w", err)
 	}
-	transmission, err = s.ocr2Reader.NewTransmissionEventAt(ctx, contractAddress, latestRound.BlockNumber)
+	transmissions, err := s.ocr2Reader.NewTransmissionsFromEventsAt(ctx, contractAddress, latestRound.BlockNumber)
 	if err != nil {
-		return latestRound, transmission, fmt.Errorf("failed to fetch last new_transmission event: %w", err)
+		return latestRound, transmission, fmt.Errorf("failed to fetch new_transmission events: %w", err)
 	}
-	return latestRound, transmission, nil
+	if len(transmissions) == 0 {
+		// NOTE This shouldn't happen! LatestRound says this block should have a transmission and we didn't find any!
+		return latestRound, transmission, fmt.Errorf("no transmissions found in the block %d", latestRound.BlockNumber)
+	}
+	for _, transmission = range transmissions {
+		if transmission.RoundId == latestRound.RoundID {
+			return latestRound, transmission, nil
+		}
+	}
+	// NOTE! This also shouldn't happen! We found transmissions in the block suggested by LatestRound but they have a different round id!
+	return latestRound, transmission, fmt.Errorf("no new_trasmission event found to correspond with the round id %d in block %d", latestRound.RoundID, latestRound.BlockNumber)
 }
 
 func (s *envelopeSource) fetchContractConfig(ctx context.Context, contractAddress string) (config ocr2.ContractConfig, err error) {

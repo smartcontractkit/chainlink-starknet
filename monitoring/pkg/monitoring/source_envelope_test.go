@@ -9,13 +9,15 @@ import (
 	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	ocr2Mocks "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/mocks"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	starknetMocks "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/mocks"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+
+	ocr2Mocks "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/mocks"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	starknetMocks "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/mocks"
 )
 
 func TestEnvelopeSource(t *testing.T) {
@@ -32,7 +34,7 @@ func TestEnvelopeSource(t *testing.T) {
 		feedConfig.ContractAddress,
 	).Return(ocr2ClientLatestRoundDataResponse, nil).Once()
 	ocr2Reader.On(
-		"NewTransmissionEventAt",
+		"NewTransmissionsFromEventsAt",
 		mock.Anything, // ctx
 		feedConfig.ContractAddress,
 		ocr2ClientLatestRoundDataResponse.BlockNumber,
@@ -87,25 +89,27 @@ var (
 		StartedAt:   time.Date(2022, time.September, 27, 18, 50, 0, 0, time.Local),
 		UpdatedAt:   time.Date(2022, time.September, 27, 18, 51, 0, 0, time.Local),
 	}
-	ocr2ClientNewTransmissionEventAtResponse = ocr2.NewTransmissionEvent{
-		RoundId:         0xf5b,
-		LatestAnswer:    bigIntFromString("-900000000"),
-		Transmitter:     caigotypes.StrToFelt("634447934223750826572902672583054702307815157196919304685470566142330202833"),
-		LatestTimestamp: time.Date(2022, time.September, 27, 18, 51, 0, 0, time.Local),
-		Observers:       []uint8{0x1, 0x2, 0x3, 0x4},
-		ObservationsLen: 0x4,
-		Observations: []*big.Int{
-			bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
-			bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
-			bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
-			bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
+	ocr2ClientNewTransmissionEventAtResponse = []ocr2.NewTransmissionEvent{
+		{
+			RoundId:         0xf5b,
+			LatestAnswer:    bigIntFromString("-900000000"),
+			Transmitter:     caigotypes.StrToFelt("634447934223750826572902672583054702307815157196919304685470566142330202833"),
+			LatestTimestamp: time.Date(2022, time.September, 27, 18, 51, 0, 0, time.Local),
+			Observers:       []uint8{0x1, 0x2, 0x3, 0x4},
+			ObservationsLen: 0x4,
+			Observations: []*big.Int{
+				bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
+				bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
+				bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
+				bigIntFromString("3618502788666131213697322783095070105623107215331596699973092056134972020481"),
+			},
+			JuelsPerFeeCoin: big.NewInt(451000),
+			GasPrice:        big.NewInt(1),
+			ConfigDigest:    types.ConfigDigest{0x0, 0x4, 0x18, 0xe5, 0x44, 0xab, 0xa8, 0x18, 0x15, 0xa5, 0x2b, 0xf0, 0x11, 0x58, 0xc6, 0x9b, 0x38, 0x8a, 0x48, 0x9f, 0x76, 0xd, 0xd8, 0x3d, 0x84, 0x3f, 0x1d, 0x31, 0x22, 0xdb, 0x78, 0xa},
+			Epoch:           0x519,
+			Round:           0x5,
+			Reimbursement:   big.NewInt(0),
 		},
-		JuelsPerFeeCoin: big.NewInt(451000),
-		GasPrice:        big.NewInt(1),
-		ConfigDigest:    types.ConfigDigest{0x0, 0x4, 0x18, 0xe5, 0x44, 0xab, 0xa8, 0x18, 0x15, 0xa5, 0x2b, 0xf0, 0x11, 0x58, 0xc6, 0x9b, 0x38, 0x8a, 0x48, 0x9f, 0x76, 0xd, 0xd8, 0x3d, 0x84, 0x3f, 0x1d, 0x31, 0x22, 0xdb, 0x78, 0xa},
-		Epoch:           0x519,
-		Round:           0x5,
-		Reimbursement:   big.NewInt(0),
 	}
 	ocr2ClientLatestConfigDetailsResponse = ocr2.ContractConfigDetails{
 		Block:  0x11,
