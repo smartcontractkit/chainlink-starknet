@@ -26,7 +26,7 @@ type OCR2Reader interface {
 	LatestRoundData(context.Context, string) (RoundData, error)
 	LinkAvailableForPayment(context.Context, string) (*big.Int, error)
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
-	NewTransmissionEventAt(context.Context, string, uint64) (NewTransmissionEvent, error)
+	NewTransmissionsFromEventsAt(context.Context, string, uint64) ([]NewTransmissionEvent, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
 	BaseReader() starknet.Reader
@@ -226,18 +226,22 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 	}, nil
 }
 
-func (c *Client) NewTransmissionEventAt(ctx context.Context, address string, blockNum uint64) (event NewTransmissionEvent, err error) {
+// NewTransmissionsFromEventsAt finds events of type new_transmission emitted by the contract address in a given block number.
+func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address string, blockNum uint64) (events []NewTransmissionEvent, err error) {
 	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
 	if err != nil {
-		return event, errors.Wrap(err, "failed to fetch new_transmission events")
+		return nil, errors.Wrap(err, "failed to fetch new_transmission events")
 	}
 	if len(eventsAsFeltArrs) != 1 {
-		return event, fmt.Errorf("expected to find one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+		return nil, fmt.Errorf("expected to find one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
 	}
-	newTransmissionEvent := eventsAsFeltArrs[0]
-	event, err = ParseNewTransmissionEvent(newTransmissionEvent)
-	if err != nil {
-		return event, errors.Wrap(err, "couldn't parse new_transmission event")
+	events = []NewTransmissionEvent{}
+	for _, felts := range eventsAsFeltArrs {
+		event, err := ParseNewTransmissionEvent(felts)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't parse new_transmission event")
+		}
+		events = append(events, event)
 	}
-	return event, nil
+	return events, nil
 }

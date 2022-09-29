@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 )
 

@@ -164,15 +164,17 @@ func (_m *OCR2Reader) LinkAvailableForPayment(_a0 context.Context, _a1 string) (
 	return r0, r1
 }
 
-// NewTransmissionEventAt provides a mock function with given fields: _a0, _a1, _a2
-func (_m *OCR2Reader) NewTransmissionEventAt(_a0 context.Context, _a1 string, _a2 uint64) (ocr2.NewTransmissionEvent, error) {
+// NewTransmissionsFromEventsAt provides a mock function with given fields: _a0, _a1, _a2
+func (_m *OCR2Reader) NewTransmissionsFromEventsAt(_a0 context.Context, _a1 string, _a2 uint64) ([]ocr2.NewTransmissionEvent, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
-	var r0 ocr2.NewTransmissionEvent
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) ocr2.NewTransmissionEvent); ok {
+	var r0 []ocr2.NewTransmissionEvent
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) []ocr2.NewTransmissionEvent); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
-		r0 = ret.Get(0).(ocr2.NewTransmissionEvent)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]ocr2.NewTransmissionEvent)
+		}
 	}
 
 	var r1 error

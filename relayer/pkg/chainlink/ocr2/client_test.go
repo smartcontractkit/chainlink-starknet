@@ -113,8 +113,8 @@ func TestOCR2Client(t *testing.T) {
 		assert.NoError(t, err)
 		fmt.Printf("%+v\n", round)
 
-		transmission, err := client.NewTransmissionEventAt(context.Background(), ocr2ContractAddress, round.BlockNumber)
+		transmissions, err := client.NewTransmissionsFromEventsAt(context.Background(), ocr2ContractAddress, round.BlockNumber)
 		assert.NoError(t, err)
-		fmt.Printf("%+v\n", transmission)
+		fmt.Printf("%+v\n", transmissions)
 	})
 }
