@@ -1,4 +1,4 @@
-package ops
+package gauntlet
 
 import (
 	"encoding/json"
