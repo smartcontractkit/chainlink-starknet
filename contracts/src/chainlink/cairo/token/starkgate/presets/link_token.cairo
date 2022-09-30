@@ -9,7 +9,6 @@ from openzeppelin.token.erc20.library import ERC20
 from starkware.starknet.std_contracts.ERC20.permitted import (
     permitted_initializer,
     permitted_minter_only,
-    permittedMinter,
 )
 
 from chainlink.cairo.token.ERC677.library import ERC677
