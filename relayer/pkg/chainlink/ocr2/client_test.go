@@ -53,6 +53,12 @@ func TestOCR2Client(t *testing.T) {
 			case caigo.BigToHex(caigo.GetSelectorFromName("latest_transmission_details")) == reqdata.Selector:
 				// latest transmission details response
 				out = []byte(`{"result":["0x4cfc96325fa7d72e4854420e2d7b0abda72de17d45e4c3c0d9f626016d669","0x0","0x0","0x0"]}`)
+			case caigo.BigToHex(caigo.GetSelectorFromName("latest_round_data")) == reqdata.Selector:
+				// latest transmission details response
+				out = []byte(`{"result":["0x0","0x0","0x0","0x0","0x0"]}`)
+			case caigo.BigToHex(caigo.GetSelectorFromName("link_available_for_payment")) == reqdata.Selector:
+				// latest transmission details response
+				out = []byte(`{"result":["0x0"]}`)
 			default:
 				require.False(t, true, "unsupported contract method")
 			}
@@ -112,9 +118,5 @@ func TestOCR2Client(t *testing.T) {
 		round, err := client.LatestRoundData(context.Background(), ocr2ContractAddress)
 		assert.NoError(t, err)
 		fmt.Printf("%+v\n", round)
-
-		transmissions, err := client.NewTransmissionsFromEventsAt(context.Background(), ocr2ContractAddress, round.BlockNumber)
-		assert.NoError(t, err)
-		fmt.Printf("%+v\n", transmissions)
 	})
 }
