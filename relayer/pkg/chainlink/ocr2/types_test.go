@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewRoundData(t *testing.T) {
-	// TODO (dru) add a snapshot of the response.
 	raw := []string{
 		"0x121e",
 		"0x800000000000010ffffffffffffffffffffffffffffffffffffffffca5b1701",
@@ -19,7 +18,7 @@ func TestNewRoundData(t *testing.T) {
 		"0x633344a5",
 	}
 
-	felts := rawToFelts(raw)
+	felts := starknet.StringsToJunoFelts(raw)
 	actualRound, err := NewRoundData(felts)
 	require.NoError(t, err)
 	expectedRound := RoundData{
@@ -33,14 +32,6 @@ func TestNewRoundData(t *testing.T) {
 }
 
 // Helpers
-
-func rawToFelts(raw []string) []junotypes.Felt {
-	out := make([]junotypes.Felt, len(raw))
-	for i := 0; i < len(raw); i++ {
-		out[i] = junotypes.HexToFelt(raw[i])
-	}
-	return out
-}
 
 func bigIntFromString(s string) *big.Int {
 	out, _ := new(big.Int).SetString(s, 10)
