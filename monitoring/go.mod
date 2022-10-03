@@ -7,7 +7,7 @@ require (
 	github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
 	github.com/prometheus/client_golang v1.12.2
 	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220929092150-827776af9911
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220926141815-3df46ca75401
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221003161435-b90403e247af
 	github.com/smartcontractkit/libocr v0.0.0-20220812191430-db92a9fdaa52
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/multierr v1.8.0
@@ -57,5 +57,3 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
