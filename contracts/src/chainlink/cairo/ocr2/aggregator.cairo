@@ -721,6 +721,7 @@ end
 func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     round : Round
 ):
+    require_access()
     let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
     let (transmission : Transmission) = Aggregator_transmissions.read(latest_round_id)
 
