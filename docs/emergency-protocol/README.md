@@ -6,6 +6,10 @@ Today Chainlink price feeds are used by many DeFi protocols to secure billions o
 
 The Starknet Emergency Protocol provides a way for Chainlink price feed consumers to guard against the scenario described above. The protocol tracks the last known health of the Sequencer and reports it's health on chain along with the timestamp of when it either comes back online or goes offline. This allows consuming contracts to implement a grace period in their contracts to revert transactions whenever the Sequencer is down.
 
+**WARNING**
+This implementation only deals with **centralized** Sequencers. As Starknet has plans to decentralize the Sequencer in the future,
+this protocol will either need to be redesigned or even deprecated. The reason for this is that the protocol relies on polling the `pending` block from the Sequencer to determine if new transactions are being added. A decentralized Starknet sequencer will no longer allow this hence breaking the protocol. For more information on how the pending block is used, take a look at the [Layer2 Sequencer Health External Adapter](#layer2-sequencer-health-external-adapter) section.
+
 [Official Docs](https://docs.chain.link/docs/l2-sequencer-flag/)
 
 ## Architecture
