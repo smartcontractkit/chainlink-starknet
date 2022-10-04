@@ -17,12 +17,6 @@ func assert_boolean{range_check_ptr}(value : felt):
     return ()
 end
 
-func assert_nn_lt{range_check_ptr}(a : felt, b : felt):
-    assert_not_equal(a, b)
-    assert_nn_le(a, b)
-    return ()
-end
-
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
     let (high, low) = split_felt(x)
     return (Uint256(low=low, high=high))
