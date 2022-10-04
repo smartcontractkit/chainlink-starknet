@@ -89,6 +89,12 @@ func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtype
 	var keys [2]PublicKey
 	keys[0].X = new(big.Int).SetBytes(publicKey)
 	keys[0].Y = caigo.Curve.GetYCoordinate(keys[0].X)
+
+	// When there is no point with the provided x-coordinate, the GetYCoordinate function returns the nil value.
+	if keys[0].Y == nil {
+		return false
+	}
+
 	keys[1].X = keys[0].X
 	keys[1].Y = new(big.Int).Mul(keys[0].Y, big.NewInt(-1))
 
