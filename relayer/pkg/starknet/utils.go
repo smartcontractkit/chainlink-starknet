@@ -71,15 +71,20 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 
 	data := []byte{}
 	buf := make([]byte, chunkSize)
-	length := int(felts[0].Int64())
+	length := felts[0].Uint64()
 
 	for _, felt := range felts[1:] {
-		bytesBuffer := buf[:Min(chunkSize, length)]
+		bytesLen := Min(chunkSize, length)
+		bytesBuffer := buf[:bytesLen]
+
+		if bytesLen != uint64(len(felt.Bytes())) {
+			return nil, errors.New("invalid: felt array can't be decoded")
+		}
 
 		felt.FillBytes(bytesBuffer)
 		data = append(data, bytesBuffer...)
 
-		length -= len(bytesBuffer)
+		length -= uint64(bytesLen)
 	}
 
 	if length != 0 {
