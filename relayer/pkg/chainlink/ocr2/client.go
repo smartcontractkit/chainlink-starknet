@@ -116,6 +116,10 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	}
 
 	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
+	if len(res) != 4 {
+		return td, errors.New("unexpected result length")
+	}
+
 	digest := junotypes.HexToFelt(res[0])
 	configDigest := types.ConfigDigest{}
 	digest.Big().FillBytes(configDigest[:])
