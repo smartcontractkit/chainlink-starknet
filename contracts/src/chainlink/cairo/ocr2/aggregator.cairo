@@ -1066,9 +1066,6 @@ func link_available_for_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     let (balance) = uint256_to_felt(balance_)
 
     let (due) = total_link_due()
-    with_attr error_message("Total amount due exceeds the balance"):
-        assert_le(balance, due)
-    end
     let amount = balance - due
 
     return (available=amount)
