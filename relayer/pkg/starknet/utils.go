@@ -120,12 +120,21 @@ func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
 }
 
 // StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
-func StringsToFelt(in []string) (out []*caigotypes.Felt) {
-	for _, f := range in {
-		out = append(out, caigotypes.StrToFelt(f))
+func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
+	if in == nil {
+		return nil, errors.New("invalid: input value")
 	}
 
-	return out
+	for _, f := range in {
+		felt := caigotypes.StrToFelt(f)
+		if felt == nil {
+			return nil, errors.New("invalid: string value")
+		}
+
+		out = append(out, felt)
+	}
+
+	return out, nil
 }
 
 // CompareAddress compares different hex starknet addresses with potentially different 0 padding
