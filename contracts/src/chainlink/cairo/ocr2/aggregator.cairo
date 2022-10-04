@@ -1117,7 +1117,7 @@ func set_payees{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return ()
 end
 
-# Returns 1 if value == 0. Returns 1 otherwise.
+# Returns 1 if value == 0. Returns 0 otherwise.
 func is_zero(value) -> (res):
     if value == 0:
         return (res=1)
