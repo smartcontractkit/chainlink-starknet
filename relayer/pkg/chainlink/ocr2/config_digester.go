@@ -48,6 +48,10 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 		return configDigest, errors.New("must have equal number of signers and transmitters")
 	}
 
+	if len(cfg.Signers) <= 3*int(cfg.F) {
+		return configDigest, errors.New("number of oracles must be greater than 3*f")
+	}
+
 	oracles := []*big.Int{}
 	for i := range cfg.Signers {
 		signer := new(big.Int).SetBytes(cfg.Signers[i])
