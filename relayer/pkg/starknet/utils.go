@@ -77,10 +77,6 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 		bytesLen := Min(chunkSize, length)
 		bytesBuffer := buf[:bytesLen]
 
-		if bytesLen != uint64(len(felt.Bytes())) {
-			return nil, errors.New("invalid: felt array can't be decoded")
-		}
-
 		felt.FillBytes(bytesBuffer)
 		data = append(data, bytesBuffer...)
 

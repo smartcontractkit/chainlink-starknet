@@ -77,7 +77,7 @@ func TestDecodeFeltFails(t *testing.T) {
 	array[1] = val
 
 	_, error := DecodeFelts(array)
-	assert.Equal(t, error.Error(), "invalid: felt array can't be decoded")
+	assert.Equal(t, error.Error(), "invalid: contained less bytes than the specified length")
 }
 
 func TestDecodeFeltsSuccesses(t *testing.T) {
