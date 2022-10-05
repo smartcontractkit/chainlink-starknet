@@ -1,6 +1,7 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
+import { AccountFunder } from '@chainlink/starknet/src/utils'
 
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
@@ -10,6 +11,9 @@ describe('ContractTestsMock', function () {
 
   before(async () => {
     account = await starknet.deployAccount('OpenZeppelin')
+    const opts = { network: 'devnet' }
+    const funder = new AccountFunder(opts)
+    await funder.fund([{ account: account.address, amount: 5000 }])
 
     const decimals = 18
     const MockFactory = await starknet.getContractFactory('MockAggregator.cairo')

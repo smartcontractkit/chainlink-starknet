@@ -5,12 +5,12 @@ import { uint256, number } from 'starknet'
 import { StarknetContract, HttpNetworkConfig, Account } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { hexPadStart } from '../../../contracts/test/utils'
 import {
   loadContract_Solidity,
   loadContract_InternalStarkgate,
   loadContract_OpenZepplin,
 } from '../src/utils'
+import { AccountFunder, hexPadStart } from '@chainlink/starknet/src/utils'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
@@ -32,6 +32,9 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
 
   before(async () => {
     owner = await starknet.deployAccount('OpenZeppelin')
+    const opts = { network: 'devnet' }
+    const funder = new AccountFunder(opts)
+    await funder.fund([{ account: owner.address, amount: 5000 }])
 
     let tokenBridgeFactory = await starknet.getContractFactory(
       '../../node_modules/@chainlink-dev/starkgate-contracts/artifacts/token_bridge.cairo',

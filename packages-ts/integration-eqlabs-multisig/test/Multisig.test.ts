@@ -3,6 +3,7 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { number } from 'starknet'
+import { AccountFunder } from '@chainlink/starknet/src/utils'
 
 describe('Multisig integration tests', function () {
   this.timeout(300_000)
@@ -17,6 +18,13 @@ describe('Multisig integration tests', function () {
     account1 = await starknet.deployAccount('OpenZeppelin')
     account2 = await starknet.deployAccount('OpenZeppelin')
     account3 = await starknet.deployAccount('OpenZeppelin')
+    const opts = { network: 'devnet' }
+    const funder = new AccountFunder(opts)
+    await funder.fund([
+      { account: account1.address, amount: 5000 },
+      { account: account2.address, amount: 5000 },
+      { account: account3.address, amount: 5000 },
+    ])
   })
 
   it('Deploy contract', async () => {

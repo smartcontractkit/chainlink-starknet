@@ -13,7 +13,7 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { addCompilationToNetwork } from '../utils'
+import { AccountFunder, addCompilationToNetwork } from '@chainlink/starknet/src/utils'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
@@ -41,6 +41,11 @@ describe('StarkNetValidator', () => {
 
     // Deploy L2 account
     account = await starknet.deployAccount('OpenZeppelin')
+
+    // Fund L2 account
+    const opts = { network: 'devnet' }
+    const funder = new AccountFunder(opts)
+    await funder.fund([{ account: account.address, amount: 5000 }])
 
     // Fetch predefined L1 EOA accounts
     const accounts = await ethers.getSigners()

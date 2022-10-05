@@ -6,7 +6,7 @@ import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { toFelt, hexPadStart, expectInvokeErrorMsg } from '../utils'
+import { AccountFunder, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet/src/utils'
 
 interface Oracle {
   signer: KeyPair
@@ -63,6 +63,7 @@ describe('aggregator.cairo', function () {
   let owner: Account
   let token: StarknetContract
   let aggregator: StarknetContract
+  let funder: AccountFunder
 
   let minAnswer = -10
   let maxAnswer = 1000000000
@@ -82,6 +83,9 @@ describe('aggregator.cairo', function () {
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
     owner = await starknet.deployAccount('OpenZeppelin')
+    const opts = { network: 'devnet' }
+    funder = new AccountFunder(opts)
+    await funder.fund([{ account: owner.address, amount: 5000 }])
 
     const tokenFactory = await starknet.getContractFactory('link_token')
     token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
@@ -106,6 +110,7 @@ describe('aggregator.cairo', function () {
     let futures = []
     let generateOracle = async () => {
       let transmitter = await starknet.deployAccount('OpenZeppelin')
+      await funder.fund([{ account: owner.address, amount: 5000 }])
       return {
         signer: ec.genKeyPair(),
         transmitter,
@@ -162,6 +167,7 @@ describe('aggregator.cairo', function () {
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
     const bob = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: bob.address, amount: 5000 }])
     return { ownable: aggregator, alice, bob }
   })
 
@@ -277,7 +283,7 @@ describe('aggregator.cairo', function () {
       assert.equal(round.answer, 99)
 
       await transmit(3, toFelt(-10))
-      ;({ round } = await aggregator.call('latest_round_data'))
+        ; ({ round } = await aggregator.call('latest_round_data'))
       assert.equal(round.round_id, 3)
       assert.equal(round.answer, -10)
 
@@ -376,7 +382,7 @@ describe('aggregator.cairo', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -388,7 +394,7 @@ describe('aggregator.cairo', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {

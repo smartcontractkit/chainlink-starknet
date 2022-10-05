@@ -1,4 +1,4 @@
-import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
+import { constants, encode, number } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
@@ -78,4 +78,43 @@ export const toFelt = (int: number | BigNumberish): BigNumberish => {
 //   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
 export const hexPadStart = (data: number | bigint, len: number) => {
   return `0x${data.toString(16).padStart(len, '0')}`
+}
+
+interface FundAccounts {
+  account: string
+  amount: number
+}
+
+//This function add some funds to predeploy account that we are using in our test.
+export class AccountFunder {
+  private opts: any
+
+  constructor(opts: any) {
+    this.opts = opts
+  }
+
+  public async fund(accounts: FundAccounts[]) {
+    let gateway_url: string
+    if (this.opts.network == 'devnet') {
+      gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
+    }
+
+    accounts.forEach(async (account) => {
+      const body = {
+        address: account.account,
+        amount: account.amount,
+        lite: true,
+      }
+
+      try {
+        await fetch(`${gateway_url}/mint`, {
+          method: 'post',
+          body: JSON.stringify(body),
+          headers: { 'Content-Type': 'application/json' },
+        })
+      } catch (error: any) {
+        throw Error(error?.message)
+      }
+    })
+  }
 }
