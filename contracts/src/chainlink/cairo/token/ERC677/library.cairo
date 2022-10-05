@@ -23,9 +23,8 @@ namespace ERC677:
 
         uint256_check(value)
         let (sender) = get_caller_address()
-        with_attr error_message("ERC677: address can not be null"):
-            assert_not_zero(to)
-        end
+
+        # ERC20.transfer will check that both addresses are not zero
         ERC20.transfer(to, value)
         Transfer.emit(sender, to, value, data_len, data)
 
