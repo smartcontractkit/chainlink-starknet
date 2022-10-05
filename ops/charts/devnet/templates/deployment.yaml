@@ -17,13 +17,21 @@ spec:
         release: {{ .Release.Name }}
         app: starknet-dev
     spec:
+      volumes:
+        - name: vol
+          hostPath:
+            path: /dumps
       containers:
       - name: {{ .Chart.Name }}
+        volumeMounts:
+          - name: vol
+            mountPath: /dumps
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.2.11"}}"
-        args: ["--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.3.2"}}"
+        command: [ "starknet-devnet", "--host", "0.0.0.0", "--port", {{ .Values.service.internalPort | quote}} ]
+        args: ["--lite-mode", "--seed", {{ .Values.seed | quote}}, "--dump-on", "transaction", "--dump-path", "/dumps/dump.pkl"]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}
@@ -56,6 +64,10 @@ spec:
             port: {{ .Values.service.externalPort }}
           initialDelaySeconds: 2
           periodSeconds: 1
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "ENDPOINT=http://localhost:{{ .Values.service.internalPort }}; for i in `seq 1 5`; do wget --spider $ENDPOINT/is_alive >> /dumps/log.txt 2>&1; if [ $? -eq 0 ]; then test -f /dumps/dump.pkl; if [ $? -eq 0 ]; then wget -O- --post-data='{\"path\": \"/dumps/dump.pkl\"}' --header='Content-Type:application/json' $ENDPOINT/load >> /dumps/log.txt 2>&1; if [ $? -eq 0 ]; then break; fi; fi; fi; sleep 5; done"]
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory }}
