@@ -130,3 +130,34 @@ func TestDecodeThenEncode(t *testing.T) {
 	encodedFelts := EncodeFelts(decodedFelts)
 	assert.Equal(t, encodedFelts, felts)
 }
+
+func TestIncorrectDecode(t *testing.T) {
+	felts := make([]*big.Int, 3)
+	felts[0] = big.NewInt(35)
+	// bytes length can be less than 31
+	felts[1] = new(big.Int).SetBytes([]byte{0x1, 0x2, 0x3, 0x4})
+	felts[2] = new(big.Int).SetBytes([]byte{0x11, 0x21})
+
+	_, err := DecodeFelts(felts)
+
+	require.NoError(t, err)
+}
+
+func TestDecodeFelts(t *testing.T) {
+	a, _ := new(big.Int).SetString("1231927389172389172983712738127391273891", 10)
+	array := make([]*big.Int, 2)
+	array[0] = a
+	array[1] = a
+	_, err := DecodeFelts(array)
+	require.Error(t, err)
+}
+
+func TestDecodeFelts2(t *testing.T) {
+	a, _ := new(big.Int).SetString("1", 10)
+	b, _ := new(big.Int).SetString("1231927389172389172983712738127391273891", 10)
+	array := make([]*big.Int, 2)
+	array[0] = a
+	array[1] = b
+	_, err := DecodeFelts(array)
+	require.Error(t, err)
+}
