@@ -1052,6 +1052,7 @@ func total_link_due_{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return total_link_due_(index - 1, latest_round_id, total_rounds, payments_juels)
 end
 
+# since the felt type in Cairo is not signed, whoever calls this function will have to interpret the result line 1070 as the correct negative value.
 @view
 func link_available_for_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (available : felt):
