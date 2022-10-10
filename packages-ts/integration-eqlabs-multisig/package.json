@@ -7,24 +7,18 @@
     "test": "test"
   },
   "scripts": {
-    "test": "npx hardhat test"
+    "test": "npx hardhat --network localhost test"
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
-    "@types/chai": "^4.3.1",
+    "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "^18.7.11",
-    "chai": "^4.3.4",
+    "@types/mocha": "^9.1.1",
+    "chai": "^4.3.6",
     "ethers": "^5.6.8",
     "starsign-multisig": "^0.2.3",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.7.2"
-  },
-  "dependencies": {
-    "hardhat": "2.10.2",
-    "starknet": "^3.9.0"
+    "hardhat": "^2.10.2"
   }
 }

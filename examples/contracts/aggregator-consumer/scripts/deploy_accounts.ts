@@ -1,7 +1,7 @@
 import fs from 'fs'
 
 import { defaultProvider, ec, stark } from 'starknet'
-import { loadAccount } from './index'
+import { loadContract_Account } from './index'
 
 const ACCOUNT_NAME = 'Account'
 interface UserAccount {
@@ -33,7 +33,7 @@ async function main() {
 }
 
 async function createAccount(): Promise<UserAccount> {
-  const compiledAccount = loadAccount(ACCOUNT_NAME)
+  const compiledAccount = loadContract_Account(ACCOUNT_NAME)
   const privateKey = stark.randomAddress()
 
   const starkKeyPair = ec.getKeyPair(privateKey)

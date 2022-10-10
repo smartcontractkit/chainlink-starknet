@@ -11,6 +11,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
@@ -38,7 +39,7 @@ func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) (
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(starknet.EnsureFelt(rawReportContext[2]))) // convert 32 byte extraHash to 31 bytes
 
-	// split report into seperate felts for hashing
+	// split report into separate felts for hashing
 	splitReport, err := medianreport.SplitReport(report)
 	if err != nil {
 		return &big.Int{}, err
@@ -64,10 +65,10 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 
 	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
 	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
-	if _, err := buff.Write(starknet.PadBytesBigInt(r, byteLen)); err != nil {
+	if _, err := buff.Write(starknet.PadBytes(r.Bytes(), byteLen)); err != nil {
 		return []byte{}, err
 	}
-	if _, err := buff.Write(starknet.PadBytesBigInt(s, byteLen)); err != nil {
+	if _, err := buff.Write(starknet.PadBytes(s.Bytes(), byteLen)); err != nil {
 		return []byte{}, err
 	}
 
@@ -88,6 +89,12 @@ func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtype
 	var keys [2]PublicKey
 	keys[0].X = new(big.Int).SetBytes(publicKey)
 	keys[0].Y = caigo.Curve.GetYCoordinate(keys[0].X)
+
+	// When there is no point with the provided x-coordinate, the GetYCoordinate function returns the nil value.
+	if keys[0].Y == nil {
+		return false
+	}
+
 	keys[1].X = keys[0].X
 	keys[1].Y = new(big.Int).Mul(keys[0].Y, big.NewInt(-1))
 
@@ -107,7 +114,7 @@ func (sk *OCR2Key) MaxSignatureLength() int {
 }
 
 func (sk *OCR2Key) Marshal() ([]byte, error) {
-	return starknet.PadBytesBigInt(sk.priv, sk.privateKeyLen()), nil
+	return starknet.PadBytes(sk.priv.Bytes(), sk.privateKeyLen()), nil
 }
 
 func (sk *OCR2Key) privateKeyLen() int {

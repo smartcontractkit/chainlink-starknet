@@ -1,11 +1,11 @@
 import { TransactionResponse } from '../transaction'
 import {
-  Provider as StarknetProvider,
-  AddTransactionResponse,
+  SequencerProvider as StarknetProvider,
+  DeployContractResponse,
+  api,
   CompiledContract,
   Account,
   Call,
-  InvocationsDetails,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -34,12 +34,13 @@ export const makeProvider = (url: string): IProvider<StarknetProvider> => {
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: AddTransactionResponse,
+  response: api.Sequencer.AddTransactionResponse | DeployContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
     hash: response.transaction_hash,
-    address: address || response.address,
+    // HACK: Work around the response being either AddTransactionResponse or DeployContractResponse
+    address: address || (response as any).address || (response as any).contract_address,
     wait: async () => {
       // Success if does not throw
       let success: boolean

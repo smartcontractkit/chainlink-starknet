@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dontpanicdao/caigo"
 	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -18,8 +19,8 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
@@ -39,7 +40,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		linkTokenAddress        string
 		accessControllerAddress string
 		ocrAddress              string
-		sg                      *ops.StarknetGauntlet
+		proxyAddress            string
+		sg                      *gauntlet.StarknetGauntlet
 		t                       *common.Test
 		nAccounts               []string
 		serviceKeyL1            = "Hardhat"
@@ -52,6 +54,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		rpcRequestTimeout       = 10 * time.Second
 		roundWaitTimeout        = 10 * time.Minute
 		increasingCountMax      = 10
+		mockServerVal           = 900000000
 	)
 
 	BeforeEach(func() {
@@ -61,7 +64,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
 
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err = ops.NewStarknetGauntlet("../../")
+			sg, err = gauntlet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
@@ -93,7 +96,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying LINK token contract", func() {
-			linkTokenAddress, err := sg.DeployLinkTokenContract()
+			linkTokenAddress, err = sg.DeployLinkTokenContract()
 			Expect(err).ShouldNot(HaveOccurred(), "LINK Contract deployment should not fail")
 			err = os.Setenv("LINK", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
@@ -109,8 +112,18 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying OCR2 contract", func() {
-			ocrAddress, err = sg.DeployOCR2ControllerContract(0, 100000000000, decimals, "auto", linkTokenAddress)
+			ocrAddress, err = sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
+		})
+
+		By("Deploy proxy contract", func() {
+			proxyAddress, err = sg.DeployOCR2ProxyContract(ocrAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy deployment should not fail")
+		})
+
+		By("Fund OCR2 contract", func() {
+			_, err = sg.MintLinkToken(linkTokenAddress, ocrAddress, "100000000000000000000")
+			Expect(err).ShouldNot(HaveOccurred(), "Funding OCR2 contract should not fail")
 		})
 
 		By("Setting OCR2 billing", func() {
@@ -128,32 +141,22 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
-			// TODO: validate juels per fee coin calculation
-			// juelsPerFeeCoinSource := `
-			// val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"ETH"}>]
-			// parse [type="jsonparse" path="ETH"]
-			// scale  [type="multiply" times=1000000000]
-			// val -> parse -> scale`
+			observationSource := `
+			val [type = "bridge" name="bridge-mockserver"]
+			parse [type="jsonparse" path="data,result"]
+			val -> parse
+			`
 
-			// observationSource := `
-			// val [type = "bridge" name="bridge-cryptocompare" requestData=<{"fsym":"LINK", "tsyms":"USD"}>]
-			// parse [type="jsonparse" path="USD"]
-			// scale [type="multiply" times=1000000000]
-			// val -> parse -> scale
-			// `
+			// TODO: validate juels per fee coin calculation
 			juelsPerFeeCoinSource := ` 
 			sum  [type="sum" values=<[451000]> ]
 			sum`
 
-			observationSource := `
-			sum [type="sum" values=<[900000000]>]
-			sum
-			`
-
 			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
-				Name: "bridge-cryptocompare",
-				URL:  "https://min-api.cryptocompare.com/data/price",
+				Name: "bridge-mockserver",
+				URL:  t.GetMockServerURL(),
 			})
+			t.SetMockServerValue("", mockServerVal)
 			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
@@ -162,6 +165,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
+			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][0]
 
@@ -171,16 +175,36 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			client, err := ocr2.NewClient(reader, lggr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
 
+			// validate balance in aggregator
+			resLINK, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: linkTokenAddress,
+				Selector:        "balanceOf",
+				Calldata:        []string{caigo.HexToBN(ocrAddress).String()},
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			resAgg, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: ocrAddress,
+				Selector:        "link_available_for_payment",
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
+			balAgg, _ := new(big.Int).SetString(resAgg[0], 0)
+			Expect(balLINK.Cmp(big.NewInt(0)) == 1).To(BeTrue(), "Aggregator should have non-zero balance")
+			Expect(balLINK.Cmp(balAgg) >= 0).To(BeTrue(), "Aggregator payment balance should be <= actual LINK balance")
+
 			// assert new rounds are occuring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
 			var stuck bool
 			stuckCount := 0
-			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
+
+			// assert both positive and negative values have been seen
+			var positive bool
+			var negative bool
 
 			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
-				// end condition: enough rounds have occured
-				if increasing == increasingCountMax {
+				// end condition: enough rounds have occured, and positive and negative answers have been seen
+				if increasing >= increasingCountMax && positive && negative {
 					break
 				}
 
@@ -188,6 +212,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				if stuck && stuckCount > 10 {
 					log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 					break
+				}
+
+				// once progression has reached halfway, change to negative values
+				if increasing == increasingCountMax/2 {
+					t.SetMockServerValue("", -1*mockServerVal)
 				}
 
 				// try to fetch rounds
@@ -205,18 +234,23 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 					continue
 				}
 
+				// answer comparison (atleast see a positive and negative value once)
+				ansCmp := res.LatestAnswer.Cmp(big.NewInt(0))
+				positive = ansCmp == 1 || positive
+				negative = ansCmp == -1 || negative
+
 				// if changes from zero values set (should only initially)
 				if res.Epoch > 0 && details.Epoch == 0 {
 					Expect(res.Epoch > details.Epoch).To(BeTrue())
 					Expect(res.Round >= details.Round).To(BeTrue())
-					Expect(res.LatestAnswer.Cmp(big.NewInt(0)) == 1).To(BeTrue())
+					Expect(ansCmp != 0).To(BeTrue()) // assert changed from 0
 					Expect(res.Digest != details.Digest).To(BeTrue())
 					Expect(details.LatestTimestamp.Before(res.LatestTimestamp)).To(BeTrue())
 					details = res
 					continue
 				}
 
-				// check increasing
+				// check increasing rounds
 				Expect(res.Digest == details.Digest).To(BeTrue(), "Config digest should not change")
 				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
 					increasing += 1
@@ -233,8 +267,21 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				}
 			}
 
-			Expect(increasing == increasingCountMax).To(BeTrue(), "Round + epochs should be increasing")
+			Expect(increasing >= increasingCountMax).To(BeTrue(), "Round + epochs should be increasing")
+			Expect(positive).To(BeTrue(), "Positive value should have been submitted")
+			Expect(negative).To(BeTrue(), "Negative value should have been submitted")
 			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
+
+			// Test proxy reading
+			// TODO: would be good to test proxy switching underlying feeds
+			roundDataRaw, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: proxyAddress,
+				Selector:        "latest_round_data",
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")
+			Expect(len(roundDataRaw) == 5).Should(BeTrue(), "Round data from proxy should match expected size")
+			value := starknet.HexToSignedBig(roundDataRaw[1]).Int64()
+			Expect(value == int64(mockServerVal) || value == int64(-1*mockServerVal)).Should(BeTrue(), "Reading from proxy should return correct value")
 		})
 	})
 

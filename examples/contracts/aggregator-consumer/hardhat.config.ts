@@ -26,6 +26,9 @@ const config: HardhatUserConfig = {
       // dockerizedVersion: "0.2.0"
     },
   },
+  paths: {
+    cairoPaths: ['../../../contracts/src'],
+  },
 }
 
 export default config

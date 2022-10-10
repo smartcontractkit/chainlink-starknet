@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/types'
 import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
+import '@nomicfoundation/hardhat-chai-matchers'
 
 const COMPILER_SETTINGS = {
   optimizer: {
@@ -59,6 +60,11 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 10000000,
+  },
+  paths: {
+    sources: './src',
+    starknetSources: './src',
+    cairoPaths: ['./vendor/starkware-libs/starkgate-contracts/src'],
   },
 }
 
