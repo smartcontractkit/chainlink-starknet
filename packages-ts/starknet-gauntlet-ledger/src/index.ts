@@ -1,11 +1,10 @@
-import { IStarknetWallet } from './'
+import { IStarknetWallet, Env } from '@chainlink/starknet-gauntlet'
 import { SignerInterface, encode } from 'starknet'
 import { Abi, Signature, Invocation, InvocationsSignerDetails } from 'starknet/types'
 import { TypedData, getMessageHash } from 'starknet/utils/typedData'
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
 import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash'
 import Stark, { LedgerError } from '@ledgerhq/hw-app-starknet'
-import { Env } from '../dependencies'
 
 // EIP-2645 path
 //  2645 - EIP number
@@ -83,9 +82,9 @@ class LedgerSigner implements SignerInterface {
   }
 
   async sign(hash: string): Promise<Signature> {
-    const response = await this.client.signFelt(this.path, hash, true)
+    const response = await this.client.sign(this.path, hash, true)
     if (response.returnCode != LedgerError.NoErrors) {
-      throw new Error(`Unable to sign the message: ${response.signMessage}`)
+      throw new Error(`Unable to sign the message: ${response.errorMessage}`)
     }
 
     return [

@@ -1,4 +1,4 @@
-import { LEDGER_PATH_REGEX, DEFAULT_LEDGER_PATH } from '../src/wallet/ledgerWallet'
+import { LEDGER_PATH_REGEX, DEFAULT_LEDGER_PATH } from '../src/'
 
 describe('Ledger Input Path', () => {
   const wrongPathFormat1 = 'hola!'

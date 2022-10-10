@@ -25,7 +25,10 @@
       "path": "./packages-ts/starknet-gauntlet-ocr2"
     },
     {
+      "path": "./packages-ts/starknet-gauntlet-ledger"
+    },
+    {
       "path": "./packages-ts/starknet-gauntlet-cli"
-    }
+    },
   ]
 }
