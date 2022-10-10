@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
-import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types/runtime'
+import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { number } from 'starknet'
 

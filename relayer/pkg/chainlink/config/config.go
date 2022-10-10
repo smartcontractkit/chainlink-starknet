@@ -1,10 +1,13 @@
 package config
 
 import (
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
@@ -125,4 +128,81 @@ func (c *config) TxMaxBatchSize() int {
 		return int(ch.Int64)
 	}
 	return c.defaults.TxMaxBatchSize
+}
+
+type Chain struct {
+	OCR2CachePollPeriod *utils.Duration
+	OCR2CacheTTL        *utils.Duration
+	RequestTimeout      *utils.Duration
+	TxTimeout           *utils.Duration
+	TxSendFrequency     *utils.Duration
+	TxMaxBatchSize      *int64
+}
+
+func (c *Chain) SetFromDB(cfg *db.ChainCfg) error {
+	if cfg == nil {
+		return nil
+	}
+
+	if cfg.OCR2CachePollPeriod != nil {
+		c.OCR2CachePollPeriod = utils.MustNewDuration(cfg.OCR2CachePollPeriod.Duration())
+	}
+	if cfg.OCR2CacheTTL != nil {
+		c.OCR2CacheTTL = utils.MustNewDuration(cfg.OCR2CacheTTL.Duration())
+	}
+	if cfg.RequestTimeout != nil {
+		c.RequestTimeout = utils.MustNewDuration(cfg.RequestTimeout.Duration())
+	}
+	if cfg.TxTimeout != nil {
+		c.TxTimeout = utils.MustNewDuration(cfg.TxTimeout.Duration())
+	}
+	if cfg.TxSendFrequency != nil {
+		c.TxSendFrequency = utils.MustNewDuration(cfg.TxSendFrequency.Duration())
+	}
+	if cfg.TxMaxBatchSize.Valid {
+		c.TxMaxBatchSize = &cfg.TxMaxBatchSize.Int64
+	}
+
+	return nil
+}
+
+func (c *Chain) SetDefaults() {
+	if c.OCR2CachePollPeriod == nil {
+		c.OCR2CachePollPeriod = utils.MustNewDuration(DefaultConfigSet.OCR2CachePollPeriod)
+	}
+	if c.OCR2CacheTTL == nil {
+		c.OCR2CacheTTL = utils.MustNewDuration(DefaultConfigSet.OCR2CacheTTL)
+	}
+	if c.RequestTimeout == nil {
+		c.RequestTimeout = utils.MustNewDuration(DefaultConfigSet.RequestTimeout)
+	}
+	if c.TxTimeout == nil {
+		c.TxTimeout = utils.MustNewDuration(DefaultConfigSet.TxTimeout)
+	}
+	if c.TxSendFrequency == nil {
+		c.TxSendFrequency = utils.MustNewDuration(DefaultConfigSet.TxSendFrequency)
+	}
+	if c.TxMaxBatchSize == nil {
+		i := int64(DefaultConfigSet.TxMaxBatchSize)
+		c.TxMaxBatchSize = &i
+	}
+}
+
+type Node struct {
+	Name *string
+	URL  *utils.URL
+}
+
+func (n *Node) SetFromDB(db db.Node) error {
+	if db.Name != "" {
+		n.Name = &db.Name
+	}
+	if db.URL != "" {
+		u, err := url.Parse(db.URL)
+		if err != nil {
+			return err
+		}
+		n.URL = (*utils.URL)(u)
+	}
+	return nil
 }

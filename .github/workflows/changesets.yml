@@ -12,31 +12,22 @@ jobs:
     steps:
       # Checkout this repository
       - name: Checkout Repo
-        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # v2.4.1
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      # Get tool versions
-      - name: Get tool versions
-        uses: smartcontractkit/tool-versions-to-env-action@v1.0.7
-        id: tool-versions
       # Install nix
       - name: Install Nix
-        uses: cachix/install-nix-action@v17
+        uses: cachix/install-nix-action@d64e0553100205688c0fb2fa16edb0fc8663c590 # v17
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      # Set up Node.js
-      - name: Setup Node.js ${{ steps.tool-versions.outputs.nodejs_version }}
-        uses: actions/setup-node@master
-        with:
-          node-version: ${{ steps.tool-versions.outputs.nodejs_version }}
       # Install dependencies using yarn
       - name: Install Dependencies
         run: nix develop -c yarn install --frozen-lockfile
       # Create PR that will update versions or trigger publish
       - name: Create Release Pull Request
-        uses: changesets/action@master
+        uses: changesets/action@2a025e8ab1cfa4312c2868cb6aa3cd3b473b84bf # v1.3.0
         id: changesets
         with:
           publish: nix develop -c yarn release

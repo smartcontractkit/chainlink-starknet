@@ -2,18 +2,19 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from contracts.cairo.ocr2.interfaces.IAggregator import IAggregator, Round
 from starkware.cairo.common.math import assert_not_zero
 from starkware.cairo.common.math_cmp import is_nn
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.starknet.common.syscalls import get_block_timestamp
 
+from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
+
 @storage_var
-func uptime_feed_address_() -> (address : felt):
+func PriceConsumerWithSequencerCheck_uptime_feed_address() -> (address : felt):
 end
 
 @storage_var
-func aggregator_address_() -> (address : felt):
+func PriceConsumerWithSequencerCheck_aggregator_address() -> (address : felt):
 end
 
 # If the sequencer is up and that 60 sec has passed,
@@ -25,8 +26,8 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     assert_not_zero(uptime_feed_address)
     assert_not_zero(aggregator_address)
 
-    uptime_feed_address_.write(uptime_feed_address)
-    aggregator_address_.write(aggregator_address)
+    PriceConsumerWithSequencerCheck_uptime_feed_address.write(uptime_feed_address)
+    PriceConsumerWithSequencerCheck_aggregator_address.write(aggregator_address)
     return ()
 end
 
@@ -36,7 +37,7 @@ func get_latest_price{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     round : felt
 ):
     assert_sequencer_healthy()
-    let (aggregator_address) = aggregator_address_.read()
+    let (aggregator_address) = PriceConsumerWithSequencerCheck_aggregator_address.read()
     let (round : Round) = IAggregator.latest_round_data(contract_address=aggregator_address)
     return (round=round.answer)
 end
@@ -46,7 +47,7 @@ end
 func assert_sequencer_healthy{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     alloc_locals
 
-    let (uptime_feed_address) = uptime_feed_address_.read()
+    let (uptime_feed_address) = PriceConsumerWithSequencerCheck_uptime_feed_address.read()
 
     # Get latest_round_data from sequencer contract which should be update by a message send from L1
     let (round : Round) = IAggregator.latest_round_data(contract_address=uptime_feed_address)

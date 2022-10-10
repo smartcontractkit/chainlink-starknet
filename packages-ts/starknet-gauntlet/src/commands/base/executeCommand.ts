@@ -208,19 +208,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
-    executeWithoutSigner = async (): Promise<TransactionResponse> => {
-      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      await deps.prompt(`Continue?`)
-      deps.logger.loading(`Sending transaction...`)
-      const tx = await contract[config.internalFunction || config.action](
-        ...(this.input.contract as any),
-      )
-      const response = wrapResponse(this.provider, tx, this.contractAddress)
-      deps.logger.loading(`Waiting for tx confirmation at ${response.hash}...`)
-      await response.wait()
-      return response
-    }
-
     execute = async () => {
       let tx: TransactionResponse
 
@@ -229,11 +216,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       if (config.action === 'deploy') {
         tx = await this.deployContract()
       } else {
-        if (this.flags.noWallet) {
-          tx = await this.executeWithoutSigner()
-        } else {
-          tx = await this.executeWithSigner()
-        }
+        tx = await this.executeWithSigner()
       }
 
       let result = {

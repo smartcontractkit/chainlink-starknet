@@ -15,11 +15,11 @@
   "scripts": {
     "gauntlet": "ts-node ./src/index.ts",
     "lint": "tsc",
-    "test": "SKIP_PROMPTS=true jest --runInBand",
+    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-multisig --passWithNoTests",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
-    "lint:format": "yarn prettier --check ./src",
     "format": "yarn prettier --write ./src",
+    "format:check": "yarn prettier --check ./src",
     "clean": "rm -rf ./dist/ ./bin/",
     "build": "yarn clean && tsc -b",
     "bundle": "yarn build && pkg ."
@@ -27,7 +27,6 @@
   "dependencies": {
     "starsign-multisig": "0.2.3",
     "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/starknet-gauntlet": "*",
-    "starknet": "^3.15.0"
+    "@chainlink/starknet-gauntlet": "*"
   }
 }

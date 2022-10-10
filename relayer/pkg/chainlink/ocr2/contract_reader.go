@@ -2,9 +2,10 @@ package ocr2
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"math/big"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
@@ -118,6 +119,6 @@ func (c *contractReader) LatestBillingDetails(ctx context.Context) (bd BillingDe
 	if err != nil {
 		err = errors.Wrap(err, "couldn't get billing details")
 	}
-	
+
 	return
 }

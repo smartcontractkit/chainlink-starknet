@@ -1,20 +1,20 @@
 package starknet
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
+	junotypes "github.com/NethermindEth/juno/pkg/types"
+	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
 )
 
 const chunkSize = 31
-
-// convert big into padded bytes
-func PadBytesBigInt(a *big.Int, length int) []byte {
-	return PadBytes(a.Bytes(), length)
-}
 
 // padd bytes to specific length
 func PadBytes(a []byte, length int) []byte {
@@ -46,8 +46,8 @@ func Min[T constraints.Ordered](a, b T) T {
 	return b
 }
 
-// Encodes a byte slice as a bunch of felts. First felt indicates the total byte size.
-func EncodeBytes(data []byte) (felts []*big.Int) {
+// EncodeFelts takes a byte slice and splits as bunch of felts. First felt indicates the total byte size.
+func EncodeFelts(data []byte) (felts []*big.Int) {
 	// prefix with len
 	length := big.NewInt(int64(len(data)))
 	felts = append(felts, length)
@@ -63,22 +63,24 @@ func EncodeBytes(data []byte) (felts []*big.Int) {
 	return felts
 }
 
-func DecodeBytes(felts []*big.Int) ([]byte, error) {
+// DecodeFelts is the reverse of EncodeFelts
+func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	if len(felts) == 0 {
 		return []byte{}, nil
 	}
 
 	data := []byte{}
 	buf := make([]byte, chunkSize)
-	length := int(felts[0].Int64())
+	length := felts[0].Uint64()
 
 	for _, felt := range felts[1:] {
-		buf := buf[:Min(chunkSize, length)]
+		bytesLen := Min(chunkSize, length)
+		bytesBuffer := buf[:bytesLen]
 
-		felt.FillBytes(buf)
-		data = append(data, buf...)
+		felt.FillBytes(bytesBuffer)
+		data = append(data, bytesBuffer...)
 
-		length -= len(buf)
+		length -= uint64(bytesLen)
 	}
 
 	if length != 0 {
@@ -88,13 +90,13 @@ func DecodeBytes(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-// BigIntToFelt wraps negative values correctly into felts
-func BigIntToFelt(num *big.Int) *big.Int {
+// SignedBigToFelt wraps negative values correctly into felt
+func SignedBigToFelt(num *big.Int) *big.Int {
 	return new(big.Int).Mod(num, caigotypes.MaxFelt.Big())
 }
 
-// FeltToBigInt unwraps felt into negative values
-func FeltToBigInt(felt *caigotypes.Felt) (num *big.Int) {
+// FeltToSigned unwraps felt into negative values
+func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
 	num = felt.Big()
 	prime := caigotypes.MaxFelt.Big()
 	half := new(big.Int).Div(prime, big.NewInt(2))
@@ -105,10 +107,66 @@ func FeltToBigInt(felt *caigotypes.Felt) (num *big.Int) {
 	return num
 }
 
-func CaigoFeltsToJunoFelts(cFelts []*caigotypes.Felt) (jFelts []*big.Int) {
-	for _, felt := range cFelts {
-		jFelts = append(jFelts, felt.Int)
+func HexToSignedBig(str string) (num *big.Int) {
+	felt := junotypes.HexToFelt(str)
+	return FeltToSignedBig(&caigotypes.Felt{Int: felt.Big()})
+}
+
+func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
+	for _, f := range in {
+		out = append(out, f.Int)
 	}
 
-	return jFelts
+	return out
+}
+
+// StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
+func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
+	if in == nil {
+		return nil, errors.New("invalid: input value")
+	}
+
+	for _, f := range in {
+		felt := caigotypes.StrToFelt(f)
+		if felt == nil {
+			return nil, errors.New("invalid: string value")
+		}
+
+		out = append(out, felt)
+	}
+
+	return out, nil
+}
+
+func StringsToJunoFelts(in []string) []junotypes.Felt {
+	out := make([]junotypes.Felt, len(in))
+	for i := 0; i < len(in); i++ {
+		out[i] = junotypes.HexToFelt(in[i])
+	}
+	return out
+}
+
+// CompareAddress compares different hex starknet addresses with potentially different 0 padding
+func CompareAddress(a, b string) bool {
+	aBytes, err := caigo.HexToBytes(a)
+	if err != nil {
+		return false
+	}
+
+	bBytes, err := caigo.HexToBytes(b)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(PadBytes(aBytes, 32), PadBytes(bBytes, 32))
+}
+
+/* Testing utils - do not use (XXX) outside testing context */
+
+func XXXMustHexDecodeString(data string) []byte {
+	bytes, err := hex.DecodeString(data)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
 }
