@@ -59,7 +59,7 @@ const registerExecuteCommand = <UI, CI>(
       if (env.withLedger) {
         return makeLedgerWallet(env)
       }
-    
+
       return makeDefaultWallet(env)
     },
   }
