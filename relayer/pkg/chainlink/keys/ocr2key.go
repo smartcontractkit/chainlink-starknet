@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -34,10 +33,11 @@ func (sk *OCR2Key) PublicKey() ocrtypes.OnchainPublicKey {
 
 func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) (*big.Int, error) {
 	var dataArray []*big.Int
-	rawReportContext := evmutil.RawReportContext(reportCtx)
+
+	rawReportContext := medianreport.RawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
-	dataArray = append(dataArray, new(big.Int).SetBytes(starknet.EnsureFelt(rawReportContext[2]))) // convert 32 byte extraHash to 31 bytes
+	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[2][:]))
 
 	// split report into separate felts for hashing
 	splitReport, err := medianreport.SplitReport(report)
