@@ -15,7 +15,7 @@ from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.math import (
     abs_value,
     split_felt,
-    assert_lt_felt,
+    assert_le_felt,
     assert_lt,
     assert_not_zero,
     assert_not_equal,
@@ -24,6 +24,7 @@ from starkware.cairo.common.math import (
     assert_in_range,
     unsigned_div_rem,
 )
+from starkware.cairo.common.math_cmp import is_nn
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_check
 
@@ -506,11 +507,19 @@ func transmit{
     let (median_idx : felt, _) = unsigned_div_rem(observations_len, 2)
     let median = observations[median_idx]
 
+    let (is_neg) = is_nn(median)
+
     # Check abs(median) is in i128 range.
-    # NOTE: (assert_lt_felt(-i128::MAX, median) doesn't work correctly so we have to use abs!)
+    # NOTE: (assert_le_felt(-i128::MAX, median) doesn't work correctly so we have to use abs!)
     let (value) = abs_value(median)
-    with_attr error_message("value not in int128 range: {median}"):
-        assert_lt_felt(value, INT128_MAX)
+    if is_neg == 0:
+        with_attr error_message("value not in int128 range: {median}"):
+            assert_le_felt(value, INT128_MAX + 1)
+        end
+    else:
+        with_attr error_message("value not in int128 range: {median}"):
+            assert_le_felt(value, INT128_MAX)
+        end
     end
 
     # Validate median in min-max range
