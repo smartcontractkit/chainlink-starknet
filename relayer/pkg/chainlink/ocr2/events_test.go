@@ -62,7 +62,8 @@ var (
 )
 
 func TestNewTransmissionEvent_Parse(t *testing.T) {
-	eventData := starknet.StringsToFelt(newTransmissionEventRaw)
+	eventData, err := starknet.StringsToFelt(newTransmissionEventRaw)
+	assert.NoError(t, err)
 	require.Equal(t, len(newTransmissionEventRaw), len(eventData))
 
 	e, err := ParseNewTransmissionEvent(eventData)
@@ -92,7 +93,8 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 }
 
 func TestConfigSetEvent_Parse(t *testing.T) {
-	eventData := starknet.StringsToFelt(configSetEventRaw)
+	eventData, err := starknet.StringsToFelt(configSetEventRaw)
+	assert.NoError(t, err)
 	require.Equal(t, len(configSetEventRaw), len(eventData))
 
 	e, err := ParseConfigSetEvent(eventData)

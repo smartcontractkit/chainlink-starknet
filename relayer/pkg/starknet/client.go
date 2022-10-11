@@ -13,6 +13,8 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
+//go:generate mockery --name Reader --output ./mocks/
+
 type Reader interface {
 	CallContract(context.Context, CallOps) ([]string, error)
 	LatestBlockHeight(context.Context) (uint64, error)

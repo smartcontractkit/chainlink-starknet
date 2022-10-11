@@ -61,7 +61,9 @@ func propose_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     address : felt
 ):
     Ownable.assert_only_owner()
-
+    with_attr error_message("AggregatorProxy: aggregator is zero address"):
+        assert_not_zero(address)
+    end
     AggregatorProxy_proposed_aggregator.write(address)
 
     # emit event
@@ -75,7 +77,9 @@ func confirm_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     address : felt
 ):
     Ownable.assert_only_owner()
-
+    with_attr error_message("AggregatorProxy: aggregator is zero address"):
+        assert_not_zero(address)
+    end
     let (phase : Phase) = AggregatorProxy_current_phase.read()
     let previous = phase.aggregator
 

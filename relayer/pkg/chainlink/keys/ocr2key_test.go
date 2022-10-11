@@ -148,7 +148,13 @@ func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
 	t.Run("invalid pubkey", func(t *testing.T) {
 		sig, err := kr1.Sign(ctx, report)
 		require.NoError(t, err)
-		result := kr2.Verify([]byte{0x01}, ctx, report, sig)
+
+		pk := []byte{0x01}
+		result := kr2.Verify(pk, ctx, report, sig)
+		require.False(t, result)
+
+		pk = big.NewInt(int64(31337)).Bytes()
+		result = kr2.Verify(pk, ctx, report, sig)
 		require.False(t, result)
 	})
 }

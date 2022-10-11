@@ -26,7 +26,7 @@ from starkware.cairo.common.math import (
     unsigned_div_rem,
 )
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_le
+from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_le, uint256_check
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
@@ -166,8 +166,8 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     let range : Range = (min=min_answer, max=max_answer)
     Aggregator_answer_range.write(range)
 
-    with_attr error_message("decimals exceed 2^8"):
-        assert_lt(decimals, UINT8_MAX)
+    with_attr error_message("decimals are negative or exceed 2^8"):
+        assert_nn_le(decimals, UINT8_MAX)
     end
     Aggregator_decimals.write(decimals)
     Aggregator_description.write(description)
@@ -722,6 +722,7 @@ end
 func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     round : Round
 ):
+    require_access()
     let (latest_round_id) = Aggregator_latest_aggregator_round_id.read()
     let (transmission : Transmission) = Aggregator_transmissions.read(latest_round_id)
 
@@ -992,7 +993,7 @@ func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 ):
     alloc_locals
     has_billing_access()
-
+    uint256_check(amount)
     let (link_token) = Aggregator_link_token.read()
     let (contract_address) = get_contract_address()
 
@@ -1123,7 +1124,7 @@ func set_payees{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return ()
 end
 
-# Returns 1 if value == 0. Returns 1 otherwise.
+# Returns 1 if value == 0. Returns 0 otherwise.
 func is_zero(value) -> (res):
     if value == 0:
         return (res=1)

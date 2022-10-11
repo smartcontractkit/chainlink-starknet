@@ -166,6 +166,28 @@ func (c *Chain) SetFromDB(cfg *db.ChainCfg) error {
 	return nil
 }
 
+func (c *Chain) SetDefaults() {
+	if c.OCR2CachePollPeriod == nil {
+		c.OCR2CachePollPeriod = utils.MustNewDuration(DefaultConfigSet.OCR2CachePollPeriod)
+	}
+	if c.OCR2CacheTTL == nil {
+		c.OCR2CacheTTL = utils.MustNewDuration(DefaultConfigSet.OCR2CacheTTL)
+	}
+	if c.RequestTimeout == nil {
+		c.RequestTimeout = utils.MustNewDuration(DefaultConfigSet.RequestTimeout)
+	}
+	if c.TxTimeout == nil {
+		c.TxTimeout = utils.MustNewDuration(DefaultConfigSet.TxTimeout)
+	}
+	if c.TxSendFrequency == nil {
+		c.TxSendFrequency = utils.MustNewDuration(DefaultConfigSet.TxSendFrequency)
+	}
+	if c.TxMaxBatchSize == nil {
+		i := int64(DefaultConfigSet.TxMaxBatchSize)
+		c.TxMaxBatchSize = &i
+	}
+}
+
 type Node struct {
 	Name *string
 	URL  *utils.URL

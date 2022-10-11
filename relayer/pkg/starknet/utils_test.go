@@ -68,3 +68,65 @@ func TestHexToSignedBig(t *testing.T) {
 	answer = HexToSignedBig("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
 	assert.Equal(t, big.NewInt(-10), answer)
 }
+
+func TestDecodeFeltFails(t *testing.T) {
+	val, _ := new(big.Int).SetString("1231927389172389172983712738127391273891", 10)
+
+	array := make([]*big.Int, 2)
+	array[0] = val
+	array[1] = val
+
+	_, error := DecodeFelts(array)
+	assert.Equal(t, error.Error(), "invalid: contained less bytes than the specified length")
+}
+
+func TestDecodeFeltsSuccesses(t *testing.T) {
+	b, _ := new(big.Int).SetString("1231927389172389172983712738127391273891", 10)
+	bBytesLen := int64(len(b.Bytes()))
+	a := big.NewInt(bBytesLen)
+
+	array := make([]*big.Int, 2)
+	array[0] = a
+	array[1] = b
+
+	bytes, error := DecodeFelts(array)
+	assert.Equal(t, int64(len(bytes)), bBytesLen)
+	require.NoError(t, error)
+}
+
+func TestEncodeThenDecode(t *testing.T) {
+	const dataLen = 232
+
+	// create random bytes
+	data := make([]byte, dataLen)
+	_, err := rand.Read(data)
+	require.NoError(t, err)
+
+	encodedData := EncodeFelts(data)
+	decodedData, err := DecodeFelts(encodedData)
+	require.NoError(t, err)
+
+	assert.Equal(t, data, decodedData)
+}
+
+func TestDecodeThenEncode(t *testing.T) {
+	const numOfFelts = 12
+
+	// Create random array of felts
+	felts := make([]*big.Int, numOfFelts+1)
+	felts[0] = big.NewInt(numOfFelts * 31)
+	for i := 1; i <= numOfFelts; i++ {
+		feltRaw := make([]byte, 31)
+		_, err := rand.Read(feltRaw)
+		require.NoError(t, err)
+
+		felt := new(big.Int).SetBytes(feltRaw)
+		felts[i] = felt
+	}
+
+	decodedFelts, err := DecodeFelts(felts)
+	require.NoError(t, err)
+
+	encodedFelts := EncodeFelts(decodedFelts)
+	assert.Equal(t, encodedFelts, felts)
+}
