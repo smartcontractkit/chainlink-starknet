@@ -10,4 +10,4 @@ export interface IStarknetWallet extends IWallet<SignerInterface> {
   getAccountAddress: () => string
 }
 
-export {makeWallet}
+export { makeWallet }
