@@ -42,6 +42,20 @@ type NewTransmissionEvent struct {
 
 // ParseNewTransmissionEvent is decoding binary felt data as the NewTransmissionEvent type
 func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEvent, error) {
+	{
+		const observationsLenIndex = 5
+		const constNumOfElements = 11
+
+		if len(eventData) < constNumOfElements {
+			return NewTransmissionEvent{}, errors.New("invalid: event data")
+		}
+
+		observationsLen := eventData[observationsLenIndex].Uint64()
+		if len(eventData) != constNumOfElements+int(observationsLen) {
+			return NewTransmissionEvent{}, errors.New("invalid: event data")
+		}
+	}
+
 	// round_id
 	index := 0
 	roundId := uint32(eventData[index].Uint64())
@@ -121,6 +135,32 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 // ParseConfigSetEvent is decoding binary felt data as the libocr ContractConfig type
 func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, error) {
+	{
+		const oraclesLenIdx = 3
+		if len(eventData) < oraclesLenIdx {
+			return types.ContractConfig{}, errors.New("invalid: event data")
+		}
+
+		oraclesLen := eventData[oraclesLenIdx].Uint64()
+		onchainConfigLenIdx := oraclesLenIdx + 2*oraclesLen + 2
+
+		if uint64(len(eventData)) < onchainConfigLenIdx {
+			return types.ContractConfig{}, errors.New("invalid: event data")
+		}
+
+		onchainConfigLen := eventData[onchainConfigLenIdx].Uint64()
+		offchainConfigLenIdx := onchainConfigLenIdx + onchainConfigLen + 2
+
+		if uint64(len(eventData)) < offchainConfigLenIdx {
+			return types.ContractConfig{}, errors.New("invalid: event data")
+		}
+
+		offchainConfigLen := eventData[offchainConfigLenIdx].Uint64()
+		if uint64(len(eventData)) != offchainConfigLenIdx+offchainConfigLen+1 {
+			return types.ContractConfig{}, errors.New("invalid: event data")
+		}
+	}
+
 	index := 0
 	// previous_config_block_number - skip
 

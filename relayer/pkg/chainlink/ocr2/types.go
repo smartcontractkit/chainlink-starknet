@@ -1,6 +1,8 @@
 package ocr2
 
 import (
+	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -56,4 +58,39 @@ func NewBillingDetails(observationPaymentFelt junotypes.Felt, transmissionPaymen
 		ObservationPaymentGJuels:  observationPaymentGJuels.Uint64(),
 		TransmissionPaymentGJuels: transmissionPaymentGJuels.Uint64(),
 	}, nil
+}
+
+type RoundData struct {
+	RoundID     uint32
+	Answer      *big.Int
+	BlockNumber uint64
+	StartedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
+	if len(felts) != 5 {
+		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
+	}
+	if !felts[0].Big().IsUint64() && felts[0].Big().Uint64() > math.MaxUint32 {
+		return data, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", felts[0].Big())
+	}
+	data.RoundID = uint32(felts[0].Big().Uint64())
+	data.Answer = felts[1].Big()
+	blockNumber := felts[2].Big()
+	if !blockNumber.IsUint64() {
+		return data, fmt.Errorf("block number '%s' does not fit into uint64", blockNumber.String())
+	}
+	data.BlockNumber = blockNumber.Uint64()
+	startedAt := felts[3].Big()
+	if !startedAt.IsInt64() {
+		return data, fmt.Errorf("startedAt '%s' does not fit into int64", startedAt.String())
+	}
+	data.StartedAt = time.Unix(startedAt.Int64(), 0)
+	updatedAt := felts[4].Big()
+	if !updatedAt.IsInt64() {
+		return data, fmt.Errorf("updatedAt '%s' does not fit into int64", startedAt.String())
+	}
+	data.UpdatedAt = time.Unix(updatedAt.Int64(), 0)
+	return data, nil
 }

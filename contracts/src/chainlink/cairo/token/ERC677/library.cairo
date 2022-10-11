@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_not_zero
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import Uint256, uint256_check
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import TRUE
 from openzeppelin.token.erc20.library import ERC20
@@ -21,10 +21,10 @@ namespace ERC677:
     ) -> (success : felt):
         alloc_locals
 
+        uint256_check(value)
         let (sender) = get_caller_address()
-        with_attr error_message("ERC677: address can not be null"):
-            assert_not_zero(to)
-        end
+
+        # ERC20.transfer will check that both addresses are not zero
         ERC20.transfer(to, value)
         Transfer.emit(sender, to, value, data_len, data)
 

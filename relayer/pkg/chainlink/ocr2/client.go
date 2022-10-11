@@ -3,6 +3,8 @@ package ocr2
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"time"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
@@ -16,10 +18,15 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
 
+//go:generate mockery --name OCR2Reader --output ./mocks/
+
 type OCR2Reader interface {
 	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
 	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
+	LatestRoundData(context.Context, string) (RoundData, error)
+	LinkAvailableForPayment(context.Context, string) (*big.Int, error)
 	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
+	NewTransmissionsFromEventsAt(context.Context, string, uint64) ([]NewTransmissionEvent, error)
 	BillingDetails(context.Context, string) (BillingDetails, error)
 
 	BaseReader() starknet.Reader
@@ -54,7 +61,8 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 		return bd, errors.Wrap(err, "couldn't call the contract")
 	}
 
-	if len(res) != 2 {
+	// [0] - observation payment, [1] - transmission payment, [2] - gas base, [3] - gas per signature
+	if len(res) != 4 {
 		return bd, errors.New("unexpected result length")
 	}
 
@@ -108,6 +116,10 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	}
 
 	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
+	if len(res) != 4 {
+		return td, errors.New("unexpected result length")
+	}
+
 	digest := junotypes.HexToFelt(res[0])
 	configDigest := types.ConfigDigest{}
 	digest.Big().FillBytes(configDigest[:])
@@ -132,10 +144,46 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	return td, nil
 }
 
-func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+func (c *Client) LatestRoundData(ctx context.Context, address string) (round RoundData, err error) {
+	ops := starknet.CallOps{
+		ContractAddress: address,
+		Selector:        "latest_round_data",
+	}
+
+	results, err := c.r.CallContract(ctx, ops)
+	if err != nil {
+		return round, errors.Wrap(err, "couldn't call the contract with selector latest_round_data")
+	}
+	felts := []junotypes.Felt{}
+	for _, result := range results {
+		felts = append(felts, junotypes.HexToFelt(result))
+	}
+
+	round, err = NewRoundData(felts)
+	if err != nil {
+		return round, errors.Wrap(err, "unable to decode RoundData")
+	}
+	return round, nil
+}
+
+func (c *Client) LinkAvailableForPayment(ctx context.Context, address string) (*big.Int, error) {
+	results, err := c.r.CallContract(ctx, starknet.CallOps{
+		ContractAddress: address,
+		Selector:        "link_available_for_payment",
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payment'")
+	}
+	if len(results) != 1 {
+		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
+	}
+	return junotypes.HexToFelt(results[0]).Big(), nil
+}
+
+func (c *Client) fetchEventsFromBlock(ctx context.Context, address, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
 	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
-		return cc, errors.Wrap(err, "couldn't fetch block by number")
+		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch block by number")
 	}
 
 	for _, txReceipt := range block.TransactionReceipts {
@@ -144,27 +192,60 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 
 			m, err := json.Marshal(event)
 			if err != nil {
-				return cc, errors.Wrap(err, "couldn't marshal event")
+				return eventsAsFeltArrs, errors.Wrap(err, "couldn't marshal event")
 			}
 
 			err = json.Unmarshal(m, &decodedEvent)
 			if err != nil {
-				return cc, errors.Wrap(err, "couldn't unmarshal event")
+				return eventsAsFeltArrs, errors.Wrap(err, "couldn't unmarshal event")
 			}
 
-			if starknet.IsEventFromContract(&decodedEvent, address, "ConfigSet") {
-				config, err := ParseConfigSetEvent(decodedEvent.Data)
-				if err != nil {
-					return cc, errors.Wrap(err, "couldn't parse config event")
-				}
-
-				return ContractConfig{
-					Config:      config,
-					ConfigBlock: blockNum,
-				}, nil
+			if starknet.IsEventFromContract(&decodedEvent, address, eventType) {
+				eventsAsFeltArrs = append(eventsAsFeltArrs, decodedEvent.Data)
 			}
 		}
 	}
+	if len(eventsAsFeltArrs) == 0 {
+		return nil, errors.New("events not found in the block")
+	}
+	return eventsAsFeltArrs, nil
+}
 
-	return cc, errors.New("config not found in the block")
+func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
+	if err != nil {
+		return cc, errors.Wrap(err, "failed to fetch config_set events")
+	}
+	if len(eventsAsFeltArrs) != 1 {
+		return cc, fmt.Errorf("expected to find one config_set event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	}
+	configAtEvent := eventsAsFeltArrs[0]
+	config, err := ParseConfigSetEvent(configAtEvent)
+	if err != nil {
+		return cc, errors.Wrap(err, "couldn't parse config event")
+	}
+	return ContractConfig{
+		Config:      config,
+		ConfigBlock: blockNum,
+	}, nil
+}
+
+// NewTransmissionsFromEventsAt finds events of type new_transmission emitted by the contract address in a given block number.
+func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address string, blockNum uint64) (events []NewTransmissionEvent, err error) {
+	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch new_transmission events")
+	}
+	if len(eventsAsFeltArrs) == 0 {
+		return nil, fmt.Errorf("expected to find at least one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	}
+	events = []NewTransmissionEvent{}
+	for _, felts := range eventsAsFeltArrs {
+		event, err := ParseNewTransmissionEvent(felts)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't parse new_transmission event")
+		}
+		events = append(events, event)
+	}
+	return events, nil
 }

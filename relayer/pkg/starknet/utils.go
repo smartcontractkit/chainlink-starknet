@@ -71,15 +71,16 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 
 	data := []byte{}
 	buf := make([]byte, chunkSize)
-	length := int(felts[0].Int64())
+	length := felts[0].Uint64()
 
 	for _, felt := range felts[1:] {
-		bytesBuffer := buf[:Min(chunkSize, length)]
+		bytesLen := Min(chunkSize, length)
+		bytesBuffer := buf[:bytesLen]
 
 		felt.FillBytes(bytesBuffer)
 		data = append(data, bytesBuffer...)
 
-		length -= len(bytesBuffer)
+		length -= uint64(bytesLen)
 	}
 
 	if length != 0 {
@@ -120,11 +121,28 @@ func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
 }
 
 // StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
-func StringsToFelt(in []string) (out []*caigotypes.Felt) {
-	for _, f := range in {
-		out = append(out, caigotypes.StrToFelt(f))
+func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
+	if in == nil {
+		return nil, errors.New("invalid: input value")
 	}
 
+	for _, f := range in {
+		felt := caigotypes.StrToFelt(f)
+		if felt == nil {
+			return nil, errors.New("invalid: string value")
+		}
+
+		out = append(out, felt)
+	}
+
+	return out, nil
+}
+
+func StringsToJunoFelts(in []string) []junotypes.Felt {
+	out := make([]junotypes.Felt, len(in))
+	for i := 0; i < len(in); i++ {
+		out[i] = junotypes.HexToFelt(in[i])
+	}
 	return out
 }
 
