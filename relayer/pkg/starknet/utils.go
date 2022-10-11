@@ -27,14 +27,6 @@ func PadBytes(a []byte, length int) []byte {
 	return a
 }
 
-// convert 32 byte to "0" + 31 bytes
-func EnsureFelt(b [32]byte) (out []byte) {
-	out = make([]byte, 32)
-	copy(out[:], b[:])
-	out[0] = 0
-	return out
-}
-
 func NilResultError(funcName string) error {
 	return fmt.Errorf("nil result in %s", funcName)
 }

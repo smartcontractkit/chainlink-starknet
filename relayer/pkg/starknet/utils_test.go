@@ -38,27 +38,6 @@ func TestPadBytes(t *testing.T) {
 	}
 }
 
-func TestEnsureFelt(t *testing.T) {
-	// create random bytes
-	random := make([]byte, 32)
-	_, err := rand.Read(random)
-	require.NoError(t, err)
-
-	// fit into [32]byte
-	val := [32]byte{}
-	copy(val[:], random[:])
-
-	// validate replace first char with 0
-	out := EnsureFelt(val)
-	assert.Equal(t, 32, len(out))
-	assert.Equal(t, uint8(0), out[0])
-	assert.Equal(t, random[1:], out[1:])
-
-	// validate always fills 64 characters
-	out = EnsureFelt([32]byte{})
-	assert.Equal(t, 32, len(out))
-}
-
 func TestHexToSignedBig(t *testing.T) {
 	// Positive value (99)
 	answer := HexToSignedBig("0x63")
