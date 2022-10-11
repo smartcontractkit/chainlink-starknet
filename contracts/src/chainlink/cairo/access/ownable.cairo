@@ -46,6 +46,7 @@ namespace Ownable:
     func assert_only_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
         let (owner) = Ownable_owner.read()
         let (caller) = get_caller_address()
+        # caller is the zero address should not be possible anymore with introduction of fees
         with_attr error_message("Ownable: Caller is the zero address"):
             assert_not_zero(caller)
         end
