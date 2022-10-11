@@ -17,6 +17,7 @@ from starkware.cairo.common.math import (
     split_felt,
     assert_lt_felt,
     assert_lt,
+    assert_le,
     assert_not_zero,
     assert_not_equal,
     assert_nn_le,
@@ -25,7 +26,13 @@ from starkware.cairo.common.math import (
     unsigned_div_rem,
 )
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_check
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_sub,
+    uint256_lt,
+    uint256_le,
+    uint256_check,
+)
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
@@ -1002,6 +1009,11 @@ func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     )
 
     let (link_due_uint256 : Uint256) = felt_to_uint256(link_due)
+    let (res) = uint256_le(link_due_uint256, balance)
+    with_attr error_message("Total amount due exceeds the balance"):
+        assert res = 1
+    end
+
     let (available : Uint256) = uint256_sub(balance, link_due_uint256)
 
     let (less_available : felt) = uint256_lt(available, amount)
@@ -1047,6 +1059,7 @@ func total_link_due_{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return total_link_due_(index - 1, latest_round_id, total_rounds, payments_juels)
 end
 
+# since the felt type in Cairo is not signed, whoever calls this function will have to interpret the result line 1070 as the correct negative value.
 @view
 func link_available_for_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (available : felt):
