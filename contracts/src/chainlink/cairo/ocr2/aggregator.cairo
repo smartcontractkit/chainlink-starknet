@@ -1181,10 +1181,6 @@ func accept_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 ):
     let (proposed) = Aggregator_proposed_payees.read(transmitter)
     let (caller) = get_caller_address()
-    # caller cannot be zero address to avoid overwriting owner when proposed_owner is not set
-    with_attr error_message("caller is the zero address"):
-        assert_not_zero(caller)
-    end
     with_attr error_message("only proposed payee can accept"):
         assert caller = proposed
     end
