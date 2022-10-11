@@ -26,7 +26,13 @@ from starkware.cairo.common.math import (
     unsigned_div_rem,
 )
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_le, uint256_check
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_sub,
+    uint256_lt,
+    uint256_le,
+    uint256_check,
+)
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
