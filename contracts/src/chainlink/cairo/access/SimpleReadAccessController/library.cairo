@@ -5,7 +5,17 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from chainlink.cairo.access.SimpleWriteAccessController.library import SimpleWriteAccessController
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
+    SimpleWriteAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 
 namespace SimpleReadAccessController:
     func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
