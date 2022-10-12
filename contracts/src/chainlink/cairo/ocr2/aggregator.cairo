@@ -15,10 +15,8 @@ from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.math import (
     abs_value,
-    split_felt,
     assert_lt_felt,
     assert_lt,
-    assert_le,
     assert_not_zero,
     assert_not_equal,
     assert_nn_le,
