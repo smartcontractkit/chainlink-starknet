@@ -51,7 +51,17 @@ from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
 
 from chainlink.cairo.access.ownable import Ownable
 
-from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import (
+    SimpleReadAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 
 from chainlink.cairo.ocr2.IAggregator import NewTransmission, Round
 
