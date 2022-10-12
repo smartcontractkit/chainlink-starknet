@@ -16,7 +16,7 @@ jobs:
         id: amarna
         continue-on-error: true
         with:
-          amarna-args: --exclude-rules=must-check-caller-address
+          amarna-args: --disable-inline --exclude-rules=must-check-caller-address
           sarif: results.sarif
           target: 'contracts/src/chainlink/cairo/'
 
