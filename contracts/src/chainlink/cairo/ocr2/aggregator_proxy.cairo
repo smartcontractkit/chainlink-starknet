@@ -1,3 +1,4 @@
+# amarna: disable=arithmetic-div,arithmetic-sub,arithmetic-mul,arithmetic-add
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
