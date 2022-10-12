@@ -1,3 +1,4 @@
+# amarna: disable=arithmetic-div,arithmetic-sub,arithmetic-mul,arithmetic-add
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
@@ -6,7 +7,17 @@ from starkware.starknet.common.syscalls import get_caller_address
 
 from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
 
-from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import (
+    SimpleReadAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 from chainlink.cairo.access.ownable import Ownable
 
 struct Phase:
@@ -61,7 +72,9 @@ func propose_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     address : felt
 ):
     Ownable.assert_only_owner()
-
+    with_attr error_message("AggregatorProxy: aggregator is zero address"):
+        assert_not_zero(address)
+    end
     AggregatorProxy_proposed_aggregator.write(address)
 
     # emit event
@@ -75,7 +88,9 @@ func confirm_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     address : felt
 ):
     Ownable.assert_only_owner()
-
+    with_attr error_message("AggregatorProxy: aggregator is zero address"):
+        assert_not_zero(address)
+    end
     let (phase : Phase) = AggregatorProxy_current_phase.read()
     let previous = phase.aggregator
 

@@ -1,3 +1,4 @@
+# amarna: disable=arithmetic-div,arithmetic-sub,arithmetic-mul,arithmetic-add
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
@@ -14,7 +15,6 @@ from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.math import (
     abs_value,
-    split_felt,
     assert_le_felt,
     assert_lt,
     assert_not_zero,
@@ -26,7 +26,13 @@ from starkware.cairo.common.math import (
 )
 from starkware.cairo.common.math_cmp import is_nn
 from starkware.cairo.common.pow import pow
-from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_lt, uint256_check
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_sub,
+    uint256_lt,
+    uint256_le,
+    uint256_check,
+)
 
 from starkware.starknet.common.syscalls import (
     get_caller_address,
@@ -46,7 +52,17 @@ from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
 
 from chainlink.cairo.access.ownable import Ownable
 
-from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import (
+    SimpleReadAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 
 from chainlink.cairo.ocr2.IAggregator import NewTransmission, Round
 
@@ -163,7 +179,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     Aggregator_billing_access_controller.write(billing_access_controller)
 
     assert_lt(min_answer, max_answer)
-    let range : Range = (min=min_answer, max=max_answer)
+    let range : Range = (min_answer, max_answer)
     Aggregator_answer_range.write(range)
 
     with_attr error_message("decimals are negative or exceed 2^8"):
@@ -625,6 +641,8 @@ func verify_signatures{
     # 'signed_count' is used for tracking duplicate signatures
     if signatures_len == 0:
         # Check all signatures are unique (we only saw each pubkey once)
+        # NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which ensures 31 bytes
+        # is enough to store a count for each oracle.
         let (masked) = bitwise_and(
             signed_count, 0x01010101010101010101010101010101010101010101010101010101010101
         )
@@ -1011,6 +1029,11 @@ func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     )
 
     let (link_due_uint256 : Uint256) = felt_to_uint256(link_due)
+    let (res) = uint256_le(link_due_uint256, balance)
+    with_attr error_message("Total amount due exceeds the balance"):
+        assert res = 1
+    end
+
     let (available : Uint256) = uint256_sub(balance, link_due_uint256)
 
     let (less_available : felt) = uint256_lt(available, amount)
@@ -1056,6 +1079,7 @@ func total_link_due_{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return total_link_due_(index - 1, latest_round_id, total_rounds, payments_juels)
 end
 
+# since the felt type in Cairo is not signed, whoever calls this function will have to interpret the result line 1070 as the correct negative value.
 @view
 func link_available_for_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (available : felt):
@@ -1190,10 +1214,6 @@ func accept_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 ):
     let (proposed) = Aggregator_proposed_payees.read(transmitter)
     let (caller) = get_caller_address()
-    # caller cannot be zero address to avoid overwriting owner when proposed_owner is not set
-    with_attr error_message("caller is the zero address"):
-        assert_not_zero(caller)
-    end
     with_attr error_message("only proposed payee can accept"):
         assert caller = proposed
     end

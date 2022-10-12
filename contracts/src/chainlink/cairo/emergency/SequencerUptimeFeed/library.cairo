@@ -12,7 +12,17 @@ from starkware.cairo.common.bool import TRUE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
-from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import (
+    SimpleReadAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 from chainlink.cairo.access.ownable import Ownable
 
 const ETH_ADDRESS_BOUND = 2 ** 160
