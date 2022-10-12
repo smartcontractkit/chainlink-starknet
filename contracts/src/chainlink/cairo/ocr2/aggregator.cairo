@@ -168,7 +168,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     Aggregator_billing_access_controller.write(billing_access_controller)
 
     assert_lt(min_answer, max_answer)
-    let range : Range = (min=min_answer, max=max_answer)
+    let range : Range = (min_answer, max_answer)
     Aggregator_answer_range.write(range)
 
     with_attr error_message("decimals are negative or exceed 2^8"):
