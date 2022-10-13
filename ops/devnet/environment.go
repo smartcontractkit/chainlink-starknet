@@ -1,6 +1,7 @@
 package devnet
 
 import (
+	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
@@ -80,7 +81,7 @@ func New(props *ethereum.Props) environment.ConnectedChart {
 	if InsideK8s {
 		defaultPath = "/root/ops/charts/devnet"
 	}
-
+	fmt.Println(defaultPath)
 	if props == nil {
 		props = defaultProps()
 	}

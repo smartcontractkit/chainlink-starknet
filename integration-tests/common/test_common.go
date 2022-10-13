@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -79,6 +80,7 @@ type ChainlinkClient struct {
 func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
 	// Checking if tests need to run on remote runner
 	_, t.InsideK8s = os.LookupEnv("INSIDE_K8")
+	fmt.Println(t.InsideK8s)
 	t.Common = SetConfig(commonConfig)
 	t.cc = &ChainlinkClient{}
 	t.sc = &StarkNetDevnetClient{}
