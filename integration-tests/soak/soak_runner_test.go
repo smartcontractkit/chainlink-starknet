@@ -73,8 +73,6 @@ func soakTestHelper(
 		"replicas": nodeCount,
 		"env":      common.GetDefaultCoreConfig(),
 	}
-	_, InsideK8s := os.LookupEnv("INSIDE_K8")
-	fmt.Println(InsideK8s)
 	testEnvironment := common.GetDefaultEnvSetup(baseEnvironmentConfig, clConfig)
 	remoteRunnerValues := map[string]interface{}{
 		"test_name":      testTag,
