@@ -81,6 +81,7 @@ func New(props *ethereum.Props) environment.ConnectedChart {
 	if InsideK8s {
 		defaultPath = "/root/ops/charts/devnet"
 	}
+	fmt.Println(InsideK8s)
 	fmt.Println(defaultPath)
 	if props == nil {
 		props = defaultProps()
