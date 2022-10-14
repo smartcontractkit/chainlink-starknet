@@ -95,7 +95,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         id: makeCommandId(config.category, config.action, config.suffixes),
         contractAddress: c.contractAddress,
         flags: flags,
-        contract: new Contract(c.contract.abi, c.contractAddress, c.provider.provider),
+        contract: new Contract(c.contract.abi, c.contractAddress || "", c.provider.provider),
       }
 
       c.input = await c.buildCommandInput(flags, args, env)
