@@ -52,8 +52,9 @@ from chainlink.cairo.utils import felt_to_uint256, uint256_to_felt
 
 from chainlink.cairo.access.ownable import Ownable
 
-from chainlink.cairo.access.SimpleReadAccessController.library import (
-    SimpleReadAccessController,
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
     owner,
     proposed_owner,
     transfer_ownership,

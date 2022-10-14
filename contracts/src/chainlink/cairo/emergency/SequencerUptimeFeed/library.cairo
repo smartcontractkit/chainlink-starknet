@@ -12,8 +12,8 @@ from starkware.cairo.common.bool import TRUE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
-from chainlink.cairo.access.SimpleReadAccessController.library import (
-    SimpleReadAccessController,
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
     owner,
     proposed_owner,
     transfer_ownership,

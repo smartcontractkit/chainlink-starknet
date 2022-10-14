@@ -400,8 +400,8 @@ describe('aggregator.cairo', function () {
       let oracle = oracles[0]
       // NOTE: previous test changed oracle0's payee to oracle1
       let payee = oracles[1].transmitter
-
-      let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
+      aggregator.call
+      let { amount: owed } = await aggregator.call('owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })
       // several rounds happened so we are owed payment
