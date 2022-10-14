@@ -92,8 +92,12 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 	feltRExpected := junotypes.BigToFelt(bigRExpected)
 	assert.Equal(t, feltRExpected, r)
 
-	bigSExpected, _ := new(big.Int).SetString("1930849708769648077928186998643944706551011476358007177069185543644456022504", 10)
+	// test for malleability
+	otherS, _ := new(big.Int).SetString("1930849708769648077928186998643944706551011476358007177069185543644456022504", 10)
+	bigSExpected, _ := new(big.Int).SetString("1687653079896483135769135784451125398975732275358080312084893914240056843079", 10)
+
 	feltSExpected := junotypes.BigToFelt(bigSExpected)
+	assert.NotEqual(t, otherS, s, "signature not in canonical form")
 	assert.Equal(t, feltSExpected, s)
 }
 

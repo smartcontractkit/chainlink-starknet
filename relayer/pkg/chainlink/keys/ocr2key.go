@@ -63,6 +63,11 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 		return []byte{}, err
 	}
 
+	// enforce s <= N/2 to prevent signature malleability
+	if s.Cmp(new(big.Int).Rsh(caigo.Curve.N, 1)) > 0 {
+		s.Sub(caigo.Curve.N, s)
+	}
+
 	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
 	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
 	if _, err := buff.Write(starknet.PadBytes(r.Bytes(), byteLen)); err != nil {
@@ -105,6 +110,11 @@ func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtype
 
 	r := new(big.Int).SetBytes(signature[32:64])
 	s := new(big.Int).SetBytes(signature[64:])
+
+	// Only allow canonical signatures to avoid signature malleability. Verify s <= N/2
+	if s.Cmp(new(big.Int).Rsh(caigo.Curve.N, 1)) == 1 {
+		return false
+	}
 
 	return caigo.Curve.Verify(hash, r, s, keys[0].X, keys[0].Y) || caigo.Curve.Verify(hash, r, s, keys[1].X, keys[1].Y)
 }
