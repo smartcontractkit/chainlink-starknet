@@ -182,7 +182,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     let range : Range = (min_answer, max_answer)
     Aggregator_answer_range.write(range)
 
-    with_attr error_message("decimals are negative or exceed 2^8"):
+    with_attr error_message("Aggregator: decimals are negative or exceed 2^8"):
         assert_nn_le(decimals, UINT8_MAX)
     end
     Aggregator_decimals.write(decimals)
@@ -247,7 +247,7 @@ func set_config{
 
     # Notice: onchain_config is always zero since we don't allow configuring it yet after deployment.
     # The contract still computes the onchain_config while digesting the config using min/maxAnswer set on construction.
-    with_attr error_message("onchain_config must be empty"):
+    with_attr error_message("Aggregator: onchain_config must be empty"):
         assert onchain_config_len = 0
     end
 
@@ -345,12 +345,12 @@ func add_oracles{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 
     # Check for duplicates
     let (existing_signer) = Aggregator_signers.read(oracles.signer)
-    with_attr error_message("repeated signer"):
+    with_attr error_message("Aggregator: repeated signer"):
         assert existing_signer = 0
     end
 
     let (existing_transmitter : Oracle) = Aggregator_transmitters.read(oracles.transmitter)
-    with_attr error_message("repeated transmitter"):
+    with_attr error_message("Aggregator: repeated transmitter"):
         assert existing_transmitter.index = 0
     end
 
@@ -482,7 +482,7 @@ func transmit{
     alloc_locals
 
     let (epoch_and_round) = Aggregator_latest_epoch_and_round.read()
-    with_attr error_message("stale report"):
+    with_attr error_message("Aggregator: stale report"):
         assert_lt(epoch_and_round, report_context.epoch_and_round)
     end
 
@@ -493,12 +493,12 @@ func transmit{
 
     # Validate config digest matches latest_config_digest
     let (config_digest) = Aggregator_latest_config_digest.read()
-    with_attr error_message("config digest mismatch"):
+    with_attr error_message("Aggregator: config digest mismatch"):
         assert report_context.config_digest = config_digest
     end
 
     let (f) = Aggregator_f.read()
-    with_attr error_message("wrong number of signatures f={f}"):
+    with_attr error_message("Aggregator: wrong number of signatures f={f}"):
         assert signatures_len = (f + 1)
     end
 
@@ -529,11 +529,11 @@ func transmit{
     # NOTE: (assert_le_felt(-i128::MAX, median) doesn't work correctly so we have to use abs!)
     let (value) = abs_value(median)
     if is_neg == 0:
-        with_attr error_message("value not in int128 range: {median}"):
+        with_attr error_message("Aggregator: value not in int128 range: {median}"):
             assert_le_felt(value, INT128_MAX + 1)
         end
     else:
-        with_attr error_message("value not in int128 range: {median}"):
+        with_attr error_message("Aggregator: value not in int128 range: {median}"):
             assert_le_felt(value, INT128_MAX)
         end
     end
@@ -646,7 +646,7 @@ func verify_signatures{
         let (masked) = bitwise_and(
             signed_count, 0x01010101010101010101010101010101010101010101010101010101010101
         )
-        with_attr error_message("duplicate signer"):
+        with_attr error_message("Aggregator: duplicate signer"):
             assert signed_count = masked
         end
         return ()
@@ -656,7 +656,7 @@ func verify_signatures{
 
     # Validate the signer key actually belongs to an oracle
     let (index) = Aggregator_signers.read(signature.public_key)
-    with_attr error_message("invalid signer {signature.public_key}"):
+    with_attr error_message("Aggregator: invalid signer {signature.public_key}"):
         assert_not_zero(index)  # 0 index = uninitialized
     end
 
@@ -923,7 +923,7 @@ func withdraw_payment{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     alloc_locals
     let (caller) = get_caller_address()
     let (payee) = Aggregator_payees.read(transmitter)
-    with_attr error_message("only payee can withdraw"):
+    with_attr error_message("Aggregator: only payee can withdraw"):
         assert caller = payee
     end
 
@@ -1030,7 +1030,7 @@ func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let (link_due_uint256 : Uint256) = felt_to_uint256(link_due)
     let (res) = uint256_le(link_due_uint256, balance)
-    with_attr error_message("Total amount due exceeds the balance"):
+    with_attr error_message("Aggregator: Total amount due exceeds the balance"):
         assert res = 1
     end
 
@@ -1172,7 +1172,7 @@ func set_payee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     # require(current_payee == 0 || current_payee == payee, "payee already set")
     let (is_unset) = is_zero(current_payee)
     let (is_same) = is_zero(current_payee - payees.payee)
-    with_attr error_message("payee already set"):
+    with_attr error_message("Aggregator: payee already set"):
         assert (is_unset - 1) * (is_same - 1) = 0
     end
 
@@ -1189,15 +1189,15 @@ end
 func transfer_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     transmitter : felt, proposed : felt
 ):
-    with_attr error_message("cannot transfer payeeship to zero address"):
+    with_attr error_message("Aggregator: cannot transfer payeeship to zero address"):
         assert_not_zero(proposed)
     end
     let (caller) = get_caller_address()
     let (payee) = Aggregator_payees.read(transmitter)
-    with_attr error_message("only current payee can update"):
+    with_attr error_message("Aggregator: only current payee can update"):
         assert caller = payee
     end
-    with_attr error_message("cannot transfer to self"):
+    with_attr error_message("Aggregator: cannot transfer to self"):
         assert_not_equal(caller, proposed)
     end
 
@@ -1214,7 +1214,7 @@ func accept_payeeship{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 ):
     let (proposed) = Aggregator_proposed_payees.read(transmitter)
     let (caller) = get_caller_address()
-    with_attr error_message("only proposed payee can accept"):
+    with_attr error_message("Aggregator: only proposed payee can accept"):
         assert caller = proposed
     end
 

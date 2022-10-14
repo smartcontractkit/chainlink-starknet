@@ -59,15 +59,15 @@ func assert_sequencer_healthy{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, 
 
     # 0 if the sequencer is up and 1 if it is down
     if round.answer == 0:
-        with_attr error_message("L2 Sequencer is up, report stale"):
+        with_attr error_message("PriceConsumer: L2 Sequencer is up, report stale"):
             assert is_ls = 0
         end
         return ()
     end
-    with_attr error_message("L2 Sequencer is down, report stale"):
+    with_attr error_message("PriceConsumer: L2 Sequencer is down, report stale"):
         assert is_ls = 0
     end
-    with_attr error_message("L2 Sequencer is down, report ok"):
+    with_attr error_message("PriceConsumer: L2 Sequencer is down, report ok"):
         assert round.answer = 0
     end
     return ()
