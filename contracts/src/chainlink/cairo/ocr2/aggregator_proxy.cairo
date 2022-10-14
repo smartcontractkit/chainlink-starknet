@@ -1,4 +1,4 @@
-# amarna: disable=arithmetic-div,arithmetic-sub,arithmetic-mul,arithmetic-add
+// amarna: disable=arithmetic-div,arithmetic-sub,arithmetic-mul,arithmetic-add
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
@@ -20,108 +20,108 @@ from chainlink.cairo.access.SimpleReadAccessController.library import (
 )
 from chainlink.cairo.access.ownable import Ownable
 
-struct Phase:
-    member id : felt
-    member aggregator : felt
-end
+struct Phase {
+    id: felt,
+    aggregator: felt,
+}
 
 @storage_var
-func AggregatorProxy_current_phase() -> (phase : Phase):
-end
+func AggregatorProxy_current_phase() -> (phase: Phase) {
+}
 
 @storage_var
-func AggregatorProxy_proposed_aggregator() -> (address : felt):
-end
+func AggregatorProxy_proposed_aggregator() -> (address: felt) {
+}
 
 @storage_var
-func AggregatorProxy_phases(id : felt) -> (address : felt):
-end
+func AggregatorProxy_phases(id: felt) -> (address: felt) {
+}
 
-const SHIFT = 2 ** 128
-const MAX_ID = SHIFT - 1
+const SHIFT = 2 ** 128;
+const MAX_ID = SHIFT - 1;
 
 @event
-func AggregatorProposed(current : felt, proposed : felt):
-end
+func AggregatorProposed(current: felt, proposed: felt) {
+}
 
 @event
-func AggregatorConfirmed(previous : felt, latest : felt):
-end
+func AggregatorConfirmed(previous: felt, latest: felt) {
+}
 
 @constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    owner : felt, address : felt
-):
-    SimpleReadAccessController.initialize(owner)  # This also calls Ownable.initializer
-    set_aggregator(address)
-    return ()
-end
+func constructor{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    owner: felt, address: felt
+) {
+    SimpleReadAccessController.initialize(owner);  // This also calls Ownable.initializer
+    set_aggregator(address);
+    return ();
+}
 
-func set_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    let (current_phase : Phase) = AggregatorProxy_current_phase.read()
-    let id = current_phase.id + 1
-    AggregatorProxy_current_phase.write(Phase(id=id, aggregator=address))
-    AggregatorProxy_phases.write(id, address)
-    return ()
-end
-
-@external
-func propose_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    Ownable.assert_only_owner()
-    with_attr error_message("AggregatorProxy: aggregator is zero address"):
-        assert_not_zero(address)
-    end
-    AggregatorProxy_proposed_aggregator.write(address)
-
-    # emit event
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    AggregatorProposed.emit(current=phase.aggregator, proposed=address)
-    return ()
-end
+func set_aggregator{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    address: felt
+) {
+    let (current_phase: Phase) = AggregatorProxy_current_phase.read();
+    let id = current_phase.id + 1;
+    AggregatorProxy_current_phase.write(Phase(id=id, aggregator=address));
+    AggregatorProxy_phases.write(id, address);
+    return ();
+}
 
 @external
-func confirm_aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    Ownable.assert_only_owner()
-    with_attr error_message("AggregatorProxy: aggregator is zero address"):
-        assert_not_zero(address)
-    end
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    let previous = phase.aggregator
+func propose_aggregator{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    address: felt
+) {
+    Ownable.assert_only_owner();
+    with_attr error_message("AggregatorProxy: aggregator is zero address") {
+        assert_not_zero(address);
+    }
+    AggregatorProxy_proposed_aggregator.write(address);
 
-    let (proposed_aggregator) = AggregatorProxy_proposed_aggregator.read()
-    assert proposed_aggregator = address
-    AggregatorProxy_proposed_aggregator.write(0)
-    set_aggregator(proposed_aggregator)
+    // emit event
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    AggregatorProposed.emit(current=phase.aggregator, proposed=address);
+    return ();
+}
 
-    # emit event
-    AggregatorConfirmed.emit(previous=previous, latest=address)
-    return ()
-end
+@external
+func confirm_aggregator{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    address: felt
+) {
+    Ownable.assert_only_owner();
+    with_attr error_message("AggregatorProxy: aggregator is zero address") {
+        assert_not_zero(address);
+    }
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    let previous = phase.aggregator;
 
-# Read access helper
-func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    let (address) = get_caller_address()
-    SimpleReadAccessController.check_access(address)
+    let (proposed_aggregator) = AggregatorProxy_proposed_aggregator.read();
+    assert proposed_aggregator = address;
+    AggregatorProxy_proposed_aggregator.write(0);
+    set_aggregator(proposed_aggregator);
 
-    return ()
-end
+    // emit event
+    AggregatorConfirmed.emit(previous=previous, latest=address);
+    return ();
+}
+
+// Read access helper
+func require_access{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    let (address) = get_caller_address();
+    SimpleReadAccessController.check_access(address);
+
+    return ();
+}
 
 @view
-func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    round : Round
-):
-    require_access()
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    let (round : Round) = IAggregator.latest_round_data(contract_address=phase.aggregator)
+func latest_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    round: Round
+) {
+    require_access();
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    let (round: Round) = IAggregator.latest_round_data(contract_address=phase.aggregator);
 
-    # Add phase_id to the high bits of round_id
-    let round_id = round.round_id + (phase.id * SHIFT)
+    // Add phase_id to the high bits of round_id
+    let round_id = round.round_id + (phase.id * SHIFT);
     return (
         Round(
         round_id=round_id,
@@ -130,21 +130,21 @@ func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
         started_at=round.started_at,
         updated_at=round.updated_at,
         ),
-    )
-end
+    );
+}
 
 @view
-func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt
-) -> (round : Round):
-    require_access()
-    let (phase_id, round_id) = split_felt(round_id)
-    let (address) = AggregatorProxy_phases.read(phase_id)
-    assert_not_zero(address)
+func round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt
+) -> (round: Round) {
+    require_access();
+    let (phase_id, round_id) = split_felt(round_id);
+    let (address) = AggregatorProxy_phases.read(phase_id);
+    assert_not_zero(address);
 
-    let (round : Round) = IAggregator.round_data(contract_address=address, round_id=round_id)
-    # Add phase_id to the high bits of round_id
-    let round_id = round.round_id + (phase_id * SHIFT)
+    let (round: Round) = IAggregator.round_data(contract_address=address, round_id=round_id);
+    // Add phase_id to the high bits of round_id
+    let round_id = round.round_id + (phase_id * SHIFT);
     return (
         Round(
         round_id=round_id,
@@ -153,73 +153,73 @@ func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
         started_at=round.started_at,
         updated_at=round.updated_at,
         ),
-    )
-end
+    );
+}
 
-# These read from the proposed aggregator as a way to test the aggregator before making setting it live.
-
-@view
-func proposed_latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ) -> (round : Round):
-    require_access()
-    let (aggregator) = AggregatorProxy_proposed_aggregator.read()
-    let (round : Round) = IAggregator.latest_round_data(contract_address=aggregator)
-    return (round)
-end
+// These read from the proposed aggregator as a way to test the aggregator before making setting it live.
 
 @view
-func proposed_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt
-) -> (round : Round):
-    require_access()
-    let (aggregator) = AggregatorProxy_proposed_aggregator.read()
-    let (round : Round) = IAggregator.round_data(contract_address=aggregator, round_id=round_id)
-    return (round)
-end
+func proposed_latest_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    ) -> (round: Round) {
+    require_access();
+    let (aggregator) = AggregatorProxy_proposed_aggregator.read();
+    let (round: Round) = IAggregator.latest_round_data(contract_address=aggregator);
+    return (round,);
+}
 
 @view
-func aggregator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    aggregator : felt
-):
-    require_access()
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    return (phase.aggregator)
-end
+func proposed_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt
+) -> (round: Round) {
+    require_access();
+    let (aggregator) = AggregatorProxy_proposed_aggregator.read();
+    let (round: Round) = IAggregator.round_data(contract_address=aggregator, round_id=round_id);
+    return (round,);
+}
 
 @view
-func phase_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    phase_id : felt
-):
-    require_access()
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    return (phase.id)
-end
+func aggregator{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    aggregator: felt
+) {
+    require_access();
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    return (phase.aggregator,);
+}
 
 @view
-func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    description : felt
-):
-    require_access()
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    let (description) = IAggregator.description(contract_address=phase.aggregator)
-    return (description)
-end
+func phase_id{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    phase_id: felt
+) {
+    require_access();
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    return (phase.id,);
+}
 
 @view
-func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    decimals : felt
-):
-    require_access()
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    let (decimals) = IAggregator.decimals(contract_address=phase.aggregator)
-    return (decimals)
-end
+func description{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    description: felt
+) {
+    require_access();
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    let (description) = IAggregator.description(contract_address=phase.aggregator);
+    return (description,);
+}
 
 @view
-func type_and_version{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    meta : felt
-):
-    let (phase : Phase) = AggregatorProxy_current_phase.read()
-    let (meta) = IAggregator.type_and_version(contract_address=phase.aggregator)
-    return (meta)
-end
+func decimals{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    decimals: felt
+) {
+    require_access();
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    let (decimals) = IAggregator.decimals(contract_address=phase.aggregator);
+    return (decimals,);
+}
+
+@view
+func type_and_version{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    meta: felt
+) {
+    let (phase: Phase) = AggregatorProxy_current_phase.read();
+    let (meta) = IAggregator.type_and_version(contract_address=phase.aggregator);
+    return (meta,);
+}
