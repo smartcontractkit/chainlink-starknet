@@ -125,8 +125,8 @@ describe('SequencerUptimeFeed', function () {
     it('should block access when using an account without access', async function () {
       const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
 
-      await expectCallError(
-        accWithoutAccess.call(proxyContract, 'latest_round_data'),
+      await expectInvokeError(
+        accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
         'SimpleReadAccessController: address does not have access',
       )
     })

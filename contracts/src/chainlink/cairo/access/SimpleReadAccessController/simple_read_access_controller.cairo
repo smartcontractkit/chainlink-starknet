@@ -2,8 +2,8 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
-from chainlink.cairo.access.SimpleReadAccessController.library import (
-    SimpleReadAccessController,
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
     owner,
     proposed_owner,
     transfer_ownership,

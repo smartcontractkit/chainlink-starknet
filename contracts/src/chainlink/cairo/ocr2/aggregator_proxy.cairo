@@ -7,8 +7,8 @@ from starkware.starknet.common.syscalls import get_caller_address
 
 from chainlink.cairo.ocr2.IAggregator import IAggregator, Round
 
-from chainlink.cairo.access.SimpleReadAccessController.library import (
-    SimpleReadAccessController,
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
     owner,
     proposed_owner,
     transfer_ownership,
