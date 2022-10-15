@@ -24,7 +24,7 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@f70ebbe4a912eb25783498c88268001e6931f99f # v2.0.15
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@de7022de6645390642337cf086d2b65c8512da61 # v2.0.23
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
@@ -43,6 +43,7 @@ jobs:
     environment: integration
     env:
       CGO_ENABLED: 1
+      TEST_TRIGGERED_BY: core-CI-starknet
     permissions:
       checks: write
       pull-requests: write
@@ -58,7 +59,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@a7d97aae34922fa7bc04f8083fe4e4b37947a1df # v2.0.15
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@de7022de6645390642337cf086d2b65c8512da61 # v2.0.23
         with:
           test_command_to_run: nix develop -c make test-integration-smoke
           test_download_vendor_packages_command: cd integration-tests && go mod download
@@ -68,6 +69,13 @@ jobs:
           publish_check_name: Smoke Test Results
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/tests/e2e/logs
           token: ${{ secrets.GITHUB_TOKEN }}
+          triggered_by: ${{ env.TEST_TRIGGERED_BY }}
+          go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
+      - name: cleanup
+        if: always()
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/cleanup@de7022de6645390642337cf086d2b65c8512da61 # v2.0.23
+        with:
+          triggered_by: ${{ env.TEST_TRIGGERED_BY }}
