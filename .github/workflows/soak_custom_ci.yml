@@ -23,7 +23,7 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@de7022de6645390642337cf086d2b65c8512da61 # v2.0.23
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
@@ -61,7 +61,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@de7022de6645390642337cf086d2b65c8512da61 # v2.0.23
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
           test_command_to_run: nix develop -c make test-integration-soak
           test_download_vendor_packages_command: cd integration-tests && go mod download
