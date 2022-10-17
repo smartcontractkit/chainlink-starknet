@@ -68,7 +68,7 @@ namespace SimpleReadAccessController:
         let (empty_data) = alloc()
 
         let (bool) = SimpleReadAccessController.has_access(user, empty_data_len, empty_data)
-        with_attr error_message("AccessController: address does not have access"):
+        with_attr error_message("SimpleReadAccessController: address does not have access"):
             assert bool = TRUE
         end
 

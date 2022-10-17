@@ -115,7 +115,9 @@ namespace SequencerUptimeFeed:
     func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         initial_status : felt, owner_address : felt
     ):
-        assert_boolean(initial_status)
+        with_attr error_message("SequencerUptimeFeed: value isn't a boolean"):
+            assert_boolean(initial_status)
+        end
 
         SimpleReadAccessController.initialize(owner_address)
 
@@ -131,7 +133,9 @@ namespace SequencerUptimeFeed:
     ):
         alloc_locals
         require_l1_sender(from_address)
-        assert_boolean(status)
+        with_attr error_message("SequencerUptimeFeed: value isn't a boolean"):
+            assert_boolean(status)
+        end
 
         let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
         let (latest_started_at) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.started_at)
