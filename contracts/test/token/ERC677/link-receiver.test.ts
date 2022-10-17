@@ -118,7 +118,7 @@ describe('LinkToken', function () {
 
     before(async () => {
       const receiverFactory = await starknet.getContractFactory('link_receiver')
-      recipient = await receiverFactory.deploy()
+      recipient = await receiverFactory.deploy({})
       const { remaining: allowance } = await token.call('allowance', {
         owner: owner.starknetContract.address,
         spender: recipient.address,
