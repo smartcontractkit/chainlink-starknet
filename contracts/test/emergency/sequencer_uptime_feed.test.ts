@@ -111,6 +111,9 @@ describe('SequencerUptimeFeed', function () {
         owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
       })
+
+      // proxy contract needs to have access to uptimeFeedContract
+      await owner.invoke(uptimeFeedContract, 'add_access', { user: proxyContract.address })
     })
 
     it('should block access when using an account without access', async function () {
