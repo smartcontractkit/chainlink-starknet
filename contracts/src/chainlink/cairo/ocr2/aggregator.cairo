@@ -1030,7 +1030,7 @@ func withdraw_funds{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let (link_due_uint256 : Uint256) = felt_to_uint256(link_due)
     let (res) = uint256_le(link_due_uint256, balance)
-    with_attr error_message("Aggregator: Total amount due exceeds the balance"):
+    with_attr error_message("Aggregator: total amount due exceeds the balance"):
         assert res = 1
     end
 
