@@ -377,7 +377,7 @@ describe('StarkNetValidator', () => {
     })
 
     it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
-      const { round } = await starkNetValidator.call(l2Contract, 'latest_round_data')
+      const { round } = await l2Contract.call('latest_round_data')
       expect(round.answer).to.equal(0n)
     })
 
@@ -415,7 +415,7 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await starkNetValidator.call(l2Contract, 'latest_round_data')
+      const res = await l2Contract.call('latest_round_data')
       expect(res.round.answer).to.equal(1n)
     })
 
@@ -438,7 +438,7 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await starkNetValidator.call(l2Contract, 'latest_round_data')
+      const res = await l2Contract.call('latest_round_data')
       expect(res.round.answer).to.equal(0n) // status unchanged - incorrect value treated as false
     })
 
@@ -465,7 +465,7 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await starkNetValidator.call(l2Contract, 'latest_round_data')
+      const res = await l2Contract.call('latest_round_data')
       expect(res.round.answer).to.equal(0n) // final status 0
     })
   })
