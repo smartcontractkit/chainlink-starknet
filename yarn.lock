@@ -10000,14 +10000,7 @@ starknet@^4.4.2:
     ts-custom-error "^3.2.0"
     url-join "^4.0.1"
 
-starsign-multisig@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/starsign-multisig/-/starsign-multisig-0.3.0.tgz#de4ed470f3c692902d003e94cde65406e62e2bc6"
-  integrity sha512-GbUHI+9CtvXKca4HrKqBrHpqo7Sv2Aad6lBjf+eyK4f2AA9RemV+cIl0A8819Z4KLaRSdOQioyHNL1siFMV1Ew==
-  dependencies:
-    starknet "^3.5.1"
-
-starsign-multisig@^0.2.3:
+starsign-multisig@0.2.3, starsign-multisig@^0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/starsign-multisig/-/starsign-multisig-0.2.3.tgz#945eef5811660ec47bab6e7fb02622ef461ec65f"
   integrity sha512-d93suDKVhjyPUN0rE8WEV0hnxXT+3XpwHzqqoc/jNJCHUvEK9GS2lpiCd4E68RqcUMRCX/IatnaO1SCb2Yyp4A==

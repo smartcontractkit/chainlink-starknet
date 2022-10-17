@@ -100,7 +100,7 @@ class Provider implements IStarknetProvider {
     calls: Call[],
     wait = false,
   ) => {
-    const account = new Account(this.provider, accountAddress, wallet.wallet)
+    const account = new Account(this.provider, accountAddress, wallet.signer)
 
     const tx = await account.execute(calls)
     const response = wrapResponse(this, tx)

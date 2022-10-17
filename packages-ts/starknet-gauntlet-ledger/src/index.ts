@@ -1,6 +1,6 @@
 import { IStarknetWallet, Env } from '@chainlink/starknet-gauntlet'
 import { SignerInterface, encode } from 'starknet'
-import { Abi, Signature, Invocation, InvocationsSignerDetails } from 'starknet/types'
+import { Abi, Signature, Call, InvocationsSignerDetails } from 'starknet/types'
 import { TypedData, getMessageHash } from 'starknet/utils/typedData'
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
 import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash'
@@ -58,7 +58,7 @@ class LedgerSigner implements SignerInterface {
   }
 
   async signTransaction(
-    transactions: Invocation[],
+    transactions: Call[],
     transactionsDetail: InvocationsSignerDetails,
     abis?: Abi[],
   ): Promise<Signature> {
@@ -95,11 +95,11 @@ class LedgerSigner implements SignerInterface {
 }
 
 export class Wallet implements IStarknetWallet {
-  wallet: LedgerSigner
+  signer: LedgerSigner
   account: string
 
   private constructor(signer: LedgerSigner, account?: string) {
-    this.wallet = signer
+    this.signer = signer
     this.account = account
   }
 
@@ -108,7 +108,7 @@ export class Wallet implements IStarknetWallet {
     return new Wallet(ledgerSigner, account)
   }
 
-  getPublicKey = async (): Promise<string> => await this.wallet.getPubKey()
+  getPublicKey = async (): Promise<string> => await this.signer.getPubKey()
   getAccountAddress = (): string => this.account
 }
 
