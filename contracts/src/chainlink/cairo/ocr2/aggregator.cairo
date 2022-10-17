@@ -644,8 +644,10 @@ func verify_signatures{
     // 'signed_count' is used for tracking duplicate signatures
     if (signatures_len == 0) {
         // Check all signatures are unique (we only saw each pubkey once)
-        // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which ensures 31 bytes
-        // is enough to store a count for each oracle.
+        // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
+        // ensures 31 bytes is enough to store a count for each oracle. Whenever the MAX_ORACLES
+        // is updated the mask below should also be updated.
+        assert MAX_ORACLES = 31;
         let (masked) = bitwise_and(
             signed_count, 0x01010101010101010101010101010101010101010101010101010101010101
         );
