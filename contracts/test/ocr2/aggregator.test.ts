@@ -309,7 +309,10 @@ describe('aggregator.cairo', function () {
         await transmit(4, answer)
         expect.fail()
       } catch (err: any) {
-        expectInvokeErrorMsg(err?.message, `Error message: value not in int128 range: ${answer}\n`)
+        expectInvokeErrorMsg(
+          err?.message,
+          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
+        )
       }
     })
 
@@ -330,7 +333,10 @@ describe('aggregator.cairo', function () {
         await transmit(4, toFelt(answer))
         expect.fail()
       } catch (err: any) {
-        expectInvokeErrorMsg(err?.message, `Error message: value not in int128 range: ${answer}\n`)
+        expectInvokeErrorMsg(
+          err?.message,
+          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
+        )
       }
     })
 
