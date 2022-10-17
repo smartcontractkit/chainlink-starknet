@@ -42,7 +42,7 @@ func onTokenTransfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
 ):
     uint256_check(value)
     with_attr error_message(
-            "linkReceiver: data_len must not be null. It needs at least one selector"):
+            "LinkReceiver: data_len must not be null. It needs at least one selector"):
         assert_not_zero(data_len)
     end
     linkReceiver_fallback_called_.write(TRUE)

@@ -151,7 +151,7 @@ namespace SimpleWriteAccessController:
         let (empty_data) = alloc()
 
         let (bool) = SimpleWriteAccessController.has_access(user, empty_data_len, empty_data)
-        with_attr error_message("AccessController: address does not have access"):
+        with_attr error_message("SimpleWriteAccessController: address does not have access"):
             assert bool = TRUE
         end
 

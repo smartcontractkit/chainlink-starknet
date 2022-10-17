@@ -3,13 +3,8 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.math import split_felt
 
 func assert_boolean{range_check_ptr}(value : felt):
-    const lower_bound = 0
-    const upper_bound = 2
-    with_attr error_message("Utils: value isn't a boolean"):
-        assert_in_range(value, lower_bound, upper_bound)
-    end
-
-    return ()
+    # Asserts that value is in the range [0, 2).
+    return assert_in_range(value, 0, 2)
 end
 
 func felt_to_uint256{range_check_ptr}(x) -> (uint_x : Uint256):
