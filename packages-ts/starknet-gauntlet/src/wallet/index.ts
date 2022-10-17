@@ -2,7 +2,7 @@ import { SignerInterface } from 'starknet'
 import { makeWallet } from './defaultWallet'
 
 export interface IWallet<W> {
-  wallet: W
+  signer: W
   getPublicKey: () => Promise<string>
 }
 

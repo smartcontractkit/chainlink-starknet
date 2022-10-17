@@ -3,11 +3,11 @@ import { IStarknetWallet } from './'
 import { Env } from '../dependencies'
 
 export class Wallet implements IStarknetWallet {
-  wallet: Signer
+  signer: Signer
   account: string
 
   private constructor(keypair: KeyPair, account?: string) {
-    this.wallet = new Signer(keypair)
+    this.signer = new Signer(keypair)
     this.account = account
   }
 
@@ -16,7 +16,7 @@ export class Wallet implements IStarknetWallet {
     return new Wallet(keyPair, account)
   }
 
-  getPublicKey = async () => await this.wallet.getPubKey()
+  getPublicKey = async () => await this.signer.getPubKey()
   getAccountAddress = () => this.account
 }
 
