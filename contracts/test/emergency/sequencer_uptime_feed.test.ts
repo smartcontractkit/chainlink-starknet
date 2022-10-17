@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
-import { expectInvokeError, expectCallError } from '../utils'
+import { expectInvokeError } from '../utils'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 
 describe('SequencerUptimeFeed', function () {

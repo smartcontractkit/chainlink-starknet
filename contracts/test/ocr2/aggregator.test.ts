@@ -435,7 +435,7 @@ describe('aggregator.cairo', function () {
 
       // owed payment is now zero
       {
-        let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
+        let { amount: owed } = await aggregator.call('owed_payment', {
           transmitter: oracle.transmitter.starknetContract.address,
         })
         assert.ok(owed == 0)
