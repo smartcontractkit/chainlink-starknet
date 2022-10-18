@@ -5,7 +5,17 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_tx_info
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from chainlink.cairo.access.SimpleWriteAccessController.library import SimpleWriteAccessController
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
+    SimpleWriteAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 
 namespace SimpleReadAccessController:
     func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -58,7 +68,7 @@ namespace SimpleReadAccessController:
         let (empty_data) = alloc()
 
         let (bool) = SimpleReadAccessController.has_access(user, empty_data_len, empty_data)
-        with_attr error_message("AccessController: address does not have access"):
+        with_attr error_message("SimpleReadAccessController: address does not have access"):
             assert bool = TRUE
         end
 

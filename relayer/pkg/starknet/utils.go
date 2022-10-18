@@ -27,14 +27,6 @@ func PadBytes(a []byte, length int) []byte {
 	return a
 }
 
-// convert 32 byte to "0" + 31 bytes
-func EnsureFelt(b [32]byte) (out []byte) {
-	out = make([]byte, 32)
-	copy(out[:], b[:])
-	out[0] = 0
-	return out
-}
-
 func NilResultError(funcName string) error {
 	return fmt.Errorf("nil result in %s", funcName)
 }
@@ -76,6 +68,12 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	for _, felt := range felts[1:] {
 		bytesLen := Min(chunkSize, length)
 		bytesBuffer := buf[:bytesLen]
+
+		// TODO: this is inefficient because Bytes() and FillBytes() duplicate work
+		// reuse felt.Bytes()
+		if bytesLen < uint64(len(felt.Bytes())) {
+			return nil, errors.New("invalid: felt array can't be decoded")
+		}
 
 		felt.FillBytes(bytesBuffer)
 		data = append(data, bytesBuffer...)

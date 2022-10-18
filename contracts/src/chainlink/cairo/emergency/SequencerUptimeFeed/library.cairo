@@ -12,7 +12,17 @@ from starkware.cairo.common.bool import TRUE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
-from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleReadAccessController.library import (
+    SimpleReadAccessController,
+    owner,
+    proposed_owner,
+    transfer_ownership,
+    accept_ownership,
+    add_access,
+    remove_access,
+    enable_access_check,
+    disable_access_check,
+)
 from chainlink.cairo.access.ownable import Ownable
 
 const ETH_ADDRESS_BOUND = 2 ** 160
@@ -47,7 +57,7 @@ func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     address : felt
 ):
     let (l1_sender) = SequencerUptimeFeed_l1_sender.read()
-    with_attr error_message("invalid sender"):
+    with_attr error_message("SequencerUptimeFeed: invalid sender"):
         assert l1_sender = address
     end
 
@@ -59,7 +69,7 @@ func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
 ):
     let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
 
-    with_attr error_message("invalid round_id"):
+    with_attr error_message("SequencerUptimeFeed: invalid round_id"):
         assert_not_zero(round_id)
         assert_nn_le(round_id, latest_round_id)
     end
@@ -81,11 +91,11 @@ func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 ):
     Ownable.assert_only_owner()
 
-    with_attr error_message("L1 sender address out of range"):
+    with_attr error_message("SequencerUptimeFeed: L1 sender address out of range"):
         assert_lt_felt(address, ETH_ADDRESS_BOUND)
     end
 
-    with_attr error_message("L1 sender address can not be zero"):
+    with_attr error_message("SequencerUptimeFeed: L1 sender address can not be zero"):
         assert_not_zero(address)
     end
     _set_l1_sender(address)
@@ -105,7 +115,9 @@ namespace SequencerUptimeFeed:
     func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         initial_status : felt, owner_address : felt
     ):
-        assert_boolean(initial_status)
+        with_attr error_message("SequencerUptimeFeed: value isn't a boolean"):
+            assert_boolean(initial_status)
+        end
 
         SimpleReadAccessController.initialize(owner_address)
 
@@ -121,7 +133,9 @@ namespace SequencerUptimeFeed:
     ):
         alloc_locals
         require_l1_sender(from_address)
-        assert_boolean(status)
+        with_attr error_message("SequencerUptimeFeed: value isn't a boolean"):
+            assert_boolean(status)
+        end
 
         let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
         let (latest_started_at) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.started_at)
