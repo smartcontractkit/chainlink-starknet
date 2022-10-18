@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/dontpanicdao/caigo"
-	"github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 )
@@ -22,7 +23,12 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(types.Transaction) error
+	Enqueue(caigotypes.Hash, caigotypes.FunctionCall) error
+}
+
+type Tx struct {
+	sender caigotypes.Hash
+	call   caigotypes.FunctionCall
 }
 
 type StarkTXM interface {
@@ -35,19 +41,19 @@ type starktxm struct {
 	lggr    logger.Logger
 	done    sync.WaitGroup
 	stop    chan struct{}
-	queue   chan types.Transaction
+	queue   chan Tx
 	ks      keys.Keystore
 	cfg     Config
 
 	// TODO: use lazy loaded client
-	client    types.Provider
-	getClient func() (types.Provider, error)
+	client    *starknet.Client
+	getClient func() (*starknet.Client, error)
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (types.Provider, error)) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
 	return &starktxm{
 		lggr:      lggr,
-		queue:     make(chan types.Transaction, MaxQueueLen),
+		queue:     make(chan Tx, MaxQueueLen),
 		stop:      make(chan struct{}),
 		getClient: getClient,
 		ks:        keystore,
@@ -97,10 +103,10 @@ func (txm *starktxm) run() {
 			}
 
 			// fetch batch and split by sender
-			txsBySender := map[string][]types.Transaction{}
+			txsBySender := map[caigotypes.Hash][]caigotypes.FunctionCall{}
 			for i := 0; i < txLen; i++ {
 				tx := <-txm.queue
-				txsBySender[tx.SenderAddress] = append(txsBySender[tx.SenderAddress], tx)
+				txsBySender[tx.sender] = append(txsBySender[tx.sender], tx.call)
 			}
 			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
 			txm.lggr.Debugw("batch details", "batches", txsBySender)
@@ -109,16 +115,16 @@ func (txm *starktxm) run() {
 			var wg sync.WaitGroup
 			wg.Add(len(txsBySender))
 			for sender, txs := range txsBySender {
-				go func(sender string, txs []types.Transaction) {
+				go func(sender caigotypes.Hash, txs []caigotypes.FunctionCall) {
 
 					// fetch key matching sender address
-					key, err := txm.ks.Get(sender)
+					key, err := txm.ks.Get(sender.String())
 					if err != nil {
 						txm.lggr.Errorw("failed to retrieve key", "id", sender, "error", err)
 					} else {
 						// parse key to expected format
 						privKeyBytes := key.Raw()
-						privKey := caigo.BigToHex(caigo.BytesToBig(privKeyBytes))
+						privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
 
 						// broadcast batch based on sender
 						hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
@@ -141,23 +147,23 @@ func (txm *starktxm) run() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcastBatch(ctx context.Context, privKey, sender string, txs []types.Transaction) (txhash string, err error) {
+func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
 	// create new account
-	account, err := caigo.NewAccount(privKey, sender, txm.client)
+	account, err := caigo.NewGatewayAccount(privKey, sender.String(), &txm.client.Gw.Gateway)
 	if err != nil {
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
 
 	// get fee for txm
-	fee, err := account.EstimateFee(ctx, txs, caigo.ExecuteDetails{})
+	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
 	if err != nil {
 		return txhash, errors.Errorf("failed to estimate fee: %s", err)
 	}
 
-	details := caigo.ExecuteDetails{
-		MaxFee: &types.Felt{
-			Int: new(big.Int).SetUint64((fee.OverallFee * FEE_MARGIN) / 100),
-		},
+	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
+	expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
+	details := caigotypes.ExecuteDetails{
+		MaxFee: expandedFee,
 	}
 
 	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
@@ -193,9 +199,9 @@ func (txm *starktxm) Ready() error {
 	return txm.starter.Ready()
 }
 
-func (txm *starktxm) Enqueue(tx types.Transaction) error {
+func (txm *starktxm) Enqueue(sender caigotypes.Hash, tx caigotypes.FunctionCall) error {
 	select {
-	case txm.queue <- tx:
+	case txm.queue <- Tx{sender: sender, call: tx}:
 	default:
 		return errors.Errorf("failed to enqueue transaction: %+v", tx)
 	}
