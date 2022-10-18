@@ -42,6 +42,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		serviceKeyChainlink = "chainlink"
 		chainName           = "starknet"
 		chainId             = gateway.GOERLI_ID
+		rpcUrlL2            string
 		cfg                 *common.Common
 		decimals            = 9
 		mockServerVal       = 900000000
@@ -91,7 +92,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			t.DeployCluster(nodeCount, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][1])
+			rpcUrlL2 = t.Env.URLs[serviceKeyL2][1]
+			devnet.SetL2RpcUrl(rpcUrlL2)
 			t.Sg.SetupNetwork(t.GetStarkNetAddressRemote())
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
@@ -123,11 +125,10 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	Describe("with OCRv2 job @soak", func() {
 		It("Soak test OCRv2", func() {
 			lggr := logger.Nop()
-			url := t.Env.URLs[serviceKeyL2][1]
 			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", roundWaitTimeout))
 
 			// build client
-			reader, err := starknet.NewClient(chainId, url, lggr, &rpcRequestTimeout)
+			reader, err := starknet.NewClient(chainId, rpcUrlL2, lggr, &rpcRequestTimeout)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
 			client, err := ocr2.NewClient(reader, lggr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
