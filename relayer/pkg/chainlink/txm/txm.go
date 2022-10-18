@@ -149,7 +149,7 @@ const FEE_MARGIN uint64 = 115
 
 func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
 	// create new account
-	account, err := caigo.NewGatewayAccount(privKey, sender.String(), &txm.client.Gw.Gateway)
+	account, err := caigo.NewGatewayAccount(privKey, sender.String(), &txm.client.Gw.Gateway, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
