@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
 	"github.com/dontpanicdao/caigo/gateway"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
@@ -179,13 +179,13 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			// validate balance in aggregator
 			resLINK, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: linkTokenAddress,
+				ContractAddress: caigotypes.HexToHash(linkTokenAddress),
 				Selector:        "balanceOf",
-				Calldata:        []string{caigo.HexToBN(ocrAddress).String()},
+				Calldata:        []string{caigotypes.HexToBN(ocrAddress).String()},
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
 			resAgg, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: ocrAddress,
+				ContractAddress: caigotypes.HexToHash(ocrAddress),
 				Selector:        "link_available_for_payment",
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
@@ -224,7 +224,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
+				res, err := client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(ocrAddress))
 				if err != nil {
 					log.Error().Err(err)
 					continue
@@ -277,7 +277,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			// Test proxy reading
 			// TODO: would be good to test proxy switching underlying feeds
 			roundDataRaw, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: proxyAddress,
+				ContractAddress: caigotypes.HexToHash(proxyAddress),
 				Selector:        "latest_round_data",
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")
