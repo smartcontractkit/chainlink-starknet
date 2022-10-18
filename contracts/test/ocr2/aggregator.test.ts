@@ -6,7 +6,7 @@ import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { toFelt, hexPadStart } from '../utils'
+import { toFelt, hexPadStart, expectInvokeErrorMsg } from '../utils'
 
 interface Oracle {
   signer: KeyPair
@@ -18,6 +18,8 @@ const CHUNK_SIZE = 31
 // Observers - max 31 oracles or 31 bytes
 const OBSERVERS_MAX = 31
 const OBSERVERS_HEX = '0x00010203000000000000000000000000000000000000000000000000000000'
+const INT128_MIN = BigInt(-2) ** BigInt(128 - 1)
+const INT128_MAX = BigInt(2) ** BigInt(128 - 1) - BigInt(1)
 
 function encodeBytes(data: Uint8Array): BN[] {
   let felts = []
@@ -69,6 +71,8 @@ describe('aggregator.cairo', function () {
   let n = 3 * f + 1
   let oracles: Oracle[] = []
   let config_digest: number
+
+  let answer: string
 
   before(async () => {
     // assumes contract.cairo and events.cairo has been compiled
@@ -284,6 +288,55 @@ describe('aggregator.cairo', function () {
         // Round should be unchanged
         let { round: new_round } = await aggregator.call('latest_round_data')
         assert.deepEqual(round, new_round)
+      }
+    })
+
+    it('should transmit with max_int_128bit correctly', async () => {
+      answer = BigInt(INT128_MAX).toString(10)
+      try {
+        await transmit(4, toFelt(answer))
+        expect.fail()
+      } catch (error: any) {
+        const matches = error?.message.match(/Error message: (.+?)\n/g)
+        if (!matches) {
+          console.log('answer is in int128 range but not in min-max range')
+        }
+      }
+
+      try {
+        const tooBig = INT128_MAX + 1n
+        answer = BigInt(tooBig).toString(10)
+        await transmit(4, answer)
+        expect.fail()
+      } catch (err: any) {
+        expectInvokeErrorMsg(
+          err?.message,
+          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
+        )
+      }
+    })
+
+    it('should transmit with min_int_128bit correctly', async () => {
+      answer = BigInt(INT128_MIN).toString(10)
+      try {
+        await transmit(4, toFelt(answer))
+      } catch (err: any) {
+        const matches = err?.message.match(/Error message: (.+?)\n/g)
+        if (!matches) {
+          console.log('answer is in int128 range but not in min-max range')
+        }
+      }
+
+      try {
+        const tooBig = INT128_MIN - 1n
+        answer = BigInt(tooBig).toString(10)
+        await transmit(4, toFelt(answer))
+        expect.fail()
+      } catch (err: any) {
+        expectInvokeErrorMsg(
+          err?.message,
+          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
+        )
       }
     })
 

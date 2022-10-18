@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -34,10 +33,11 @@ func (sk *OCR2Key) PublicKey() ocrtypes.OnchainPublicKey {
 
 func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) (*big.Int, error) {
 	var dataArray []*big.Int
-	rawReportContext := evmutil.RawReportContext(reportCtx)
+
+	rawReportContext := medianreport.RawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
-	dataArray = append(dataArray, new(big.Int).SetBytes(starknet.EnsureFelt(rawReportContext[2]))) // convert 32 byte extraHash to 31 bytes
+	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[2][:]))
 
 	// split report into separate felts for hashing
 	splitReport, err := medianreport.SplitReport(report)
@@ -61,6 +61,11 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 	r, s, err := caigo.Curve.Sign(hash, sk.priv)
 	if err != nil {
 		return []byte{}, err
+	}
+
+	// enforce s <= N/2 to prevent signature malleability
+	if s.Cmp(new(big.Int).Rsh(caigo.Curve.N, 1)) > 0 {
+		s.Sub(caigo.Curve.N, s)
 	}
 
 	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
@@ -105,6 +110,11 @@ func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtype
 
 	r := new(big.Int).SetBytes(signature[32:64])
 	s := new(big.Int).SetBytes(signature[64:])
+
+	// Only allow canonical signatures to avoid signature malleability. Verify s <= N/2
+	if s.Cmp(new(big.Int).Rsh(caigo.Curve.N, 1)) == 1 {
+		return false
+	}
 
 	return caigo.Curve.Verify(hash, r, s, keys[0].X, keys[0].Y) || caigo.Curve.Verify(hash, r, s, keys[1].X, keys[1].Y)
 }

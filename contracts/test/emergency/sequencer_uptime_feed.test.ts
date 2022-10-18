@@ -66,7 +66,7 @@ describe('SequencerUptimeFeed', function () {
 
       await expectInvokeError(
         owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 }),
-        'AccessController: address does not have access',
+        'SimpleReadAccessController: address does not have access',
       )
     })
 
@@ -127,7 +127,7 @@ describe('SequencerUptimeFeed', function () {
 
       await expectCallError(
         accWithoutAccess.call(proxyContract, 'latest_round_data'),
-        'AccessController: address does not have access',
+        'SimpleReadAccessController: address does not have access',
       )
     })
 

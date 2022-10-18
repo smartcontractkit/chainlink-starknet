@@ -38,27 +38,6 @@ func TestPadBytes(t *testing.T) {
 	}
 }
 
-func TestEnsureFelt(t *testing.T) {
-	// create random bytes
-	random := make([]byte, 32)
-	_, err := rand.Read(random)
-	require.NoError(t, err)
-
-	// fit into [32]byte
-	val := [32]byte{}
-	copy(val[:], random[:])
-
-	// validate replace first char with 0
-	out := EnsureFelt(val)
-	assert.Equal(t, 32, len(out))
-	assert.Equal(t, uint8(0), out[0])
-	assert.Equal(t, random[1:], out[1:])
-
-	// validate always fills 64 characters
-	out = EnsureFelt([32]byte{})
-	assert.Equal(t, 32, len(out))
-}
-
 func TestHexToSignedBig(t *testing.T) {
 	// Positive value (99)
 	answer := HexToSignedBig("0x63")
@@ -129,4 +108,35 @@ func TestDecodeThenEncode(t *testing.T) {
 
 	encodedFelts := EncodeFelts(decodedFelts)
 	assert.Equal(t, encodedFelts, felts)
+}
+
+func TestIncorrectDecode(t *testing.T) {
+	felts := make([]*big.Int, 3)
+	felts[0] = big.NewInt(35)
+	// bytes length can be less than 31
+	felts[1] = new(big.Int).SetBytes([]byte{0x1, 0x2, 0x3, 0x4})
+	felts[2] = new(big.Int).SetBytes([]byte{0x11, 0x21})
+
+	_, err := DecodeFelts(felts)
+
+	require.NoError(t, err)
+}
+
+func TestDecodeFelts(t *testing.T) {
+	a, _ := new(big.Int).SetString("1231927389172389172983712738127391273891", 10)
+	array := make([]*big.Int, 2)
+	array[0] = a
+	array[1] = a
+	_, err := DecodeFelts(array)
+	require.Error(t, err)
+}
+
+func TestDecodeFelts2(t *testing.T) {
+	a, _ := new(big.Int).SetString("1", 10)
+	b, _ := new(big.Int).SetString("1231927389172389172983712738127391273891", 10)
+	array := make([]*big.Int, 2)
+	array[0] = a
+	array[1] = b
+	_, err := DecodeFelts(array)
+	require.Error(t, err)
 }
