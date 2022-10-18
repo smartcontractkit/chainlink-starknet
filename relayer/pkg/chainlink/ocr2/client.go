@@ -10,6 +10,7 @@ import (
 	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 
+	caigogw "github.com/dontpanicdao/caigo/gateway"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -21,13 +22,13 @@ import (
 //go:generate mockery --name OCR2Reader --output ./mocks/
 
 type OCR2Reader interface {
-	LatestConfigDetails(context.Context, string) (ContractConfigDetails, error)
-	LatestTransmissionDetails(context.Context, string) (TransmissionDetails, error)
-	LatestRoundData(context.Context, string) (RoundData, error)
-	LinkAvailableForPayment(context.Context, string) (*big.Int, error)
-	ConfigFromEventAt(context.Context, string, uint64) (ContractConfig, error)
-	NewTransmissionsFromEventsAt(context.Context, string, uint64) ([]NewTransmissionEvent, error)
-	BillingDetails(context.Context, string) (BillingDetails, error)
+	LatestConfigDetails(context.Context, caigotypes.Hash) (ContractConfigDetails, error)
+	LatestTransmissionDetails(context.Context, caigotypes.Hash) (TransmissionDetails, error)
+	LatestRoundData(context.Context, caigotypes.Hash) (RoundData, error)
+	LinkAvailableForPayment(context.Context, caigotypes.Hash) (*big.Int, error)
+	ConfigFromEventAt(context.Context, caigotypes.Hash, uint64) (ContractConfig, error)
+	NewTransmissionsFromEventsAt(context.Context, caigotypes.Hash, uint64) ([]NewTransmissionEvent, error)
+	BillingDetails(context.Context, caigotypes.Hash) (BillingDetails, error)
 
 	BaseReader() starknet.Reader
 }
@@ -50,7 +51,7 @@ func (c *Client) BaseReader() starknet.Reader {
 	return c.r
 }
 
-func (c *Client) BillingDetails(ctx context.Context, address string) (bd BillingDetails, err error) {
+func (c *Client) BillingDetails(ctx context.Context, address caigotypes.Hash) (bd BillingDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "billing",
@@ -77,7 +78,7 @@ func (c *Client) BillingDetails(ctx context.Context, address string) (bd Billing
 	return
 }
 
-func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd ContractConfigDetails, err error) {
+func (c *Client) LatestConfigDetails(ctx context.Context, address caigotypes.Hash) (ccd ContractConfigDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "latest_config_details",
@@ -104,7 +105,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address string) (ccd C
 	return
 }
 
-func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) (td TransmissionDetails, err error) {
+func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotypes.Hash) (td TransmissionDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "latest_transmission_details",
@@ -144,7 +145,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address string) 
 	return td, nil
 }
 
-func (c *Client) LatestRoundData(ctx context.Context, address string) (round RoundData, err error) {
+func (c *Client) LatestRoundData(ctx context.Context, address caigotypes.Hash) (round RoundData, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "latest_round_data",
@@ -166,7 +167,7 @@ func (c *Client) LatestRoundData(ctx context.Context, address string) (round Rou
 	return round, nil
 }
 
-func (c *Client) LinkAvailableForPayment(ctx context.Context, address string) (*big.Int, error) {
+func (c *Client) LinkAvailableForPayment(ctx context.Context, address caigotypes.Hash) (*big.Int, error) {
 	results, err := c.r.CallContract(ctx, starknet.CallOps{
 		ContractAddress: address,
 		Selector:        "link_available_for_payment",
@@ -180,7 +181,7 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address string) (*
 	return junotypes.HexToFelt(results[0]).Big(), nil
 }
 
-func (c *Client) fetchEventsFromBlock(ctx context.Context, address, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
+func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Hash, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
 	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
 	if err != nil {
 		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch block by number")
@@ -188,7 +189,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address, eventType st
 
 	for _, txReceipt := range block.TransactionReceipts {
 		for _, event := range txReceipt.Events {
-			var decodedEvent caigotypes.Event
+			var decodedEvent caigogw.Event
 
 			m, err := json.Marshal(event)
 			if err != nil {
@@ -211,7 +212,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address, eventType st
 	return eventsAsFeltArrs, nil
 }
 
-func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum uint64) (cc ContractConfig, err error) {
+func (c *Client) ConfigFromEventAt(ctx context.Context, address caigotypes.Hash, blockNum uint64) (cc ContractConfig, err error) {
 	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "failed to fetch config_set events")
@@ -231,7 +232,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address string, blockNum
 }
 
 // NewTransmissionsFromEventsAt finds events of type new_transmission emitted by the contract address in a given block number.
-func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address string, blockNum uint64) (events []NewTransmissionEvent, err error) {
+func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address caigotypes.Hash, blockNum uint64) (events []NewTransmissionEvent, err error) {
 	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch new_transmission events")

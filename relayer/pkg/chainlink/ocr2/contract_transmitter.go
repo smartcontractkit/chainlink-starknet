@@ -20,8 +20,8 @@ var _ types.ContractTransmitter = (*contractTransmitter)(nil)
 type contractTransmitter struct {
 	reader *transmissionsCache
 
-	contractAddress string
-	senderAddress   string
+	contractAddress caigotypes.Hash
+	senderAddress   caigotypes.Hash
 
 	txm txm.TxManager
 }
@@ -34,8 +34,8 @@ func NewContractTransmitter(
 ) *contractTransmitter {
 	return &contractTransmitter{
 		reader:          reader,
-		contractAddress: contract,
-		senderAddress:   sender,
+		contractAddress: caigotypes.HexToHash(contract),
+		senderAddress:   caigotypes.HexToHash(sender),
 		txm:             txm,
 	}
 }
@@ -81,9 +81,8 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[:32]))   // public key
 	}
 
-	err = c.txm.Enqueue(caigotypes.Transaction{
+	err = c.txm.Enqueue(c.senderAddress, caigotypes.FunctionCall{
 		ContractAddress:    c.contractAddress,
-		SenderAddress:      c.senderAddress,
 		EntryPointSelector: "transmit",
 		Calldata:           transmitPayload,
 	})
@@ -107,5 +106,5 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 }
 
 func (c *contractTransmitter) FromAccount() types.Account {
-	return types.Account(c.senderAddress)
+	return types.Account(c.senderAddress.String())
 }
