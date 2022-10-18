@@ -119,6 +119,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		By("Deploy proxy contract", func() {
 			proxyAddress, err = sg.DeployOCR2ProxyContract(ocrAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy deployment should not fail")
+			_, err = sg.AddAccess(proxyAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy access set should not fail")
 		})
 
 		By("Fund OCR2 contract", func() {

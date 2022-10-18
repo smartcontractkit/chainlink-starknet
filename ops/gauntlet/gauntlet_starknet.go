@@ -171,3 +171,15 @@ func (sg *StarknetGauntlet) SetConfigDetails(cfg string, ocrAddress string) (str
 	}
 	return sg.gr.Responses[0].Contract, nil
 }
+
+func (sg *StarknetGauntlet) AddAccess(account string) (string, error) {
+	_, err := sg.g.ExecCommand([]string{"ocr2:add_access", account}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
