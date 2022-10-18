@@ -173,6 +173,11 @@ test-integration: test-integration-smoke test-integration-contracts test-integra
 test-integration-smoke: build-ts-contracts
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
+.PHONY: test-integration-soak
+test-integration-smoke: build-ts-contracts
+	cd integration-tests/soak/ && \
+		go test
+
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
 test-integration-contracts: build-ts env-devnet-hardhat
