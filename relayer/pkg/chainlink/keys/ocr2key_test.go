@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	"github.com/dontpanicdao/caigo"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 	// kr2, err := NewOCR2Key(cryptorand.Reader)
 	// require.NoError(t, err)
 
-	bytes, err := caigo.HexToBytes("0x004acf99cb25a4803916f086440c661295b105a485efdc649ac4de9536da25b")
+	bytes, err := caigotypes.HexToBytes("0x004acf99cb25a4803916f086440c661295b105a485efdc649ac4de9536da25b")
 	require.NoError(t, err)
 	configDigest, err := ocrtypes.BytesToConfigDigest(bytes)
 	require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 	msg, err := ReportToSigData(ctx, report)
 	require.NoError(t, err)
 
-	expected, err := caigo.HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
+	expected, err := caigotypes.HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
 	require.NoError(t, err)
 	assert.Equal(t, expected, msg.Bytes())
 
