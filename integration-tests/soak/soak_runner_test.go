@@ -24,13 +24,23 @@ func init() {
 }
 
 var (
-	// Default TTL for the environment
-	baseEnvironmentConfig = &environment.Config{
-		TTL: time.Hour * 72, // 3 days,
-	}
-	nodeCount           = 5
+	nodeCount           = 5              // default node count
+	TTL                 = time.Hour * 72 // Default TTL for the env (3 days)
 	remoteContainerName = "remote-test-runner"
-	remoteFileList      = []string{"../../ops", "../../package.json", "../../yarn.lock", "../../tsconfig.json", "../../tsconfig.base.json", "../../packages-ts", "../../contracts"}
+	// Required files / folders for the remote runner
+	remoteFileList = []string{
+		"../../ops",
+		"../../package.json",
+		"../../yarn.lock",
+		"../../tsconfig.json",
+		"../../tsconfig.base.json",
+		"../../packages-ts",
+		"../../contracts",
+		"../../.env",
+	}
+	baseEnvironmentConfig = &environment.Config{
+		TTL: TTL,
+	}
 )
 
 // Run the OCR soak test defined in ./tests/ocr_test.go
@@ -48,23 +58,24 @@ func soakTestHelper(
 	exeFile, exeFileSize, err := actions.BuildGoTests("./", "../soak/tests", "../../")
 	require.NoError(t, err, "Error building go tests")
 
-	// Checking if TTL env var is set to adjust duration to custom value
+	// Checking if TTL env var is set in ENV
 	ttlValue, ttlDefined := os.LookupEnv("TTL")
-	if ttlDefined == true {
-		ttl, err := time.ParseDuration(ttlValue)
+	if ttlDefined {
+		TTL, err = time.ParseDuration(ttlValue)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
 		}
-		baseEnvironmentConfig.TTL = ttl
+		baseEnvironmentConfig.TTL = TTL
 	}
-	// Checking if count of OCR nodes is defined in ENV
+	// Checking if count of OCR nodes is set in ENV
 	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
-	if nodeCountDefined == true {
+	if nodeCountDefined {
 		nodeCount, err = strconv.Atoi(nodeCountSet)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
 		}
 	}
+	l2RpcUrl, _ := os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
 	baseEnvironmentConfig.NamespacePrefix = fmt.Sprintf(
 		"chainlink-soak-ocr-starknet-%s",
 		strings.ReplaceAll(strings.ToLower(activeEVMNetwork.Name), " ", "-"),
@@ -82,6 +93,7 @@ func soakTestHelper(
 		"INSIDE_K8":      true,
 		"TTL":            ttlValue,
 		"NODE_COUNT":     nodeCount,
+		"L2_RPC_URL":     l2RpcUrl,
 	}
 	// Set evm network connection for remote runner
 	for key, value := range activeEVMNetwork.ToMap() {
@@ -93,7 +105,7 @@ func soakTestHelper(
 		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
 		Run()
 	require.NoError(t, err, "Error launching test environment")
-	// Copying required files / folders to pod
+	// Copying required files / folders to remote runner pod
 	for _, file := range remoteFileList {
 		_, _, _, err = testEnvironment.Client.CopyToPod(
 			testEnvironment.Cfg.Namespace,

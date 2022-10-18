@@ -15,12 +15,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 )
@@ -42,11 +39,9 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		serviceKeyChainlink = "chainlink"
 		chainName           = "starknet"
 		chainId             = gateway.GOERLI_ID
-		rpcUrlL2            string
 		cfg                 *common.Common
 		decimals            = 9
 		mockServerVal       = 900000000
-		rpcRequestTimeout   = time.Second * 10
 		roundWaitTimeout    = time.Hour * 72
 		nodeCount           = 5
 	)
@@ -76,8 +71,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
 			t.Sg, err = gauntlet.NewStarknetGauntlet("/root/")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
-			err = os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
-			err = os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
 		})
 
@@ -92,11 +85,12 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			t.DeployCluster(nodeCount, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			rpcUrlL2 = t.Env.URLs[serviceKeyL2][1]
-			devnet.SetL2RpcUrl(rpcUrlL2)
-			t.Sg.SetupNetwork(t.GetStarkNetAddressRemote())
+			t.Sg.SetupNetwork(t.L2RPCUrl)
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
+			if !t.Testnet {
+				t.Devnet.AutoLoadState(t.OCR2Client, t.OCRAddr)
+			}
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
@@ -124,15 +118,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job @soak", func() {
 		It("Soak test OCRv2", func() {
-			lggr := logger.Nop()
 			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", roundWaitTimeout))
-
-			// build client
-			reader, err := starknet.NewClient(chainId, rpcUrlL2, lggr, &rpcRequestTimeout)
-			Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
-			client, err := ocr2.NewClient(reader, lggr)
-			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
-
 			// assert new rounds are occuring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
@@ -165,7 +151,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := client.LatestTransmissionDetails(ctx, t.OCRAddr)
+				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, t.OCRAddr)
 				if err != nil {
 					log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 					continue

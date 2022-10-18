@@ -2,8 +2,14 @@ package common
 
 import (
 	"encoding/json"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"fmt"
+	"github.com/rs/zerolog/log"
 	"os"
+)
+
+var (
+	ethAddressGoerli = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+	nAccount         string
 )
 
 func (t *Test) fundNodes() error {
@@ -12,15 +18,25 @@ func (t *Test) fundNodes() error {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return err
 		}
-		nAccount, err := t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		nAccount, err = t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		if err != nil || nAccount != key.TXKey.Data.Attributes.AccountAddr {
 			return err
 		}
 		nAccounts = append(nAccounts, nAccount)
 	}
-	err = devnet.FundAccounts(nAccounts)
-	if err != nil {
-		return err
+	if t.Testnet {
+		for _, key := range nAccounts {
+			log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
+			_, err = t.Sg.TransferToken(ethAddressGoerli, key, "10000000000000000") // Transferring 0.1 ETH to each node
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err = t.Devnet.FundAccounts(nAccounts)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

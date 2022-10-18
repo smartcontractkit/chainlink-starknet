@@ -26,7 +26,8 @@ type GauntletResponse struct {
 			Hash    string `json:"hash"`
 			Address string `json:"address"`
 			Status  string `json:"status"`
-			Tx      struct {
+
+			Tx struct {
 				Address         string   `json:"address"`
 				Code            string   `json:"code"`
 				Result          []string `json:"result"`
@@ -102,6 +103,18 @@ func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
 
 func (sg *StarknetGauntlet) MintLinkToken(token, to, amount string) (string, error) {
 	_, err := sg.g.ExecCommand([]string{"ERC20:mint", fmt.Sprintf("--account=%s", to), fmt.Sprintf("--amount=%s", amount), token}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) TransferToken(token, to, amount string) (string, error) {
+	_, err := sg.g.ExecCommand([]string{"ERC20:transfer", fmt.Sprintf("--recipient=%s", to), fmt.Sprintf("--amount=%s", amount), token}, *sg.options)
 	if err != nil {
 		return "", err
 	}

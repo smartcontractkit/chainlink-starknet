@@ -12,6 +12,15 @@ on:
         required: true
         default: develop
         type: string
+      l2_rpc_url:
+        description: Override default RPC url which points to local devnet (Optional)
+        required: false
+        type: string
+      node_count:
+        description: Number of ocr nodes
+        required: true
+        default: 5
+        type: string
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -28,7 +37,7 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.15
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
@@ -48,7 +57,8 @@ jobs:
     environment: integration
     env:
       CGO_ENABLED: 1
-      IS_CI: 1
+      L2_RPC_URL: ${{ l2_rpc_url }}
+      NODE_COUNT: ${{ node_count }}
       TEST_TRIGGERED_BY: core-CI-starknet
     permissions:
       checks: write
@@ -63,7 +73,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@13437f3be1c82243a8c44eabc043a4fa58d72d73 # v2.0.20
         with:
           test_command_to_run: nix develop -c make test-integration-soak
           test_download_vendor_packages_command: cd integration-tests && go mod download
