@@ -93,8 +93,7 @@ func TestIntegration_Txm(t *testing.T) {
 
 	for k := range localKeys {
 		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(types.Transaction{
-				SenderAddress:      k,
+			require.NoError(t, txm.Enqueue(k, caigotypes.FunctionCall{
 				ContractAddress:    k, // send to self
 				EntryPointSelector: "get_nonce",
 			}))
