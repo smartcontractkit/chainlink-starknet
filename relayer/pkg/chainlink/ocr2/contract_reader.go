@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"time"
 
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -20,14 +21,14 @@ type Reader interface {
 var _ Reader = (*contractReader)(nil)
 
 type contractReader struct {
-	address string
+	address caigotypes.Hash
 	reader  OCR2Reader
 	lggr    logger.Logger
 }
 
 func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) Reader {
 	return &contractReader{
-		address: address,
+		address: caigotypes.HexToHash(address), // TODO: propagate type everywhere
 		reader:  reader,
 		lggr:    lggr,
 	}

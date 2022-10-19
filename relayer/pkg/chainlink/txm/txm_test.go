@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/stretchr/testify/mock"
@@ -62,7 +62,7 @@ func TestIntegration_Txm(t *testing.T) {
 	wg.Add(2)
 
 	// should be called twice
-	getClient := func() (types.Provider, error) {
+	getClient := func() (*starknet.Client, error) {
 		wg.Done()
 		if !failed {
 			failed = true
@@ -92,10 +92,10 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, txm.Ready())
 
 	for k := range localKeys {
+		key := caigotypes.HexToHash(k)
 		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(types.Transaction{
-				SenderAddress:      k,
-				ContractAddress:    k, // send to self
+			require.NoError(t, txm.Enqueue(key, caigotypes.FunctionCall{
+				ContractAddress:    key, // send to self
 				EntryPointSelector: "get_nonce",
 			}))
 		}
