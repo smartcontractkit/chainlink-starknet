@@ -74,7 +74,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][1])
 			t.Sg.SetupNetwork(t.GetStarkNetAddressRemote())
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
-			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fial")
+			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
