@@ -1,19 +1,20 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { AccountFunder } from '@chainlink/starknet/src/utils'
+import { account } from '@chainlink/starknet'
 
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
-  let account: Account
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = account.Funder(opts)
+
+  let alice: Account
   let MockContract: StarknetContract
   let ConsumerContract: StarknetContract
 
   before(async () => {
-    account = await starknet.deployAccount('OpenZeppelin')
-    const opts = { network: 'devnet' }
-    const funder = new AccountFunder(opts)
-    await funder.fund([{ account: account.address, amount: 5000 }])
+    alice = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: alice.address, amount: 5000 }])
 
     const decimals = 18
     const MockFactory = await starknet.getContractFactory('MockAggregator.cairo')

@@ -1,12 +1,18 @@
 {
-    "compilerOptions": {
-      "target": "es2020",
-      "module": "commonjs",
-      "strict": true,
-      "esModuleInterop": true,
-      "outDir": "dist",
-      "resolveJsonModule": true
-    },
-    "include": ["./scripts", "./test"],
-    "files": ["./hardhat.config.ts"]
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "./scripts",
+    "./test",
+    "../packages-ts/starknet/test/fundAccount.test.ts"
+  ],
+  "files": [
+    "./hardhat.config.ts"
+  ]
 }

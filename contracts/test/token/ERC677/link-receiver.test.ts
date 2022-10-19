@@ -5,10 +5,12 @@ import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
-import { AccountFunder } from '@chainlink/starknet/src/utils'
+import { account } from '@chainlink/starknet'
 
 describe('LinkToken', function () {
   this.timeout(TIMEOUT)
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = account.Funder(opts)
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
@@ -17,13 +19,10 @@ describe('LinkToken', function () {
   let sender: Account
   let owner: Account
   let token: StarknetContract
-  let funder: AccountFunder
 
   beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
     owner = await starknet.deployAccount('OpenZeppelin')
-    const opts = { network: 'devnet' }
-    funder = new AccountFunder(opts)
     await funder.fund([
       { account: sender.address, amount: 5000 },
       { account: owner.address, amount: 5000 },

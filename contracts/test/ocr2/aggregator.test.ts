@@ -6,7 +6,7 @@ import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { AccountFunder, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet/src/utils'
+import { account, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet'
 
 interface Oracle {
   signer: KeyPair
@@ -57,13 +57,14 @@ function decodeBytes(felts: BN[]): Uint8Array {
 
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = account.Funder(opts)
 
   let aggregatorFactory: StarknetContractFactory
 
   let owner: Account
   let token: StarknetContract
   let aggregator: StarknetContract
-  let funder: AccountFunder
 
   let minAnswer = -10
   let maxAnswer = 1000000000
@@ -83,8 +84,6 @@ describe('aggregator.cairo', function () {
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
     owner = await starknet.deployAccount('OpenZeppelin')
-    const opts = { network: 'devnet' }
-    funder = new AccountFunder(opts)
     await funder.fund([{ account: owner.address, amount: 5000 }])
 
     const tokenFactory = await starknet.getContractFactory('link_token')

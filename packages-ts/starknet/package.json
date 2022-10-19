@@ -13,15 +13,17 @@
     "!dist/**/*.test.js"
   ],
   "scripts": {
+    "lint": "tsc",
+    "test": "npx hardhat --network localhost test",
+    "gauntlet": "ts-node ./src/index.ts",
     "format": "yarn prettier --write ./src",
     "format:check": "yarn prettier --check ./src",
     "clean": "rm -rf ./dist/ ./bin/",
     "build": "yarn clean && tsc -b",
     "bundle": "yarn build && pkg ."
   },
-  "dependencies": {
-    "@chainlink/gauntlet-contracts-example": "*",
-    "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/starknet-gauntlet": "^0.0.1"
+  "devDependencies": {
+    "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
+    "hardhat": "^2.10.2"
   }
 }

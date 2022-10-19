@@ -1,7 +1,12 @@
-import { constants, encode, number } from 'starknet'
+import { constants, encode, number, Account, SequencerProvider, ec } from 'starknet'
 import { BigNumberish } from 'starknet/utils/number'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
+
+export const ERC20_ADDRESS_DEVNET =
+  '0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488'
+export const ERC20_ADDRESS_TESTNET =
+  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
 
 // This function adds the build info to the test network so that the network knows
 // how to handle custom errors.  It is automatically done when testing
@@ -80,25 +85,66 @@ export const hexPadStart = (data: number | bigint, len: number) => {
   return `0x${data.toString(16).padStart(len, '0')}`
 }
 
+interface FunderOpts {
+  makeFunderOptsFromEnv: () => AccountFunderOptions
+  Funder: (opts: AccountFunderOptions) => AccountFunder
+}
+
+// This function loads options from the environment.
+// It returns options for Devnet as default when nothing is configured in the environment.
+const makeFunderOptsFromEnv = (): AccountFunderOptions => {
+  const network = process.env.NETWORK || 'devnet'
+  const gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
+
+  return { network, gateway_url }
+}
+
+const Funder = (opts: AccountFunderOptions): AccountFunder => {
+  return new AccountFunder(opts)
+}
+
+export const account: FunderOpts = {
+  makeFunderOptsFromEnv: makeFunderOptsFromEnv,
+  Funder: Funder,
+}
+
 interface FundAccounts {
   account: string
   amount: number
 }
 
-//This function add some funds to predeploy account that we are using in our test.
-export class AccountFunder {
-  private opts: any
+interface AccountFunderOptions {
+  network?: string
+  gateway_url?: string
+}
 
-  constructor(opts: any) {
+// Define the Strategy to use depending on the network.
+class AccountFunder {
+  private opts: AccountFunderOptions
+  private strategy: IFundingStrategy
+
+  constructor(opts: AccountFunderOptions) {
     this.opts = opts
+    if (this.opts.network === 'devnet') {
+      this.strategy = new DevnetFundingStrategy()
+      return
+    }
+    this.strategy = new AllowanceFundingStrategy()
   }
 
+  //This function add some funds to predeploy account that we are using in our test.
   public async fund(accounts: FundAccounts[]) {
-    let gateway_url: string
-    if (this.opts.network == 'devnet') {
-      gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
-    }
+    this.strategy.fund(accounts, this.opts)
+  }
+}
 
+interface IFundingStrategy {
+  fund(accounts: FundAccounts[], opts: AccountFunderOptions): void
+}
+
+// Fund the Account on Devnet
+class DevnetFundingStrategy implements IFundingStrategy {
+  public async fund(accounts: FundAccounts[], opts: AccountFunderOptions) {
     accounts.forEach(async (account) => {
       const body = {
         address: account.account,
@@ -107,14 +153,37 @@ export class AccountFunder {
       }
 
       try {
-        await fetch(`${gateway_url}/mint`, {
+        await fetch(`${opts.gateway_url}/mint`, {
           method: 'post',
           body: JSON.stringify(body),
           headers: { 'Content-Type': 'application/json' },
         })
-      } catch (error: any) {
-        throw Error(error?.message)
-      }
+      } catch (error: any) {}
+    })
+  }
+}
+
+// Fund the Account on Testnet
+class AllowanceFundingStrategy implements IFundingStrategy {
+  public async fund(accounts: FundAccounts[], opts: AccountFunderOptions) {
+    const provider = new SequencerProvider({
+      baseUrl: 'https://alpha4.starknet.io',
+    })
+
+    const keyPair = ec.getKeyPair(process.env.ACCOUNT_PRIVATE_KEY)
+    const accountFunder = new Account(provider, process.env.ACCOUNT.toLowerCase(), keyPair)
+
+    accounts.forEach(async (account) => {
+      const hash = await accountFunder.execute(
+        {
+          contractAddress: ERC20_ADDRESS_TESTNET,
+          entrypoint: 'transfer',
+          calldata: [account.account, account.amount],
+        },
+        undefined,
+        { maxFee: '32703804275172' },
+      )
+      await provider.waitForTransaction(hash.transaction_hash)
     })
   }
 }
