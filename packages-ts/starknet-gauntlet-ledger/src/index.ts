@@ -3,8 +3,8 @@ import { SignerInterface, encode } from 'starknet'
 import { Abi, Signature, Call, InvocationsSignerDetails } from 'starknet/types'
 import { TypedData, getMessageHash } from 'starknet/utils/typedData'
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
-import { calculcateTransactionHash, getSelectorFromName } from 'starknet/utils/hash'
-import Stark, { LedgerError } from '@ledgerhq/hw-app-starknet'
+import { calculateTransactionHash } from 'starknet/utils/hash'
+import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
 
 // EIP-2645 path
 //  2645 - EIP number
@@ -38,8 +38,8 @@ class LedgerSigner implements SignerInterface {
 
     // work around jest reimporting the package
     // package is only allowed to be imported once
-    const TransportNodeHid = (await import('@ledgerhq/hw-transport-node-hid')).default
-    const transport = await TransportNodeHid.create()
+    const Transport = (await import('@ledgerhq/hw-transport-node-hid')).default
+    const transport = await Transport.create()
     const ledgerConnector = new Stark(transport)
 
     const response = await ledgerConnector.getPubKey(path)
@@ -64,13 +64,13 @@ class LedgerSigner implements SignerInterface {
   ): Promise<Signature> {
     const calldata = fromCallsToExecuteCalldataWithNonce(transactions, transactionsDetail.nonce)
 
-    const msgHash = calculcateTransactionHash(
+    const msgHash = calculateTransactionHash(
       transactionsDetail.walletAddress,
       transactionsDetail.version,
-      getSelectorFromName('__execute__'),
       calldata,
       transactionsDetail.maxFee,
       transactionsDetail.chainId,
+      transactionsDetail.nonce
     )
 
     return this.sign(msgHash)
