@@ -70,7 +70,7 @@ class LedgerSigner implements SignerInterface {
       calldata,
       transactionsDetail.maxFee,
       transactionsDetail.chainId,
-      transactionsDetail.nonce
+      transactionsDetail.nonce,
     )
 
     return this.sign(msgHash)
