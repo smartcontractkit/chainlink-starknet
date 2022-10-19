@@ -1305,12 +1305,14 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/errors/-/errors-6.11.1.tgz#a8a81bda6d28ac43c757e109b1ff079ddeec54a6"
   integrity sha512-HT1PFvNrejcN5z3ba6xikacIdHWMkjBeE9U5FFoGHhaKBKGjC74mnCeEo0/oJunyuVId+9mhGnv6lrBl6Mkqdg==
 
-"@ledgerhq/hw-app-starknet@^1.0.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/hw-app-starknet/-/hw-app-starknet-1.1.1.tgz#60ea0ad7bcbc2924a724ef462d638a0c8f8c89a6"
-  integrity sha512-CHUgSTCBIBynvhVEspqywaoiHzt/azRqCk/Q16WG8Y60PjiVrZlGAtDObvL7F+Uo23N/tzLMbc4m1xTYLXJPLw==
+"@ledgerhq/hw-app-starknet@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/hw-app-starknet/-/hw-app-starknet-2.0.3.tgz#3d964321ef96ae1cdc210b8f87ba945363d37849"
+  integrity sha512-wRr0MAvm8UunwoPOGgLOW7PnZLlN6X2yHsFGqyIWUtqKu8DZ7AuVTx5GGbOUBOYWL9xIYAYZnTACCFABuuY6qw==
   dependencies:
     "@ledgerhq/hw-transport" "^6.27.1"
+    "@types/bn.js" "^5.1.1"
+    bn.js "^5.2.1"
 
 "@ledgerhq/hw-transport-node-hid-noevents@^6.27.6":
   version "6.27.6"
@@ -1323,7 +1325,7 @@
     "@ledgerhq/logs" "^6.10.1"
     node-hid "2.1.1"
 
-"@ledgerhq/hw-transport-node-hid@^6.27.2":
+"@ledgerhq/hw-transport-node-hid@^6.27.6":
   version "6.27.6"
   resolved "https://registry.yarnpkg.com/@ledgerhq/hw-transport-node-hid/-/hw-transport-node-hid-6.27.6.tgz#0ff7d0d5c8a423da57ca071d384a10fb90b5ef3e"
   integrity sha512-ZQGKTydb3niMfGBrhbYR7zDiykOadiXRj05qfrjkCvvLXEq3KkUy8WnhfoSQEgaQpOx+i4SUJwzzfAih5eP3GA==
