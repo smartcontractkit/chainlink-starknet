@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
 	"github.com/dontpanicdao/caigo/gateway"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -35,7 +35,7 @@ func TestOCR2Client(t *testing.T) {
 		var out []byte
 
 		switch {
-		case r.RequestURI == "/feeder_gateway/call_contract":
+		case r.RequestURI == "/feeder_gateway/call_contract?blockNumber=pending":
 			type Request struct {
 				Selector string `json:"entry_point_selector"`
 			}
@@ -44,19 +44,19 @@ func TestOCR2Client(t *testing.T) {
 			require.NoError(t, json.Unmarshal(req, &reqdata))
 
 			switch {
-			case caigo.BigToHex(caigo.GetSelectorFromName("billing")) == reqdata.Selector:
+			case caigotypes.BigToHex(caigotypes.GetSelectorFromName("billing")) == reqdata.Selector:
 				// billing response
 				out = []byte(`{"result":["0x0","0x0","0x0","0x0"]}`)
-			case caigo.BigToHex(caigo.GetSelectorFromName("latest_config_details")) == reqdata.Selector:
+			case caigotypes.BigToHex(caigotypes.GetSelectorFromName("latest_config_details")) == reqdata.Selector:
 				// latest config details response
 				out = []byte(`{"result":["0x1","0x2","0x4b791b801cf0d7b6a2f9e59daf15ec2dd7d9cdc3bc5e037bada9c86e4821c"]}`)
-			case caigo.BigToHex(caigo.GetSelectorFromName("latest_transmission_details")) == reqdata.Selector:
+			case caigotypes.BigToHex(caigotypes.GetSelectorFromName("latest_transmission_details")) == reqdata.Selector:
 				// latest transmission details response
 				out = []byte(`{"result":["0x4cfc96325fa7d72e4854420e2d7b0abda72de17d45e4c3c0d9f626016d669","0x0","0x0","0x0"]}`)
-			case caigo.BigToHex(caigo.GetSelectorFromName("latest_round_data")) == reqdata.Selector:
+			case caigotypes.BigToHex(caigotypes.GetSelectorFromName("latest_round_data")) == reqdata.Selector:
 				// latest transmission details response
 				out = []byte(`{"result":["0x0","0x0","0x0","0x0","0x0"]}`)
-			case caigo.BigToHex(caigo.GetSelectorFromName("link_available_for_payment")) == reqdata.Selector:
+			case caigotypes.BigToHex(caigotypes.GetSelectorFromName("link_available_for_payment")) == reqdata.Selector:
 				// latest transmission details response
 				out = []byte(`{"result":["0x0"]}`)
 			default:
@@ -80,42 +80,44 @@ func TestOCR2Client(t *testing.T) {
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
 
+	contractAddress := caigotypes.HexToHash(ocr2ContractAddress)
+
 	t.Run("get billing details", func(t *testing.T) {
-		billing, err := client.BillingDetails(context.Background(), ocr2ContractAddress)
+		billing, err := client.BillingDetails(context.Background(), contractAddress)
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", billing)
 	})
 
 	t.Run("get latest config details", func(t *testing.T) {
-		details, err := client.LatestConfigDetails(context.Background(), ocr2ContractAddress)
+		details, err := client.LatestConfigDetails(context.Background(), contractAddress)
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", details)
 
-		config, err := client.ConfigFromEventAt(context.Background(), ocr2ContractAddress, details.Block)
+		config, err := client.ConfigFromEventAt(context.Background(), contractAddress, details.Block)
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", config)
 	})
 
 	t.Run("get latest transmission details", func(t *testing.T) {
-		transmissions, err := client.LatestTransmissionDetails(context.Background(), ocr2ContractAddress)
+		transmissions, err := client.LatestTransmissionDetails(context.Background(), contractAddress)
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", transmissions)
 	})
 
 	t.Run("get latest round data", func(t *testing.T) {
-		round, err := client.LatestRoundData(context.Background(), ocr2ContractAddress)
+		round, err := client.LatestRoundData(context.Background(), contractAddress)
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", round)
 	})
 
 	t.Run("get link available for payment", func(t *testing.T) {
-		available, err := client.LinkAvailableForPayment(context.Background(), ocr2ContractAddress)
+		available, err := client.LinkAvailableForPayment(context.Background(), contractAddress)
 		require.NoError(t, err)
 		fmt.Printf("%+v\n", available)
 	})
 
 	t.Run("get latest transmission", func(t *testing.T) {
-		round, err := client.LatestRoundData(context.Background(), ocr2ContractAddress)
+		round, err := client.LatestRoundData(context.Background(), contractAddress)
 		assert.NoError(t, err)
 		fmt.Printf("%+v\n", round)
 	})

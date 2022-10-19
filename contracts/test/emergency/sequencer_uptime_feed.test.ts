@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
-import { expectInvokeError, expectCallError } from '../utils'
+import { expectInvokeError } from '../utils'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 
 describe('SequencerUptimeFeed', function () {
@@ -111,22 +111,16 @@ describe('SequencerUptimeFeed', function () {
         owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
       })
-    })
 
-    it('should allow access without specifying account (toolchain quirk)', async function () {
-      // NOTICE: This test should fail on AC check, but it passes!?
-      // The StarkNet Devnet simulator sets the contract as the caller account, when no explicit account is used - this makes the AC check pass.
-      {
-        const res = await proxyContract.call('latest_round_data')
-        expect(res.round.answer).to.equal(0n)
-      }
+      // proxy contract needs to have access to uptimeFeedContract
+      await owner.invoke(uptimeFeedContract, 'add_access', { user: proxyContract.address })
     })
 
     it('should block access when using an account without access', async function () {
       const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
 
-      await expectCallError(
-        accWithoutAccess.call(proxyContract, 'latest_round_data'),
+      await expectInvokeError(
+        accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
         'SimpleReadAccessController: address does not have access',
       )
     })
