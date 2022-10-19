@@ -140,8 +140,6 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
 github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
-github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5 h1:37YQPO1xKfciFA/4y371DOmTaxmn8QD3P1nAPOBpySI=
-github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5/go.mod h1:6i+wtZJN1nvTbh2i55OgMuEHq3wYxe6dvRTHBVWZEZ8=
 github.com/dontpanicdao/caigo v0.3.1-0.20221017220428-d0cf10bd3c1e h1:pLswtYCwQ60gz9UV9EexcJ6KjRvW8lODJMMUPMj/42w=
 github.com/dontpanicdao/caigo v0.3.1-0.20221017220428-d0cf10bd3c1e/go.mod h1:xLt3Z79hOOzkAnMF3P4FuumV6fWHjdyYnrYS9qNkzLY=
 github.com/edsrzf/mmap-go v1.0.0 h1:CEBF7HpRnUCSJgGUb5h1Gm7e3VkmVDrR8lvWVLtrOFw=
@@ -452,6 +450,7 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
+github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249 h1:NHrXEjTNQY7P0Zfx1aMrNhpgxHmow66XQtm0aQLY0AE=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
@@ -547,12 +546,8 @@ github.com/smartcontractkit/chainlink-env v0.2.35 h1:xveefHkVsyavsEQAI7pO9uCAfoE
 github.com/smartcontractkit/chainlink-env v0.2.35/go.mod h1:pPMIcVvyS9owsJ2e1zqFsfaDjeoUlpsWtV+Ndm3/JN8=
 github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220824173548-dab4ac0a6595 h1:B3OCQ+Zb+kgpWtoLvJTE7co38SOEtn4qt1B5QDPGlFk=
 github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220824173548-dab4ac0a6595/go.mod h1:f6ju2ncT/Q1loAdiT2/8M7dtpkXwCaZvhfddyeBESXE=
-github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220929160142-83f3bd710afa h1:FUuifM5IdC8PMzjBO4u/7dOW8UwlEc/7IazywbXMYgk=
-github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220929160142-83f3bd710afa/go.mod h1:Jp+QKghWWY7e/sqy90iwGcPsW1biTUyCok/lD59Vx0M=
 github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221018132517-fdff6ae407b2 h1:zyEUmnn/vHzgQWGA9aAiHGY8aTKZ7gx+G5gukzlqel8=
 github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221018132517-fdff6ae407b2/go.mod h1:jP0qNI5RPB2Ps3CjyyZZ1o0i4zL8ylk1YZar8N7aSgo=
-github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220923221140-2cf0e5cbd55e h1:kJwPnlq6HFy0x59Mgz6tIxzwfk8ghcHMyVA6K9u+qws=
-github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220923221140-2cf0e5cbd55e/go.mod h1:IurdtTjI48EMwZ50KrnLhNi+ZpgArDUn7nRJciFy2Tc=
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221018132517-fdff6ae407b2 h1:05298wDQtwttmNcL/KDoVzCE5uCIs+eydIwtNTwF7h8=
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221018132517-fdff6ae407b2/go.mod h1:ul19KeUkgowZsktSDQsIFcDSaa5jLcw3g+PsJdVLn90=
 github.com/smartcontractkit/chainlink-testing-framework v1.5.8 h1:bAOP5KcHXwbcysScCXq4Ovgufs4HyDxWkUkyVhGhcfY=
