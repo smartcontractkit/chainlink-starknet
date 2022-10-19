@@ -13,6 +13,7 @@ import (
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
@@ -50,7 +51,7 @@ func init() {
 type Test struct {
 	sc                   *StarkNetDevnetClient
 	cc                   *ChainlinkClient
-	Sg                   *ops.StarknetGauntlet
+	Sg                   *gauntlet.StarknetGauntlet
 	mockServer           *ctfClient.MockserverClient
 	Env                  *environment.Environment
 	Common               *Common

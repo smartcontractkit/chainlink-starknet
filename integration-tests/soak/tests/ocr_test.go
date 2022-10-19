@@ -5,23 +5,24 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
-	"math/big"
-	"math/rand"
-	"os"
-	"strconv"
-	"time"
 )
 
 var (
@@ -51,7 +52,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
-			
+
 			// Checking if count of OCR nodes is defined in ENV
 			nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
 			if nodeCountDefined == true {
@@ -72,9 +73,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			}
 			t = &common.Test{}
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err := ops.NewStarknetGauntlet("/root/")
+			t.Sg, err = gauntlet.NewStarknetGauntlet("/root/")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
-			t.Sg = sg
 			err = os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
 			err = os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
