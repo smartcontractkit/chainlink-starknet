@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,8 +82,7 @@ func TestKeys(t *testing.T, count int) (rawkeys [][]byte) {
 			break
 		}
 
-		keyBytes, err := caigo.HexToBytes(k)
-		require.NoError(t, err)
+		keyBytes := caigotypes.HexToHash(k).Bytes()
 		rawkeys = append(rawkeys, keyBytes)
 	}
 	return rawkeys

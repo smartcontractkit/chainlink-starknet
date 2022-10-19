@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -143,7 +142,7 @@ func TestNewTransmissionEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigo.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
+	assert.Equal(t, caigotypes.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
 }
 
 func TestConfigSetEventSelector(t *testing.T) {
@@ -151,5 +150,5 @@ func TestConfigSetEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigo.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
+	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }

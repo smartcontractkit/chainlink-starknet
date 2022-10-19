@@ -7,7 +7,6 @@ import (
 	"math/big"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/pkg/errors"
@@ -146,12 +145,12 @@ func StringsToJunoFelts(in []string) []junotypes.Felt {
 
 // CompareAddress compares different hex starknet addresses with potentially different 0 padding
 func CompareAddress(a, b string) bool {
-	aBytes, err := caigo.HexToBytes(a)
+	aBytes, err := caigotypes.HexToBytes(a)
 	if err != nil {
 		return false
 	}
 
-	bBytes, err := caigo.HexToBytes(b)
+	bBytes, err := caigotypes.HexToBytes(b)
 	if err != nil {
 		return false
 	}

@@ -12,8 +12,8 @@ from starkware.cairo.common.bool import TRUE
 
 from chainlink.cairo.utils import assert_boolean
 from chainlink.cairo.ocr2.IAggregator import Round, AnswerUpdated, NewRound
-from chainlink.cairo.access.SimpleReadAccessController.library import (
-    SimpleReadAccessController,
+from chainlink.cairo.access.SimpleReadAccessController.library import SimpleReadAccessController
+from chainlink.cairo.access.SimpleWriteAccessController.library import (
     owner,
     proposed_owner,
     transfer_ownership,
@@ -25,222 +25,222 @@ from chainlink.cairo.access.SimpleReadAccessController.library import (
 )
 from chainlink.cairo.access.ownable import Ownable
 
-const ETH_ADDRESS_BOUND = 2 ** 160
+const ETH_ADDRESS_BOUND = 2 ** 160;
 
 @event
-func RoundUpdated(status : felt, updated_at : felt):
-end
+func RoundUpdated(status: felt, updated_at: felt) {
+}
 
 @event
 func UpdateIgnored(
-    latest_status : felt, latest_timestamp : felt, incoming_status : felt, incoming_timestamp : felt
-):
-end
+    latest_status: felt, latest_timestamp: felt, incoming_status: felt, incoming_timestamp: felt
+) {
+}
 
 @event
-func L1SenderTransferred(from_addr : felt, to_addr : felt):
-end
+func L1SenderTransferred(from_addr: felt, to_addr: felt) {
+}
 
 @storage_var
-func SequencerUptimeFeed_l1_sender() -> (address : felt):
-end
+func SequencerUptimeFeed_l1_sender() -> (address: felt) {
+}
 
 @storage_var
-func SequencerUptimeFeed_rounds(id : felt, field : felt) -> (res : felt):
-end
+func SequencerUptimeFeed_rounds(id: felt, field: felt) -> (res: felt) {
+}
 
 @storage_var
-func SequencerUptimeFeed_latest_round_id() -> (res : felt):
-end
+func SequencerUptimeFeed_latest_round_id() -> (res: felt) {
+}
 
-func require_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    let (l1_sender) = SequencerUptimeFeed_l1_sender.read()
-    with_attr error_message("SequencerUptimeFeed: invalid sender"):
-        assert l1_sender = address
-    end
+func require_l1_sender{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    address: felt
+) {
+    let (l1_sender) = SequencerUptimeFeed_l1_sender.read();
+    with_attr error_message("SequencerUptimeFeed: invalid sender") {
+        assert l1_sender = address;
+    }
 
-    return ()
-end
+    return ();
+}
 
-func require_valid_round_id{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt
-):
-    let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
+func require_valid_round_id{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt
+) {
+    let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read();
 
-    with_attr error_message("SequencerUptimeFeed: invalid round_id"):
-        assert_not_zero(round_id)
-        assert_nn_le(round_id, latest_round_id)
-    end
+    with_attr error_message("SequencerUptimeFeed: invalid round_id") {
+        assert_not_zero(round_id);
+        assert_nn_le(round_id, latest_round_id);
+    }
 
-    return ()
-end
+    return ();
+}
 
-func require_access{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    let (address) = get_caller_address()
-    SimpleReadAccessController.check_access(address)
+func require_access{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    let (address) = get_caller_address();
+    SimpleReadAccessController.check_access(address);
 
-    return ()
-end
+    return ();
+}
 
-# TODO: make overridable in the future
+// TODO: make overridable in the future
 @external
-func set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    Ownable.assert_only_owner()
+func set_l1_sender{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(address: felt) {
+    Ownable.assert_only_owner();
 
-    with_attr error_message("SequencerUptimeFeed: L1 sender address out of range"):
-        assert_lt_felt(address, ETH_ADDRESS_BOUND)
-    end
+    with_attr error_message("SequencerUptimeFeed: L1 sender address out of range") {
+        assert_lt_felt(address, ETH_ADDRESS_BOUND);
+    }
 
-    with_attr error_message("SequencerUptimeFeed: L1 sender address can not be zero"):
-        assert_not_zero(address)
-    end
-    _set_l1_sender(address)
+    with_attr error_message("SequencerUptimeFeed: L1 sender address can not be zero") {
+        assert_not_zero(address);
+    }
+    _set_l1_sender(address);
 
-    return ()
-end
+    return ();
+}
 
 @view
-func l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    address : felt
-):
-    let (address) = SequencerUptimeFeed_l1_sender.read()
-    return (address)
-end
+func l1_sender{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    address: felt
+) {
+    let (address) = SequencerUptimeFeed_l1_sender.read();
+    return (address,);
+}
 
-namespace SequencerUptimeFeed:
-    func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        initial_status : felt, owner_address : felt
-    ):
-        with_attr error_message("SequencerUptimeFeed: value isn't a boolean"):
-            assert_boolean(initial_status)
-        end
+namespace SequencerUptimeFeed {
+    func initialize{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+        initial_status: felt, owner_address: felt
+    ) {
+        with_attr error_message("SequencerUptimeFeed: value isn't a boolean") {
+            assert_boolean(initial_status);
+        }
 
-        SimpleReadAccessController.initialize(owner_address)
+        SimpleReadAccessController.initialize(owner_address);
 
-        let round_id = 1
-        let (timestamp) = get_block_timestamp()
-        _record_round(round_id, initial_status, timestamp)
+        let round_id = 1;
+        let (timestamp) = get_block_timestamp();
+        _record_round(round_id, initial_status, timestamp);
 
-        return ()
-    end
+        return ();
+    }
 
-    func update_status{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, status : felt, timestamp : felt
-    ):
-        alloc_locals
-        require_l1_sender(from_address)
-        with_attr error_message("SequencerUptimeFeed: value isn't a boolean"):
-            assert_boolean(status)
-        end
+    func update_status{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+        from_address: felt, status: felt, timestamp: felt
+    ) {
+        alloc_locals;
+        require_l1_sender(from_address);
+        with_attr error_message("SequencerUptimeFeed: value isn't a boolean") {
+            assert_boolean(status);
+        }
 
-        let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
-        let (latest_started_at) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.started_at)
-        let (local latest_status) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.answer)
+        let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read();
+        let (latest_started_at) = SequencerUptimeFeed_rounds.read(
+            latest_round_id, Round.started_at
+        );
+        let (local latest_status) = SequencerUptimeFeed_rounds.read(latest_round_id, Round.answer);
 
-        let (lt) = is_le(timestamp, latest_started_at - 1)  # timestamp < latest_started_at
-        if lt == TRUE:
-            UpdateIgnored.emit(latest_status, latest_started_at, status, timestamp)
-            return ()
-        end
+        let lt = is_le(timestamp, latest_started_at - 1);  // timestamp < latest_started_at
+        if (lt == TRUE) {
+            UpdateIgnored.emit(latest_status, latest_started_at, status, timestamp);
+            return ();
+        }
 
-        if latest_status == status:
-            _update_round(latest_round_id, status)
-        else:
-            let round_id = latest_round_id + 1
-            _record_round(round_id, status, timestamp)
-        end
+        if (latest_status == status) {
+            _update_round(latest_round_id, status);
+        } else {
+            let round_id = latest_round_id + 1;
+            _record_round(round_id, status, timestamp);
+        }
 
-        return ()
-    end
+        return ();
+    }
 
-    func latest_round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        round : Round
-    ):
-        require_access()
+    func latest_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+        round: Round
+    ) {
+        require_access();
 
-        let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read()
-        let (latest_round) = SequencerUptimeFeed.round_data(latest_round_id)
+        let (latest_round_id) = SequencerUptimeFeed_latest_round_id.read();
+        let (latest_round) = SequencerUptimeFeed.round_data(latest_round_id);
 
-        return (latest_round)
-    end
+        return (latest_round,);
+    }
 
-    func round_data{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        round_id : felt
-    ) -> (res : Round):
-        require_access()
-        require_valid_round_id(round_id)
+    func round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+        round_id: felt
+    ) -> (res: Round) {
+        require_access();
+        require_valid_round_id(round_id);
 
-        let (round) = _get_round(round_id)
-        return (round)
-    end
+        let (round) = _get_round(round_id);
+        return (round,);
+    }
 
-    func description{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        description : felt
-    ):
-        return ('L2 Sequencer Uptime Status Feed')
-    end
+    func description{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+        description: felt
+    ) {
+        return ('L2 Sequencer Uptime Status Feed',);
+    }
 
-    func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        decimals : felt
-    ):
-        return (0)
-    end
+    func decimals{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+        decimals: felt
+    ) {
+        return (0,);
+    }
 
-    func type_and_version{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        meta : felt
-    ):
-        const meta = 'SequencerUptimeFeed 1.0.0'
-        return (meta)
-    end
-end
+    func type_and_version{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+        meta: felt
+    ) {
+        const meta = 'SequencerUptimeFeed 1.0.0';
+        return (meta,);
+    }
+}
 
-func _set_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt, value : Round
-):
-    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.answer, value=value.answer)
-    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.block_num, value=value.block_num)
-    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.started_at, value=value.started_at)
-    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.updated_at, value=value.updated_at)
+func _set_round{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt, value: Round
+) {
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.answer, value=value.answer);
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.block_num, value=value.block_num);
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.started_at, value=value.started_at);
+    SequencerUptimeFeed_rounds.write(id=round_id, field=Round.updated_at, value=value.updated_at);
 
-    return ()
-end
+    return ();
+}
 
-func _get_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt
-) -> (round : Round):
-    let (answer) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.answer)
-    let (block_num) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.block_num)
-    let (started_at) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.started_at)
-    let (updated_at) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.updated_at)
+func _get_round{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt
+) -> (round: Round) {
+    let (answer) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.answer);
+    let (block_num) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.block_num);
+    let (started_at) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.started_at);
+    let (updated_at) = SequencerUptimeFeed_rounds.read(id=round_id, field=Round.updated_at);
 
-    return (Round(round_id, answer, block_num, started_at, updated_at))
-end
+    return (Round(round_id, answer, block_num, started_at, updated_at),);
+}
 
-func _set_l1_sender{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    address : felt
-):
-    let (old_address) = SequencerUptimeFeed_l1_sender.read()
+func _set_l1_sender{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    address: felt
+) {
+    let (old_address) = SequencerUptimeFeed_l1_sender.read();
 
-    if old_address != address:
-        SequencerUptimeFeed_l1_sender.write(address)
-        L1SenderTransferred.emit(old_address, address)
-        return ()
-    end
+    if (old_address != address) {
+        SequencerUptimeFeed_l1_sender.write(address);
+        L1SenderTransferred.emit(old_address, address);
+        return ();
+    }
 
-    return ()
-end
+    return ();
+}
 
-func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt, status : felt, timestamp : felt
-):
-    SequencerUptimeFeed_latest_round_id.write(round_id)
+func _record_round{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt, status: felt, timestamp: felt
+) {
+    SequencerUptimeFeed_latest_round_id.write(round_id);
 
-    let (block_num) = get_block_number()
-    let (updated_at) = get_block_timestamp()
+    let (block_num) = get_block_number();
+    let (updated_at) = get_block_timestamp();
 
     let round = Round(
         round_id=round_id,
@@ -248,22 +248,22 @@ func _record_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
         block_num=block_num,
         started_at=timestamp,
         updated_at=updated_at,
-    )
-    _set_round(round_id, round)
+    );
+    _set_round(round_id, round);
 
-    let (sender) = get_caller_address()
-    NewRound.emit(round_id=round_id, started_by=sender, started_at=timestamp)
-    AnswerUpdated.emit(status, round_id, timestamp)
+    let (sender) = get_caller_address();
+    NewRound.emit(round_id=round_id, started_by=sender, started_at=timestamp);
+    AnswerUpdated.emit(status, round_id, timestamp);
 
-    return ()
-end
+    return ();
+}
 
-func _update_round{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    round_id : felt, status : felt
-):
-    let (updated_at) = get_block_timestamp()
-    SequencerUptimeFeed_rounds.write(round_id, Round.updated_at, updated_at)
+func _update_round{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    round_id: felt, status: felt
+) {
+    let (updated_at) = get_block_timestamp();
+    SequencerUptimeFeed_rounds.write(round_id, Round.updated_at, updated_at);
 
-    RoundUpdated.emit(status, updated_at)
-    return ()
-end
+    RoundUpdated.emit(status, updated_at);
+    return ();
+}
