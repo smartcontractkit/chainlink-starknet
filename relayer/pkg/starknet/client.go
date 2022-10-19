@@ -35,16 +35,9 @@ type Writer interface {
 	EstimateFee(context.Context, caigotypes.FunctionInvoke, string) (*caigotypes.FeeEstimate, error)
 }
 
-type Unimplemented interface {
-	Class(context.Context, string) (*caigotypes.ContractClass, error)
-	ClassHashAt(context.Context, string) (*caigotypes.Felt, error)
-	ClassAt(context.Context, string) (*caigotypes.ContractClass, error)
-}
-
 type ReaderWriter interface {
 	Reader
 	Writer
-	Unimplemented
 }
 
 var _ ReaderWriter = (*Client)(nil)
@@ -299,18 +292,4 @@ func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke
 	}
 	return out, nil
 
-}
-
-// -- unimplemented provider interface --
-
-func (c *Client) Class(context.Context, string) (*caigotypes.ContractClass, error) {
-	return nil, errors.New("client.Class is not implemented")
-}
-
-func (c *Client) ClassHashAt(context.Context, string) (*caigotypes.Felt, error) {
-	return nil, errors.New("client.ClassHashAt is not implemented")
-}
-
-func (c *Client) ClassAt(context.Context, string) (*caigotypes.ContractClass, error) {
-	return nil, errors.New("client.ClassAt is not implemented")
 }
