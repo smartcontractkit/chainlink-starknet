@@ -163,8 +163,9 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 
 	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
 	expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
+	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
 	details := caigotypes.ExecuteDetails{
-		MaxFee: expandedFee,
+		MaxFee: max,
 	}
 
 	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
