@@ -58,6 +58,7 @@ type Test struct {
 	LinkTokenAddr        string
 	OCRAddr              string
 	AccessControllerAddr string
+	ProxyAddr            string
 }
 
 type StarkNetDevnetClient struct {

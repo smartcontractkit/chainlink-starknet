@@ -20,6 +20,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -34,7 +35,6 @@ func init() {
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
 		err                 error
-		ocrAddress          string
 		t                   *common.Test
 		serviceKeyL1        = "Hardhat"
 		serviceKeyL2        = "starknet-dev"
@@ -44,12 +44,32 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		cfg                 *common.Common
 		decimals            = 9
 		mockServerVal       = 900000000
-		rpcRequestTimeout   = 10 * time.Second
-		roundWaitTimeout    = 10 * time.Minute
+		rpcRequestTimeout   = time.Second * 10
+		roundWaitTimeout    = time.Hour * 72
+		nodeCount           = 5
 	)
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
+			
+			// Checking if count of OCR nodes is defined in ENV
+			nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
+			if nodeCountDefined == true {
+				nodeCount, err = strconv.Atoi(nodeCountSet)
+				if err != nil {
+					panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
+				}
+			}
+
+			// Checking if TTL env var is set to adjust duration to custom value
+			ttlValue, ttlDefined := os.LookupEnv("TTL")
+			if ttlDefined == true {
+				ttl, err := time.ParseDuration(ttlValue)
+				if err != nil {
+					panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+				}
+				roundWaitTimeout = ttl
+			}
 			t = &common.Test{}
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
 			sg, err := ops.NewStarknetGauntlet("/root/")
@@ -69,7 +89,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				ServiceKeyL2:        serviceKeyL2,
 			}
 
-			t.DeployCluster(5, cfg)
+			t.DeployCluster(nodeCount, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][1])
 			t.Sg.SetupNetwork(t.GetStarkNetAddressRemote())
@@ -94,7 +114,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			})
 			err = t.SetMockServerValue("", mockServerVal)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting mock server value should not fail")
-			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, ocrAddress)
+			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, t.OCRAddr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 		})
 
@@ -104,7 +124,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		It("Soak test OCRv2", func() {
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][1]
-			roundWaitTimeout = t.Env.Cfg.TTL
 			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", roundWaitTimeout))
 
 			// build client
