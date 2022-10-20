@@ -1,6 +1,6 @@
 ecdsa
 fastecdsa
 sympy
-cairo-lang==0.10.0
+cairo-lang==0.10.1
 starknet-devnet>=0.3.4
 openzeppelin-cairo-contracts==0.4.0
