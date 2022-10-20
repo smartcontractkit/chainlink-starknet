@@ -7,7 +7,7 @@ import '@shardlabs/starknet-hardhat-plugin'
 const config: HardhatUserConfig = {
   starknet: {
     venv: 'active',
-    network: 'alpha-goerli',
+    network: 'devnet',
     wallets: {
       OpenZeppelin: {
         accountName: 'OpenZeppelin',

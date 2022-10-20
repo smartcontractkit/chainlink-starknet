@@ -1,7 +1,7 @@
 import { assert } from 'chai'
 import { account } from '@chainlink/starknet'
 import { Account, ec, SequencerProvider, stark } from 'starknet'
-import { ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/utils'
+import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/utils'
 
 describe('fundAccount', function () {
   this.timeout(900_000)
@@ -14,10 +14,10 @@ describe('fundAccount', function () {
   const funder = account.Funder(opts)
 
   before(async function () {
-    const gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
+    const gateway_url = process.env.NODE_URL || DEVNET_URL
     provider = new SequencerProvider({ baseUrl: gateway_url })
 
-    if (gateway_url === 'http://127.0.0.1:5050') {
+    if (gateway_url === DEVNET_URL) {
       erc20_address = ERC20_ADDRESS_DEVNET
     } else {
       erc20_address = ERC20_ADDRESS_TESTNET
@@ -44,7 +44,6 @@ describe('fundAccount', function () {
       entrypoint: 'balanceOf',
       calldata: [BigInt(alice.address).toString(10)],
     })
-    // const balance = await erc20.balanceOf(alice.address)
     assert.deepEqual(balance.result, ['0x1388', '0x0'])
   })
 

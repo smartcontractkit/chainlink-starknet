@@ -1,12 +1,15 @@
 import { constants, encode, number, Account, SequencerProvider, ec } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
+import { BigNumberish, toBN } from 'starknet/utils/number'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
+import { bnToUint256, Uint256 } from 'starknet/dist/utils/uint256'
 
 export const ERC20_ADDRESS_DEVNET =
   '0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488'
 export const ERC20_ADDRESS_TESTNET =
   '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+export const DEVNET_URL = 'http://127.0.0.1:5050'
+const DEVNET_NAME = 'devnet'
 
 // This function adds the build info to the test network so that the network knows
 // how to handle custom errors.  It is automatically done when testing
@@ -93,8 +96,8 @@ interface FunderOpts {
 // This function loads options from the environment.
 // It returns options for Devnet as default when nothing is configured in the environment.
 const makeFunderOptsFromEnv = (): AccountFunderOptions => {
-  const network = process.env.NETWORK || 'devnet'
-  const gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
+  const network = process.env.NETWORK || DEVNET_NAME
+  const gateway_url = process.env.NODE_URL || DEVNET_URL
 
   return { network, gateway_url }
 }
@@ -125,21 +128,21 @@ class AccountFunder {
 
   constructor(opts: AccountFunderOptions) {
     this.opts = opts
-    if (this.opts.network === 'devnet') {
+    if (this.opts.network === DEVNET_NAME) {
       this.strategy = new DevnetFundingStrategy()
       return
     }
     this.strategy = new AllowanceFundingStrategy()
   }
 
-  //This function add some funds to predeploy account that we are using in our test.
+  // This function adds some funds to pre-deployed account that we are using in our test.
   public async fund(accounts: FundAccounts[]) {
-    this.strategy.fund(accounts, this.opts)
+    await this.strategy.fund(accounts, this.opts)
   }
 }
 
 interface IFundingStrategy {
-  fund(accounts: FundAccounts[], opts: AccountFunderOptions): void
+  fund(accounts: FundAccounts[], opts: AccountFunderOptions): Promise<void>
 }
 
 // Fund the Account on Devnet
@@ -173,17 +176,32 @@ class AllowanceFundingStrategy implements IFundingStrategy {
     const keyPair = ec.getKeyPair(process.env.ACCOUNT_PRIVATE_KEY)
     const accountFunder = new Account(provider, process.env.ACCOUNT.toLowerCase(), keyPair)
 
-    accounts.forEach(async (account) => {
+    for (const account of accounts) {
+      const estimatFee = await accountFunder.estimateFee({
+        contractAddress: ERC20_ADDRESS_TESTNET,
+        entrypoint: 'transfer',
+        calldata: [
+          account.account,
+          bnToUint256(account.amount).low.toString(),
+          bnToUint256(account.amount).high.toString(),
+        ],
+      })
+      const result = await accountFunder.getNonce()
+      const nonce = toBN(result).toNumber()
       const hash = await accountFunder.execute(
         {
           contractAddress: ERC20_ADDRESS_TESTNET,
           entrypoint: 'transfer',
-          calldata: [account.account, account.amount],
+          calldata: [
+            account.account,
+            bnToUint256(account.amount).low.toString(),
+            bnToUint256(account.amount).high.toString(),
+          ],
         },
         undefined,
-        { maxFee: '32703804275172' },
+        { maxFee: estimatFee.suggestedMaxFee, nonce },
       )
       await provider.waitForTransaction(hash.transaction_hash)
-    })
+    }
   }
 }
