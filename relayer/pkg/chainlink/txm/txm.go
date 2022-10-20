@@ -132,7 +132,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Has
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewGatewayAccount(senderAddress.String(), accountAddress.String(), txm.ks, client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewRPCAccount(senderAddress.String(), accountAddress.String(), txm.ks, client.Provider, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
