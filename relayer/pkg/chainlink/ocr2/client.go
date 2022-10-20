@@ -2,14 +2,13 @@ package ocr2
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
 
-	caigogw "github.com/smartcontractkit/caigo/gateway"
+	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -180,33 +179,36 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address caigotypes
 	if len(results) != 1 {
 		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
 	}
-	return caigotypes.StrToFelt(results[0]).Big(), nil
+	return caigotypes.HexToBN(results[0]), nil
 }
 
 func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Hash, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
-	block, err := c.r.BlockByNumberGateway(ctx, blockNum)
+	block := caigorpc.WithBlockNumber(blockNum)
+
+	eventKey := caigotypes.BigToHex(caigotypes.GetSelectorFromName(eventType))
+
+	events, err := c.r.Events(ctx, caigorpc.EventFilter{
+		FromBlock: block,
+		ToBlock:   block,
+		Address:   address,
+		Keys:      []string{eventKey}, // skip other event types
+		// PageSize:   0,
+		// PageNumber: 0,
+	})
+
+	// TODO: check events.isLastPage, query more if needed
+
 	if err != nil {
-		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch block by number")
+		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch events for block")
 	}
 
-	for _, txReceipt := range block.TransactionReceipts {
-		for _, event := range txReceipt.Events {
-			var decodedEvent caigogw.Event
-
-			m, err := json.Marshal(event)
-			if err != nil {
-				return eventsAsFeltArrs, errors.Wrap(err, "couldn't marshal event")
-			}
-
-			err = json.Unmarshal(m, &decodedEvent)
-			if err != nil {
-				return eventsAsFeltArrs, errors.Wrap(err, "couldn't unmarshal event")
-			}
-
-			if starknet.IsEventFromContract(&decodedEvent, address, eventType) {
-				eventsAsFeltArrs = append(eventsAsFeltArrs, decodedEvent.Data)
-			}
+	for _, event := range events.Events {
+		// convert to felts
+		felts := []*caigotypes.Felt{}
+		for _, felt := range event.Data {
+			felts = append(felts, caigotypes.StrToFelt(felt))
 		}
+		eventsAsFeltArrs = append(eventsAsFeltArrs, felts)
 	}
 	if len(eventsAsFeltArrs) == 0 {
 		return nil, errors.New("events not found in the block")

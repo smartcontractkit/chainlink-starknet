@@ -6,8 +6,7 @@ import (
 	context "context"
 	big "math/big"
 
-	gateway "github.com/smartcontractkit/caigo/gateway"
-
+	rpcv02 "github.com/smartcontractkit/caigo/rpcv02"
 	mock "github.com/stretchr/testify/mock"
 
 	starknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -20,77 +19,20 @@ type Reader struct {
 	mock.Mock
 }
 
-// BlockByHash provides a mock function with given fields: _a0, _a1, _a2
-func (_m *Reader) BlockByHash(_a0 context.Context, _a1 string, _a2 string) (*gateway.Block, error) {
-	ret := _m.Called(_a0, _a1, _a2)
+// BlockWithTxHashes provides a mock function with given fields: ctx, blockID
+func (_m *Reader) BlockWithTxHashes(ctx context.Context, blockID rpcv02.BlockID) (rpcv02.Block, error) {
+	ret := _m.Called(ctx, blockID)
 
-	var r0 *gateway.Block
+	var r0 rpcv02.Block
+	if rf, ok := ret.Get(0).(func(context.Context, rpcv02.BlockID) rpcv02.Block); ok {
+		r0 = rf(ctx, blockID)
+	} else {
+		r0 = ret.Get(0).(rpcv02.Block)
+	}
+
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gateway.Block, error)); ok {
-		return rf(_a0, _a1, _a2)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gateway.Block); ok {
-		r0 = rf(_a0, _a1, _a2)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gateway.Block)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(_a0, _a1, _a2)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// BlockByNumber provides a mock function with given fields: _a0, _a1, _a2
-func (_m *Reader) BlockByNumber(_a0 context.Context, _a1 *big.Int, _a2 string) (*gateway.Block, error) {
-	ret := _m.Called(_a0, _a1, _a2)
-
-	var r0 *gateway.Block
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *big.Int, string) (*gateway.Block, error)); ok {
-		return rf(_a0, _a1, _a2)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *big.Int, string) *gateway.Block); ok {
-		r0 = rf(_a0, _a1, _a2)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gateway.Block)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *big.Int, string) error); ok {
-		r1 = rf(_a0, _a1, _a2)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// BlockByNumberGateway provides a mock function with given fields: _a0, _a1
-func (_m *Reader) BlockByNumberGateway(_a0 context.Context, _a1 uint64) (*gateway.Block, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gateway.Block
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64) (*gateway.Block, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uint64) *gateway.Block); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gateway.Block)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uint64) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, rpcv02.BlockID) error); ok {
+		r1 = rf(ctx, blockID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -99,15 +41,11 @@ func (_m *Reader) BlockByNumberGateway(_a0 context.Context, _a1 uint64) (*gatewa
 }
 
 // Call provides a mock function with given fields: _a0, _a1, _a2
-func (_m *Reader) Call(_a0 context.Context, _a1 types.FunctionCall, _a2 string) ([]string, error) {
+func (_m *Reader) Call(_a0 context.Context, _a1 types.FunctionCall, _a2 rpcv02.BlockID) ([]string, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 []string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.FunctionCall, string) ([]string, error)); ok {
-		return rf(_a0, _a1, _a2)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.FunctionCall, string) []string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.FunctionCall, rpcv02.BlockID) []string); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
@@ -115,7 +53,8 @@ func (_m *Reader) Call(_a0 context.Context, _a1 types.FunctionCall, _a2 string) 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.FunctionCall, string) error); ok {
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, types.FunctionCall, rpcv02.BlockID) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
@@ -167,6 +106,29 @@ func (_m *Reader) ChainID(_a0 context.Context) (string, error) {
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Events provides a mock function with given fields: ctx, filter
+func (_m *Reader) Events(ctx context.Context, filter rpcv02.EventFilter) (*rpcv02.EventsOutput, error) {
+	ret := _m.Called(ctx, filter)
+
+	var r0 *rpcv02.EventsOutput
+	if rf, ok := ret.Get(0).(func(context.Context, rpcv02.EventFilter) *rpcv02.EventsOutput); ok {
+		r0 = rf(ctx, filter)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*rpcv02.EventsOutput)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, rpcv02.EventFilter) error); ok {
+		r1 = rf(ctx, filter)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -26,7 +26,7 @@ import (
 
 func TestIntegration_Txm(t *testing.T) {
 	n := 2 // number of txs per key
-	url := SetupLocalStarknetNode(t)
+	url := SetupLocalStarknetNode(t) + "/rpc"
 	devnet := test.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
