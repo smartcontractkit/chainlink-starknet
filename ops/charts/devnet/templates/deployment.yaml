@@ -22,7 +22,7 @@ spec:
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.3.3"}}"
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.3.4"}}"
         args: ["--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
 {{- end }}
         imagePullPolicy: IfNotPresent
