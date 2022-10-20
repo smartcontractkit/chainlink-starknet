@@ -57,8 +57,8 @@ jobs:
     environment: integration
     env:
       CGO_ENABLED: 1
-      L2_RPC_URL: ${{ l2_rpc_url }}
-      NODE_COUNT: ${{ node_count }}
+      L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
+      NODE_COUNT: ${{ github.event.inputs.node_count }}
       TEST_TRIGGERED_BY: core-CI-starknet
     permissions:
       checks: write
