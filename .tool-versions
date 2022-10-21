@@ -11,7 +11,7 @@ actionlint 1.6.12
 shellcheck 0.8.0
 
 # Kubernetes
-k3d 5.4.4
+k3d 5.4.6
 kubectl 1.24.3
 k9s 0.26.3
 helm 3.9.3
