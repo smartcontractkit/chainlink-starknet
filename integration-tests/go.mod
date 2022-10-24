@@ -3,14 +3,14 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.18
 
 require (
-	github.com/dontpanicdao/caigo v0.3.1-0.20221017220428-d0cf10bd3c1e
+	github.com/dontpanicdao/caigo v0.4.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
 	github.com/rs/zerolog v1.27.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221018132517-fdff6ae407b2
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221018132517-fdff6ae407b2
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221024053349-209ee0d97d21
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220822181847-8f75df66a5f1
 )
