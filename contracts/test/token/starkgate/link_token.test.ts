@@ -2,6 +2,7 @@ import { account } from '@chainlink/starknet'
 import { starknet } from 'hardhat'
 import { TIMEOUT } from '../../constants'
 import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
+import { startNetwork, IntegratedDevnet } from '@chainlink/starknet-gauntlet/test/utils'
 
 describe('link_token', function () {
   this.timeout(TIMEOUT)

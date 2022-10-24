@@ -4,12 +4,14 @@ import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
-import { account } from '@chainlink/starknet'
+import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
+
+  let network: IntegratedDevnet
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
@@ -19,6 +21,7 @@ describe('ERC677', function () {
   let data: (number | bigint)[]
 
   beforeEach(async () => {
+    network = await startNetwork()
     sender = await starknet.deployAccount('OpenZeppelin')
     await funder.fund([{ account: sender.address, amount: 5000 }])
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')
@@ -98,7 +101,7 @@ describe('ERC677', function () {
           amount: uint256.bnToUint256(10000),
         })
         expect.fail()
-      } catch (error: any) {}
+      } catch (error: any) { }
     })
   })
 
@@ -142,5 +145,9 @@ describe('ERC677', function () {
         expect(uint256.uint256ToBN(balance1)).to.deep.equal(toBN(0))
       }
     })
+  })
+
+  after(async function () {
+    network.stop()
   })
 })

@@ -13,13 +13,16 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { account, addCompilationToNetwork } from '@chainlink/starknet'
+import { account, addCompilationToNetwork, startNetwork, startNode, IntegratedDevnet } from '@chainlink/starknet'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
+
+  let devnetNetwork: IntegratedDevnet
+  let hardHatNetwork: IntegratedDevnet
 
   let defaultAccount: Account
   let deployer: SignerWithAddress
@@ -37,6 +40,8 @@ describe('StarkNetValidator', () => {
   let l2Contract: StarknetContract
 
   before(async () => {
+    devnetNetwork = await startNetwork()
+    hardHatNetwork = await startNode()
     await addCompilationToNetwork(
       'src/chainlink/solidity/emergency/StarkNetValidator.sol:StarkNetValidator',
     )
@@ -533,5 +538,10 @@ describe('StarkNetValidator', () => {
         expect(balance).to.equal(0n)
       })
     })
+  })
+
+  after(async function () {
+    devnetNetwork.stop()
+    hardHatNetwork.stop()
   })
 })

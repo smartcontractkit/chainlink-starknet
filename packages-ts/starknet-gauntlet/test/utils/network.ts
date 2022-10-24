@@ -62,6 +62,26 @@ class VenvDevnet extends IntegratedDevnet {
   }
 }
 
+class VenvHardHatNode extends IntegratedDevnet {
+  private command: string[]
+  private opts: any
+
+  constructor(port: string, opts: any) {
+    super(port)
+
+    this.opts = opts
+    this.command = ['hardhat', 'node']
+  }
+
+  protected async spawnChildProcess(): Promise<ChildProcess> {
+    return spawn('npx', this.command)
+  }
+
+  protected cleanup(): void {
+    this.childProcess?.kill()
+  }
+}
+
 export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
   const devnet = new VenvDevnet('5050', opts)
 
@@ -71,4 +91,15 @@ export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
   await new Promise((f) => setTimeout(f, 2000))
 
   return devnet
+}
+
+export const startNode = async (opts?: {}): Promise<IntegratedDevnet> => {
+  const hardhatNode = new VenvHardHatNode('8545', opts)
+
+  await hardhatNode.start()
+
+  // Starting to poll hardhatNode too soon can result in ENOENT
+  await new Promise((f) => setTimeout(f, 2000))
+
+  return hardhatNode
 }

@@ -4,12 +4,12 @@ import { number } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account } from '@chainlink/starknet'
+import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
 
 describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
+
+  let network: IntegratedDevnet
   let aggregatorContractFactory: StarknetContractFactory
   let proxyContractFactory: StarknetContractFactory
 
@@ -17,7 +17,10 @@ describe('aggregator_proxy.cairo', function () {
   let aggregator: StarknetContract
   let proxy: StarknetContract
 
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
   before(async function () {
+    network = await startNetwork()
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
     proxyContractFactory = await starknet.getContractFactory('ocr2/aggregator_proxy')
@@ -100,5 +103,9 @@ describe('aggregator_proxy.cairo', function () {
       round = (await proxy.call('latest_round_data')).round
       assert.equal(round.answer, '12')
     })
+  })
+
+  after(async function () {
+    network.stop()
   })
 })

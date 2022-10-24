@@ -6,7 +6,7 @@ import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { account, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet'
+import { account, toFelt, hexPadStart, expectInvokeErrorMsg, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
 
 interface Oracle {
   signer: KeyPair
@@ -59,6 +59,7 @@ describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
+  let network: IntegratedDevnet
 
   let aggregatorFactory: StarknetContractFactory
 
@@ -77,6 +78,7 @@ describe('aggregator.cairo', function () {
   let answer: string
 
   before(async () => {
+    network = await startNetwork()
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorFactory = await starknet.getContractFactory('ocr2/aggregator')
 
@@ -282,7 +284,7 @@ describe('aggregator.cairo', function () {
       assert.equal(round.answer, 99)
 
       await transmit(3, toFelt(-10))
-      ;({ round } = await aggregator.call('latest_round_data'))
+        ; ({ round } = await aggregator.call('latest_round_data'))
       assert.equal(round.round_id, 3)
       assert.equal(round.answer, -10)
 
@@ -381,7 +383,7 @@ describe('aggregator.cairo', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -393,7 +395,7 @@ describe('aggregator.cairo', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
@@ -445,6 +447,10 @@ describe('aggregator.cairo', function () {
         })
         assert.ok(owed == 0)
       }
+    })
+
+    after(async function () {
+      network.stop()
     })
   })
 })
