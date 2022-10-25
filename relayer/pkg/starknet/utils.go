@@ -2,6 +2,7 @@ package starknet
 
 import (
 	"bytes"
+	cryptorand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -35,6 +36,17 @@ func Min[T constraints.Ordered](a, b T) T {
 		return a
 	}
 	return b
+}
+
+func RandomFelt() (*big.Int, error) {
+	data := make([]byte, chunkSize)
+	_, err := cryptorand.Read(data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return new(big.Int).SetBytes(data), nil
 }
 
 // EncodeFelts takes a byte slice and splits as bunch of felts. First felt indicates the total byte size.

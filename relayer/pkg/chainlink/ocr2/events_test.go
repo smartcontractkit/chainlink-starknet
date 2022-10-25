@@ -1,8 +1,11 @@
 package ocr2
 
 import (
+	cryptorand "crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"math/big"
+	mathrand "math/rand"
 	"testing"
 	"time"
 
@@ -10,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
-
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
@@ -151,4 +153,42 @@ func TestConfigSetEventSelector(t *testing.T) {
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
 	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
+}
+
+func TestTransmissiionEvent2(t *testing.T) {
+	const constNumOfElements = 11
+	const ObservationMaxBytes = 16
+
+	roundId := mathrand.Int31()
+	latestAnswer := starknet.RandomFelt()
+	transmitter := starknet.RandomFelt()
+	latestTimestamp := time.Unix(mathrand.Int63(), 0)
+
+	observersRaw := starknet.RandomFelt().Bytes()
+
+	observationsLen := mathrand.Intn(MaxObservers)
+	observations := []*caigotypes.Felt{}
+	data := make([]byte, ObservationMaxBytes)
+	for i := 0; i < observationsLen; i++ {
+		_, err := cryptorand.Read(data)
+		require.NoError(t, err)
+
+		// felt := caigotypes.Felt{new(big.Int).SetBytes(data)}
+		observations = append(observations, &caigotypes.Felt{new(big.Int).SetBytes(data)})
+	}
+
+	juelsPerFeeCoin := starknet.RandomFelt()
+	gasPrice := starknet.RandomFelt()
+	digest, err := types.BytesToConfigDigest(starknet.PadBytes(starknet.RandomFelt(), len(types.ConfigDigest{})))
+	require.NoError(t, err)
+
+	fmt.Println(roundId, latestAnswer, transmitter, latestTimestamp, observersRaw, juelsPerFeeCoin,
+		digest, gasPrice)
+}
+
+func RandomFelt() *big.Int {
+	data := make([]byte, chunkSize)
+	_, err := cryptorand.Read(data)
+
+	return new(big.Int).SetBytes(data)
 }
