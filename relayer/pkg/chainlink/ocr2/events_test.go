@@ -160,11 +160,11 @@ func TestTransmissiionEvent2(t *testing.T) {
 	const ObservationMaxBytes = 16
 
 	roundId := mathrand.Int31()
-	latestAnswer := starknet.RandomFelt()
-	transmitter := starknet.RandomFelt()
-	latestTimestamp := time.Unix(mathrand.Int63(), 0)
+	latestAnswer := RandomFelt()
+	transmitter := RandomFelt()
+	unixTime := mathrand.Int63()
 
-	observersRaw := starknet.RandomFelt().Bytes()
+	observersRaw := RandomFelt()
 
 	observationsLen := mathrand.Intn(MaxObservers)
 	observations := []*caigotypes.Felt{}
@@ -177,18 +177,42 @@ func TestTransmissiionEvent2(t *testing.T) {
 		observations = append(observations, &caigotypes.Felt{new(big.Int).SetBytes(data)})
 	}
 
-	juelsPerFeeCoin := starknet.RandomFelt()
-	gasPrice := starknet.RandomFelt()
-	digest, err := types.BytesToConfigDigest(starknet.PadBytes(starknet.RandomFelt(), len(types.ConfigDigest{})))
-	require.NoError(t, err)
+	juelsPerFeeCoin := RandomFelt()
+	gasPrice := RandomFelt()
+	digestData := RandomFelt()
+	epochAndRoundData := RandomFelt()
+	reimbursement := RandomFelt()
 
-	fmt.Println(roundId, latestAnswer, transmitter, latestTimestamp, observersRaw, juelsPerFeeCoin,
-		digest, gasPrice)
+	eventData := []*caigotypes.Felt{
+		&caigotypes.Felt{new(big.Int).SetInt64(int64(roundId))},
+		&caigotypes.Felt{latestAnswer},
+		&caigotypes.Felt{transmitter},
+		&caigotypes.Felt{new(big.Int).SetInt64(unixTime)},
+		&caigotypes.Felt{observersRaw},
+		&caigotypes.Felt{new(big.Int).SetInt64(int64(observationsLen))},
+	}
+	eventData = append(eventData, observations...)
+	eventData = append(
+		eventData,
+		&caigotypes.Felt{juelsPerFeeCoin},
+		&caigotypes.Felt{gasPrice},
+		&caigotypes.Felt{digestData},
+		&caigotypes.Felt{epochAndRoundData},
+		&caigotypes.Felt{reimbursement},
+	)
+	// eventData = append()
+	event, err := ParseNewTransmissionEvent(eventData)
+	fmt.Println(event, err)
+	require.NoError(t, err)
+	// fmt.Println(roundId, latestAnswer, transmitter, observersRaw, juelsPerFeeCoin,
+	// 	gasPrice, epoch, round, reimbursement, eventData)
 }
 
 func RandomFelt() *big.Int {
+	const chunkSize = 31
+
 	data := make([]byte, chunkSize)
-	_, err := cryptorand.Read(data)
+	cryptorand.Read(data)
 
 	return new(big.Int).SetBytes(data)
 }
