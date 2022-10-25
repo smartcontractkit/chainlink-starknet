@@ -51,6 +51,10 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 		}
 
 		observationsLen := eventData[observationsLenIndex].Uint64()
+		if observationsLen > uint64(MaxObservers) {
+			return NewTransmissionEvent{}, errors.New("invalid: observationsLen")
+		}
+
 		if len(eventData) != constNumOfElements+int(observationsLen) {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
