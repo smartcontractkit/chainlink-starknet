@@ -1,4 +1,5 @@
 import { ChildProcess, spawn } from 'child_process'
+import axios from 'axios'
 
 export abstract class IntegratedDevnet {
   protected childProcess: ChildProcess
@@ -17,9 +18,25 @@ export abstract class IntegratedDevnet {
 
   protected abstract cleanup(): void
 
+  private async isServerAlive() {
+    try {
+      await axios.get(`http://127.0.0.1:5050/is_alive`)
+      return true
+    } catch (err: unknown) {
+      // cannot connect, so address is not occupied
+      return false
+    }
+  }
+
   public async start(): Promise<void> {
+    if (await this.isServerAlive()) {
+      this.cleanup()
+    }
     this.childProcess = await this.spawnChildProcess()
 
+    // capture the most recent message from stderr
+    // Needed to avoid TimeOut error in some of our tests.
+    this.childProcess.stderr?.on('data', async () => {})
     return new Promise((resolve, reject) => {
       setTimeout(resolve, 4000)
 
@@ -50,7 +67,7 @@ class VenvDevnet extends IntegratedDevnet {
   }
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
-    let args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
+    let args = ['--port', this.port, '--gas-price', '1', '--lite-mode', '--timeout', '30000']
     if (this.opts?.seed) {
       args.push('--seed', this.opts.seed.toString())
     }

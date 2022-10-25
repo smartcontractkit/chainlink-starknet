@@ -22,9 +22,11 @@ describe('LinkToken', function () {
   let owner: Account
   let token: StarknetContract
 
-  beforeEach(async () => {
+  before(async function () {
     network = await startNetwork()
+  })
 
+  beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
     owner = await starknet.deployAccount('OpenZeppelin')
     await funder.fund([

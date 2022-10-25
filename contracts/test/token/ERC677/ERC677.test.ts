@@ -20,8 +20,11 @@ describe('ERC677', function () {
   let token: StarknetContract
   let data: (number | bigint)[]
 
-  beforeEach(async () => {
+  before(async function () {
     network = await startNetwork()
+  })
+
+  beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
     await funder.fund([{ account: sender.address, amount: 5000 }])
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')

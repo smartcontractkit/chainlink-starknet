@@ -1,13 +1,17 @@
-import { account } from '@chainlink/starknet'
+import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
 import { starknet } from 'hardhat'
 import { TIMEOUT } from '../../constants'
 import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
-import { startNetwork, IntegratedDevnet } from '@chainlink/starknet-gauntlet/test/utils'
 
 describe('link_token', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
+  let network: IntegratedDevnet
+
+  before(async function () {
+    network = await startNetwork()
+  })
 
   shouldBehaveLikeStarkGateERC20(async () => {
     const owner = await starknet.deployAccount('OpenZeppelin')
@@ -23,5 +27,9 @@ describe('link_token', function () {
       { account: bob.address, amount: 5000 },
     ])
     return { token, owner, alice, bob }
+  })
+
+  after(async function () {
+    network.stop()
   })
 })
