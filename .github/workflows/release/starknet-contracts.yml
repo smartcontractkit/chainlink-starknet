@@ -27,6 +27,8 @@ jobs:
 
       - name: NPM publish
         run: nix develop -c npm publish 
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
 
   chainlink-starknet-pypi:
     runs-on: ubuntu-latest
@@ -51,4 +53,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
-          password: ${{ secrets.pypi_token }}
+          password: ${{ secrets.PYPI_AUTH_TOKEN }}
