@@ -31,7 +31,6 @@
     "@chainlink/starknet-gauntlet": "*",
     "ethers": "^5.6.9",
     "internals-starkgate-contracts": "^0.0.3",
-    "starknet": "^3.15.0",
     "@chainlink/starknet-gauntlet-oz": "*"
   }
 }
