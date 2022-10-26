@@ -3,7 +3,7 @@ module github.com/smartcontractkit/chainlink-starknet/ops
 go 1.18
 
 require (
-	github.com/dontpanicdao/caigo v0.3.0
+	github.com/dontpanicdao/caigo v0.4.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.27.0
 	github.com/smartcontractkit/chainlink-env v0.2.31
@@ -25,6 +25,7 @@ require (
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/ethereum/go-ethereum v1.10.21 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect

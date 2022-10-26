@@ -11,9 +11,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -22,8 +20,8 @@ var _ types.ContractTransmitter = (*contractTransmitter)(nil)
 type contractTransmitter struct {
 	reader *transmissionsCache
 
-	contractAddress string
-	senderAddress   string
+	contractAddress caigotypes.Hash
+	senderAddress   caigotypes.Hash
 
 	txm txm.TxManager
 }
@@ -36,8 +34,8 @@ func NewContractTransmitter(
 ) *contractTransmitter {
 	return &contractTransmitter{
 		reader:          reader,
-		contractAddress: contract,
-		senderAddress:   sender,
+		contractAddress: caigotypes.HexToHash(contract),
+		senderAddress:   caigotypes.HexToHash(sender),
 		txm:             txm,
 	}
 }
@@ -56,13 +54,10 @@ func (c *contractTransmitter) Transmit(
 	//    config_digest
 	//    epoch_and_round
 	//    extra_hash
-	reportContext := utils.RawReportContext(reportCtx)
+	reportContext := medianreport.RawReportContext(reportCtx)
+
 	for _, r := range reportContext {
-		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(starknet.EnsureFelt(r)))
-		// ensure felt
-		// does not change config digest (already hashed through pedersen)
-		// does not change epoch & round (0x0.....0<value><value>)
-		// changes extra hash (32 bytes => 31 bytes)
+		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(r[:]))
 	}
 
 	slices, err := medianreport.SplitReport(report)
@@ -86,9 +81,8 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[:32]))   // public key
 	}
 
-	err = c.txm.Enqueue(caigotypes.Transaction{
+	err = c.txm.Enqueue(c.senderAddress, caigotypes.FunctionCall{
 		ContractAddress:    c.contractAddress,
-		SenderAddress:      c.senderAddress,
 		EntryPointSelector: "transmit",
 		Calldata:           transmitPayload,
 	})
@@ -112,5 +106,5 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 }
 
 func (c *contractTransmitter) FromAccount() types.Account {
-	return types.Account(c.senderAddress)
+	return types.Account(c.senderAddress.String())
 }

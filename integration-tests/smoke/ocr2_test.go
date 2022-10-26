@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
@@ -18,8 +19,8 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	client "github.com/smartcontractkit/chainlink/integration-tests/client"
@@ -39,7 +40,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		linkTokenAddress        string
 		accessControllerAddress string
 		ocrAddress              string
-		sg                      *ops.StarknetGauntlet
+		proxyAddress            string
+		sg                      *gauntlet.StarknetGauntlet
 		t                       *common.Test
 		nAccounts               []string
 		serviceKeyL1            = "Hardhat"
@@ -62,7 +64,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
 
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err = ops.NewStarknetGauntlet("../../")
+			sg, err = gauntlet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
@@ -94,7 +96,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		})
 
 		By("Deploying LINK token contract", func() {
-			linkTokenAddress, err := sg.DeployLinkTokenContract()
+			linkTokenAddress, err = sg.DeployLinkTokenContract()
 			Expect(err).ShouldNot(HaveOccurred(), "LINK Contract deployment should not fail")
 			err = os.Setenv("LINK", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
@@ -112,6 +114,18 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		By("Deploying OCR2 contract", func() {
 			ocrAddress, err = sg.DeployOCR2ControllerContract(-100000000000, 100000000000, decimals, "auto", linkTokenAddress)
 			Expect(err).ShouldNot(HaveOccurred(), "OCR contract deployment should not fail")
+		})
+
+		By("Deploy proxy contract", func() {
+			proxyAddress, err = sg.DeployOCR2ProxyContract(ocrAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy deployment should not fail")
+			_, err = sg.AddAccess(ocrAddress, proxyAddress)
+			Expect(err).ShouldNot(HaveOccurred(), "OCR2 proxy access set should not fail")
+		})
+
+		By("Fund OCR2 contract", func() {
+			_, err = sg.MintLinkToken(linkTokenAddress, ocrAddress, "100000000000000000000")
+			Expect(err).ShouldNot(HaveOccurred(), "Funding OCR2 contract should not fail")
 		})
 
 		By("Setting OCR2 billing", func() {
@@ -153,6 +167,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
+			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 			lggr := logger.Nop()
 			url := t.Env.URLs[serviceKeyL2][0]
 
@@ -162,12 +177,28 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			client, err := ocr2.NewClient(reader, lggr)
 			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
 
+			// validate balance in aggregator
+			resLINK, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: caigotypes.HexToHash(linkTokenAddress),
+				Selector:        "balanceOf",
+				Calldata:        []string{caigotypes.HexToBN(ocrAddress).String()},
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			resAgg, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: caigotypes.HexToHash(ocrAddress),
+				Selector:        "link_available_for_payment",
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
+			balAgg, _ := new(big.Int).SetString(resAgg[0], 0)
+			Expect(balLINK.Cmp(big.NewInt(0)) == 1).To(BeTrue(), "Aggregator should have non-zero balance")
+			Expect(balLINK.Cmp(balAgg) >= 0).To(BeTrue(), "Aggregator payment balance should be <= actual LINK balance")
+
 			// assert new rounds are occuring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
 			var stuck bool
 			stuckCount := 0
-			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
 
 			// assert both positive and negative values have been seen
 			var positive bool
@@ -193,7 +224,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := client.LatestTransmissionDetails(ctx, ocrAddress)
+				res, err := client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(ocrAddress))
 				if err != nil {
 					log.Error().Err(err)
 					continue
@@ -242,6 +273,17 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(positive).To(BeTrue(), "Positive value should have been submitted")
 			Expect(negative).To(BeTrue(), "Negative value should have been submitted")
 			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
+
+			// Test proxy reading
+			// TODO: would be good to test proxy switching underlying feeds
+			roundDataRaw, err := reader.CallContract(ctx, starknet.CallOps{
+				ContractAddress: caigotypes.HexToHash(proxyAddress),
+				Selector:        "latest_round_data",
+			})
+			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")
+			Expect(len(roundDataRaw) == 5).Should(BeTrue(), "Round data from proxy should match expected size")
+			value := starknet.HexToSignedBig(roundDataRaw[1]).Int64()
+			Expect(value == int64(mockServerVal) || value == int64(-1*mockServerVal)).Should(BeTrue(), "Reading from proxy should return correct value")
 		})
 	})
 
