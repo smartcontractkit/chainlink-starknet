@@ -76,8 +76,7 @@ const registerEVMExecuteCommand = <UI, CI>(
     prompt: prompt,
     makeEnv: (flags) => {
       return {
-        providerUrl:
-          process.env.NODE_URL,
+        providerUrl: process.env.NODE_URL,
         pk: process.env.PRIVATE_KEY,
       }
     },
