@@ -50,7 +50,7 @@ const registerExecuteCommand = <UI, CI>(
     prompt: emptyPrompt ? noopPrompt : prompt,
     makeEnv: (flags) => {
       const env: Env = {
-        providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
+        providerUrl: process.env.NODE_URL,
         pk: process.env.PRIVATE_KEY,
         publicKey: process.env.PUBLIC_KEY,
         account: process.env.ACCOUNT,
@@ -77,7 +77,7 @@ const registerEVMExecuteCommand = <UI, CI>(
     makeEnv: (flags) => {
       return {
         providerUrl:
-          process.env.NODE_URL || 'https://goerli.infura.io/v3/7c43471f9d604276a856f0cff1edb645',
+          process.env.NODE_URL,
         pk: process.env.PRIVATE_KEY,
       }
     },
@@ -97,7 +97,7 @@ const registerInspectionCommand = <QueryResult>(
     prompt: prompt,
     makeEnv: (flags) => {
       const env: Env = {
-        providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
+        providerUrl: process.env.NODE_URL,
       }
       return env
     },
