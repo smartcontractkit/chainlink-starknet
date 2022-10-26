@@ -3,7 +3,7 @@ package ocr2
 import (
 	cryptorand "crypto/rand"
 	"encoding/hex"
-	"fmt"
+	//"fmt"
 	"math/big"
 	mathrand "math/rand"
 	"testing"
@@ -155,16 +155,16 @@ func TestConfigSetEventSelector(t *testing.T) {
 	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }
 
-func TestTransmissiionEvent2(t *testing.T) {
+func TestTransmissionEvent(t *testing.T) {
 	const constNumOfElements = 11
 	const ObservationMaxBytes = 16
 
 	roundId := mathrand.Int31()
-	latestAnswer := RandomFelt()
-	transmitter := RandomFelt()
+	latestAnswer := randomFelt()
+	transmitter := randomFelt()
 	unixTime := mathrand.Int63()
 
-	observersRaw := RandomFelt()
+	observersRaw := randomFelt()
 
 	observationsLen := mathrand.Intn(MaxObservers)
 	observations := []*caigotypes.Felt{}
@@ -173,15 +173,14 @@ func TestTransmissiionEvent2(t *testing.T) {
 		_, err := cryptorand.Read(data)
 		require.NoError(t, err)
 
-		// felt := caigotypes.Felt{new(big.Int).SetBytes(data)}
 		observations = append(observations, &caigotypes.Felt{new(big.Int).SetBytes(data)})
 	}
 
-	juelsPerFeeCoin := RandomFelt()
-	gasPrice := RandomFelt()
-	digestData := RandomFelt()
-	epochAndRoundData := RandomFelt()
-	reimbursement := RandomFelt()
+	juelsPerFeeCoin := randomFelt()
+	gasPrice := randomFelt()
+	digestData := randomFelt()
+	epochAndRoundData := randomFelt()
+	reimbursement := randomFelt()
 
 	eventData := []*caigotypes.Felt{
 		&caigotypes.Felt{new(big.Int).SetInt64(int64(roundId))},
@@ -191,24 +190,36 @@ func TestTransmissiionEvent2(t *testing.T) {
 		&caigotypes.Felt{observersRaw},
 		&caigotypes.Felt{new(big.Int).SetInt64(int64(observationsLen))},
 	}
-	eventData = append(eventData, observations...)
 	eventData = append(
-		eventData,
+		append(eventData, observations...),
 		&caigotypes.Felt{juelsPerFeeCoin},
 		&caigotypes.Felt{gasPrice},
 		&caigotypes.Felt{digestData},
 		&caigotypes.Felt{epochAndRoundData},
 		&caigotypes.Felt{reimbursement},
 	)
-	// eventData = append()
-	event, err := ParseNewTransmissionEvent(eventData)
-	fmt.Println(event, err)
+
+	_, err := ParseNewTransmissionEvent(eventData)
 	require.NoError(t, err)
-	// fmt.Println(roundId, latestAnswer, transmitter, observersRaw, juelsPerFeeCoin,
-	// 	gasPrice, epoch, round, reimbursement, eventData)
 }
 
-func RandomFelt() *big.Int {
+func TestTransmissionEventFailure(t *testing.T) {
+	const numOfFelts = 10
+	const chunkSize = 31
+
+	data := make([]byte, numOfFelts*chunkSize)
+	felts := starknet.EncodeFelts(data)
+
+	caigoFelts := []*caigotypes.Felt{}
+	for _, felt := range felts[1:] {
+		caigoFelts = append(caigoFelts, &caigotypes.Felt{felt})
+	}
+
+	_, err := ParseNewTransmissionEvent(caigoFelts)
+	assert.Equal(t, err.Error(), "invalid: event data")
+}
+
+func randomFelt() *big.Int {
 	const chunkSize = 31
 
 	data := make([]byte, chunkSize)
