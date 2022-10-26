@@ -89,7 +89,7 @@ func (sg *StarknetGauntlet) DeployAccountContract(salt int64, pubKey string) (st
 }
 
 func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
-	_, err := sg.g.ExecCommand([]string{"ERC20:deploy", "--link"}, *sg.options)
+	_, err := sg.g.ExecCommand([]string{"token:deploy", "--link"}, *sg.options)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +101,7 @@ func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
 }
 
 func (sg *StarknetGauntlet) MintLinkToken(token, to, amount string) (string, error) {
-	_, err := sg.g.ExecCommand([]string{"ERC20:mint", fmt.Sprintf("--account=%s", to), fmt.Sprintf("--amount=%s", amount), token}, *sg.options)
+	_, err := sg.g.ExecCommand([]string{"token:mint", fmt.Sprintf("--account=%s", to), fmt.Sprintf("--amount=%s", amount), token}, *sg.options)
 	if err != nil {
 		return "", err
 	}
