@@ -1,9 +1,9 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
 import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployTokenCommand from '../../src/commands/token/deploy'
-import deployCommand from '../../src/commands/bridge/deploy'
-import setL1Bridge from '../../src/commands/bridge/setL1Bridge'
-import setL2Token from '../../src/commands/bridge/setL2Token'
+import deployL2Bridge from '../../src/commands/L2-bridge/deploy'
+import setL1Bridge from '../../src/commands/L2-bridge/setL1Bridge'
+import setL2Token from '../../src/commands/L2-bridge/setL2Token'
 import {
   registerExecuteCommand,
   TIMEOUT,
@@ -11,10 +11,9 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
+import { loadL2Contract, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { compressProgram } from 'starknet/dist/utils/stark'
 
 describe('Bridge Contract', () => {
   let network: IntegratedDevnet
@@ -69,7 +68,7 @@ describe('Bridge Contract', () => {
   it(
     'Deploy L2 Bridge with Default Wallet as Governor',
     async () => {
-      const command = await registerExecuteCommand(deployCommand).create(
+      const command = await registerExecuteCommand(deployL2Bridge).create(
         {
           account: account,
           pk: privateKey,
@@ -82,7 +81,7 @@ describe('Bridge Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
       bridgeContractAddress = report.responses[0].contract
 
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridge = loadL2Contract(CONTRACT_LIST.L2_BRIDGE)
       const bridgeContract = new Contract(
         bridge.abi,
         bridgeContractAddress,
@@ -130,7 +129,7 @@ describe('Bridge Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridge = loadL2Contract(CONTRACT_LIST.L2_BRIDGE)
       const bridgeContract = new Contract(
         bridge.abi,
         bridgeContractAddress,
@@ -159,7 +158,7 @@ describe('Bridge Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridge = loadL2Contract(CONTRACT_LIST.L2_BRIDGE)
       const bridgeContract = new Contract(
         bridge.abi,
         bridgeContractAddress,

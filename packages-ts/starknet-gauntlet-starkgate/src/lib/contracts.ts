@@ -2,30 +2,36 @@ import fs from 'fs'
 import { CompiledContract, json } from 'starknet'
 import { ContractFactory } from 'ethers'
 
-// todo: fix name mapping
-// l1_token_bridge = token_bridge
-// l2_token_bridge = StarknetERC20Bridge
 export enum CONTRACT_LIST {
-  TOKEN = 'ERC20',
+  TOKEN = 'token',
   L1_BRIDGE = 'l1_token_bridge',
   L2_BRIDGE = 'l2_token_bridge',
 }
 
+// todo: remove when stable contract artifacts release available
+const CONTRACT_NAME_TO_ARTIFACT_NAME = {
+  [CONTRACT_LIST.L1_BRIDGE]: 'StarknetERC20Bridge',
+  [CONTRACT_LIST.L2_BRIDGE]: 'token_bridge',
+  [CONTRACT_LIST.TOKEN]: 'ERC20',
+}
+
 export const loadL2Contract = (name: CONTRACT_LIST): CompiledContract => {
+  const artifactName = CONTRACT_NAME_TO_ARTIFACT_NAME[name]
   return json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-contracts/artifacts/${name}.cairo/${name}.json`,
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-contracts/artifacts/${artifactName}.cairo/${artifactName}.json`,
       )
       .toString('ascii'),
   )
 }
 
 export const loadL1BridgeContract = (name: CONTRACT_LIST): ContractFactory => {
+  const artifactName = CONTRACT_NAME_TO_ARTIFACT_NAME[name]
   const abi = JSON.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../../node_modules/internals-starkgate-contracts/artifacts/0.0.3/eth/StarknetERC20Bridge.json`,
+        `${__dirname}/../../../../node_modules/internals-starkgate-contracts/artifacts/0.0.3/eth/${artifactName}.json`,
       )
       .toString('ascii'),
   )
