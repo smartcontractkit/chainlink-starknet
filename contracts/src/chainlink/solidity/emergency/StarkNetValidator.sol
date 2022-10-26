@@ -43,6 +43,10 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed);
   /// @notice emitted when a new gas access-control contract is set
   event ConfigACSet(address indexed previous, address indexed current);
+  /// @notice emitted when a new source aggregator contract is set
+  event SourceAggregatorSet(address indexed previous, address indexed current);
+  /// @notice emitted when withdrawFunds or withdrawFundsTo is call
+  event FundsWithdrawn(address indexed recipient, uint256 amount);
 
   /**
    * @param starkNetMessaging the address of the StarkNet Messaging contract
@@ -242,6 +246,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address previousSource = address(s_source);
     if (source != previousSource) {
       s_source = AggregatorV3Interface(source);
+      emit SourceAggregatorSet(previousSource, source);
     }
   }
 
@@ -267,6 +272,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address payable recipient = payable(msg.sender);
     uint256 amount = address(this).balance;
     Address.sendValue(recipient, amount);
+    emit FundsWithdrawn(recipient, amount);
   }
 
   /**
@@ -277,5 +283,6 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   function withdrawFundsTo(address payable recipient) external onlyOwner {
     uint256 amount = address(this).balance;
     Address.sendValue(recipient, amount);
+    emit FundsWithdrawn(recipient, amount);
   }
 }

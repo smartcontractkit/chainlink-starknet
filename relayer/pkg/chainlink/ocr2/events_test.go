@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 var (
@@ -61,7 +61,8 @@ var (
 )
 
 func TestNewTransmissionEvent_Parse(t *testing.T) {
-	eventData := starknet.StringsToFelt(newTransmissionEventRaw)
+	eventData, err := starknet.StringsToFelt(newTransmissionEventRaw)
+	assert.NoError(t, err)
 	require.Equal(t, len(newTransmissionEventRaw), len(eventData))
 
 	e, err := ParseNewTransmissionEvent(eventData)
@@ -91,7 +92,8 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 }
 
 func TestConfigSetEvent_Parse(t *testing.T) {
-	eventData := starknet.StringsToFelt(configSetEventRaw)
+	eventData, err := starknet.StringsToFelt(configSetEventRaw)
+	assert.NoError(t, err)
 	require.Equal(t, len(configSetEventRaw), len(eventData))
 
 	e, err := ParseConfigSetEvent(eventData)
@@ -140,7 +142,7 @@ func TestNewTransmissionEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigo.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
+	assert.Equal(t, caigotypes.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
 }
 
 func TestConfigSetEventSelector(t *testing.T) {
@@ -148,5 +150,5 @@ func TestConfigSetEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigo.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
+	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }

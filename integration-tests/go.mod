@@ -3,14 +3,14 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.18
 
 require (
-	github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
+	github.com/dontpanicdao/caigo v0.4.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
 	github.com/rs/zerolog v1.27.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20220822173222-d6c1c758059c
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20220822173222-d6c1c758059c
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221024053349-209ee0d97d21
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04
 	github.com/smartcontractkit/chainlink-testing-framework v1.5.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20220822181847-8f75df66a5f1
 )
@@ -86,8 +86,8 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/slack-go/slack v0.11.2 // indirect
 	github.com/smartcontractkit/chainlink-env v0.2.35
-	github.com/smartcontractkit/chainlink-relay v0.1.5-0.20220808181113-70f8468a87ee
-	github.com/smartcontractkit/libocr v0.0.0-20220726132443-ef1f5a4b63d0 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220824173548-dab4ac0a6595
+	github.com/smartcontractkit/libocr v0.0.0-20220812191430-db92a9fdaa52 // indirect
 	github.com/spf13/cobra v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect

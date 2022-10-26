@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ var _ median.MedianContract = (*transmissionsCache)(nil)
 type transmissionsCache struct {
 	transmissionDetails TransmissionDetails
 	tdLock              sync.RWMutex
-	tdTime              time.Time
+	tdLastCheckedAt     time.Time
 
 	stop, done chan struct{}
 
@@ -50,6 +51,7 @@ func (c *transmissionsCache) updateTransmission(ctx context.Context) error {
 
 	c.tdLock.Lock()
 	defer c.tdLock.Unlock()
+	c.tdLastCheckedAt = time.Now()
 	c.transmissionDetails = TransmissionDetails{
 		Digest:          digest,
 		Epoch:           epoch,
@@ -115,7 +117,7 @@ func (c *transmissionsCache) LatestTransmissionDetails(
 	round = c.transmissionDetails.Round
 	latestAnswer = c.transmissionDetails.LatestAnswer
 	latestTimestamp = c.transmissionDetails.LatestTimestamp
-
+	err = c.assertTransmissionsNotStale()
 	return
 }
 
@@ -133,6 +135,18 @@ func (c *transmissionsCache) LatestRoundRequested(
 	configDigest = c.transmissionDetails.Digest
 	epoch = c.transmissionDetails.Epoch
 	round = c.transmissionDetails.Round
-
+	err = c.assertTransmissionsNotStale()
 	return
+}
+
+func (c *transmissionsCache) assertTransmissionsNotStale() error {
+	if c.tdLastCheckedAt.IsZero() {
+		return errors.New("transmissions cache not yet initialized")
+	}
+
+	if since := time.Since(c.tdLastCheckedAt); since > c.cfg.OCR2CacheTTL() {
+		return fmt.Errorf("transmissions cache expired: checked last %s ago", since)
+	}
+
+	return nil
 }

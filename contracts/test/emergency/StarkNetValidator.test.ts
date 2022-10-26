@@ -1,4 +1,4 @@
-import { ethers, starknet, network, artifacts } from 'hardhat'
+import { ethers, starknet, network } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
 import { number } from 'starknet'
 import {
@@ -22,6 +22,7 @@ describe('StarkNetValidator', () => {
   let account: Account
   let deployer: SignerWithAddress
   let eoaValidator: SignerWithAddress
+  let alice: SignerWithAddress
 
   let starkNetValidator: Contract
   let mockStarkNetMessagingFactory: ContractFactory
@@ -45,6 +46,7 @@ describe('StarkNetValidator', () => {
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
     eoaValidator = accounts[1]
+    alice = accounts[2]
 
     // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
@@ -187,9 +189,7 @@ describe('StarkNetValidator', () => {
   describe('#retry', () => {
     describe('when called by account with no access', () => {
       it('reverts', async () => {
-        await expect(starkNetValidator.connect(eoaValidator).retry()).to.be.revertedWith(
-          'No access',
-        )
+        await expect(starkNetValidator.connect(alice).retry()).to.be.revertedWith('No access')
       })
     })
   })
@@ -198,7 +198,7 @@ describe('StarkNetValidator', () => {
     describe('when called by non owner', () => {
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).setConfigAC(ethers.constants.AddressZero),
+          starkNetValidator.connect(alice).setConfigAC(ethers.constants.AddressZero),
         ).to.be.revertedWith('Only callable by owner')
       })
     })
@@ -219,6 +219,38 @@ describe('StarkNetValidator', () => {
     })
   })
 
+  describe('#setSourceAggregator', () => {
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(alice).setSourceAggregator(ethers.constants.AddressZero),
+        ).to.be.revertedWith('Only callable by owner')
+      })
+    })
+
+    describe('when source address is the zero address', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(deployer).setSourceAggregator(ethers.constants.AddressZero),
+        ).to.be.revertedWithCustomError(starkNetValidator, 'InvalidSourceAggregatorAddress')
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        const newSourceAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
+        await expect(starkNetValidator.setSourceAggregator(newSourceAddr))
+          .to.emit(starkNetValidator, 'SourceAggregatorSet')
+          .withArgs(mockAggregator.address, newSourceAddr)
+      })
+
+      it('sets the source aggregator address', async () => {
+        await starkNetValidator.connect(deployer).setSourceAggregator(mockAggregator.address)
+        expect(await starkNetValidator.getSourceAggregator()).to.equal(mockAggregator.address)
+      })
+    })
+  })
+
   describe('#setGasConfig', () => {
     describe('when called by non owner without access', () => {
       beforeEach(async () => {
@@ -227,7 +259,7 @@ describe('StarkNetValidator', () => {
 
       it('reverts', async () => {
         await expect(
-          starkNetValidator.connect(eoaValidator).setGasConfig(0, mockGasPriceFeed.address),
+          starkNetValidator.connect(alice).setGasConfig(0, mockGasPriceFeed.address),
         ).to.be.revertedWithCustomError(starkNetValidator, 'AccessForbidden')
       })
     })
@@ -345,7 +377,7 @@ describe('StarkNetValidator', () => {
     })
 
     it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
-      const { round } = await account.call(l2Contract, 'latest_round_data')
+      const { round } = await l2Contract.call('latest_round_data')
       expect(round.answer).to.equal(0n)
     })
 
@@ -383,7 +415,7 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await account.call(l2Contract, 'latest_round_data')
+      const res = await l2Contract.call('latest_round_data')
       expect(res.round.answer).to.equal(1n)
     })
 
@@ -406,7 +438,7 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await account.call(l2Contract, 'latest_round_data')
+      const res = await l2Contract.call('latest_round_data')
       expect(res.round.answer).to.equal(0n) // status unchanged - incorrect value treated as false
     })
 
@@ -433,8 +465,68 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
 
       // Assert L2 effects
-      const res = await account.call(l2Contract, 'latest_round_data')
+      const res = await l2Contract.call('latest_round_data')
       expect(res.round.answer).to.equal(0n) // final status 0
+    })
+  })
+
+  describe('#withdrawFunds', () => {
+    beforeEach(async () => {
+      await deployer.sendTransaction({ to: starkNetValidator.address, value: 10 })
+      const balance = await ethers.provider.getBalance(starkNetValidator.address)
+      expect(balance).to.equal(10n)
+    })
+
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(starkNetValidator.connect(alice).withdrawFunds()).to.be.revertedWith(
+          'Only callable by owner',
+        )
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        await expect(starkNetValidator.connect(deployer).withdrawFunds())
+          .to.emit(starkNetValidator, 'FundsWithdrawn')
+          .withArgs(deployer.address, 10)
+      })
+
+      it('withdraws all funds to deployer', async () => {
+        await starkNetValidator.connect(deployer).withdrawFunds()
+        const balance = await ethers.provider.getBalance(starkNetValidator.address)
+        expect(balance).to.equal(0n)
+      })
+    })
+  })
+
+  describe('#withdrawFundsTo', () => {
+    beforeEach(async () => {
+      await deployer.sendTransaction({ to: starkNetValidator.address, value: 10 })
+      const balance = await ethers.provider.getBalance(starkNetValidator.address)
+      expect(balance).to.equal(10n)
+    })
+
+    describe('when called by non owner', () => {
+      it('reverts', async () => {
+        await expect(
+          starkNetValidator.connect(alice).withdrawFundsTo(alice.address),
+        ).to.be.revertedWith('Only callable by owner')
+      })
+    })
+
+    describe('when called by owner', () => {
+      it('emits an event', async () => {
+        await expect(starkNetValidator.connect(deployer).withdrawFundsTo(eoaValidator.address))
+          .to.emit(starkNetValidator, 'FundsWithdrawn')
+          .withArgs(eoaValidator.address, 10)
+      })
+
+      it('withdraws all funds to deployer', async () => {
+        await starkNetValidator.connect(deployer).withdrawFunds()
+        const balance = await ethers.provider.getBalance(starkNetValidator.address)
+        expect(balance).to.equal(0n)
+      })
     })
   })
 })

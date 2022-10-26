@@ -25,7 +25,7 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "starsign-multisig": "0.2.3",
+    "starsign-multisig": "0.3.0",
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/starknet-gauntlet": "*"
   }

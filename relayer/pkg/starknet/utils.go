@@ -7,7 +7,6 @@ import (
 	"math/big"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	"github.com/dontpanicdao/caigo"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	"github.com/pkg/errors"
@@ -25,14 +24,6 @@ func PadBytes(a []byte, length int) []byte {
 
 	// return original if length is >= to specified length
 	return a
-}
-
-// convert 32 byte to "0" + 31 bytes
-func EnsureFelt(b [32]byte) (out []byte) {
-	out = make([]byte, 32)
-	copy(out[:], b[:])
-	out[0] = 0
-	return out
 }
 
 func NilResultError(funcName string) error {
@@ -71,15 +62,22 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 
 	data := []byte{}
 	buf := make([]byte, chunkSize)
-	length := int(felts[0].Int64())
+	length := felts[0].Uint64()
 
 	for _, felt := range felts[1:] {
-		buf := buf[:Min(chunkSize, length)]
+		bytesLen := Min(chunkSize, length)
+		bytesBuffer := buf[:bytesLen]
 
-		felt.FillBytes(buf)
-		data = append(data, buf...)
+		// TODO: this is inefficient because Bytes() and FillBytes() duplicate work
+		// reuse felt.Bytes()
+		if bytesLen < uint64(len(felt.Bytes())) {
+			return nil, errors.New("invalid: felt array can't be decoded")
+		}
 
-		length -= len(buf)
+		felt.FillBytes(bytesBuffer)
+		data = append(data, bytesBuffer...)
+
+		length -= uint64(bytesLen)
 	}
 
 	if length != 0 {
@@ -120,27 +118,44 @@ func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
 }
 
 // StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
-func StringsToFelt(in []string) (out []*caigotypes.Felt) {
-	for _, f := range in {
-		out = append(out, caigotypes.StrToFelt(f))
+func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
+	if in == nil {
+		return nil, errors.New("invalid: input value")
 	}
 
+	for _, f := range in {
+		felt := caigotypes.StrToFelt(f)
+		if felt == nil {
+			return nil, errors.New("invalid: string value")
+		}
+
+		out = append(out, felt)
+	}
+
+	return out, nil
+}
+
+func StringsToJunoFelts(in []string) []junotypes.Felt {
+	out := make([]junotypes.Felt, len(in))
+	for i := 0; i < len(in); i++ {
+		out[i] = junotypes.HexToFelt(in[i])
+	}
 	return out
 }
 
 // CompareAddress compares different hex starknet addresses with potentially different 0 padding
 func CompareAddress(a, b string) bool {
-	aBytes, err := caigo.HexToBytes(a)
+	aBytes, err := caigotypes.HexToBytes(a)
 	if err != nil {
 		return false
 	}
 
-	bBytes, err := caigo.HexToBytes(b)
+	bBytes, err := caigotypes.HexToBytes(b)
 	if err != nil {
 		return false
 	}
 
-	return bytes.Compare(PadBytes(aBytes, 32), PadBytes(bBytes, 32)) == 0
+	return bytes.Equal(PadBytes(aBytes, 32), PadBytes(bBytes, 32))
 }
 
 /* Testing utils - do not use (XXX) outside testing context */
