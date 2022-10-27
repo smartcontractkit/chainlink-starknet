@@ -6,7 +6,7 @@ import { account } from '@chainlink/starknet'
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
 
   let alice: Account
   let MockContract: StarknetContract
