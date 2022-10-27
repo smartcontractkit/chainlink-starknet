@@ -9,7 +9,7 @@ import { account } from '@chainlink/starknet'
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory

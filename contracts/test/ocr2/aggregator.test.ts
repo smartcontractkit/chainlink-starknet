@@ -58,7 +58,7 @@ function decodeBytes(felts: BN[]): Uint8Array {
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
 
   let aggregatorFactory: StarknetContractFactory
 
@@ -282,7 +282,7 @@ describe('aggregator.cairo', function () {
       assert.equal(round.answer, 99)
 
       await transmit(3, toFelt(-10))
-        ; ({ round } = await aggregator.call('latest_round_data'))
+      ;({ round } = await aggregator.call('latest_round_data'))
       assert.equal(round.round_id, 3)
       assert.equal(round.answer, -10)
 
@@ -381,7 +381,7 @@ describe('aggregator.cairo', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) { }
+      } catch (err: any) {}
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -393,7 +393,7 @@ describe('aggregator.cairo', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) { }
+      } catch (err: any) {}
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {

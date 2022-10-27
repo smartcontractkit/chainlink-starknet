@@ -6,7 +6,7 @@ import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
 describe('link_token', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
 
   shouldBehaveLikeStarkGateERC20(async () => {
     const owner = await starknet.deployAccount('OpenZeppelin')

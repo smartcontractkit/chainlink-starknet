@@ -9,8 +9,7 @@
   },
   "include": [
     "./scripts",
-    "./test",
-    "../packages-ts/starknet/test/fundAccount.test.ts"
+    "./test"
   ],
   "files": [
     "./hardhat.config.ts"

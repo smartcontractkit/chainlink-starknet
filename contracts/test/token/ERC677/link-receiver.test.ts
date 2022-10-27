@@ -10,7 +10,7 @@ import { account } from '@chainlink/starknet'
 describe('LinkToken', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory

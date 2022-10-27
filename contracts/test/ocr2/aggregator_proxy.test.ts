@@ -9,7 +9,7 @@ import { account } from '@chainlink/starknet'
 describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
   let aggregatorContractFactory: StarknetContractFactory
   let proxyContractFactory: StarknetContractFactory
 
