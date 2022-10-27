@@ -29,7 +29,7 @@ describe('ContractTestsMock', function () {
   })
 
   it('should set and read latest round data successfully', async () => {
-    await account.invoke(MockContract, 'set_latest_round_data', {
+    await alice.invoke(MockContract, 'set_latest_round_data', {
       answer: 12,
       block_num: 1,
       observation_timestamp: 14325,
@@ -44,7 +44,7 @@ describe('ContractTestsMock', function () {
   })
 
   it('should set and read latest round data successfully for the second time', async () => {
-    await account.invoke(MockContract, 'set_latest_round_data', {
+    await alice.invoke(MockContract, 'set_latest_round_data', {
       answer: 19,
       block_num: 2,
       observation_timestamp: 14345,
@@ -59,7 +59,7 @@ describe('ContractTestsMock', function () {
   })
 
   it('should set and read latest round data successfully for the third time', async () => {
-    await account.invoke(MockContract, 'set_latest_round_data', {
+    await alice.invoke(MockContract, 'set_latest_round_data', {
       answer: 42,
       block_num: 3,
       observation_timestamp: 9876,
