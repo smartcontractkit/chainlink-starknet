@@ -9,7 +9,7 @@ describe('Multisig integration tests', function () {
   this.timeout(300_000)
 
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
 
   let account1: Account
   let account2: Account

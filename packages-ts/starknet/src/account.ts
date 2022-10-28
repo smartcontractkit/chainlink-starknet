@@ -13,10 +13,11 @@ const DEVNET_NAME = 'devnet'
 // It returns options for Devnet as default when nothing is configured in the environment.
 export const makeFunderOptsFromEnv = () => {
   const network = process.env.NETWORK || DEVNET_NAME
-  const gateway_url = process.env.NODE_URL || DEVNET_URL
+  const gateway = process.env.NODE_URL || DEVNET_URL
+  const accountAddr = process.env.ACCOUNT.toLowerCase()
   const keyPair = ec.getKeyPair(process.env.ACCOUNT_PRIVATE_KEY)
 
-  return { network, gateway_url, keyPair }
+  return { network, gateway, accountAddr, keyPair }
 }
 
 interface FundAccounts {
@@ -24,18 +25,19 @@ interface FundAccounts {
   amount: number
 }
 
-interface AccountFunderOptions {
+interface FunderOptions {
   network?: string
-  gateway_url?: string
+  gateway?: string
+  accountAddr?: string
   keyPair?: KeyPair
 }
 
 // Define the Strategy to use depending on the network.
 export class Funder {
-  private opts: AccountFunderOptions
+  private opts: FunderOptions
   private strategy: IFundingStrategy
 
-  constructor(opts: AccountFunderOptions) {
+  constructor(opts: FunderOptions) {
     this.opts = opts
     if (this.opts.network === DEVNET_NAME) {
       this.strategy = new DevnetFundingStrategy()
@@ -51,19 +53,19 @@ export class Funder {
 }
 
 interface IFundingStrategy {
-  fund(accounts: FundAccounts[], opts: AccountFunderOptions): Promise<void>
+  fund(accounts: FundAccounts[], opts: FunderOptions): Promise<void>
 }
 
 // Fund the Account on Devnet
 class DevnetFundingStrategy implements IFundingStrategy {
-  public async fund(accounts: FundAccounts[], opts: AccountFunderOptions) {
+  public async fund(accounts: FundAccounts[], opts: FunderOptions) {
     accounts.forEach(async (account) => {
       const body = {
         address: account.account,
         amount: account.amount,
         lite: true,
       }
-      await fetch(`${opts.gateway_url}/mint`, {
+      await fetch(`${opts.gateway}/mint`, {
         method: 'post',
         body: JSON.stringify(body),
         headers: { 'Content-Type': 'application/json' },
@@ -74,13 +76,12 @@ class DevnetFundingStrategy implements IFundingStrategy {
 
 // Fund the Account on Testnet
 class AllowanceFundingStrategy implements IFundingStrategy {
-  public async fund(accounts: FundAccounts[], opts: AccountFunderOptions) {
+  public async fund(accounts: FundAccounts[], opts: FunderOptions) {
     const provider = new SequencerProvider({
       baseUrl: 'https://alpha4.starknet.io',
     })
 
-    const keyPair = ec.getKeyPair(process.env.ACCOUNT_PRIVATE_KEY)
-    const accountFunder = new Account(provider, process.env.ACCOUNT.toLowerCase(), keyPair)
+    const operator = new Account(provider, opts.accountAddr, opts.keyPair)
 
     for (const account of accounts) {
       const data = [
@@ -88,14 +89,14 @@ class AllowanceFundingStrategy implements IFundingStrategy {
         bnToUint256(account.amount).low.toString(),
         bnToUint256(account.amount).high.toString(),
       ]
-      const estimatFee = await accountFunder.estimateFee({
+      const estimatFee = await operator.estimateFee({
         contractAddress: ERC20_ADDRESS_TESTNET,
         entrypoint: 'transfer',
         calldata: data,
       })
-      const result = await accountFunder.getNonce()
+      const result = await operator.getNonce()
       const nonce = toBN(result).toNumber()
-      const hash = await accountFunder.execute(
+      const hash = await operator.execute(
         {
           contractAddress: ERC20_ADDRESS_TESTNET,
           entrypoint: 'transfer',

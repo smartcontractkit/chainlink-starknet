@@ -1,2 +1,2 @@
 export * from './utils'
-export * as account from './funder'
+export * as account from './account'

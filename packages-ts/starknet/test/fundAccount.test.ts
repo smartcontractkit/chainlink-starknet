@@ -1,7 +1,7 @@
 import { assert } from 'chai'
 import { account } from '@chainlink/starknet'
 import { Account, ec, SequencerProvider, stark } from 'starknet'
-import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/funder'
+import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/account'
 
 describe('fundAccount', function () {
   this.timeout(900_000)

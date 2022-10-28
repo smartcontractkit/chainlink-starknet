@@ -19,7 +19,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
   this.timeout(TIMEOUT)
 
   const opts = account.makeFunderOptsFromEnv()
-  const funder = account.Funder(opts)
+  const funder = new account.Funder(opts)
   // L2 StarkNet
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   let owner: Account
