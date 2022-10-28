@@ -31,6 +31,7 @@
     "@chainlink/starknet-gauntlet-example": "*",
     "@chainlink/starknet-gauntlet-ocr2": "*",
     "@chainlink/starknet-gauntlet-starkgate": "*",
-    "@chainlink/starknet-gauntlet-multisig": "*"
+    "@chainlink/starknet-gauntlet-multisig": "*",
+    "@chainlink/starknet-gauntlet-ledger": "*"
   }
 }

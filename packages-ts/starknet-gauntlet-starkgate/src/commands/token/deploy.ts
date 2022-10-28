@@ -43,7 +43,7 @@ const makeContractInput = async (
   input: UserInput,
   context: ExecutionContext,
 ): Promise<ContractInput> => {
-  const defaultWallet = context.wallet.getAccountPublicKey()
+  const defaultWallet = context.wallet.getAccountAddress()
   return [
     shortString.encodeShortString(input.name),
     shortString.encodeShortString(input.symbol),
