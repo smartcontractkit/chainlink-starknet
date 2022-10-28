@@ -6,15 +6,18 @@ export interface Env {
   providerUrl: string
   pk?: string
   account?: string
-  [key: string]: string // Custom env
+  withLedger?: boolean
+  ledgerPath?: string
+  multisig?: string
+  [key: string]: string | boolean // Custom env
 }
 
 export interface Dependencies {
   logger: typeof logger
   prompt: typeof prompt
   makeProvider: (url: string) => IStarknetProvider
-  makeWallet: (pk: string, account?: string) => IStarknetWallet
-  makeEnv: (flags: Record<string, string>) => Env
+  makeEnv: (flags: Record<string, string | boolean>) => Env
+  makeWallet: (env: Env) => Promise<IStarknetWallet>
 }
 
 export type InspectionDependencies = Omit<Dependencies, 'makeWallet'>

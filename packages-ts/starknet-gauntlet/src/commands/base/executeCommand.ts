@@ -82,9 +82,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const c = new ExecuteCommand(flags, args)
 
       const env = deps.makeEnv(flags)
+      c.wallet = await deps.makeWallet(env)
 
       c.provider = deps.makeProvider(env.providerUrl)
-      c.wallet = deps.makeWallet(env.pk, env.account)
       c.contractAddress = args[0]
       c.account = env.account
       c.contract = config.loadContract()
