@@ -14,7 +14,7 @@ const DEVNET_NAME = 'devnet'
 export const makeFunderOptsFromEnv = () => {
   const network = process.env.NETWORK || DEVNET_NAME
   const gateway = process.env.NODE_URL || DEVNET_URL
-  const accountAddr = process.env.ACCOUNT.toLowerCase()
+  const accountAddr = process.env.ACCOUNT?.toLowerCase()
   const keyPair = ec.getKeyPair(process.env.ACCOUNT_PRIVATE_KEY)
 
   return { network, gateway, accountAddr, keyPair }
