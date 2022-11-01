@@ -1,5 +1,5 @@
 import { IStarknetWallet, Env } from '@chainlink/starknet-gauntlet'
-import { SignerInterface, encode } from 'starknet'
+import { SignerInterface, encode, DeployAccountSignerDetails, DeclareSignerDetails } from 'starknet'
 import { Abi, Signature, Call, InvocationsSignerDetails } from 'starknet/types'
 import { TypedData, getMessageHash } from 'starknet/utils/typedData'
 import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
@@ -13,6 +13,7 @@ import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
 export const DEFAULT_LEDGER_PATH = "m/2645'/579218131'/894929996'/0'"
 export const LEDGER_PATH_REGEX = /^\s*m\s*\/\s*2645\s*\'\s*\/\s*579218131\s*\'\s*\/\s*(\d+)\s*\'\s*\/\s*(\d+)\s*\'$/
 
+// TODO: why are we copying this rather than using https://github.com/yogh333/starknetjs-signer-ledger/blob/main/src/ledger-signer.ts
 class LedgerSigner implements SignerInterface {
   client: Stark
   path: string
@@ -74,6 +75,16 @@ class LedgerSigner implements SignerInterface {
     )
 
     return this.sign(msgHash)
+  }
+
+  async signDeployAccountTransaction(transaction: DeployAccountSignerDetails): Promise<Signature> {
+    // TODO: implement this
+    return []
+  }
+
+  async signDeclareTransaction(transaction: DeclareSignerDetails): Promise<Signature> {
+    // TODO: implement this
+    return []
   }
 
   async signMessage(typedData: TypedData, accountAddress: string): Promise<Signature> {
