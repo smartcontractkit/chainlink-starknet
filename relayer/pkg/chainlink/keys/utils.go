@@ -17,7 +17,7 @@ var (
 	byteLen = 32
 
 	// note: the contract hash must match the corresponding OZ gauntlet command hash - otherwise addresses will not correspond
-	defaultContractHash, _ = new(big.Int).SetString("0xd42d20e6cdb007aecd7fcf84adf59146d375e643c829b73f41baa2aac172fa", 0)
+	defaultContractHash, _ = new(big.Int).SetString("0x0750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062", 0)
 	defaultSalt            = big.NewInt(100)
 )
 
