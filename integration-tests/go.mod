@@ -12,7 +12,7 @@ require (
 	github.com/smartcontractkit/chainlink v1.9.0
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221101111009-5f3c52bc2675
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04
-	github.com/smartcontractkit/chainlink-testing-framework v1.7.5
+	github.com/smartcontractkit/chainlink-testing-framework v1.7.7-0.20221101103530-cf8d0a99d211
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221031221257-4b7cdefdf853
 )
 
