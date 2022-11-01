@@ -5,22 +5,24 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	caigotypes "github.com/dontpanicdao/caigo/types"
 	"math/big"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
 
+	caigotypes "github.com/dontpanicdao/caigo/types"
+
 	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
+	client "github.com/smartcontractkit/chainlink/integration-tests/client"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
-	client "github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
 var (
@@ -85,7 +87,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			t.DeployCluster(nodeCount, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			t.Sg.SetupNetwork(t.L2RPCUrl)
+			err = t.Sg.SetupNetwork(t.L2RPCUrl)
+			Expect(err).ShouldNot(HaveOccurred(), "Setting up network should not fail")
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 			if !t.Testnet {
@@ -100,9 +103,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			val -> parse
 			`
 			// TODO: validate juels per fee coin calculation
-			juelsPerFeeCoinSource := ` 
+			juelsPerFeeCoinSource := `"""
 			sum  [type="sum" values=<[451000]> ]
-			sum`
+			sum
+			"""
+			`
 
 			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 				Name: "bridge-mockserver",
@@ -119,12 +124,12 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	Describe("with OCRv2 job @soak", func() {
 		It("Soak test OCRv2", func() {
 			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", roundWaitTimeout))
-			// assert new rounds are occuring
+			// assert new rounds are occurring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
 			var stuck bool
 			stuckCount := 0
-			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
+			ctx := context.Background() // context background used because timeout handled by requestTimeout param
 
 			// assert both positive and negative values have been seen
 			var positive bool

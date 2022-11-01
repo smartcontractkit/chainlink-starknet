@@ -45,7 +45,7 @@ var (
 // Run the OCR soak test defined in ./tests/ocr_test.go
 func TestOCRSoak(t *testing.T) {
 	activeEVMNetwork := blockchain.LoadNetworkFromEnvironment() // Environment currently being used to soak test on
-	soakTestHelper(t, "@soak", activeEVMNetwork)
+	soakTestHelper(t, "@ocr", activeEVMNetwork)
 }
 
 // builds tests, launches environment, and triggers the soak test to run
@@ -54,8 +54,7 @@ func soakTestHelper(
 	testTag string,
 	activeEVMNetwork *blockchain.EVMNetwork,
 ) {
-	exeFile, exeFileSize, err := actions.BuildGoTests("./", "../soak/tests", "../../")
-	require.NoError(t, err, "Error building go tests")
+	var err error
 
 	// Checking if TTL env var is set in ENV
 	ttlValue, ttlDefined := os.LookupEnv("TTL")
@@ -84,16 +83,25 @@ func soakTestHelper(
 		"env":      common.GetDefaultCoreConfig(),
 	}
 	testEnvironment := common.GetDefaultEnvSetup(baseEnvironmentConfig, clConfig)
-	remoteRunnerValues := map[string]interface{}{
-		"test_name":      testTag,
-		"env_namespace":  testEnvironment.Cfg.Namespace,
-		"test_file_size": fmt.Sprint(exeFileSize),
+
+	remoteRunnerValues := actions.BasicRunnerValuesSetup(
+		testTag,
+		testEnvironment.Cfg.Namespace,
+		"./integration-tests/soak/tests",
+	)
+	envValues := map[string]interface{}{
 		"test_log_level": "debug",
 		"INSIDE_K8":      true,
 		"TTL":            ttlValue,
 		"NODE_COUNT":     nodeCount,
 		"L2_RPC_URL":     l2RpcUrl,
 	}
+
+	// Set env values
+	for key, value := range envValues {
+		remoteRunnerValues[key] = value
+	}
+
 	// Set evm network connection for remote runner
 	for key, value := range activeEVMNetwork.ToMap() {
 		remoteRunnerValues[key] = value
@@ -117,6 +125,6 @@ func soakTestHelper(
 		}
 	}
 
-	err = actions.TriggerRemoteTest(exeFile, testEnvironment)
+	err = actions.TriggerRemoteTest("../../", testEnvironment)
 	require.NoError(t, err, "Error activating remote test")
 }

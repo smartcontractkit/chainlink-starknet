@@ -2,14 +2,18 @@ package common
 
 import (
 	"fmt"
+	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
+	"github.com/smartcontractkit/chainlink/core/services/job"
+	"github.com/smartcontractkit/chainlink/core/services/relay"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"gopkg.in/guregu/null.v4"
+	"strings"
 )
 
 type Common struct {
@@ -22,12 +26,12 @@ type Common struct {
 }
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
-func (c *Common) CreateKeys(env *environment.Environment) ([]ctfClient.NodeKeysBundle, []*client.Chainlink, error) {
+func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBundle, []*client.Chainlink, error) {
 	chainlinkNodes, err := client.ConnectChainlinkNodes(env)
 	if err != nil {
 		return nil, nil, err
 	}
-	nKeys, err := ctfClient.CreateNodeKeysBundle(chainlinkNodes, c.ChainName)
+	nKeys, _, err := client.CreateNodeKeysBundle(chainlinkNodes, c.ChainName, c.ChainId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -64,23 +68,33 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	}
 
 	// Defining relay config
-	relayConfig := map[string]string{
-		"nodeName": fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.NewV4().String()),
-		"chainID":  c.ChainId,
+	relayConfig := job.JSONConfig{
+		"nodeName": fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuid.NewV4().String()),
+		"chainID":  fmt.Sprintf("\"%s\"", c.ChainId),
 	}
 
+	oracleSpec := job.OCR2OracleSpec{
+		ContractID:                  ocrControllerAddress,
+		Relay:                       relay.StarkNet,
+		RelayConfig:                 relayConfig,
+		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
+	}
 	// Setting up bootstrap node
 	jobSpec := &client.OCR2TaskJobSpec{
-		Name:                  fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
-		JobType:               "bootstrap",
-		ContractID:            ocrControllerAddress,
-		Relay:                 c.ChainName,
-		RelayConfig:           relayConfig,
-		ContractConfirmations: 1, // don't wait for confirmation on devnet
+		Name:           fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+		JobType:        "bootstrap",
+		OCR2OracleSpec: oracleSpec,
 	}
+
 	_, _, err := cc.chainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
 		return err
+	}
+
+	var p2pBootstrappers []string
+
+	for i, _ := range cc.bootstrapPeers {
+		p2pBootstrappers = append(p2pBootstrappers, cc.bootstrapPeers[i].P2PV2Bootstrapper())
 	}
 
 	// Setting up job specs
@@ -92,21 +106,28 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		if err != nil {
 			return err
 		}
-		jobSpec := &client.OCR2TaskJobSpec{
-			Name:                  fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
-			JobType:               "offchainreporting2",
-			ContractID:            ocrControllerAddress,
-			Relay:                 c.ChainName,
-			RelayConfig:           relayConfig,
-			PluginType:            "median",
-			P2PV2Bootstrappers:    cc.bootstrapPeers,
-			OCRKeyBundleID:        cc.nKeys[nIdx].OCR2Key.Data.ID,
-			TransmitterID:         cc.nKeys[nIdx].TXKey.Data.ID,
-			ObservationSource:     observationSource,
-			JuelsPerFeeCoinSource: juelsPerFeeCoinSource,
-			ContractConfirmations: 1, // don't wait for confirmation on devnet
+
+		oracleSpec = job.OCR2OracleSpec{
+			ContractID:                  ocrControllerAddress,
+			Relay:                       relay.StarkNet,
+			RelayConfig:                 relayConfig,
+			PluginType:                  "median",
+			OCRKeyBundleID:              null.StringFrom(cc.nKeys[nIdx].OCR2Key.Data.ID),
+			TransmitterID:               null.StringFrom(cc.nKeys[nIdx].TXKey.Data.ID),
+			P2PV2Bootstrappers:          pq.StringArray{strings.Join(p2pBootstrappers, ",")},
+			ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
+			PluginConfig: job.JSONConfig{
+				"juelsPerFeeCoinSource": juelsPerFeeCoinSource,
+			},
 		}
-		_, _, err := n.CreateJob(jobSpec)
+
+		jobSpec = &client.OCR2TaskJobSpec{
+			Name:              fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
+			JobType:           "offchainreporting2",
+			OCR2OracleSpec:    oracleSpec,
+			ObservationSource: observationSource,
+		}
+		_, _, err = n.CreateJob(jobSpec)
 		if err != nil {
 			return err
 		}

@@ -76,7 +76,7 @@ type StarkNetDevnetClient struct {
 	client *resty.Client
 }
 type ChainlinkClient struct {
-	nKeys          []ctfClient.NodeKeysBundle
+	nKeys          []client.NodeKeysBundle
 	chainlinkNodes []*client.Chainlink
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
@@ -184,7 +184,7 @@ func (t *Test) GetStarkNetAddressRemote() string {
 }
 
 // GetNodeKeys Returns the node key bundles
-func (t *Test) GetNodeKeys() []ctfClient.NodeKeysBundle {
+func (t *Test) GetNodeKeys() []client.NodeKeysBundle {
 	return t.cc.nKeys
 }
 

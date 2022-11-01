@@ -100,9 +100,11 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			`
 
 			// TODO: validate juels per fee coin calculation
-			juelsPerFeeCoinSource := ` 
+			juelsPerFeeCoinSource := `"""
 			sum  [type="sum" values=<[451000]> ]
-			sum`
+			sum
+			"""
+			`
 
 			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 				Name: "bridge-mockserver",
@@ -206,7 +208,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 				// reach this point, answer has not changed
 				stuckCount += 1
-				if stuckCount > 5 {
+				if stuckCount > 30 {
 					stuck = true
 					increasing = 0
 				}
