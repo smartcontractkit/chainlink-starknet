@@ -12,7 +12,7 @@ require (
 	github.com/smartcontractkit/chainlink v1.9.0
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221101111009-5f3c52bc2675
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04
-	github.com/smartcontractkit/chainlink-testing-framework v1.7.7-0.20221101103530-cf8d0a99d211
+	github.com/smartcontractkit/chainlink-testing-framework v1.7.8-0.20221102064929-003a8e358279
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221031221257-4b7cdefdf853
 )
 
@@ -253,11 +253,11 @@ require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac // indirect
 	github.com/VictoriaMetrics/fastcache v1.10.0 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
-	github.com/aws/constructs-go/constructs/v10 v10.1.138 // indirect
+	github.com/aws/constructs-go/constructs/v10 v10.1.145 // indirect
 	github.com/aws/jsii-runtime-go v1.70.0 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
-	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.5.26 // indirect
+	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.5.33 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
@@ -313,7 +313,7 @@ require (
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/slack-go/slack v0.11.3 // indirect
-	github.com/smartcontractkit/chainlink-env v0.2.47
+	github.com/smartcontractkit/chainlink-env v0.2.49
 	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20221025223751-9b407cff57eb
 	github.com/smartcontractkit/libocr v0.0.0-20220812191430-db92a9fdaa52 // indirect
 	github.com/spf13/cobra v1.5.0 // indirect
