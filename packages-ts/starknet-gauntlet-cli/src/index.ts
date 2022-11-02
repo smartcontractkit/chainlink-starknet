@@ -29,7 +29,7 @@ import {
   ExecuteCommandInstance,
   InspectCommandInstance,
   makeProvider,
-  makeWallet,
+  makeWallet as makeDefaultWallet,
 } from '@chainlink/starknet-gauntlet'
 import {
   EVMExecuteCommandInstance,
@@ -38,6 +38,7 @@ import {
   makeProvider as EVMMakeProvider,
   EVMDependencies,
 } from '@chainlink/evm-gauntlet'
+import { makeWallet as makeLedgerWallet } from '@chainlink/starknet-gauntlet-ledger'
 
 export const noopPrompt: typeof prompt = async () => {}
 
@@ -58,11 +59,19 @@ const registerExecuteCommand = <UI, CI>(
         billingAccessController: process.env.BILLING_ACCESS_CONTROLLER,
         link: process.env.LINK,
         secret: flags.secret || process.env.SECRET,
+        withLedger: !!flags.withLedger || !!process.env.WITH_LEDGER,
+        ledgerPath: (flags.ledgerPath as string) || process.env.LEDGER_PATH,
       }
       return env
     },
     makeProvider: makeProvider,
-    makeWallet: makeWallet,
+    makeWallet: async (env: Env) => {
+      if (env.withLedger) {
+        return makeLedgerWallet(env)
+      }
+
+      return makeDefaultWallet(env)
+    },
   }
   return registerCommand(deps)
 }

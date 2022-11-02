@@ -15,7 +15,7 @@ func TestStarkKey_PublicKeyStr(t *testing.T) {
 		priv     string
 		contract string
 	}{
-		{"0", "0x0115fe99e7137319dc20c29511cadfb3650d256d6298f3c411bcfe8730967c51", "0x070cb19fbed32437e6ba7dfc4a957080b2caa2821a15f420b14670f2b8f8d365"},
+		{"0", "0x0115fe99e7137319dc20c29511cadfb3650d256d6298f3c411bcfe8730967c51", "0x04c89666b55d7f9f7b67174ceac660da53f22c61b22ea4e945ed7e9e4c8a1ef8"},
 	}
 
 	for _, k := range keys {

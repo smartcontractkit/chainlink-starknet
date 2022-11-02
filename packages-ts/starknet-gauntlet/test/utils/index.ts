@@ -48,8 +48,8 @@ export const registerExecuteCommand = <UI, CI>(
     makeEnv: (flags) => {
       return {
         providerUrl: LOCAL_URL,
-        pk: flags.pk,
-        account: flags.account,
+        pk: flags.pk as string,
+        account: flags.account as string,
       }
     },
     makeProvider: makeProvider,
@@ -69,8 +69,8 @@ export const registerInspectCommand = <QueryResult>(
     makeEnv: (flags) => {
       return {
         providerUrl: LOCAL_URL,
-        pk: flags.pk,
-        account: flags.account,
+        pk: flags.pk as string,
+        account: flags.account as string,
       }
     },
     makeProvider: makeProvider,

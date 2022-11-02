@@ -8,7 +8,7 @@ import BN from 'bn.js'
 // easier to deploy an instance then get the hash from: https://alpha4.starknet.io/feeder_gateway/get_class_hash_at?contractAddress=<contract-address>
 // yarn gauntlet account:deploy --network=testnet
 // note: if this value is changed, it must also be changed in the relayer keystore code
-export const CONTRACT_HASH = '0xd42d20e6cdb007aecd7fcf84adf59146d375e643c829b73f41baa2aac172fa'
+export const CONTRACT_HASH = '0x0750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062'
 
 export enum CONTRACT_LIST {
   ACCOUNT = 'Account',
@@ -18,7 +18,7 @@ export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.4.0/${name}.cairo/${name}.json`,
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.5.0/${name}.cairo/${name}.json`,
       )
       .toString('ascii'),
   )
