@@ -5,7 +5,7 @@ import { InspectionDependencies } from '../../dependencies'
 import { IStarknetProvider } from '../../provider'
 import { CommandUX, makeCommandId } from './command'
 
-interface InspectUserInput<UI, CompareInput> {
+export interface InspectUserInput<UI, CompareInput> {
   input: UI
   toCompare?: CompareInput
 }
