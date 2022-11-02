@@ -30,7 +30,7 @@ const makeContractInput = async (
   input: UserInput,
   context: ExecutionContext,
 ): Promise<ContractInput> => {
-  const defaultWallet = context.wallet.getAccountPublicKey()
+  const defaultWallet = context.wallet.getAccountAddress()
   return [input.governor || defaultWallet]
 }
 

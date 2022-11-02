@@ -77,7 +77,7 @@ export const wrapCommand = <UI, CI>(
       const env = deps.makeEnv(flags)
 
       c.provider = deps.makeProvider(env.providerUrl)
-      c.wallet = deps.makeWallet(env.pk, env.account)
+      c.wallet = await deps.makeWallet(env)
       c.contractAddress = args[0]
       c.account = env.account
       c.multisigAddress = env.multisig
