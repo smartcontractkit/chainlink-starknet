@@ -2,7 +2,6 @@ import {
   BeforeExecute,
   ExecuteCommandConfig,
   makeExecuteCommand,
-  Validation,
   isValidAddress,
 } from '@chainlink/starknet-gauntlet'
 import { Uint256 } from 'starknet/dist/utils/uint256'
