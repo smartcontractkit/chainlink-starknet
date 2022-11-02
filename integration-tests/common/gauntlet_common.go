@@ -99,7 +99,7 @@ func (t *Test) setConfigDetails(ocrAddress string) error {
 }
 
 func (t *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
-	_, err := t.Sg.InstallDependencies()
+	err := t.Sg.InstallDependencies()
 	if err != nil {
 		return err
 	}

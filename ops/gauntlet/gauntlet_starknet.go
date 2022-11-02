@@ -81,19 +81,14 @@ func (sg *StarknetGauntlet) SetupNetwork(addr string) error {
 	return nil
 }
 
-func (sg *StarknetGauntlet) InstallDependencies() (string, error) {
+func (sg *StarknetGauntlet) InstallDependencies() error {
 	sg.G.Command = "yarn"
 	_, err := sg.G.ExecCommand([]string{"install"}, *sg.options)
-
 	if err != nil {
-		return "", err
-	}
-	sg.gr, err = sg.FetchGauntletJsonOutput()
-	if err != nil {
-		return "", err
+		return err
 	}
 	sg.G.Command = "gauntlet"
-	return sg.gr.Responses[0].Contract, nil
+	return nil
 }
 
 func (sg *StarknetGauntlet) DeployAccountContract(salt int64, pubKey string) (string, error) {
