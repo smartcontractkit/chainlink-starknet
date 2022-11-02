@@ -10,6 +10,7 @@ import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
 import {
   L1Commands as L1StarkgateCommands,
   L2Commands as L2StarkgateCommands,
+  InspectionCommands as StarkgateInspectionCommands,
 } from '@chainlink/starknet-gauntlet-starkgate'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
@@ -131,6 +132,7 @@ const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
   ...OCR2InspectionCommands,
+  ...StarkgateInspectionCommands,
 ]
 
 const commands = {
