@@ -19,8 +19,8 @@ func (t *Test) fundNodes() error {
 	g := errgroup.Group{}
 	var nAccounts []string
 	for _, key := range t.GetNodeKeys() {
+		key := key
 		g.Go(func() error {
-			key := key
 			if key.TXKey.Data.Attributes.StarkKey == "" {
 				return errors.New("stark key can't be empty")
 			}
