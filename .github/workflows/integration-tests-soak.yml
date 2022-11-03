@@ -56,7 +56,6 @@ jobs:
     needs: [ build_custom_chainlink_image ]
     environment: integration
     env:
-      CGO_ENABLED: 1
       L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
       NODE_COUNT: ${{ github.event.inputs.node_count }}
       TEST_TRIGGERED_BY: core-CI-starknet
@@ -79,6 +78,7 @@ jobs:
       - name: Run Tests
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@13437f3be1c82243a8c44eabc043a4fa58d72d73 # v2.0.20
         with:
+          CGO_ENABLED: 1
           test_command_to_run: nix develop -c make test-integration-soak
           test_download_vendor_packages_command: cd integration-tests && go mod download
           cl_repo: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink

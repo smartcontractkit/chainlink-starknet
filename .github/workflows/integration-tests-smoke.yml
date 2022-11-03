@@ -44,7 +44,6 @@ jobs:
     needs: [ build_custom_chainlink_image ]
     environment: integration
     env:
-      CGO_ENABLED: 1
       TEST_TRIGGERED_BY: core-CI-starknet
       CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
       CL_VERSION: custom.${{ github.sha }}
@@ -65,6 +64,7 @@ jobs:
       - name: Run Tests
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
+          CGO_ENABLED: 1
           test_command_to_run: nix develop -c make test-integration-smoke
           test_download_vendor_packages_command: cd integration-tests && go mod download
           cl_repo: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
