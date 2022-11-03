@@ -201,6 +201,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.9 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/smartcontractkit/chainlink-starknet v0.0.0-20221103092953-bc9b3cf9c00f // indirect
 	github.com/smartcontractkit/ocr2vrf v0.0.0-20221021145954-aef9beb5fcbf // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
 	github.com/smartcontractkit/terra.go v1.0.3-0.20220108002221-62b39252ee16 // indirect
