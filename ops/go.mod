@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/chainlink-starknet/ops
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dontpanicdao/caigo v0.4.0
