@@ -3,6 +3,7 @@ package devnet
 import (
 	"context"
 	"fmt"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	"strings"
@@ -83,8 +84,8 @@ func (devnet *StarkNetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddres
 				return
 			case <-t.C:
 				log.Debug().Msg("Checking for devnet OCR contract errors")
-				_, err := client.LatestTransmissionDetails(devnet.ctx, ocrAddress)
-				if err != nil && strings.Contains(err.Error(), "No contract at the provided address") {
+				_, err := client.LatestTransmissionDetails(devnet.ctx, caigotypes.HexToHash(ocrAddress))
+				if err != nil && strings.Contains(err.Error(), "is not deployed") {
 					_, err = devnet.client.R().SetBody(map[string]interface{}{
 						"path": devnet.dumpPath,
 					}).Post("/load")

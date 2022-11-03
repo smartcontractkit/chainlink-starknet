@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"math/big"
 	"math/rand"
 	"os"
@@ -71,7 +72,6 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
 			t.Sg, err = gauntlet.NewStarknetGauntlet("/root/")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
-			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
 		})
 
 		By("Deploying the environment", func() {
@@ -151,7 +151,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, t.OCRAddr)
+				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
 				if err != nil {
 					log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 					continue

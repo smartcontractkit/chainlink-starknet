@@ -2,9 +2,13 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink-testing-framework/client"
 	"os"
+	"sync"
 )
 
 var (
@@ -14,23 +18,49 @@ var (
 
 func (t *Test) fundNodes() error {
 	var nAccounts []string
+	errChannel := make(chan error)
+	wgDone := make(chan bool)
+	wg := sync.WaitGroup{}
+	wg.Add(len(t.GetNodeKeys()))
 	for _, key := range t.GetNodeKeys() {
-		if key.TXKey.Data.Attributes.StarkKey == "" {
-			return err
-		}
-		nAccount, err = t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
-		if err != nil || nAccount != key.TXKey.Data.Attributes.AccountAddr {
-			return err
-		}
-		nAccounts = append(nAccounts, nAccount)
-	}
-	if t.Testnet {
-		for _, key := range nAccounts {
-			log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = t.Sg.TransferToken(ethAddressGoerli, key, "10000000000000000") // Transferring 0.1 ETH to each node
-			if err != nil {
-				return err
+		go func(key client.NodeKeysBundle) {
+			if key.TXKey.Data.Attributes.StarkKey == "" {
+				errChannel <- errors.New("stark key can't be empty")
 			}
+			nAccount, err = t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+			if err != nil {
+				errChannel <- err
+			}
+			if caigotypes.HexToHash(nAccount).String() != key.TXKey.Data.Attributes.AccountAddr {
+				errChannel <- errors.New(fmt.Sprintf("Deployed account with address %s not matching with node account with address %s", caigotypes.HexToHash(nAccount).String(), key.TXKey.Data.Attributes.AccountAddr))
+			}
+			nAccounts = append(nAccounts, nAccount)
+			defer wg.Done()
+		}(key)
+	}
+	wg.Wait()
+	close(wgDone)
+	select {
+	case <-wgDone:
+		break
+	case err = <-errChannel:
+		close(errChannel)
+		return err
+	}
+	errChannel = make(chan error)
+	wgDone = make(chan bool)
+	if t.Testnet {
+		wg.Add(len(nAccounts))
+		for _, key := range nAccounts {
+			go func(key string) {
+				log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
+				_, err = t.Sg.TransferToken(ethAddressGoerli, key, "10000000000000000") // Transferring 0.1 ETH to each node
+				if err != nil {
+					errChannel <- err
+				}
+				defer wg.Done()
+			}(key)
+
 		}
 	} else {
 		err = t.Devnet.FundAccounts(nAccounts)
@@ -38,7 +68,15 @@ func (t *Test) fundNodes() error {
 			return err
 		}
 	}
-
+	wg.Wait()
+	close(wgDone)
+	select {
+	case <-wgDone:
+		break
+	case err = <-errChannel:
+		close(errChannel)
+		return err
+	}
 	return nil
 }
 
@@ -104,7 +142,10 @@ func (t *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64
 	if err != nil {
 		return err
 	}
-
+	_, err = t.Sg.AddAccess(t.OCRAddr, t.ProxyAddr)
+	if err != nil {
+		return err
+	}
 	_, err = t.Sg.MintLinkToken(t.LinkTokenAddr, t.OCRAddr, "100000000000000000000")
 	if err != nil {
 		return err

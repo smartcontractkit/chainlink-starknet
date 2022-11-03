@@ -92,6 +92,9 @@ func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
 	t.cc = &ChainlinkClient{}
 	t.DeployEnv(nodes)
 	t.SetupClients()
+	if t.Testnet {
+		t.Env.URLs[t.Common.ServiceKeyL2][1] = t.L2RPCUrl
+	}
 	t.cc.nKeys, t.cc.chainlinkNodes, err = t.Common.CreateKeys(t.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating chains and keys should not fail")
 	t.Starknet, err = starknet.NewClient(commonConfig.ChainId, t.L2RPCUrl, lggr, &rpcRequestTimeout)

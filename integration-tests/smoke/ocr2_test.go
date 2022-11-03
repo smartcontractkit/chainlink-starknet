@@ -5,8 +5,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/dontpanicdao/caigo/gateway"
@@ -14,11 +16,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -36,8 +34,6 @@ func init() {
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
 		err                 error
-		proxyAddress        string
-		sg                  *ops.StarknetGauntlet
 		t                   *common.Test
 		serviceKeyL1        = "Hardhat"
 		serviceKeyL2        = "starknet-dev"
@@ -46,20 +42,35 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		chainId             = gateway.GOERLI_ID
 		cfg                 *common.Common
 		decimals            = 9
-		rpcRequestTimeout   = 10 * time.Second
 		roundWaitTimeout    = 10 * time.Minute
 		increasingCountMax  = 10
 		mockServerVal       = 900000000
+		nodeCount           = 5
 	)
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
-			err = os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
-			err = os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
-			Expect(err).ShouldNot(HaveOccurred(), "Setting env vars should not fail")
+			// Checking if count of OCR nodes is defined in ENV
+			nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
+			if nodeCountDefined == true {
+				nodeCount, err = strconv.Atoi(nodeCountSet)
+				if err != nil {
+					panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
+				}
+			}
 
+			// Checking if TTL env var is set to adjust duration to custom value
+			ttlValue, ttlDefined := os.LookupEnv("TTL")
+			if ttlDefined == true {
+				ttl, err := time.ParseDuration(ttlValue)
+				if err != nil {
+					panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+				}
+				roundWaitTimeout = ttl
+			}
+			t = &common.Test{}
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			sg, err = gauntlet.NewStarknetGauntlet("../../")
+			t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
@@ -71,15 +82,15 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				ServiceKeyL1:        serviceKeyL1,
 				ServiceKeyL2:        serviceKeyL2,
 			}
-			t = &common.Test{}
-			t.DeployCluster(5, cfg)
+			t.DeployCluster(nodeCount, cfg)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			devnet.SetL2RpcUrl(t.Env.URLs[serviceKeyL2][0])
-			sg.SetupNetwork(t.GetStarkNetAddress())
+			t.Sg.SetupNetwork(t.L2RPCUrl)
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
+			if !t.Testnet {
+				t.Devnet.AutoLoadState(t.OCR2Client, t.OCRAddr)
+			}
 		})
-
 
 		By("Setting up bootstrap and oracle nodes", func() {
 			observationSource := `
@@ -108,23 +119,15 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
 			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
-			lggr := logger.Nop()
-			url := t.Env.URLs[serviceKeyL2][0]
-
-			// build client
-			reader, err := starknet.NewClient(chainId, url, lggr, &rpcRequestTimeout)
-			Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
-			client, err := ocr2.NewClient(reader, lggr)
-			Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
 
 			// validate balance in aggregator
-			resLINK, err := reader.CallContract(ctx, starknet.CallOps{
+			resLINK, err := t.Starknet.CallContract(ctx, starknet.CallOps{
 				ContractAddress: caigotypes.HexToHash(t.LinkTokenAddr),
 				Selector:        "balanceOf",
 				Calldata:        []string{caigotypes.HexToBN(t.OCRAddr).String()},
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
-			resAgg, err := reader.CallContract(ctx, starknet.CallOps{
+			resAgg, err := t.Starknet.CallContract(ctx, starknet.CallOps{
 				ContractAddress: caigotypes.HexToHash(t.OCRAddr),
 				Selector:        "link_available_for_payment",
 			})
@@ -164,7 +167,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
+				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
 				if err != nil {
 					log.Error().Err(err)
 					continue
@@ -216,8 +219,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			// Test proxy reading
 			// TODO: would be good to test proxy switching underlying feeds
-			roundDataRaw, err := reader.CallContract(ctx, starknet.CallOps{
-				ContractAddress: caigotypes.HexToHash(proxyAddress),
+			roundDataRaw, err := t.Starknet.CallContract(ctx, starknet.CallOps{
+				ContractAddress: caigotypes.HexToHash(t.ProxyAddr),
 				Selector:        "latest_round_data",
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")

@@ -36,7 +36,6 @@ var (
 		"../../tsconfig.base.json",
 		"../../packages-ts",
 		"../../contracts",
-		"../../.env",
 	}
 	baseEnvironmentConfig = &environment.Config{
 		TTL: TTL,
