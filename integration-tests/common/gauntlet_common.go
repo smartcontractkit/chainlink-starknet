@@ -6,7 +6,6 @@ import (
 	"fmt"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 	"os"
 )
 
@@ -16,27 +15,21 @@ var (
 )
 
 func (t *Test) fundNodes() error {
-	g := errgroup.Group{}
 	var nAccounts []string
 	for _, key := range t.GetNodeKeys() {
-		key := key
-		g.Go(func() error {
-			if key.TXKey.Data.Attributes.StarkKey == "" {
-				return errors.New("stark key can't be empty")
-			}
-			nAccount, err = t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
-			if err != nil {
-				return err
-			}
-			if caigotypes.HexToHash(nAccount).String() != key.TXKey.Data.Attributes.AccountAddr {
-				return errors.New(fmt.Sprintf("Deployed account with address %s not matching with node account with address %s", caigotypes.HexToHash(nAccount).String(), key.TXKey.Data.Attributes.AccountAddr))
-			}
-			nAccounts = append(nAccounts, nAccount)
-
-			return nil
-		})
+		if key.TXKey.Data.Attributes.StarkKey == "" {
+			return errors.New("stark key can't be empty")
+		}
+		nAccount, err = t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		if err != nil {
+			return err
+		}
+		if caigotypes.HexToHash(nAccount).String() != key.TXKey.Data.Attributes.AccountAddr {
+			return errors.New(fmt.Sprintf("Deployed account with address %s not matching with node account with address %s", caigotypes.HexToHash(nAccount).String(), key.TXKey.Data.Attributes.AccountAddr))
+		}
+		nAccounts = append(nAccounts, nAccount)
 	}
-	err = g.Wait()
+
 	if err != nil {
 		return err
 	}

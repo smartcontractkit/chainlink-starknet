@@ -46,6 +46,10 @@ jobs:
     env:
       CGO_ENABLED: 1
       TEST_TRIGGERED_BY: core-CI-starknet
+      CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
+      CL_VERSION: custom.${{ github.sha }}
+      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
+      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
     permissions:
       checks: write
       pull-requests: write

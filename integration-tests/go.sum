@@ -1652,15 +1652,13 @@ github.com/smartcontractkit/chainlink-env v0.2.49/go.mod h1:qiTByXxg979l6dDOWuM5
 github.com/smartcontractkit/chainlink-relay v0.1.6-0.20221025223751-9b407cff57eb h1:NF6//JILgK8AeLkknJFEVsVRt+VqwNnxJ4SLpHKje9c=
 github.com/smartcontractkit/chainlink-relay v0.1.6-0.20221025223751-9b407cff57eb/go.mod h1:v/QSrVm3z4/aPz/PLB6da05B/r4MHZy0/jder7iPxkQ=
 github.com/smartcontractkit/chainlink-solana v0.2.20-0.20220829192456-1cce38dd3129 h1:t7vEkHvn5pl0txpr6DUGBhvLgMuUqbz1gKd8n6mnbgk=
-github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221101111009-5f3c52bc2675 h1:byIuBH63Oag+TlDzVs0CKSQm9qbHKV7g/eSQR+p66nk=
-github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221101111009-5f3c52bc2675/go.mod h1:R3Bm8MwruH4IruzlfE7WsncaR1+JBbC0NcnRgVPZFfE=
 github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221102074350-400def08f963 h1:ZqkJM9H/51ewpA+U5t8IP4zDTMasnaebxl+ygUckwOY=
 github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221102074350-400def08f963/go.mod h1:H0gWYfdO1Ypd70NrARBVkPNfgC+6IkAPZ8W+rPMGfBg=
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04 h1:k5fXxOPedE4StRAQssIwljQKizeZi5AqxbNCcu9DcYE=
 github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04/go.mod h1:RlIYKPUknm1yM252evPMIjVXueUzWvFYrPUt/0KJJBc=
 github.com/smartcontractkit/chainlink-terra v0.1.4-0.20220824174951-d1e2bcd51e46 h1:Yb+oJqTniiluQKGnTFvK+QWnfQSur3wL4kqCXQ4cBYQ=
-github.com/smartcontractkit/chainlink-testing-framework v1.7.8-0.20221102064929-003a8e358279 h1:z5lbLVlT153X3QK8CC+kgk1Z8xhm3gop/SC0pRvnV9Y=
-github.com/smartcontractkit/chainlink-testing-framework v1.7.8-0.20221102064929-003a8e358279/go.mod h1:zaCknJvXOXhYfUFnmndpoOia2+TLqRE5vfeSwawn91M=
+github.com/smartcontractkit/chainlink-testing-framework v1.7.8 h1:2pAvTPQXOsBKRFTVQm01HC1itwyz97/nsqc3MHvgOsY=
+github.com/smartcontractkit/chainlink-testing-framework v1.7.8/go.mod h1:zaCknJvXOXhYfUFnmndpoOia2+TLqRE5vfeSwawn91M=
 github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221031221257-4b7cdefdf853 h1:xRYHWpLdZAX4s7le1LIX8o6+rz9tKIHVm9DrcSFOVW8=
 github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221031221257-4b7cdefdf853/go.mod h1:2rQ34qJh1DZQ71sI6qWWuj9Mv8z6aEyn1yLWBB5Rtlo=
 github.com/smartcontractkit/libocr v0.0.0-20220812191430-db92a9fdaa52 h1:Nac1UCKJwt0AY15bAaorscflOcBs/FnmO7NoCh8Tons=

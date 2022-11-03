@@ -26,9 +26,10 @@ import (
 )
 
 var (
-	err       error
-	clImage   string
-	clVersion string
+	err error
+	// Default version to run on
+	clImage   = "public.ecr.aws/chainlink/chainlink"
+	clVersion = "1.9.0"
 
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
@@ -38,9 +39,17 @@ var (
 )
 
 func init() {
+
+	// Checking if version needs to be overridden env var is set in ENV
+	envClImage, clImageDefined := os.LookupEnv("CL_IMAGE")
+	envClVersion, clVersionDefined := os.LookupEnv("CL_VERSION")
+	if clImageDefined && clVersionDefined {
+		clImage = envClImage
+		clVersion = envClVersion
+	}
 	// pass in flags to override default chainlink image & version
-	flag.StringVar(&clImage, "chainlink-image", "", "specify chainlink image to be used")
-	flag.StringVar(&clVersion, "chainlink-version", "", "specify chainlink version to be used")
+	flag.StringVar(&clImage, "chainlink-image", clImage, "specify chainlink image to be used")
+	flag.StringVar(&clVersion, "chainlink-version", clVersion, "specify chainlink version to be used")
 
 	// wallet contract derivation
 	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))

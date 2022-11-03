@@ -55,7 +55,7 @@ func defaultProps() *ethereum.Props {
 			"starknet-dev": map[string]interface{}{
 				"image": map[string]interface{}{
 					"image":   "shardlabs/starknet-devnet",
-					"version": "v0.2.9",
+					"version": "v0.3.5",
 				},
 				"resources": map[string]interface{}{
 					"requests": map[string]interface{}{

@@ -24,6 +24,8 @@ func init() {
 }
 
 var (
+	clImage             = "public.ecr.aws/chainlink/chainlink"
+	clVersion           = "1.9.0"
 	nodeCount           = 5              // default node count
 	TTL                 = time.Hour * 72 // Default TTL for the env (3 days)
 	remoteContainerName = "remote-test-runner"
@@ -56,6 +58,14 @@ func soakTestHelper(
 ) {
 	var err error
 
+	// Checking if version needs to be overridden env var is set in ENV
+	envClImage, clImageDefined := os.LookupEnv("CL_IMAGE")
+	envClVersion, clVersionDefined := os.LookupEnv("CL_VERSION")
+	if clImageDefined && clVersionDefined {
+		clImage = envClImage
+		clVersion = envClVersion
+	}
+
 	// Checking if TTL env var is set in ENV
 	ttlValue, ttlDefined := os.LookupEnv("TTL")
 	if ttlDefined {
@@ -74,6 +84,9 @@ func soakTestHelper(
 		}
 	}
 	l2RpcUrl, _ := os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
+	privateKey, _ := os.LookupEnv("PRIVATE_KEY")
+	account, _ := os.LookupEnv("ACCOUNT")
+
 	baseEnvironmentConfig.NamespacePrefix = fmt.Sprintf(
 		"chainlink-soak-ocr-starknet-%s",
 		strings.ReplaceAll(strings.ToLower(activeEVMNetwork.Name), " ", "-"),
@@ -81,9 +94,14 @@ func soakTestHelper(
 	clConfig := map[string]interface{}{
 		"replicas": nodeCount,
 		"env":      common.GetDefaultCoreConfig(),
+		"chainlink": map[string]interface{}{
+			"image": map[string]interface{}{
+				"image":   clImage,
+				"version": clVersion,
+			},
+		},
 	}
 	testEnvironment := common.GetDefaultEnvSetup(baseEnvironmentConfig, clConfig)
-
 	remoteRunnerValues := actions.BasicRunnerValuesSetup(
 		testTag,
 		testEnvironment.Cfg.Namespace,
@@ -95,6 +113,8 @@ func soakTestHelper(
 		"TTL":            ttlValue,
 		"NODE_COUNT":     nodeCount,
 		"L2_RPC_URL":     l2RpcUrl,
+		"PRIVATE_KEY":    privateKey,
+		"ACCOUNT":        account,
 	}
 
 	// Set env values
@@ -106,7 +126,20 @@ func soakTestHelper(
 	for key, value := range activeEVMNetwork.ToMap() {
 		remoteRunnerValues[key] = value
 	}
-	remoteRunnerWrapper := map[string]interface{}{"remote_test_runner": remoteRunnerValues}
+	// Need to bump resources due to yarn using memory when running in parallel
+	remoteRunnerWrapper := map[string]interface{}{
+		"remote_test_runner": remoteRunnerValues,
+		"resources": map[string]interface{}{
+			"requests": map[string]interface{}{
+				"cpu":    "2000m",
+				"memory": "2048Mi",
+			},
+			"limits": map[string]interface{}{
+				"cpu":    "2000m",
+				"memory": "2048Mi",
+			},
+		},
+	}
 
 	err = testEnvironment.
 		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).

@@ -12,7 +12,7 @@ require (
 	github.com/smartcontractkit/chainlink v1.9.0
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221102074350-400def08f963
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04
-	github.com/smartcontractkit/chainlink-testing-framework v1.7.8-0.20221102064929-003a8e358279
+	github.com/smartcontractkit/chainlink-testing-framework v1.7.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221031221257-4b7cdefdf853
 )
 
@@ -332,7 +332,7 @@ require (
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/term v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
@@ -365,5 +365,3 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 // Fix go mod tidy issue for ambiguous imports from go-ethereum
 // See https://github.com/ugorji/go/issues/279
 replace github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
-
-//replace github.com/smartcontractkit/chainlink-starknet/ops => ../ops
