@@ -10,12 +10,13 @@ require (
 	github.com/rs/zerolog v1.28.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartcontractkit/chainlink v1.9.0
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221102074350-400def08f963
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221024054022-3c77b546dc04
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221103134312-d40949720ad3
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221103134312-d40949720ad3
 	github.com/smartcontractkit/chainlink-testing-framework v1.7.8
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221031221257-4b7cdefdf853
 	github.com/terra-money/core v0.5.20 // indirect
 )
+
+require github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221102233518-1e61a9b970a2
 
 require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.4 // indirect
@@ -202,7 +203,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.9 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/smartcontractkit/ocr2vrf v0.0.0-20221021145954-aef9beb5fcbf // indirect
+	github.com/smartcontractkit/ocr2vrf v0.0.0-20221101142607-77f2fe1d1723 // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
 	github.com/smartcontractkit/terra.go v1.0.3-0.20220108002221-62b39252ee16 // indirect
 	github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 // indirect
