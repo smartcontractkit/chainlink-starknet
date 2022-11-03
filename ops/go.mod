@@ -8,7 +8,7 @@ require (
 	github.com/rs/zerolog v1.28.0
 	github.com/smartcontractkit/chainlink-env v0.2.49
 	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220824173548-dab4ac0a6595
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221020114514-e480d54e0a7f
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221102160912-61646f534e3a
 	github.com/smartcontractkit/chainlink-testing-framework v1.7.8-0.20221102064929-003a8e358279
 	github.com/stretchr/testify v1.8.1
 )
