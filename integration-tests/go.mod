@@ -12,7 +12,7 @@ require (
 	github.com/smartcontractkit/chainlink v1.9.0
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221103134312-d40949720ad3
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221103134312-d40949720ad3
-	github.com/smartcontractkit/chainlink-testing-framework v1.7.8
+	github.com/smartcontractkit/chainlink-testing-framework v1.7.9-0.20221103145139-89a99e7981e0
 	github.com/terra-money/core v0.5.20 // indirect
 )
 
