@@ -3,7 +3,7 @@ import deployTokenCommand from '../../src/commands/token/deploy'
 import mintTokensCommand from '../../src/commands/token/mint'
 import transferTokensCommand from '../../src/commands/token/transfer'
 import balanceOfCommand from '../../src/commands/inspection/balanceOf'
- 
+
 import {
   registerExecuteCommand,
   registerInspectCommand,
@@ -27,7 +27,7 @@ describe('Token Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork({ seed: 0 })
-    
+
     // account #0 with seed 0
     defaultAccount = '0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a'
     defaultPk = '0xe3e70682c2094cac629f6fbed82c07cd'
@@ -91,7 +91,7 @@ describe('Token Contract', () => {
         {
           account: defaultAccount,
         },
-        [tokenContractAddress]
+        [tokenContractAddress],
       )
       report = await inspectCommand.execute()
       expect(report.data?.data?.balance).toEqual(defaultBalance.toString())
@@ -119,9 +119,9 @@ describe('Token Contract', () => {
 
       const inspectCommand = await registerInspectCommand(balanceOfCommand).create(
         {
-          account: ozAccount
+          account: ozAccount,
         },
-        [tokenContractAddress]
+        [tokenContractAddress],
       )
       report = await inspectCommand.execute()
       expect(report.data?.data?.balance).toEqual(ozBalance.toString())

@@ -26,7 +26,8 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const validateRecipient = async (input) => {
-  if (!isValidAddress(input.recipient)) throw new Error(`Invalid recipient address: ${input.recipient}`)
+  if (!isValidAddress(input.recipient))
+    throw new Error(`Invalid recipient address: ${input.recipient}`)
   return true
 }
 
