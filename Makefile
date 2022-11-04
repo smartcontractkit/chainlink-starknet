@@ -171,6 +171,10 @@ test-integration: test-integration-smoke test-integration-contracts test-integra
 
 .PHONY: test-integration-smoke
 test-integration-smoke:
+	python -m venv ~/cairo_venv && \
+		source ~/cairo_venv/bin/activate
+	cd ./contracts && pip install -r requirements.txt
+	make build
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
 .PHONY: test-integration-soak
