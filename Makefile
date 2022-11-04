@@ -166,19 +166,22 @@ test-unit-go:
 test-integration-go:
 	cd ./relayer && go test -v ./... -run TestIntegration -tags integration
 
-.PHONY: test-integration
-test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
-
-.PHONY: test-integration-smoke
-test-integration-smoke:
+.PHONY: test-integration-prep
+test-integration-prep:
 	python -m venv ~/cairo_venv && \
 		. ~/cairo_venv/bin/activate
 	cd ./contracts && pip install -r requirements.txt
 	make build
+
+.PHONY: test-integration
+test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
+
+.PHONY: test-integration-smoke
+test-integration-smoke: test-integration-prep
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
 
 .PHONY: test-integration-soak
-test-integration-soak: build-ts-contracts
+test-integration-soak: test-integration-prep
 	cd integration-tests/soak/ && \
 		go test
 
