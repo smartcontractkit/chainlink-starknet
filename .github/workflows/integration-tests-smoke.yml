@@ -49,6 +49,8 @@ jobs:
       CL_VERSION: custom.${{ github.sha }}
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
+      TTL: 2h
+      NODE_COUNT: 5
     permissions:
       checks: write
       pull-requests: write

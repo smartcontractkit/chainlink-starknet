@@ -21,6 +21,13 @@ on:
         required: true
         default: 5
         type: string
+      ttl:
+        description: TTL for namespace
+        required: true
+        default: 72h
+        type: string
+
+
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -63,6 +70,7 @@ jobs:
       CL_VERSION: custom.${{ github.sha }}
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
+      TTL: ${{ github.event.inputs.ttl }}
     permissions:
       checks: write
       pull-requests: write
