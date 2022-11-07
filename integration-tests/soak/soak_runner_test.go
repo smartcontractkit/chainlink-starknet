@@ -2,17 +2,11 @@ package soak_test
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/remotetestrunner"
 	"github.com/smartcontractkit/chainlink-testing-framework/actions"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
@@ -24,10 +18,7 @@ func init() {
 }
 
 var (
-	clImage             = "public.ecr.aws/chainlink/chainlink"
-	clVersion           = "1.9.0"
-	nodeCount           = 5              // default node count
-	TTL                 = time.Hour * 72 // Default TTL for the env (3 days)
+	c                   *common.Common
 	remoteContainerName = "remote-test-runner"
 	// Required files / folders for the remote runner
 	remoteFileList = []string{
@@ -38,9 +29,6 @@ var (
 		"../../tsconfig.base.json",
 		"../../packages-ts",
 		"../../contracts",
-	}
-	baseEnvironmentConfig = &environment.Config{
-		TTL: TTL,
 	}
 )
 
@@ -57,64 +45,23 @@ func soakTestHelper(
 	activeEVMNetwork *blockchain.EVMNetwork,
 ) {
 	var err error
-
-	// Checking if version needs to be overridden env var is set in ENV
-	envClImage, clImageDefined := os.LookupEnv("CL_IMAGE")
-	envClVersion, clVersionDefined := os.LookupEnv("CL_VERSION")
-	if clImageDefined && clVersionDefined {
-		clImage = envClImage
-		clVersion = envClVersion
-	}
-
-	// Checking if TTL env var is set in ENV
-	ttlValue, ttlDefined := os.LookupEnv("TTL")
-	if ttlDefined {
-		TTL, err = time.ParseDuration(ttlValue)
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-		}
-		baseEnvironmentConfig.TTL = TTL
-	}
-	// Checking if count of OCR nodes is set in ENV
-	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
-	if nodeCountDefined {
-		nodeCount, err = strconv.Atoi(nodeCountSet)
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
-		}
-	}
-	l2RpcUrl, _ := os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
-	privateKey, _ := os.LookupEnv("PRIVATE_KEY")
-	account, _ := os.LookupEnv("ACCOUNT")
-
-	baseEnvironmentConfig.NamespacePrefix = fmt.Sprintf(
-		"chainlink-soak-ocr-starknet-%s",
-		strings.ReplaceAll(strings.ToLower(activeEVMNetwork.Name), " ", "-"),
-	)
-	clConfig := map[string]interface{}{
-		"replicas": nodeCount,
-		"env":      common.GetDefaultCoreConfig(),
-		"chainlink": map[string]interface{}{
-			"image": map[string]interface{}{
-				"image":   clImage,
-				"version": clVersion,
-			},
-		},
-	}
-	testEnvironment := common.GetDefaultEnvSetup(baseEnvironmentConfig, clConfig)
+	c = common.New()
+	c.Default()
 	remoteRunnerValues := actions.BasicRunnerValuesSetup(
 		testTag,
-		testEnvironment.Cfg.Namespace,
+		c.Env.Cfg.Namespace,
 		"./integration-tests/soak/tests",
 	)
 	envValues := map[string]interface{}{
 		"test_log_level": "debug",
 		"INSIDE_K8":      true,
-		"TTL":            ttlValue,
-		"NODE_COUNT":     nodeCount,
-		"L2_RPC_URL":     l2RpcUrl,
-		"PRIVATE_KEY":    privateKey,
-		"ACCOUNT":        account,
+		"TTL":            c.TTL,
+		"NODE_COUNT":     c.NodeCount,
+		"L2_RPC_URL":     c.L2RPCUrl,
+		"PRIVATE_KEY":    c.PrivateKey,
+		"ACCOUNT":        c.Account,
+		"CL_VERSION":     c.CLVersion,
+		"CL_IMAGE":       c.CLImage,
 	}
 
 	// Set env values
@@ -132,25 +79,25 @@ func soakTestHelper(
 		"resources": map[string]interface{}{
 			"requests": map[string]interface{}{
 				"cpu":    "2000m",
-				"memory": "2048Mi",
+				"memory": "1048Mi",
 			},
 			"limits": map[string]interface{}{
 				"cpu":    "2000m",
-				"memory": "2048Mi",
+				"memory": "1048Mi",
 			},
 		},
 	}
 
-	err = testEnvironment.
+	err = c.Env.
 		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
 		Run()
 	require.NoError(t, err, "Error launching test environment")
 	// Copying required files / folders to remote runner pod
 	for _, file := range remoteFileList {
-		_, _, _, err = testEnvironment.Client.CopyToPod(
-			testEnvironment.Cfg.Namespace,
+		_, _, _, err = c.Env.Client.CopyToPod(
+			c.Env.Cfg.Namespace,
 			file,
-			fmt.Sprintf("%s/%s:/root/", testEnvironment.Cfg.Namespace, remoteContainerName),
+			fmt.Sprintf("%s/%s:/root/", c.Env.Cfg.Namespace, remoteContainerName),
 			remoteContainerName)
 
 		if err != nil {
@@ -158,6 +105,6 @@ func soakTestHelper(
 		}
 	}
 
-	err = actions.TriggerRemoteTest("../../", testEnvironment)
+	err = actions.TriggerRemoteTest("../../", c.Env)
 	require.NoError(t, err, "Error activating remote test")
 }

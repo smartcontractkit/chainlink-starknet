@@ -7,22 +7,17 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"os"
-	"strconv"
 	"time"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
 
-	"github.com/dontpanicdao/caigo/gateway"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
-	client "github.com/smartcontractkit/chainlink/integration-tests/client"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 )
 
 var (
@@ -35,95 +30,43 @@ func init() {
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err                 error
-		t                   *common.Test
-		serviceKeyL1        = "Hardhat"
-		serviceKeyL2        = "starknet-dev"
-		serviceKeyChainlink = "chainlink"
-		chainName           = "starknet"
-		chainId             = gateway.GOERLI_ID
-		cfg                 *common.Common
-		decimals            = 9
-		mockServerVal       = 900000000
-		roundWaitTimeout    = time.Hour * 72
-		nodeCount           = 5
+		err           error
+		t             *common.Test
+		decimals      = 9
+		mockServerVal = 900000000
 	)
 
 	BeforeEach(func() {
 		By("Gauntlet preparation", func() {
-
-			// Checking if count of OCR nodes is defined in ENV
-			nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
-			if nodeCountDefined == true {
-				nodeCount, err = strconv.Atoi(nodeCountSet)
-				if err != nil {
-					panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
-				}
-			}
-
-			// Checking if TTL env var is set to adjust duration to custom value
-			ttlValue, ttlDefined := os.LookupEnv("TTL")
-			if ttlDefined == true {
-				ttl, err := time.ParseDuration(ttlValue)
-				if err != nil {
-					panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-				}
-				roundWaitTimeout = ttl
-			}
 			t = &common.Test{}
+			t.Common = common.New()
+			t.Common.Default()
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
 			t.Sg, err = gauntlet.NewStarknetGauntlet("/root/")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
 		By("Deploying the environment", func() {
-			cfg = &common.Common{
-				ChainName:           chainName,
-				ChainId:             chainId,
-				ServiceKeyChainlink: serviceKeyChainlink,
-				ServiceKeyL1:        serviceKeyL1,
-				ServiceKeyL2:        serviceKeyL2,
-			}
-
-			t.DeployCluster(nodeCount, cfg)
+			t.DeployCluster()
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
-			err = t.Sg.SetupNetwork(t.L2RPCUrl)
+			err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting up network should not fail")
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
-			if !t.Testnet {
+			if !t.Common.Testnet {
 				t.Devnet.AutoLoadState(t.OCR2Client, t.OCRAddr)
 			}
 		})
 
 		By("Setting up bootstrap and oracle nodes", func() {
-			observationSource := `
-			val [type = "bridge" name="bridge-mockserver"]
-			parse [type="jsonparse" path="data,result"]
-			val -> parse
-			`
-			// TODO: validate juels per fee coin calculation
-			juelsPerFeeCoinSource := `"""
-			sum  [type="sum" values=<[451000]> ]
-			sum
-			"""
-			`
-
-			t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
-				Name: "bridge-mockserver",
-				URL:  t.GetMockServerURL(),
-			})
-			err = t.SetMockServerValue("", mockServerVal)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting mock server value should not fail")
-			err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, t.OCRAddr)
-			Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
+			t.SetUpNodes(mockServerVal)
 		})
 
 	})
 
 	Describe("with OCRv2 job @soak", func() {
 		It("Soak test OCRv2", func() {
-			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", roundWaitTimeout))
+			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", t.Common.TTL))
 			// assert new rounds are occurring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
@@ -136,8 +79,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			var negative bool
 			var sign = -1
 
-			for start := time.Now(); time.Since(start) < roundWaitTimeout; {
-				log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), roundWaitTimeout))
+			for start := time.Now(); time.Since(start) < t.Common.TTL; {
+				log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), t.Common.TTL))
 				rand.Seed(time.Now().UnixNano())
 				sign *= -1
 				var newValue = (rand.Intn(mockServerVal-0+1) + 0) * sign
@@ -218,7 +161,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 		}
 
 		By("Tearing down the environment", func() {
-			err = actions.TeardownSuite(t.Env, "./", t.GetChainlinkNodes(), nil, nil)
+			err = actions.TeardownSuite(t.Common.Env, "./", t.GetChainlinkNodes(), nil, nil)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})

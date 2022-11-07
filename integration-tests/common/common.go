@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
@@ -13,7 +14,18 @@ import (
 	"github.com/smartcontractkit/chainlink/core/services/relay"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"gopkg.in/guregu/null.v4"
+	"os"
+	"strconv"
 	"strings"
+	"time"
+)
+
+var (
+	serviceKeyL1        = "Hardhat"
+	serviceKeyL2        = "starknet-dev"
+	serviceKeyChainlink = "chainlink"
+	chainName           = "starknet"
+	chainId             = gateway.GOERLI_ID
 )
 
 type Common struct {
@@ -23,6 +35,67 @@ type Common struct {
 	ServiceKeyChainlink string
 	ChainName           string
 	ChainId             string
+	NodeCount           int
+	TTL                 time.Duration
+	InsideK8            bool
+	Testnet             bool
+	CLImage             string
+	CLVersion           string
+	L2RPCUrl            string
+	PrivateKey          string
+	Account             string
+	ClConfig            map[string]interface{}
+	EnvConfig           map[string]interface{}
+	Env                 *environment.Environment
+}
+
+func New() *Common {
+	c := &Common{
+		ChainName:           chainName,
+		ChainId:             chainId,
+		ServiceKeyChainlink: serviceKeyChainlink,
+		ServiceKeyL1:        serviceKeyL1,
+		ServiceKeyL2:        serviceKeyL2,
+	}
+	// Checking if count of OCR nodes is defined in ENV
+	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
+	if nodeCountDefined {
+		c.NodeCount, err = strconv.Atoi(nodeCountSet)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
+		}
+	} else {
+		panic("Please define NODE_COUNT")
+	}
+
+	// Checking if TTL env var is set in ENV
+	ttlValue, ttlDefined := os.LookupEnv("TTL")
+	if ttlDefined {
+		c.TTL, err = time.ParseDuration(ttlValue)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+	} else {
+		panic("Please define TTL of env")
+	}
+
+	// Checking if version needs to be overridden env var is set in ENV
+	envClImage, clImageDefined := os.LookupEnv("CL_IMAGE")
+	envClVersion, clVersionDefined := os.LookupEnv("CL_VERSION")
+	if clImageDefined && clVersionDefined {
+		c.CLImage = envClImage
+		c.CLVersion = envClVersion
+	} else {
+		panic("Please define CL_IMAGE and CL_VERSION")
+	}
+
+	// Setting optional parameters
+	_, c.InsideK8 = os.LookupEnv("INSIDE_K8")
+	c.L2RPCUrl, c.Testnet = os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
+	c.PrivateKey, _ = os.LookupEnv("PRIVATE_KEY")
+	c.Account, _ = os.LookupEnv("ACCOUNT")
+
+	return c
 }
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
@@ -135,23 +208,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	return nil
 }
 
-func (c *Common) GetConfig() *Common {
-	return c
-}
-
-func SetConfig(cfg *Common) *Common {
-	return &Common{
-		ServiceKeyChainlink: cfg.ServiceKeyChainlink,
-		ServiceKeyL1:        cfg.ServiceKeyL1,
-		ServiceKeyL2:        cfg.ServiceKeyL2,
-		P2PPort:             cfg.P2PPort,
-		ChainId:             cfg.ChainId,
-		ChainName:           cfg.ChainName,
-	}
-}
-
-func GetDefaultCoreConfig() map[string]interface{} {
-	return map[string]interface{}{
+func (c *Common) Default() {
+	c.EnvConfig = map[string]interface{}{
 		"STARKNET_ENABLED":            "true",
 		"EVM_ENABLED":                 "false",
 		"EVM_RPC_ENABLED":             "false",
@@ -164,12 +222,19 @@ func GetDefaultCoreConfig() map[string]interface{} {
 		"P2PV2_DELTA_RECONCILE":       "5s",
 		"p2p_listen_port":             "0",
 	}
-}
-
-func GetDefaultEnvSetup(envConfig *environment.Config, clConfig map[string]interface{}) *environment.Environment {
-	return environment.New(envConfig).
+	c.ClConfig = map[string]interface{}{
+		"replicas": c.NodeCount,
+		"env":      c.EnvConfig,
+		"chainlink": map[string]interface{}{
+			"image": map[string]interface{}{
+				"image":   c.CLImage,
+				"version": c.CLVersion,
+			},
+		},
+	}
+	c.Env = environment.New(&environment.Config{InsideK8s: c.InsideK8, NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL}).
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.New(0, clConfig))
+		AddHelm(chainlink.New(0, c.ClConfig))
 }

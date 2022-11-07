@@ -34,7 +34,7 @@ func (t *Test) fundNodes() error {
 		return err
 	}
 
-	if t.Testnet {
+	if t.Common.Testnet {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
