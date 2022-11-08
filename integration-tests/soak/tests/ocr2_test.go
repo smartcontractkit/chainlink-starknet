@@ -1,22 +1,23 @@
-package smoke_test
+package soak_test
 
 // revive:disable:dot-imports
 import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	"math/big"
+	"math/rand"
 	"time"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 )
 
 var (
@@ -29,11 +30,10 @@ func init() {
 
 var _ = Describe("StarkNET OCR suite @ocr", func() {
 	var (
-		err                error
-		t                  *common.Test
-		decimals           = 9
-		increasingCountMax = 10
-		mockServerVal      = 900000000
+		err           error
+		t             *common.Test
+		decimals      = 9
+		mockServerVal = 900000000
 	)
 
 	BeforeEach(func() {
@@ -42,7 +42,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			t.Common = common.New()
 			t.Common.Default()
 			// Setting this to the root of the repo for cmd exec func for Gauntlet
-			t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
+			t.Sg, err = gauntlet.NewStarknetGauntlet("/root/")
 			Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
 		})
 
@@ -50,7 +50,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			t.DeployCluster()
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
-			Expect(err).ShouldNot(HaveOccurred(), "Setting up gauntlet network should not fail")
+			Expect(err).ShouldNot(HaveOccurred(), "Setting up network should not fail")
 			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 			if !t.Common.Testnet {
@@ -64,52 +64,36 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	})
 
-	Describe("with OCRv2 job", func() {
-		It("works", func() {
-			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
-
-			// validate balance in aggregator
-			resLINK, err := t.Starknet.CallContract(ctx, starknet.CallOps{
-				ContractAddress: caigotypes.HexToHash(t.LinkTokenAddr),
-				Selector:        "balanceOf",
-				Calldata:        []string{caigotypes.HexToBN(t.OCRAddr).String()},
-			})
-			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
-			resAgg, err := t.Starknet.CallContract(ctx, starknet.CallOps{
-				ContractAddress: caigotypes.HexToHash(t.OCRAddr),
-				Selector:        "link_available_for_payment",
-			})
-			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
-			balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
-			balAgg, _ := new(big.Int).SetString(resAgg[0], 0)
-			Expect(balLINK.Cmp(big.NewInt(0)) == 1).To(BeTrue(), "Aggregator should have non-zero balance")
-			Expect(balLINK.Cmp(balAgg) >= 0).To(BeTrue(), "Aggregator payment balance should be <= actual LINK balance")
-
-			// assert new rounds are occuring
+	Describe("with OCRv2 job @soak", func() {
+		It("Soak test OCRv2", func() {
+			log.Info().Msg(fmt.Sprintf("Starting run for:  %+v", t.Common.TTL))
+			// assert new rounds are occurring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
 			var stuck bool
 			stuckCount := 0
+			ctx := context.Background() // context background used because timeout handled by requestTimeout param
 
 			// assert both positive and negative values have been seen
 			var positive bool
 			var negative bool
+			var sign = -1
 
 			for start := time.Now(); time.Since(start) < t.Common.TTL; {
-				// end condition: enough rounds have occured, and positive and negative answers have been seen
-				if increasing >= increasingCountMax && positive && negative {
-					break
+				log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), t.Common.TTL))
+				rand.Seed(time.Now().UnixNano())
+				sign *= -1
+				var newValue = (rand.Intn(mockServerVal-0+1) + 0) * sign
+
+				err = t.SetMockServerValue("", newValue)
+				if err != nil {
+					log.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
 				}
 
 				// end condition: rounds have been stuck
-				if stuck && stuckCount > 10 {
+				if stuck && stuckCount > 50 {
 					log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 					break
-				}
-
-				// once progression has reached halfway, change to negative values
-				if increasing == increasingCountMax/2 {
-					t.SetMockServerValue("", -1*mockServerVal)
 				}
 
 				// try to fetch rounds
@@ -117,7 +101,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
 				if err != nil {
-					log.Error().Err(err)
+					log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 					continue
 				}
 				log.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
@@ -144,7 +128,10 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				}
 
 				// check increasing rounds
-				Expect(res.Digest == details.Digest).To(BeTrue(), "Config digest should not change")
+				if !(res.Digest == details.Digest) {
+					stuckCount += 1
+					log.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
+				}
 				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
 					increasing += 1
 					stuck = false
@@ -154,27 +141,16 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 				// reach this point, answer has not changed
 				stuckCount += 1
-				if stuckCount > 30 {
+				if stuckCount > 5 {
 					stuck = true
 					increasing = 0
 				}
 			}
-
-			Expect(increasing >= increasingCountMax).To(BeTrue(), "Round + epochs should be increasing")
+			log.Info().Msg(fmt.Sprintf("Reached the end of run"))
+			Expect(increasing >= 0).To(BeTrue(), "Round + epochs should be increasing")
+			Expect(negative).To(BeTrue(), "Positive value should have been submitted")
 			Expect(positive).To(BeTrue(), "Positive value should have been submitted")
-			Expect(negative).To(BeTrue(), "Negative value should have been submitted")
 			Expect(stuck).To(BeFalse(), "Round + epochs should not be stuck")
-
-			// Test proxy reading
-			// TODO: would be good to test proxy switching underlying feeds
-			roundDataRaw, err := t.Starknet.CallContract(ctx, starknet.CallOps{
-				ContractAddress: caigotypes.HexToHash(t.ProxyAddr),
-				Selector:        "latest_round_data",
-			})
-			Expect(err).ShouldNot(HaveOccurred(), "Reading round data from proxy should not fail")
-			Expect(len(roundDataRaw) == 5).Should(BeTrue(), "Round data from proxy should match expected size")
-			value := starknet.HexToSignedBig(roundDataRaw[1]).Int64()
-			Expect(value == int64(mockServerVal) || value == int64(-1*mockServerVal)).Should(BeTrue(), "Reading from proxy should return correct value")
 		})
 	})
 
