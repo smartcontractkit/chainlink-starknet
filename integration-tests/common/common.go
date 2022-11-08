@@ -6,6 +6,7 @@ import (
 	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
+	"github.com/smartcontractkit/chainlink-env/pkg/alias"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
@@ -71,7 +72,11 @@ func New() *Common {
 	// Checking if TTL env var is set in ENV
 	ttlValue, ttlDefined := os.LookupEnv("TTL")
 	if ttlDefined {
-		c.TTL, err = time.ParseDuration(ttlValue)
+		duration, err := time.ParseDuration(ttlValue)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
 		}
