@@ -39,7 +39,7 @@ It also needs to export a json configuration for for node operators:
 [
   {
     "id": "noop",
-    "nodeAddress": ["0x26db6cd9e7dfd3f7c825ec9d6d2646e7a959fc574febde9668337e4c55aaac"]
+    "nodeAddress": [<NODE_OPERATOR_ADDRESS>]
   }
 ]
 ```
