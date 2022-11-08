@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/chainlink-starknet/monitoring
 
-go 1.18
+go 1.19
 
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
