@@ -19,17 +19,27 @@ error appears, but instead log it.
 
 ##### Run
 
-`go test ./integration-test/soak/tests`
+`make test-integration-soak`
 
 ##### Env vars
 
-`TTL=72h` - duration of soak (72h default)
+`TTL=72h` - duration of soak
 
-`NODE_COUNT` - number of OCR nodes (5 default)
+`NODE_COUNT` - number of OCR nodes
+
+`CL_IMAGE` - Chainlink docker image repo
+
+`CL_VERSION` - Chainlink docker image version
+
+`L2_RPC_URL` - This will override the L2 url, used for testnet (optional)
+
+`PRIVATE_KEY` - Private key for Testnet (optional)
+
+`ACCOUNT` - Account address on Testnet (optional)
 
 ### Structure
 
-[Commons](../../integration-tests/common/common.go) - Common EVM based methods to generate chains, nodes, key bundles
+[Commons](../../integration-tests/common/common.go) - Common Chainlink methods to generate chains, nodes, key bundles
 
 [Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch
 client details
