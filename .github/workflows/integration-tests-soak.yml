@@ -44,7 +44,7 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.15
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
@@ -80,7 +80,7 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3.0.2
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@13437f3be1c82243a8c44eabc043a4fa58d72d73 # v2.0.20
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
           CGO_ENABLED: 1
           test_command_to_run: make test-integration-soak
