@@ -55,7 +55,7 @@ func soakTestHelper(
 	envValues := map[string]interface{}{
 		"test_log_level": "debug",
 		"INSIDE_K8":      true,
-		"TTL":            c.TTL,
+		"TTL":            c.TTL.String(),
 		"NODE_COUNT":     c.NodeCount,
 		"L2_RPC_URL":     c.L2RPCUrl,
 		"PRIVATE_KEY":    c.PrivateKey,
@@ -79,11 +79,11 @@ func soakTestHelper(
 		"resources": map[string]interface{}{
 			"requests": map[string]interface{}{
 				"cpu":    "2000m",
-				"memory": "1048Mi",
+				"memory": "2048Mi",
 			},
 			"limits": map[string]interface{}{
 				"cpu":    "2000m",
-				"memory": "1048Mi",
+				"memory": "2048Mi",
 			},
 		},
 	}

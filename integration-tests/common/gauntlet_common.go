@@ -38,7 +38,7 @@ func (t *Test) fundNodes() error {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = t.Sg.TransferToken(ethAddressGoerli, key, "10000000000000000") // Transferring 0.1 ETH to each node
+			_, err = t.Sg.TransferToken(ethAddressGoerli, key, "1000000000000000000") // Transferring 1 ETH to each node
 			if err != nil {
 				return err
 			}
