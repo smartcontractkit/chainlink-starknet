@@ -8,8 +8,8 @@
 
 ## Local development
 
-- Start the third party dependencies using [docker-compose](https://docs.docker.com/compose/).
-  Use the docker-compose.yml file from [smartcontractkit/chainlink-relay/ops/monitoring](https://github.com/smartcontractkit/chainlink-relay/tree/main/ops/monitoring).
+- Start the monitor's third party dependencies using [docker-compose](https://docs.docker.com/compose/).
+  Use the docker-compose.yml file in `./ops`:
 
 ```sh
 docker-compose up
