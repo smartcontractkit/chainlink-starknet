@@ -104,7 +104,7 @@ func (sg *StarknetGauntlet) DeployAccountContract(salt int64, pubKey string) (st
 }
 
 func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
-	_, err := sg.g.ExecCommand([]string{"token:deploy", "--link"}, *sg.options)
+	_, err := sg.G.ExecCommand([]string{"token:deploy", "--link"}, *sg.options)
 	if err != nil {
 		return "", err
 	}
