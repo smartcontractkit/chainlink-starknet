@@ -1,10 +1,12 @@
 import { assert } from 'chai'
-import { account } from '@chainlink/starknet'
+import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
 import { Account, ec, SequencerProvider, stark } from 'starknet'
 import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/account'
 
 describe('fundAccount', function () {
   this.timeout(900_000)
+  let network: IntegratedDevnet
+
   let alice: Account
   let bob: Account
   let provider: SequencerProvider
@@ -14,6 +16,7 @@ describe('fundAccount', function () {
   const funder = new account.Funder(opts)
 
   before(async function () {
+    network = await startNetwork()
     const gateway_url = process.env.NODE_URL || DEVNET_URL
     provider = new SequencerProvider({ baseUrl: gateway_url })
 
@@ -76,5 +79,9 @@ describe('fundAccount', function () {
       calldata: [BigInt(bob.address).toString(10)],
     })
     assert.deepEqual(balance.result, ['0x2328', '0x0'])
+  })
+
+  after(async function () {
+    network.stop()
   })
 })

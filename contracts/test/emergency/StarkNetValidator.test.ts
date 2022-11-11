@@ -13,7 +13,13 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { account, addCompilationToNetwork, startNetwork, startNode, IntegratedDevnet } from '@chainlink/starknet'
+import {
+  account,
+  addCompilationToNetwork,
+  startNetwork,
+  startNode,
+  IntegratedDevnet,
+} from '@chainlink/starknet'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */

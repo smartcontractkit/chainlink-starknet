@@ -1,6 +1,7 @@
 import { Account, SequencerProvider, ec, KeyPair } from 'starknet'
 import { toBN } from 'starknet/utils/number'
 import { bnToUint256 } from 'starknet/dist/utils/uint256'
+import { startNetwork } from './network'
 
 export const ERC20_ADDRESS_DEVNET =
   '0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488'
@@ -59,6 +60,7 @@ interface IFundingStrategy {
 // Fund the Account on Devnet
 class DevnetFundingStrategy implements IFundingStrategy {
   public async fund(accounts: FundAccounts[], opts: FunderOptions) {
+    const network = await startNetwork()
     accounts.forEach(async (account) => {
       const body = {
         address: account.account,
@@ -71,6 +73,7 @@ class DevnetFundingStrategy implements IFundingStrategy {
         headers: { 'Content-Type': 'application/json' },
       })
     })
+    network.stop()
   }
 }
 

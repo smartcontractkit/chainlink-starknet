@@ -187,7 +187,7 @@ test-integration-soak: test-integration-prep
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
-test-integration-contracts: build-ts env-devnet-hardhat
+test-integration-contracts: build-ts
 	cd examples/contracts/aggregator-consumer/ && \
 		yarn test
 	cd packages-ts/integration-eqlabs-multisig/ && \

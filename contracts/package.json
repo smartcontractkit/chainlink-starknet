@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.2",
-    "@chainlink/starknet": "^1.0.0",
+    "@chainlink/starknet": "*",
     "@openzeppelin/contracts": "^4.7.3",
     "axios": "^0.24.0"
   }
