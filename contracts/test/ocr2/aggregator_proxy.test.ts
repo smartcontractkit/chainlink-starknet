@@ -4,10 +4,12 @@ import { number } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
+import { account } from '@chainlink/starknet'
 
 describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
-
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
   let aggregatorContractFactory: StarknetContractFactory
   let proxyContractFactory: StarknetContractFactory
 
@@ -21,6 +23,7 @@ describe('aggregator_proxy.cairo', function () {
     proxyContractFactory = await starknet.getContractFactory('ocr2/aggregator_proxy')
 
     owner = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: owner.address, amount: 5000 }])
 
     aggregator = await aggregatorContractFactory.deploy({ decimals: 8 })
 
@@ -35,6 +38,8 @@ describe('aggregator_proxy.cairo', function () {
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
     const bob = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: bob.address, amount: 5000 }])
+
     return { ownable: proxy, alice, bob }
   })
 

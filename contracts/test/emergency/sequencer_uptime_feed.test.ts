@@ -2,24 +2,32 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
-import { expectInvokeError } from '../utils'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
+import { account, expectInvokeError } from '@chainlink/starknet'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
 
   let owner: Account
   let nonOwner: Account
-
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
     owner = await starknet.deployAccount('OpenZeppelin')
     nonOwner = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([
+      { account: owner.address, amount: 5000 },
+      { account: nonOwner.address, amount: 5000 },
+    ])
   })
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
     const bob = await starknet.deployAccount('OpenZeppelin')
+
+    await funder.fund([{ account: bob.address, amount: 5000 }])
+
     const feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
     const feed = await feedFactory.deploy({
       initial_status: 0,
@@ -118,7 +126,7 @@ describe('SequencerUptimeFeed', function () {
 
     it('should block access when using an account without access', async function () {
       const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
-
+      await funder.fund([{ account: accWithoutAccess.address, amount: 5000 }])
       await expectInvokeError(
         accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
         'SimpleReadAccessController: address does not have access',
