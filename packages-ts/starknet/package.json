@@ -1,0 +1,29 @@
+{
+  "name": "@chainlink/starknet",
+  "version": "1.0.0",
+  "description": "Starknet test utilities",
+  "keywords": [
+    "typescript",
+    "cli"
+  ],
+  "main": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "!dist/**/*.test.js"
+  ],
+  "scripts": {
+    "lint": "tsc",
+    "test": "npx hardhat --network localhost test",
+    "gauntlet": "ts-node ./src/index.ts",
+    "format": "yarn prettier --write ./src",
+    "format:check": "yarn prettier --check ./src",
+    "clean": "rm -rf ./dist/ ./bin/",
+    "build": "yarn clean && tsc -b",
+    "bundle": "yarn build && pkg ."
+  },
+  "devDependencies": {
+    "@shardlabs/starknet-hardhat-plugin": "^0.6.2",
+    "hardhat": "^2.10.2"
+  }
+}

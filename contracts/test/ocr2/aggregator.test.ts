@@ -6,7 +6,7 @@ import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { toFelt, hexPadStart, expectInvokeErrorMsg } from '../utils'
+import { account, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet'
 
 interface Oracle {
   signer: KeyPair
@@ -57,6 +57,8 @@ function decodeBytes(felts: BN[]): Uint8Array {
 
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
 
   let aggregatorFactory: StarknetContractFactory
 
@@ -82,6 +84,7 @@ describe('aggregator.cairo', function () {
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
     owner = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: owner.address, amount: 5000 }])
 
     const tokenFactory = await starknet.getContractFactory('link_token')
     token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
@@ -106,6 +109,7 @@ describe('aggregator.cairo', function () {
     let futures = []
     let generateOracle = async () => {
       let transmitter = await starknet.deployAccount('OpenZeppelin')
+      await funder.fund([{ account: owner.address, amount: 5000 }])
       return {
         signer: ec.genKeyPair(),
         transmitter,
@@ -162,6 +166,7 @@ describe('aggregator.cairo', function () {
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
     const bob = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: bob.address, amount: 5000 }])
     return { ownable: aggregator, alice, bob }
   })
 

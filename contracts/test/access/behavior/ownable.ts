@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { hexPadStart } from '../../utils'
+import { hexPadStart } from '@chainlink/starknet'
 
 export type BeforeFn = () => Promise<TestData>
 export type TestData = {

@@ -1,15 +1,20 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
+import { account } from '@chainlink/starknet'
 
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
-  let account: Account
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
+
+  let alice: Account
   let MockContract: StarknetContract
   let ConsumerContract: StarknetContract
 
   before(async () => {
-    account = await starknet.deployAccount('OpenZeppelin')
+    alice = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: alice.address, amount: 5000 }])
 
     const decimals = 18
     const MockFactory = await starknet.getContractFactory('MockAggregator.cairo')
@@ -24,7 +29,7 @@ describe('ContractTestsMock', function () {
   })
 
   it('should set and read latest round data successfully', async () => {
-    await account.invoke(MockContract, 'set_latest_round_data', {
+    await alice.invoke(MockContract, 'set_latest_round_data', {
       answer: 12,
       block_num: 1,
       observation_timestamp: 14325,
@@ -39,7 +44,7 @@ describe('ContractTestsMock', function () {
   })
 
   it('should set and read latest round data successfully for the second time', async () => {
-    await account.invoke(MockContract, 'set_latest_round_data', {
+    await alice.invoke(MockContract, 'set_latest_round_data', {
       answer: 19,
       block_num: 2,
       observation_timestamp: 14345,
@@ -54,7 +59,7 @@ describe('ContractTestsMock', function () {
   })
 
   it('should set and read latest round data successfully for the third time', async () => {
-    await account.invoke(MockContract, 'set_latest_round_data', {
+    await alice.invoke(MockContract, 'set_latest_round_data', {
       answer: 42,
       block_num: 3,
       observation_timestamp: 9876,

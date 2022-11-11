@@ -4,9 +4,12 @@ import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
+import { account } from '@chainlink/starknet'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
@@ -17,6 +20,7 @@ describe('ERC677', function () {
 
   beforeEach(async () => {
     sender = await starknet.deployAccount('OpenZeppelin')
+    await funder.fund([{ account: sender.address, amount: 5000 }])
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')
     tokenFactory = await starknet.getContractFactory('link_token')
 

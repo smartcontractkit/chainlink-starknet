@@ -13,13 +13,15 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { addCompilationToNetwork } from '../utils'
+import { account, addCompilationToNetwork } from '@chainlink/starknet'
 
 describe('StarkNetValidator', () => {
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
 
-  let account: Account
+  let defaultAccount: Account
   let deployer: SignerWithAddress
   let eoaValidator: SignerWithAddress
   let alice: SignerWithAddress
@@ -40,7 +42,10 @@ describe('StarkNetValidator', () => {
     )
 
     // Deploy L2 account
-    account = await starknet.deployAccount('OpenZeppelin')
+    defaultAccount = await starknet.deployAccount('OpenZeppelin')
+
+    // Fund L2 account
+    await funder.fund([{ account: defaultAccount.address, amount: 5000 }])
 
     // Fetch predefined L1 EOA accounts
     const accounts = await ethers.getSigners()
@@ -52,7 +57,7 @@ describe('StarkNetValidator', () => {
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
     l2Contract = await l2ContractFactory.deploy({
       initial_status: 0,
-      owner_address: number.toBN(account.starknetContract.address),
+      owner_address: number.toBN(defaultAccount.starknetContract.address),
     })
 
     // Deploy the MockStarkNetMessaging contract used to simulate L1 - L2 comms
@@ -100,7 +105,7 @@ describe('StarkNetValidator', () => {
     )
 
     // Point the L2 feed contract to receive from the L1 StarkNetValidator contract
-    await account.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
+    await defaultAccount.invoke(l2Contract, 'set_l1_sender', { address: starkNetValidator.address })
   })
 
   describe('#constructor', () => {
