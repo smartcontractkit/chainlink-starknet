@@ -1,18 +1,21 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { account } from '@chainlink/starknet'
+import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
 
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
+  let network: IntegratedDevnet
+
   let alice: Account
   let MockContract: StarknetContract
   let ConsumerContract: StarknetContract
 
   before(async () => {
+    network = await startNetwork()
     alice = await starknet.deployAccount('OpenZeppelin')
     await funder.fund([{ account: alice.address, amount: 5000 }])
 
@@ -75,5 +78,9 @@ describe('ContractTestsMock', function () {
   it('should read Decimals successfully', async () => {
     const decimals = await ConsumerContract.call('readDecimals', {})
     assert.equal(decimals.decimals, 18)
+  })
+
+  after(async function () {
+    network.stop()
   })
 })
