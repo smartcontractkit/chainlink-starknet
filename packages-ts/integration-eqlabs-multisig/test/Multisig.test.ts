@@ -3,10 +3,12 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { number } from 'starknet'
-import { account } from '@chainlink/starknet'
+import { account, IntegratedDevnet, startNetwork } from '@chainlink/starknet'
 
 describe('Multisig integration tests', function () {
   this.timeout(300_000)
+
+  let network: IntegratedDevnet
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -18,6 +20,8 @@ describe('Multisig integration tests', function () {
   let multisig: StarknetContract
 
   before(async function () {
+    network = await startNetwork()
+
     account1 = await starknet.deployAccount('OpenZeppelin')
     account2 = await starknet.deployAccount('OpenZeppelin')
     account3 = await starknet.deployAccount('OpenZeppelin')
@@ -80,5 +84,9 @@ describe('Multisig integration tests', function () {
       const res = await multisig.call('get_threshold')
       expect(res.threshold).to.equal(newThreshold)
     }
+  })
+
+  after(async function () {
+    network.stop()
   })
 })

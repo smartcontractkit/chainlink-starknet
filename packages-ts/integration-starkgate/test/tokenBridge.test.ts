@@ -10,13 +10,22 @@ import {
   loadContract_InternalStarkgate,
   loadContract_OpenZepplin,
 } from '../src/utils'
-import { account, hexPadStart } from '@chainlink/starknet'
+import {
+  account,
+  hexPadStart,
+  IntegratedDevnet,
+  startNetwork,
+  startNode,
+} from '@chainlink/starknet'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
 
 describe('Test StarkGate token bridge + link_token.cairo', function () {
   this.timeout(TIMEOUT)
+
+  let devnetNetwork: IntegratedDevnet
+  let hardHatNetwork: IntegratedDevnet
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -33,6 +42,9 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
   let starknetERC20Bridge: Contract
 
   before(async () => {
+    devnetNetwork = await startNetwork()
+    hardHatNetwork = await startNode()
+
     owner = await starknet.deployAccount('OpenZeppelin')
 
     await funder.fund([{ account: owner.address, amount: 5000 }])
@@ -181,5 +193,10 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
       const balance = await tokenL1.balanceOf(deployer.address)
       expect(balance).to.equal(10)
     })
+  })
+
+  after(async function () {
+    devnetNetwork.stop()
+    hardHatNetwork.stop()
   })
 })

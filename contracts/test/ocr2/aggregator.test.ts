@@ -455,9 +455,9 @@ describe('aggregator.cairo', function () {
         assert.ok(owed == 0)
       }
     })
+  })
 
-    after(async function () {
-      network.stop()
-    })
+  after(async function () {
+    network.stop()
   })
 })
