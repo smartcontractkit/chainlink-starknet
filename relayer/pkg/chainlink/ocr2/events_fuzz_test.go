@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"fmt"
 	fuzz "github.com/google/gofuzz"
 )
 
