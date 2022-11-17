@@ -2,6 +2,7 @@ package ocr2
 
 import (
 	"encoding/hex"
+	"math"
 	"math/big"
 	"time"
 
@@ -21,6 +22,15 @@ var (
 	// Event selectors
 	NewTransmissionEventSelector = "019e22f866f4c5aead2809bf160d2b29e921e335d899979732101c6f3c38ff81"
 	ConfigSetEventSelector       = "9a144bf4a6a8fd083c93211e163e59221578efcc86b93f8c97c620e7b9608a"
+
+	feltLowerBound = new(big.Int).SetUint64(0)
+	feltUpperBound = caigotypes.MaxFelt.Big()
+
+	uint32LowerBound = new(big.Int).SetUint64(0)
+	uint32UpperBound = new(big.Int).SetUint64(math.MaxUint32)
+
+	uint64LowerBound = new(big.Int).SetUint64(0)
+	uint64UpperBound = new(big.Int).SetUint64(math.MaxUint64)
 )
 
 // NewTransmissionEvent represents the 'NewTransmission' event
@@ -40,6 +50,14 @@ type NewTransmissionEvent struct {
 	Reimbursement   *big.Int
 }
 
+func rangeCheck(felt *caigotypes.Felt, lowerBound *big.Int, upperBound *big.Int) error {
+	if !(felt.Int.Cmp(lowerBound) >= 0 && felt.Int.Cmp(upperBound) <= 0) {
+		return errors.New("invalid: value is out of range")
+	}
+
+	return nil
+}
+
 // ParseNewTransmissionEvent is decoding binary felt data as the NewTransmissionEvent type
 func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEvent, error) {
 	{
@@ -50,6 +68,10 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
 
+		err := rangeCheck(eventData[observationsLenIndex], uint64LowerBound, uint64UpperBound)
+		if err != nil {
+			return NewTransmissionEvent{}, err
+		}
 		observationsLen := eventData[observationsLenIndex].Uint64()
 		if len(eventData) != constNumOfElements+int(observationsLen) {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
@@ -58,18 +80,34 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// round_id
 	index := 0
+	err := rangeCheck(eventData[index], uint32LowerBound, uint32UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	roundId := uint32(eventData[index].Uint64())
 
 	// answer
 	index++
+	err = rangeCheck(eventData[index], feltLowerBound, feltUpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	latestAnswer := starknet.HexToSignedBig(eventData[index].String())
 
 	// transmitter
 	index++
+	err = rangeCheck(eventData[index], feltLowerBound, feltUpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	transmitter := eventData[index]
 
 	// observation_timestamp
 	index++
+	err = rangeCheck(eventData[index], new(big.Int).SetInt64(math.MinInt64), new(big.Int).SetInt64(math.MaxInt64))
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	unixTime := eventData[index].Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
@@ -79,6 +117,10 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// observation_len
 	index++
+	err = rangeCheck(eventData[index], uint32LowerBound, uint32UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	observationsLen := uint32(eventData[index].Uint64())
 
 	// observers (based on observationsLen)
@@ -90,15 +132,27 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	// observations (based on observationsLen)
 	var observations []*big.Int
 	for i := 0; i < int(observationsLen); i++ {
+		err = rangeCheck(eventData[index], feltLowerBound, feltUpperBound)
+		if err != nil {
+			return NewTransmissionEvent{}, err
+		}
 		observations = append(observations, eventData[index+i+1].Big())
 	}
 
 	// juels_per_fee_coin
 	index += int(observationsLen) + 1
+	err = rangeCheck(eventData[index], feltLowerBound, feltUpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	juelsPerFeeCoin := eventData[index].Big()
 
 	// juels_per_fee_coin
 	index++
+	err = rangeCheck(eventData[index], feltLowerBound, feltUpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	gasPrice := eventData[index].Big()
 
 	// config digest
@@ -114,6 +168,10 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// reimbursement
 	index++
+	err = rangeCheck(eventData[index], feltLowerBound, feltUpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	reimbursement := eventData[index].Big()
 
 	return NewTransmissionEvent{
@@ -141,6 +199,10 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
+		err := rangeCheck(eventData[oraclesLenIdx], uint64LowerBound, new(big.Int).SetUint64(uint64(MaxObservers)))
+		if err != nil {
+			return NewTransmissionEvent{}, err
+		}
 		oraclesLen := eventData[oraclesLenIdx].Uint64()
 		onchainConfigLenIdx := oraclesLenIdx + 2*oraclesLen + 2
 
@@ -148,6 +210,10 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
+		err = rangeCheck(eventData[onchainConfigLenIdx], uint64LowerBound, uint64UpperBound)
+		if err != nil {
+			return NewTransmissionEvent{}, err
+		}
 		onchainConfigLen := eventData[onchainConfigLenIdx].Uint64()
 		offchainConfigLenIdx := onchainConfigLenIdx + onchainConfigLen + 2
 
@@ -156,6 +222,11 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 		}
 
 		offchainConfigLen := eventData[offchainConfigLenIdx].Uint64()
+		err = rangeCheck(eventData[onchainConfigLenIdx], uint64LowerBound, uint64UpperBound)
+		if err != nil {
+			return NewTransmissionEvent{}, err
+		}
+
 		if uint64(len(eventData)) != offchainConfigLenIdx+offchainConfigLen+1 {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
@@ -173,10 +244,18 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 	// config_count
 	index++
+	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	configCount := eventData[index].Uint64()
 
 	// oracles_len
 	index++
+	err = rangeCheck(eventData[index], uint64LowerBound, new(big.Int).SetUint64(uint64(MaxObservers)))
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	oraclesLen := eventData[index].Uint64()
 
 	// oracles
@@ -194,10 +273,18 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 	// f
 	index = index + int(oraclesLen)*2
+	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	f := eventData[index].Uint64()
 
 	// onchain_config length
 	index++
+	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	onchainConfigLen := eventData[index].Uint64()
 
 	// onchain_config (version=1, min, max)
@@ -214,10 +301,18 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 	// offchain_config_version
 	index += int(onchainConfigLen)
+	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	offchainConfigVersion := eventData[index].Uint64()
 
 	// offchain_config_len
 	index++
+	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
+	if err != nil {
+		return NewTransmissionEvent{}, err
+	}
 	offchainConfigLen := eventData[index].Uint64()
 
 	// offchain_config
