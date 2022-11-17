@@ -1,11 +1,8 @@
 package ocr2
 
 import (
-	cryptorand "crypto/rand"
 	"encoding/hex"
-	//"fmt"
 	"math/big"
-	mathrand "math/rand"
 	"testing"
 	"time"
 
