@@ -51,10 +51,6 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 		}
 
 		observationsLen := eventData[observationsLenIndex].Uint64()
-		if observationsLen > uint64(MaxObservers) {
-			return NewTransmissionEvent{}, errors.New("invalid: observationsLen")
-		}
-
 		if len(eventData) != constNumOfElements+int(observationsLen) {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
@@ -62,6 +58,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// round_id
 	index := 0
+	// TODO check for overflow?
 	roundId := uint32(eventData[index].Uint64())
 
 	// answer
@@ -70,6 +67,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// transmitter
 	index++
+	// TODO check if < Prime?
 	transmitter := eventData[index]
 
 	// observation_timestamp
@@ -94,6 +92,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 	// observations (based on observationsLen)
 	var observations []*big.Int
 	for i := 0; i < int(observationsLen); i++ {
+		// TODO: check if < UINT128_MAX?
 		observations = append(observations, eventData[index+i+1].Big())
 	}
 

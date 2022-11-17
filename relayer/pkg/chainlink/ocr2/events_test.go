@@ -155,54 +155,6 @@ func TestConfigSetEventSelector(t *testing.T) {
 	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }
 
-func TestTransmissionEvent(t *testing.T) {
-	const constNumOfElements = 11
-	const ObservationMaxBytes = 16
-
-	roundId := mathrand.Int31()
-	latestAnswer := randomFelt()
-	transmitter := randomFelt()
-	unixTime := mathrand.Int63()
-
-	observersRaw := randomFelt()
-
-	observationsLen := mathrand.Intn(MaxObservers)
-	observations := []*caigotypes.Felt{}
-	data := make([]byte, ObservationMaxBytes)
-	for i := 0; i < observationsLen; i++ {
-		_, err := cryptorand.Read(data)
-		require.NoError(t, err)
-
-		observations = append(observations, &caigotypes.Felt{new(big.Int).SetBytes(data)})
-	}
-
-	juelsPerFeeCoin := randomFelt()
-	gasPrice := randomFelt()
-	digestData := randomFelt()
-	epochAndRoundData := randomFelt()
-	reimbursement := randomFelt()
-
-	eventData := []*caigotypes.Felt{
-		&caigotypes.Felt{new(big.Int).SetInt64(int64(roundId))},
-		&caigotypes.Felt{latestAnswer},
-		&caigotypes.Felt{transmitter},
-		&caigotypes.Felt{new(big.Int).SetInt64(unixTime)},
-		&caigotypes.Felt{observersRaw},
-		&caigotypes.Felt{new(big.Int).SetInt64(int64(observationsLen))},
-	}
-	eventData = append(
-		append(eventData, observations...),
-		&caigotypes.Felt{juelsPerFeeCoin},
-		&caigotypes.Felt{gasPrice},
-		&caigotypes.Felt{digestData},
-		&caigotypes.Felt{epochAndRoundData},
-		&caigotypes.Felt{reimbursement},
-	)
-
-	_, err := ParseNewTransmissionEvent(eventData)
-	require.NoError(t, err)
-}
-
 func TestTransmissionEventFailure(t *testing.T) {
 	const numOfFelts = 10
 	const chunkSize = 31
@@ -217,13 +169,4 @@ func TestTransmissionEventFailure(t *testing.T) {
 
 	_, err := ParseNewTransmissionEvent(caigoFelts)
 	assert.Equal(t, err.Error(), "invalid: event data")
-}
-
-func randomFelt() *big.Int {
-	const chunkSize = 31
-
-	data := make([]byte, chunkSize)
-	cryptorand.Read(data)
-
-	return new(big.Int).SetBytes(data)
 }
