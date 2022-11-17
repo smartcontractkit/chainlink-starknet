@@ -201,7 +201,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 		err := rangeCheck(eventData[oraclesLenIdx], uint64LowerBound, new(big.Int).SetUint64(uint64(MaxObservers)))
 		if err != nil {
-			return NewTransmissionEvent{}, err
+			return types.ContractConfig{}, err
 		}
 		oraclesLen := eventData[oraclesLenIdx].Uint64()
 		onchainConfigLenIdx := oraclesLenIdx + 2*oraclesLen + 2
@@ -212,7 +212,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 		err = rangeCheck(eventData[onchainConfigLenIdx], uint64LowerBound, uint64UpperBound)
 		if err != nil {
-			return NewTransmissionEvent{}, err
+			return types.ContractConfig{}, err
 		}
 		onchainConfigLen := eventData[onchainConfigLenIdx].Uint64()
 		offchainConfigLenIdx := onchainConfigLenIdx + onchainConfigLen + 2
@@ -224,7 +224,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 		offchainConfigLen := eventData[offchainConfigLenIdx].Uint64()
 		err = rangeCheck(eventData[onchainConfigLenIdx], uint64LowerBound, uint64UpperBound)
 		if err != nil {
-			return NewTransmissionEvent{}, err
+			return types.ContractConfig{}, err
 		}
 
 		if uint64(len(eventData)) != offchainConfigLenIdx+offchainConfigLen+1 {
@@ -246,7 +246,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index++
 	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
 	if err != nil {
-		return NewTransmissionEvent{}, err
+		return types.ContractConfig{}, err
 	}
 	configCount := eventData[index].Uint64()
 
@@ -254,7 +254,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index++
 	err = rangeCheck(eventData[index], uint64LowerBound, new(big.Int).SetUint64(uint64(MaxObservers)))
 	if err != nil {
-		return NewTransmissionEvent{}, err
+		return types.ContractConfig{}, err
 	}
 	oraclesLen := eventData[index].Uint64()
 
@@ -275,7 +275,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index = index + int(oraclesLen)*2
 	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
 	if err != nil {
-		return NewTransmissionEvent{}, err
+		return types.ContractConfig{}, err
 	}
 	f := eventData[index].Uint64()
 
@@ -283,7 +283,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index++
 	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
 	if err != nil {
-		return NewTransmissionEvent{}, err
+		return types.ContractConfig{}, err
 	}
 	onchainConfigLen := eventData[index].Uint64()
 
@@ -303,7 +303,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index += int(onchainConfigLen)
 	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
 	if err != nil {
-		return NewTransmissionEvent{}, err
+		return types.ContractConfig{}, err
 	}
 	offchainConfigVersion := eventData[index].Uint64()
 
@@ -311,7 +311,7 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	index++
 	err = rangeCheck(eventData[index], uint64LowerBound, uint64UpperBound)
 	if err != nil {
-		return NewTransmissionEvent{}, err
+		return types.ContractConfig{}, err
 	}
 	offchainConfigLen := eventData[index].Uint64()
 
