@@ -34,8 +34,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # Dispatch Relayer build & release
-      - name: Build and release relayer
+      # Dispatch Relayer release
+      - name: Release relayer
         run: gh workflow run release/starknet-relayer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
