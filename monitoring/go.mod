@@ -6,7 +6,7 @@ require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/dontpanicdao/caigo v0.3.1-0.20220812122711-b855f2b57bb5
 	github.com/prometheus/client_golang v1.12.2
-	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220929092150-827776af9911
+	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20221025223751-9b407cff57eb
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221003161435-b90403e247af
 	github.com/smartcontractkit/libocr v0.0.0-20220812191430-db92a9fdaa52
 	github.com/stretchr/testify v1.8.0
