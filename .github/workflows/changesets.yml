@@ -36,11 +36,11 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       # Dispatch Relayer release
       - name: Release relayer
-        run: gh workflow run .github/workflows/release/starknet-relayer
+        run: gh workflow run .github/workflows/release/starknet-relayer.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Dispatch Gauntlet CLI build & release
       - name: Build and release Gauntlet CLI
-        run: gh workflow run .github/workflows/release/starknet-gauntlet-cli
+        run: gh workflow run .github/workflows/release/starknet-gauntlet-cli.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
