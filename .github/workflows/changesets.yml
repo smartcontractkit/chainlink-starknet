@@ -37,6 +37,10 @@ jobs:
       # Dispatch Relayer build & release
       - name: Build and release relayer
         run: gh workflow run release/starknet-relayer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Dispatch Gauntlet CLI build & release
       - name: Build and release Gauntlet CLI
         run: gh workflow run release/starknet-gauntlet-cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
