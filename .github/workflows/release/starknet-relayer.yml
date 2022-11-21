@@ -25,7 +25,7 @@ jobs:
       # Release code under vX.X.X
       - name: Release Code
         if: steps.checkTag.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           tag_name: relayer/v${{ env.STARKNET_RELAYER }}
           token: ${{ secrets.GITHUB_TOKEN }}
