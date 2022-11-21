@@ -14,8 +14,17 @@ jobs:
       # Store starknet version
       - name: Set Env Variables
         run: echo "STARKNET_RELAYER=$(npm info @chainlink/starknet-relayer version)" >> $GITHUB_ENV
+      # Check if release tag exists
+      - name: Check release tag
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: checkTag
+        with:
+          tag: relayer/v${{ env.STARKNET_RELAYER }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Release code under vX.X.X
       - name: Release Code
+        if: steps.checkTag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: relayer/v${{ env.STARKNET_RELAYER }}
