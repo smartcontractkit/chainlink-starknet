@@ -1,9 +1,7 @@
 name: Starknet Relayer Release
 
 on:
-  push:
-    tags:
-      - "@chainlink/starknet-relayer@[0-9]+.[0-9]+.[0-9]"
+  workflow_dispatch:
 
 jobs:
   starknet-relayer-release:
