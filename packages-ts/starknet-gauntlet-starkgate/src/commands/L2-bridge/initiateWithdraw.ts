@@ -4,7 +4,9 @@ import {
   ExecutionContext,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
+import { isValidAddress } from '@chainlink/evm-gauntlet'
 import { Uint256, bnToUint256 } from 'starknet/dist/utils/uint256'
+import { utils } from 'ethers'
 import { CATEGORIES } from '../../lib/categories'
 import { l2BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
@@ -28,16 +30,17 @@ const makeContractInput = async (
   input: UserInput,
   context: ExecutionContext,
 ): Promise<ContractInput> => {
-  return [input.recipient, bnToUint256(input.amount)]
+  const amount = utils.parseEther(input.amount).toString()
+  return [input.recipient, bnToUint256(amount)]
 }
 
 const validateInput = async (input: UserInput): Promise<boolean> => {
-  if (!input.recipient) {
-    throw new Error('Must specify --recipient of L1 Recipient')
+  if (!isValidAddress(input.recipient)) {
+    throw new Error(`Invalid L1 recipient: ${input.recipient}`)
   }
 
-  if (!input.amount) {
-    throw new Error('Must specify --amount to withdraw')
+  if (isNaN(Number(input.amount))) {
+    throw new Error(`Invalid amount: ${input.amount}`)
   }
 
   return true
@@ -60,7 +63,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Initiates withdraw to L1',
     examples: [
-      `${CATEGORIES.L2_BRIDGE}:initiate_withdraw --network=<NETWORK> --recipient=[L1_RECIPIENT_ADDRESS] --amount=[AMOUNT_TO_WITHDRAW] [L2_BRIDGE_ADDRESS]`,
+      `${CATEGORIES.L2_BRIDGE}:initiate_withdraw --network=<NETWORK> --recipient=[L1_RECIPIENT_ADDRESS] --amount=[AMOUNT_IN_LINK] [L2_BRIDGE_ADDRESS]`,
     ],
   },
   makeUserInput,
