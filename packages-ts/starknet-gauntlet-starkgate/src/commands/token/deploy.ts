@@ -1,41 +1,23 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import {
-  AfterExecute,
   BeforeExecute,
   ExecuteCommandConfig,
   ExecutionContext,
   makeExecuteCommand,
-  Validation,
 } from '@chainlink/starknet-gauntlet'
-import { shortString } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
-  name: string
-  symbol: string
-  decimals: string
-  minter?: string
+  owner?: string
 }
 
-type ContractInput = [name: string, symbol: string, decimals: string, minter: string]
+type ContractInput = [owner: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
-  if (flags.link) {
-    return {
-      name: 'Chainlink LINK Token',
-      symbol: 'LINK',
-      decimals: '18',
-    }
-  }
-
   return {
-    name: flags.name,
-    symbol: flags.symbol,
-    decimals: flags.decimals,
-    minter: flags.minter,
+    owner: flags.owner,
   }
 }
 
@@ -44,12 +26,7 @@ const makeContractInput = async (
   context: ExecutionContext,
 ): Promise<ContractInput> => {
   const defaultWallet = context.wallet.getAccountAddress()
-  return [
-    shortString.encodeShortString(input.name),
-    shortString.encodeShortString(input.symbol),
-    input.decimals,
-    input.minter || defaultWallet,
-  ]
+  return [input.owner || defaultWallet]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
@@ -57,7 +34,7 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
   input,
   deps,
 ) => async () => {
-  deps.logger.info(`About to deploy an ERC20 Token Contract with the following details:
+  deps.logger.info(`About to deploy the LINK Token Contract with the following details:
     ${input.contract}
   `)
 }
@@ -67,10 +44,10 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   category: CATEGORIES.TOKEN,
   action: 'deploy',
   ux: {
-    description: 'Deploys an ERC20 Token contract',
+    description: 'Deploys the LINK Token contract',
     examples: [
-      `${CATEGORIES.TOKEN}:deploy --network=<NETWORK> --link`,
-      `${CATEGORIES.TOKEN}:deploy --network=<NETWORK> --link`,
+      `${CATEGORIES.TOKEN}:deploy --network=<NETWORK>`,
+      `${CATEGORIES.TOKEN}:deploy --network=<NETWORK> --owner=<ACCOUNT_ADDRESS>`,
     ],
   },
   makeUserInput,
