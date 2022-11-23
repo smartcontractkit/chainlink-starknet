@@ -77,7 +77,7 @@ const registerExecuteCommand = <UI, CI>(
   return registerCommand(deps)
 }
 
-const registerEVMExecuteCommand = <UI, CI>(
+const registerEVMExecuteCommand = <UI, CI extends Iterable<any>>(
   registerCommand: (deps: EVMDependencies) => EVMCommandCtor<EVMExecuteCommandInstance<UI, CI>>,
   gauntletConfig,
 ) => {
