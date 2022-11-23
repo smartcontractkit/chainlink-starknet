@@ -10,7 +10,7 @@ import { tokenContractLoader } from '../../lib/contracts'
 import { uint256ToBN } from 'starknet/dist/utils/uint256'
 
 type UserInput = {
-  account: string
+  address: string
 }
 
 type ContractInput = string
@@ -24,14 +24,14 @@ const makeUserInput = async (flags, args): Promise<InspectUserInput<UserInput, n
 
   return {
     input: {
-      account: flags.account,
+      address: flags.address,
     },
   }
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput[]> => {
-  if (!isValidAddress(input.account)) throw new Error(`Invalid account address: ${input.account}`)
-  return [input.account]
+  if (!isValidAddress(input.address)) throw new Error(`Invalid account address: ${input.address}`)
+  return [input.address]
 }
 
 const makeComparisionData = (provider: IStarknetProvider) => async (
@@ -58,7 +58,7 @@ const commandConfig: InspectCommandConfig<UserInput, ContractInput, null, QueryR
     category: CATEGORIES.TOKEN,
     function: 'balance_of',
     examples: [
-      'yarn gauntlet token:balanceOf --network=<NETWORK> --account=<ACCOUNT> <CONTRACT_ADDRESS>',
+      `${CATEGORIES.TOKEN}:balance_of --network=<NETWORK> --address=<ACCOUNT_ADDRESS> <TOKEN_CONTRACT_ADDRESS>`,
     ],
   },
   queries: ['balanceOf'],
