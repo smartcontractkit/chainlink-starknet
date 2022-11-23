@@ -336,10 +336,10 @@
   dependencies:
     "@eth-optimism/contracts" "^0.5.21"
 
-"@chainlink/evm-gauntlet@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.0.1.tgz#2b9ee322e62c9e469f21c8d360bafd67ebf23930"
-  integrity sha512-5kSVef8FP9MCYrj0FcmCfh7x0zYZ4R9SWm9ABjOmerRc9H+6f0u018AX5RA1V8hukS1uaFnTZ6ZzxlGTQ1ZQyA==
+"@chainlink/evm-gauntlet@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.4.0.tgz#95a5a63eaab641e9558c910dba5cead6ce56b862"
+  integrity sha512-gQAzl7o/Hesz+UPY3rBw/kkHqjUxReYCIQdtdqKT6hRHDOqncVrAO4iAcHuKLSHtnQ79kSaDCfTSlUn1nTrrTQ==
   dependencies:
     "@chainlink/gauntlet-core" "0.3.1"
     ethers "^5.6.9"
