@@ -1,22 +1,23 @@
 import { assert } from 'chai'
-import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
+import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 import { Account, ec, SequencerProvider, stark } from 'starknet'
 import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/account'
 
 describe('fundAccount', function () {
   this.timeout(900_000)
-  let network: IntegratedDevnet
+  const manager = new NetworkManager()
 
   let alice: Account
   let bob: Account
   let provider: SequencerProvider
   let erc20Address: string
-
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
+  let opts: FunderOptions
+  let funder: Funder
 
   before(async function () {
-    network = await startNetwork()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
     const gateway_url = process.env.NODE_URL || DEVNET_URL
     provider = new SequencerProvider({ baseUrl: gateway_url })
 
@@ -82,6 +83,6 @@ describe('fundAccount', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })

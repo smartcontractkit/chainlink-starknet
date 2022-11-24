@@ -1,11 +1,51 @@
 import { ChildProcess, spawn } from 'child_process'
 import axios from 'axios'
 
-export abstract class IntegratedDevnet {
+const DEVNET_NAME = 'devnet'
+const HARDHAT_NAME = 'hardhat'
+
+export class NetworkManager {
+  private opts?: any
+  private strategyDevnet: StarknetDevnet
+  private strategyHardhat: HardHatNode
+
+  constructor(opts?: any) {
+    this.opts = opts
+
+    const network = process.env.NETWORK
+    const hardhatNetwork = process.env.NETWORK_ETHEREUM
+    if (network === DEVNET_NAME) {
+      this.strategyDevnet = new StarknetDevnet('5050', this.opts)
+    }
+    if (hardhatNetwork === HARDHAT_NAME) {
+      this.strategyHardhat = new HardHatNode('8545', this.opts)
+    }
+  }
+  // This function adds some funds to pre-deployed account that we are using in our test.
+  public async start(): Promise<void> {
+    if (this.strategyDevnet) {
+      await this.strategyDevnet.startNetwork()
+    }
+    if (this.strategyHardhat) {
+      await this.strategyHardhat.startNode()
+    }
+  }
+
+  public stop() {
+    if (this.strategyDevnet) {
+      this.strategyDevnet.stop()
+    }
+    if (this.strategyHardhat) {
+      this.strategyHardhat.stop()
+    }
+  }
+}
+
+abstract class ChildProcessManager {
   protected childProcess: ChildProcess
 
   constructor(protected port: string) {
-    IntegratedDevnet.cleanupFns.push(this.cleanup.bind(this))
+    ChildProcessManager.cleanupFns.push(this.cleanup.bind(this))
   }
 
   protected static cleanupFns: Array<() => void> = []
@@ -15,8 +55,6 @@ export abstract class IntegratedDevnet {
   }
 
   protected abstract spawnChildProcess(): Promise<ChildProcess>
-
-  protected abstract cleanup(): void
 
   private async isServerAlive() {
     try {
@@ -46,6 +84,10 @@ export abstract class IntegratedDevnet {
     })
   }
 
+  public cleanup(): void {
+    this.childProcess?.kill()
+  }
+
   public stop() {
     if (!this.childProcess) {
       return
@@ -55,11 +97,11 @@ export abstract class IntegratedDevnet {
   }
 }
 
-class VenvDevnet extends IntegratedDevnet {
+class StarknetDevnet extends ChildProcessManager {
   private command: string
-  private opts: any
+  private opts?: any
 
-  constructor(port: string, opts: any) {
+  constructor(port: string, opts?: any) {
     super(port)
 
     this.opts = opts
@@ -74,16 +116,19 @@ class VenvDevnet extends IntegratedDevnet {
     return spawn(this.command, args)
   }
 
-  protected cleanup(): void {
-    this.childProcess?.kill()
+  public async startNetwork(): Promise<void> {
+    await this.start()
+
+    // Starting to poll devnet too soon can result in ENOENT
+    await new Promise((f) => setTimeout(f, 4000))
   }
 }
 
-class VenvHardHatNode extends IntegratedDevnet {
+class HardHatNode extends ChildProcessManager {
   private command: string[]
-  private opts: any
+  private opts?: any
 
-  constructor(port: string, opts: any) {
+  constructor(port: string, opts?: any) {
     super(port)
 
     this.opts = opts
@@ -94,29 +139,10 @@ class VenvHardHatNode extends IntegratedDevnet {
     return spawn('npx', this.command)
   }
 
-  protected cleanup(): void {
-    this.childProcess?.kill()
+  public async startNode(): Promise<void> {
+    await this.start()
+
+    // Starting to poll hardhatNode too soon can result in ENOENT
+    await new Promise((f) => setTimeout(f, 4000))
   }
-}
-
-export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
-  const devnet = new VenvDevnet('5050', opts)
-
-  await devnet.start()
-
-  // Starting to poll devnet too soon can result in ENOENT
-  await new Promise((f) => setTimeout(f, 2000))
-
-  return devnet
-}
-
-export const startNode = async (opts?: {}): Promise<IntegratedDevnet> => {
-  const hardhatNode = new VenvHardHatNode('8545', opts)
-
-  await hardhatNode.start()
-
-  // Starting to poll hardhatNode too soon can result in ENOENT
-  await new Promise((f) => setTimeout(f, 2000))
-
-  return hardhatNode
 }

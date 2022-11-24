@@ -3,19 +3,27 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account, expectInvokeError, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
+import {
+  account,
+  expectInvokeError,
+  NetworkManager,
+  FunderOptions,
+  Funder,
+} from '@chainlink/starknet'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
-  let network: IntegratedDevnet
+  const manager = new NetworkManager()
 
   let owner: Account
   let nonOwner: Account
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
+  let opts: FunderOptions
+  let funder: Funder
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
-    network = await startNetwork()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
     owner = await starknet.deployAccount('OpenZeppelin')
     nonOwner = await starknet.deployAccount('OpenZeppelin')
     await funder.fund([
@@ -158,6 +166,6 @@ describe('SequencerUptimeFeed', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })

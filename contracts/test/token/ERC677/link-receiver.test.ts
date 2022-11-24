@@ -5,14 +5,14 @@ import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
-import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
+import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 
 describe('LinkToken', function () {
   this.timeout(TIMEOUT)
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
+  const manager = new NetworkManager()
 
-  let network: IntegratedDevnet
+  let opts: FunderOptions
+  let funder: Funder
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
@@ -23,7 +23,9 @@ describe('LinkToken', function () {
   let token: StarknetContract
 
   before(async function () {
-    network = await startNetwork()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
   })
 
   beforeEach(async () => {
@@ -231,6 +233,6 @@ describe('LinkToken', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })

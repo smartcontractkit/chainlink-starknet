@@ -4,14 +4,14 @@ import { starknet } from 'hardhat'
 import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
-import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
+import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 
 describe('ERC677', function () {
   this.timeout(TIMEOUT)
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
+  const manager = new NetworkManager()
 
-  let network: IntegratedDevnet
+  let opts: FunderOptions
+  let funder: Funder
 
   let receiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
@@ -21,7 +21,9 @@ describe('ERC677', function () {
   let data: (number | bigint)[]
 
   before(async function () {
-    network = await startNetwork()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
   })
 
   beforeEach(async () => {
@@ -151,6 +153,6 @@ describe('ERC677', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })

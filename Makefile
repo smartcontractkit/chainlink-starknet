@@ -1,7 +1,8 @@
 BIN_DIR = bin
 export GOPATH ?= $(shell go env GOPATH)
 export GO111MODULE ?= on
-
+export NETWORK = devnet
+export NETWORK_ETHEREUM = hardhat
 LINUX=LINUX
 OSX=OSX
 WINDOWS=WIN32
@@ -187,7 +188,9 @@ test-integration-soak: test-integration-prep
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
-test-integration-contracts: build-ts
+test-integration-contracts: build-ts 
+	export NETWORK = devnet && \
+	export NETWORK_ETHEREUM = hardhat && \
 	cd examples/contracts/aggregator-consumer/ && \
 		yarn test
 	cd packages-ts/integration-eqlabs-multisig/ && \

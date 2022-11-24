@@ -16,19 +16,18 @@ import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract
 import {
   account,
   addCompilationToNetwork,
-  startNetwork,
-  startNode,
-  IntegratedDevnet,
+  NetworkManager,
+  FunderOptions,
+  Funder,
 } from '@chainlink/starknet'
 
 describe('StarkNetValidator', () => {
+  const manager = new NetworkManager()
+
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
-
-  let devnetNetwork: IntegratedDevnet
-  let hardHatNetwork: IntegratedDevnet
+  let opts: FunderOptions
+  let funder: Funder
 
   let defaultAccount: Account
   let deployer: SignerWithAddress
@@ -46,8 +45,9 @@ describe('StarkNetValidator', () => {
   let l2Contract: StarknetContract
 
   before(async () => {
-    devnetNetwork = await startNetwork()
-    hardHatNetwork = await startNode()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
     await addCompilationToNetwork(
       'src/chainlink/solidity/emergency/StarkNetValidator.sol:StarkNetValidator',
     )
@@ -547,7 +547,6 @@ describe('StarkNetValidator', () => {
   })
 
   after(async function () {
-    devnetNetwork.stop()
-    hardHatNetwork.stop()
+    manager.stop()
   })
 })

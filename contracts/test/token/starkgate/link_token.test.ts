@@ -1,16 +1,19 @@
-import { account, startNetwork, IntegratedDevnet } from '@chainlink/starknet'
+import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 import { starknet } from 'hardhat'
 import { TIMEOUT } from '../../constants'
 import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
 
 describe('link_token', function () {
   this.timeout(TIMEOUT)
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
-  let network: IntegratedDevnet
+  const manager = new NetworkManager()
+
+  let opts: FunderOptions
+  let funder: Funder
 
   before(async function () {
-    network = await startNetwork()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
   })
 
   shouldBehaveLikeStarkGateERC20(async () => {
@@ -30,6 +33,6 @@ describe('link_token', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })

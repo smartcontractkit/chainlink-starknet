@@ -11,8 +11,9 @@ import {
   toFelt,
   hexPadStart,
   expectInvokeErrorMsg,
-  startNetwork,
-  IntegratedDevnet,
+  NetworkManager,
+  FunderOptions,
+  Funder,
 } from '@chainlink/starknet'
 
 interface Oracle {
@@ -64,9 +65,10 @@ function decodeBytes(felts: BN[]): Uint8Array {
 
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
-  let network: IntegratedDevnet
+  const manager = new NetworkManager()
+
+  let opts: FunderOptions
+  let funder: Funder
 
   let aggregatorFactory: StarknetContractFactory
 
@@ -85,7 +87,10 @@ describe('aggregator.cairo', function () {
   let answer: string
 
   before(async () => {
-    network = await startNetwork()
+    await manager.start()
+
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorFactory = await starknet.getContractFactory('ocr2/aggregator')
 
@@ -458,6 +463,6 @@ describe('aggregator.cairo', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })

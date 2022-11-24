@@ -3,15 +3,15 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { number } from 'starknet'
-import { account, IntegratedDevnet, startNetwork } from '@chainlink/starknet'
+import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 
 describe('Multisig integration tests', function () {
   this.timeout(300_000)
 
-  let network: IntegratedDevnet
+  const manager = new NetworkManager()
 
-  const opts = account.makeFunderOptsFromEnv()
-  const funder = new account.Funder(opts)
+  let opts: FunderOptions
+  let funder: Funder
 
   let account1: Account
   let account2: Account
@@ -20,7 +20,9 @@ describe('Multisig integration tests', function () {
   let multisig: StarknetContract
 
   before(async function () {
-    network = await startNetwork()
+    await manager.start()
+    opts = account.makeFunderOptsFromEnv()
+    funder = new account.Funder(opts)
 
     account1 = await starknet.deployAccount('OpenZeppelin')
     account2 = await starknet.deployAccount('OpenZeppelin')
@@ -87,6 +89,6 @@ describe('Multisig integration tests', function () {
   })
 
   after(async function () {
-    network.stop()
+    manager.stop()
   })
 })
