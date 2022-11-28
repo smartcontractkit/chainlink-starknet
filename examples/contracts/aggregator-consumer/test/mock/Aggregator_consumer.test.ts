@@ -1,11 +1,13 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions
   let funder: Funder

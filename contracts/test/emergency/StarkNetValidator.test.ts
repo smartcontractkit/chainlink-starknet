@@ -16,14 +16,16 @@ import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract
 import {
   account,
   addCompilationToNetwork,
+  loadConfig,
   NetworkManager,
   FunderOptions,
   Funder,
 } from '@chainlink/starknet'
 
 describe('StarkNetValidator', () => {
-  const manager = new NetworkManager()
-
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet', 'hardhat'] }
+  const manager = new NetworkManager(optsConf)
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   let opts: FunderOptions

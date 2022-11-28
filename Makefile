@@ -1,8 +1,6 @@
 BIN_DIR = bin
 export GOPATH ?= $(shell go env GOPATH)
 export GO111MODULE ?= on
-export NETWORK = devnet
-export NETWORK_ETHEREUM = hardhat
 LINUX=LINUX
 OSX=OSX
 WINDOWS=WIN32

@@ -4,12 +4,15 @@ import { number } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 
 describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
 
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
+
   let aggregatorContractFactory: StarknetContractFactory
   let proxyContractFactory: StarknetContractFactory
 

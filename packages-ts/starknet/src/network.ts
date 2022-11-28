@@ -11,17 +11,14 @@ export class NetworkManager {
 
   constructor(opts?: any) {
     this.opts = opts
-
-    const network = process.env.NETWORK
-    const hardhatNetwork = process.env.NETWORK_ETHEREUM
-    if (network === DEVNET_NAME) {
+    if (this.opts.config.starknet === DEVNET_NAME || this.opts?.required[0] === DEVNET_NAME) {
       this.strategyDevnet = new StarknetDevnet('5050', this.opts)
     }
-    if (hardhatNetwork === HARDHAT_NAME) {
+    if (this.opts.config.ethereum === HARDHAT_NAME || this.opts?.required[1] === HARDHAT_NAME) {
       this.strategyHardhat = new HardHatNode('8545', this.opts)
     }
   }
-  // This function adds some funds to pre-deployed account that we are using in our test.
+
   public async start(): Promise<void> {
     if (this.strategyDevnet) {
       await this.strategyDevnet.startNetwork()
@@ -79,6 +76,7 @@ abstract class ChildProcessManager {
       setTimeout(resolve, 4000)
 
       this.childProcess.on('error', (error) => {
+        console.log('ERROR: ', error)
         reject(error)
       })
     })
@@ -143,6 +141,6 @@ class HardHatNode extends ChildProcessManager {
     await this.start()
 
     // Starting to poll hardhatNode too soon can result in ENOENT
-    await new Promise((f) => setTimeout(f, 4000))
+    await new Promise((f) => setTimeout(f, 10000))
   }
 }

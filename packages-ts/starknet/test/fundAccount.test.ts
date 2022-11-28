@@ -1,11 +1,13 @@
 import { assert } from 'chai'
-import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, NetworkManager, loadConfig, FunderOptions, Funder } from '@chainlink/starknet'
 import { Account, ec, SequencerProvider, stark } from 'starknet'
 import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/account'
 
 describe('fundAccount', function () {
   this.timeout(900_000)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
 
   let alice: Account
   let bob: Account

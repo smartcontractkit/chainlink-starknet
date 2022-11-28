@@ -5,11 +5,13 @@ import { uint256 } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
 import { getSelectorFromName } from 'starknet/dist/utils/hash'
-import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 
 describe('LinkToken', function () {
   this.timeout(TIMEOUT)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions
   let funder: Funder

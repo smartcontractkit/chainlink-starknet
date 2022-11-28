@@ -10,14 +10,23 @@ import {
   loadContract_InternalStarkgate,
   loadContract_OpenZepplin,
 } from '../src/utils'
-import { account, hexPadStart, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import {
+  account,
+  loadConfig,
+  hexPadStart,
+  NetworkManager,
+  FunderOptions,
+  Funder,
+} from '@chainlink/starknet'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
 
 describe('Test StarkGate token bridge + link_token.cairo', function () {
   this.timeout(TIMEOUT)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet', 'hardhat'] }
+  const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions
   let funder: Funder

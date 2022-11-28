@@ -6,6 +6,7 @@ import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import {
   account,
   expectInvokeError,
+  loadConfig,
   NetworkManager,
   FunderOptions,
   Funder,
@@ -13,7 +14,9 @@ import {
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
 
   let owner: Account
   let nonOwner: Account

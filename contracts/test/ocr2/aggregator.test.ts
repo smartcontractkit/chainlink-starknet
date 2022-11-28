@@ -11,6 +11,7 @@ import {
   toFelt,
   hexPadStart,
   expectInvokeErrorMsg,
+  loadConfig,
   NetworkManager,
   FunderOptions,
   Funder,
@@ -65,7 +66,9 @@ function decodeBytes(felts: BN[]): Uint8Array {
 
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions
   let funder: Funder

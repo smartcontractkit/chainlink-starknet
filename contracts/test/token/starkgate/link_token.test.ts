@@ -1,11 +1,13 @@
-import { account, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
 import { starknet } from 'hardhat'
 import { TIMEOUT } from '../../constants'
 import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
 
 describe('link_token', function () {
   this.timeout(TIMEOUT)
-  const manager = new NetworkManager()
+  const config = loadConfig()
+  const optsConf = { config, required: ['devnet'] }
+  const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions
   let funder: Funder

@@ -79,3 +79,11 @@ export const toFelt = (int: number | BigNumberish): BigNumberish => {
 export const hexPadStart = (data: number | bigint, len: number) => {
   return `0x${data.toString(16).padStart(len, '0')}`
 }
+
+export const loadConfig = () => {
+  const config = {
+    starknet: process.env.NETWORK,
+    ethereum: process.env.NETWORK_ETHEREUM,
+  }
+  return config
+}
