@@ -3,17 +3,21 @@ package infra_deployments_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"time"
+	"net/url"
+)
+
+const (
+	L2RpcUrl = "https://alpha4-2.starknet.io"
+	P2pPort  = "5001"
 )
 
 var (
 	observationSource = `
-			val [type="bridge" name="bridge-mockserver" requestData=<{"data": {"from":"LINK","to":"USD"}}>]
-			parse [type="jsonparse" path="result"]
+			val [type="bridge" name="bridge-mockserver"]
+			parse [type="jsonparse" path="PATH"]
 			val -> parse
 			`
 	juelsPerFeeCoinSource = `"""
@@ -24,15 +28,19 @@ var (
 )
 
 func createKeys() ([]*client.Chainlink, error) {
-	urls := [][]string{}
+	urls := [][]string{
+		// Node access params
+		{"NODE_URL", "NODE_USER", "NODE_PASS"},
+	}
 	var clients []*client.Chainlink
 
-	for _, url := range urls {
+	for _, nodeUrl := range urls {
+		u, _ := url.Parse(nodeUrl[0])
 		c, err := client.NewChainlink(&client.ChainlinkConfig{
-			URL:      url[0],
-			Email:    url[1],
-			Password: url[2],
-			RemoteIP: url[0],
+			URL:      nodeUrl[0],
+			Email:    nodeUrl[1],
+			Password: nodeUrl[2],
+			RemoteIP: u.Host,
 		})
 		if err != nil {
 			return nil, err
@@ -44,21 +52,17 @@ func createKeys() ([]*client.Chainlink, error) {
 		}
 		clients = append(clients, c)
 	}
-
 	return clients, nil
 }
 
-var _ = Describe("@infra", func() {
+var _ = Describe("Deploy config only @infra", func() {
 	It("works", func() {
 		var err error
-		lggr := logger.Nop()
-		rpcRequestTimeout := time.Second * 300
 		t := &common.Test{}
 		t.Common = common.New()
 		t.Common.Default()
 		t.Cc = &common.ChainlinkClient{}
-		//t.Common.P2PPort = "6690"
-		t.Devnet = t.Devnet.NewStarkNetDevnetClient(t.Common.L2RPCUrl, "")
+		t.Common.P2PPort = P2pPort
 		t.Cc.ChainlinkNodes, err = createKeys()
 		t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.Cc.ChainlinkNodes, t.Common.ChainName, t.Common.ChainId)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -72,25 +76,23 @@ var _ = Describe("@infra", func() {
 			_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
 				Name:    t.Common.ChainName,
 				ChainID: t.Common.ChainId,
-				Url:     "https://alpha4-2.starknet.io",
+				Url:     L2RpcUrl,
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 		}
-		t.Starknet, err = starknet.NewClient(t.Common.ChainId, t.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
 		t.Common.Testnet = true
-		t.Common.L2RPCUrl = "https://alpha4-2.starknet.io"
-		//t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
-		//Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
-		//
-		//err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
-		//Expect(err).ShouldNot(HaveOccurred(), "Setting up gauntlet network should not fail")
-		//err = t.DeployGauntlet(-100000000000, 100000000000, 9, "auto", 1, 1)
-		//Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
+		t.Common.L2RPCUrl = L2RpcUrl
+		t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
+		Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
+		err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
+		Expect(err).ShouldNot(HaveOccurred(), "Setting up gauntlet network should not fail")
+		err = t.DeployGauntlet(-100000000000, 100000000000, 9, "auto", 1, 1)
+		Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 		t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 			Name: "bridge-mockserver",
-			URL:  "https://adapters.main.stage.cldev.sh/coinmetrics",
+			URL:  "ADAPTER_URL", // Specify EA url
 		})
-		t.Common.P2PPort = "6690"
+
 		err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
 	})
 

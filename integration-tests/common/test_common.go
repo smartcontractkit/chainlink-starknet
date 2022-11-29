@@ -31,16 +31,6 @@ var (
 	defaultWalletAddress string // derived in init()
 	rpcRequestTimeout    = time.Second * 300
 	dumpPath             = "/dumps/dump.pkl"
-	observationSource    = `
-			val [type = "bridge" name="bridge-mockserver"]
-			parse [type="jsonparse" path="data,result"]
-			val -> parse
-			`
-	juelsPerFeeCoinSource = `"""
-			sum  [type="sum" values=<[451000]> ]
-			sum
-			"""
-			`
 )
 
 func init() {
@@ -54,18 +44,20 @@ func init() {
 }
 
 type Test struct {
-	Devnet               *devnet.StarkNetDevnetClient
-	Cc                   *ChainlinkClient
-	Starknet             *starknet.Client
-	OCR2Client           *ocr2.Client
-	Sg                   *gauntlet.StarknetGauntlet
-	mockServer           *ctfClient.MockserverClient
-	L1RPCUrl             string
-	Common               *Common
-	LinkTokenAddr        string
-	OCRAddr              string
-	AccessControllerAddr string
-	ProxyAddr            string
+	Devnet                *devnet.StarkNetDevnetClient
+	Cc                    *ChainlinkClient
+	Starknet              *starknet.Client
+	OCR2Client            *ocr2.Client
+	Sg                    *gauntlet.StarknetGauntlet
+	mockServer            *ctfClient.MockserverClient
+	L1RPCUrl              string
+	Common                *Common
+	LinkTokenAddr         string
+	OCRAddr               string
+	AccessControllerAddr  string
+	ProxyAddr             string
+	ObservationSource     string
+	JuelsPerFeeCoinSource string
 }
 
 type StarkNetDevnetClient struct {
@@ -85,6 +77,8 @@ type ChainlinkClient struct {
 func (t *Test) DeployCluster() {
 	lggr := logger.Nop()
 	t.Cc = &ChainlinkClient{}
+	t.ObservationSource = t.GetDefaultObservationSource()
+	t.JuelsPerFeeCoinSource = t.GetDefaultJuelsPerFeeCoinSource()
 	t.DeployEnv()
 	t.SetupClients()
 	if t.Common.Testnet {
@@ -159,7 +153,7 @@ func (t *Test) SetUpNodes(mockServerVal int) {
 	})
 	err = t.SetMockServerValue("", mockServerVal)
 	Expect(err).ShouldNot(HaveOccurred(), "Setting mock server value should not fail")
-	err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), observationSource, juelsPerFeeCoinSource, t.OCRAddr)
+	err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), t.ObservationSource, t.JuelsPerFeeCoinSource, t.OCRAddr)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 }
 
@@ -214,4 +208,20 @@ func (t *Test) SetMockServerValue(path string, val int) error {
 func (t *Test) ConfigureL1Messaging() {
 	err = t.Devnet.LoadL1MessagingContract(t.L1RPCUrl)
 	Expect(err).ShouldNot(HaveOccurred(), "Setting up L1 messaging should not fail")
+}
+
+func (t *Test) GetDefaultObservationSource() string {
+	return `
+			val [type = "bridge" name="bridge-mockserver"]
+			parse [type="jsonparse" path="data,result"]
+			val -> parse
+			`
+}
+
+func (t *Test) GetDefaultJuelsPerFeeCoinSource() string {
+	return `"""
+			sum  [type="sum" values=<[451000]> ]
+			sum
+			"""
+			`
 }

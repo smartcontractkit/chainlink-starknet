@@ -371,11 +371,3 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 replace github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
 
 replace github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.0.0
-
-replace github.com/smartcontractkit/chainlink-env/environment => ../../chainlink-env
-
-replace github.com/smartcontractkit/chainlink-env => ../../chainlink-env
-
-replace github.com/smartcontractkit/chainlink-starknet/ops => ../ops
-
-replace github.com/smartcontractkit/chainlink/integration-tests => ../../chainlink/integration-tests

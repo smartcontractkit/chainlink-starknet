@@ -243,5 +243,5 @@ func (c *Common) Default() {
 		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.New(0, c.ClConfig))
+		AddHelm(chainlink.NewVersioned(0, "0.0.11", c.ClConfig))
 }
