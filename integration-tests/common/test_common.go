@@ -55,7 +55,7 @@ func init() {
 
 type Test struct {
 	Devnet               *devnet.StarkNetDevnetClient
-	cc                   *ChainlinkClient
+	Cc                   *ChainlinkClient
 	Starknet             *starknet.Client
 	OCR2Client           *ocr2.Client
 	Sg                   *gauntlet.StarknetGauntlet
@@ -75,8 +75,8 @@ type StarkNetDevnetClient struct {
 	client *resty.Client
 }
 type ChainlinkClient struct {
-	nKeys          []client.NodeKeysBundle
-	chainlinkNodes []*client.Chainlink
+	NKeys          []client.NodeKeysBundle
+	ChainlinkNodes []*client.Chainlink
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
 }
@@ -84,13 +84,13 @@ type ChainlinkClient struct {
 // DeployCluster Deploys and sets up config of the environment and nodes
 func (t *Test) DeployCluster() {
 	lggr := logger.Nop()
-	t.cc = &ChainlinkClient{}
+	t.Cc = &ChainlinkClient{}
 	t.DeployEnv()
 	t.SetupClients()
 	if t.Common.Testnet {
 		t.Common.Env.URLs[t.Common.ServiceKeyL2][1] = t.Common.L2RPCUrl
 	}
-	t.cc.nKeys, t.cc.chainlinkNodes, err = t.Common.CreateKeys(t.Common.Env)
+	t.Cc.NKeys, t.Cc.ChainlinkNodes, err = t.Common.CreateKeys(t.Common.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating chains and keys should not fail")
 	t.Starknet, err = starknet.NewClient(t.Common.ChainId, t.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
@@ -129,23 +129,23 @@ func (t *Test) SetupClients() {
 
 // LoadOCR2Config Loads and returns the default starknet gauntlet config
 func (t *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
-	var offChainKeys []string
-	var onChainKeys []string
+	var offChaiNKeys []string
+	var onChaiNKeys []string
 	var peerIds []string
 	var txKeys []string
 	var cfgKeys []string
-	for _, key := range t.cc.nKeys {
-		offChainKeys = append(offChainKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
+	for _, key := range t.Cc.NKeys {
+		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
 		txKeys = append(txKeys, key.TXKey.Data.ID)
-		onChainKeys = append(onChainKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
+		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
 
 	var payload = ops.TestOCR2Config
-	payload.Signers = onChainKeys
+	payload.Signers = onChaiNKeys
 	payload.Transmitters = txKeys
-	payload.OffchainConfig.OffchainPublicKeys = offChainKeys
+	payload.OffchainConfig.OffchainPublicKeys = offChaiNKeys
 	payload.OffchainConfig.PeerIds = peerIds
 	payload.OffchainConfig.ConfigPublicKeys = cfgKeys
 
@@ -175,11 +175,11 @@ func (t *Test) GetStarkNetAddressRemote() string {
 
 // GetNodeKeys Returns the node key bundles
 func (t *Test) GetNodeKeys() []client.NodeKeysBundle {
-	return t.cc.nKeys
+	return t.Cc.NKeys
 }
 
 func (t *Test) GetChainlinkNodes() []*client.Chainlink {
-	return t.cc.chainlinkNodes
+	return t.Cc.ChainlinkNodes
 }
 
 func (t *Test) GetDefaultPrivateKey() string {
@@ -191,7 +191,7 @@ func (t *Test) GetDefaultWalletAddress() string {
 }
 
 func (t *Test) GetChainlinkClient() *ChainlinkClient {
-	return t.cc
+	return t.Cc
 }
 
 func (t *Test) GetStarknetDevnetClient() *devnet.StarkNetDevnetClient {
@@ -199,7 +199,7 @@ func (t *Test) GetStarknetDevnetClient() *devnet.StarkNetDevnetClient {
 }
 
 func (t *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
-	t.cc.bTypeAttr = attr
+	t.Cc.bTypeAttr = attr
 }
 
 func (t *Test) GetMockServerURL() string {
