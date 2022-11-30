@@ -269,7 +269,7 @@ require (
 	github.com/slack-go/slack v0.11.3 // indirect
 	github.com/smartcontractkit/chainlink-env v0.2.56
 	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20221025223751-9b407cff57eb
-	github.com/smartcontractkit/libocr v0.0.0-20220812191430-db92a9fdaa52 // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8 // indirect
 	github.com/smartcontractkit/ocr2vrf v0.0.0-20221101142607-77f2fe1d1723 // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
 	github.com/smartcontractkit/terra.go v1.0.3-0.20220108002221-62b39252ee16 // indirect
