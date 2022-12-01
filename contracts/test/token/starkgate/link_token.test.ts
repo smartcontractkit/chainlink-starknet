@@ -6,7 +6,7 @@ import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
 describe('link_token', function () {
   this.timeout(TIMEOUT)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions

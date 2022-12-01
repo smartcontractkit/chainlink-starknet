@@ -25,7 +25,7 @@ const SYMBOL = 'LINK'
 describe('Test StarkGate token bridge + link_token.cairo', function () {
   this.timeout(TIMEOUT)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet', 'hardhat'] }
+  const optsConf = { config, required: ['starknet', 'ethereum'] }
   const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions

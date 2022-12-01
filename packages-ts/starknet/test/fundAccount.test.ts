@@ -6,7 +6,7 @@ import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/
 describe('fundAccount', function () {
   this.timeout(900_000)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let alice: Account

@@ -10,7 +10,7 @@ import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@cha
 describe('LinkToken', function () {
   this.timeout(TIMEOUT)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions

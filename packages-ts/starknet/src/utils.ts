@@ -3,6 +3,8 @@ import { BigNumberish } from 'starknet/utils/number'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
 
+export const DEVNET_NAME = 'devnet'
+export const HARDHAT_NAME = 'hardhat'
 // This function adds the build info to the test network so that the network knows
 // how to handle custom errors.  It is automatically done when testing
 // against the default hardhat network.
@@ -82,8 +84,8 @@ export const hexPadStart = (data: number | bigint, len: number) => {
 
 export const loadConfig = () => {
   const config = {
-    starknet: process.env.NETWORK,
-    ethereum: process.env.NETWORK_ETHEREUM,
+    starknet: process.env.NETWORK || DEVNET_NAME,
+    ethereum: process.env.NETWORK_ETHEREUM || HARDHAT_NAME,
   }
   return config
 }

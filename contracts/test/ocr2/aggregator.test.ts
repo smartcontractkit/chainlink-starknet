@@ -67,7 +67,7 @@ function decodeBytes(felts: BN[]): Uint8Array {
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions

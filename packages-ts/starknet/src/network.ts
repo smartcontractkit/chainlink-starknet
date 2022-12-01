@@ -1,8 +1,6 @@
 import { ChildProcess, spawn } from 'child_process'
-import axios from 'axios'
-
-const DEVNET_NAME = 'devnet'
-const HARDHAT_NAME = 'hardhat'
+import net from 'net'
+import { DEVNET_NAME, HARDHAT_NAME } from './utils'
 
 export class NetworkManager {
   private opts?: any
@@ -11,11 +9,15 @@ export class NetworkManager {
 
   constructor(opts?: any) {
     this.opts = opts
-    if (this.opts.config.starknet === DEVNET_NAME || this.opts?.required[0] === DEVNET_NAME) {
-      this.strategyDevnet = new StarknetDevnet('5050', this.opts)
+    if (this.opts?.required[0] === 'starknet') {
+      if (this.opts.config.starknet === DEVNET_NAME) {
+        this.strategyDevnet = new StarknetDevnet('5050', this.opts)
+      }
     }
-    if (this.opts.config.ethereum === HARDHAT_NAME || this.opts?.required[1] === HARDHAT_NAME) {
-      this.strategyHardhat = new HardHatNode('8545', this.opts)
+    if (this.opts?.required[1] === 'ethereum') {
+      if (this.opts.config.ethereum === HARDHAT_NAME) {
+        this.strategyHardhat = new HardHatNode('8545', this.opts)
+      }
     }
   }
 
@@ -53,20 +55,25 @@ abstract class ChildProcessManager {
 
   protected abstract spawnChildProcess(): Promise<ChildProcess>
 
-  private async isServerAlive() {
-    try {
-      await axios.get(`http://127.0.0.1:5050/is_alive`)
-      return true
-    } catch (err: unknown) {
-      // cannot connect, so address is not occupied
-      return false
-    }
+  public async isFreePort(port: number): Promise<boolean> {
+    return await new Promise((accept, reject) => {
+      const sock = net.createConnection(port)
+      sock.once('connect', () => {
+        sock.end()
+        accept(false)
+      })
+      sock.once('error', (e: NodeJS.ErrnoException) => {
+        sock.destroy()
+        if (e.code === 'ECONNREFUSED') {
+          accept(true)
+        } else {
+          reject(e)
+        }
+      })
+    })
   }
 
   public async start(): Promise<void> {
-    if (await this.isServerAlive()) {
-      this.cleanup()
-    }
     this.childProcess = await this.spawnChildProcess()
 
     // capture the most recent message from stderr
@@ -115,6 +122,9 @@ class StarknetDevnet extends ChildProcessManager {
   }
 
   public async startNetwork(): Promise<void> {
+    if (!(await this.isFreePort(parseInt(this.port)))) {
+      return
+    }
     await this.start()
 
     // Starting to poll devnet too soon can result in ENOENT
@@ -138,6 +148,9 @@ class HardHatNode extends ChildProcessManager {
   }
 
   public async startNode(): Promise<void> {
+    if (!(await this.isFreePort(parseInt(this.port)))) {
+      return
+    }
     await this.start()
 
     // Starting to poll hardhatNode too soon can result in ENOENT

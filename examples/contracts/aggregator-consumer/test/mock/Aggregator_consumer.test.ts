@@ -6,7 +6,7 @@ import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@cha
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let opts: FunderOptions

@@ -24,7 +24,7 @@ import {
 
 describe('StarkNetValidator', () => {
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet', 'hardhat'] }
+  const optsConf = { config, required: ['starknet', 'ethereum'] }
   const manager = new NetworkManager(optsConf)
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url

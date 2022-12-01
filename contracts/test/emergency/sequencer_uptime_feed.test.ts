@@ -15,7 +15,7 @@ import {
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let owner: Account

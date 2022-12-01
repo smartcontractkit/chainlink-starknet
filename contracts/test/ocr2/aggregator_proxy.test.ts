@@ -10,7 +10,7 @@ describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
 
   const config = loadConfig()
-  const optsConf = { config, required: ['devnet'] }
+  const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
   let aggregatorContractFactory: StarknetContractFactory
