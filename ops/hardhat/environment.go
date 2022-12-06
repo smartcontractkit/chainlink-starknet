@@ -4,15 +4,33 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
 )
 
-type Chart ethereum.Chart
-type Props ethereum.Props
-type HelmProps ethereum.HelmProps
+type Chart struct {
+	HelmProps *HelmProps
+	Props     *Props
+}
+type Props struct {
+	NetworkName string   `envconfig:"network_name"`
+	Simulated   bool     `envconfig:"network_simulated"`
+	HttpURLs    []string `envconfig:"http_url"`
+	WsURLs      []string `envconfig:"ws_url"`
+	Values      map[string]interface{}
+}
+
+type HelmProps struct {
+	Name    string
+	Path    string
+	Values  *map[string]interface{}
+	Version string
+}
 
 func (m Chart) IsDeploymentNeeded() bool {
 	return true
+}
+
+func (m Chart) GetVersion() string {
+	return m.HelmProps.Version
 }
 
 func (m Chart) GetProps() interface{} {
@@ -46,8 +64,8 @@ func (m Chart) ExportData(e *environment.Environment) error {
 	return nil
 }
 
-func defaultProps() *ethereum.Props {
-	return &ethereum.Props{
+func defaultProps() *Props {
+	return &Props{
 		NetworkName: "hardhat",
 		Values: map[string]interface{}{
 			"replicas": "1",
@@ -71,15 +89,16 @@ func defaultProps() *ethereum.Props {
 	}
 }
 
-func New(props *ethereum.Props) environment.ConnectedChart {
+func New(props *Props) environment.ConnectedChart {
 	if props == nil {
 		props = defaultProps()
 	}
 	return Chart{
-		HelmProps: &ethereum.HelmProps{
-			Name:   "hardhat",
-			Path:   "../../ops/charts/hardhat",
-			Values: &props.Values,
+		HelmProps: &HelmProps{
+			Name:    "hardhat",
+			Path:    "../../ops/charts/hardhat",
+			Values:  &props.Values,
+			Version: "",
 		},
 		Props: props,
 	}
