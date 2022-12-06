@@ -5,8 +5,7 @@ import {
   Validation,
   isValidAddress,
 } from '@chainlink/starknet-gauntlet'
-import { Uint256 } from 'starknet/dist/utils/uint256'
-import { bnToUint256 } from 'starknet/dist/utils/uint256'
+import { uint256 } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
@@ -15,7 +14,7 @@ type UserInput = {
   amount: string
 }
 
-type ContractInput = [account: string, amount: Uint256]
+type ContractInput = [account: string, amount: any]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -37,7 +36,7 @@ const validateAmount = async (input) => {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [input.account, bnToUint256(input.amount)]
+  return [input.account, uint256.bnToUint256(input.amount)]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
