@@ -4,13 +4,27 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/ethereum"
 	"os"
 )
 
-type Chart ethereum.Chart
-type Props ethereum.Props
-type HelmProps ethereum.HelmProps
+type Chart struct {
+	HelmProps *HelmProps
+	Props     *Props
+}
+type Props struct {
+	NetworkName string   `envconfig:"network_name"`
+	Simulated   bool     `envconfig:"network_simulated"`
+	HttpURLs    []string `envconfig:"http_url"`
+	WsURLs      []string `envconfig:"ws_url"`
+	Values      map[string]interface{}
+}
+
+type HelmProps struct {
+	Name    string
+	Path    string
+	Values  *map[string]interface{}
+	Version string
+}
 
 func (m Chart) IsDeploymentNeeded() bool {
 	return true
@@ -32,6 +46,10 @@ func (m Chart) GetValues() *map[string]interface{} {
 	return m.HelmProps.Values
 }
 
+func (m Chart) GetVersion() string {
+	return m.HelmProps.Version
+}
+
 func (m Chart) ExportData(e *environment.Environment) error {
 	devnetLocalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.LocalConnection, client.HTTP)
 	if err != nil {
@@ -47,8 +65,8 @@ func (m Chart) ExportData(e *environment.Environment) error {
 	return nil
 }
 
-func defaultProps() *ethereum.Props {
-	return &ethereum.Props{
+func defaultProps() *Props {
+	return &Props{
 		NetworkName: "starknet-dev",
 		Values: map[string]interface{}{
 			"replicas": "1",
@@ -74,7 +92,7 @@ func defaultProps() *ethereum.Props {
 	}
 }
 
-func New(props *ethereum.Props) environment.ConnectedChart {
+func New(helmVersion string, props *Props) environment.ConnectedChart {
 	defaultPath := "../../ops/charts/devnet"
 	_, InsideK8s := os.LookupEnv("INSIDE_K8")
 	if InsideK8s {
@@ -85,10 +103,11 @@ func New(props *ethereum.Props) environment.ConnectedChart {
 	}
 
 	return Chart{
-		HelmProps: &ethereum.HelmProps{
-			Name:   "starknet-dev",
-			Path:   defaultPath,
-			Values: &props.Values,
+		HelmProps: &HelmProps{
+			Name:    "starknet-dev",
+			Path:    defaultPath,
+			Values:  &props.Values,
+			Version: helmVersion,
 		},
 		Props: props,
 	}

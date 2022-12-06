@@ -1839,7 +1839,7 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@shardlabs/starknet-hardhat-plugin@^0.6.8":
+"@shardlabs/starknet-hardhat-plugin@^0.6.2", "@shardlabs/starknet-hardhat-plugin@^0.6.8":
   version "0.6.8"
   resolved "https://registry.yarnpkg.com/@shardlabs/starknet-hardhat-plugin/-/starknet-hardhat-plugin-0.6.8.tgz#a2749119f7210785f771863b25066b3364a1b8cb"
   integrity sha512-WXr0fie6Qh8why3ItMUkqXgsuENynX70LnxvPj6tuFEEkn+YakUA03g37fhKQiX6KxgG7vDg0xRQXqihNb9tcw==
