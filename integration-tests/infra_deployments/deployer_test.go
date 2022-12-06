@@ -16,8 +16,8 @@ const (
 
 var (
 	observationSource = `
-			val [type="bridge" name="bridge-mockserver"]
-			parse [type="jsonparse" path="PATH"]
+			val [type="bridge" name="bridge-coinmetrics" requestData=<{"data": {"from":"LINK","to":"USD"}}>]
+			parse [type="jsonparse" path="result"]
 			val -> parse
 			`
 	juelsPerFeeCoinSource = `"""
@@ -89,8 +89,8 @@ var _ = Describe("Deploy config only @infra", func() {
 		err = t.DeployGauntlet(-100000000000, 100000000000, 9, "auto", 1, 1)
 		Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 		t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
-			Name: "bridge-mockserver",
-			URL:  "ADAPTER_URL", // Specify EA url
+			Name: "bridge-coinmetrics",
+			URL:  "ADAPTER_URL", // ADAPTER_URL e.g https://adapters.main.sand.cldev.sh/coinmetrics
 		})
 
 		err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
