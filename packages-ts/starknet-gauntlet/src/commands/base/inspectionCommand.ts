@@ -88,7 +88,7 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
 
       const env = deps.makeEnv(flags)
 
-      c.provider = deps.makeProvider(env)
+      c.provider = deps.makeProvider(env.providerUrl)
       c.contractAddress = args[0]
 
       c.input = await c.buildCommandInput(flags, args)
