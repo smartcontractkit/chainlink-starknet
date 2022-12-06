@@ -65,19 +65,21 @@ func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time
 		client.defaultTimeout = *timeout
 	}
 
-	client.setURL(baseURL) // hack: change the base URL (not supported in caigo)
+	client.set(baseURL, chainID) // hack: change the base URL & chainID (not supported in caigo)
 
 	return client, nil
 }
 
-func (c *Client) setURL(baseURL string) {
-	if baseURL == "" {
-		return // if empty, use default from caigo
+func (c *Client) set(baseURL, chainID string) {
+	if chainID == "" {
+		c.Gw.Gateway.ChainId = chainID // note: gateway API in caigo does not query endpoint, uses what is set
 	}
 
-	c.Gw.Gateway.Base = baseURL
-	c.Gw.Gateway.Feeder = baseURL + "/feeder_gateway"
-	c.Gw.Gateway.Gateway = baseURL + "/gateway"
+	if baseURL != "" {
+		c.Gw.Gateway.Base = baseURL
+		c.Gw.Gateway.Feeder = baseURL + "/feeder_gateway"
+		c.Gw.Gateway.Gateway = baseURL + "/gateway"
+	}
 }
 
 // -- Custom Wrapped Func --
