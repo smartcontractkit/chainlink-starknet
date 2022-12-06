@@ -1839,7 +1839,7 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@shardlabs/starknet-hardhat-plugin@^0.6.8":
+"@shardlabs/starknet-hardhat-plugin@^0.6.2", "@shardlabs/starknet-hardhat-plugin@^0.6.8":
   version "0.6.8"
   resolved "https://registry.yarnpkg.com/@shardlabs/starknet-hardhat-plugin/-/starknet-hardhat-plugin-0.6.8.tgz#a2749119f7210785f771863b25066b3364a1b8cb"
   integrity sha512-WXr0fie6Qh8why3ItMUkqXgsuENynX70LnxvPj6tuFEEkn+YakUA03g37fhKQiX6KxgG7vDg0xRQXqihNb9tcw==
@@ -9976,10 +9976,10 @@ starknet@^3.15.0, starknet@^3.5.1:
     ts-custom-error "^3.2.0"
     url-join "^4.0.1"
 
-starknet@^4.9.0:
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/starknet/-/starknet-4.9.0.tgz#1d0b5a1ff532a41b84a619f3d7c3f833f67dad2d"
-  integrity sha512-0Y9Nce0msMs1k3jid93ZuPD2e3yW42FUuMFChRTaq1qcjP8G/fL+5+/zuq441VQ82/JxAHnVqBMvpmMgn5yJSA==
+starknet@^4.15.0:
+  version "4.15.0"
+  resolved "https://registry.yarnpkg.com/starknet/-/starknet-4.15.0.tgz#2639c3b6c1e485488e32d43ef8f96d82eb9367b3"
+  integrity sha512-L5gieXVYVn9g7Dg2e6Ux7edD/odvWpq10MZdA8ix3Bq7jGZe+llsreYC10wOIWQYY5AwF5g4r7XplHh0WCHCHQ==
   dependencies:
     "@ethersproject/bytes" "^5.6.1"
     bn.js "^5.2.1"
@@ -9990,7 +9990,7 @@ starknet@^4.9.0:
     json-bigint "^1.0.0"
     minimalistic-assert "^1.0.1"
     pako "^2.0.4"
-    ts-custom-error "^3.2.0"
+    ts-custom-error "^3.3.1"
     url-join "^4.0.1"
 
 starsign-multisig@0.3.0, starsign-multisig@^0.3.0:
@@ -10472,6 +10472,11 @@ ts-custom-error@^3.2.0:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/ts-custom-error/-/ts-custom-error-3.2.2.tgz#06a567ea92f5df0b61c25722bb4e3772f79c5e5b"
   integrity sha512-u0YCNf2lf6T/vHm+POKZK1yFKWpSpJitcUN3HxqyEcFuNnHIDbyuIQC7QDy/PsBX3giFyk9rt6BFqBAh2lsDZQ==
+
+ts-custom-error@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/ts-custom-error/-/ts-custom-error-3.3.1.tgz#8bd3c8fc6b8dc8e1cb329267c45200f1e17a65d1"
+  integrity sha512-5OX1tzOjxWEgsr/YEUWSuPrQ00deKLh6D7OTWcvNHm12/7QPyRh8SYpyWvA4IZv8H/+GQWQEh/kwo95Q9OVW1A==
 
 ts-essentials@^1.0.0:
   version "1.0.4"
