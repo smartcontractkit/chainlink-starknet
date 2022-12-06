@@ -1,6 +1,4 @@
-import { Account, SequencerProvider, ec, KeyPair } from 'starknet'
-import { toBN } from 'starknet/utils/number'
-import { bnToUint256 } from 'starknet/dist/utils/uint256'
+import { Account, SequencerProvider, ec, KeyPair, number, uint256 } from 'starknet'
 
 export const ERC20_ADDRESS_DEVNET =
   '0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488'
@@ -86,8 +84,8 @@ class AllowanceFundingStrategy implements IFundingStrategy {
     for (const account of accounts) {
       const data = [
         account.account,
-        bnToUint256(account.amount).low.toString(),
-        bnToUint256(account.amount).high.toString(),
+        uint256.bnToUint256(account.amount).low.toString(),
+        uint256.bnToUint256(account.amount).high.toString(),
       ]
       const estimatFee = await operator.estimateFee({
         contractAddress: ERC20_ADDRESS_TESTNET,
@@ -95,7 +93,7 @@ class AllowanceFundingStrategy implements IFundingStrategy {
         calldata: data,
       })
       const result = await operator.getNonce()
-      const nonce = toBN(result).toNumber()
+      const nonce = number.toBN(result).toNumber()
       const hash = await operator.execute(
         {
           contractAddress: ERC20_ADDRESS_TESTNET,

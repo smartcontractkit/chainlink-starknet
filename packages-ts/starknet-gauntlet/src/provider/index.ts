@@ -2,7 +2,7 @@ import { TransactionResponse } from '../transaction'
 import {
   SequencerProvider as StarknetProvider,
   DeployContractResponse,
-  api,
+  Sequencer,
   CompiledContract,
   Account,
   Call,
@@ -34,7 +34,7 @@ export const makeProvider = (url: string): IProvider<StarknetProvider> => {
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: api.Sequencer.AddTransactionResponse | DeployContractResponse,
+  response: Sequencer.AddTransactionResponse | DeployContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
@@ -81,6 +81,7 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
+    // const account = new Account(this.provider, accountAddress, wallet.signer)
     const tx = await this.provider.deployContract({
       contract,
       addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined

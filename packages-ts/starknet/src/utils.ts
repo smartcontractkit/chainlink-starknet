@@ -1,5 +1,4 @@
 import { constants, encode, number } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
 
@@ -69,7 +68,7 @@ export const expectSpecificMsg = (actual: string, expected: string) => {
 }
 
 // Required to convert negative values into [0, PRIME) range
-export const toFelt = (int: number | BigNumberish): BigNumberish => {
+export const toFelt = (int: number | number.BigNumberish): number.BigNumberish => {
   const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
   return number.toBN(int).umod(prime)
 }
