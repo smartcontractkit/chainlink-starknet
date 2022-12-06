@@ -240,7 +240,7 @@ func (c *Common) Default() {
 		},
 	}
 	c.Env = environment.New(c.K8Config).
-		AddHelm(devnet.New(nil)).
+		AddHelm(devnet.New("0.0.11", nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.NewVersioned(0, "0.0.11", c.ClConfig))
