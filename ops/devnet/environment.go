@@ -92,7 +92,7 @@ func defaultProps() *Props {
 	}
 }
 
-func New(props *Props) environment.ConnectedChart {
+func New(helmVersion string, props *Props) environment.ConnectedChart {
 	defaultPath := "../../ops/charts/devnet"
 	_, InsideK8s := os.LookupEnv("INSIDE_K8")
 	if InsideK8s {
@@ -107,7 +107,7 @@ func New(props *Props) environment.ConnectedChart {
 			Name:    "starknet-dev",
 			Path:    defaultPath,
 			Values:  &props.Values,
-			Version: "",
+			Version: helmVersion,
 		},
 		Props: props,
 	}
