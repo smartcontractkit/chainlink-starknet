@@ -253,7 +253,9 @@ func set_config{
     }
 
     let (answer_range: Range) = Aggregator_answer_range.read();
-    local computed_onchain_config: OnchainConfig = OnchainConfig(version=1, min_answer=answer_range.min, max_answer=answer_range.max);
+    local computed_onchain_config: OnchainConfig = OnchainConfig(
+        version=1, min_answer=answer_range.min, max_answer=answer_range.max
+    );
     // cast to felt* and use OnchainConfig.SIZE as len
     let (__fp__, _) = get_fp_and_pc();
     let onchain_config = cast(&computed_onchain_config, felt*);
@@ -557,10 +559,10 @@ func transmit{
     Aggregator_transmissions.write(
         round_id,
         Transmission(
-        answer=median,
-        block_num=block_num,
-        observation_timestamp=observation_timestamp,
-        transmission_timestamp=timestamp,
+            answer=median,
+            block_num=block_num,
+            observation_timestamp=observation_timestamp,
+            transmission_timestamp=timestamp,
         ),
     );
 
@@ -594,11 +596,7 @@ func transmit{
     // TODO: check overflow
 
     Aggregator_transmitters.write(
-        caller,
-        Oracle(
-        index=oracle.index,
-        payment_juels=oracle.payment_juels + payment
-        ),
+        caller, Oracle(index=oracle.index, payment_juels=oracle.payment_juels + payment)
     );
 
     return ();
