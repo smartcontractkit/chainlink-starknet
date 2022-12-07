@@ -150,6 +150,18 @@ format-ts:
 format-ts-check:
 	yarn format:check
 
+.PHONY: lint-go-ops
+lint-go-ops:
+	cd ./ops && golangci-lint --color=always run
+
+.PHONY: lint-go-relayer
+lint-go-relayer:
+	cd ./relayer && golangci-lint --color=always run
+
+.PHONY: lint-go-test
+lint-go-test:
+	cd ./integration-tests && golangci-lint --color=always run
+
 .PHONY: test-go
 test-go: test-unit-go test-integration-go
 
