@@ -124,11 +124,11 @@ func latest_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
     let round_id = round.round_id + (phase.id * SHIFT);
     return (
         Round(
-        round_id=round_id,
-        answer=round.answer,
-        block_num=round.block_num,
-        started_at=round.started_at,
-        updated_at=round.updated_at,
+            round_id=round_id,
+            answer=round.answer,
+            block_num=round.block_num,
+            started_at=round.started_at,
+            updated_at=round.updated_at,
         ),
     );
 }
@@ -147,11 +147,11 @@ func round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}
     let round_id = round.round_id + (phase_id * SHIFT);
     return (
         Round(
-        round_id=round_id,
-        answer=round.answer,
-        block_num=round.block_num,
-        started_at=round.started_at,
-        updated_at=round.updated_at,
+            round_id=round_id,
+            answer=round.answer,
+            block_num=round.block_num,
+            started_at=round.started_at,
+            updated_at=round.updated_at,
         ),
     );
 }
