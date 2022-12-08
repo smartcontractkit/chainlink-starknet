@@ -27,7 +27,7 @@ interface IProvider<P> {
   ) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> { }
+export interface IStarknetProvider extends IProvider<StarknetProvider> {}
 export const makeProvider = (url: string): IProvider<StarknetProvider> => {
   return new Provider(url)
 }
@@ -83,7 +83,7 @@ class Provider implements IStarknetProvider {
   ) => {
     // const account = new Account(this.provider, accountAddress, wallet.signer)
     // TODO => Add an arg for the path of the compile contract
-    const classhash = await starknetClassHash(`${__dirname}/../../test/__mocks__/example.json`)
+    const classhash = await starknetClassHash(contract)
 
     const tx = await this.provider.deployContract({
       contract,

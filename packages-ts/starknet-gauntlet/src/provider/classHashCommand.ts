@@ -1,4 +1,8 @@
 import { spawn } from 'child_process'
+import { writeFileSync } from 'fs'
+import { join } from 'path'
+import { CompiledContract } from 'starknet'
+import fs from 'fs'
 
 export abstract class StarknetCLICommand {
   protected classHash: string
@@ -10,6 +14,9 @@ export abstract class StarknetCLICommand {
   public async run(): Promise<string> {
     this.classHash = await this.spawnClassHash()
     return this.classHash
+  }
+  public rm(contract_path: string) {
+    fs.rmSync(contract_path)
   }
 }
 
@@ -41,12 +48,17 @@ class CLIClassHashCommand extends StarknetCLICommand {
   }
 }
 
-export const starknetClassHash = async (contract: string): Promise<string> => {
-  const commandCLI = new CLIClassHashCommand(contract)
+export const starknetClassHash = async (contract: CompiledContract): Promise<string> => {
+  const replacer = (key, value) => (typeof value === 'bigint' ? value.toString() : value)
+  writeFileSync(join(__dirname, 'contract.json'), JSON.stringify(contract, replacer), {
+    flag: 'w',
+  })
+  const contract_path = join(__dirname, 'contract.json')
+  const commandCLI = new CLIClassHashCommand(contract_path)
 
   const classHash = await commandCLI.run()
 
   await new Promise((f) => setTimeout(f, 2000))
-
+  commandCLI.rm(contract_path)
   return classHash
 }
