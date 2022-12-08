@@ -8,6 +8,7 @@ import {
   Call,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
+import { starknetClassHash } from './classHashCommand'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
@@ -26,8 +27,7 @@ interface IProvider<P> {
   ) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> {}
-
+export interface IStarknetProvider extends IProvider<StarknetProvider> { }
 export const makeProvider = (url: string): IProvider<StarknetProvider> => {
   return new Provider(url)
 }
@@ -82,6 +82,9 @@ class Provider implements IStarknetProvider {
     salt = undefined,
   ) => {
     // const account = new Account(this.provider, accountAddress, wallet.signer)
+    // TODO => Add an arg for the path of the compile contract
+    const classhash = await starknetClassHash(`${__dirname}/../../test/__mocks__/example.json`)
+
     const tx = await this.provider.deployContract({
       contract,
       addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
