@@ -64,6 +64,7 @@ var _ = Describe("Deploy config only @infra", func() {
 		t.Cc = &common.ChainlinkClient{}
 		t.Common.P2PPort = P2pPort
 		t.Cc.ChainlinkNodes, err = createKeys()
+		Expect(err).ShouldNot(HaveOccurred())
 		t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.Cc.ChainlinkNodes, t.Common.ChainName, t.Common.ChainId)
 		Expect(err).ShouldNot(HaveOccurred())
 		for _, n := range t.Cc.ChainlinkNodes {
@@ -94,6 +95,7 @@ var _ = Describe("Deploy config only @infra", func() {
 		})
 
 		err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 })

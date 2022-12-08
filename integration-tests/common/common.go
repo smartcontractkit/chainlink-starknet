@@ -52,6 +52,7 @@ type Common struct {
 }
 
 func New() *Common {
+	var err error
 	c := &Common{
 		ChainName:           chainName,
 		ChainId:             chainId,
@@ -172,7 +173,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	var p2pBootstrappers []string
 
-	for i, _ := range cc.bootstrapPeers {
+	for i := range cc.bootstrapPeers {
 		p2pBootstrappers = append(p2pBootstrappers, cc.bootstrapPeers[i].P2PV2Bootstrapper())
 	}
 

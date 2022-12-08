@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,7 +29,7 @@ func TestOCR2Client(t *testing.T) {
 	lggr := logger.Test(t)
 
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		req, _ := ioutil.ReadAll(r.Body)
+		req, _ := io.ReadAll(r.Body)
 		fmt.Println(r.RequestURI, r.URL, string(req))
 
 		var out []byte

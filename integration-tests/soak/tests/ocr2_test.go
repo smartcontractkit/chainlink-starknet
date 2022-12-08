@@ -99,7 +99,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
+				var res ocr2.TransmissionDetails
+				res, err = t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
 				if err != nil {
 					log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 					continue
@@ -129,24 +130,24 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 				// check increasing rounds
 				if !(res.Digest == details.Digest) {
-					stuckCount += 1
+					stuckCount++
 					log.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
 				}
 				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
-					increasing += 1
+					increasing++
 					stuck = false
 					stuckCount = 0 // reset counter
 					continue
 				}
 
 				// reach this point, answer has not changed
-				stuckCount += 1
+				stuckCount++
 				if stuckCount > 5 {
 					stuck = true
 					increasing = 0
 				}
 			}
-			log.Info().Msg(fmt.Sprintf("Reached the end of run"))
+			log.Info().Msg("Reached the end of run")
 			Expect(increasing >= 0).To(BeTrue(), "Round + epochs should be increasing")
 			Expect(negative).To(BeTrue(), "Positive value should have been submitted")
 			Expect(positive).To(BeTrue(), "Positive value should have been submitted")
