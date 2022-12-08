@@ -16,7 +16,7 @@ import (
 
 var (
 	// seed = 0 keys for starknet-devnet
-	PrivateKeys0Seed []string = []string{
+	PrivateKeys0Seed = []string{
 		"0xe3e70682c2094cac629f6fbed82c07cd",
 		"0xf728b4fa42485e3a0a5d2f346baa9455",
 		"0xeb1167b367a9c3787c65c1e582e2e662",

@@ -3,8 +3,9 @@ package gauntlet
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"github.com/smartcontractkit/chainlink-testing-framework/gauntlet"
-	"io/ioutil"
 )
 
 var (
@@ -59,7 +60,7 @@ func NewStarknetGauntlet(workingDir string) (*StarknetGauntlet, error) {
 // FetchGauntletJsonOutput Parse gauntlet json response that is generated after yarn gauntlet command execution
 func (sg *StarknetGauntlet) FetchGauntletJsonOutput() (*GauntletResponse, error) {
 	var payload = &GauntletResponse{}
-	gauntletOutput, err := ioutil.ReadFile(sg.dir + "report.json")
+	gauntletOutput, err := os.ReadFile(sg.dir + "report.json")
 	if err != nil {
 		return payload, err
 	}
