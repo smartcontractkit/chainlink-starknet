@@ -1,24 +1,22 @@
 package common
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	. "github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
-	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
@@ -35,7 +33,8 @@ var (
 
 func init() {
 	// wallet contract derivation
-	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
+	var keyBytes []byte
+	keyBytes, err = hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
 	if err != nil {
 		panic(err)
 	}
@@ -60,12 +59,6 @@ type Test struct {
 	JuelsPerFeeCoinSource string
 }
 
-type StarkNetDevnetClient struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	cfg    *blockchain.EVMNetwork
-	client *resty.Client
-}
 type ChainlinkClient struct {
 	NKeys          []client.NodeKeysBundle
 	ChainlinkNodes []*client.Chainlink
