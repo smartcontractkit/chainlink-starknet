@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/rs/zerolog/log"
-	"os"
+	"github.com/smartcontractkit/chainlink-starknet/ops"
 )
 
 var (
@@ -25,7 +27,7 @@ func (t *Test) fundNodes() error {
 			return err
 		}
 		if caigotypes.HexToHash(nAccount).String() != key.TXKey.Data.Attributes.AccountAddr {
-			return errors.New(fmt.Sprintf("Deployed account with address %s not matching with node account with address %s", caigotypes.HexToHash(nAccount).String(), key.TXKey.Data.Attributes.AccountAddr))
+			return fmt.Errorf("Deployed account with address %s not matching with node account with address %s", caigotypes.HexToHash(nAccount).String(), key.TXKey.Data.Attributes.AccountAddr)
 		}
 		nAccounts = append(nAccounts, nAccount)
 	}
@@ -79,11 +81,13 @@ func (t *Test) deployAccessController() error {
 }
 
 func (t *Test) setConfigDetails(ocrAddress string) error {
-	cfg, err := t.LoadOCR2Config()
+	var cfg *ops.OCR2Config
+	cfg, err = t.LoadOCR2Config()
 	if err != nil {
 		return err
 	}
-	parsedConfig, err := json.Marshal(cfg)
+	var parsedConfig []byte
+	parsedConfig, err = json.Marshal(cfg)
 	if err != nil {
 		return err
 	}
@@ -92,7 +96,7 @@ func (t *Test) setConfigDetails(ocrAddress string) error {
 }
 
 func (t *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
-	err := t.Sg.InstallDependencies()
+	err = t.Sg.InstallDependencies()
 	if err != nil {
 		return err
 	}
