@@ -1,6 +1,6 @@
 import { ethers, starknet, network } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
-import { number } from 'starknet'
+import { hash, number } from 'starknet'
 import {
   Account,
   StarknetContractFactory,
@@ -9,7 +9,6 @@ import {
 } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
@@ -182,7 +181,7 @@ describe('StarkNetValidator', () => {
     })
 
     it('should get the selector from the name successfully', async () => {
-      const actual = getSelectorFromName('update_status')
+      const actual = hash.getSelectorFromName('update_status')
       const expected = 1585322027166395525705364165097050997465692350398750944680096081848180365267n
       expect(BigInt(actual)).to.equal(expected)
 

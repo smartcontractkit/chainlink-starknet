@@ -94,7 +94,7 @@ class Provider implements IStarknetProvider {
 
     const declareTx = await this.account.declare({
       classHash,
-      contract
+      contract,
     })
 
     await this.provider.waitForTransaction(declareTx.transaction_hash)
