@@ -6,7 +6,7 @@ import {
   CompiledContract,
   Account,
   Call,
-  number
+  number,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 import { starknetClassHash } from './classHashCommand'
@@ -22,14 +22,14 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
-  signAndSend: (
-    calls: Call[],
-    wait?: boolean,
-  ) => Promise<TransactionResponse>
+  signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
 export interface IStarknetProvider extends IProvider<StarknetProvider> {}
-export const makeProvider = (url: string, wallet?: IStarknetWallet): IProvider<StarknetProvider> => {
+export const makeProvider = (
+  url: string,
+  wallet?: IStarknetWallet,
+): IProvider<StarknetProvider> => {
   return new Provider(url, wallet)
 }
 
@@ -106,10 +106,7 @@ class Provider implements IStarknetProvider {
     return response
   }
 
-  signAndSend = async (
-    calls: Call[],
-    wait = false,
-  ) => {
+  signAndSend = async (calls: Call[], wait = false) => {
     const tx = await this.account.execute(calls)
     const response = wrapResponse(this, tx)
     if (!wait) return response
