@@ -1,5 +1,4 @@
-import { Account, Contract, defaultProvider, ec } from 'starknet'
-import { CallContractResponse } from 'starknet/types'
+import { Account, Contract, defaultProvider, ec, CallContractResponse } from 'starknet'
 
 import { loadContract } from './index'
 import dotenv from 'dotenv'

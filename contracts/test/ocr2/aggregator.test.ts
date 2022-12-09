@@ -2,7 +2,6 @@ import { assert, expect } from 'chai'
 import BN from 'bn.js'
 import { starknet } from 'hardhat'
 import { ec, hash, number, uint256, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
@@ -171,7 +170,7 @@ describe('aggregator.cairo', function () {
   })
 
   describe('OCR aggregator behavior', function () {
-    let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
+    let transmit = async (epoch_and_round: number, answer: number.BigNumberish): Promise<any> => {
       let extra_hash = 1
       let observation_timestamp = 1
       let juels_per_fee_coin = 1
