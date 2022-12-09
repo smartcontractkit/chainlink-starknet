@@ -21,15 +21,14 @@ interface IProvider<P> {
     salt?: number,
   ) => Promise<TransactionResponse>
   signAndSend: (
-    accountAddress: string,
-    wallet: IStarknetWallet,
     calls: Call[],
+    wait?: boolean,
   ) => Promise<TransactionResponse>
 }
 
 export interface IStarknetProvider extends IProvider<StarknetProvider> {}
-export const makeProvider = (url: string): IProvider<StarknetProvider> => {
-  return new Provider(url)
+export const makeProvider = (url: string, wallet?: IStarknetWallet): IProvider<StarknetProvider> => {
+  return new Provider(url, wallet)
 }
 
 export const wrapResponse = (
@@ -65,9 +64,17 @@ export const wrapResponse = (
 
 class Provider implements IStarknetProvider {
   provider: StarknetProvider
+  account: Account
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, wallet?: IStarknetWallet) {
     this.provider = new StarknetProvider({ baseUrl })
+    if (wallet) {
+      this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
+    }
+  }
+
+  setAccount(wallet: IStarknetWallet) {
+    this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
   }
 
   send = async () => {
@@ -81,17 +88,17 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
-    // const account = new Account(this.provider, accountAddress, wallet.signer)
-    // TODO => Add an arg for the path of the compile contract
-    const classhash = await starknetClassHash(contract)
+    const classHash = await starknetClassHash(contract)
 
-    const tx = await this.provider.deployContract({
+    const tx = await this.account.declareDeploy({
+      classHash,
       contract,
-      addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+      salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
-    const response = wrapResponse(this, tx)
+    console.log(tx)
+    const response = wrapResponse(this, tx.declare)
 
     if (!wait) return response
     await response.wait()
@@ -99,14 +106,10 @@ class Provider implements IStarknetProvider {
   }
 
   signAndSend = async (
-    accountAddress: string,
-    wallet: IStarknetWallet,
     calls: Call[],
     wait = false,
   ) => {
-    const account = new Account(this.provider, accountAddress, wallet.signer)
-
-    const tx = await account.execute(calls)
+    const tx = await this.account.execute(calls)
     const response = wrapResponse(this, tx)
     if (!wait) return response
 

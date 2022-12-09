@@ -75,8 +75,8 @@ export const wrapCommand = <UI, CI>(
 
       const env = deps.makeEnv(flags)
 
-      c.provider = deps.makeProvider(env.providerUrl)
       c.wallet = await deps.makeWallet(env)
+      c.provider = deps.makeProvider(env.providerUrl, c.wallet)
       c.contractAddress = args[0]
       c.account = env.account
       c.multisigAddress = env.multisig
@@ -253,7 +253,7 @@ export const wrapCommand = <UI, CI>(
       await this.beforeExecute()
 
       deps.logger.loading(`Signing and sending transaction...`)
-      const tx = await this.provider.signAndSend(this.account, this.wallet, message)
+      const tx = await this.provider.signAndSend(message)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
 
