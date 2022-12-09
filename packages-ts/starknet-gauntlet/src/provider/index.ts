@@ -6,9 +6,11 @@ import {
   CompiledContract,
   Account,
   Call,
+  number
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 import { starknetClassHash } from './classHashCommand'
+import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
@@ -44,9 +46,9 @@ export const wrapResponse = (
       // Success if does not throw
       let success: boolean
       try {
-        success =
-          (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+        await provider.provider.waitForTransaction(response.transaction_hash)
         txResponse.status = 'ACCEPTED'
+        success = true
       } catch (e) {
         txResponse.status = 'REJECTED'
         txResponse.errorMessage = e.message
@@ -97,8 +99,7 @@ class Provider implements IStarknetProvider {
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
-    console.log(tx)
-    const response = wrapResponse(this, tx.declare)
+    const response = wrapResponse(this, tx.deploy)
 
     if (!wait) return response
     await response.wait()
