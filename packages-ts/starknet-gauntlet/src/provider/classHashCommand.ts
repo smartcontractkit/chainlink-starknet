@@ -60,5 +60,5 @@ export const starknetClassHash = async (contract: CompiledContract): Promise<str
 
   await new Promise((f) => setTimeout(f, 2000))
   commandCLI.rm(contract_path)
-  return classHash
+  return classHash.trim()
 }
