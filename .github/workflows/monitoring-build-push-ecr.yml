@@ -1,0 +1,51 @@
+name: "Build and push on-chain monitor image to ECR"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - monitoring/**
+
+jobs:
+  build-and-publish-monitoring:
+    runs-on: ubuntu-latest
+    environment: publish
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838 # v1.7.0
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_IAM_ROLE_ARN }}
+          role-duration-seconds: ${{ secrets.AWS_ROLE_DURATION_SECONDS }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: elgohr/ecr-login-action@eb56fdd99f572d1bbb1b85cac67b98e771d53e35 # v1.0.1
+        with:
+          access_key: ${{ env.AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+
+      - name: Output Docker Image Tag
+        id: docker_meta
+        run: |
+          GITHEAD=`git rev-parse HEAD`
+          echo ::set-output name=tag::${GITHEAD}
+
+      - name: Build & Publish Onchain Monitor to Registry
+        uses: elgohr/Publish-Docker-Github-Action@f7aca2fea76a5218f3c76cd5933c3ba1d8008774 # v3.02
+        with:
+          name: ${{ secrets.MONITORING_ECR_HOSTNAME }}
+          username: ${{ steps.ecr.outputs.username }}
+          password: ${{ steps.ecr.outputs.password }}
+          registry: ${{ steps.ecr.outputs.registry }}
+          tags: "${{ steps.docker_meta.outputs.tag }}"
+          context: monitoring
+          dockerfile: monitoring/ops/Dockerfile
