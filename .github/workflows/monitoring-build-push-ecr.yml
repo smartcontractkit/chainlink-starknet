@@ -3,7 +3,7 @@ name: "Build and push on-chain monitor image to ECR"
 on:
   push:
     branches:
-      - main
+      - develop
     paths:
       - monitoring/**
 
