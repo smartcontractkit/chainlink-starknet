@@ -10,7 +10,6 @@ import {
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 import { starknetClassHash } from './classHashCommand'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
@@ -92,27 +91,15 @@ class Provider implements IStarknetProvider {
   ) => {
     const classHash = await starknetClassHash(contract)
 
-    const declareTx = await this.account.declare({
+    const tx = await this.account.declareDeploy({
       classHash,
-      contract
-    })
-
-    await this.provider.waitForTransaction(declareTx.transaction_hash)
-
-    const deployTx = await this.account.deployContract({
-      classHash,
+      contract,
       salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+      unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
-    // tx = await this.account.declareDeploy({
-    //   classHash,
-    //   contract,
-    //   salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
-    //   ...(!!input && input.length > 0 && { constructorCalldata: input }),
-    // })
-
-    const response = wrapResponse(this, deployTx)
+    const response = wrapResponse(this, tx.deploy)
 
     if (!wait) return response
     await response.wait()
