@@ -3,7 +3,7 @@ name: "Build and push on-chain monitor image to ECR"
 on:
   push:
     branches:
-      - develop
+      - DEVOPS-69-starknet
     paths:
       - monitoring/**
 
@@ -33,12 +33,6 @@ jobs:
           secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           region: ${{ secrets.AWS_REGION }}
 
-      - name: Output Docker Image Tag
-        id: docker_meta
-        run: |
-          GITHEAD=`git rev-parse HEAD`
-          echo ::set-output name=tag::${GITHEAD}
-
       - name: Build & Publish Onchain Monitor to Registry
         uses: elgohr/Publish-Docker-Github-Action@f7aca2fea76a5218f3c76cd5933c3ba1d8008774 # v3.02
         with:
@@ -46,6 +40,6 @@ jobs:
           username: ${{ steps.ecr.outputs.username }}
           password: ${{ steps.ecr.outputs.password }}
           registry: ${{ steps.ecr.outputs.registry }}
-          tags: "${{ steps.docker_meta.outputs.tag }}"
+          tags: ${{ env.GITHUB_SHA }}
           context: monitoring
           dockerfile: monitoring/ops/Dockerfile
