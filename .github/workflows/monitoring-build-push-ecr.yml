@@ -3,9 +3,9 @@ name: "Build and push on-chain monitor image to ECR"
 on:
   push:
     branches:
-      - DEVOPS-69-starknet
-#    paths:
-#      - monitoring/**
+      - develop
+    paths:
+      - monitoring/**
 
 jobs:
   build-and-publish-monitoring:
