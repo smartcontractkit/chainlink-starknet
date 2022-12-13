@@ -40,6 +40,6 @@ jobs:
           username: ${{ steps.ecr.outputs.username }}
           password: ${{ steps.ecr.outputs.password }}
           registry: ${{ steps.ecr.outputs.registry }}
-          tags: ${{ env.GITHUB_SHA }}
+          tags: ${{ github.sha }}
           context: monitoring
           dockerfile: monitoring/ops/Dockerfile
