@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
-
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
@@ -151,4 +150,20 @@ func TestConfigSetEventSelector(t *testing.T) {
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
 	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
+}
+
+func TestTransmissionEventFailure(t *testing.T) {
+	const numOfFelts = 10
+	const chunkSize = 31
+
+	data := make([]byte, numOfFelts*chunkSize)
+	felts := starknet.EncodeFelts(data)
+
+	caigoFelts := []*caigotypes.Felt{}
+	for _, felt := range felts[1:] {
+		caigoFelts = append(caigoFelts, &caigotypes.Felt{felt})
+	}
+
+	_, err := ParseNewTransmissionEvent(caigoFelts)
+	assert.Equal(t, err.Error(), "invalid: event data")
 }

@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
   paths: {
     sources: './src',
     starknetSources: './src',
-    cairoPaths: ['./vendor/starkware-libs/starkgate-contracts/src'],
+    cairoPaths: ['./src/vendor/starkware-libs/starkgate-contracts/src'],
   },
 }
 
