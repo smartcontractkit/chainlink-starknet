@@ -1,0 +1,52 @@
+name: "Build and push on-chain monitor image to ECR"
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - monitoring/**
+
+jobs:
+  build-and-publish-monitoring:
+    runs-on: ubuntu-latest
+    environment: publish
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838 # v1.7.0
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_IAM_ROLE_ARN }}
+          role-duration-seconds: ${{ secrets.AWS_ROLE_DURATION_SECONDS }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        with:
+          registry: ${{ secrets.MONITORING_ECR_HOSTNAME }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325 # v2.2.1
+
+      - name: Generate docker metadata
+        id: docker_meta
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea # v4.1.1
+        with:
+          flavor: | # prevent auto tagging with latest
+            latest=false
+          images: ${{ secrets.MONITORING_ECR_HOSTNAME }}
+          tags: type=sha,format=long
+
+      - name: Build and push docker image
+        uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5 # v3.2.0
+        with:
+          push: true
+          context: monitoring
+          file: monitoring/ops/Dockerfile
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
