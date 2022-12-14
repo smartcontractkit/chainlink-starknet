@@ -36,6 +36,5 @@ jobs:
         with:
           push: true
           context: monitoring
-          load: true
           tags: ${{ github.sha }}
           file: monitoring/ops/Dockerfile
