@@ -24,7 +24,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
-        uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7 # v1.12.0
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ${{ secrets.MONITORING_ECR_HOSTNAME }}
 
@@ -33,14 +33,14 @@ jobs:
 
       - name: Generate docker metadata
         id: docker_meta
-        uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681 # v3.6.2
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea # v4.1.1
         with:
           flavor: | # prevent auto tagging with latest
             latest=false
           images: ${{ secrets.MONITORING_ECR_HOSTNAME }}
           tags: type=sha,format=long
 
-      - name: Build and push root docker image
+      - name: Build and push docker image
         uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5 # v3.2.0
         with:
           push: true
