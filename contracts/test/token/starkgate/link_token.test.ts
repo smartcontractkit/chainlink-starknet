@@ -1,4 +1,4 @@
-import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager } from '@chainlink/starknet'
 import { starknet } from 'hardhat'
 import { TIMEOUT } from '../../constants'
 import { shouldBehaveLikeStarkGateERC20 } from './behavior/ERC20'
@@ -9,12 +9,11 @@ describe('link_token', function () {
   const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
-  let opts: FunderOptions
-  let funder: Funder
+  let funder: account.Funder
 
   before(async function () {
     await manager.start()
-    opts = account.makeFunderOptsFromEnv()
+    const opts = account.makeFunderOptsFromEnv()
     funder = new account.Funder(opts)
   })
 

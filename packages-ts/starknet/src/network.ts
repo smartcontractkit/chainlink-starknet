@@ -4,38 +4,59 @@ import { DEVNET_NAME, HARDHAT_NAME } from './utils'
 
 export class NetworkManager {
   private opts?: any
-  private strategyDevnet: StarknetDevnet
-  private strategyHardhat: HardHatNode
+  private Devnet: StarknetDevnet
+  private Hardhat: HardHatNode
 
   constructor(opts?: any) {
     this.opts = opts
-    if (this.opts?.required[0] === 'starknet') {
-      if (this.opts.config.starknet === DEVNET_NAME) {
-        this.strategyDevnet = new StarknetDevnet('5050', this.opts)
-      }
+
+    if (this.opts.required.length > 2) {
+      throw new Error('Too many networks required')
     }
-    if (this.opts?.required[1] === 'ethereum') {
-      if (this.opts.config.ethereum === HARDHAT_NAME) {
-        this.strategyHardhat = new HardHatNode('8545', this.opts)
+
+    for (let i = 0; i < this.opts.required.length; i++) {
+      const network = this.opts.required[i]
+      if (network === 'starknet') {
+        if (this.opts.config.starknet === DEVNET_NAME) {
+          if (this.Devnet) {
+            throw new Error('Starknet network is already up')
+          }
+          this.Devnet = new StarknetDevnet('5050', this.opts.opts)
+        }
+      } else if (network === 'ethereum') {
+        if (this.opts.config.ethereum === HARDHAT_NAME) {
+          if (this.Hardhat) {
+            throw new Error('Ethereum network is already up')
+          }
+          this.Hardhat = new HardHatNode('8545', this.opts.opts)
+        }
+      } else {
+        throw new Error(`Unknown ${network} network`)
       }
     }
   }
 
   public async start(): Promise<void> {
-    if (this.strategyDevnet) {
-      await this.strategyDevnet.startNetwork()
+    if (this.Devnet) {
+      await this.Devnet.startNetwork()
     }
-    if (this.strategyHardhat) {
-      await this.strategyHardhat.startNode()
+    if (this.Hardhat) {
+      await this.Hardhat.startNode()
     }
   }
 
   public stop() {
-    if (this.strategyDevnet) {
-      this.strategyDevnet.stop()
+    if (this.Devnet) {
+      this.Devnet.stop()
     }
-    if (this.strategyHardhat) {
-      this.strategyHardhat.stop()
+    if (this.Hardhat) {
+      this.Hardhat.stop()
+    }
+  }
+
+  public async restart(): Promise<void> {
+    if (this.Devnet || this.Hardhat) {
+      await this.start()
     }
   }
 }
@@ -104,9 +125,9 @@ abstract class ChildProcessManager {
 
 class StarknetDevnet extends ChildProcessManager {
   private command: string
-  private opts?: any
+  private opts?: string[]
 
-  constructor(port: string, opts?: any) {
+  constructor(port: string, opts?: string[]) {
     super(port)
 
     this.opts = opts
@@ -115,9 +136,9 @@ class StarknetDevnet extends ChildProcessManager {
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
     let args = ['--port', this.port, '--gas-price', '1', '--lite-mode', '--timeout', '30000']
-    if (this.opts?.seed) {
-      args.push('--seed', this.opts.seed.toString())
-    }
+    this.opts?.forEach((opt) => {
+      args.push(opt)
+    })
     return spawn(this.command, args)
   }
 
@@ -128,23 +149,32 @@ class StarknetDevnet extends ChildProcessManager {
     await this.start()
 
     // Starting to poll devnet too soon can result in ENOENT
-    await new Promise((f) => setTimeout(f, 4000))
+    await new Promise((f) => setTimeout(f, 2000))
   }
 }
 
 class HardHatNode extends ChildProcessManager {
-  private command: string[]
-  private opts?: any
+  private command: string
+  private opts?: string[]
 
-  constructor(port: string, opts?: any) {
+  constructor(port: string, opts?: string[]) {
     super(port)
 
     this.opts = opts
-    this.command = ['hardhat', 'node']
+    this.command = 'npx'
+    // this.command = ['hardhat', 'node']
+    // this.opts.forEach(function (opt) {
+    //   this.command.push(opt)
+    // })
   }
 
   protected async spawnChildProcess(): Promise<ChildProcess> {
-    return spawn('npx', this.command)
+    let args = ['hardhat', 'node']
+    this.opts?.forEach((opt) => {
+      args.push(opt)
+    })
+
+    return spawn(this.command, args)
   }
 
   public async startNode(): Promise<void> {
@@ -154,6 +184,6 @@ class HardHatNode extends ChildProcessManager {
     await this.start()
 
     // Starting to poll hardhatNode too soon can result in ENOENT
-    await new Promise((f) => setTimeout(f, 10000))
+    await new Promise((f) => setTimeout(f, 2000))
   }
 }

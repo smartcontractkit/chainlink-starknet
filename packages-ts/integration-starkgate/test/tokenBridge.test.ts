@@ -10,14 +10,7 @@ import {
   loadContract_InternalStarkgate,
   loadContract_OpenZepplin,
 } from '../src/utils'
-import {
-  account,
-  loadConfig,
-  hexPadStart,
-  NetworkManager,
-  FunderOptions,
-  Funder,
-} from '@chainlink/starknet'
+import { account, loadConfig, hexPadStart, NetworkManager } from '@chainlink/starknet'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
@@ -28,8 +21,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
   const optsConf = { config, required: ['starknet', 'ethereum'] }
   const manager = new NetworkManager(optsConf)
 
-  let opts: FunderOptions
-  let funder: Funder
+  let funder: account.Funder
 
   // L2 StarkNet
   const networkUrl: string = (network.config as HttpNetworkConfig).url
@@ -46,7 +38,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
   before(async () => {
     await manager.start()
 
-    opts = account.makeFunderOptsFromEnv()
+    const opts = account.makeFunderOptsFromEnv()
     funder = new account.Funder(opts)
 
     owner = await starknet.deployAccount('OpenZeppelin')

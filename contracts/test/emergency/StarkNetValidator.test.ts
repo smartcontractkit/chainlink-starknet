@@ -13,14 +13,7 @@ import { getSelectorFromName } from 'starknet/dist/utils/hash'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import {
-  account,
-  addCompilationToNetwork,
-  loadConfig,
-  NetworkManager,
-  FunderOptions,
-  Funder,
-} from '@chainlink/starknet'
+import { account, addCompilationToNetwork, loadConfig, NetworkManager } from '@chainlink/starknet'
 
 describe('StarkNetValidator', () => {
   const config = loadConfig()
@@ -28,8 +21,8 @@ describe('StarkNetValidator', () => {
   const manager = new NetworkManager(optsConf)
   /** Fake L2 target */
   const networkUrl: string = (network.config as HttpNetworkConfig).url
-  let opts: FunderOptions
-  let funder: Funder
+
+  let funder: account.Funder
 
   let defaultAccount: Account
   let deployer: SignerWithAddress
@@ -48,7 +41,7 @@ describe('StarkNetValidator', () => {
 
   before(async () => {
     await manager.start()
-    opts = account.makeFunderOptsFromEnv()
+    const opts = account.makeFunderOptsFromEnv()
     funder = new account.Funder(opts)
     await addCompilationToNetwork(
       'src/chainlink/solidity/emergency/StarkNetValidator.sol:StarkNetValidator',

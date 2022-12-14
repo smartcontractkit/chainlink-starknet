@@ -1,7 +1,7 @@
 import { starknet } from 'hardhat'
 import { assert } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager } from '@chainlink/starknet'
 
 describe('ContractTestsMock', function () {
   this.timeout(600_000)
@@ -9,8 +9,7 @@ describe('ContractTestsMock', function () {
   const optsConf = { config, required: ['starknet'] }
   const manager = new NetworkManager(optsConf)
 
-  let opts: FunderOptions
-  let funder: Funder
+  let funder: account.Funder
 
   let alice: Account
   let MockContract: StarknetContract
@@ -18,7 +17,7 @@ describe('ContractTestsMock', function () {
 
   before(async () => {
     await manager.start()
-    opts = account.makeFunderOptsFromEnv()
+    const opts = account.makeFunderOptsFromEnv()
     funder = new account.Funder(opts)
     alice = await starknet.deployAccount('OpenZeppelin')
     await funder.fund([{ account: alice.address, amount: 5000 }])

@@ -4,7 +4,7 @@ import { number } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account, loadConfig, NetworkManager, FunderOptions, Funder } from '@chainlink/starknet'
+import { account, loadConfig, NetworkManager } from '@chainlink/starknet'
 
 describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
@@ -19,12 +19,11 @@ describe('aggregator_proxy.cairo', function () {
   let owner: Account
   let aggregator: StarknetContract
   let proxy: StarknetContract
-  let opts: FunderOptions
-  let funder: Funder
+  let funder: account.Funder
 
   before(async function () {
     await manager.start()
-    opts = account.makeFunderOptsFromEnv()
+    const opts = account.makeFunderOptsFromEnv()
     funder = new account.Funder(opts)
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
