@@ -9,18 +9,22 @@ describe('link_token', function () {
   const funder = new account.Funder(opts)
 
   shouldBehaveLikeStarkGateERC20(async () => {
-    const owner = await starknet.deployAccount('OpenZeppelin')
+    const owner = await starknet.OpenZeppelinAccount.createAccount()
+    const alice = await starknet.OpenZeppelinAccount.createAccount()
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([
+      { account: owner.address, amount: 9000000000000000 },
+      { account: alice.address, amount: 9000000000000000 },
+      { account: bob.address, amount: 9000000000000000 },
+    ])
+    await owner.deployAccount()
+    await alice.deployAccount()
+    await bob.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
-    const token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
-
-    const alice = await starknet.deployAccount('OpenZeppelin')
-    const bob = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([
-      { account: owner.address, amount: 5000 },
-      { account: alice.address, amount: 5000 },
-      { account: bob.address, amount: 5000 },
-    ])
+    await owner.declare(tokenFactory)
+    const token = await owner.deploy(tokenFactory, { owner: owner.starknetContract.address })
     return { token, owner, alice, bob }
   })
 })

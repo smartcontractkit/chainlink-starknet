@@ -37,7 +37,7 @@ export const expectInvokeError = async (invoke: Promise<any>, expected?: string)
 
 export const expectInvokeErrorMsg = (actual: string, expected?: string) => {
   // Match transaction error
-  expect(actual).to.deep.contain('Transaction rejected. Error message:')
+  expect(actual).to.deep.contain('TRANSACTION_FAILED')
   // Match specific error
   if (expected) expectSpecificMsg(actual, expected)
 }

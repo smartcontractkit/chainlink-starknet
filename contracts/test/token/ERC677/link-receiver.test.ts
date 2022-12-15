@@ -21,18 +21,24 @@ describe('LinkToken', function () {
   let token: StarknetContract
 
   beforeEach(async () => {
-    sender = await starknet.deployAccount('OpenZeppelin')
-    owner = await starknet.deployAccount('OpenZeppelin')
+    sender = await starknet.OpenZeppelinAccount.createAccount()
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+
     await funder.fund([
-      { account: sender.address, amount: 5000 },
-      { account: owner.address, amount: 5000 },
+      { account: sender.address, amount: 9000000000000000 },
+      { account: owner.address, amount: 9000000000000000 },
     ])
+    await sender.deployAccount()
+    await owner.deployAccount()
 
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')
     tokenFactory = await starknet.getContractFactory('link_token')
 
-    receiver = await receiverFactory.deploy({})
-    token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
+    await owner.declare(receiverFactory)
+    await sender.declare(tokenFactory)
+
+    receiver = await sender.deploy(receiverFactory, {})
+    token = await owner.deploy(tokenFactory, { owner: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
@@ -126,7 +132,7 @@ describe('LinkToken', function () {
     before(async () => {
       const receiverFactory = await starknet.getContractFactory('link_receiver')
       const classHash = await owner.declare(receiverFactory)
-      recipient = await receiverFactory.deploy({ class_hash: classHash })
+      recipient = await owner.deploy(receiverFactory, { class_hash: classHash })
 
       const { remaining: allowance } = await token.call('allowance', {
         owner: owner.starknetContract.address,
