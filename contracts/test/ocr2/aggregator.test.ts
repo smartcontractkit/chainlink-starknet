@@ -85,7 +85,7 @@ describe('aggregator.cairo', function () {
     // if imported from hardhat/types/runtime"
     owner = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: owner.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
     await owner.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
@@ -115,7 +115,7 @@ describe('aggregator.cairo', function () {
     let generateOracle = async () => {
       let transmitter = await starknet.OpenZeppelinAccount.createAccount()
 
-      await funder.fund([{ account: transmitter.address, amount: 9000000000000000 }])
+      await funder.fund([{ account: transmitter.address, amount: 1e21 }])
       await transmitter.deployAccount()
 
       return {
@@ -175,7 +175,7 @@ describe('aggregator.cairo', function () {
     const alice = owner
     const bob = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: bob.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
     await bob.deployAccount()
 
     return { ownable: aggregator, alice, bob }

@@ -23,9 +23,9 @@ describe('Multisig integration tests', function () {
     account3 = await starknet.OpenZeppelinAccount.createAccount()
 
     await funder.fund([
-      { account: account1.address, amount: 9000000000000000 },
-      { account: account2.address, amount: 9000000000000000 },
-      { account: account3.address, amount: 9000000000000000 },
+      { account: account1.address, amount: 1e21 },
+      { account: account2.address, amount: 1e21 },
+      { account: account3.address, amount: 1e21 },
     ])
     await account1.deployAccount()
     await account2.deployAccount()
