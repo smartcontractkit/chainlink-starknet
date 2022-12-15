@@ -83,18 +83,23 @@ describe('aggregator.cairo', function () {
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
-    owner = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([{ account: owner.address, amount: 5000 }])
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: owner.address, amount: 9000000000000000 }])
+    await owner.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
-    token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
+    await owner.declare(tokenFactory)
+    token = await owner.deploy(tokenFactory, { owner: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
       amount: uint256.bnToUint256(100_000_000_000),
     })
 
-    aggregator = await aggregatorFactory.deploy({
+    await owner.declare(aggregatorFactory)
+
+    aggregator = await owner.deploy(aggregatorFactory, {
       owner: BigInt(owner.starknetContract.address),
       link: BigInt(token.address),
       min_answer: toFelt(minAnswer),
@@ -108,8 +113,11 @@ describe('aggregator.cairo', function () {
 
     let futures = []
     let generateOracle = async () => {
-      let transmitter = await starknet.deployAccount('OpenZeppelin')
-      await funder.fund([{ account: owner.address, amount: 5000 }])
+      let transmitter = await starknet.OpenZeppelinAccount.createAccount()
+
+      await funder.fund([{ account: transmitter.address, amount: 9000000000000000 }])
+      await transmitter.deployAccount()
+
       return {
         signer: ec.genKeyPair(),
         transmitter,
@@ -151,7 +159,7 @@ describe('aggregator.cairo', function () {
     let events = block.transaction_receipts[0].events
 
     assert.isNotEmpty(events)
-    assert.equal(events.length, 1)
+    assert.equal(events.length, 2)
     console.log("Log raw 'ConfigSet' event: %O", events[0])
 
     const decodedEvents = await aggregator.decodeEvents(events)
@@ -165,8 +173,11 @@ describe('aggregator.cairo', function () {
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([{ account: bob.address, amount: 5000 }])
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: bob.address, amount: 9000000000000000 }])
+    await bob.deployAccount()
+
     return { ownable: aggregator, alice, bob }
   })
 
@@ -265,7 +276,8 @@ describe('aggregator.cairo', function () {
       // assert.equal(e.data.reimbursement, 0n)
 
       const len = 32 * 2 // 32 bytes (hex)
-      assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
+
+      expect(hexPadStart(e.data.transmitter, len)).to.hexEqual(transmitter)
 
       const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
       assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)

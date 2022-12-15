@@ -13,19 +13,24 @@ describe('ContractTestsMock', function () {
   let ConsumerContract: StarknetContract
 
   before(async () => {
-    alice = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([{ account: alice.address, amount: 5000 }])
+    alice = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: alice.address, amount: 9000000000000000 }])
+    await alice.deployAccount()
 
     const decimals = 18
     const MockFactory = await starknet.getContractFactory('MockAggregator.cairo')
-    MockContract = await MockFactory.deploy({ decimals })
-    console.log('MockContract: ', MockContract.address)
+    await alice.declare(MockFactory)
+    console.log('MockContract: ', MockFactory.getClassHash())
+
+    MockContract = await alice.deploy(MockFactory, { decimals: decimals })
 
     const ConsumerFactory = await starknet.getContractFactory('Aggregator_consumer.cairo')
-    ConsumerContract = await ConsumerFactory.deploy({
+    await alice.declare(ConsumerFactory)
+
+    ConsumerContract = await alice.deploy(ConsumerFactory, {
       address: MockContract.address,
     })
-    console.log('ConsumerContract: ', ConsumerContract.address)
   })
 
   it('should set and read latest round data successfully', async () => {
