@@ -15,7 +15,7 @@ describe('ContractTestsMock', function () {
   before(async () => {
     alice = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: alice.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: alice.address, amount: 1e21 }])
     await alice.deployAccount()
 
     const decimals = 18

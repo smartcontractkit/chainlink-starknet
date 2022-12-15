@@ -24,7 +24,7 @@ describe('aggregator_proxy.cairo', function () {
 
     owner = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: owner.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
     await owner.deployAccount()
 
     await owner.declare(aggregatorContractFactory)
@@ -44,7 +44,7 @@ describe('aggregator_proxy.cairo', function () {
     const alice = owner
     const bob = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: bob.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
     await bob.deployAccount()
     return { ownable: proxy, alice, bob }
   })

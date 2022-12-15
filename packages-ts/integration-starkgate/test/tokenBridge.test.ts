@@ -35,7 +35,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
   before(async () => {
     owner = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: owner.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
     await owner.deployAccount()
 
     let tokenBridgeFactory = await starknet.getContractFactory(

@@ -25,8 +25,8 @@ describe('LinkToken', function () {
     owner = await starknet.OpenZeppelinAccount.createAccount()
 
     await funder.fund([
-      { account: sender.address, amount: 9000000000000000 },
-      { account: owner.address, amount: 9000000000000000 },
+      { account: sender.address, amount: 1e21 },
+      { account: owner.address, amount: 1e21 },
     ])
     await sender.deployAccount()
     await owner.deployAccount()

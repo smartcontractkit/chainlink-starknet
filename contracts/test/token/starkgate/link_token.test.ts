@@ -14,9 +14,9 @@ describe('link_token', function () {
     const bob = await starknet.OpenZeppelinAccount.createAccount()
 
     await funder.fund([
-      { account: owner.address, amount: 9000000000000000 },
-      { account: alice.address, amount: 9000000000000000 },
-      { account: bob.address, amount: 9000000000000000 },
+      { account: owner.address, amount: 1e21 },
+      { account: alice.address, amount: 1e21 },
+      { account: bob.address, amount: 1e21 },
     ])
     await owner.deployAccount()
     await alice.deployAccount()

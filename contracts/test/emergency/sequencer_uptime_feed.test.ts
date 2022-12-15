@@ -18,8 +18,8 @@ describe('SequencerUptimeFeed', function () {
     nonOwner = await starknet.OpenZeppelinAccount.createAccount()
 
     await funder.fund([
-      { account: owner.address, amount: 9000000000000000 },
-      { account: nonOwner.address, amount: 9000000000000000 },
+      { account: owner.address, amount: 1e21 },
+      { account: nonOwner.address, amount: 1e21 },
     ])
     await owner.deployAccount()
     await nonOwner.deployAccount()
@@ -29,7 +29,7 @@ describe('SequencerUptimeFeed', function () {
     const alice = owner
     const bob = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: bob.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
 
     await bob.deployAccount()
 
@@ -139,7 +139,7 @@ describe('SequencerUptimeFeed', function () {
     it('should block access when using an account without access', async function () {
       const accWithoutAccess = await starknet.OpenZeppelinAccount.createAccount()
 
-      await funder.fund([{ account: accWithoutAccess.address, amount: 9000000000000000 }])
+      await funder.fund([{ account: accWithoutAccess.address, amount: 1e21 }])
       await accWithoutAccess.deployAccount()
       await expectInvokeError(
         accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
