@@ -45,7 +45,7 @@ describe('StarkNetValidator', () => {
     defaultAccount = await starknet.OpenZeppelinAccount.createAccount()
 
     // Fund L2 account
-    await funder.fund([{ account: defaultAccount.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: defaultAccount.address, amount: 1e21 }])
     await defaultAccount.deployAccount()
 
     // Fetch predefined L1 EOA accounts

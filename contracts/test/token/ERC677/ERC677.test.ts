@@ -21,7 +21,7 @@ describe('ERC677', function () {
   beforeEach(async () => {
     sender = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: sender.address, amount: 9000000000000000 }])
+    await funder.fund([{ account: sender.address, amount: 1e21 }])
     await sender.deployAccount()
 
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')
