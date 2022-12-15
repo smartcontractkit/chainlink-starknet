@@ -42,10 +42,11 @@ describe('StarkNetValidator', () => {
     )
 
     // Deploy L2 account
-    defaultAccount = await starknet.deployAccount('OpenZeppelin')
+    defaultAccount = await starknet.OpenZeppelinAccount.createAccount()
 
     // Fund L2 account
-    await funder.fund([{ account: defaultAccount.address, amount: 5000 }])
+    await funder.fund([{ account: defaultAccount.address, amount: 9000000000000000 }])
+    await defaultAccount.deployAccount()
 
     // Fetch predefined L1 EOA accounts
     const accounts = await ethers.getSigners()
@@ -55,7 +56,9 @@ describe('StarkNetValidator', () => {
 
     // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    l2Contract = await l2ContractFactory.deploy({
+    await defaultAccount.declare(l2ContractFactory)
+
+    l2Contract = await defaultAccount.deploy(l2ContractFactory, {
       initial_status: 0,
       owner_address: number.toBN(defaultAccount.starknetContract.address),
     })

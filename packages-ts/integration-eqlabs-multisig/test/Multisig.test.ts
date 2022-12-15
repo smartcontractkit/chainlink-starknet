@@ -18,20 +18,25 @@ describe('Multisig integration tests', function () {
   let multisig: StarknetContract
 
   before(async function () {
-    account1 = await starknet.deployAccount('OpenZeppelin')
-    account2 = await starknet.deployAccount('OpenZeppelin')
-    account3 = await starknet.deployAccount('OpenZeppelin')
+    account1 = await starknet.OpenZeppelinAccount.createAccount()
+    account2 = await starknet.OpenZeppelinAccount.createAccount()
+    account3 = await starknet.OpenZeppelinAccount.createAccount()
 
     await funder.fund([
-      { account: account1.address, amount: 5000 },
-      { account: account2.address, amount: 5000 },
-      { account: account3.address, amount: 5000 },
+      { account: account1.address, amount: 9000000000000000 },
+      { account: account2.address, amount: 9000000000000000 },
+      { account: account3.address, amount: 9000000000000000 },
     ])
+    await account1.deployAccount()
+    await account2.deployAccount()
+    await account3.deployAccount()
   })
 
   it('Deploy contract', async () => {
     let multisigFactory = await starknet.getContractFactory('Multisig')
-    multisig = await multisigFactory.deploy({
+    await account1.declare(multisigFactory)
+
+    multisig = await account1.deploy(multisigFactory, {
       signers: [
         number.toBN(account1.starknetContract.address),
         number.toBN(account2.starknetContract.address),
@@ -59,7 +64,7 @@ describe('Multisig integration tests', function () {
       const res = await account1.invoke(multisig, 'submit_transaction', payload)
       const txReciept = await starknet.getTransactionReceipt(res)
 
-      expect(txReciept.events.length).to.equal(1)
+      expect(txReciept.events.length).to.equal(2)
       expect(txReciept.events[0].data.length).to.equal(3)
       expect(txReciept.events[0].data[1]).to.equal(number.toHex(number.toBN(nonce, 'hex')))
     }

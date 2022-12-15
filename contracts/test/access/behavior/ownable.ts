@@ -94,7 +94,7 @@ export const shouldBehaveLikeOwnableContract = (beforeFn: BeforeFn) => {
     })
 
     it(`should fail with account without fees`, async () => {
-      const accountNoFees = await starknet.deployAccount('OpenZeppelin')
+      const accountNoFees = await starknet.OpenZeppelinAccount.createAccount()
 
       await t.alice.invoke(t.ownable, 'transfer_ownership', {
         new_owner: accountNoFees.address,
