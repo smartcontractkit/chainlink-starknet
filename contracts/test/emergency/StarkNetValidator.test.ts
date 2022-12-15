@@ -171,17 +171,17 @@ describe('StarkNetValidator', () => {
     it('is initialized with the correct gas config', async () => {
       const gasConfig = await starkNetValidator.getGasConfig()
       expect(gasConfig.gasEstimate).to.equal(0) // Initialized with 0 in before function
-      expect(gasConfig.gasPriceL1Feed).to.equal(mockGasPriceFeed.address)
+      expect(gasConfig.gasPriceL1Feed).to.hexEqual(mockGasPriceFeed.address)
     })
 
     it('is initialized with the correct access controller address', async () => {
       const acAddr = await starkNetValidator.getConfigAC()
-      expect(acAddr).to.equal(mockAccessController.address)
+      expect(acAddr).to.hexEqual(mockAccessController.address)
     })
 
     it('is initialized with the correct source aggregator address', async () => {
       const aggregatorAddr = await starkNetValidator.getSourceAggregator()
-      expect(aggregatorAddr).to.equal(mockAggregator.address)
+      expect(aggregatorAddr).to.hexEqual(mockAggregator.address)
     })
 
     it('should get the selector from the name successfully', async () => {
@@ -254,7 +254,7 @@ describe('StarkNetValidator', () => {
 
       it('sets the source aggregator address', async () => {
         await starkNetValidator.connect(deployer).setSourceAggregator(mockAggregator.address)
-        expect(await starkNetValidator.getSourceAggregator()).to.equal(mockAggregator.address)
+        expect(await starkNetValidator.getSourceAggregator()).to.hexEqual(mockAggregator.address)
       })
     })
   })
@@ -279,7 +279,7 @@ describe('StarkNetValidator', () => {
         await starkNetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr)
         const gasConfig = await starkNetValidator.getGasConfig()
         expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
-        expect(gasConfig.gasPriceL1Feed).to.equal(newFeedAddr)
+        expect(gasConfig.gasPriceL1Feed).to.hexEqual(newFeedAddr)
       })
 
       it('emits an event', async () => {
@@ -311,7 +311,7 @@ describe('StarkNetValidator', () => {
           await starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr)
           const gasConfig = await starkNetValidator.getGasConfig()
           expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
-          expect(gasConfig.gasPriceL1Feed).to.equal(newFeedAddr)
+          expect(gasConfig.gasPriceL1Feed).to.hexEqual(newFeedAddr)
         })
 
         it('emits an event', async () => {
@@ -352,7 +352,7 @@ describe('StarkNetValidator', () => {
           await starkNetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr)
           const gasConfig = await starkNetValidator.getGasConfig()
           expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
-          expect(gasConfig.gasPriceL1Feed).to.equal(newFeedAddr)
+          expect(gasConfig.gasPriceL1Feed).to.hexEqual(newFeedAddr)
         })
 
         it('emits an event', async () => {
@@ -401,7 +401,7 @@ describe('StarkNetValidator', () => {
         mockStarkNetMessaging.address,
       )
 
-      expect(mockStarkNetMessaging.address).to.equal(loadedFrom)
+      expect(mockStarkNetMessaging.address).to.hexEqual(loadedFrom)
     })
 
     it('should send a message to the L2 contract', async () => {
@@ -418,9 +418,9 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(1)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
-      expect(msgFromL1[0].args.from_address).to.equal(starkNetValidator.address)
-      expect(msgFromL1[0].args.to_address).to.equal(l2Contract.address)
-      expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
+      expect(msgFromL1[0].args.from_address).to.hexEqual(starkNetValidator.address)
+      expect(msgFromL1[0].args.to_address).to.hexEqual(l2Contract.address)
+      expect(msgFromL1[0].address).to.hexEqual(mockStarkNetMessaging.address)
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
@@ -441,9 +441,9 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(1)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
-      expect(msgFromL1[0].args.from_address).to.equal(starkNetValidator.address)
-      expect(msgFromL1[0].args.to_address).to.equal(l2Contract.address)
-      expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
+      expect(msgFromL1[0].args.from_address).to.hexEqual(starkNetValidator.address)
+      expect(msgFromL1[0].args.to_address).to.hexEqual(l2Contract.address)
+      expect(msgFromL1[0].address).to.hexEqual(mockStarkNetMessaging.address)
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
@@ -468,9 +468,9 @@ describe('StarkNetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(4)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
-      expect(msgFromL1[0].args.from_address).to.equal(starkNetValidator.address)
-      expect(msgFromL1[0].args.to_address).to.equal(l2Contract.address)
-      expect(msgFromL1[0].address).to.equal(mockStarkNetMessaging.address)
+      expect(msgFromL1[0].args.from_address).to.hexEqual(starkNetValidator.address)
+      expect(msgFromL1[0].args.to_address).to.hexEqual(l2Contract.address)
+      expect(msgFromL1[0].address).to.hexEqual(mockStarkNetMessaging.address)
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
