@@ -18,14 +18,19 @@ describe('ERC677', function () {
   let data: (number | bigint)[]
 
   beforeEach(async () => {
-    sender = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([{ account: sender.address, amount: 5000 }])
+    sender = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: sender.address, amount: 1e21 }])
+    await sender.deployAccount()
+
     receiverFactory = await starknet.getContractFactory('token677_receiver_mock')
     tokenFactory = await starknet.getContractFactory('link_token')
 
-    receiver = await receiverFactory.deploy({})
+    await sender.declare(receiverFactory)
+    receiver = await sender.deploy(receiverFactory, {})
 
-    token = await tokenFactory.deploy({ owner: sender.starknetContract.address })
+    await sender.declare(tokenFactory)
+    token = await sender.deploy(tokenFactory, { owner: sender.starknetContract.address })
 
     await sender.invoke(token, 'permissionedMint', {
       account: sender.starknetContract.address,
@@ -106,7 +111,10 @@ describe('ERC677', function () {
 
     beforeEach(async () => {
       const nonERC677Factory = await starknet.getContractFactory('not_erc677_compatible')
-      nonERC677 = await nonERC677Factory.deploy({})
+
+      await sender.declare(nonERC677Factory)
+      nonERC677 = await sender.deploy(nonERC677Factory, {})
+
       data = [1000n, 0n, 12n]
     })
 

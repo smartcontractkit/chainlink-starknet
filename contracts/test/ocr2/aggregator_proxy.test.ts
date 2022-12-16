@@ -22,12 +22,17 @@ describe('aggregator_proxy.cairo', function () {
     aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
     proxyContractFactory = await starknet.getContractFactory('ocr2/aggregator_proxy')
 
-    owner = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([{ account: owner.address, amount: 5000 }])
+    owner = await starknet.OpenZeppelinAccount.createAccount()
 
-    aggregator = await aggregatorContractFactory.deploy({ decimals: 8 })
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
+    await owner.deployAccount()
 
-    proxy = await proxyContractFactory.deploy({
+    await owner.declare(aggregatorContractFactory)
+    aggregator = await owner.deploy(aggregatorContractFactory, { decimals: 8 })
+
+    await owner.declare(proxyContractFactory)
+
+    proxy = await owner.deploy(proxyContractFactory, {
       owner: owner.address,
       address: aggregator.address,
     })
@@ -37,9 +42,10 @@ describe('aggregator_proxy.cairo', function () {
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
-    await funder.fund([{ account: bob.address, amount: 5000 }])
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
 
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
+    await bob.deployAccount()
     return { ownable: proxy, alice, bob }
   })
 
@@ -62,7 +68,7 @@ describe('aggregator_proxy.cairo', function () {
       assert.equal(round.updated_at, '8')
 
       // insert a second ocr2 aggregator
-      let new_aggregator = await aggregatorContractFactory.deploy({ decimals: 8 })
+      let new_aggregator = await owner.deploy(aggregatorContractFactory, { decimals: 8 })
 
       // insert round into the mock
       await owner.invoke(new_aggregator, 'set_latest_round_data', {

@@ -14,25 +14,33 @@ describe('SequencerUptimeFeed', function () {
   const funder = new account.Funder(opts)
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
-    owner = await starknet.deployAccount('OpenZeppelin')
-    nonOwner = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+    nonOwner = await starknet.OpenZeppelinAccount.createAccount()
+
     await funder.fund([
-      { account: owner.address, amount: 5000 },
-      { account: nonOwner.address, amount: 5000 },
+      { account: owner.address, amount: 1e21 },
+      { account: nonOwner.address, amount: 1e21 },
     ])
+    await owner.deployAccount()
+    await nonOwner.deployAccount()
   })
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
 
-    await funder.fund([{ account: bob.address, amount: 5000 }])
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
+
+    await bob.deployAccount()
 
     const feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    const feed = await feedFactory.deploy({
+    await alice.declare(feedFactory)
+
+    const feed = await alice.deploy(feedFactory, {
       initial_status: 0,
       owner_address: number.toBN(alice.starknetContract.address),
     })
+
     return { ownable: feed, alice, bob }
   })
 
@@ -42,7 +50,9 @@ describe('SequencerUptimeFeed', function () {
 
     before(async function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      uptimeFeedContract = await uptimeFeedFactory.deploy({
+      await owner.declare(uptimeFeedFactory)
+
+      uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
         initial_status: 0,
         owner_address: number.toBN(owner.starknetContract.address),
       })
@@ -109,13 +119,15 @@ describe('SequencerUptimeFeed', function () {
 
     before(async function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      uptimeFeedContract = await uptimeFeedFactory.deploy({
+      await owner.declare(uptimeFeedFactory)
+      uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
         initial_status: 0,
         owner_address: number.toBN(owner.starknetContract.address),
       })
 
       const proxyFactory = await starknet.getContractFactory('aggregator_proxy')
-      proxyContract = await proxyFactory.deploy({
+      await owner.declare(proxyFactory)
+      proxyContract = await owner.deploy(proxyFactory, {
         owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
       })
@@ -125,8 +137,10 @@ describe('SequencerUptimeFeed', function () {
     })
 
     it('should block access when using an account without access', async function () {
-      const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
-      await funder.fund([{ account: accWithoutAccess.address, amount: 5000 }])
+      const accWithoutAccess = await starknet.OpenZeppelinAccount.createAccount()
+
+      await funder.fund([{ account: accWithoutAccess.address, amount: 1e21 }])
+      await accWithoutAccess.deployAccount()
       await expectInvokeError(
         accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
         'SimpleReadAccessController: address does not have access',
