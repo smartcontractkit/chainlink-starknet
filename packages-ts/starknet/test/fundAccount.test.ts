@@ -1,14 +1,13 @@
 import { assert } from 'chai'
 import { account } from '@chainlink/starknet'
 import { Account, ec, SequencerProvider, stark } from 'starknet'
-import { DEVNET_URL, ERC20_ADDRESS_DEVNET, ERC20_ADDRESS_TESTNET } from '../src/account'
+import { DEVNET_URL, ERC20_ADDRESS } from '../src/account'
 
 describe('fundAccount', function () {
   this.timeout(900_000)
   let alice: Account
   let bob: Account
   let provider: SequencerProvider
-  let erc20Address: string
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -16,12 +15,6 @@ describe('fundAccount', function () {
   before(async function () {
     const gateway_url = process.env.NODE_URL || DEVNET_URL
     provider = new SequencerProvider({ baseUrl: gateway_url })
-
-    if (gateway_url === DEVNET_URL) {
-      erc20Address = ERC20_ADDRESS_DEVNET
-    } else {
-      erc20Address = ERC20_ADDRESS_TESTNET
-    }
 
     const aliceStarkKeyPair = ec.genKeyPair()
     const bobStarkKeyPair = ec.genKeyPair()
@@ -40,7 +33,7 @@ describe('fundAccount', function () {
 
   it('should have fund alice', async () => {
     const balance = await alice.callContract({
-      contractAddress: erc20Address,
+      contractAddress: ERC20_ADDRESS,
       entrypoint: 'balanceOf',
       calldata: [BigInt(alice.address).toString(10)],
     })
@@ -49,7 +42,7 @@ describe('fundAccount', function () {
 
   it('should have fund bob', async () => {
     const balance = await bob.callContract({
-      contractAddress: erc20Address,
+      contractAddress: ERC20_ADDRESS,
       entrypoint: 'balanceOf',
       calldata: [BigInt(bob.address).toString(10)],
     })
@@ -60,7 +53,7 @@ describe('fundAccount', function () {
     await funder.fund([{ account: alice.address, amount: 100 }])
 
     const balance = await alice.callContract({
-      contractAddress: erc20Address,
+      contractAddress: ERC20_ADDRESS,
       entrypoint: 'balanceOf',
       calldata: [BigInt(alice.address).toString(10)],
     })
@@ -71,7 +64,7 @@ describe('fundAccount', function () {
     await funder.fund([{ account: bob.address, amount: 1000 }])
 
     const balance = await bob.callContract({
-      contractAddress: erc20Address,
+      contractAddress: ERC20_ADDRESS,
       entrypoint: 'balanceOf',
       calldata: [BigInt(bob.address).toString(10)],
     })

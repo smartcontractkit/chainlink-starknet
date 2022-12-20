@@ -1,5 +1,5 @@
-import { Account, Contract, defaultProvider, ec, number } from 'starknet'
-import { loadContract } from './index'
+import { Account, Contract, Provider, ec, number } from 'starknet'
+import { loadContract, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
 interface Transmission {
@@ -13,15 +13,18 @@ const CONTRACT_NAME = 'MockAggregator'
 let account: Account
 let mock: Contract
 let transmission: Transmission
+let provider: Provider
 
-dotenv.config({ path: __dirname + '/.env' })
+dotenv.config({ path: __dirname + '/../.env' })
 
 const rl = require('readline').createInterface({
   input: process.stdin,
   output: process.stdout,
 })
 
-async function main() {
+async function updateLatestRound() {
+  provider = makeProvider()
+
   transmission = {
     answer: 0,
     block_num: 0,
@@ -29,8 +32,8 @@ async function main() {
     transmission_timestamp: 0,
   }
 
-  const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY_2 as string)
-  account = new Account(defaultProvider, process.env.ACCOUNT_ADDRESS_2 as string, keyPair)
+  const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY as string)
+  account = new Account(provider, process.env.ACCOUNT_ADDRESS as string, keyPair)
 
   const MockArtifact = loadContract(CONTRACT_NAME)
 
@@ -61,10 +64,10 @@ async function callFunction(transmission: Transmission) {
       ],
     },
     [mock.abi],
-    { maxFee: 30000000000000 },
+    { maxFee: 1e18 },
   )
   console.log('Waiting for Tx to be Accepted on Starknet - Aggregator consumer Deployment...')
-  await defaultProvider.waitForTransaction(transaction.transaction_hash)
+  await provider.waitForTransaction(transaction.transaction_hash)
 }
 
 function input(prompt: string) {
@@ -83,4 +86,4 @@ function input(prompt: string) {
   })
 }
 
-main()
+updateLatestRound()
