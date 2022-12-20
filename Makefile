@@ -206,6 +206,8 @@ test-integration-contracts: build-ts env-devnet-hardhat
 		yarn test
 	cd packages-ts/integration-starkgate/ && \
 		yarn test
+	cd packages-ts/starknet/ && \
+		yarn test
 
 .PHONY: test-integration-gauntlet
 # TODO: better network lifecycle setup - tests setup/run their own network (L1 + conflict w/ above if not cleaned up)
