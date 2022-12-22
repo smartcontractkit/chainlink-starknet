@@ -62,7 +62,7 @@ async function createAccount(): Promise<UserAccount> {
   })
 
   console.log('Waiting for Tx to be Accepted on Starknet - OZ Account Deployment...')
-  const accountResponse = declareDeployResponse.deploy 
+  const accountResponse = declareDeployResponse.deploy
   await defaultProvider.waitForTransaction(accountResponse.transaction_hash)
 
   return { account: accountResponse.address as string, privateKey: privateKey }
