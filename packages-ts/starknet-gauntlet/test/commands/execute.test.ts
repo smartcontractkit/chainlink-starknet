@@ -59,7 +59,7 @@ describe('Execute Command', () => {
   })
 
   it('Command input creation', async () => {
-    const commandInstance = await command.create({ a: 'a', b: '20', account, pk: privateKey }, [])
+    const commandInstance = await command.create({ a: 'a', b: '20' }, [])
     expect(commandInstance.input.user).toEqual({ a: 'a', b: 20 })
     expect(commandInstance.input.contract).toEqual(['a', 20])
   })
@@ -100,7 +100,7 @@ describe('Execute with network', () => {
 
       const command = registerExecuteCommand(makeExecuteCommand(deployCommandConfig))
 
-      const commandInstance = await command.create({ account, pk: privateKey }, [])
+      const commandInstance = await command.create({}, [])
       const report = await commandInstance.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
