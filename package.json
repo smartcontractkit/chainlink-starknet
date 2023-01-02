@@ -1,5 +1,5 @@
 {
-  "name": "@chainlink/chainlink-starknet",
+  "name": "chainlink-starknet",
   "private": true,
   "version": "0.0.1",
   "description": "Chainlink's StarkNet integration monorepo",
