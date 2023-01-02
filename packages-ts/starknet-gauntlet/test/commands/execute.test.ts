@@ -1,11 +1,16 @@
+import { ExecuteCommandConfig, makeExecuteCommand } from '../../src/index'
 import {
-  ExecuteCommandConfig,
-  makeExecuteCommand,
-} from '../../src/index'
-import { loadExampleContract, registerExecuteCommand } from '../utils'
+  devnetAccount0Address,
+  devnetPrivateKey,
+  loadExampleContract,
+  registerExecuteCommand,
+} from '../utils'
 import { IntegratedDevnet, startNetwork } from '../utils/network'
 
 const TIMEOUT = 100000
+
+let account: string = devnetAccount0Address
+let privateKey: string = devnetPrivateKey
 
 describe('Execute Command', () => {
   type UserInput = {
@@ -54,7 +59,7 @@ describe('Execute Command', () => {
   })
 
   it('Command input creation', async () => {
-    const commandInstance = await command.create({ a: 'a', b: '20' }, [])
+    const commandInstance = await command.create({ a: 'a', b: '20', account, pk: privateKey }, [])
     expect(commandInstance.input.user).toEqual({ a: 'a', b: 20 })
     expect(commandInstance.input.contract).toEqual(['a', 20])
   })
@@ -65,7 +70,7 @@ describe('Execute with network', () => {
   let contractAddress: string
 
   beforeAll(async () => {
-    network = await startNetwork()
+    network = await startNetwork({ seed: 0 })
   }, 15000)
 
   it(
@@ -95,7 +100,7 @@ describe('Execute with network', () => {
 
       const command = registerExecuteCommand(makeExecuteCommand(deployCommandConfig))
 
-      const commandInstance = await command.create({}, [])
+      const commandInstance = await command.create({ account, pk: privateKey }, [])
       const report = await commandInstance.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
