@@ -8,7 +8,7 @@ import {
   InspectCommandInstance,
   makeProvider,
   makeWallet,
-} from '@chainlink/starknet-gauntlet'
+} from '../../src/index'
 
 export { startNetwork, IntegratedDevnet } from './network'
 
