@@ -51,6 +51,9 @@ describe('Multisig', () => {
         {
           signers: accounts,
           threshold: 1,
+          pk: privateKeys[0],
+          publicKey: publicKeys[0],
+          account: accounts[0],
         },
         [],
       )
