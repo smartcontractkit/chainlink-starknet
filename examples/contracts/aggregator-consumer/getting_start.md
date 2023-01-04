@@ -1,3 +1,5 @@
+0. `.env` contains predeploy and funded account details, such as DEPLOYER_ACCOUNT_ADDRESS and DEPLOYER_PRIVATE_KEY
+
 1. Start by deploy a account with `npx ts-node ./scripts/deploy_accounts.ts`
 
 2. It'll create an `.env`. Open it en copy the ACCOUNT_ADDRESS and ACCOUNT_ADDRESS_2 value.

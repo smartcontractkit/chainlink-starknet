@@ -1,38 +1,16 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { Contract } from 'starknet'
+import { ExecuteCommandConfig, makeExecuteCommand } from '../../src/index'
 import {
-  Dependencies,
-  CommandCtor,
-  ExecuteCommandInstance,
-  makeProvider,
-  makeWallet,
-  ExecuteCommandConfig,
-  makeExecuteCommand,
-} from '../../src/index'
-import { loadExampleContract, noopLogger, noopPrompt } from '../utils'
+  devnetAccount0Address,
+  devnetPrivateKey,
+  loadExampleContract,
+  registerExecuteCommand,
+} from '../utils'
 import { IntegratedDevnet, startNetwork } from '../utils/network'
 
 const TIMEOUT = 100000
-const LOCAL_URL = 'http://127.0.0.1:5050/'
 
-const registerExecuteCommand = <UI, CI>(
-  registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
-) => {
-  const deps: Dependencies = {
-    logger: noopLogger,
-    prompt: noopPrompt,
-    makeEnv: (flags) => {
-      return {
-        providerUrl: LOCAL_URL,
-        pk: flags.pk as string,
-        account: flags.account as string,
-      }
-    },
-    makeProvider: makeProvider,
-    makeWallet: makeWallet,
-  }
-  return registerCommand(deps)
-}
+let account: string = devnetAccount0Address
+let privateKey: string = devnetPrivateKey
 
 describe('Execute Command', () => {
   type UserInput = {
@@ -92,7 +70,7 @@ describe('Execute with network', () => {
   let contractAddress: string
 
   beforeAll(async () => {
-    network = await startNetwork()
+    network = await startNetwork({ seed: 0 })
   }, 15000)
 
   it(

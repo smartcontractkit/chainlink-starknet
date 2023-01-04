@@ -1,5 +1,4 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployCommand from '../../src/commands/ocr2/deploy'
 import setBillingCommand from '../../src/commands/ocr2/setBilling'
 import setConfigCommand from '../../src/commands/ocr2/setConfig'
@@ -10,10 +9,13 @@ import {
   LOCAL_URL,
   startNetwork,
   IntegratedDevnet,
+  devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadContract_Ocr2, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
+
+let account = devnetAccount0Address
 
 const signers = [
   'ocr2on_starknet_04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730', // ocr2on_starknet_<key>
@@ -74,8 +76,6 @@ const validInput = {
 
 describe('OCR2 Contract', () => {
   let network: IntegratedDevnet
-  let account: string
-  let privateKey: string
   let contractAddress: string
   let accessController: string
 
@@ -84,47 +84,10 @@ describe('OCR2 Contract', () => {
   }, TIMEOUT)
 
   it(
-    'Deploy OZ Account',
-    async () => {
-      const command = await registerExecuteCommand(deployOZCommand).create({}, [])
-
-      const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      account = report.responses[0].contract
-      privateKey = report.data.privateKey
-
-      // Fund the newly allocated account
-      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
-      let balance = 1e21
-      const body = {
-        address: account,
-        amount: balance,
-        lite: true,
-      }
-      const response = await fetch(`${gateway_url}/mint`, {
-        method: 'post',
-        body: JSON.stringify(body),
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      const data = await response.json()
-      expect(data.new_balance).toEqual(balance)
-    },
-    TIMEOUT,
-  )
-
-  it(
     'Deploy AC',
     async () => {
       // TODO: owner can't be 0 anymore
-      const command = await registerExecuteCommand(deployACCommand).create(
-        {
-          account: account,
-          pk: privateKey,
-        },
-        [],
-      )
+      const command = await registerExecuteCommand(deployACCommand).create({}, [])
 
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
@@ -138,8 +101,6 @@ describe('OCR2 Contract', () => {
     async () => {
       const command = await registerExecuteCommand(deployCommand).create(
         {
-          account: account,
-          pk: privateKey,
           input: {
             owner: account,
             maxAnswer: 10000,
@@ -167,8 +128,6 @@ describe('OCR2 Contract', () => {
       // transfer overflow on set billing
       const command = await registerExecuteCommand(setBillingCommand).create(
         {
-          account: account,
-          pk: privateKey,
           input: {
             observationPaymentGjuels: 1,
             transmissionPaymentGjuels: 1,
@@ -197,8 +156,6 @@ describe('OCR2 Contract', () => {
     async () => {
       const command = await registerExecuteCommand(setConfigCommand).create(
         {
-          account: account,
-          pk: privateKey,
           input: validInput,
         },
         [contractAddress],
