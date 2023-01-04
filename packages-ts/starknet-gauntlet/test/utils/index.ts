@@ -50,7 +50,6 @@ export const registerExecuteCommand = <UI, CI>(
     logger: noopLogger,
     prompt: noopPrompt,
     makeEnv: (flags) => {
-      console.log(flags)
       return {
         providerUrl: LOCAL_URL,
         pk: (flags.pk as string) || devnetPrivateKey,
