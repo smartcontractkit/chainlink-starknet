@@ -1,8 +1,7 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { getSelectorFromName } from 'starknet/dist/utils/hash'
-import { number } from 'starknet'
+import { number, hash } from 'starknet'
 import { account } from '@chainlink/starknet'
 
 describe('Multisig integration tests', function () {
@@ -51,7 +50,7 @@ describe('Multisig integration tests', function () {
   it('should submit & confirm transaction', async () => {
     const nonce = 0
     const newThreshold = 1n
-    const selector = getSelectorFromName('set_threshold')
+    const selector = hash.getSelectorFromName('set_threshold')
 
     const payload = {
       to: multisig.address,

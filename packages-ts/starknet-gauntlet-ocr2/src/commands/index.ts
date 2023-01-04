@@ -9,10 +9,19 @@ import {
   executeCommands as proxyExecuteCommands,
   inspectionCommands as proxyInspectionCommands,
 } from './proxy'
+import {
+  executeCommands as exampleExecuteCommands,
+  inspectionCommands as exampleInspectionCommands,
+} from './example'
 
 export const executeCommands = [
   ...acExecuteCommands,
   ...ocr2ExecuteCommands,
   ...proxyExecuteCommands,
+  ...exampleExecuteCommands,
 ]
-export const inspectionCommands = [...ocr2InspectionCommands, ...proxyInspectionCommands]
+export const inspectionCommands = [
+  ...ocr2InspectionCommands,
+  ...proxyInspectionCommands,
+  ...exampleInspectionCommands,
+]

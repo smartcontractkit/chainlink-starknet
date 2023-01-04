@@ -15,8 +15,8 @@ export interface Env {
 export interface Dependencies {
   logger: typeof logger
   prompt: typeof prompt
-  makeProvider: (url: string) => IStarknetProvider
   makeEnv: (flags: Record<string, string | boolean>) => Env
+  makeProvider: (url: string, wallet?: IStarknetWallet) => IStarknetProvider
   makeWallet: (env: Env) => Promise<IStarknetWallet>
 }
 

@@ -13,7 +13,7 @@ export const loadContract_Account = (name: string): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../node_modules/@shardlabs/starknet-hardhat-plugin/dist/account-contract-artifacts/OpenZeppelinAccount/0.2.1/${name}.cairo/${name}.json`,
+        `${__dirname}/../../../../node_modules/@shardlabs/starknet-hardhat-plugin/dist/account-contract-artifacts/OpenZeppelinAccount/0.5.0/${name}.cairo/${name}.json`,
       )
       .toString('ascii'),
   )
