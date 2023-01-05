@@ -1,16 +1,17 @@
-import { Account, Contract, defaultProvider, ec } from 'starknet'
-import { loadContract } from './index'
+import { Account, Contract } from 'starknet'
+import { createDeployerAccount, loadContract, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
 const CONSUMER_NAME = 'Aggregator_consumer'
 let account: Account
 let consumer: Contract
 
-dotenv.config({ path: __dirname + '/.env' })
+dotenv.config({ path: __dirname + '/../.env' })
 
-async function main() {
-  const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY as string)
-  account = new Account(defaultProvider, process.env.ACCOUNT_ADDRESS as string, keyPair)
+export async function readDecimals() {
+  const provider = makeProvider()
+  account = createDeployerAccount(provider)
+
   const AggregatorArtifact = loadContract(CONSUMER_NAME)
   consumer = new Contract(AggregatorArtifact.abi, process.env.CONSUMER as string)
 
@@ -21,6 +22,7 @@ async function main() {
   })
 
   console.log('decimals= ', parseInt(decimals.result[0], 16))
+  return parseInt(decimals.result[0], 16)
 }
 
-main()
+readDecimals()

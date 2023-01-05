@@ -1,9 +1,7 @@
 import { Account, SequencerProvider, ec, KeyPair, number, uint256 } from 'starknet'
 
-export const ERC20_ADDRESS_DEVNET =
-  '0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488'
-export const ERC20_ADDRESS_TESTNET =
-  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+export const ERC20_ADDRESS = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+
 export const DEVNET_URL = 'http://127.0.0.1:5050'
 const DEVNET_NAME = 'devnet'
 
@@ -88,7 +86,7 @@ class AllowanceFundingStrategy implements IFundingStrategy {
         uint256.bnToUint256(account.amount).high.toString(),
       ]
       const estimatFee = await operator.estimateFee({
-        contractAddress: ERC20_ADDRESS_TESTNET,
+        contractAddress: ERC20_ADDRESS,
         entrypoint: 'transfer',
         calldata: data,
       })
@@ -96,7 +94,7 @@ class AllowanceFundingStrategy implements IFundingStrategy {
       const nonce = number.toBN(result).toNumber()
       const hash = await operator.execute(
         {
-          contractAddress: ERC20_ADDRESS_TESTNET,
+          contractAddress: ERC20_ADDRESS,
           entrypoint: 'transfer',
           calldata: data,
         },

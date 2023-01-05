@@ -21,7 +21,6 @@ describe('ContractTestsMock', function () {
     const decimals = 18
     const MockFactory = await starknet.getContractFactory('MockAggregator.cairo')
     await alice.declare(MockFactory)
-    console.log('MockContract: ', MockFactory.getClassHash())
 
     MockContract = await alice.deploy(MockFactory, { decimals: decimals })
 

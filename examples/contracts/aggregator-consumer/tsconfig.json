@@ -3,6 +3,13 @@
   "compilerOptions": {
     "outDir": "dist",
   },
-  "include": ["./hardhat.config.ts"],
-  "exclude": ["dist", "**/*.spec.ts", "**/*.test.ts"]
+  "include": [
+    "./hardhat.config.ts",
+    "scripts/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
 }
