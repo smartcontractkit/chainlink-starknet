@@ -1,0 +1,12 @@
+{
+ "/home/dwightjl/chainlink-starknet/examples/contracts/proxy-consumer/contracts/Consumer.cairo": {
+  "contentHash": "18382a061a8be8c242987dec2d1a96f7e9b8d62605674b151ab2fa0436f31f02",
+  "outputPath": "/home/dwightjl/chainlink-starknet/examples/contracts/proxy-consumer/starknet-artifacts/contracts/Consumer.cairo/Consumer.json",
+  "abiPath": "/home/dwightjl/chainlink-starknet/examples/contracts/proxy-consumer/starknet-artifacts/contracts/Consumer.cairo/Consumer_abi.json"
+ },
+ "/home/dwightjl/chainlink-starknet/examples/contracts/proxy-consumer/contracts/Proxy_consumer.cairo": {
+  "contentHash": "9ff61c2298f86f9febf89f8762c22976776759e6231f290ccc0e51532cf17aed",
+  "outputPath": "/home/dwightjl/chainlink-starknet/examples/contracts/proxy-consumer/starknet-artifacts/contracts/Proxy_consumer.cairo/Proxy_consumer.json",
+  "abiPath": "/home/dwightjl/chainlink-starknet/examples/contracts/proxy-consumer/starknet-artifacts/contracts/Proxy_consumer.cairo/Proxy_consumer_abi.json"
+ }
+}
