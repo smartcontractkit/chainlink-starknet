@@ -14,6 +14,9 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  paths: {
+    cairoPaths: ['../../../contracts/src'],
+  },
 }
 
 export default config
