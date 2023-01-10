@@ -15,13 +15,11 @@ let firstAccount: UserAccount
 export async function deployAccount() {
   firstAccount = await createAccount()
 
-  fs.appendFile(
-    __dirname + '/../.env',
-    '\nACCOUNT_ADDRESS=' + firstAccount.account,
-    function (err) {
-      if (err) throw err
-    },
-  )
+  fs.appendFile(__dirname + '/../.env', '\nACCOUNT_ADDRESS=' + firstAccount.account, function (
+    err,
+  ) {
+    if (err) throw err
+  })
   fs.appendFile(__dirname + '/../.env', '\nPRIVATE_KEY=' + firstAccount.privateKey, function (err) {
     if (err) throw err
   })
