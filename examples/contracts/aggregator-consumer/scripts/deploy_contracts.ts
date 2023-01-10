@@ -92,11 +92,13 @@ export async function deployContract() {
       if (err) throw err
     },
   )
-  fs.appendFile(__dirname + '/../.env', '\nUPTIME_FEED=' + uptimeFeedDeploy.address, function (
-    err,
-  ) {
-    if (err) throw err
-  })
+  fs.appendFile(
+    __dirname + '/../.env',
+    '\nUPTIME_FEED=' + uptimeFeedDeploy.address,
+    function (err) {
+      if (err) throw err
+    },
+  )
 }
 
 deployContract()

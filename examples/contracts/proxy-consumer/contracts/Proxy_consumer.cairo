@@ -35,7 +35,7 @@ func get_latest_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
 
 @view
 func get_stored_round{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
-res: Round
+    res: Round
 ) {
     let (res) = feed_data.read();
     return (res=res);
@@ -43,7 +43,7 @@ res: Round
 
 @view
 func get_stored_feed_address{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
-res: felt
+    res: felt
 ) {
     let (res) = consumer_proxy_address.read();
     return (res=res);
