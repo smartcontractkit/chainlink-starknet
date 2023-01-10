@@ -2,9 +2,8 @@ This is a simple example for how to read Chainlink data feeds on Starknet.
 
 ### Requirements
 
-- Install [Python 3.9](https://www.python.org/downloads/).
+- [Setup your local StarkNet environment](https://starknet.io/docs/quickstart.html). Note that Python 3.9 is required. The [`cairo-lang` Python package](https://pypi.org/project/cairo-lang/) is not compatible with later versions of Python as of `cairo-lang` 0.10.3.
 - Install [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/).
-- [Setup your local StarkNet environment](https://starknet.io/docs/quickstart.html).
 - [Set up a StarkNet account](https://starknet.io/docs/hello_starknet/account_setup.html) on Starknet's `alpha-goerli` network and fund it with [testnet ETH](https://faucet.goerli.starknet.io/).
 
 ### Running the on-chain example
