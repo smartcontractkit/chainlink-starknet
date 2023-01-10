@@ -13,7 +13,6 @@ This is a simple example for how to read Chainlink data feeds on Starknet.
 1. Run `yarn deploy` to deploy the example consumer contract to the StarkNet Goerli testnet. The console prints the contract address and transaction hash.
 1. Run `yarn readLatestRound <CONTRACT_ADDRESS>` to send an invoke transaction to the deployed contract. Specify the contract address printed by the deploy step. The deployed contract reads the latest round data from the proxy, stores the values, and prints the resulting values.
 
-
 ### Running the off-chain example
 
 This example simply reads the proxy contract to get the latest values with no account or contract compiling steps required.

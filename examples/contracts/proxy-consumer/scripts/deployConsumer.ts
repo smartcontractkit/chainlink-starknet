@@ -32,10 +32,12 @@ export async function deployContract() {
   })
 
   const account = new Account(provider, accountAddress, accountKeyPair)
-  
+
   const consumerContract = json.parse(
     fs
-      .readFileSync(`${__dirname}/../starknet-artifacts/contracts/${consumerContractName}.cairo/${consumerContractName}.json`)
+      .readFileSync(
+        `${__dirname}/../starknet-artifacts/contracts/${consumerContractName}.cairo/${consumerContractName}.json`,
+      )
       .toString('ascii'),
   )
 
@@ -53,7 +55,6 @@ export async function deployContract() {
 
   console.log('Contract address: ' + consumerDeploy.address)
   console.log('Transaction hash: ' + declareDeployConsumer.deploy.transaction_hash)
-
 }
 
 deployContract()

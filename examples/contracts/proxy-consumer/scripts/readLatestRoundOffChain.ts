@@ -13,7 +13,6 @@ const network = 'goerli-alpha'
 const dataFeedAddress = '0x2579940ca3c41e7119283ceb82cd851c906cbb1510908a913d434861fdcb245'
 
 export async function readLatestRoundOffChain() {
-
   const provider = new Provider({
     sequencer: {
       network: network,
@@ -22,9 +21,9 @@ export async function readLatestRoundOffChain() {
 
   const latestRound = await provider.callContract({
     contractAddress: dataFeedAddress,
-    entrypoint: 'latest_round_data'
+    entrypoint: 'latest_round_data',
   })
-  
+
   printResult(latestRound)
   return latestRound
 }
