@@ -17,13 +17,13 @@ Set up your environment to run the examples.
 1. Find the your account address and private key for your funded StarkNet testnet account. By default, the OpenZeppelin wallet contains these values at `~/.starknet_accounts/starknet_open_zeppelin_accounts.json`.
 1. Export your address to the `DEPLOYER_ACCOUNT_ADDRESS` environment variable and your private key to the `DEPLOYER_PRIVATE_KEY` environment variable.
 
-    ```shell
-    export DEPLOYER_ACCOUNT_ADDRESS=<YOUR_WALLET_ADDRESS>
-    ```
+   ```shell
+   export DEPLOYER_ACCOUNT_ADDRESS=<YOUR_WALLET_ADDRESS>
+   ```
 
-    ```shell
-    export DEPLOYER_PRIVATE_KEY=<YOUR_KEY>
-    ```
+   ```shell
+   export DEPLOYER_PRIVATE_KEY=<YOUR_KEY>
+   ```
 
 1. Run `yarn build` to run Hardhat and create `./starknet-artifacts/` with the compiled contracts. Hardhat uses the [`@shardlabs/starknet-hardhat-plugin` package](https://www.npmjs.com/package/@shardlabs/starknet-hardhat-plugin) for this step.
 1. Run `yarn deploy` to deploy the example consumer contract to the StarkNet Goerli testnet. The console prints the contract address and transaction hash.
