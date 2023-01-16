@@ -5,7 +5,7 @@ import {
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
 import { isValidAddress } from '@chainlink/evm-gauntlet'
-import { Uint256, bnToUint256 } from 'starknet/dist/utils/uint256'
+import { uint256 } from 'starknet'
 import { utils } from 'ethers'
 import { CATEGORIES } from '../../lib/categories'
 import { l2BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
@@ -15,7 +15,7 @@ type UserInput = {
   amount: string
 }
 
-type ContractInput = [recipient: string, amount: Uint256]
+type ContractInput = [recipient: string, amount: any]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -31,7 +31,7 @@ const makeContractInput = async (
   context: ExecutionContext,
 ): Promise<ContractInput> => {
   const amount = utils.parseEther(input.amount).toString()
-  return [input.recipient, bnToUint256(amount)]
+  return [input.recipient, uint256.bnToUint256(amount)]
 }
 
 const validateInput = async (input: UserInput): Promise<boolean> => {

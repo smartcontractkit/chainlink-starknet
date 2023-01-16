@@ -55,8 +55,8 @@ func TestDecodeFeltFails(t *testing.T) {
 	array[0] = val
 	array[1] = val
 
-	_, error := DecodeFelts(array)
-	assert.Equal(t, error.Error(), "invalid: contained less bytes than the specified length")
+	_, err := DecodeFelts(array)
+	assert.Equal(t, err.Error(), "invalid: contained less bytes than the specified length")
 }
 
 func TestDecodeFeltsSuccesses(t *testing.T) {
@@ -68,9 +68,9 @@ func TestDecodeFeltsSuccesses(t *testing.T) {
 	array[0] = a
 	array[1] = b
 
-	bytes, error := DecodeFelts(array)
-	assert.Equal(t, int64(len(bytes)), bBytesLen)
-	require.NoError(t, error)
+	fBytes, err := DecodeFelts(array)
+	assert.Equal(t, int64(len(fBytes)), bBytesLen)
+	require.NoError(t, err)
 }
 
 func TestEncodeThenDecode(t *testing.T) {

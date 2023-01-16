@@ -7,7 +7,7 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContractLoader } from '../../lib/contracts'
-import { uint256ToBN } from 'starknet/dist/utils/uint256'
+import { uint256 } from 'starknet'
 
 type UserInput = {
   address: string
@@ -48,7 +48,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   return {
     toCompare: null,
     result: {
-      balance: uint256ToBN(balance).toString(),
+      balance: uint256.uint256ToBN(balance).toString(),
     },
   }
 }

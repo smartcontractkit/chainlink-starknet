@@ -1,16 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
-)
-
-var (
-	namespace string
 )
 
 // TODO: consider extracting entire file to `chainlink-relay/ops` or into a separate CLI tool
@@ -41,7 +38,10 @@ func main() {
 		run("push image", "docker", "push", "localhost:12345/chainlink:local")
 	// run ginkgo commands to spin up environment
 	case "run":
-		os.Chdir("../../") // move to repo root
+		// move to repo root
+		if err := os.Chdir("../../"); err != nil {
+			panic(err)
+		}
 		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.localhost:12345/chainlink", "--chainlink-version", "local", "--keep-alive")
 	// stop k8s namespace from environment
 	case "stop":
@@ -66,6 +66,9 @@ func run(name string, f string, args ...string) {
 		panic(err)
 	}
 	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
 
 	// stream output to cmd line
 	var wg sync.WaitGroup
@@ -74,7 +77,7 @@ func run(name string, f string, args ...string) {
 		p := make([]byte, 100)
 		for {
 			n, err := stdout.Read(p)
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				wg.Done()
 				break
 			}
@@ -85,7 +88,7 @@ func run(name string, f string, args ...string) {
 		p := make([]byte, 100)
 		for {
 			n, err := stderr.Read(p)
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				wg.Done()
 				break
 			}

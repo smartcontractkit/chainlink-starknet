@@ -40,10 +40,10 @@ func set_latest_round_data{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range
     MockAggregator_transmissions.write(
         round_id,
         Transmission(
-        answer=answer,
-        block_num=block_num,
-        observation_timestamp=observation_timestamp,
-        transmission_timestamp=transmission_timestamp,
+            answer=answer,
+            block_num=block_num,
+            observation_timestamp=observation_timestamp,
+            transmission_timestamp=transmission_timestamp,
         ),
     );
 

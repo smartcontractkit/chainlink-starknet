@@ -5,12 +5,12 @@ import { uint256, number } from 'starknet'
 import { StarknetContract, HttpNetworkConfig, Account } from 'hardhat/types'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { hexPadStart } from '../../../contracts/test/utils'
 import {
   loadContract_Solidity,
   loadContract_InternalStarkgate,
   loadContract_OpenZepplin,
 } from '../src/utils'
+import { account, hexPadStart } from '@chainlink/starknet'
 
 const NAME = 'ChainLink Token'
 const SYMBOL = 'LINK'
@@ -18,6 +18,8 @@ const SYMBOL = 'LINK'
 describe('Test StarkGate token bridge + link_token.cairo', function () {
   this.timeout(TIMEOUT)
 
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
   // L2 StarkNet
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   let owner: Account
@@ -31,17 +33,23 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
   let starknetERC20Bridge: Contract
 
   before(async () => {
-    owner = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
+    await owner.deployAccount()
 
     let tokenBridgeFactory = await starknet.getContractFactory(
       '../../node_modules/@chainlink-dev/starkgate-contracts/artifacts/token_bridge.cairo',
     )
-    tokenBridge = await tokenBridgeFactory.deploy({
+    await owner.declare(tokenBridgeFactory)
+    tokenBridge = await owner.deploy(tokenBridgeFactory, {
       governor_address: owner.starknetContract.address,
     })
 
     let linkTokenFactory = await starknet.getContractFactory('link_token')
-    tokenL2 = await linkTokenFactory.deploy({ owner: tokenBridge.address })
+    await owner.declare(linkTokenFactory)
+
+    tokenL2 = await owner.deploy(linkTokenFactory, { owner: tokenBridge.address })
     ;[deployer] = await ethers.getSigners()
     // Different .json artifact - incompatible with 'ethers.getContractFactoryFromArtifact'
     const starknetERC20BridgeArtifact = await loadContract_InternalStarkgate('StarknetERC20Bridge')
@@ -93,7 +101,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
         l2_token_address: tokenL2.address,
       })
       const { res: l2Token } = await tokenBridge.call('get_l2_token', {})
-      expect(hexPadStart(l2Token, 32 * 2)).to.equal(tokenL2.address)
+      expect(hexPadStart(l2Token, 32 * 2)).to.hexEqual(tokenL2.address)
     })
 
     it(`should configure L2 token bridge with L1 token bridge successfully`, async () => {
@@ -101,7 +109,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
         l1_bridge_address: starknetERC20Bridge.address,
       })
       const { res: l1Bridge } = await tokenBridge.call('get_l1_bridge', {})
-      expect(hexPadStart(l1Bridge, 20 * 2)).to.equal(starknetERC20Bridge.address.toLowerCase())
+      expect(hexPadStart(l1Bridge, 20 * 2)).to.hexEqual(starknetERC20Bridge.address.toLowerCase())
     })
 
     it('should configure L1 token bridge with L2 token bridge successfully', async () => {
@@ -137,9 +145,9 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
       expect(flushL1Messages).to.have.a.lengthOf(1)
       expect(flushL1Response.consumed_messages.from_l2).to.be.empty
 
-      expect(flushL1Messages[0].args.from_address).to.equal(starknetERC20Bridge.address)
-      expect(flushL1Messages[0].args.to_address).to.equal(tokenBridge.address)
-      expect(flushL1Messages[0].address).to.equal(mockStarknetMessaging.address)
+      expect(flushL1Messages[0].args.from_address).to.hexEqual(starknetERC20Bridge.address)
+      expect(flushL1Messages[0].args.to_address).to.hexEqual(tokenBridge.address)
+      expect(flushL1Messages[0].address).to.hexEqual(mockStarknetMessaging.address)
 
       const { balance } = await tokenL2.call('balanceOf', {
         account: owner.starknetContract.address,
@@ -164,9 +172,9 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
       const flushL2Messages = flushL2Response.consumed_messages.from_l2
 
       expect(flushL2Messages).to.have.a.lengthOf(1)
-      expect(flushL2Messages[0].from_address).to.equal(tokenBridge.address)
+      expect(flushL2Messages[0].from_address).to.hexEqual(tokenBridge.address)
       // TODO: Starknet Devnet bug - 'consumed_messages.from_l2.[].to_address' not always padded to 20 bytes (expected b/c address)
-      expect(hexPadStart(BigInt(flushL2Messages[0].to_address), 20 * 2)).to.equal(
+      expect(hexPadStart(BigInt(flushL2Messages[0].to_address), 20 * 2)).to.hexEqual(
         starknetERC20Bridge.address.toLowerCase(),
       )
     })

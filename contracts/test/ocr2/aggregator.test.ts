@@ -2,11 +2,10 @@ import { assert, expect } from 'chai'
 import BN from 'bn.js'
 import { starknet } from 'hardhat'
 import { ec, hash, number, uint256, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { toFelt, hexPadStart, expectInvokeErrorMsg } from '../utils'
+import { account, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet'
 
 interface Oracle {
   signer: KeyPair
@@ -57,6 +56,8 @@ function decodeBytes(felts: BN[]): Uint8Array {
 
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
 
   let aggregatorFactory: StarknetContractFactory
 
@@ -81,17 +82,23 @@ describe('aggregator.cairo', function () {
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
-    owner = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
+    await owner.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
-    token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
+    await owner.declare(tokenFactory)
+    token = await owner.deploy(tokenFactory, { owner: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
       amount: uint256.bnToUint256(100_000_000_000),
     })
 
-    aggregator = await aggregatorFactory.deploy({
+    await owner.declare(aggregatorFactory)
+
+    aggregator = await owner.deploy(aggregatorFactory, {
       owner: BigInt(owner.starknetContract.address),
       link: BigInt(token.address),
       min_answer: toFelt(minAnswer),
@@ -105,7 +112,11 @@ describe('aggregator.cairo', function () {
 
     let futures = []
     let generateOracle = async () => {
-      let transmitter = await starknet.deployAccount('OpenZeppelin')
+      let transmitter = await starknet.OpenZeppelinAccount.createAccount()
+
+      await funder.fund([{ account: transmitter.address, amount: 1e21 }])
+      await transmitter.deployAccount()
+
       return {
         signer: ec.genKeyPair(),
         transmitter,
@@ -147,7 +158,7 @@ describe('aggregator.cairo', function () {
     let events = block.transaction_receipts[0].events
 
     assert.isNotEmpty(events)
-    assert.equal(events.length, 1)
+    assert.equal(events.length, 2)
     console.log("Log raw 'ConfigSet' event: %O", events[0])
 
     const decodedEvents = await aggregator.decodeEvents(events)
@@ -161,12 +172,16 @@ describe('aggregator.cairo', function () {
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
+    await bob.deployAccount()
+
     return { ownable: aggregator, alice, bob }
   })
 
   describe('OCR aggregator behavior', function () {
-    let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
+    let transmit = async (epoch_and_round: number, answer: number.BigNumberish): Promise<any> => {
       let extra_hash = 1
       let observation_timestamp = 1
       let juels_per_fee_coin = 1
@@ -260,7 +275,8 @@ describe('aggregator.cairo', function () {
       // assert.equal(e.data.reimbursement, 0n)
 
       const len = 32 * 2 // 32 bytes (hex)
-      assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
+
+      expect(hexPadStart(e.data.transmitter, len)).to.hexEqual(transmitter)
 
       const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
       assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)

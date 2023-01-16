@@ -81,7 +81,7 @@ yarn gauntlet l1_bridge:set_l2_bridge --network=<L1_NETWORK> --address=<L2_BRIDG
 
 #### Configure L1 Bridge
 
-Maximum total balance deposited on the bridge: 
+Maximum total balance deposited on the bridge:
 
 ```bash
 yarn gauntlet l1_bridge:set_max_total_balance --network=<L1_NETWORK> --amount=<AMOUNT_IN_LINK> <L1_BRIDGE_PROXY_ADDRESS>

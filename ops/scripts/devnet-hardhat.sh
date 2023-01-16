@@ -13,10 +13,10 @@ echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]
 then
     echo "Starting arm devnet container..."
-    docker run -p 5050:5050 -p 8545:8545 -d --name chainlink-starknet.starknet-devnet shardlabs/starknet-devnet:0.3.4-arm;
+    docker run -p 5050:5050 -p 8545:8545 -d --name chainlink-starknet.starknet-devnet shardlabs/starknet-devnet:0.4.2-arm;
 else
     echo "Starting i386 devnet container..."
-    docker run -p 5050:5050 -p 8545:8545 -d --name chainlink-starknet.starknet-devnet shardlabs/starknet-devnet:0.3.4;
+    docker run -p 5050:5050 -p 8545:8545 -d --name chainlink-starknet.starknet-devnet shardlabs/starknet-devnet:0.4.2;
 fi
 
 echo "Starting hardhat..."

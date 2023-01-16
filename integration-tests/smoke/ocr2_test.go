@@ -66,26 +66,26 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 	Describe("with OCRv2 job", func() {
 		It("works", func() {
-			ctx := context.Background() // context background used because timeout handeld by requestTimeout param
+			ctx := context.Background() // context background used because timeout handled by requestTimeout param
 
 			// validate balance in aggregator
-			resLINK, err := t.Starknet.CallContract(ctx, starknet.CallOps{
+			resLINK, errLINK := t.Starknet.CallContract(ctx, starknet.CallOps{
 				ContractAddress: caigotypes.HexToHash(t.LinkTokenAddr),
 				Selector:        "balanceOf",
 				Calldata:        []string{caigotypes.HexToBN(t.OCRAddr).String()},
 			})
-			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
-			resAgg, err := t.Starknet.CallContract(ctx, starknet.CallOps{
+			Expect(errLINK).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			resAgg, errAgg := t.Starknet.CallContract(ctx, starknet.CallOps{
 				ContractAddress: caigotypes.HexToHash(t.OCRAddr),
 				Selector:        "link_available_for_payment",
 			})
-			Expect(err).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
+			Expect(errAgg).ShouldNot(HaveOccurred(), "Reader balance from LINK contract should not fail")
 			balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
 			balAgg, _ := new(big.Int).SetString(resAgg[0], 0)
 			Expect(balLINK.Cmp(big.NewInt(0)) == 1).To(BeTrue(), "Aggregator should have non-zero balance")
 			Expect(balLINK.Cmp(balAgg) >= 0).To(BeTrue(), "Aggregator payment balance should be <= actual LINK balance")
 
-			// assert new rounds are occuring
+			// assert new rounds are occurring
 			details := ocr2.TransmissionDetails{}
 			increasing := 0 // track number of increasing rounds
 			var stuck bool
@@ -96,7 +96,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			var negative bool
 
 			for start := time.Now(); time.Since(start) < t.Common.TTL; {
-				// end condition: enough rounds have occured, and positive and negative answers have been seen
+				// end condition: enough rounds have occurred, and positive and negative answers have been seen
 				if increasing >= increasingCountMax && positive && negative {
 					break
 				}
@@ -109,13 +109,15 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 				// once progression has reached halfway, change to negative values
 				if increasing == increasingCountMax/2 {
-					t.SetMockServerValue("", -1*mockServerVal)
+					err = t.SetMockServerValue("", -1*mockServerVal)
+					Expect(err).ShouldNot(HaveOccurred(), "Set mocker server value should not fail")
 				}
 
 				// try to fetch rounds
 				time.Sleep(5 * time.Second)
 
-				res, err := t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
+				var res ocr2.TransmissionDetails
+				res, err = t.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(t.OCRAddr))
 				if err != nil {
 					log.Error().Err(err)
 					continue
@@ -146,14 +148,14 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 				// check increasing rounds
 				Expect(res.Digest == details.Digest).To(BeTrue(), "Config digest should not change")
 				if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
-					increasing += 1
+					increasing++
 					stuck = false
 					stuckCount = 0 // reset counter
 					continue
 				}
 
 				// reach this point, answer has not changed
-				stuckCount += 1
+				stuckCount++
 				if stuckCount > 30 {
 					stuck = true
 					increasing = 0
@@ -167,7 +169,8 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 
 			// Test proxy reading
 			// TODO: would be good to test proxy switching underlying feeds
-			roundDataRaw, err := t.Starknet.CallContract(ctx, starknet.CallOps{
+			var roundDataRaw []string
+			roundDataRaw, err = t.Starknet.CallContract(ctx, starknet.CallOps{
 				ContractAddress: caigotypes.HexToHash(t.ProxyAddr),
 				Selector:        "latest_round_data",
 			})

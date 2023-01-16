@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { hexPadStart } from '../../utils'
+import { hexPadStart } from '@chainlink/starknet'
 
 export type BeforeFn = () => Promise<TestData>
 export type TestData = {
@@ -94,7 +94,7 @@ export const shouldBehaveLikeOwnableContract = (beforeFn: BeforeFn) => {
     })
 
     it(`should fail with account without fees`, async () => {
-      const accountNoFees = await starknet.deployAccount('OpenZeppelin')
+      const accountNoFees = await starknet.OpenZeppelinAccount.createAccount()
 
       await t.alice.invoke(t.ownable, 'transfer_ownership', {
         new_owner: accountNoFees.address,

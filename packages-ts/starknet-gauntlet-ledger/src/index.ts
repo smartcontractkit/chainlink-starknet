@@ -1,9 +1,17 @@
 import { IStarknetWallet, Env } from '@chainlink/starknet-gauntlet'
-import { SignerInterface, encode, DeployAccountSignerDetails, DeclareSignerDetails } from 'starknet'
-import { Abi, Signature, Call, InvocationsSignerDetails } from 'starknet/types'
-import { TypedData, getMessageHash } from 'starknet/utils/typedData'
-import { fromCallsToExecuteCalldataWithNonce } from 'starknet/utils/transaction'
-import { calculateTransactionHash } from 'starknet/utils/hash'
+import {
+  SignerInterface,
+  encode,
+  DeployAccountSignerDetails,
+  DeclareSignerDetails,
+  typedData,
+  hash,
+  transaction,
+  Abi,
+  Signature,
+  Call,
+  InvocationsSignerDetails,
+} from 'starknet'
 import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
 
 // EIP-2645 path
@@ -63,9 +71,12 @@ class LedgerSigner implements SignerInterface {
     transactionsDetail: InvocationsSignerDetails,
     abis?: Abi[],
   ): Promise<Signature> {
-    const calldata = fromCallsToExecuteCalldataWithNonce(transactions, transactionsDetail.nonce)
+    const calldata = transaction.fromCallsToExecuteCalldataWithNonce(
+      transactions,
+      transactionsDetail.nonce,
+    )
 
-    const msgHash = calculateTransactionHash(
+    const msgHash = hash.calculateTransactionHash(
       transactionsDetail.walletAddress,
       transactionsDetail.version,
       calldata,
@@ -87,8 +98,8 @@ class LedgerSigner implements SignerInterface {
     return []
   }
 
-  async signMessage(typedData: TypedData, accountAddress: string): Promise<Signature> {
-    const msgHash = getMessageHash(typedData, accountAddress)
+  async signMessage(data: typedData.TypedData, accountAddress: string): Promise<Signature> {
+    const msgHash = typedData.getMessageHash(data, accountAddress)
     return this.sign(msgHash)
   }
 

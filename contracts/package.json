@@ -15,7 +15,7 @@
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "@shardlabs/starknet-hardhat-plugin": "^0.6.8",
+    "@shardlabs/starknet-hardhat-plugin": "^0.7.1",
     "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",
@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.2",
+    "@chainlink/starknet": "^1.0.0",
     "@openzeppelin/contracts": "^4.7.3",
     "axios": "^0.24.0"
   }
