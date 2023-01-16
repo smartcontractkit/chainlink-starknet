@@ -3,11 +3,11 @@ package devnet
 import (
 	"context"
 	"fmt"
-	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	"strings"
 	"time"
+
+	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
@@ -16,7 +16,6 @@ import (
 type StarkNetDevnetClient struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
-	cfg      *blockchain.EVMNetwork
 	client   *resty.Client
 	dumpPath string
 }

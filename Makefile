@@ -150,6 +150,18 @@ format-ts:
 format-ts-check:
 	yarn format:check
 
+.PHONY: lint-go-ops
+lint-go-ops:
+	cd ./ops && golangci-lint --color=always run
+
+.PHONY: lint-go-relayer
+lint-go-relayer:
+	cd ./relayer && golangci-lint --color=always run
+
+.PHONY: lint-go-test
+lint-go-test:
+	cd ./integration-tests && golangci-lint --color=always --exclude=dot-imports run
+
 .PHONY: test-go
 test-go: test-unit-go test-integration-go
 
@@ -194,6 +206,8 @@ test-integration-contracts: build-ts env-devnet-hardhat
 		yarn test
 	cd packages-ts/integration-starkgate/ && \
 		yarn test
+	cd packages-ts/starknet/ && \
+		yarn test
 
 .PHONY: test-integration-gauntlet
 # TODO: better network lifecycle setup - tests setup/run their own network (L1 + conflict w/ above if not cleaned up)
@@ -219,7 +233,7 @@ test-integration-gauntlet: build-ts env-devnet-hardhat-down
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-ts-contracts
-test-ts-contracts: build-ts-contracts env-devnet-hardhat
+test-ts-contracts: build-ts-contracts build-ts-workspace env-devnet-hardhat
 	cd contracts/ && \
 		yarn test
 

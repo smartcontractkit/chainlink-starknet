@@ -47,10 +47,12 @@ type Common struct {
 	Account             string
 	ClConfig            map[string]interface{}
 	EnvConfig           map[string]interface{}
+	K8Config            *environment.Config
 	Env                 *environment.Environment
 }
 
 func New() *Common {
+	var err error
 	c := &Common{
 		ChainName:           chainName,
 		ChainId:             chainId,
@@ -105,15 +107,15 @@ func New() *Common {
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
 func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBundle, []*client.Chainlink, error) {
-	chainlinkNodes, err := client.ConnectChainlinkNodes(env)
+	ChainlinkNodes, err := client.ConnectChainlinkNodes(env)
 	if err != nil {
 		return nil, nil, err
 	}
-	nKeys, _, err := client.CreateNodeKeysBundle(chainlinkNodes, c.ChainName, c.ChainId)
+	NKeys, _, err := client.CreateNodeKeysBundle(ChainlinkNodes, c.ChainName, c.ChainId)
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, n := range chainlinkNodes {
+	for _, n := range ChainlinkNodes {
 		_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
 			Type:    c.ChainName,
 			ChainID: c.ChainId,
@@ -131,7 +133,7 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBund
 			return nil, nil, err
 		}
 	}
-	return nKeys, chainlinkNodes, nil
+	return NKeys, ChainlinkNodes, nil
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
@@ -139,9 +141,9 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
-			RemoteIP:   cc.chainlinkNodes[0].RemoteIP(),
+			RemoteIP:   cc.ChainlinkNodes[0].RemoteIP(),
 			RemotePort: c.P2PPort,
-			PeerID:     cc.nKeys[0].PeerID,
+			PeerID:     cc.NKeys[0].PeerID,
 		},
 	}
 
@@ -164,23 +166,23 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		OCR2OracleSpec: oracleSpec,
 	}
 
-	_, _, err := cc.chainlinkNodes[0].CreateJob(jobSpec)
+	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
 		return err
 	}
 
 	var p2pBootstrappers []string
 
-	for i, _ := range cc.bootstrapPeers {
+	for i := range cc.bootstrapPeers {
 		p2pBootstrappers = append(p2pBootstrappers, cc.bootstrapPeers[i].P2PV2Bootstrapper())
 	}
 
 	// Setting up job specs
-	for nIdx, n := range cc.chainlinkNodes {
+	for nIdx, n := range cc.ChainlinkNodes {
 		if nIdx == 0 {
 			continue
 		}
-		_, err = n.CreateBridge(cc.bTypeAttr)
+		_, err := n.CreateBridge(cc.bTypeAttr)
 		if err != nil {
 			return err
 		}
@@ -190,8 +192,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 			Relay:                       relay.StarkNet,
 			RelayConfig:                 relayConfig,
 			PluginType:                  "median",
-			OCRKeyBundleID:              null.StringFrom(cc.nKeys[nIdx].OCR2Key.Data.ID),
-			TransmitterID:               null.StringFrom(cc.nKeys[nIdx].TXKey.Data.ID),
+			OCRKeyBundleID:              null.StringFrom(cc.NKeys[nIdx].OCR2Key.Data.ID),
+			TransmitterID:               null.StringFrom(cc.NKeys[nIdx].TXKey.Data.ID),
 			P2PV2Bootstrappers:          pq.StringArray{strings.Join(p2pBootstrappers, ",")},
 			ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 			PluginConfig: job.JSONConfig{
@@ -214,6 +216,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 }
 
 func (c *Common) Default() {
+	c.K8Config = &environment.Config{InsideK8s: c.InsideK8, NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL}
 	c.EnvConfig = map[string]interface{}{
 		"STARKNET_ENABLED":            "true",
 		"EVM_ENABLED":                 "false",
@@ -237,9 +240,9 @@ func (c *Common) Default() {
 			},
 		},
 	}
-	c.Env = environment.New(&environment.Config{InsideK8s: c.InsideK8, NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL}).
-		AddHelm(devnet.New(nil)).
+	c.Env = environment.New(c.K8Config).
+		AddHelm(devnet.New("0.0.11", nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.New(0, c.ClConfig))
+		AddHelm(chainlink.NewVersioned(0, "0.0.11", c.ClConfig))
 }

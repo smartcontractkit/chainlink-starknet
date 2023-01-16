@@ -15,13 +15,14 @@
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.0",
-    "@shardlabs/starknet-hardhat-plugin": "^0.6.8",
+    "@shardlabs/starknet-hardhat-plugin": "^0.7.1",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",
     "hardhat": "^*"
   },
   "dependencies": {
+    "@chainlink/starknet": "^1.0.0",
     "dotenv": "^16.0.1"
   }
 }

@@ -1,5 +1,4 @@
-import { constants, ec, encode, hash, number, uint256, stark, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
+import { constants, encode, number } from 'starknet'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
 
@@ -37,7 +36,7 @@ export const expectInvokeError = async (invoke: Promise<any>, expected?: string)
 
 export const expectInvokeErrorMsg = (actual: string, expected?: string) => {
   // Match transaction error
-  expect(actual).to.deep.contain('Transaction rejected. Error message:')
+  expect(actual).to.deep.contain('TRANSACTION_FAILED')
   // Match specific error
   if (expected) expectSpecificMsg(actual, expected)
 }
@@ -69,7 +68,7 @@ export const expectSpecificMsg = (actual: string, expected: string) => {
 }
 
 // Required to convert negative values into [0, PRIME) range
-export const toFelt = (int: number | BigNumberish): BigNumberish => {
+export const toFelt = (int: number | number.BigNumberish): number.BigNumberish => {
   const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
   return number.toBN(int).umod(prime)
 }

@@ -16,12 +16,11 @@ import {
   Contract,
   addAddressPadding,
   number,
+  encode,
+  hash,
   validateAndParseAddress,
   InvokeTransactionReceiptResponse,
 } from 'starknet'
-import { addHexPrefix } from 'starknet/dist/utils/encode'
-import { getSelectorFromName } from 'starknet/dist/utils/hash'
-import { toBN, toHex } from 'starknet/dist/utils/number'
 import { contractLoader } from '../lib/contracts'
 import { Action, State } from './types'
 
@@ -76,8 +75,8 @@ export const wrapCommand = <UI, CI>(
 
       const env = deps.makeEnv(flags)
 
-      c.provider = deps.makeProvider(env.providerUrl)
       c.wallet = await deps.makeWallet(env)
+      c.provider = deps.makeProvider(env.providerUrl, c.wallet)
       c.contractAddress = args[0]
       c.account = env.account
       c.multisigAddress = env.multisig
@@ -114,8 +113,8 @@ export const wrapCommand = <UI, CI>(
       )
       const multisig = {
         address,
-        threshold: toBN(threshold.threshold).toNumber(),
-        signers: signers.signers.map((o) => toHex(o)),
+        threshold: number.toBN(threshold.threshold).toNumber(),
+        signers: signers.signers.map((o) => number.toHex(o)),
       }
 
       if (isNaN(proposalId)) return { multisig }
@@ -127,11 +126,13 @@ export const wrapCommand = <UI, CI>(
           confirmations: proposal.tx.confirmations,
           data: {
             contractAddress: addAddressPadding(proposal.tx.to),
-            entrypoint: addHexPrefix(toBN(proposal.tx.function_selector).toString('hex')),
-            calldata: proposal.tx_calldata.map((v) => toBN(v).toString()),
+            entrypoint: encode.addHexPrefix(
+              number.toBN(proposal.tx.function_selector).toString('hex'),
+            ),
+            calldata: proposal.tx_calldata.map((v) => number.toBN(v).toString()),
           },
           nextAction:
-            toBN(proposal.tx.executed).toNumber() !== 0
+            number.toBN(proposal.tx.executed).toNumber() !== 0
               ? Action.NONE
               : proposal.tx.confirmations >= multisig.threshold
               ? Action.EXECUTE
@@ -144,7 +145,7 @@ export const wrapCommand = <UI, CI>(
       const localAddress = validateAndParseAddress(local.contractAddress)
       const onchainAddress = validateAndParseAddress(onchain.contractAddress)
       if (localAddress !== onchainAddress) return false
-      if (getSelectorFromName(local.entrypoint) !== onchain.entrypoint) return false
+      if (hash.getSelectorFromName(local.entrypoint) !== onchain.entrypoint) return false
       if (!isDeepEqual(local.calldata, onchain.calldata)) return false
       return true
     }
@@ -152,7 +153,7 @@ export const wrapCommand = <UI, CI>(
     makeProposeMessage: ProposalAction = (message, proposalId) => {
       const invocation = this.executionContext.contract.populate('submit_transaction', [
         this.contractAddress,
-        toBN(getSelectorFromName(message.entrypoint)),
+        number.toBN(hash.getSelectorFromName(message.entrypoint)),
         message.calldata,
         proposalId,
       ])
@@ -252,7 +253,7 @@ export const wrapCommand = <UI, CI>(
       await this.beforeExecute()
 
       deps.logger.loading(`Signing and sending transaction...`)
-      const tx = await this.provider.signAndSend(this.account, this.wallet, message)
+      const tx = await this.provider.signAndSend(message)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
 

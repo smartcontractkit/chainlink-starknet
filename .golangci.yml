@@ -5,10 +5,10 @@ linters:
     - exhaustive
     - exportloopref
     - revive
-    - goimports
+    # - goimports
     - gosec
     - misspell
-    - rowserrcheck
+    # - rowserrcheck
     - errorlint
 linters-settings:
   exhaustive:

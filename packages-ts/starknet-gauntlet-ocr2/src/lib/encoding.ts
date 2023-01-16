@@ -1,5 +1,4 @@
 import { number, constants, encode } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import BN from 'bn.js'
 import { encoding } from '@chainlink/gauntlet-contracts-ocr2'
 
@@ -58,7 +57,7 @@ export const decodeOffchainConfigFromEventData = (data: string[]): encoding.Offc
   return encoding.deserializeConfig(feltsToBytes(offchainConfigFelts.map((f) => number.toBN(f))))
 }
 
-export function toFelt(int: number | BigNumberish): BN {
+export function toFelt(int: number | number.BigNumberish): BN {
   let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
   return number.toBN(int).umod(prime)
 }

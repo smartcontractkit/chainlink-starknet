@@ -120,6 +120,9 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
       const results = await Promise.all(
         functions.map((func, i) => {
           deps.logger.loading(`Fetching ${func} of contract ${this.contractAddress}...`)
+          if (!inputs[i]) {
+            return contract[func]() // workaround undefined argument inputs[i]
+          }
           return contract[func](inputs[i])
         }),
       )
