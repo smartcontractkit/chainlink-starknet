@@ -19,7 +19,7 @@ let account = devnetAccount0Address
 
 describe('Bridge Contract', () => {
   let network: IntegratedDevnet
-  let l1BridgeAddress: string = "0xB81C73E1b942C38a3C821605b56A2734Dc31ee12" // random L1 address
+  let l1BridgeAddress: string = '0xB81C73E1b942C38a3C821605b56A2734Dc31ee12' // random L1 address
   let bridgeContractAddress: string
   let tokenContractAddress: string
 
