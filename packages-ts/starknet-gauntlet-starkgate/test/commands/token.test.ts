@@ -89,7 +89,7 @@ describe('Token Contract', () => {
 
       const inspectCommand = await registerInspectCommand(balanceOfCommand).create(
         {
-          account: defaultAccount,
+          address: defaultAccount,
         },
         [tokenContractAddress],
       )
@@ -119,7 +119,7 @@ describe('Token Contract', () => {
 
       const inspectCommand = await registerInspectCommand(balanceOfCommand).create(
         {
-          account: ozAccount,
+          address: ozAccount,
         },
         [tokenContractAddress],
       )
