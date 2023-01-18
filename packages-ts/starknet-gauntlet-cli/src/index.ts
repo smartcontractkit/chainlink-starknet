@@ -15,6 +15,7 @@ import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
   L1Commands as L1EmergencyProtocolCommands,
   L2Commands as L2EmergencyProtocolCommands,
+  L2InspectionCommands as L2EmergencyProtocolInspectionCommands
 } from '@chainlink/starknet-gauntlet-emergency-protocol'
 import {
   executeCommands as MultisigExecuteCommands,
@@ -43,7 +44,7 @@ import {
   EVMDependencies,
 } from '@chainlink/evm-gauntlet'
 
-export const noopPrompt: typeof prompt = async () => {}
+export const noopPrompt: typeof prompt = async () => { }
 
 const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
@@ -127,6 +128,7 @@ const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
   ...OCR2InspectionCommands,
+  ...L2EmergencyProtocolInspectionCommands,
 ]
 
 const commands = {
@@ -142,21 +144,21 @@ const commands = {
     makeCommand: () => undefined,
   },
 }
-;(async () => {
-  try {
-    const networkPossiblePaths = [
-      path.join(process.cwd(), 'networks'),
-      path.join(__dirname, '../networks'),
-    ]
-    const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
-    const result = await executeCLI(commands, networkPath)
-    if (result) {
-      io.saveJSON(result, process.env['REPORT_NAME'] ? process.env['REPORT_NAME'] : 'report')
+  ; (async () => {
+    try {
+      const networkPossiblePaths = [
+        path.join(process.cwd(), 'networks'),
+        path.join(__dirname, '../networks'),
+      ]
+      const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
+      const result = await executeCLI(commands, networkPath)
+      if (result) {
+        io.saveJSON(result, process.env['REPORT_NAME'] ? process.env['REPORT_NAME'] : 'report')
+      }
+      process.exit(0)
+    } catch (e) {
+      console.log(e)
+      console.log('Starknet Command execution error', e.message)
+      process.exitCode = 1
     }
-    process.exit(0)
-  } catch (e) {
-    console.log(e)
-    console.log('Starknet Command execution error', e.message)
-    process.exitCode = 1
-  }
-})()
+  })()
