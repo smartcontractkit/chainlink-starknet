@@ -6,4 +6,4 @@ import StarknetValidatorCommands from './starknetValidator'
 
 export const L1Commands = [...StarknetValidatorCommands]
 export const L2Commands = [...UptimeFeedCommands]
-export const L2InspectionCommands = [...UptimeFeedCommands]
+export const L2InspectionCommands = [...UptimeInspectionCommands]
