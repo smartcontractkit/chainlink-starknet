@@ -3,6 +3,7 @@ import {
     IStarknetProvider,
     makeInspectionCommand,
 } from '@chainlink/starknet-gauntlet'
+import { BN } from 'bn.js'
 import { toBN, toHex } from 'starknet/dist/utils/number'
 import { CATEGORIES } from '../../../lib/categories'
 import { uptimeFeedContractLoader } from '../../../lib/contracts'
@@ -27,7 +28,14 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
     toCompare: null
     result: QueryResult
 }> => {
-    const [latest_round_data] = results
+    let [{ round: latest_round_data }]: { round: Round }[] = results
+
+    for (var key in latest_round_data) {
+        if (latest_round_data.hasOwnProperty(key)) {
+            latest_round_data[key] = new BN(latest_round_data[key]).toString()
+        }
+    }
+
     return {
         toCompare: null,
         result: {
