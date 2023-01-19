@@ -1,12 +1,12 @@
 package starknet
 
 import (
-	caigo "github.com/dontpanicdao/caigo"
+	caigogw "github.com/dontpanicdao/caigo/gateway"
 	caigotypes "github.com/dontpanicdao/caigo/types"
 )
 
-func IsEventFromContract(event *caigotypes.Event, address string, eventName string) bool {
-	eventKey := caigo.GetSelectorFromName(eventName)
+func IsEventFromContract(event *caigogw.Event, address caigotypes.Hash, eventName string) bool {
+	eventKey := caigotypes.GetSelectorFromName(eventName)
 	// encoded event name guaranteed to be at index 0
-	return CompareAddress(event.FromAddress, address) && event.Keys[0].Cmp(eventKey) == 0
+	return CompareAddress(event.FromAddress, address.String()) && event.Keys[0].Cmp(eventKey) == 0
 }

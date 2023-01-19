@@ -9,19 +9,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
 	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
-func TestTxm(t *testing.T) {
+func TestIntegration_Txm(t *testing.T) {
 	url := ops.SetupLocalStarkNetNode(t)
 	rawLocalKeys := ops.TestKeys(t, 2) // generate 2 keys
 
@@ -61,7 +62,7 @@ func TestTxm(t *testing.T) {
 	wg.Add(2)
 
 	// should be called twice
-	getClient := func() (types.Provider, error) {
+	getClient := func() (*starknet.Client, error) {
 		wg.Done()
 		if !failed {
 			failed = true
@@ -91,10 +92,10 @@ func TestTxm(t *testing.T) {
 	require.NoError(t, txm.Ready())
 
 	for k := range localKeys {
+		key := caigotypes.HexToHash(k)
 		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(types.Transaction{
-				SenderAddress:      k,
-				ContractAddress:    k, // send to self
+			require.NoError(t, txm.Enqueue(key, caigotypes.FunctionCall{
+				ContractAddress:    key, // send to self
 				EntryPointSelector: "get_nonce",
 			}))
 		}

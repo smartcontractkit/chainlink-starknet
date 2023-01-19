@@ -7,7 +7,7 @@ import { CATEGORIES } from '../../lib/categories'
 import { l1BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {}
-type ContractInput = []
+type ContractInput = any[]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput

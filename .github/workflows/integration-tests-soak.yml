@@ -1,6 +1,10 @@
-name: E2E Custom image build tests
+name: Integration Tests - Soak
+
 on:
-  pull_request:
+  push:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
     inputs:
       cl_branch_ref:
@@ -8,6 +12,22 @@ on:
         required: true
         default: develop
         type: string
+      l2_rpc_url:
+        description: Override default RPC url which points to local devnet (Optional)
+        required: false
+        type: string
+      node_count:
+        description: Number of ocr nodes
+        required: true
+        default: 5
+        type: string
+      ttl:
+        description: TTL for namespace
+        required: true
+        default: 72h
+        type: string
+
+
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -15,8 +35,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  e2e_custom_build_custom_chainlink_image:
-    name: E2E Custom Build Custom CL Image
+  build_custom_chainlink_image:
+    name: Build Custom CL Image
     runs-on: ubuntu-latest
     environment: integration
     permissions:
@@ -24,25 +44,33 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@1f3c81b148e53caaa0563f8963f884f0e5a4f82d # v2.0.15
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
           # cl_ref: ${{ github.event.inputs.cl_branch_ref }}
-          cl_ref: 22c6ac0237a85010b91154277533dfd6acc8912c # https://github.com/smartcontractkit/chainlink/pull/7366
+          cl_ref: a8f467cbcdb3f8176f7ea30155bfaf4d77e0718d # https://github.com/smartcontractkit/chainlink/pull/7366
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
           push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
-  e2e_custom_run_smoke_tests:
-    name: E2E Custom Run Smoke Tests
+
+  run_tests:
+    name: Run Soak Tests
     runs-on: ubuntu-latest
-    needs: [ e2e_custom_build_custom_chainlink_image ]
+    needs: [ build_custom_chainlink_image ]
     environment: integration
     env:
-      CGO_ENABLED: 1
+      L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
+      NODE_COUNT: ${{ github.event.inputs.node_count }}
+      TEST_TRIGGERED_BY: core-CI-starknet
+      CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
+      CL_VERSION: custom.${{ github.sha }}
+      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
+      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
+      TTL: ${{ github.event.inputs.ttl }}
     permissions:
       checks: write
       pull-requests: write
@@ -51,23 +79,22 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3.0.2
-      - name: Install Yarn dependencies
-        run: yarn install --frozen-lockfile
       - name: Install Nix
         uses: cachix/install-nix-action@d64e0553100205688c0fb2fa16edb0fc8663c590 # v17
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@1f3c81b148e53caaa0563f8963f884f0e5a4f82d # v2.0.15
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@cd9e407a6e0aa8ef7f315067644c0333846ffd40 # v2.0.24
         with:
-          test_command_to_run: nix develop -c make test-integration-smoke
+          CGO_ENABLED: 1
+          test_command_to_run: nix develop -c make test-integration-soak
           test_download_vendor_packages_command: cd integration-tests && go mod download
           cl_repo: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
           cl_image_tag: custom.${{ github.sha }}
-          publish_report_paths: "./tests-smoke-report.xml"
-          publish_check_name: Smoke Test Results
-          artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/tests/e2e/logs
           token: ${{ secrets.GITHUB_TOKEN }}
+          triggered_by: ${{ env.TEST_TRIGGERED_BY }}
+          go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
+          should_cleanup: "false"

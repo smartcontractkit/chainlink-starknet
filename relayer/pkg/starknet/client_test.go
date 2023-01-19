@@ -49,7 +49,7 @@ func TestGatewayClient(t *testing.T) {
 	wg.Wait()
 }
 
-func TestGateWayClient_DefaultTimeout(t *testing.T) {
+func TestGatewayClient_DefaultTimeout(t *testing.T) {
 	client, err := NewClient(gateway.GOERLI_ID, "", logger.Test(t), nil)
 	require.NoError(t, err)
 	assert.Zero(t, client.defaultTimeout)

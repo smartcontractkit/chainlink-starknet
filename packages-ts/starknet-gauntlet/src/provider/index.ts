@@ -2,12 +2,14 @@ import { TransactionResponse } from '../transaction'
 import {
   SequencerProvider as StarknetProvider,
   DeployContractResponse,
-  api,
+  Sequencer,
   CompiledContract,
   Account,
   Call,
+  number,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
+import { starknetClassHash } from './classHashCommand'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
@@ -19,22 +21,20 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
-  signAndSend: (
-    accountAddress: string,
-    wallet: IStarknetWallet,
-    calls: Call[],
-  ) => Promise<TransactionResponse>
+  signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
 export interface IStarknetProvider extends IProvider<StarknetProvider> {}
-
-export const makeProvider = (url: string): IProvider<StarknetProvider> => {
-  return new Provider(url)
+export const makeProvider = (
+  url: string,
+  wallet?: IStarknetWallet,
+): IProvider<StarknetProvider> => {
+  return new Provider(url, wallet)
 }
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: api.Sequencer.AddTransactionResponse | DeployContractResponse,
+  response: Sequencer.AddTransactionResponse | DeployContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
@@ -45,9 +45,9 @@ export const wrapResponse = (
       // Success if does not throw
       let success: boolean
       try {
-        success =
-          (await provider.provider.waitForTransaction(response.transaction_hash)) === undefined
+        await provider.provider.waitForTransaction(response.transaction_hash)
         txResponse.status = 'ACCEPTED'
+        success = true
       } catch (e) {
         txResponse.status = 'REJECTED'
         txResponse.errorMessage = e.message
@@ -65,9 +65,17 @@ export const wrapResponse = (
 
 class Provider implements IStarknetProvider {
   provider: StarknetProvider
+  account: Account
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, wallet?: IStarknetWallet) {
     this.provider = new StarknetProvider({ baseUrl })
+    if (wallet) {
+      this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
+    }
+  }
+
+  setAccount(wallet: IStarknetWallet) {
+    this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
   }
 
   send = async () => {
@@ -81,31 +89,25 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
-    const tx = await this.provider.deployContract({
+    const classHash = await starknetClassHash(contract)
+
+    const tx = await this.account.declareDeploy({
+      classHash,
       contract,
-      addressSalt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+      salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+      unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
-    const response = wrapResponse(this, tx)
+    const response = wrapResponse(this, tx.deploy)
 
     if (!wait) return response
     await response.wait()
     return response
   }
 
-  signAndSend = async (
-    accountAddress: string,
-    wallet: IStarknetWallet,
-    calls: Call[],
-    wait = false,
-  ) => {
-    const account = new Account(this.provider, accountAddress, wallet.wallet)
-
-    const maxFee = await account.estimateFee(calls)
-    const tx = await account.execute(calls, undefined, {
-      maxFee: maxFee.suggestedMaxFee,
-    })
+  signAndSend = async (calls: Call[], wait = false) => {
+    const tx = await this.account.execute(calls)
     const response = wrapResponse(this, tx)
     if (!wait) return response
 

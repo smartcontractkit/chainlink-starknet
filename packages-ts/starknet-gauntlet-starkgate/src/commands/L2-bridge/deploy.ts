@@ -1,14 +1,10 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import {
-  AfterExecute,
   BeforeExecute,
   ExecuteCommandConfig,
   ExecutionContext,
   makeExecuteCommand,
-  Validation,
 } from '@chainlink/starknet-gauntlet'
-import { shortString } from 'starknet'
-import { isContext } from 'vm'
+import { isValidAddress } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { l2BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
@@ -30,8 +26,16 @@ const makeContractInput = async (
   input: UserInput,
   context: ExecutionContext,
 ): Promise<ContractInput> => {
-  const defaultWallet = context.wallet.getAccountPublicKey()
+  const defaultWallet = context.wallet.getAccountAddress()
   return [input.governor || defaultWallet]
+}
+
+const validateInput = async (input: UserInput): Promise<boolean> => {
+  if (!isValidAddress(input.governor)) {
+    throw new Error(`Invalid governor: ${input.governor}`)
+  }
+
+  return true
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
@@ -50,11 +54,14 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys an L2 token bridge',
-    examples: [`${CATEGORIES.L2_BRIDGE}:deploy --network=<NETWORK> --governor=[ADDRESS]`],
+    examples: [
+      `${CATEGORIES.L2_BRIDGE}:deploy --network=<NETWORK> --governor=[OWNER_ADDRESS]`,
+      `${CATEGORIES.L2_BRIDGE}:deploy --network=<NETWORK>`,
+    ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateInput],
   loadContract: l2BridgeContractLoader,
   hooks: {
     beforeExecute,

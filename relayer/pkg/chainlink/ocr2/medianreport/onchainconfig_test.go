@@ -16,7 +16,7 @@ func TestOnchainConfigCodec(t *testing.T) {
 		expectErr bool
 	}{
 		{
-			name:      "postive min < positive max",
+			name:      "positive min < positive max",
 			val:       []*big.Int{big.NewInt(1), big.NewInt(1000)},
 			expectErr: false,
 		},
@@ -31,7 +31,7 @@ func TestOnchainConfigCodec(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:      "postive min > positive max",
+			name:      "positive min > positive max",
 			val:       []*big.Int{big.NewInt(1000), big.NewInt(1)},
 			expectErr: true,
 		},
@@ -41,7 +41,7 @@ func TestOnchainConfigCodec(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:      "postive min > negative max",
+			name:      "positive min > negative max",
 			val:       []*big.Int{big.NewInt(1), big.NewInt(-1000)},
 			expectErr: true,
 		},
@@ -68,9 +68,8 @@ func TestOnchainConfigCodec(t *testing.T) {
 			if p.expectErr {
 				assert.Error(t, err)
 				return // exit func if error is verified
-			} else {
-				require.NoError(t, err)
 			}
+			require.NoError(t, err)
 
 			assert.True(t, cfg.Min.Cmp(newCfg.Min) == 0)
 			assert.True(t, cfg.Max.Cmp(newCfg.Max) == 0)

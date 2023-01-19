@@ -153,3 +153,10 @@ go.work.sum
 
 .env.test*
 tmp-manifest-*
+
+# Test log files
+integration-tests/logs
+integration-tests/smoke/logs
+integration-tests/soak/logs
+remote.test
+ztarrepo.tar.gz

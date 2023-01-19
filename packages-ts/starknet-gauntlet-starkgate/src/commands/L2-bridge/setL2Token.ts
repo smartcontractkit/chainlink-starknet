@@ -1,19 +1,15 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import {
-  AfterExecute,
   BeforeExecute,
   ExecuteCommandConfig,
   ExecutionContext,
   makeExecuteCommand,
-  Validation,
 } from '@chainlink/starknet-gauntlet'
-import { shortString } from 'starknet'
-import { isContext } from 'vm'
+import { isValidAddress } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { l2BridgeContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
-  address?: string
+  address: string
 }
 
 type ContractInput = [address: string]
@@ -34,9 +30,10 @@ const makeContractInput = async (
 }
 
 const validateInput = async (input: UserInput): Promise<boolean> => {
-  if (!input.address) {
-    throw new Error('Must supply --address of L2 Token')
+  if (!isValidAddress(input.address)) {
+    throw new Error(`Invalid L2 token address: ${input.address}`)
   }
+
   return true
 }
 

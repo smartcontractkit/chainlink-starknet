@@ -31,7 +31,7 @@ const config: HardhatUserConfig = {
     ],
   },
   starknet: {
-    // dockerizedVersion: "0.8.1", // alternatively choose one of the two venv options below
+    // dockerizedVersion: "0.10.0", // alternatively choose one of the two venv options below
     // uses (my-venv) defined by `python -m venv path/to/my-venv`
     // venv: "../.venv",
 

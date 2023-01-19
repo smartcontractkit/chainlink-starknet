@@ -1,0 +1,86 @@
+name: golangci_lint
+
+on:
+  push:
+
+jobs:
+  golangci-lint-version:
+    name: Get golangci-lint version to from nix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+      - name: Install Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Parse version
+        id: parse
+        run: |
+          long=$(nix develop -c golangci-lint version | grep "golangci-lint has version")
+          stringArray=($long)
+          version=$(echo "${stringArray[3]}")
+          echo "version found: ${version}"
+          echo "version=${version}" >>$GITHUB_OUTPUT
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+
+  golang_lint_relayer:
+    name: Golang Lint Relayer
+    runs-on: ubuntu-latest
+    needs: [golangci-lint-version]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+      - name: Install Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v${{ needs.golangci-lint-version.outputs.version }}
+          working-directory: relayer
+
+  golang_lint_ops:
+    name: Golang Lint Ops
+    runs-on: ubuntu-latest
+    needs: [golangci-lint-version]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+      - name: Install Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v${{ needs.golangci-lint-version.outputs.version }}
+          working-directory: ops
+
+  golang_lint_integration_tests:
+    name: Golang Lint Integration Tests
+    runs-on: ubuntu-latest
+    needs: [golangci-lint-version]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+      - name: Install Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Lint integration-tests
+        run: nix develop -c make lint-go-test
+      # Note: I could not figure out why the golangci-lint-action would not work even though it is technically running the same as above, error message is this:
+      # Running [/home/runner/golangci-lint-1.50.1-linux-amd64/golangci-lint run --out-format=github-actions --path-prefix=integration-tests --exclude=dot-imports] in [/home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests] ...
+      # level=warning msg="[runner] Can't run linter goanalysis_metalinter: inspect: failed to load package client: could not load export data: no export data for \"github.com/smartcontractkit/chainlink-testing-framework/client\""
+      # level=error msg="Running error: 1 error occurred:\n\t* can't run linter goanalysis_metalinter: inspect: failed to load package client: could not load export data: no export data for \"github.com/smartcontractkit/chainlink-testing-framework/client\"\n\n"
+      # - name: golangci-lint
+      #   uses: golangci/golangci-lint-action@v3
+      #   env:
+      #     CGO_ENABLED: 1
+      #   with:
+      #     version: v${{ needs.golangci-lint-version.outputs.version }}
+      #     working-directory: integration-tests
+      #     args: --exclude=dot-imports

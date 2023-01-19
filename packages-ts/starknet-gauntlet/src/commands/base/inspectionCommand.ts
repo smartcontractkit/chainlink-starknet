@@ -5,7 +5,7 @@ import { InspectionDependencies } from '../../dependencies'
 import { IStarknetProvider } from '../../provider'
 import { CommandUX, makeCommandId } from './command'
 
-interface InspectUserInput<UI, CompareInput> {
+export interface InspectUserInput<UI, CompareInput> {
   input: UI
   toCompare?: CompareInput
 }
@@ -120,6 +120,9 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
       const results = await Promise.all(
         functions.map((func, i) => {
           deps.logger.loading(`Fetching ${func} of contract ${this.contractAddress}...`)
+          if (!inputs[i]) {
+            return contract[func]() // workaround undefined argument inputs[i]
+          }
           return contract[func](inputs[i])
         }),
       )
