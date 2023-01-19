@@ -1,6 +1,6 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST, uptimeFeedContractLoader } from '../../lib/contracts'
-import { toFelt } from 'starknet/dist/utils/number'
+import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 
 type ContractInput = [initial_status: string, owner_address: string]
@@ -11,7 +11,7 @@ export interface UserInput {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [toFelt(0), input.owner]
+  return [number.toFelt(0), input.owner]
 }
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
