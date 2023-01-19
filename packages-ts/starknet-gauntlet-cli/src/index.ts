@@ -45,7 +45,7 @@ import {
 } from '@chainlink/evm-gauntlet'
 import { makeWallet as makeLedgerWallet } from '@chainlink/starknet-gauntlet-ledger'
 
-export const noopPrompt: typeof prompt = async () => { }
+export const noopPrompt: typeof prompt = async () => {}
 
 const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
@@ -153,21 +153,21 @@ const commands = {
     makeCommand: () => undefined,
   },
 }
-  ; (async () => {
-    try {
-      const networkPossiblePaths = [
-        path.join(process.cwd(), 'networks'),
-        path.join(__dirname, '../networks'),
-      ]
-      const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
-      const result = await executeCLI(commands, networkPath)
-      if (result) {
-        io.saveJSON(result, process.env['REPORT_NAME'] ? process.env['REPORT_NAME'] : 'report')
-      }
-      process.exit(0)
-    } catch (e) {
-      console.log(e)
-      console.log('Starknet Command execution error', e.message)
-      process.exitCode = 1
+;(async () => {
+  try {
+    const networkPossiblePaths = [
+      path.join(process.cwd(), 'networks'),
+      path.join(__dirname, '../networks'),
+    ]
+    const networkPath = networkPossiblePaths.filter((networkPath) => existsSync(networkPath))[0]
+    const result = await executeCLI(commands, networkPath)
+    if (result) {
+      io.saveJSON(result, process.env['REPORT_NAME'] ? process.env['REPORT_NAME'] : 'report')
     }
-  })()
+    process.exit(0)
+  } catch (e) {
+    console.log(e)
+    console.log('Starknet Command execution error', e.message)
+    process.exitCode = 1
+  }
+})()
