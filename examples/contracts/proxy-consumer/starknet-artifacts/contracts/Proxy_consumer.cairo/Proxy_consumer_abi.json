@@ -1,0 +1,173 @@
+[
+    {
+        "members": [
+            {
+                "name": "round_id",
+                "offset": 0,
+                "type": "felt"
+            },
+            {
+                "name": "answer",
+                "offset": 1,
+                "type": "felt"
+            },
+            {
+                "name": "block_num",
+                "offset": 2,
+                "type": "felt"
+            },
+            {
+                "name": "started_at",
+                "offset": 3,
+                "type": "felt"
+            },
+            {
+                "name": "updated_at",
+                "offset": 4,
+                "type": "felt"
+            }
+        ],
+        "name": "Round",
+        "size": 5,
+        "type": "struct"
+    },
+    {
+        "data": [
+            {
+                "name": "round_id",
+                "type": "felt"
+            },
+            {
+                "name": "answer",
+                "type": "felt"
+            },
+            {
+                "name": "transmitter",
+                "type": "felt"
+            },
+            {
+                "name": "observation_timestamp",
+                "type": "felt"
+            },
+            {
+                "name": "observers",
+                "type": "felt"
+            },
+            {
+                "name": "observations_len",
+                "type": "felt"
+            },
+            {
+                "name": "observations",
+                "type": "felt*"
+            },
+            {
+                "name": "juels_per_fee_coin",
+                "type": "felt"
+            },
+            {
+                "name": "gas_price",
+                "type": "felt"
+            },
+            {
+                "name": "config_digest",
+                "type": "felt"
+            },
+            {
+                "name": "epoch_and_round",
+                "type": "felt"
+            },
+            {
+                "name": "reimbursement",
+                "type": "felt"
+            }
+        ],
+        "keys": [],
+        "name": "NewTransmission",
+        "type": "event"
+    },
+    {
+        "data": [
+            {
+                "name": "current",
+                "type": "felt"
+            },
+            {
+                "name": "round_id",
+                "type": "felt"
+            },
+            {
+                "name": "timestamp",
+                "type": "felt"
+            }
+        ],
+        "keys": [],
+        "name": "AnswerUpdated",
+        "type": "event"
+    },
+    {
+        "data": [
+            {
+                "name": "round_id",
+                "type": "felt"
+            },
+            {
+                "name": "started_by",
+                "type": "felt"
+            },
+            {
+                "name": "started_at",
+                "type": "felt"
+            }
+        ],
+        "keys": [],
+        "name": "NewRound",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "name": "proxy_address",
+                "type": "felt"
+            }
+        ],
+        "name": "constructor",
+        "outputs": [],
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "get_latest_round_data",
+        "outputs": [
+            {
+                "name": "round",
+                "type": "Round"
+            }
+        ],
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "get_stored_round",
+        "outputs": [
+            {
+                "name": "res",
+                "type": "Round"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "get_stored_feed_address",
+        "outputs": [
+            {
+                "name": "res",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
