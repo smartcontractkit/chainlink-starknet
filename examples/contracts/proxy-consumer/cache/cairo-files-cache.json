@@ -1,0 +1,7 @@
+{
+ "/Users/augustuschang/woodshop/table/chainlink-starknet/examples/contracts/proxy-consumer/contracts/Proxy_consumer.cairo": {
+  "contentHash": "5eee616c8e42b3204e6e44bce74f05d1ef945c2276be75ed3349a242f44f35e4",
+  "outputPath": "/Users/augustuschang/woodshop/table/chainlink-starknet/examples/contracts/proxy-consumer/starknet-artifacts/contracts/Proxy_consumer.cairo/Proxy_consumer.json",
+  "abiPath": "/Users/augustuschang/woodshop/table/chainlink-starknet/examples/contracts/proxy-consumer/starknet-artifacts/contracts/Proxy_consumer.cairo/Proxy_consumer_abi.json"
+ }
+}

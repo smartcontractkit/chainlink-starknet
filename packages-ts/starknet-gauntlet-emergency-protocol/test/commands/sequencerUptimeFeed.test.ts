@@ -7,7 +7,7 @@ import {
 } from '@chainlink/starknet-gauntlet/test/utils'
 
 describe('Sequencer Uptime Feed Contract', () => {
-  let network: IntegratedDevnet
+  let network
   let contractAddress: string
 
   beforeAll(async () => {
