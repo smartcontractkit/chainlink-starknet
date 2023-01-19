@@ -1,4 +1,3 @@
-import deployOZCommand from '../../../starknet-gauntlet-oz/src/commands/account/deploy'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { makeProvider } from '@chainlink/starknet-gauntlet'
 import { Contract } from 'starknet'
@@ -28,8 +27,6 @@ const getBalance = async (address: string) => {
 
 describe('Example Contract', () => {
   let network: IntegratedDevnet
-  let account: string
-  let privateKey: string
   let contractAddress: string
 
   beforeAll(async () => {
@@ -37,51 +34,9 @@ describe('Example Contract', () => {
   }, TIMEOUT)
 
   it(
-    'Deploy OZ Account',
-    async () => {
-      const command = await registerExecuteCommand(deployOZCommand).create({}, [])
-
-      const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      account = report.responses[0].contract
-      privateKey = report.data.privateKey
-
-      // Fund the newly allocated account
-      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
-      let balance = 1e21
-      const body = {
-        address: account,
-        amount: balance,
-        lite: true,
-      }
-
-      try {
-        const response = await fetch(`${gateway_url}/mint`, {
-          method: 'post',
-          body: JSON.stringify(body),
-          headers: { 'Content-Type': 'application/json' },
-        })
-
-        const data = await response.json()
-        expect(data.new_balance).toEqual(balance)
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    TIMEOUT,
-  )
-
-  it(
     'Deployment with default input',
     async () => {
-      const command = await registerExecuteCommand(deployCommand).create(
-        {
-          account: account,
-          pk: privateKey,
-        },
-        [],
-      )
+      const command = await registerExecuteCommand(deployCommand).create({}, [])
 
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
@@ -97,8 +52,6 @@ describe('Example Contract', () => {
       const command = await registerExecuteCommand(increaseBalanceCommand).create(
         {
           input: { balance: '100' },
-          account: account,
-          pk: privateKey,
         },
         [contractAddress],
       )
@@ -118,8 +71,6 @@ describe('Example Contract', () => {
       const command = await registerExecuteCommand(increaseBalanceCommand).create(
         {
           balance: '100',
-          account: account,
-          pk: privateKey,
         },
         [contractAddress],
       )

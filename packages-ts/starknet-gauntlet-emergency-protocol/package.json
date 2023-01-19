@@ -15,7 +15,7 @@
   "scripts": {
     "gauntlet": "ts-node ./src/index.ts",
     "lint": "tsc",
-    "test": "SKIP_PROMPTS=true jest --runInBand",
+    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-emergency-protocol --passWithNoTests",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
     "lint:format": "yarn prettier --check ./src",
@@ -28,6 +28,6 @@
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/evm-gauntlet": "0.1.0",
     "@chainlink/starknet-gauntlet": "*",
-    "starknet": "^3.15.0"
+    "starknet": "^4.17.1"
   }
 }

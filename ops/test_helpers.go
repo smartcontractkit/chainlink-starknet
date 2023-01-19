@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 
 var (
 	// seed = 0 keys for starknet-devnet
-	PrivateKeys0Seed []string = []string{
+	PrivateKeys0Seed = []string{
 		"0xe3e70682c2094cac629f6fbed82c07cd",
 		"0xf728b4fa42485e3a0a5d2f346baa9455",
 		"0xeb1167b367a9c3787c65c1e582e2e662",
@@ -82,8 +82,7 @@ func TestKeys(t *testing.T, count int) (rawkeys [][]byte) {
 			break
 		}
 
-		keyBytes, err := caigo.HexToBytes(k)
-		require.NoError(t, err)
+		keyBytes := caigotypes.HexToHash(k).Bytes()
 		rawkeys = append(rawkeys, keyBytes)
 	}
 	return rawkeys

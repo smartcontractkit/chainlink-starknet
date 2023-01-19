@@ -2,11 +2,10 @@ import { assert, expect } from 'chai'
 import BN from 'bn.js'
 import { starknet } from 'hardhat'
 import { ec, hash, number, uint256, KeyPair } from 'starknet'
-import { BigNumberish } from 'starknet/utils/number'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { toFelt, hexPadStart } from '../utils'
+import { account, toFelt, hexPadStart, expectInvokeErrorMsg } from '@chainlink/starknet'
 
 interface Oracle {
   signer: KeyPair
@@ -18,6 +17,8 @@ const CHUNK_SIZE = 31
 // Observers - max 31 oracles or 31 bytes
 const OBSERVERS_MAX = 31
 const OBSERVERS_HEX = '0x00010203000000000000000000000000000000000000000000000000000000'
+const INT128_MIN = BigInt(-2) ** BigInt(128 - 1)
+const INT128_MAX = BigInt(2) ** BigInt(128 - 1) - BigInt(1)
 
 function encodeBytes(data: Uint8Array): BN[] {
   let felts = []
@@ -55,6 +56,8 @@ function decodeBytes(felts: BN[]): Uint8Array {
 
 describe('aggregator.cairo', function () {
   this.timeout(TIMEOUT)
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
 
   let aggregatorFactory: StarknetContractFactory
 
@@ -70,6 +73,8 @@ describe('aggregator.cairo', function () {
   let oracles: Oracle[] = []
   let config_digest: number
 
+  let answer: string
+
   before(async () => {
     // assumes contract.cairo and events.cairo has been compiled
     aggregatorFactory = await starknet.getContractFactory('ocr2/aggregator')
@@ -77,17 +82,23 @@ describe('aggregator.cairo', function () {
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
     // if imported from hardhat/types/runtime"
-    owner = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
+    await owner.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
-    token = await tokenFactory.deploy({ owner: owner.starknetContract.address })
+    await owner.declare(tokenFactory)
+    token = await owner.deploy(tokenFactory, { owner: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
       amount: uint256.bnToUint256(100_000_000_000),
     })
 
-    aggregator = await aggregatorFactory.deploy({
+    await owner.declare(aggregatorFactory)
+
+    aggregator = await owner.deploy(aggregatorFactory, {
       owner: BigInt(owner.starknetContract.address),
       link: BigInt(token.address),
       min_answer: toFelt(minAnswer),
@@ -101,7 +112,11 @@ describe('aggregator.cairo', function () {
 
     let futures = []
     let generateOracle = async () => {
-      let transmitter = await starknet.deployAccount('OpenZeppelin')
+      let transmitter = await starknet.OpenZeppelinAccount.createAccount()
+
+      await funder.fund([{ account: transmitter.address, amount: 1e21 }])
+      await transmitter.deployAccount()
+
       return {
         signer: ec.genKeyPair(),
         transmitter,
@@ -143,7 +158,7 @@ describe('aggregator.cairo', function () {
     let events = block.transaction_receipts[0].events
 
     assert.isNotEmpty(events)
-    assert.equal(events.length, 1)
+    assert.equal(events.length, 2)
     console.log("Log raw 'ConfigSet' event: %O", events[0])
 
     const decodedEvents = await aggregator.decodeEvents(events)
@@ -157,12 +172,16 @@ describe('aggregator.cairo', function () {
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
+    await bob.deployAccount()
+
     return { ownable: aggregator, alice, bob }
   })
 
   describe('OCR aggregator behavior', function () {
-    let transmit = async (epoch_and_round: number, answer: BigNumberish): Promise<any> => {
+    let transmit = async (epoch_and_round: number, answer: number.BigNumberish): Promise<any> => {
       let extra_hash = 1
       let observation_timestamp = 1
       let juels_per_fee_coin = 1
@@ -256,7 +275,8 @@ describe('aggregator.cairo', function () {
       // assert.equal(e.data.reimbursement, 0n)
 
       const len = 32 * 2 // 32 bytes (hex)
-      assert.equal(hexPadStart(e.data.transmitter, len), transmitter)
+
+      expect(hexPadStart(e.data.transmitter, len)).to.hexEqual(transmitter)
 
       const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
       assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)
@@ -284,6 +304,55 @@ describe('aggregator.cairo', function () {
         // Round should be unchanged
         let { round: new_round } = await aggregator.call('latest_round_data')
         assert.deepEqual(round, new_round)
+      }
+    })
+
+    it('should transmit with max_int_128bit correctly', async () => {
+      answer = BigInt(INT128_MAX).toString(10)
+      try {
+        await transmit(4, toFelt(answer))
+        expect.fail()
+      } catch (error: any) {
+        const matches = error?.message.match(/Error message: (.+?)\n/g)
+        if (!matches) {
+          console.log('answer is in int128 range but not in min-max range')
+        }
+      }
+
+      try {
+        const tooBig = INT128_MAX + 1n
+        answer = BigInt(tooBig).toString(10)
+        await transmit(4, answer)
+        expect.fail()
+      } catch (err: any) {
+        expectInvokeErrorMsg(
+          err?.message,
+          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
+        )
+      }
+    })
+
+    it('should transmit with min_int_128bit correctly', async () => {
+      answer = BigInt(INT128_MIN).toString(10)
+      try {
+        await transmit(4, toFelt(answer))
+      } catch (err: any) {
+        const matches = err?.message.match(/Error message: (.+?)\n/g)
+        if (!matches) {
+          console.log('answer is in int128 range but not in min-max range')
+        }
+      }
+
+      try {
+        const tooBig = INT128_MIN - 1n
+        answer = BigInt(tooBig).toString(10)
+        await transmit(4, toFelt(answer))
+        expect.fail()
+      } catch (err: any) {
+        expectInvokeErrorMsg(
+          err?.message,
+          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
+        )
       }
     })
 
@@ -347,8 +416,8 @@ describe('aggregator.cairo', function () {
       let oracle = oracles[0]
       // NOTE: previous test changed oracle0's payee to oracle1
       let payee = oracles[1].transmitter
-
-      let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
+      aggregator.call
+      let { amount: owed } = await aggregator.call('owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })
       // several rounds happened so we are owed payment
@@ -382,7 +451,7 @@ describe('aggregator.cairo', function () {
 
       // owed payment is now zero
       {
-        let { amount: owed } = await payee.call(aggregator, 'owed_payment', {
+        let { amount: owed } = await aggregator.call('owed_payment', {
           transmitter: oracle.transmitter.starknetContract.address,
         })
         assert.ok(owed == 0)

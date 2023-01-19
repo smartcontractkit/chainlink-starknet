@@ -58,8 +58,8 @@ func TestBuildReport(t *testing.T) {
 
 	// validate observations
 	for i := 0; i < n; i++ {
-		index := prefixSizeBytes + observationSizeBytes*i
-		assert.Equal(t, oo[0].Value.FillBytes(make([]byte, observationSizeBytes)), []byte(report[index:index+observationSizeBytes]), fmt.Sprintf("validate median observation #%d", i))
+		idx := prefixSizeBytes + observationSizeBytes*i
+		assert.Equal(t, oo[0].Value.FillBytes(make([]byte, observationSizeBytes)), []byte(report[idx:idx+observationSizeBytes]), fmt.Sprintf("validate median observation #%d", i))
 	}
 
 	// validate juelsPerFeeCoin
