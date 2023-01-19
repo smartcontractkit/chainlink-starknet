@@ -129,6 +129,7 @@ const L2ExecuteCommands = [
   ...MultisigExecuteCommands,
   ...L2EmergencyProtocolCommands,
 ]
+
 const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(
   multisigWrapCommand,
 )
