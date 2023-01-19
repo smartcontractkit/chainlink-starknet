@@ -15,19 +15,21 @@ describe('Sequencer Uptime Feed Contract', () => {
   }, 15000)
 
   describe('deploy', () => {
-    it('Deployment with default input', async () => {
-      const command = await registerExecuteCommand(deployCommand).create(
-        {
-          initialStatus: 0,
-        },
-        [],
-      )
+    it(
+      'Deployment with default input',
+      async () => {
+        const command = await registerExecuteCommand(deployCommand).create(
+          {
+            initialStatus: 0,
+          },
+          [],
+        )
 
-      const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+        const report = await command.execute()
+        expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      contractAddress = report.responses[0].contract
-    },
+        contractAddress = report.responses[0].contract
+      },
       TIMEOUT,
     )
   })
