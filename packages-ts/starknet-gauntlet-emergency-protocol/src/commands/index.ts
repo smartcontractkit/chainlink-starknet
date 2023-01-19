@@ -1,6 +1,6 @@
 import {
-    executionCommands as UptimeFeedCommands,
-    inspectionCommands as UptimeInspectionCommands
+  executionCommands as UptimeFeedCommands,
+  inspectionCommands as UptimeInspectionCommands,
 } from './sequencerUptimeFeed'
 import StarknetValidatorCommands from './starknetValidator'
 

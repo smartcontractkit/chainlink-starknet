@@ -56,7 +56,7 @@ This sets the L1 sender address. This is to control, which L1 address can write 
 yarn gauntlet sequencer_uptime_feed:set_l1_sender --network=<NETWORK> --address=0x31982C9e5edd99bb923a948252167ea4BbC38AC1 0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f
 ```
 
-- Inspect 
+- Inspect
 
 Inspect the latest round data
 
