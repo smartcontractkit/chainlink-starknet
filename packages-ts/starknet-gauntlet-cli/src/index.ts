@@ -138,11 +138,8 @@ const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
   ...OCR2InspectionCommands,
-<<<<<<< HEAD
   ...L2EmergencyProtocolInspectionCommands,
-=======
   ...StarkgateInspectionCommands,
->>>>>>> l2-emergency-protocol-gauntlet
 ]
 
 const commands = {
