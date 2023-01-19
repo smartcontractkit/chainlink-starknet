@@ -1,27 +1,25 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployTokenCommand from '../../src/commands/token/deploy'
-import deployCommand from '../../src/commands/bridge/deploy'
-import setL1Bridge from '../../src/commands/bridge/setL1Bridge'
-import setL2Token from '../../src/commands/bridge/setL2Token'
+import deployL2Bridge from '../../src/commands/L2-bridge/deploy'
+import setL1Bridge from '../../src/commands/L2-bridge/setL1Bridge'
+import setL2Token from '../../src/commands/L2-bridge/setL2Token'
 import {
   registerExecuteCommand,
   TIMEOUT,
   LOCAL_URL,
   startNetwork,
   IntegratedDevnet,
+  devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
+import { loadL2Contract, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
-import { compressProgram } from 'starknet/dist/utils/stark'
+
+let account = devnetAccount0Address
 
 describe('Bridge Contract', () => {
   let network: IntegratedDevnet
-  let account: string
-  let privateKey: string
-  let publicKey: string
-  let l1BridgeAddress: number = 42 // mock placeholder
+  let l1BridgeAddress: string = '0xB81C73E1b942C38a3C821605b56A2734Dc31ee12' // random L1 address
   let bridgeContractAddress: string
   let tokenContractAddress: string
 
@@ -30,49 +28,10 @@ describe('Bridge Contract', () => {
   }, 15000)
 
   it(
-    'Deploy OZ Account',
-    async () => {
-      const command = await registerExecuteCommand(deployOZCommand).create({}, [])
-
-      const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      account = report.responses[0].contract
-      privateKey = report.data.privateKey
-      publicKey = report.data.publicKey
-
-      // Fund the newly allocated account
-      let gateway_url = process.env.NODE_URL || 'http://127.0.0.1:5050'
-      let balance = 1e21
-      const body = {
-        address: account,
-        amount: balance,
-        lite: true,
-      }
-
-      try {
-        const response = await fetch(`${gateway_url}/mint`, {
-          method: 'post',
-          body: JSON.stringify(body),
-          headers: { 'Content-Type': 'application/json' },
-        })
-
-        const data = await response.json()
-        expect(data.new_balance).toEqual(balance)
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    TIMEOUT,
-  )
-
-  it(
     'Deploy L2 Bridge with Default Wallet as Governor',
     async () => {
-      const command = await registerExecuteCommand(deployCommand).create(
+      const command = await registerExecuteCommand(deployL2Bridge).create(
         {
-          account: account,
-          pk: privateKey,
           governor: account,
         },
         [],
@@ -82,7 +41,7 @@ describe('Bridge Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
       bridgeContractAddress = report.responses[0].contract
 
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridge = loadL2Contract(CONTRACT_LIST.L2_BRIDGE)
       const bridgeContract = new Contract(
         bridge.abi,
         bridgeContractAddress,
@@ -101,8 +60,6 @@ describe('Bridge Contract', () => {
       const command = await registerExecuteCommand(deployTokenCommand).create(
         {
           link: true,
-          account: account,
-          pk: privateKey,
         },
         [],
       )
@@ -120,8 +77,6 @@ describe('Bridge Contract', () => {
     async () => {
       const command = await registerExecuteCommand(setL1Bridge).create(
         {
-          account: account,
-          pk: privateKey,
           address: l1BridgeAddress,
         },
         [bridgeContractAddress],
@@ -130,7 +85,7 @@ describe('Bridge Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridge = loadL2Contract(CONTRACT_LIST.L2_BRIDGE)
       const bridgeContract = new Contract(
         bridge.abi,
         bridgeContractAddress,
@@ -149,8 +104,6 @@ describe('Bridge Contract', () => {
     async () => {
       const command = await registerExecuteCommand(setL2Token).create(
         {
-          account: account,
-          pk: privateKey,
           address: tokenContractAddress,
         },
         [bridgeContractAddress],
@@ -159,7 +112,7 @@ describe('Bridge Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const bridge = loadContract(CONTRACT_LIST.BRIDGE)
+      const bridge = loadL2Contract(CONTRACT_LIST.L2_BRIDGE)
       const bridgeContract = new Contract(
         bridge.abi,
         bridgeContractAddress,

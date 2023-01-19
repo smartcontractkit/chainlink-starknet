@@ -150,6 +150,21 @@ format-ts:
 format-ts-check:
 	yarn format:check
 
+.PHONY: lint-go-ops
+lint-go-ops:
+	cd ./ops && golangci-lint --color=always run
+
+.PHONY: lint-go-relayer
+lint-go-relayer:
+	cd ./relayer && golangci-lint --color=always run
+
+.PHONY: lint-go-test
+lint-go-test:
+	cd ./integration-tests && golangci-lint --color=always --exclude=dot-imports run
+
+.PHONY: test-go
+test-go: test-unit-go test-integration-go
+
 .PHONY: test-unit
 test-unit: test-unit-go
 
@@ -158,12 +173,29 @@ test-unit-go:
 	cd ./relayer && go test -v ./...
 	cd ./relayer && go test -v ./... -race -count=10
 
+.PHONY: test-integration-go
+# only runs tests with TestIntegration_* + //go:build integration
+test-integration-go:
+	cd ./relayer && go test -v ./... -run TestIntegration -tags integration
+
+.PHONY: test-integration-prep
+test-integration-prep:
+	python -m venv ~/cairo_venv && \
+		. ~/cairo_venv/bin/activate
+	cd ./contracts && pip install -r requirements.txt
+	make build
+
 .PHONY: test-integration
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-integration-smoke
-test-integration-smoke: build-ts-contracts
+test-integration-smoke: test-integration-prep
 	ginkgo -v -r --junit-report=tests-smoke-report.xml --keep-going --trace integration-tests/smoke
+
+.PHONY: test-integration-soak
+test-integration-soak: test-integration-prep
+	cd integration-tests/soak/ && \
+		go test
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
@@ -173,6 +205,8 @@ test-integration-contracts: build-ts env-devnet-hardhat
 	cd packages-ts/integration-eqlabs-multisig/ && \
 		yarn test
 	cd packages-ts/integration-starkgate/ && \
+		yarn test
+	cd packages-ts/starknet/ && \
 		yarn test
 
 .PHONY: test-integration-gauntlet
@@ -201,7 +235,7 @@ test-integration-gauntlet: build-ts env-devnet-hardhat-down
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-ts-contracts
-test-ts-contracts: build-ts-contracts env-devnet-hardhat
+test-ts-contracts: build-ts-contracts build-ts-workspace env-devnet-hardhat
 	cd contracts/ && \
 		yarn test
 

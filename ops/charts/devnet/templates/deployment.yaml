@@ -17,12 +17,19 @@ spec:
         release: {{ .Release.Name }}
         app: starknet-dev
     spec:
+      volumes:
+        - name: vol
+          hostPath:
+            path: /dumps
       containers:
       - name: {{ .Chart.Name }}
+        volumeMounts:
+          - name: vol
+            mountPath: /dumps
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.2.11"}}"
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.3.5"}}"
         args: ["--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
 {{- end }}
         imagePullPolicy: IfNotPresent

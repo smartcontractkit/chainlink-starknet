@@ -8,9 +8,10 @@ import (
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 // TODO: use libocr constant
@@ -45,6 +46,10 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 
 	if len(cfg.Signers) != len(cfg.Transmitters) {
 		return configDigest, errors.New("must have equal number of signers and transmitters")
+	}
+
+	if len(cfg.Signers) <= 3*int(cfg.F) {
+		return configDigest, errors.New("number of oracles must be greater than 3*f")
 	}
 
 	oracles := []*big.Int{}

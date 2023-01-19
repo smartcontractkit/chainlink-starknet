@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	"github.com/dontpanicdao/caigo"
+	caigotypes "github.com/dontpanicdao/caigo/types"
 
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 	// kr2, err := NewOCR2Key(cryptorand.Reader)
 	// require.NoError(t, err)
 
-	bytes, err := caigo.HexToBytes("0x004acf99cb25a4803916f086440c661295b105a485efdc649ac4de9536da25b")
+	bytes, err := caigotypes.HexToBytes("0x004acf99cb25a4803916f086440c661295b105a485efdc649ac4de9536da25b")
 	require.NoError(t, err)
 	configDigest, err := ocrtypes.BytesToConfigDigest(bytes)
 	require.NoError(t, err)
@@ -70,8 +70,9 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 
 	// check that report hash matches expected
 	msg, err := ReportToSigData(ctx, report)
+	require.NoError(t, err)
 
-	expected, err := caigo.HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
+	expected, err := caigotypes.HexToBytes("0x1332a8dabaabef63b03438ca50760cb9f5c0292cbf015b2395e50e6157df4e3")
 	require.NoError(t, err)
 	assert.Equal(t, expected, msg.Bytes())
 
@@ -91,8 +92,12 @@ func TestStarkNetKeyring_TestVector(t *testing.T) {
 	feltRExpected := junotypes.BigToFelt(bigRExpected)
 	assert.Equal(t, feltRExpected, r)
 
-	bigSExpected, _ := new(big.Int).SetString("1930849708769648077928186998643944706551011476358007177069185543644456022504", 10)
+	// test for malleability
+	otherS, _ := new(big.Int).SetString("1930849708769648077928186998643944706551011476358007177069185543644456022504", 10)
+	bigSExpected, _ := new(big.Int).SetString("1687653079896483135769135784451125398975732275358080312084893914240056843079", 10)
+
 	feltSExpected := junotypes.BigToFelt(bigSExpected)
+	assert.NotEqual(t, otherS, s, "signature not in canonical form")
 	assert.Equal(t, feltSExpected, s)
 }
 
@@ -147,7 +152,13 @@ func TestStarkNetKeyring_Sign_Verify(t *testing.T) {
 	t.Run("invalid pubkey", func(t *testing.T) {
 		sig, err := kr1.Sign(ctx, report)
 		require.NoError(t, err)
-		result := kr2.Verify([]byte{0x01}, ctx, report, sig)
+
+		pk := []byte{0x01}
+		result := kr2.Verify(pk, ctx, report, sig)
+		require.False(t, result)
+
+		pk = big.NewInt(int64(31337)).Bytes()
+		result = kr2.Verify(pk, ctx, report, sig)
 		require.False(t, result)
 	})
 }

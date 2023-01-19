@@ -1,7 +1,11 @@
 package starknet
 
+import (
+	caigotypes "github.com/dontpanicdao/caigo/types"
+)
+
 type CallOps struct {
-	ContractAddress string
+	ContractAddress caigotypes.Hash
 	Selector        string
 	Calldata        []string
 }

@@ -1,197 +1,172 @@
 package common
 
 import (
-	"context"
 	"encoding/hex"
-	"flag"
+	"fmt"
+	"os"
 	"strings"
+	"time"
 
-	"github.com/dontpanicdao/caigo/gateway"
-	"github.com/go-resty/resty/v2"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	. "github.com/onsi/gomega"
-	"github.com/smartcontractkit/chainlink-env/environment"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
-	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
+	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
-	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 )
 
-const (
-	ChainName = "starknet"
-	ChainId   = gateway.GOERLI_ID // default chainID for local devnet and live testnet
-)
-
 var (
-	err       error
-	clImage   string
-	clVersion string
+	err error
 
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
 	defaultWalletAddress string // derived in init()
+	rpcRequestTimeout    = time.Second * 300
+	dumpPath             = "/dumps/dump.pkl"
 )
 
 func init() {
-	// pass in flags to override default chainlink image & version
-	flag.StringVar(&clImage, "chainlink-image", "", "specify chainlink image to be used")
-	flag.StringVar(&clVersion, "chainlink-version", "", "specify chainlink version to be used")
-
 	// wallet contract derivation
-	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
+	var keyBytes []byte
+	keyBytes, err = hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
 	if err != nil {
 		panic(err)
 	}
 	defaultWalletAddress = "0x" + hex.EncodeToString(keys.PubKeyToAccount(keys.Raw(keyBytes).Key().PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+
 }
 
 type Test struct {
-	sc         *StarkNetDevnetClient
-	cc         *ChainlinkClient
-	mockServer *ctfClient.MockserverClient
-	Env        *environment.Environment
-	Common     *Common
+	Devnet                *devnet.StarkNetDevnetClient
+	Cc                    *ChainlinkClient
+	Starknet              *starknet.Client
+	OCR2Client            *ocr2.Client
+	Sg                    *gauntlet.StarknetGauntlet
+	mockServer            *ctfClient.MockserverClient
+	L1RPCUrl              string
+	Common                *Common
+	LinkTokenAddr         string
+	OCRAddr               string
+	AccessControllerAddr  string
+	ProxyAddr             string
+	ObservationSource     string
+	JuelsPerFeeCoinSource string
 }
 
-type StarkNetDevnetClient struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	cfg    *blockchain.EVMNetwork
-	client *resty.Client
-}
 type ChainlinkClient struct {
-	nKeys          []ctfClient.NodeKeysBundle
-	chainlinkNodes []*client.Chainlink
+	NKeys          []client.NodeKeysBundle
+	ChainlinkNodes []*client.Chainlink
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
 }
 
 // DeployCluster Deploys and sets up config of the environment and nodes
-func (t *Test) DeployCluster(nodes int, commonConfig *Common) {
-	t.Common = SetConfig(commonConfig)
-	t.cc = &ChainlinkClient{}
-	t.sc = &StarkNetDevnetClient{}
-	t.DeployEnv(nodes)
+func (t *Test) DeployCluster() {
+	lggr := logger.Nop()
+	t.Cc = &ChainlinkClient{}
+	t.ObservationSource = t.GetDefaultObservationSource()
+	t.JuelsPerFeeCoinSource = t.GetDefaultJuelsPerFeeCoinSource()
+	t.DeployEnv()
 	t.SetupClients()
-	t.cc.nKeys, t.cc.chainlinkNodes, err = t.Common.CreateKeys(t.Env)
+	if t.Common.Testnet {
+		t.Common.Env.URLs[t.Common.ServiceKeyL2][1] = t.Common.L2RPCUrl
+	}
+	t.Cc.NKeys, t.Cc.ChainlinkNodes, err = t.Common.CreateKeys(t.Common.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating chains and keys should not fail")
+	t.Starknet, err = starknet.NewClient(t.Common.ChainId, t.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating starknet client should not fail")
+	t.OCR2Client, err = ocr2.NewClient(t.Starknet, lggr)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating ocr2 client should not fail")
+	if !t.Common.Testnet {
+		err = os.Setenv("PRIVATE_KEY", t.GetDefaultPrivateKey())
+		Expect(err).ShouldNot(HaveOccurred(), "Setting private key should not fail")
+		err = os.Setenv("ACCOUNT", t.GetDefaultWalletAddress())
+		Expect(err).ShouldNot(HaveOccurred(), "Setting account address should not fail")
+		t.Devnet.AutoDumpState() // Auto dumping devnet state to avoid losing contracts on crash
+	}
 }
 
 // DeployEnv Deploys the environment
-func (t *Test) DeployEnv(nodes int) {
-	clConfig := map[string]interface{}{
-		"replicas": nodes,
-		"env": map[string]interface{}{
-			"STARKNET_ENABLED":            "true",
-			"EVM_ENABLED":                 "false",
-			"EVM_RPC_ENABLED":             "false",
-			"CHAINLINK_DEV":               "false",
-			"FEATURE_OFFCHAIN_REPORTING2": "true",
-			"feature_offchain_reporting":  "false",
-			"P2P_NETWORKING_STACK":        "V2",
-			"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
-			"P2PV2_DELTA_DIAL":            "5s",
-			"P2PV2_DELTA_RECONCILE":       "5s",
-			"p2p_listen_port":             "0",
-		},
-	}
-
-	// if image is specified, include in config data
-	// if not, do not set image data - will default to env vars
-	if clImage != "" && clVersion != "" {
-		clConfig["chainlink"] = map[string]interface{}{
-			"image": map[string]interface{}{
-				"image":   clImage,
-				"version": clVersion,
-			},
-		}
-	}
-
-	t.Env = environment.New(&environment.Config{
-		NamespacePrefix: "chainlink-smoke-ocr-starknet-ci",
-		InsideK8s:       false,
-	}).
-		// AddHelm(hardhat.New(nil)).
-		AddHelm(devnet.New(nil)).
-		AddHelm(mockservercfg.New(nil)).
-		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.New(0, clConfig))
-	err := t.Env.Run()
+func (t *Test) DeployEnv() {
+	err = t.Common.Env.Run()
 	Expect(err).ShouldNot(HaveOccurred())
-	t.mockServer, err = ctfClient.ConnectMockServer(t.Env)
+	t.mockServer, err = ctfClient.ConnectMockServer(t.Common.Env)
 	Expect(err).ShouldNot(HaveOccurred(), "Creating mockserver clients shouldn't fail")
 }
 
 // SetupClients Sets up the starknet client
 func (t *Test) SetupClients() {
-	t.sc = t.NewStarkNetDevnetClient(&blockchain.EVMNetwork{
-		Name: t.Common.ServiceKeyL2,
-		URL:  t.Env.URLs[t.Common.ServiceKeyL2][1],
-		PrivateKeys: []string{
-			defaultWalletPrivKey,
-		},
-	})
-
-	Expect(err).ShouldNot(HaveOccurred())
-}
-
-func (t *Test) NewStarkNetDevnetClient(cfg *blockchain.EVMNetwork) *StarkNetDevnetClient {
-	ctx, cancel := context.WithCancel(context.Background())
-	t.sc = &StarkNetDevnetClient{
-		ctx:    ctx,
-		cancel: cancel,
-		cfg:    cfg,
-		client: resty.New().SetBaseURL(t.GetStarkNetAddress()),
+	if t.Common.Testnet {
+		log.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", t.Common.L2RPCUrl))
+	} else {
+		t.Common.L2RPCUrl = t.Common.Env.URLs[t.Common.ServiceKeyL2][0] // For local runs setting local ip
+		if t.Common.InsideK8 {
+			t.Common.L2RPCUrl = t.Common.Env.URLs[t.Common.ServiceKeyL2][1] // For remote runner setting remote IP
+		}
+		t.Devnet = t.Devnet.NewStarkNetDevnetClient(t.Common.L2RPCUrl, dumpPath)
+		Expect(err).ShouldNot(HaveOccurred())
 	}
-	return t.sc
 }
 
 // LoadOCR2Config Loads and returns the default starknet gauntlet config
 func (t *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
-	var offChainKeys []string
-	var onChainKeys []string
+	var offChaiNKeys []string
+	var onChaiNKeys []string
 	var peerIds []string
 	var txKeys []string
 	var cfgKeys []string
-	for _, key := range t.cc.nKeys {
-		offChainKeys = append(offChainKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
+	for _, key := range t.Cc.NKeys {
+		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
 		txKeys = append(txKeys, key.TXKey.Data.ID)
-		onChainKeys = append(onChainKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
+		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
 
 	var payload = ops.TestOCR2Config
-	payload.Signers = onChainKeys
+	payload.Signers = onChaiNKeys
 	payload.Transmitters = txKeys
-	payload.OffchainConfig.OffchainPublicKeys = offChainKeys
+	payload.OffchainConfig.OffchainPublicKeys = offChaiNKeys
 	payload.OffchainConfig.PeerIds = peerIds
 	payload.OffchainConfig.ConfigPublicKeys = cfgKeys
 
 	return &payload, nil
 }
 
-// GetStarkNetName Returns the config name for StarkNET
-func (t *Test) GetStarkNetName() string {
-	return t.sc.cfg.Name
+func (t *Test) SetUpNodes(mockServerVal int) {
+	t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
+		Name: "bridge-mockserver",
+		URL:  t.GetMockServerURL(),
+	})
+	err = t.SetMockServerValue("", mockServerVal)
+	Expect(err).ShouldNot(HaveOccurred(), "Setting mock server value should not fail")
+	err = t.Common.CreateJobsForContract(t.GetChainlinkClient(), t.ObservationSource, t.JuelsPerFeeCoinSource, t.OCRAddr)
+	Expect(err).ShouldNot(HaveOccurred(), "Creating jobs should not fail")
 }
 
 // GetStarkNetAddress Returns the local StarkNET address
 func (t *Test) GetStarkNetAddress() string {
-	return t.Env.URLs[t.Common.ServiceKeyL2][0]
+	return t.Common.Env.URLs[t.Common.ServiceKeyL2][0]
+}
+
+// GetStarkNetAddressRemote Returns the remote StarkNET address
+func (t *Test) GetStarkNetAddressRemote() string {
+	return t.Common.Env.URLs[t.Common.ServiceKeyL2][1]
 }
 
 // GetNodeKeys Returns the node key bundles
-func (t *Test) GetNodeKeys() []ctfClient.NodeKeysBundle {
-	return t.cc.nKeys
+func (t *Test) GetNodeKeys() []client.NodeKeysBundle {
+	return t.Cc.NKeys
 }
 
 func (t *Test) GetChainlinkNodes() []*client.Chainlink {
-	return t.cc.chainlinkNodes
+	return t.Cc.ChainlinkNodes
 }
 
 func (t *Test) GetDefaultPrivateKey() string {
@@ -203,19 +178,15 @@ func (t *Test) GetDefaultWalletAddress() string {
 }
 
 func (t *Test) GetChainlinkClient() *ChainlinkClient {
-	return t.cc
+	return t.Cc
 }
 
-func (t *Test) GetStarknetDevnetClient() *StarkNetDevnetClient {
-	return t.sc
-}
-
-func (t *Test) GetStarknetDevnetCfg() *blockchain.EVMNetwork {
-	return t.sc.cfg
+func (t *Test) GetStarknetDevnetClient() *devnet.StarkNetDevnetClient {
+	return t.Devnet
 }
 
 func (t *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
-	t.cc.bTypeAttr = attr
+	t.Cc.bTypeAttr = attr
 }
 
 func (t *Test) GetMockServerURL() string {
@@ -228,6 +199,22 @@ func (t *Test) SetMockServerValue(path string, val int) error {
 
 // ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
 func (t *Test) ConfigureL1Messaging() {
-	err := devnet.LoadL1MessagingContract()
+	err = t.Devnet.LoadL1MessagingContract(t.L1RPCUrl)
 	Expect(err).ShouldNot(HaveOccurred(), "Setting up L1 messaging should not fail")
+}
+
+func (t *Test) GetDefaultObservationSource() string {
+	return `
+			val [type = "bridge" name="bridge-mockserver"]
+			parse [type="jsonparse" path="data,result"]
+			val -> parse
+			`
+}
+
+func (t *Test) GetDefaultJuelsPerFeeCoinSource() string {
+	return `"""
+			sum  [type="sum" values=<[451000]> ]
+			sum
+			"""
+			`
 }

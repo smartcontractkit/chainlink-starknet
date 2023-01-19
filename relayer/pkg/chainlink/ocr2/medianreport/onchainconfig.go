@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
+	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/smartcontractkit/libocr/bigbigendian"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )

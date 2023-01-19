@@ -1,0 +1,32 @@
+{
+    "name": "@chainlink/starknet-gauntlet-ledger",
+    "version": "0.0.1",
+    "description": "Gauntlet Starknet Ledger Signer",
+    "keywords": [
+      "typescript",
+      "ledger",
+      "cli"
+    ],
+    "main": "./dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.test.js"
+    ],
+    "scripts": {
+      "lint": "tsc",
+      "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-starkgate --passWithNoTests",
+      "test:ci": "yarn test --ci",
+      "format": "yarn prettier --write ./src",
+      "format:check": "yarn prettier --check ./src",
+      "clean": "rm -rf ./dist/ ./bin/",
+      "build": "yarn clean && tsc -b",
+      "bundle": "yarn build && pkg ."
+    },
+    "dependencies": {
+      "@chainlink/starknet-gauntlet": "*",
+      "@ledgerhq/hw-app-starknet": "^2.0.3",
+      "@ledgerhq/hw-transport-node-hid": "^6.27.6"
+    }
+  }
+  

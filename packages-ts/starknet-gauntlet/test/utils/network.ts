@@ -53,6 +53,8 @@ class VenvDevnet extends IntegratedDevnet {
     let args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
     if (this.opts?.seed) {
       args.push('--seed', this.opts.seed.toString())
+    } else {
+      args.push('--seed', '0')
     }
     return spawn(this.command, args)
   }

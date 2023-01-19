@@ -8,7 +8,7 @@ import {
   InspectCommandInstance,
   makeProvider,
   makeWallet,
-} from '@chainlink/starknet-gauntlet'
+} from '../../src/index'
 
 export { startNetwork, IntegratedDevnet } from './network'
 
@@ -38,6 +38,10 @@ export const noopPrompt: typeof prompt = async () => {}
 
 export const TIMEOUT = 200000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
+export const devnetPrivateKey = '0xe3e70682c2094cac629f6fbed82c07cd'
+export const devnetAccount0Address =
+  '0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a'
+// export const devnetKeyPair = ec.getKeyPair(devnetPrivateKey);
 
 export const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
@@ -48,8 +52,8 @@ export const registerExecuteCommand = <UI, CI>(
     makeEnv: (flags) => {
       return {
         providerUrl: LOCAL_URL,
-        pk: flags.pk,
-        account: flags.account,
+        pk: (flags.pk as string) || devnetPrivateKey,
+        account: (flags.account as string) || devnetAccount0Address,
       }
     },
     makeProvider: makeProvider,
@@ -69,8 +73,8 @@ export const registerInspectCommand = <QueryResult>(
     makeEnv: (flags) => {
       return {
         providerUrl: LOCAL_URL,
-        pk: flags.pk,
-        account: flags.account,
+        pk: (flags.pk as string) || devnetPrivateKey,
+        account: (flags.account as string) || devnetAccount0Address,
       }
     },
     makeProvider: makeProvider,

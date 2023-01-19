@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "./packages-ts/starknet"
+    },
+    {
       "path": "./packages-ts/starknet-gauntlet"
     },
     {
@@ -28,7 +31,10 @@
       "path": "./packages-ts/starknet-gauntlet-emergency-protocol"
     },
     {
+      "path": "./packages-ts/starknet-gauntlet-ledger"
+    },
+    {
       "path": "./packages-ts/starknet-gauntlet-cli"
-    }
+    },
   ]
 }

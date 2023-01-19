@@ -1,6 +1,7 @@
 import { expect } from 'chai'
+import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { hexPadStart } from '../../utils'
+import { hexPadStart } from '@chainlink/starknet'
 
 export type BeforeFn = () => Promise<TestData>
 export type TestData = {
@@ -90,6 +91,19 @@ export const shouldBehaveLikeOwnableContract = (beforeFn: BeforeFn) => {
       // owner is now alice
       await expectOwner(t.ownable, alice)
       await expectProposedOwner(t.ownable, hexPadStart(0, ADDRESS_LEN)) // 0x0
+    })
+
+    it(`should fail with account without fees`, async () => {
+      const accountNoFees = await starknet.OpenZeppelinAccount.createAccount()
+
+      await t.alice.invoke(t.ownable, 'transfer_ownership', {
+        new_owner: accountNoFees.address,
+      })
+
+      try {
+        await accountNoFees.invoke(t.ownable, 'accept_ownership', { maxFee: 1e18 })
+        expect.fail()
+      } catch (err: any) {}
     })
   })
 }

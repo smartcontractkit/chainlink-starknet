@@ -2,29 +2,45 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { number } from 'starknet'
-import { expectInvokeError, expectCallError } from '../utils'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
+import { account, expectInvokeError } from '@chainlink/starknet'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(300_000)
 
   let owner: Account
   let nonOwner: Account
-
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
-    owner = await starknet.deployAccount('OpenZeppelin')
-    nonOwner = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.OpenZeppelinAccount.createAccount()
+    nonOwner = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([
+      { account: owner.address, amount: 1e21 },
+      { account: nonOwner.address, amount: 1e21 },
+    ])
+    await owner.deployAccount()
+    await nonOwner.deployAccount()
   })
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
+
+    await bob.deployAccount()
+
     const feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    const feed = await feedFactory.deploy({
+    await alice.declare(feedFactory)
+
+    const feed = await alice.deploy(feedFactory, {
       initial_status: 0,
       owner_address: number.toBN(alice.starknetContract.address),
     })
+
     return { ownable: feed, alice, bob }
   })
 
@@ -34,7 +50,9 @@ describe('SequencerUptimeFeed', function () {
 
     before(async function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      uptimeFeedContract = await uptimeFeedFactory.deploy({
+      await owner.declare(uptimeFeedFactory)
+
+      uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
         initial_status: 0,
         owner_address: number.toBN(owner.starknetContract.address),
       })
@@ -66,7 +84,7 @@ describe('SequencerUptimeFeed', function () {
 
       await expectInvokeError(
         owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 }),
-        'AccessController: address does not have access',
+        'SimpleReadAccessController: address does not have access',
       )
     })
 
@@ -101,33 +119,31 @@ describe('SequencerUptimeFeed', function () {
 
     before(async function () {
       const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      uptimeFeedContract = await uptimeFeedFactory.deploy({
+      await owner.declare(uptimeFeedFactory)
+      uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
         initial_status: 0,
         owner_address: number.toBN(owner.starknetContract.address),
       })
 
       const proxyFactory = await starknet.getContractFactory('aggregator_proxy')
-      proxyContract = await proxyFactory.deploy({
+      await owner.declare(proxyFactory)
+      proxyContract = await owner.deploy(proxyFactory, {
         owner: number.toBN(owner.starknetContract.address),
         address: number.toBN(uptimeFeedContract.address),
       })
-    })
 
-    it('should allow access without specifying account (toolchain quirk)', async function () {
-      // NOTICE: This test should fail on AC check, but it passes!?
-      // The StarkNet Devnet simulator sets the contract as the caller account, when no explicit account is used - this makes the AC check pass.
-      {
-        const res = await proxyContract.call('latest_round_data')
-        expect(res.round.answer).to.equal(0n)
-      }
+      // proxy contract needs to have access to uptimeFeedContract
+      await owner.invoke(uptimeFeedContract, 'add_access', { user: proxyContract.address })
     })
 
     it('should block access when using an account without access', async function () {
-      const accWithoutAccess = await starknet.deployAccount('OpenZeppelin')
+      const accWithoutAccess = await starknet.OpenZeppelinAccount.createAccount()
 
-      await expectCallError(
-        accWithoutAccess.call(proxyContract, 'latest_round_data'),
-        'AccessController: address does not have access',
+      await funder.fund([{ account: accWithoutAccess.address, amount: 1e21 }])
+      await accWithoutAccess.deployAccount()
+      await expectInvokeError(
+        accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
+        'SimpleReadAccessController: address does not have access',
       )
     })
 

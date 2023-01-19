@@ -83,8 +83,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       const env = deps.makeEnv(flags)
 
-      c.provider = deps.makeProvider(env.providerUrl)
-      c.wallet = deps.makeWallet(env.pk, env.account)
+      c.wallet = await deps.makeWallet(env)
+      c.provider = deps.makeProvider(env.providerUrl, c.wallet)
       c.contractAddress = args[0]
       c.account = env.account
       c.contract = config.loadContract()
@@ -95,7 +95,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         id: makeCommandId(config.category, config.action, config.suffixes),
         contractAddress: c.contractAddress,
         flags: flags,
-        contract: new Contract(c.contract.abi, c.contractAddress, c.provider.provider),
+        contract: new Contract(c.contract.abi, c.contractAddress ?? '', c.provider.provider),
       }
 
       c.input = await c.buildCommandInput(flags, args, env)
@@ -157,7 +157,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
       const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = await contract.populate(
+      const invocation = contract.populate(
         config.internalFunction || config.action,
         this.input.contract as any,
       )
@@ -197,7 +197,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       const messages = await this.makeMessage()
       await deps.prompt(`Continue?`)
       deps.logger.loading(`Signing and sending transaction...`)
-      const tx = await this.provider.signAndSend(this.account, this.wallet, messages)
+      const tx = await this.provider.signAndSend(messages)
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
       const response = await tx.wait()
       if (!response.success) {

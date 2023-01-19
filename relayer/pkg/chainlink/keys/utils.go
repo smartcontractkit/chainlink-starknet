@@ -8,6 +8,7 @@ import (
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	"github.com/dontpanicdao/caigo"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -16,7 +17,7 @@ var (
 	byteLen = 32
 
 	// note: the contract hash must match the corresponding OZ gauntlet command hash - otherwise addresses will not correspond
-	defaultContractHash, _ = new(big.Int).SetString("0x726edb35cc732c1b3661fd837592033bd85ae8dde31533c35711fb0422d8993", 0)
+	defaultContractHash, _ = new(big.Int).SetString("0x0750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062", 0)
 	defaultSalt            = big.NewInt(100)
 )
 
@@ -39,10 +40,11 @@ func PubKeyToStarkKey(pubkey PublicKey) []byte {
 	return starknet.PadBytes(pubkey.X.Bytes(), byteLen)
 }
 
-// reimplements: https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// reimplements parts of https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// generate the PK as a pseudo-random number in the interval [1, CurveOrder - 1]
 // using io.Reader, and Key struct
 func GenerateKey(material io.Reader) (k Key, err error) {
-	max := new(big.Int).Sub(caigo.Curve.Max, big.NewInt(1))
+	max := new(big.Int).Sub(caigo.Curve.N, big.NewInt(1))
 
 	k.priv, err = rand.Int(material, max)
 	if err != nil {
@@ -50,6 +52,9 @@ func GenerateKey(material io.Reader) (k Key, err error) {
 	}
 
 	k.pub.X, k.pub.Y, err = caigo.Curve.PrivateToPoint(k.priv)
+	if err != nil {
+		return k, err
+	}
 
 	if !caigo.Curve.IsOnCurve(k.pub.X, k.pub.Y) {
 		return k, fmt.Errorf("key gen is not on stark curve")

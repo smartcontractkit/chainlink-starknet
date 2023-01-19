@@ -4,10 +4,12 @@ import { number } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
+import { account } from '@chainlink/starknet'
 
 describe('aggregator_proxy.cairo', function () {
   this.timeout(TIMEOUT)
-
+  const opts = account.makeFunderOptsFromEnv()
+  const funder = new account.Funder(opts)
   let aggregatorContractFactory: StarknetContractFactory
   let proxyContractFactory: StarknetContractFactory
 
@@ -20,11 +22,17 @@ describe('aggregator_proxy.cairo', function () {
     aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
     proxyContractFactory = await starknet.getContractFactory('ocr2/aggregator_proxy')
 
-    owner = await starknet.deployAccount('OpenZeppelin')
+    owner = await starknet.OpenZeppelinAccount.createAccount()
 
-    aggregator = await aggregatorContractFactory.deploy({ decimals: 8 })
+    await funder.fund([{ account: owner.address, amount: 1e21 }])
+    await owner.deployAccount()
 
-    proxy = await proxyContractFactory.deploy({
+    await owner.declare(aggregatorContractFactory)
+    aggregator = await owner.deploy(aggregatorContractFactory, { decimals: 8 })
+
+    await owner.declare(proxyContractFactory)
+
+    proxy = await owner.deploy(proxyContractFactory, {
       owner: owner.address,
       address: aggregator.address,
     })
@@ -34,14 +42,17 @@ describe('aggregator_proxy.cairo', function () {
 
   shouldBehaveLikeOwnableContract(async () => {
     const alice = owner
-    const bob = await starknet.deployAccount('OpenZeppelin')
+    const bob = await starknet.OpenZeppelinAccount.createAccount()
+
+    await funder.fund([{ account: bob.address, amount: 1e21 }])
+    await bob.deployAccount()
     return { ownable: proxy, alice, bob }
   })
 
   describe('proxy behaviour', function () {
     it('works', async () => {
       // insert round into the mock
-      aggregator.invoke('set_latest_round_data', {
+      await owner.invoke(aggregator, 'set_latest_round_data', {
         answer: 10,
         block_num: 1,
         observation_timestamp: 9,
@@ -57,10 +68,10 @@ describe('aggregator_proxy.cairo', function () {
       assert.equal(round.updated_at, '8')
 
       // insert a second ocr2 aggregator
-      let new_aggregator = await aggregatorContractFactory.deploy({ decimals: 8 })
+      let new_aggregator = await owner.deploy(aggregatorContractFactory, { decimals: 8 })
 
       // insert round into the mock
-      new_aggregator.invoke('set_latest_round_data', {
+      await owner.invoke(new_aggregator, 'set_latest_round_data', {
         answer: 12,
         block_num: 2,
         observation_timestamp: 10,
@@ -85,10 +96,10 @@ describe('aggregator_proxy.cairo', function () {
         address: new_aggregator.address,
       })
 
-      const phase_aggregator = await owner.call(proxy, 'aggregator', {})
+      const phase_aggregator = await proxy.call('aggregator', {})
       assert.equal(phase_aggregator.aggregator, number.toBN(new_aggregator.address))
 
-      const phase_id = await owner.call(proxy, 'phase_id', {})
+      const phase_id = await proxy.call('phase_id', {})
       assert.equal(phase_id.phase_id, 2n)
 
       // query latest round, it should now point to the new aggregator
