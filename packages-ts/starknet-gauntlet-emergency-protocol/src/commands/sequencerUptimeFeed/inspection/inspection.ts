@@ -4,7 +4,6 @@ import {
     makeInspectionCommand,
 } from '@chainlink/starknet-gauntlet'
 import { BN } from 'bn.js'
-import { toBN, toHex } from 'starknet/dist/utils/number'
 import { CATEGORIES } from '../../../lib/categories'
 import { uptimeFeedContractLoader } from '../../../lib/contracts'
 
