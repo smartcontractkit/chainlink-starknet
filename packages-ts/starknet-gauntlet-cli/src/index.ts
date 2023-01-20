@@ -16,6 +16,7 @@ import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
   L1Commands as L1EmergencyProtocolCommands,
   L2Commands as L2EmergencyProtocolCommands,
+  L2InspectionCommands as L2EmergencyProtocolInspectionCommands,
 } from '@chainlink/starknet-gauntlet-emergency-protocol'
 import {
   executeCommands as MultisigExecuteCommands,
@@ -137,6 +138,7 @@ const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
   ...OCR2InspectionCommands,
+  ...L2EmergencyProtocolInspectionCommands,
   ...StarkgateInspectionCommands,
 ]
 
