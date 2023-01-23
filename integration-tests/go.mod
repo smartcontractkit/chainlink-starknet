@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/dontpanicdao/caigo v0.4.0
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/onsi/gomega v1.23.0
 	github.com/rs/zerolog v1.28.0
@@ -15,6 +14,8 @@ require (
 	github.com/smartcontractkit/chainlink-testing-framework v1.7.9-0.20221103145957-d40b562b818b
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221102233518-1e61a9b970a2
 )
+
+require github.com/go-resty/resty/v2 v2.7.0 // indirect
 
 require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.4 // indirect
