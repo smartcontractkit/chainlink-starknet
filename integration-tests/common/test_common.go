@@ -256,19 +256,11 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < testState.Common.TTL; {
 		log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TTL))
-
+		var res ocr2.TransmissionDetails
+		res, err = testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
 		// end condition: enough rounds have occurred, and positive and negative answers have been seen
 		if !isSoak && increasing >= rounds && positive && negative {
 			break
-		} else {
-			rand.Seed(time.Now().UnixNano())
-			sign *= -1
-			mockServerValue = (rand.Intn(900000000-0+1) + 0) * sign
-			log.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
-			err = testState.SetMockServerValue("", mockServerValue)
-			if err != nil {
-				log.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
-			}
 		}
 
 		// end condition: rounds have been stuck
@@ -277,11 +269,17 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			break
 		}
 
+		rand.Seed(time.Now().UnixNano())
+		sign *= -1
+		mockServerValue = (rand.Intn(900000000-0+1) + 0) * sign
+		log.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
+		err = testState.SetMockServerValue("", mockServerValue)
+		if err != nil {
+			log.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
+		}
 		// try to fetch rounds
 		time.Sleep(5 * time.Second)
 
-		var res ocr2.TransmissionDetails
-		res, err = testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 			continue
