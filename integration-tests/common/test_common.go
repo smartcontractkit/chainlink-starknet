@@ -351,14 +351,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	}
 	value := starknet.HexToSignedBig(roundDataRaw[1]).Int64()
 	if value < 0 {
-		if !isSoak {
-			assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
-		}
-
-	} else {
-		if !isSoak {
-			assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
-		}
+		assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
 	}
 
 	return nil
