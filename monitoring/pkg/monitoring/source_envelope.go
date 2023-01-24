@@ -156,6 +156,8 @@ func (s *envelopeSource) fetchContractConfig(ctx context.Context, contractAddres
 	return config, nil
 }
 
+var zeroBigInt = big.NewInt(0)
+
 func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress string) (*big.Int, error) {
 	results, err := s.ocr2Reader.BaseReader().CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkTokenAddress,
@@ -170,5 +172,9 @@ func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress,
 	if len(results) < 1 {
 		return nil, fmt.Errorf("insufficient data from balanceOf '%v': %w", results, err)
 	}
-	return junotypes.HexToFelt(results[0]).Big(), nil
+	linkBalance := junotypes.HexToFelt(results[0]).Big()
+	if linkBalance.Cmp(zeroBigInt) == 0 {
+		return nil, fmt.Errorf("contract's LINK balance should not be zero")
+	}
+	return linkBalance, nil
 }
