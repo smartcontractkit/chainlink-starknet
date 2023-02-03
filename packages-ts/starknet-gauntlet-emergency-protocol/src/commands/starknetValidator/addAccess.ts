@@ -1,21 +1,29 @@
 import { EVMExecuteCommandConfig, makeEVMExecuteCommand } from '@chainlink/evm-gauntlet'
 import { CONTRACT_LIST, starknetValidatorContractLoader } from '../../lib/contracts'
 import { CATEGORIES } from '../../lib/categories'
+import { isValidAddress } from '@chainlink/starknet-gauntlet'
 
 export interface UserInput {
-  user: string
+  address: string
 }
 
 type ContractInput = [_user: string]
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [input.user]
+  return [input.address]
+}
+
+const validateAddress = async (input) => {
+  if (!isValidAddress(input.address)) {
+    throw new Error(`Invalid Address: ${input.address}`)
+  }
+  return true
 }
 
 const makeUserInput = async (flags): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
   return {
-    user: flags.user,
+    address: flags.address,
   }
 }
 
@@ -27,12 +35,12 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Allow address to access StarknetValidator',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:add_access --user=0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4 0x6B5b7121C4F4B186e8C018a65CF379260B0Dba04 --network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:add_access --address=<ADDRESS> --network=<NETWORK> <CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateAddress],
   loadContract: starknetValidatorContractLoader,
 }
 

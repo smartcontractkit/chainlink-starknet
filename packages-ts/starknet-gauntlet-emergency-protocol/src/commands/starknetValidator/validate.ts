@@ -25,6 +25,36 @@ const makeContractInput = async ({
   return [previousRoundId, previousAnswer, currentRoundId, currentAnswer]
 }
 
+const validatePreviousRoundId = async (input) => {
+  if (isNaN(Number(input.previousRoundId))) {
+    throw new Error(`Invalid previousRoundId: ${input.previousRoundId}`)
+  }
+  return true
+}
+
+const validatePreviousAnswer = async (input) => {
+  if (isNaN(Number(input.previousAnswer))) {
+    throw new Error(`Invalid previousAnswer: ${input.previousAnswer}`)
+  }
+  return true
+}
+
+
+const validateCurrentRoundId = async (input) => {
+  if (isNaN(Number(input.currentRoundId))) {
+    throw new Error(`Invalid currentRoundId: ${input.currentRoundId}`)
+  }
+  return true
+}
+
+const validateCurrentAnswer = async (input) => {
+  if (isNaN(Number(input.currentAnswer))) {
+    throw new Error(`Invalid currentAnswer: ${input.currentAnswer}`)
+  }
+  return true
+}
+
+
 const makeUserInput = async (flags): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
   const { previousRoundId, previousAnswer, currentRoundId, currentAnswer } = flags
@@ -45,12 +75,12 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
     description:
       'Validate the status by sending xDomain L2 tx to Starknet UptimeFeed. Caller must have access to validate.',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:validate --previousRoundId=0x0 --previousAnswer=0x0 --currentRoundId=0x1 --currentAnswer=0x1 <YOUR_CONTRACT_ADDRESS>--network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:validate --previousRoundId=0 --previousAnswer=0 --currentRoundId=1 --currentAnswer=1 --network=<NETWORK> <YOUR_CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateCurrentAnswer, validateCurrentRoundId, validatePreviousAnswer, validatePreviousRoundId],
   loadContract: starknetValidatorContractLoader,
 }
 

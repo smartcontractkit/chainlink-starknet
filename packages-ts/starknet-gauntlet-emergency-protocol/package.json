@@ -27,7 +27,6 @@
   "dependencies": {
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/evm-gauntlet": "0.1.0",
-    "@chainlink/starknet-gauntlet": "*",
-    "starknet": "^4.17.1"
+    "@chainlink/starknet-gauntlet": "*"
   }
 }

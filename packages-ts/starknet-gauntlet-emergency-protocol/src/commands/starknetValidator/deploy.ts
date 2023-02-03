@@ -1,6 +1,7 @@
 import { EVMExecuteCommandConfig, makeEVMExecuteCommand } from '@chainlink/evm-gauntlet'
 import { CONTRACT_LIST, starknetValidatorContractLoader } from '../../lib/contracts'
 import { CATEGORIES } from '../../lib/categories'
+import { isValidAddress } from '@chainlink/starknet-gauntlet'
 
 export interface UserInput {
   starkNetMessaging: number
@@ -43,19 +44,63 @@ const makeUserInput = async (flags): Promise<UserInput> => {
   }
 }
 
+const validateStarkNetMessaging = async (input) => {
+  if (!isValidAddress(input.starkNetMessaging)) {
+    throw new Error(`Invalid starkNetMessaging Address: ${input.starkNetMessaging}`)
+  }
+  return true
+}
+
+const validateConfigAC = async (input) => {
+  if (!isValidAddress(input.configAC)) {
+    throw new Error(`Invalid configAC Address: ${input.configAC}`)
+  }
+  return true
+}
+
+const validateGasPriceL1Feed = async (input) => {
+  if (!isValidAddress(input.gasPriceL1Feed)) {
+    throw new Error(`Invalid gasPriceL1Feed Address: ${input.gasPriceL1Feed}`)
+  }
+  return true
+}
+
+const validateSourceAggregator = async (input) => {
+  if (!isValidAddress(input.source)) {
+    throw new Error(`Invalid source Address: ${input.source}`)
+  }
+  return true
+}
+
+const validateGasEstimate = async (input) => {
+  if (isNaN(Number(input.gasEstimate))) {
+    throw new Error(`Invalid gasEstimate (must be number): ${input.gasEstimate}`)
+  }
+  return true
+}
+
+const validateL2Feed = async (input) => {
+  if (!isValidAddress(input.l2Feed)) {
+    throw new Error(`Invalid l2Feed Address: ${input.l2Feed}`)
+  }
+  return true
+}
+
+
+
 const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: CONTRACT_LIST.STARKNET_VALIDATOR,
   category: CATEGORIES.STARKNET_VALIDATOR,
   action: 'deploy',
   ux: {
-    description: 'Deploys a StarknetValidator contract',
+    description: 'Deploys a StarknetValidator contract. Starknet messaging contract is address officially deployed by starkware industries. ',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=0xde29d060D45901Fb19ED6C6e959EB22d8626708e --configAC=0x42f4802128C56740D77824046bb13E6a38874331 --gasPriceL1Feed=0xdcb95Cd00d32d02b5689CE020Ed67f4f91ee5942 --source=0x42f4802128C56740D77824046bb13E6a38874331 --gasEstimate=0 --l2Feed=0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f --network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=<ADDRESS> --configAC=<ADDRESS>--gasPriceL1Feed=<ADDRESS> --source=<ADDRESS> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<ADDRESS> --network=<NETWORK>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateStarkNetMessaging, validateConfigAC, validateGasPriceL1Feed, validateGasEstimate, validateSourceAggregator, validateL2Feed],
   loadContract: starknetValidatorContractLoader,
 }
 

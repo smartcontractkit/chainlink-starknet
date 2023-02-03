@@ -45,6 +45,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
 
 const commandConfig: InspectCommandConfig<null, null, null, QueryResult> = {
   ux: {
+    description: 'Retrieve the outputs from the latest_round_data function',
     category: CATEGORIES.SEQUENCER_UPTIME_FEED,
     function: 'inspect',
     examples: [`${CATEGORIES.SEQUENCER_UPTIME_FEED}:inspect --network=<NETWORK>`],

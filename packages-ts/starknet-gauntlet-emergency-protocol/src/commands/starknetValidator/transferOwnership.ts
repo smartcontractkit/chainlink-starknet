@@ -25,9 +25,9 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'transfer_ownership',
   internalFunction: 'transferOwnership',
   ux: {
-    description: 'Transfers ownership of the StarknetValidator contract',
+    description: 'Transfers ownership of the StarknetValidator contract. Should be called by current owner',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:transfer_ownership --to=0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4 0xAD6F411BF8559002CC9800A2E9aA87A0ff1b464e --network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:transfer_ownership --to=<NEW_PROPOSED_OWNER> <CONTRACT_ADDRESS> --network=<NETWORK>`,
     ],
   },
   makeUserInput,
