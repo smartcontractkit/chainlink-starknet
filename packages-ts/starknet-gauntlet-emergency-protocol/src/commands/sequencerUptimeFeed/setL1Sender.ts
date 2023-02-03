@@ -1,4 +1,4 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
+import { ExecuteCommandConfig, isValidAddress, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { CONTRACT_LIST, uptimeFeedContractLoader } from '../../lib/contracts'
 
@@ -6,6 +6,13 @@ type ContractInput = [address: string]
 
 export interface SetL1SenderInput {
   address: string
+}
+
+const validateAddress = async (input) => {
+  if (!isValidAddress(input.address)) {
+    throw new Error(`Invalid L1 Sender Address: ${input.address}`)
+  }
+  return true
 }
 
 const makeUserInput = async (flags): Promise<SetL1SenderInput> => {
@@ -26,12 +33,12 @@ const commandConfig: ExecuteCommandConfig<SetL1SenderInput, ContractInput> = {
   ux: {
     description: 'Sets the L1 sender address on the SequencerUptimeFeed contract',
     examples: [
-      `${CATEGORIES.SEQUENCER_UPTIME_FEED}:set_l1_sender --network=<NETWORK> --address=0x31982C9e5edd99bb923a948252167ea4BbC38AC1 0x0646bbfcaab5ead1f025af1e339cb0f2d63b070b1264675da9a70a9a5efd054f`,
+      `${CATEGORIES.SEQUENCER_UPTIME_FEED}:set_l1_sender --network=<NETWORK> --address=<L1_SENDER_ADDRESS> <CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateAddress],
   loadContract: uptimeFeedContractLoader,
 }
 

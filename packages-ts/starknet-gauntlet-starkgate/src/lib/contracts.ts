@@ -2,9 +2,6 @@ import fs from 'fs'
 import { CompiledContract, json } from 'starknet'
 import { ContractFactory } from 'ethers'
 
-// todo: fix name mapping
-// l1_token_bridge = token_bridge
-// l2_token_bridge = StarknetERC20Bridge
 export enum CONTRACT_LIST {
   TOKEN = 'token',
   L1_BRIDGE = 'l1_bridge',
