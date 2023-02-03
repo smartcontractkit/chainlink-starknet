@@ -61,7 +61,6 @@ This deploys a new `sequencer_uptime_feed` contract to L2.
 
 `--owner` flag can be omitted. In such a case, it will default to the account specified in .env
 
-
 ```bash
 yarn gauntlet sequencer_uptime_feed:deploy --initialStatus=<INITIAL_STATUS> --owner=<OWNER> --network=<NETWORK>
 ```

@@ -4,7 +4,7 @@ import { CATEGORIES } from '../../lib/categories'
 
 export type ContractInput = []
 
-export interface UserInput { }
+export interface UserInput {}
 
 const makeContractInput = async (input: ContractInput): Promise<ContractInput> => {
   return input

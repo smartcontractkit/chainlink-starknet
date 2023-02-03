@@ -39,7 +39,6 @@ const validatePreviousAnswer = async (input) => {
   return true
 }
 
-
 const validateCurrentRoundId = async (input) => {
   if (isNaN(Number(input.currentRoundId))) {
     throw new Error(`Invalid currentRoundId: ${input.currentRoundId}`)
@@ -53,7 +52,6 @@ const validateCurrentAnswer = async (input) => {
   }
   return true
 }
-
 
 const makeUserInput = async (flags): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -80,7 +78,12 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateCurrentAnswer, validateCurrentRoundId, validatePreviousAnswer, validatePreviousRoundId],
+  validations: [
+    validateCurrentAnswer,
+    validateCurrentRoundId,
+    validatePreviousAnswer,
+    validatePreviousRoundId,
+  ],
   loadContract: starknetValidatorContractLoader,
 }
 
