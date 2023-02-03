@@ -1,4 +1,8 @@
-import { ExecuteCommandConfig, isValidAddress, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
+import {
+  ExecuteCommandConfig,
+  isValidAddress,
+  makeExecuteCommand,
+} from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST, uptimeFeedContractLoader } from '../../lib/contracts'
 import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'

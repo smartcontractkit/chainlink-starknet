@@ -86,21 +86,27 @@ const validateL2Feed = async (input) => {
   return true
 }
 
-
-
 const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: CONTRACT_LIST.STARKNET_VALIDATOR,
   category: CATEGORIES.STARKNET_VALIDATOR,
   action: 'deploy',
   ux: {
-    description: 'Deploys a StarknetValidator contract. Starknet messaging contract is address officially deployed by starkware industries. ',
+    description:
+      'Deploys a StarknetValidator contract. Starknet messaging contract is address officially deployed by starkware industries. ',
     examples: [
       `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=<ADDRESS> --configAC=<ADDRESS>--gasPriceL1Feed=<ADDRESS> --source=<ADDRESS> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<ADDRESS> --network=<NETWORK>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateStarkNetMessaging, validateConfigAC, validateGasPriceL1Feed, validateGasEstimate, validateSourceAggregator, validateL2Feed],
+  validations: [
+    validateStarkNetMessaging,
+    validateConfigAC,
+    validateGasPriceL1Feed,
+    validateGasEstimate,
+    validateSourceAggregator,
+    validateL2Feed,
+  ],
   loadContract: starknetValidatorContractLoader,
 }
 

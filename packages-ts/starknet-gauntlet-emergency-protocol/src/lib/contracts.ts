@@ -27,4 +27,3 @@ export const starknetValidatorContractLoader = (): ContractFactory => {
   )
   return new ContractFactory(abi?.abi, abi?.bytecode)
 }
-
