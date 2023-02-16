@@ -14,6 +14,11 @@ import {
 } from '@chainlink/starknet-gauntlet-starkgate'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
+  L1Commands as L1EmergencyProtocolCommands,
+  L2Commands as L2EmergencyProtocolCommands,
+  L2InspectionCommands as L2EmergencyProtocolInspectionCommands,
+} from '@chainlink/starknet-gauntlet-emergency-protocol'
+import {
   executeCommands as MultisigExecuteCommands,
   inspectionCommands as MultisigInspectionCommands,
   wrapCommand as multisigWrapCommand,
@@ -115,7 +120,7 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const L1ExecuteCommands = [...L1StarkgateCommands]
+const L1ExecuteCommands = [...L1StarkgateCommands, ...L1EmergencyProtocolCommands]
 const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
@@ -123,6 +128,7 @@ const L2ExecuteCommands = [
   ...L2StarkgateCommands,
   ...ArgentCommands,
   ...MultisigExecuteCommands,
+  ...L2EmergencyProtocolCommands,
 ]
 
 const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(
@@ -132,6 +138,7 @@ const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
   ...OCR2InspectionCommands,
+  ...L2EmergencyProtocolInspectionCommands,
   ...StarkgateInspectionCommands,
 ]
 
@@ -148,7 +155,6 @@ const commands = {
     makeCommand: () => undefined,
   },
 }
-
 ;(async () => {
   try {
     const networkPossiblePaths = [

@@ -1,7 +1,7 @@
 {
-  "name": "@chainlink/starknet-gauntlet",
+  "name": "@chainlink/starknet-gauntlet-emergency-protocol",
   "version": "0.0.1",
-  "description": "Starknet Gauntlet",
+  "description": "Starknet Gauntlet Emergency Protocol",
   "keywords": [
     "typescript",
     "cli"
@@ -15,18 +15,18 @@
   "scripts": {
     "gauntlet": "ts-node ./src/index.ts",
     "lint": "tsc",
-    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet --passWithNoTests",
+    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-emergency-protocol --passWithNoTests",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
+    "lint:format": "yarn prettier --check ./src",
     "format": "yarn prettier --write ./src",
-    "format:check": "yarn prettier --check ./src",
     "clean": "rm -rf ./dist/ ./bin/",
     "build": "yarn clean && tsc -b",
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "@chainlink/evm-gauntlet": "^0.0.2",
     "@chainlink/gauntlet-core": "0.3.1",
-    "cross-fetch": "^3.1.5"
+    "@chainlink/evm-gauntlet": "0.1.0",
+    "@chainlink/starknet-gauntlet": "*"
   }
 }

@@ -228,6 +228,8 @@ test-integration-gauntlet: build-ts env-devnet-hardhat-down
 		yarn test
 	cd packages-ts/starknet-gauntlet-starkgate/ && \
 		yarn test
+	cd packages-ts/starknet-gauntlet-emergency-protocol/ && \
+		yarn test
 
 .PHONY: test-ts
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet

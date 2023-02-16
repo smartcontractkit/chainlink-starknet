@@ -36,4 +36,5 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   loadContract: l1BridgeContractLoader,
 }
 
-export default makeEVMExecuteCommand(commandConfig)
+// todo: fix type annotation required by compiler
+export default makeEVMExecuteCommand(commandConfig) as any
