@@ -28,6 +28,9 @@
       "path": "./packages-ts/starknet-gauntlet-ocr2"
     },
     {
+      "path": "./packages-ts/starknet-gauntlet-emergency-protocol"
+    },
+    {
       "path": "./packages-ts/starknet-gauntlet-ledger"
     },
     {
