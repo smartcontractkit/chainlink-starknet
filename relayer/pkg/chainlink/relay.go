@@ -35,9 +35,6 @@ func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
 }
 
 func (r *relayer) Start(context.Context) error {
-	if r.chainSet == nil {
-		return errors.New("chain unavailable")
-	}
 	return nil
 }
 
