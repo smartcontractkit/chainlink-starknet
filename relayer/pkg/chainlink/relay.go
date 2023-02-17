@@ -29,9 +29,13 @@ func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
 	return &relayer{
 		chainSet: chainSet,
 		ctx:      ctx,
-		lggr:     lggr,
+		lggr:     lggr.Named("StarkNetRelayer"),
 		cancel:   cancel,
 	}
+}
+
+func (r *relayer) Name() string {
+	return r.lggr.Name()
 }
 
 func (r *relayer) Start(context.Context) error {
@@ -52,6 +56,10 @@ func (r *relayer) Ready() error {
 
 func (r *relayer) Healthy() error {
 	return r.chainSet.Healthy()
+}
+
+func (r *relayer) HealthReport() map[string]error {
+	return map[string]error{r.Name(): r.Healthy()}
 }
 
 func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
