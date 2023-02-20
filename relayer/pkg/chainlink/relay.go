@@ -29,7 +29,7 @@ func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
 	return &relayer{
 		chainSet: chainSet,
 		ctx:      ctx,
-		lggr:     lggr.Named("StarkNetRelayer"),
+		lggr:     lggr,
 		cancel:   cancel,
 	}
 }
@@ -111,4 +111,8 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	}
 
 	return medianProvider, nil
+}
+
+func (r *relayer) NewMercuryProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MercuryProvider, error) {
+	return nil, errors.New("mercury is not supported for starknet")
 }

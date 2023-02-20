@@ -53,7 +53,7 @@ type starktxm struct {
 
 func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
 	return &starktxm{
-		lggr:      lggr.Named("StarkNetTxm"),
+		lggr:      logger.Named(lggr, "StarkNetTxm"),
 		queue:     make(chan Tx, MaxQueueLen),
 		stop:      make(chan struct{}),
 		getClient: getClient,

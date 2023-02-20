@@ -29,7 +29,7 @@ type configProvider struct {
 }
 
 func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg Config, lggr logger.Logger) (*configProvider, error) {
-	lggr = lggr.Named("ConfigProvider")
+	lggr = logger.Named(lggr, "ConfigProvider")
 	chainReader, err := NewClient(basereader, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "err in NewConfigProvider.NewClient")
@@ -87,7 +87,7 @@ type medianProvider struct {
 }
 
 func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
-	lggr = lggr.Named("MedianProvider")
+	lggr = logger.Named(lggr, "MedianProvider")
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in NewMedianProvider.NewConfigProvider")
