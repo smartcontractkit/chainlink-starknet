@@ -71,7 +71,7 @@ func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time
 }
 
 func (c *Client) set(baseURL, chainID string) {
-	if chainID == "" {
+	if chainID != "" {
 		c.Gw.Gateway.ChainId = chainID // note: gateway API in caigo does not query endpoint, uses what is set
 	}
 
