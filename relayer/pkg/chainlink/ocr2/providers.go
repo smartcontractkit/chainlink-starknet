@@ -29,6 +29,7 @@ type configProvider struct {
 }
 
 func NewConfigProvider(chainID string, contractAddress string, basereader starknet.Reader, cfg Config, lggr logger.Logger) (*configProvider, error) {
+	lggr = logger.Named(lggr, "ConfigProvider")
 	chainReader, err := NewClient(basereader, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "err in NewConfigProvider.NewClient")
@@ -46,6 +47,10 @@ func NewConfigProvider(chainID string, contractAddress string, basereader starkn
 	}, nil
 }
 
+func (p *configProvider) Name() string {
+	return p.lggr.Name()
+}
+
 func (p *configProvider) Start(context.Context) error {
 	return p.StartOnce("ConfigProvider", func() error {
 		p.lggr.Debugf("Config provider starting")
@@ -58,6 +63,10 @@ func (p *configProvider) Close() error {
 		p.lggr.Debugf("Config provider stopping")
 		return p.contractCache.Close()
 	})
+}
+
+func (p *configProvider) HealthReport() map[string]error {
+	return map[string]error{p.Name(): p.Healthy()}
 }
 
 func (p *configProvider) ContractConfigTracker() types.ContractConfigTracker {
@@ -78,6 +87,7 @@ type medianProvider struct {
 }
 
 func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
+	lggr = logger.Named(lggr, "MedianProvider")
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in NewMedianProvider.NewConfigProvider")
@@ -92,6 +102,10 @@ func NewMedianProvider(chainID string, contractAddress string, senderAddress str
 		transmissionsCache: cache,
 		reportCodec:        medianreport.ReportCodec{},
 	}, nil
+}
+
+func (p *medianProvider) Name() string {
+	return p.lggr.Name()
 }
 
 func (p *medianProvider) Start(context.Context) error {
@@ -116,6 +130,10 @@ func (p *medianProvider) Close() error {
 		}
 		return p.transmissionsCache.Close()
 	})
+}
+
+func (p *medianProvider) HealthReport() map[string]error {
+	return map[string]error{p.Name(): p.Healthy()}
 }
 
 func (p *medianProvider) ContractTransmitter() types.ContractTransmitter {
