@@ -54,3 +54,16 @@ func TestGatewayClient_DefaultTimeout(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, client.defaultTimeout)
 }
+
+func TestGatewayClient_CustomURLChainID(t *testing.T) {
+	client, err := NewClient("test", "test", logger.Test(t), nil)
+	require.NoError(t, err)
+
+	id, err := client.ChainID(context.TODO())
+	require.NoError(t, err)
+	assert.Equal(t, "test", id)
+
+	assert.Equal(t, "test", client.Gw.Gateway.Base)
+	assert.Equal(t, "test/feeder_gateway", client.Gw.Gateway.Feeder)
+	assert.Equal(t, "test/gateway", client.Gw.Gateway.Gateway)
+}
