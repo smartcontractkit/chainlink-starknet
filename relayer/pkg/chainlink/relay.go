@@ -39,9 +39,6 @@ func (r *relayer) Name() string {
 }
 
 func (r *relayer) Start(context.Context) error {
-	if r.chainSet == nil {
-		return errors.New("chain unavailable")
-	}
 	return nil
 }
 
