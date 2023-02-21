@@ -32,10 +32,11 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
-      - name: Install Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
+      # NOTE: nix doesn't support go 1.20 yet?
+      # - name: Install Nix
+      #   uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+      #   with:
+      #     nix_path: nixpkgs=channel:nixos-unstable
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
