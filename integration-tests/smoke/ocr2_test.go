@@ -51,7 +51,7 @@ var _ = Describe("StarkNET OCR suite @ocr", func() {
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying cluster should not fail")
 			err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
 			Expect(err).ShouldNot(HaveOccurred(), "Setting up gauntlet network should not fail")
-			err = t.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
+			err = t.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
 			Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
 			if !t.Common.Testnet {
 				t.Devnet.AutoLoadState(t.OCR2Client, t.OCRAddr)
