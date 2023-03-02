@@ -193,7 +193,7 @@ test-integration-smoke: test-integration-prep
 
 # CI Already has the integration prep ran
 .PHONY: test-integration-smoke-ci
-test-integration-smoke:
+test-integration-smoke-ci:
 	cd integration-tests && \
 		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
 
