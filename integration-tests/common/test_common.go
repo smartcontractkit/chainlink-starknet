@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"math/big"
-	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -235,7 +234,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	stuckCount := 0
 	var positive bool
 	var negative bool
-	var sign = -1
 
 	// validate balance in aggregator
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
@@ -269,9 +267,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			break
 		}
 
-		rand.Seed(time.Now().UnixNano())
-		sign *= -1
-		mockServerValue = (rand.Intn(900000000-0+1) + 0) * sign
 		log.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
 		err = testState.SetMockServerValue("", mockServerValue)
 		if err != nil {
