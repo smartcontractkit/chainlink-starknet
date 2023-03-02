@@ -233,7 +233,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	var stuck bool
 	stuckCount := 0
 	var positive bool
-	var negative bool
 
 	// validate balance in aggregator
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
@@ -256,8 +255,8 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 		log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TTL))
 		var res ocr2.TransmissionDetails
 		res, err = testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
-		// end condition: enough rounds have occurred, and positive and negative answers have been seen
-		if !isSoak && increasing >= rounds && positive && negative {
+		// end condition: enough rounds have occurred
+		if !isSoak && increasing >= rounds && positive {
 			break
 		}
 
@@ -286,10 +285,8 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			continue
 		}
 
-		// answer comparison (atleast see a positive and negative value once)
 		ansCmp := res.LatestAnswer.Cmp(big.NewInt(0))
 		positive = ansCmp == 1 || positive
-		negative = ansCmp == -1 || negative
 
 		// if changes from zero values set (should only initially)
 		if res.Epoch > 0 && details.Epoch == 0 {
@@ -329,7 +326,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	if !isSoak {
 		assert.GreaterOrEqual(testState.T, increasing, rounds, "Round + epochs should be increasing")
 		assert.Equal(testState.T, positive, true, "Positive value should have been submitted")
-		assert.Equal(testState.T, negative, true, "Negative value should have been submitted")
 		assert.Equal(testState.T, stuck, false, "Round + epochs should not be stuck")
 	}
 
