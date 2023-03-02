@@ -7,8 +7,8 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220824173548-dab4ac0a6595
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221103113815-46da679c1d3c
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230221200635-404a44389f85
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230214070706-9544d04bb4d8
 	github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
@@ -27,6 +27,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -44,7 +45,6 @@ require (
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

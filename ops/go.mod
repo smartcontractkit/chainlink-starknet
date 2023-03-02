@@ -6,26 +6,26 @@ require (
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.28.0
-	github.com/smartcontractkit/chainlink-env v0.2.54
+	github.com/smartcontractkit/chainlink-env v0.3.0
 	github.com/smartcontractkit/chainlink-relay v0.1.6-0.20220824173548-dab4ac0a6595
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221102160912-61646f534e3a
-	github.com/smartcontractkit/chainlink-testing-framework v1.7.8
+	github.com/smartcontractkit/chainlink-testing-framework v1.9.2
 	github.com/stretchr/testify v1.8.1
 )
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac // indirect
 	github.com/alecthomas/units v0.0.0-20210927113745-59d0afb8317a // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
-	github.com/aws/constructs-go/constructs/v10 v10.1.152 // indirect
-	github.com/aws/jsii-runtime-go v1.70.0 // indirect
+	github.com/aws/constructs-go/constructs/v10 v10.1.187 // indirect
+	github.com/aws/jsii-runtime-go v1.72.0 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
-	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.5.37 // indirect
+	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.5.72 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/chaos-mesh/chaos-mesh/api/v1alpha1 v0.0.0-20220226050744-799408773657 // indirect
@@ -34,7 +34,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
-	github.com/ethereum/go-ethereum v1.10.25 // indirect
+	github.com/ethereum/go-ethereum v1.10.26 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect
@@ -80,9 +80,9 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.13.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
+	github.com/prometheus/common v0.38.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
@@ -104,15 +104,15 @@ require (
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
@@ -120,15 +120,15 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.25.3 // indirect
+	k8s.io/api v0.25.4 // indirect
 	k8s.io/apiextensions-apiserver v0.25.3 // indirect
-	k8s.io/apimachinery v0.25.3 // indirect
-	k8s.io/cli-runtime v0.25.3 // indirect
-	k8s.io/client-go v0.25.3 // indirect
-	k8s.io/component-base v0.25.3 // indirect
+	k8s.io/apimachinery v0.25.4 // indirect
+	k8s.io/cli-runtime v0.25.4 // indirect
+	k8s.io/client-go v0.25.4 // indirect
+	k8s.io/component-base v0.25.4 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
-	k8s.io/kubectl v0.25.3 // indirect
+	k8s.io/kubectl v0.25.4 // indirect
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73 // indirect
 	sigs.k8s.io/controller-runtime v0.13.0 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

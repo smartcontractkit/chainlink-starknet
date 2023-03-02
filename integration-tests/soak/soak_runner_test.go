@@ -2,6 +2,7 @@ package soak_test
 
 import (
 	"fmt"
+	"github.com/smartcontractkit/chainlink-env/config"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"testing"
 
@@ -35,14 +36,14 @@ var (
 // Run the OCR soak test defined in ./tests/ocr_test.go
 func TestOCRSoak(t *testing.T) {
 	activeEVMNetwork := blockchain.LoadNetworkFromEnvironment() // Environment currently being used to soak test on
-	soakTestHelper(t, "@ocr", activeEVMNetwork)
+	soakTestHelper(t, "TestOCRSoak", activeEVMNetwork)
 }
 
 // builds tests, launches environment, and triggers the soak test to run
 func soakTestHelper(
 	t *testing.T,
 	testTag string,
-	activeEVMNetwork *blockchain.EVMNetwork,
+	activeEVMNetwork blockchain.EVMNetwork,
 ) {
 	var err error
 	c = common.New()
@@ -50,18 +51,20 @@ func soakTestHelper(
 	remoteRunnerValues := actions.BasicRunnerValuesSetup(
 		testTag,
 		c.Env.Cfg.Namespace,
-		"./integration-tests/soak/tests",
+		"./soak/tests",
 	)
+	remoteRunnerValues[config.EnvVarInsideK8s] = "true"
 	envValues := map[string]interface{}{
-		"test_log_level": "debug",
-		"INSIDE_K8":      true,
-		"TTL":            c.TTL.String(),
-		"NODE_COUNT":     c.NodeCount,
-		"L2_RPC_URL":     c.L2RPCUrl,
-		"PRIVATE_KEY":    c.PrivateKey,
-		"ACCOUNT":        c.Account,
-		"CL_VERSION":     c.CLVersion,
-		"CL_IMAGE":       c.CLImage,
+		"test_log_level":    "debug",
+		"INSIDE_K8":         true,
+		"TTL":               c.TTL.String(),
+		"NODE_COUNT":        c.NodeCount,
+		"L2_RPC_URL":        c.L2RPCUrl,
+		"PRIVATE_KEY":       c.PrivateKey,
+		"ACCOUNT":           c.Account,
+		"CL_VERSION":        c.CLVersion,
+		"CL_IMAGE":          c.CLImage,
+		"SELECTED_NETWORKS": "SIMULATED",
 	}
 
 	// Set env values
