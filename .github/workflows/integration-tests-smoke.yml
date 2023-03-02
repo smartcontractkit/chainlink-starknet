@@ -96,13 +96,13 @@ jobs:
     environment: integration
     env:
       TEST_SUITE: smoke
-      TEST_ARGS: -test.timeout 30m
-      CL_IMAGE: ${{ env.CL_ECR }}
+      TEST_ARGS: -test.timeout 1h
+      CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
       CL_VERSION: ci.${{ github.sha }}
-      TEST_PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
-      TEST_ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
-      TTL: 2h
-      TEST_NODE_COUNT: 5
+      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
+      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
+      TTL: 1h
+      NODE_COUNT: 5
     permissions:
       checks: write
       pull-requests: write

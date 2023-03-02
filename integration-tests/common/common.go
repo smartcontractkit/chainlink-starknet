@@ -62,8 +62,8 @@ func New() *Common {
 		ServiceKeyL2:        serviceKeyL2,
 	}
 	// Checking if count of OCR nodes is defined in ENV
-	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
-	if nodeCountDefined && nodeCountSet != "" {
+	nodeCountSet := getEnv("NODE_COUNT")
+	if nodeCountSet != "" {
 		c.NodeCount, err = strconv.Atoi(nodeCountSet)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
@@ -73,8 +73,8 @@ func New() *Common {
 	}
 
 	// Checking if TTL env var is set in ENV
-	ttlValue, ttlDefined := os.LookupEnv("TTL")
-	if ttlDefined && ttlValue != "" {
+	ttlValue := getEnv("TTL")
+	if ttlValue != "" {
 		duration, err := time.ParseDuration(ttlValue)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
@@ -88,9 +88,9 @@ func New() *Common {
 	}
 
 	// Checking if version needs to be overridden env var is set in ENV
-	envClImage, clImageDefined := os.LookupEnv("CL_IMAGE")
-	envClVersion, clVersionDefined := os.LookupEnv("CL_VERSION")
-	if clImageDefined && clVersionDefined {
+	envClImage := getEnv("CL_IMAGE")
+	envClVersion := getEnv("CL_VERSION")
+	if envClImage != "" && envClVersion != "" {
 		c.CLImage = envClImage
 		c.CLVersion = envClVersion
 	} else {
@@ -98,11 +98,21 @@ func New() *Common {
 	}
 
 	// Setting optional parameters
-	c.L2RPCUrl, c.Testnet = os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
-	c.PrivateKey, _ = os.LookupEnv("PRIVATE_KEY")
-	c.Account, _ = os.LookupEnv("ACCOUNT")
+	c.L2RPCUrl = getEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
+	c.Testnet = c.L2RPCUrl != ""
+	c.PrivateKey = getEnv("PRIVATE_KEY")
+	c.Account = getEnv("ACCOUNT")
 
 	return c
+}
+
+// getEnv gets the environment variable if it exists and sets it for the remote runner
+func getEnv(v string) string {
+	val := os.Getenv(v)
+	if val != "" {
+		os.Setenv(fmt.Sprintf("TEST_%s", v), val)
+	}
+	return val
 }
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
