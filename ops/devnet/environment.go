@@ -1,10 +1,11 @@
 package devnet
 
 import (
+	"os"
+
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
-	"os"
 )
 
 type Chart struct {
@@ -94,9 +95,9 @@ func defaultProps() *Props {
 
 func New(helmVersion string, props *Props) environment.ConnectedChart {
 	defaultPath := "../../ops/charts/devnet"
-	_, InsideK8s := os.LookupEnv("INSIDE_K8")
+	_, InsideK8s := os.LookupEnv("ENV_INSIDE_K8S")
 	if InsideK8s {
-		defaultPath = "/root/ops/charts/devnet"
+		defaultPath = "/go/testdir/ops/charts/devnet"
 	}
 	if props == nil {
 		props = defaultProps()
