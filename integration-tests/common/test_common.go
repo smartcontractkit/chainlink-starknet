@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"math/big"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
@@ -79,6 +80,9 @@ func (testState *Test) DeployCluster() {
 	testState.ObservationSource = testState.GetDefaultObservationSource()
 	testState.JuelsPerFeeCoinSource = testState.GetDefaultJuelsPerFeeCoinSource()
 	testState.DeployEnv()
+	if testState.Common.Env.WillUseRemoteRunner() {
+		return // short circuit here if using a remote runner
+	}
 	testState.SetupClients()
 	if testState.Common.Testnet {
 		testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] = testState.Common.L2RPCUrl
@@ -102,6 +106,9 @@ func (testState *Test) DeployCluster() {
 func (testState *Test) DeployEnv() {
 	err = testState.Common.Env.Run()
 	require.NoError(testState.T, err)
+	if testState.Common.Env.WillUseRemoteRunner() {
+		return // short circuit here if using a remote runner
+	}
 	testState.mockServer, err = ctfClient.ConnectMockServer(testState.Common.Env)
 	require.NoError(testState.T, err, "Creating mockserver clients shouldn't fail")
 }
@@ -112,9 +119,9 @@ func (testState *Test) SetupClients() {
 		log.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", testState.Common.L2RPCUrl))
 	} else {
 		testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
-		if testState.Common.InsideK8 {
-			testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
-		}
+		// if testState.Common.InsideK8 {
+		// 	testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
+		// }
 		testState.Devnet = testState.Devnet.NewStarkNetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
 		require.NoError(testState.T, err)
 	}
