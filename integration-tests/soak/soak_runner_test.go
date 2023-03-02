@@ -2,13 +2,13 @@ package soak_test
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/smartcontractkit/chainlink-env/config"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/remotetestrunner"
 	"github.com/smartcontractkit/chainlink-testing-framework/actions"
 	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
@@ -47,7 +47,7 @@ func soakTestHelper(
 ) {
 	var err error
 	c = common.New()
-	c.Default()
+	c.Default(t)
 	remoteRunnerValues := actions.BasicRunnerValuesSetup(
 		testTag,
 		c.Env.Cfg.Namespace,
@@ -56,7 +56,6 @@ func soakTestHelper(
 	remoteRunnerValues[config.EnvVarInsideK8s] = "true"
 	envValues := map[string]interface{}{
 		"test_log_level":    "debug",
-		"INSIDE_K8":         true,
 		"TTL":               c.TTL.String(),
 		"NODE_COUNT":        c.NodeCount,
 		"L2_RPC_URL":        c.L2RPCUrl,
@@ -77,22 +76,22 @@ func soakTestHelper(
 		remoteRunnerValues[key] = value
 	}
 	// Need to bump resources due to yarn using memory when running in parallel
-	remoteRunnerWrapper := map[string]interface{}{
-		"remote_test_runner": remoteRunnerValues,
-		"resources": map[string]interface{}{
-			"requests": map[string]interface{}{
-				"cpu":    "2000m",
-				"memory": "2048Mi",
-			},
-			"limits": map[string]interface{}{
-				"cpu":    "2000m",
-				"memory": "2048Mi",
-			},
-		},
-	}
+	// remoteRunnerWrapper := map[string]interface{}{
+	// 	"remote_test_runner": remoteRunnerValues,
+	// 	"resources": map[string]interface{}{
+	// 		"requests": map[string]interface{}{
+	// 			"cpu":    "2000m",
+	// 			"memory": "2048Mi",
+	// 		},
+	// 		"limits": map[string]interface{}{
+	// 			"cpu":    "2000m",
+	// 			"memory": "2048Mi",
+	// 		},
+	// 	},
+	// }
 
 	err = c.Env.
-		AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
+		// AddHelm(remotetestrunner.New(remoteRunnerWrapper)).
 		Run()
 	require.NoError(t, err, "Error launching test environment")
 	// Copying required files / folders to remote runner pod

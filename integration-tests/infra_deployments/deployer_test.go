@@ -1,12 +1,13 @@
 package infra_deployments_test
 
 import (
+	"net/url"
+	"testing"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/stretchr/testify/require"
-	"net/url"
-	"testing"
 )
 
 const (
@@ -58,7 +59,7 @@ func TestOCRBasic(testState *testing.T) {
 	var err error
 	t := &common.Test{}
 	t.Common = common.New()
-	t.Common.Default()
+	t.Common.Default(testState)
 	t.Cc = &common.ChainlinkClient{}
 	t.Common.P2PPort = P2pPort
 	t.Cc.ChainlinkNodes, err = createKeys(testState)

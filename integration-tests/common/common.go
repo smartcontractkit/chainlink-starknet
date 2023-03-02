@@ -2,6 +2,12 @@ package common
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
@@ -15,10 +21,6 @@ import (
 	"github.com/smartcontractkit/chainlink/core/services/relay"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"gopkg.in/guregu/null.v4"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -38,7 +40,6 @@ type Common struct {
 	ChainId             string
 	NodeCount           int
 	TTL                 time.Duration
-	InsideK8            bool
 	Testnet             bool
 	CLImage             string
 	CLVersion           string
@@ -97,7 +98,6 @@ func New() *Common {
 	}
 
 	// Setting optional parameters
-	_, c.InsideK8 = os.LookupEnv("INSIDE_K8")
 	c.L2RPCUrl, c.Testnet = os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
 	c.PrivateKey, _ = os.LookupEnv("PRIVATE_KEY")
 	c.Account, _ = os.LookupEnv("ACCOUNT")
@@ -215,8 +215,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	return nil
 }
 
-func (c *Common) Default() {
-	c.K8Config = &environment.Config{InsideK8s: c.InsideK8, NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL}
+func (c *Common) Default(t *testing.T) {
+	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
 	c.EnvConfig = map[string]interface{}{
 		"STARKNET_ENABLED":            "true",
 		"EVM_ENABLED":                 "false",
