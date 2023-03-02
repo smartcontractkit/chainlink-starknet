@@ -1,12 +1,12 @@
 package infra_deployments_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/stretchr/testify/require"
 	"net/url"
+	"testing"
 )
 
 const (
@@ -27,7 +27,7 @@ var (
 			`
 )
 
-func createKeys() ([]*client.Chainlink, error) {
+func createKeys(testState *testing.T) ([]*client.Chainlink, error) {
 	urls := [][]string{
 		// Node access params
 		{"NODE_URL", "NODE_USER", "NODE_PASS"},
@@ -48,54 +48,50 @@ func createKeys() ([]*client.Chainlink, error) {
 		key, _ := c.MustReadP2PKeys()
 		if key == nil {
 			_, _, err = c.CreateP2PKey()
-			Expect(err).ShouldNot(HaveOccurred())
+			require.NoError(testState, err)
 		}
 		clients = append(clients, c)
 	}
 	return clients, nil
 }
-
-var _ = Describe("Deploy config only @infra", func() {
-	It("works", func() {
-		var err error
-		t := &common.Test{}
-		t.Common = common.New()
-		t.Common.Default()
-		t.Cc = &common.ChainlinkClient{}
-		t.Common.P2PPort = P2pPort
-		t.Cc.ChainlinkNodes, err = createKeys()
-		Expect(err).ShouldNot(HaveOccurred())
-		t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.Cc.ChainlinkNodes, t.Common.ChainName, t.Common.ChainId)
-		Expect(err).ShouldNot(HaveOccurred())
-		for _, n := range t.Cc.ChainlinkNodes {
-			_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
-				Type:    t.Common.ChainName,
-				ChainID: t.Common.ChainId,
-				Config:  client.StarkNetChainConfig{},
-			})
-			Expect(err).ShouldNot(HaveOccurred())
-			_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
-				Name:    t.Common.ChainName,
-				ChainID: t.Common.ChainId,
-				Url:     L2RpcUrl,
-			})
-			Expect(err).ShouldNot(HaveOccurred())
-		}
-		t.Common.Testnet = true
-		t.Common.L2RPCUrl = L2RpcUrl
-		t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
-		Expect(err).ShouldNot(HaveOccurred(), "Could not get a new gauntlet struct")
-		err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
-		Expect(err).ShouldNot(HaveOccurred(), "Setting up gauntlet network should not fail")
-		err = t.DeployGauntlet(-100000000000, 100000000000, 9, "auto", 1, 1)
-		Expect(err).ShouldNot(HaveOccurred(), "Deploying contracts should not fail")
-		t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
-			Name: "bridge-coinmetrics",
-			URL:  "ADAPTER_URL", // ADAPTER_URL e.g https://adapters.main.sand.cldev.sh/coinmetrics
+func TestOCRBasic(testState *testing.T) {
+	var err error
+	t := &common.Test{}
+	t.Common = common.New()
+	t.Common.Default()
+	t.Cc = &common.ChainlinkClient{}
+	t.Common.P2PPort = P2pPort
+	t.Cc.ChainlinkNodes, err = createKeys(testState)
+	require.NoError(testState, err)
+	t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.Cc.ChainlinkNodes, t.Common.ChainName, t.Common.ChainId)
+	require.NoError(testState, err)
+	for _, n := range t.Cc.ChainlinkNodes {
+		_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
+			Type:    t.Common.ChainName,
+			ChainID: t.Common.ChainId,
+			Config:  client.StarkNetChainConfig{},
 		})
-
-		err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
-		Expect(err).ShouldNot(HaveOccurred())
+		require.NoError(testState, err)
+		_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
+			Name:    t.Common.ChainName,
+			ChainID: t.Common.ChainId,
+			Url:     L2RpcUrl,
+		})
+		require.NoError(testState, err)
+	}
+	t.Common.Testnet = true
+	t.Common.L2RPCUrl = L2RpcUrl
+	t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
+	require.NoError(testState, err, "Could not get a new gauntlet struct")
+	err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
+	require.NoError(testState, err, "Setting up gauntlet network should not fail")
+	err = t.DeployGauntlet(-100000000000, 100000000000, 9, "auto", 1, 1)
+	require.NoError(testState, err, "Deploying contracts should not fail")
+	t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
+		Name: "bridge-coinmetrics",
+		URL:  "ADAPTER_URL", // ADAPTER_URL e.g https://adapters.main.sand.cldev.sh/coinmetrics
 	})
 
-})
+	err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
+	require.NoError(testState, err)
+}
