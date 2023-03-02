@@ -16,13 +16,13 @@ var (
 	nAccount         string
 )
 
-func (t *Test) fundNodes() error {
+func (testState *Test) fundNodes() error {
 	var nAccounts []string
-	for _, key := range t.GetNodeKeys() {
+	for _, key := range testState.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return errors.New("stark key can't be empty")
 		}
-		nAccount, err = t.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		nAccount, err = testState.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
 			return err
 		}
@@ -36,18 +36,18 @@ func (t *Test) fundNodes() error {
 		return err
 	}
 
-	if t.Common.Testnet {
+	if testState.Common.Testnet {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = t.Sg.TransferToken(ethAddressGoerli, key, "100000000000000000") // Transferring 1 ETH to each node
+			_, err = testState.Sg.TransferToken(ethAddressGoerli, key, "100000000000000000") // Transferring 1 ETH to each node
 			if err != nil {
 				return err
 			}
 		}
 
 	} else {
-		err = t.Devnet.FundAccounts(nAccounts)
+		err = testState.Devnet.FundAccounts(nAccounts)
 		if err != nil {
 			return err
 		}
@@ -56,33 +56,33 @@ func (t *Test) fundNodes() error {
 	return nil
 }
 
-func (t *Test) deployLinkToken() error {
-	t.LinkTokenAddr, err = t.Sg.DeployLinkTokenContract()
+func (testState *Test) deployLinkToken() error {
+	testState.LinkTokenAddr, err = testState.Sg.DeployLinkTokenContract()
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("LINK", t.LinkTokenAddr)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *Test) deployAccessController() error {
-	t.AccessControllerAddr, err = t.Sg.DeployAccessControllerContract()
-	if err != nil {
-		return err
-	}
-	err = os.Setenv("BILLING_ACCESS_CONTROLLER", t.AccessControllerAddr)
+	err = os.Setenv("LINK", testState.LinkTokenAddr)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *Test) setConfigDetails(ocrAddress string) error {
+func (testState *Test) deployAccessController() error {
+	testState.AccessControllerAddr, err = testState.Sg.DeployAccessControllerContract()
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("BILLING_ACCESS_CONTROLLER", testState.AccessControllerAddr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (testState *Test) setConfigDetails(ocrAddress string) error {
 	var cfg *ops.OCR2Config
-	cfg, err = t.LoadOCR2Config()
+	cfg, err = testState.LoadOCR2Config()
 	if err != nil {
 		return err
 	}
@@ -91,54 +91,54 @@ func (t *Test) setConfigDetails(ocrAddress string) error {
 	if err != nil {
 		return err
 	}
-	_, err = t.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
+	_, err = testState.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
 	return nil
 }
 
-func (t *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
-	err = t.Sg.InstallDependencies()
+func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
+	err = testState.Sg.InstallDependencies()
 	if err != nil {
 		return err
 	}
 
-	err = t.fundNodes()
+	err = testState.fundNodes()
 	if err != nil {
 		return err
 	}
 
-	err = t.deployLinkToken()
+	err = testState.deployLinkToken()
 	if err != nil {
 		return err
 	}
 
-	err = t.deployAccessController()
+	err = testState.deployAccessController()
 	if err != nil {
 		return err
 	}
 
-	t.OCRAddr, err = t.Sg.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, t.LinkTokenAddr)
+	testState.OCRAddr, err = testState.Sg.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, testState.LinkTokenAddr)
 	if err != nil {
 		return err
 	}
 
-	t.ProxyAddr, err = t.Sg.DeployOCR2ProxyContract(t.OCRAddr)
+	testState.ProxyAddr, err = testState.Sg.DeployOCR2ProxyContract(testState.OCRAddr)
 	if err != nil {
 		return err
 	}
-	_, err = t.Sg.AddAccess(t.OCRAddr, t.ProxyAddr)
+	_, err = testState.Sg.AddAccess(testState.OCRAddr, testState.ProxyAddr)
 	if err != nil {
 		return err
 	}
-	_, err = t.Sg.MintLinkToken(t.LinkTokenAddr, t.OCRAddr, "100000000000000000000")
+	_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
 	if err != nil {
 		return err
 	}
-	_, err = t.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, t.OCRAddr)
+	_, err = testState.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, testState.OCRAddr)
 	if err != nil {
 		return err
 	}
 
-	err = t.setConfigDetails(t.OCRAddr)
+	err = testState.setConfigDetails(testState.OCRAddr)
 	if err != nil {
 		return err
 	}

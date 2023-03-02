@@ -34,10 +34,11 @@ func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
 	}
 }
 
+func (r *relayer) Name() string {
+	return r.lggr.Name()
+}
+
 func (r *relayer) Start(context.Context) error {
-	if r.chainSet == nil {
-		return errors.New("chain unavailable")
-	}
 	return nil
 }
 
@@ -52,6 +53,10 @@ func (r *relayer) Ready() error {
 
 func (r *relayer) Healthy() error {
 	return r.chainSet.Healthy()
+}
+
+func (r *relayer) HealthReport() map[string]error {
+	return map[string]error{r.Name(): r.Healthy()}
 }
 
 func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
@@ -103,4 +108,8 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	}
 
 	return medianProvider, nil
+}
+
+func (r *relayer) NewMercuryProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MercuryProvider, error) {
+	return nil, errors.New("mercury is not supported for starknet")
 }

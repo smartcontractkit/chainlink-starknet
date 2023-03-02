@@ -9,7 +9,7 @@
 
 #### Smoke
 
-`ginkgo -r --focus @ocr integration-tests/smoke` (from core of repo)
+`cd integration-tests/smoke/ && go test --timeout=2h -v` (from core of repo)
 
 #### Soak
 

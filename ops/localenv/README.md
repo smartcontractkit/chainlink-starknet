@@ -7,7 +7,6 @@ docker - build local containers
 kubectl - interact with kubernetes cluster
 ```
 
-from the root of the repo, install ginkgo
 ```
 make install
 ```
@@ -28,7 +27,7 @@ go run main.go create
 # note: assumes a folder structure like Documents/chainlink + Documents/chainlink-starknet
 go run main.go build
 
-# runs the ginkgo testing environment using the locally compiled image
+# runs the go test environment using the locally compiled image
 # note: the namespace is in the first few lines of logging
 go run main.go run
 
