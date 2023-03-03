@@ -28,6 +28,7 @@ jobs:
       id-token: write
       contents: read
     steps:
+      # TODO: if a workflow dispatch and the cl_branch_ref is develop, do not build
       - name: Collect Metrics
         if: always()
         id: collect-gha-metrics
@@ -61,6 +62,7 @@ jobs:
     name: Build Test Image
     runs-on: ubuntu-latest
     steps:
+      # TODO: if a workflow dispatch and this branch is develop, do not build
       - name: Collect Metrics
         id: collect-gha-metrics
         uses: smartcontractkit/push-gha-metrics-action@v1
