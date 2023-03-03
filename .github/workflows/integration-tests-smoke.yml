@@ -60,7 +60,7 @@ jobs:
       id-token: write
       contents: read
     name: Build Test Image
-    runs-on: ubuntu20.04-32cores-128GB
+    runs-on: ubuntu20.04-64cores-256GB
     steps:
       # TODO: if a workflow dispatch and this branch is develop, do not build
       - name: Collect Metrics
@@ -93,7 +93,7 @@ jobs:
 
   run_tests:
     name: Run Smoke Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu20.04-8cores-32GB
     needs: [ build_custom_chainlink_image, build_test_image ]
     environment: integration
     env:
