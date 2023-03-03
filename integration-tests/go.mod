@@ -360,10 +360,14 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+replace (
+	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.0.0
 
-// Fix go mod tidy issue for ambiguous imports from go-ethereum
-// See https://github.com/ugorji/go/issues/279
-replace github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
+	// Fix go mod tidy issue for ambiguous imports from go-ethereum
+	// See https://github.com/ugorji/go/issues/279
+	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
+	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.0.0
+	// Make sure we're working with the latest ops
+	github.com/smartcontractkit/chainlink-starknet/ops => ../ops
+)
