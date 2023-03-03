@@ -54,6 +54,10 @@ ifneq ($(CI),true)
 endif
 endif
 
+.PHONY: nix-container
+nix-container:
+	docker run -it --rm -v $(shell pwd):/repo -e NIX_USER_CONF_FILES=/repo/nix.conf --workdir /repo nixos/nix:latest /bin/sh
+
 .PHONY: build
 build: build-go build-ts
 

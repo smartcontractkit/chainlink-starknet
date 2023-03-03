@@ -4,6 +4,7 @@
 (pkgs.mkShell.override { stdenv = pkgs.clangStdenv; }) {
   buildInputs = with pkgs; [
     python39
+    python39Packages.pip
     python39Packages.venvShellHook
     python39Packages.fastecdsa # so libgmp is correctly sourced
     gmp
@@ -35,7 +36,6 @@
   venvDir = "./.venv";
 
   postShellHook = ''
-    pip install --upgrade pip
     pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
   '';
 }
