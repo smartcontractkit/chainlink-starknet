@@ -97,7 +97,7 @@ func New(helmVersion string, props *Props) environment.ConnectedChart {
 	defaultPath := "../../ops/charts/devnet"
 	_, InsideK8s := os.LookupEnv("ENV_INSIDE_K8S")
 	if InsideK8s {
-		defaultPath = "/go/testdir/ops/charts/devnet"
+		defaultPath = "/repo/ops/charts/devnet"
 	}
 	if props == nil {
 		props = defaultProps()
