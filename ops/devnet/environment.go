@@ -1,8 +1,6 @@
 package devnet
 
 import (
-	"os"
-
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
@@ -94,11 +92,6 @@ func defaultProps() *Props {
 }
 
 func New(helmVersion string, props *Props) environment.ConnectedChart {
-	defaultPath := "../../ops/charts/devnet"
-	_, InsideK8s := os.LookupEnv("ENV_INSIDE_K8S")
-	if InsideK8s {
-		defaultPath = "/repo/ops/charts/devnet"
-	}
 	if props == nil {
 		props = defaultProps()
 	}
@@ -106,7 +99,7 @@ func New(helmVersion string, props *Props) environment.ConnectedChart {
 	return Chart{
 		HelmProps: &HelmProps{
 			Name:    "starknet-dev",
-			Path:    defaultPath,
+			Path:    "../ops/charts/devnet",
 			Values:  &props.Values,
 			Version: helmVersion,
 		},
