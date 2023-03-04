@@ -30,7 +30,7 @@ func TestOCRSoak(t *testing.T) {
 	testState.Common = common.New()
 	testState.Common.Default(t)
 	// Setting this to the root of the repo for cmd exec func for Gauntlet
-	testState.Sg, err = gauntlet.NewStarknetGauntlet("/root/")
+	testState.Sg, err = gauntlet.NewStarknetGauntlet("../")
 	require.NoError(t, err, "Could not get a new gauntlet struct")
 	testState.DeployCluster()
 	if testState.Common.Env.WillUseRemoteRunner() {
