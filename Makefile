@@ -58,6 +58,10 @@ endif
 nix-container:
 	docker run -it --rm -v $(shell pwd):/repo -e NIX_USER_CONF_FILES=/repo/nix.conf --workdir /repo nixos/nix:latest /bin/sh
 
+.PHONY: nix-flake-update
+nix-flake-update:
+	docker run -it --rm -v $(shell pwd):/repo -e NIX_USER_CONF_FILES=/repo/nix.conf --workdir /repo nixos/nix:latest /bin/sh -c "nix flake update"
+
 .PHONY: build
 build: build-go build-ts
 
