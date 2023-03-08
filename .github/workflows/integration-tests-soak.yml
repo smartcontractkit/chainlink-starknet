@@ -74,6 +74,8 @@ jobs:
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
       TTL: ${{ github.event.inputs.ttl }}
+      TEST_SUITE: soak
+      TEST_ARGS: -test.timeout 72h
     permissions:
       checks: write
       pull-requests: write
