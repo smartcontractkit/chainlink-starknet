@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	err error
+	// err error
 
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
@@ -41,7 +41,7 @@ var (
 func init() {
 	// wallet contract derivation
 	var keyBytes []byte
-	keyBytes, err = hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
+	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
 	if err != nil {
 		panic(err)
 	}
@@ -87,6 +87,7 @@ func (testState *Test) DeployCluster() {
 	if testState.Common.Testnet {
 		testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] = testState.Common.L2RPCUrl
 	}
+	var err error
 	testState.Cc.NKeys, testState.Cc.ChainlinkNodes, err = testState.Common.CreateKeys(testState.Common.Env)
 	require.NoError(testState.T, err, "Creating chains and keys should not fail")
 	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, testState.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
@@ -104,7 +105,7 @@ func (testState *Test) DeployCluster() {
 
 // DeployEnv Deploys the environment
 func (testState *Test) DeployEnv() {
-	err = testState.Common.Env.Run()
+	err := testState.Common.Env.Run()
 	require.NoError(testState.T, err)
 	if testState.Common.Env.WillUseRemoteRunner() {
 		return // short circuit here if using a remote runner
@@ -120,14 +121,10 @@ func (testState *Test) SetupClients() {
 	} else {
 		testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
 		if testState.Common.Env.Cfg.InsideK8s {
-			// testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
-			log.Debug().Msg(fmt.Sprintf("Possible L2 RPC: %s", testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1]))
+			testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
 		}
-		log.Debug().Msg(fmt.Sprintf("Possible L2 RPC: %s", testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0]))
-		log.Debug().Msg(fmt.Sprintf("Possible L2 RPC: %s", testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1]))
 		log.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
 		testState.Devnet = testState.Devnet.NewStarkNetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
-		require.NoError(testState.T, err)
 	}
 }
 
@@ -161,7 +158,7 @@ func (testState *Test) SetUpNodes(mockServerVal int) {
 		Name: "bridge-mockserver",
 		URL:  testState.GetMockServerURL(),
 	})
-	err = testState.SetMockServerValue("", mockServerVal)
+	err := testState.SetMockServerValue("", mockServerVal)
 	require.NoError(testState.T, err, "Setting mock server value should not fail")
 	err = testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr)
 	require.NoError(testState.T, err, "Creating jobs should not fail")
@@ -216,7 +213,7 @@ func (testState *Test) SetMockServerValue(path string, val int) error {
 
 // ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
 func (testState *Test) ConfigureL1Messaging() {
-	err = testState.Devnet.LoadL1MessagingContract(testState.L1RPCUrl)
+	err := testState.Devnet.LoadL1MessagingContract(testState.L1RPCUrl)
 	require.NoError(testState.T, err, "Setting up L1 messaging should not fail")
 }
 
@@ -264,8 +261,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < testState.Common.TTL; {
 		log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TTL))
-		var res ocr2.TransmissionDetails
-		res, err = testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
+		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
 			break
@@ -342,8 +338,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	// Test proxy reading
 	// TODO: would be good to test proxy switching underlying feeds
-	var roundDataRaw []string
-	roundDataRaw, err = testState.Starknet.CallContract(ctx, starknet.CallOps{
+	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
 		ContractAddress: caigotypes.HexToHash(testState.ProxyAddr),
 		Selector:        "latest_round_data",
 	})
