@@ -28,8 +28,6 @@ import (
 )
 
 var (
-	// err error
-
 	// These are one of the default addresses based on the seed we pass to devnet which is 0
 	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
 	defaultWalletAddress string // derived in init()
