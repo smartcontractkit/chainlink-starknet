@@ -93,7 +93,7 @@ func (testState *Test) setConfigDetails(ocrAddress string) error {
 		return err
 	}
 	_, err = testState.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
-	return nil
+	return err
 }
 
 func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
@@ -140,9 +140,5 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 	}
 
 	err = testState.setConfigDetails(testState.OCRAddr)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
