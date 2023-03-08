@@ -82,7 +82,7 @@ func TestOCRBasic(testState *testing.T) {
 	}
 	t.Common.Testnet = true
 	t.Common.L2RPCUrl = L2RpcUrl
-	t.Sg, err = gauntlet.NewStarknetGauntlet("../../")
+	t.Sg, err = gauntlet.NewStarknetGauntlet("../")
 	require.NoError(testState, err, "Could not get a new gauntlet struct")
 	err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
 	require.NoError(testState, err, "Setting up gauntlet network should not fail")

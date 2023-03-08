@@ -196,19 +196,24 @@ test-integration: test-integration-smoke test-integration-contracts test-integra
 
 .PHONY: test-integration-smoke
 test-integration-smoke: test-integration-prep
-	cd integration-tests/smoke && \
-		go test --timeout=2h -v
+	cd integration-tests/ && \
+		go test --timeout=2h -v ./smoke
 
 # CI Already has the integration prep ran
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
-	cd integration-tests/smoke && \
-		go test --timeout=2h -v -count=1 -json 2>&1 | tee /tmp/gotest.log | gotestfmt
+	cd integration-tests/ && \
+		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
-	cd integration-tests/soak/ && \
-		go test --timeout=1h -v
+	cd integration-tests/ && \
+		go test --timeout=1h -v ./soak
+
+.PHONY: test-integration-soak-ci
+test-integration-soak-ci:
+	cd integration-tests/ && \
+		go test --timeout=1h -v -count=1 -json ./soak 2>&1 | tee /tmp/gotest.log | gotestfmt
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)

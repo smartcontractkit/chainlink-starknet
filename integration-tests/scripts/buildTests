@@ -13,8 +13,7 @@ cd "$SCRIPT_DIR"/../../ || exit 1
 # integration prep
 make test-integration-prep
 
-INTEGRATION_TEST_DIR="$SCRIPT_DIR"/../
-cd "$INTEGRATION_TEST_DIR" || exit 1
+cd "$SCRIPT_DIR"/../ || exit 1
 
 # parse out quotes if they exist in the string
 temp="${1%\"}"
@@ -25,7 +24,6 @@ OIFS=$IFS
 IFS=' '
 for x in $tosplit
 do
-    cd "$INTEGRATION_TEST_DIR""${x}" || exit 1
-    go test -c ./
+    go test -c ./"${x}"
 done
 IFS=$OIFS
