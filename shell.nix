@@ -37,5 +37,8 @@
 
   postShellHook = ''
     pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
+    helm repo add chainlink-qa https://raw.githubusercontent.com/smartcontractkit/qa-charts/gh-pages/
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm repo update
   '';
 }
