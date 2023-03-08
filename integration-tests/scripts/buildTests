@@ -25,7 +25,7 @@ OIFS=$IFS
 IFS=' '
 for x in $tosplit
 do
-    cd "$INTEGRATION_TEST_DIR"/"${x}" || exit 1
+    cd "$INTEGRATION_TEST_DIR""${x}" || exit 1
     go test -c ./
 done
 IFS=$OIFS

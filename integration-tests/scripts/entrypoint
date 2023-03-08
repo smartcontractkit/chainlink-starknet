@@ -15,4 +15,5 @@ cd "$SCRIPT_DIR"/../ || exit 1
 # TEST_NAME=${TEST_NAME:=} The specific test to run
 
 # run the tests
-nix develop -c ./"${SUITE}"/"${SUITE}".test -test.v -test.count 1 ${ARGS} -test.run ^${TEST_NAME}$
+cd "${SUITE}"
+nix develop -c ./"${SUITE}".test -test.v -test.count 1 ${ARGS} -test.run ^${TEST_NAME}$
