@@ -119,9 +119,11 @@ func (testState *Test) SetupClients() {
 		log.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", testState.Common.L2RPCUrl))
 	} else {
 		testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
-		// if testState.Common.InsideK8 {
-		// 	testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
-		// }
+		if testState.Common.Env.Cfg.InsideK8s {
+			// testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
+			log.Debug().Msg(fmt.Sprintf("Possible L2 RPC: %s", testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1]))
+		}
+		log.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
 		testState.Devnet = testState.Devnet.NewStarkNetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
 		require.NoError(testState.T, err)
 	}

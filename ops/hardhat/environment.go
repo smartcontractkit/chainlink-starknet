@@ -96,7 +96,7 @@ func New(props *Props) environment.ConnectedChart {
 	return Chart{
 		HelmProps: &HelmProps{
 			Name:    "hardhat",
-			Path:    "../ops/charts/hardhat",
+			Path:    "../../ops/charts/hardhat",
 			Values:  &props.Values,
 			Version: "",
 		},

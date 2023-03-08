@@ -196,14 +196,14 @@ test-integration: test-integration-smoke test-integration-contracts test-integra
 
 .PHONY: test-integration-smoke
 test-integration-smoke: test-integration-prep
-	cd integration-tests && \
-		go test --timeout=2h -v ./smoke
+	cd integration-tests/smoke && \
+		go test --timeout=2h -v
 
 # CI Already has the integration prep ran
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
-	cd integration-tests && \
-		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
+	cd integration-tests/smoke && \
+		go test --timeout=2h -v -count=1 -json 2>&1 | tee /tmp/gotest.log | gotestfmt
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
