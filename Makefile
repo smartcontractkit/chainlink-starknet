@@ -199,7 +199,7 @@ test-integration-smoke: test-integration-prep
 	cd integration-tests/ && \
 		go test --timeout=2h -v ./smoke
 
-# CI Already has the integration prep ran
+# CI Already has already ran test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
@@ -210,6 +210,7 @@ test-integration-soak: test-integration-prep
 	cd integration-tests/ && \
 		go test --timeout=1h -v ./soak
 
+# CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
 test-integration-soak-ci:
 	cd integration-tests/ && \

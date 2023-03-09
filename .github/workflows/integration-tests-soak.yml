@@ -55,10 +55,14 @@ jobs:
           cl_ref: ${{ github.event.inputs.cl_branch_ref }}
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:custom.${{ github.sha }}
+          push_tag: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink:soak.${{ github.sha }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
+      - name: Print Chainlink Image Built
+        run: |
+          echo "### chainlink image tag used for this test run :link:" >>$GITHUB_STEP_SUMMARY
+          echo "\`soak.${{ github.sha }}\`" >>$GITHUB_STEP_SUMMARY
 
   run_tests:
     name: Run Soak Tests
@@ -70,12 +74,13 @@ jobs:
       L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
       NODE_COUNT: ${{ github.event.inputs.node_count }}
       CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-      CL_VERSION: custom.${{ github.sha }}
+      CL_VERSION: soak.${{ github.sha }}
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
       TTL: ${{ github.event.inputs.ttl }}
+      DETACH_RUNNER: true
       TEST_SUITE: soak
-      TEST_ARGS: -test.timeout 72h
+      TEST_ARGS: -test.timeout ${{ github.event.inputs.ttl }}
     permissions:
       checks: write
       pull-requests: write
@@ -98,13 +103,17 @@ jobs:
             SUITES="soak"
           AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+      - name: Print Image Built
+        run: |
+          echo "### chainlink-starknet-tests image tag for this test run :ship:" >>$GITHUB_STEP_SUMMARY
+          echo "\`${{ env.REF_NAME }}\`" >>$GITHUB_STEP_SUMMARY
       - name: Run Tests
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ce87f8986ca18336cc5015df75916c2ec0a7c4b3 # v2.1.2
         with:
           test_command_to_run: nix develop -c make test-integration-soak-ci
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-          cl_image_tag: custom.${{ github.sha }}
+          cl_image_tag: soak.${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
