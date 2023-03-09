@@ -10,6 +10,7 @@ import (
 
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/alias"
@@ -41,15 +42,12 @@ type Common struct {
 	NodeCount           int
 	TTL                 time.Duration
 	Testnet             bool
-	CLImage             string
-	CLVersion           string
 	L2RPCUrl            string
 	PrivateKey          string
 	Account             string
 	ClConfig            map[string]interface{}
-	// EnvConfig           map[string]interface{}
-	K8Config *environment.Config
-	Env      *environment.Environment
+	K8Config            *environment.Config
+	Env                 *environment.Environment
 }
 
 func New() *Common {
@@ -85,16 +83,6 @@ func New() *Common {
 		}
 	} else {
 		panic("Please define TTL of env")
-	}
-
-	// Checking if version needs to be overridden env var is set in ENV
-	envClImage := getEnv("CL_IMAGE")
-	envClVersion := getEnv("CL_VERSION")
-	if envClImage != "" && envClVersion != "" {
-		c.CLImage = envClImage
-		c.CLVersion = envClVersion
-	} else {
-		panic("Please define CL_IMAGE and CL_VERSION")
 	}
 
 	// Setting optional parameters
@@ -227,20 +215,10 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 func (c *Common) Default(t *testing.T) {
 	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-	// c.EnvConfig = map[string]interface{}{
-	// 	"STARKNET_ENABLED":            "true",
-	// 	"EVM_ENABLED":                 "false",
-	// 	"EVM_RPC_ENABLED":             "false",
-	// 	"CHAINLINK_DEV":               "false",
-	// 	"FEATURE_OFFCHAIN_REPORTING2": "true",
-	// 	"feature_offchain_reporting":  "false",
-	// 	"P2P_NETWORKING_STACK":        "V2",
-	// 	"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
-	// 	"P2PV2_DELTA_DIAL":            "5s",
-	// 	"P2PV2_DELTA_RECONCILE":       "5s",
-	// 	"p2p_listen_port":             "0",
-	// }
 	starknetUrl := fmt.Sprintf("http://%s:%d", c.ServiceKeyL2, 5000)
+	if c.Testnet {
+		starknetUrl = c.L2RPCUrl
+	}
 	baseTOML := fmt.Sprintf(`[[Starknet]]
 Enabled = true
 ChainID = '%s'
@@ -258,16 +236,10 @@ DeltaDial = '5s'
 DeltaReconcile = '5s'
 ListenAddresses = ['0.0.0.0:6690']
 	`, c.ChainId, starknetUrl)
+	log.Debug().Str("toml", baseTOML).Msg("TOML")
 	c.ClConfig = map[string]interface{}{
 		"replicas": c.NodeCount,
-		// "env":      c.EnvConfig,
-		"toml": baseTOML,
-		"chainlink": map[string]interface{}{
-			"image": map[string]interface{}{
-				"image":   c.CLImage,
-				"version": c.CLVersion,
-			},
-		},
+		"toml":     baseTOML,
 	}
 	c.Env = environment.New(c.K8Config).
 		AddHelm(devnet.New("0.0.11", nil)).

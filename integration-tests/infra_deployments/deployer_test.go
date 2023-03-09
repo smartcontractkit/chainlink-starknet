@@ -1,11 +1,13 @@
 package infra_deployments_test
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/stretchr/testify/require"
 )
@@ -82,7 +84,7 @@ func TestOCRBasic(testState *testing.T) {
 	}
 	t.Common.Testnet = true
 	t.Common.L2RPCUrl = L2RpcUrl
-	t.Sg, err = gauntlet.NewStarknetGauntlet("../")
+	t.Sg, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
 	require.NoError(testState, err, "Could not get a new gauntlet struct")
 	err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
 	require.NoError(testState, err, "Setting up gauntlet network should not fail")

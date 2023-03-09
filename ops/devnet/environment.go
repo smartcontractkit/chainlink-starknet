@@ -1,9 +1,12 @@
 package devnet
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
+	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
 type Chart struct {
@@ -99,7 +102,7 @@ func New(helmVersion string, props *Props) environment.ConnectedChart {
 	return Chart{
 		HelmProps: &HelmProps{
 			Name:    "starknet-dev",
-			Path:    "../ops/charts/devnet",
+			Path:    fmt.Sprintf("%s/charts/devnet", utils.OpsRoot),
 			Values:  &props.Values,
 			Version: helmVersion,
 		},
