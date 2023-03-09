@@ -81,6 +81,7 @@ jobs:
       DETACH_RUNNER: true
       TEST_SUITE: soak
       TEST_ARGS: -test.timeout ${{ github.event.inputs.ttl }}
+      TEST_LOG_LEVEL: debug
     permissions:
       checks: write
       pull-requests: write
