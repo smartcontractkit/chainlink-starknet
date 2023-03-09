@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  REF_NAME: ${{ github.head_ref || github.ref_name }}
   CHAINLINK_ENV_USER: ${{ github.actor }}
   TEST_LOG_LEVEL: debug
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
@@ -30,7 +31,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      # TODO: if a workflow dispatch and the cl_branch_ref is develop, do not build
       - name: Collect Metrics
         if: always()
         id: collect-gha-metrics
@@ -64,7 +64,6 @@ jobs:
     name: Build Test Image
     runs-on: ubuntu20.04-32cores-128GB
     steps:
-      # TODO: if a workflow dispatch and this branch is develop, do not build
       - name: Collect Metrics
         id: collect-gha-metrics
         uses: smartcontractkit/push-gha-metrics-action@v1
@@ -78,6 +77,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: build test runner
+        if: ${{ env.REF_NAME != 'develop' }}
         uses: smartcontractkit/chainlink-github-actions/docker/build-push@ce87f8986ca18336cc5015df75916c2ec0a7c4b3 # v2.1.2
         with:
           tags: ${{ env.ENV_JOB_IMAGE }}
@@ -89,7 +89,11 @@ jobs:
       - name: Print Image Built
         run: |
           echo "### chainlink-starknet-tests image tag for this test run :ship:" >>$GITHUB_STEP_SUMMARY
-          echo "\`ci.${{ github.sha }}\`" >>$GITHUB_STEP_SUMMARY
+          if [ "${{ env.REF_NAME }}" != "develop"]; then
+            echo "\`ci.${{ github.sha }}\`" >>$GITHUB_STEP_SUMMARY
+          else
+            echo "\`${{ env.REF_NAME }}\`" >>$GITHUB_STEP_SUMMARY
+          fi
 
   run_tests:
     name: Run Smoke Tests
