@@ -47,9 +47,9 @@ type Common struct {
 	PrivateKey          string
 	Account             string
 	ClConfig            map[string]interface{}
-	EnvConfig           map[string]interface{}
-	K8Config            *environment.Config
-	Env                 *environment.Environment
+	// EnvConfig           map[string]interface{}
+	K8Config *environment.Config
+	Env      *environment.Environment
 }
 
 func New() *Common {
@@ -227,22 +227,41 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 func (c *Common) Default(t *testing.T) {
 	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-	c.EnvConfig = map[string]interface{}{
-		"STARKNET_ENABLED":            "true",
-		"EVM_ENABLED":                 "false",
-		"EVM_RPC_ENABLED":             "false",
-		"CHAINLINK_DEV":               "false",
-		"FEATURE_OFFCHAIN_REPORTING2": "true",
-		"feature_offchain_reporting":  "false",
-		"P2P_NETWORKING_STACK":        "V2",
-		"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
-		"P2PV2_DELTA_DIAL":            "5s",
-		"P2PV2_DELTA_RECONCILE":       "5s",
-		"p2p_listen_port":             "0",
-	}
+	// c.EnvConfig = map[string]interface{}{
+	// 	"STARKNET_ENABLED":            "true",
+	// 	"EVM_ENABLED":                 "false",
+	// 	"EVM_RPC_ENABLED":             "false",
+	// 	"CHAINLINK_DEV":               "false",
+	// 	"FEATURE_OFFCHAIN_REPORTING2": "true",
+	// 	"feature_offchain_reporting":  "false",
+	// 	"P2P_NETWORKING_STACK":        "V2",
+	// 	"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
+	// 	"P2PV2_DELTA_DIAL":            "5s",
+	// 	"P2PV2_DELTA_RECONCILE":       "5s",
+	// 	"p2p_listen_port":             "0",
+	// }
+	starknetUrl := fmt.Sprintf("http://%s:%d", c.ServiceKeyL2, 5000)
+	baseTOML := fmt.Sprintf(`[[Starknet]]
+Enabled = true
+ChainID = '%s'
+[[Starknet.Nodes]]
+Name = 'primary'
+URL = '%s'
+
+[OCR2]
+Enabled = true
+
+[P2P]
+[P2P.V2]
+Enabled = true
+DeltaDial = '5s'
+DeltaReconcile = '5s'
+ListenAddresses = ['0.0.0.0:6690']
+	`, c.ChainId, starknetUrl)
 	c.ClConfig = map[string]interface{}{
 		"replicas": c.NodeCount,
-		"env":      c.EnvConfig,
+		// "env":      c.EnvConfig,
+		"toml": baseTOML,
 		"chainlink": map[string]interface{}{
 			"image": map[string]interface{}{
 				"image":   c.CLImage,
@@ -254,5 +273,5 @@ func (c *Common) Default(t *testing.T) {
 		AddHelm(devnet.New("0.0.11", nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.NewVersioned(0, "0.0.11", c.ClConfig))
+		AddHelm(chainlink.New(0, c.ClConfig))
 }
