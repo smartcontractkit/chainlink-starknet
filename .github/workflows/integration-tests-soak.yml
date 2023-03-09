@@ -73,8 +73,6 @@ jobs:
       CHAINLINK_ENV_USER: ${{ github.actor }}
       L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
       NODE_COUNT: ${{ github.event.inputs.node_count }}
-      CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-      CL_VERSION: soak.${{ github.sha }}
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
       TTL: ${{ github.event.inputs.ttl }}

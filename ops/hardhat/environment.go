@@ -1,9 +1,12 @@
 package hardhat
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
+	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
 type Chart struct {
@@ -96,7 +99,7 @@ func New(props *Props) environment.ConnectedChart {
 	return Chart{
 		HelmProps: &HelmProps{
 			Name:    "hardhat",
-			Path:    "../ops/charts/hardhat",
+			Path:    fmt.Sprintf("%s/charts/hardhat", utils.OpsRoot),
 			Values:  &props.Values,
 			Version: "",
 		},
