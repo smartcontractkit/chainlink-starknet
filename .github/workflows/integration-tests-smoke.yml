@@ -103,8 +103,6 @@ jobs:
     env:
       TEST_SUITE: smoke
       TEST_ARGS: -test.timeout 1h
-      CL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-      CL_VERSION: ci.${{ github.sha }}
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
       TTL: 1h
