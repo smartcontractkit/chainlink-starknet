@@ -237,9 +237,6 @@ URL = '%s'
 Enabled = true
 
 [P2P]
-IncomingMessageBufferSize = 10 # Default
-OutgoingMessageBufferSize = 10 # Default
-TraceLogging = true
 [P2P.V2]
 Enabled = true
 DeltaDial = '5s'
