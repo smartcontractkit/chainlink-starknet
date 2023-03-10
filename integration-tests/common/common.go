@@ -215,13 +215,20 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 func (c *Common) Default(t *testing.T) {
 	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-	starknetUrl := fmt.Sprintf("http://%s:%d", c.ServiceKeyL2, 5000)
+	starknetUrl := fmt.Sprintf("http://%s:%d", serviceKeyL2, 5000)
 	if c.Testnet {
 		starknetUrl = c.L2RPCUrl
 	}
 	baseTOML := fmt.Sprintf(`[[Starknet]]
 Enabled = true
 ChainID = '%s'
+OCR2CachePollPeriod = '5s' # Default
+OCR2CacheTTL = '1m' # Default
+RequestTimeout = '10s' # Default
+TxTimeout = '1m' # Default
+TxSendFrequency = '5s' # Default
+TxMaxBatchSize = 100 # Default
+
 [[Starknet.Nodes]]
 Name = 'primary'
 URL = '%s'
@@ -230,12 +237,15 @@ URL = '%s'
 Enabled = true
 
 [P2P]
+IncomingMessageBufferSize = 10 # Default
+OutgoingMessageBufferSize = 10 # Default
+TraceLogging = true
 [P2P.V2]
 Enabled = true
 DeltaDial = '5s'
 DeltaReconcile = '5s'
 ListenAddresses = ['0.0.0.0:6690']
-	`, c.ChainId, starknetUrl)
+`, c.ChainId, starknetUrl)
 	log.Debug().Str("toml", baseTOML).Msg("TOML")
 	c.ClConfig = map[string]interface{}{
 		"replicas": c.NodeCount,
