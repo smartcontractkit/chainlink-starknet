@@ -146,8 +146,12 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	}
 
 	// Defining relay config
+	uuidV4, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
 	relayConfig := job.JSONConfig{
-		"nodeName": fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuid.NewV4().String()),
+		"nodeName": fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuidV4.String()),
 		"chainID":  fmt.Sprintf("\"%s\"", c.ChainId),
 	}
 
@@ -158,13 +162,17 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	// Setting up bootstrap node
+	uuidV4, err = uuid.NewV4()
+	if err != nil {
+		return err
+	}
 	jobSpec := &client.OCR2TaskJobSpec{
-		Name:           fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.NewV4().String()),
+		Name:           fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuidV4.String()),
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
 	}
 
-	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
+	_, _, err = cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
 		return err
 	}
@@ -199,8 +207,12 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 			},
 		}
 
+		uuidV4, err := uuid.NewV4()
+		if err != nil {
+			return err
+		}
 		jobSpec = &client.OCR2TaskJobSpec{
-			Name:              fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.NewV4().String()),
+			Name:              fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuidV4.String()),
 			JobType:           "offchainreporting2",
 			OCR2OracleSpec:    oracleSpec,
 			ObservationSource: observationSource,
