@@ -12,6 +12,7 @@ require (
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221103134312-d40949720ad3
 	github.com/smartcontractkit/chainlink-testing-framework v1.9.2
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230120175917-456bc0c86b97
+
 )
 
 require (
