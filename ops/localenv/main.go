@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+
+	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
 // TODO: consider extracting entire file to `chainlink-relay/ops` or into a separate CLI tool
@@ -39,10 +41,15 @@ func main() {
 	// run ginkgo commands to spin up environment
 	case "run":
 		// move to repo root
-		if err := os.Chdir("../../"); err != nil {
+		if err := os.Chdir(utils.IntegrationTestsRoot); err != nil {
 			panic(err)
 		}
-		run("start environment", "ginkgo", "-r", "--focus", "@ocr", "integration-tests/smoke", "--", "--chainlink-image", "k3d-registry.localhost:12345/chainlink", "--chainlink-version", "local", "--keep-alive")
+		setEnvIfNotExists("CHAINLINK_IMAGE", "k3d-registry.localhost:12345/chainlink")
+		setEnvIfNotExists("CHAINLINK_VERSION", "local")
+		setEnvIfNotExists("KEEP_ENVIRONMENTS", "ALWAYS")
+		setEnvIfNotExists("NODE_COUNT", "1")
+		setEnvIfNotExists("TTL", "900h")
+		run("start environment", "go", "test", "-count", "1", "-v", "-timeout", "30m", "--run", "^TestOCRBasic$", "./smoke")
 	// stop k8s namespace from environment
 	case "stop":
 		if len(os.Args) < 3 {
@@ -56,6 +63,15 @@ func main() {
 	default:
 		panic("unrecognized command")
 	}
+}
+
+func setEnvIfNotExists(key, defaultValue string) {
+	value := os.Getenv(key)
+	if value == "" {
+		os.Setenv(key, defaultValue)
+		value = defaultValue
+	}
+	fmt.Printf("Using %s=%s\n", key, value)
 }
 
 func run(name string, f string, args ...string) {
