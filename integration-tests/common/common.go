@@ -222,7 +222,6 @@ func (c *Common) Default(t *testing.T) {
 	baseTOML := fmt.Sprintf(`[[Starknet]]
 Enabled = true
 ChainID = '%s'
-
 [[Starknet.Nodes]]
 Name = 'primary'
 URL = '%s'
@@ -243,7 +242,7 @@ ListenAddresses = ['0.0.0.0:6690']
 		"toml":     baseTOML,
 	}
 	c.Env = environment.New(c.K8Config).
-		AddHelm(devnet.New("0.0.11", nil)).
+		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
 		AddHelm(chainlink.New(0, c.ClConfig))

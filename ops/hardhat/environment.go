@@ -18,13 +18,13 @@ type Props struct {
 	Simulated   bool     `envconfig:"network_simulated"`
 	HttpURLs    []string `envconfig:"http_url"`
 	WsURLs      []string `envconfig:"ws_url"`
-	Values      map[string]interface{}
+	Values      map[string]any
 }
 
 type HelmProps struct {
 	Name    string
 	Path    string
-	Values  *map[string]interface{}
+	Values  *map[string]any
 	Version string
 }
 
@@ -36,7 +36,7 @@ func (m Chart) GetVersion() string {
 	return m.HelmProps.Version
 }
 
-func (m Chart) GetProps() interface{} {
+func (m Chart) GetProps() any {
 	return m.Props
 }
 
@@ -48,7 +48,7 @@ func (m Chart) GetPath() string {
 	return m.HelmProps.Path
 }
 
-func (m Chart) GetValues() *map[string]interface{} {
+func (m Chart) GetValues() *map[string]any {
 	return m.HelmProps.Values
 }
 
@@ -70,19 +70,19 @@ func (m Chart) ExportData(e *environment.Environment) error {
 func defaultProps() *Props {
 	return &Props{
 		NetworkName: "hardhat",
-		Values: map[string]interface{}{
+		Values: map[string]any{
 			"replicas": "1",
-			"starknet-dev": map[string]interface{}{
-				"image": map[string]interface{}{
+			"starknet-dev": map[string]any{
+				"image": map[string]any{
 					"image":   "ethereumoptimism/hardhat-node",
 					"version": "nightly",
 				},
-				"resources": map[string]interface{}{
-					"requests": map[string]interface{}{
+				"resources": map[string]any{
+					"requests": map[string]any{
 						"cpu":    "1000m",
 						"memory": "1024Mi",
 					},
-					"limits": map[string]interface{}{
+					"limits": map[string]any{
 						"cpu":    "1000m",
 						"memory": "1024Mi",
 					},
