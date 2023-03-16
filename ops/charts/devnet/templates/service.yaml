@@ -5,7 +5,7 @@ metadata:
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type }}
   ports:
   - name: http
     port: {{ .Values.service.externalPort }}
