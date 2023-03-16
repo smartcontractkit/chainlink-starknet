@@ -139,7 +139,6 @@ require (
 )
 
 replace (
-
 	// Fix go mod tidy issue for ambiguous imports from go-ethereum
 	// See https://github.com/ugorji/go/issues/279
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1

@@ -61,7 +61,7 @@ func (devnet *StarkNetDevnetClient) AutoDumpState() {
 				return
 			case <-t.C:
 				log.Debug().Msg("Dumping state")
-				_, err := devnet.client.R().SetBody(map[string]interface{}{
+				_, err := devnet.client.R().SetBody(map[string]any{
 					"path": devnet.dumpPath,
 				}).Post("/dump")
 				if err != nil {
@@ -85,7 +85,7 @@ func (devnet *StarkNetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddres
 				log.Debug().Msg("Checking for devnet OCR contract errors")
 				_, err := client.LatestTransmissionDetails(devnet.ctx, caigotypes.HexToHash(ocrAddress))
 				if err != nil && strings.Contains(err.Error(), "is not deployed") {
-					_, err = devnet.client.R().SetBody(map[string]interface{}{
+					_, err = devnet.client.R().SetBody(map[string]any{
 						"path": devnet.dumpPath,
 					}).Post("/load")
 					if err != nil {
@@ -101,7 +101,7 @@ func (devnet *StarkNetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddres
 // FundAccounts Funds provided accounts with 100 eth each
 func (devnet *StarkNetDevnetClient) FundAccounts(l2AccList []string) error {
 	for _, key := range l2AccList {
-		res, err := devnet.client.R().SetBody(map[string]interface{}{
+		res, err := devnet.client.R().SetBody(map[string]any{
 			"address": key,
 			"amount":  1e21,
 		}).Post("/mint")
@@ -115,7 +115,7 @@ func (devnet *StarkNetDevnetClient) FundAccounts(l2AccList []string) error {
 
 // LoadL1MessagingContract loads and sets up the L1 messaging contract and URL
 func (devnet *StarkNetDevnetClient) LoadL1MessagingContract(l1RpcUrl string) error {
-	resp, err := devnet.client.R().SetBody(map[string]interface{}{
+	resp, err := devnet.client.R().SetBody(map[string]any{
 		"networkUrl": l1RpcUrl,
 	}).Post("/postman/load_l1_messaging_contract")
 	if err != nil {
