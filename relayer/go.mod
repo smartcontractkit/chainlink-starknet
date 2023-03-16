@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/chainlink-starknet/relayer
 
-go 1.19
+go 1.20
 
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
