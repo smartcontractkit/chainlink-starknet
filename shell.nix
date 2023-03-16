@@ -32,13 +32,12 @@
   ];
 
   LD_LIBRARY_PATH="${stdenv.cc.cc.lib}/lib64:$LD_LIBRARY_PATH";
+  HELM_REPOSITORY_CONFIG=./.helm-repositories.yaml
 
   venvDir = "./.venv";
 
   postShellHook = ''
     pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
-    helm repo add chainlink-qa https://raw.githubusercontent.com/smartcontractkit/qa-charts/gh-pages/
-    helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo update
   '';
 }
