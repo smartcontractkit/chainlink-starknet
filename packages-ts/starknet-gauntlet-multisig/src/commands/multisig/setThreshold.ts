@@ -4,7 +4,6 @@ import {
   ExecutionContext,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
 import { validateThreshold as validateThresholdWithSigners } from './deploy'
@@ -29,7 +28,7 @@ const validateThreshold = async (input: UserInput, context: ExecutionContext) =>
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [number.toFelt(input.threshold)]
+  return [input.threshold]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (

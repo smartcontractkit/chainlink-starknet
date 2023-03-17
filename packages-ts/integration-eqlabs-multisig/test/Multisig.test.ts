@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { number, hash } from 'starknet'
+import { num, hash } from 'starknet'
 import { account } from '@chainlink/starknet'
 
 describe('Multisig integration tests', function () {
@@ -37,9 +37,9 @@ describe('Multisig integration tests', function () {
 
     multisig = await account1.deploy(multisigFactory, {
       signers: [
-        number.toBN(account1.starknetContract.address),
-        number.toBN(account2.starknetContract.address),
-        number.toBN(account3.starknetContract.address),
+        num.toBigInt(account1.starknetContract.address),
+        num.toBigInt(account2.starknetContract.address),
+        num.toBigInt(account3.starknetContract.address),
       ],
       threshold: 2,
     })
@@ -65,7 +65,7 @@ describe('Multisig integration tests', function () {
 
       expect(txReciept.events.length).to.equal(2)
       expect(txReciept.events[0].data.length).to.equal(3)
-      expect(txReciept.events[0].data[1]).to.equal(number.toHex(number.toBN(nonce, 'hex')))
+      expect(txReciept.events[0].data[1]).to.equal(num.toHex(num.toBigInt(nonce, 'hex')))
     }
 
     await account1.invoke(multisig, 'confirm_transaction', {

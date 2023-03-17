@@ -43,7 +43,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   result: QueryResult
 }> => {
   const [queryRes] = results
-  const [balance] = queryRes
+  const { balance } = queryRes
 
   return {
     toCompare: null,

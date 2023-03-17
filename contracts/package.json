@@ -15,7 +15,7 @@
     "@ethereum-waffle/mock-contract": "^4.0.4",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@shardlabs/starknet-hardhat-plugin": "^0.7.1",
+    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.0",
     "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",

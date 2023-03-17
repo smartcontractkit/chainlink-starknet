@@ -8,7 +8,7 @@ dotenv.config({ path: __dirname + '/../.env' })
 const ACCOUNT_NAME = 'Account'
 interface UserAccount {
   account: string
-  privateKey: string
+  privateKey: Uint8Array
 }
 let firstAccount: UserAccount
 
@@ -31,10 +31,9 @@ async function createAccount(): Promise<UserAccount> {
   const predeployedAccount = createDeployerAccount(provider)
 
   const compiledAccount = loadContract_Account(ACCOUNT_NAME)
-  const privateKey = stark.randomAddress()
+  const privateKey = ec.starkCurve.utils.randomPrivateKey()
 
-  const starkKeyPair = ec.getKeyPair(privateKey)
-  const starkKeyPub = ec.getStarkKey(starkKeyPair)
+  const starkKeyPub = ec.starkCurve.getStarkKey(privateKey)
   const OZaccountConstructorCallData = stark.compileCalldata({ publicKey: starkKeyPub })
 
   const declareTx = await predeployedAccount.declare({

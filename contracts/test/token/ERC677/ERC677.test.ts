@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
-import { uint256, number } from 'starknet'
+import { uint256, num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../../constants'
 import { account } from '@chainlink/starknet'
@@ -42,7 +42,7 @@ describe('ERC677', function () {
       amount: uint256.bnToUint256(100),
     })
     const { value: value } = await receiver.call('getSentValue')
-    expect(uint256.uint256ToBN(value)).to.deep.equal(number.toBN(0))
+    expect(uint256.uint256ToBN(value)).to.deep.equal(num.toBigInt(0))
   })
 
   describe('#transferAndCall(address, uint, bytes)', () => {
@@ -55,7 +55,7 @@ describe('ERC677', function () {
         account: receiver.address,
       })
 
-      expect(uint256.uint256ToBN(balance)).to.deep.equal(number.toBN(0))
+      expect(uint256.uint256ToBN(balance)).to.deep.equal(num.toBigInt(0))
 
       await sender.invoke(token, 'transferAndCall', {
         to: receiver.address,
@@ -66,7 +66,7 @@ describe('ERC677', function () {
       let { balance: balance1 } = await token.call('balanceOf', {
         account: receiver.address,
       })
-      expect(uint256.uint256ToBN(balance1)).to.deep.equal(number.toBN(100))
+      expect(uint256.uint256ToBN(balance1)).to.deep.equal(num.toBigInt(100))
     })
 
     it('calls the token fallback function on transfer', async () => {
@@ -83,7 +83,7 @@ describe('ERC677', function () {
       expect(address).to.equal(BigInt(sender.starknetContract.address))
 
       const { value: sentValue } = await receiver.call('getSentValue')
-      expect(uint256.uint256ToBN(sentValue)).to.deep.equal(number.toBN(100))
+      expect(uint256.uint256ToBN(sentValue)).to.deep.equal(num.toBigInt(100))
     })
 
     it('transfer succeeds with response', async () => {
@@ -130,7 +130,7 @@ describe('ERC677', function () {
         let { balance: balance1 } = await token.call('balanceOf', {
           account: nonERC677.address,
         })
-        expect(uint256.uint256ToBN(balance1)).to.deep.equal(number.toBN(0))
+        expect(uint256.uint256ToBN(balance1)).to.deep.equal(num.toBigInt(0))
       }
     })
 
@@ -146,7 +146,7 @@ describe('ERC677', function () {
         let { balance: balance1 } = await token.call('balanceOf', {
           account: 0,
         })
-        expect(uint256.uint256ToBN(balance1)).to.deep.equal(number.toBN(0))
+        expect(uint256.uint256ToBN(balance1)).to.deep.equal(num.toBigInt(0))
       }
     })
   })

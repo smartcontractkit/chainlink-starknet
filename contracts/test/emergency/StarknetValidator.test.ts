@@ -1,6 +1,6 @@
 import { ethers, starknet, network } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
-import { hash, number } from 'starknet'
+import { hash, num } from 'starknet'
 import {
   Account,
   StarknetContractFactory,
@@ -61,7 +61,7 @@ describe('StarknetValidator', () => {
 
     l2Contract = await defaultAccount.deploy(l2ContractFactory, {
       initial_status: 0,
-      owner_address: number.toBN(defaultAccount.starknetContract.address),
+      owner_address: num.toBigInt(defaultAccount.starknetContract.address),
     })
 
     // Deploy the MockStarknetMessaging contract used to simulate L1 - L2 comms

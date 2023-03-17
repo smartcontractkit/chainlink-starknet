@@ -46,7 +46,7 @@ export async function consumerValidator() {
 
   // Deploy the mock feed
   mockGasPriceFeed = await deployMockContract(deployer, aggregatorAbi.abi)
-  await mockGasPriceFeed.mock.latestRoundData.returns(
+  mockGasPriceFeed.mock.latestRoundData.returns(
     '73786976294838220258' /** roundId */,
     '96800000000' /** answer */,
     '163826896' /** startedAt */,
@@ -59,7 +59,7 @@ export async function consumerValidator() {
 
   // Deploy the mock aggregator
   mockAggregator = await deployMockContract(deployer, aggregatorAbi.abi)
-  await mockAggregator.mock.latestRoundData.returns(
+  mockAggregator.mock.latestRoundData.returns(
     '73786976294838220258' /** roundId */,
     1 /** answer */,
     '163826896' /** startedAt */,

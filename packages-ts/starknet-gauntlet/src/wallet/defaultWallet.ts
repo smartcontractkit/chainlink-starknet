@@ -1,4 +1,4 @@
-import { ec, KeyPair, Signer } from 'starknet'
+import { Signer } from 'starknet'
 import { IStarknetWallet } from './'
 import { Env } from '../dependencies'
 
@@ -6,14 +6,13 @@ export class Wallet implements IStarknetWallet {
   signer: Signer
   account: string
 
-  private constructor(keypair: KeyPair, account?: string) {
+  private constructor(keypair: string, account?: string) {
     this.signer = new Signer(keypair)
     this.account = account
   }
 
   static create = (pKey: string, account?: string) => {
-    const keyPair = ec.getKeyPair(pKey)
-    return new Wallet(keyPair, account)
+    return new Wallet(pKey, account)
   }
 
   getPublicKey = async () => await this.signer.getPubKey()

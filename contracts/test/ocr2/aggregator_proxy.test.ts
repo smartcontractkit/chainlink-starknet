@@ -1,6 +1,6 @@
 import { assert } from 'chai'
 import { starknet } from 'hardhat'
-import { number } from 'starknet'
+import { num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
@@ -97,7 +97,7 @@ describe('aggregator_proxy.cairo', function () {
       })
 
       const phase_aggregator = await proxy.call('aggregator', {})
-      assert.equal(phase_aggregator.aggregator, number.toBN(new_aggregator.address))
+      assert.equal(phase_aggregator.aggregator, num.toBigInt(new_aggregator.address))
 
       const phase_id = await proxy.call('phase_id', {})
       assert.equal(phase_id.phase_id, 2n)
