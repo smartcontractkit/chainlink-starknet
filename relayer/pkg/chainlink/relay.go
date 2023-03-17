@@ -51,9 +51,7 @@ func (r *relayer) Ready() error {
 	return r.chainSet.Ready()
 }
 
-func (r *relayer) Healthy() error {
-	return r.chainSet.Healthy()
-}
+func (r *relayer) Healthy() error { return nil }
 
 func (r *relayer) HealthReport() map[string]error {
 	return map[string]error{r.Name(): r.Healthy()}
