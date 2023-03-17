@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { number } from 'starknet'
+import { num } from 'starknet'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { account, expectInvokeError } from '@chainlink/starknet'
 
@@ -38,7 +38,7 @@ describe('SequencerUptimeFeed', function () {
 
     const feed = await alice.deploy(feedFactory, {
       initial_status: 0,
-      owner_address: number.toBN(alice.starknetContract.address),
+      owner_address: num.toBigInt(alice.starknetContract.address),
     })
 
     return { ownable: feed, alice, bob }
@@ -54,7 +54,7 @@ describe('SequencerUptimeFeed', function () {
 
       uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
         initial_status: 0,
-        owner_address: number.toBN(owner.starknetContract.address),
+        owner_address: num.toBigInt(owner.starknetContract.address),
       })
     })
 
@@ -122,14 +122,14 @@ describe('SequencerUptimeFeed', function () {
       await owner.declare(uptimeFeedFactory)
       uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
         initial_status: 0,
-        owner_address: number.toBN(owner.starknetContract.address),
+        owner_address: num.toBigInt(owner.starknetContract.address),
       })
 
       const proxyFactory = await starknet.getContractFactory('aggregator_proxy')
       await owner.declare(proxyFactory)
       proxyContract = await owner.deploy(proxyFactory, {
-        owner: number.toBN(owner.starknetContract.address),
-        address: number.toBN(uptimeFeedContract.address),
+        owner: num.toBigInt(owner.starknetContract.address),
+        address: num.toBigInt(uptimeFeedContract.address),
       })
 
       // proxy contract needs to have access to uptimeFeedContract

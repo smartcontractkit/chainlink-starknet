@@ -1,4 +1,4 @@
-import { constants, encode, number } from 'starknet'
+import { constants, encode, num } from 'starknet'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
 
@@ -65,16 +65,4 @@ export const expectSpecificMsg = (actual: string, expected: string) => {
   if (matches && matches.length > 0) {
     expect(matches.join()).to.include(expected)
   } else expect.fail(`\nActual: ${actual}\n\nExpected: ${expected}`)
-}
-
-// Required to convert negative values into [0, PRIME) range
-export const toFelt = (int: number | number.BigNumberish): number.BigNumberish => {
-  const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
-  return number.toBN(int).umod(prime)
-}
-
-// NOTICE: Leading zeros are trimmed for an encoded felt (number).
-//   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
-export const hexPadStart = (data: number | bigint, len: number) => {
-  return `0x${data.toString(16).padStart(len, '0')}`
 }

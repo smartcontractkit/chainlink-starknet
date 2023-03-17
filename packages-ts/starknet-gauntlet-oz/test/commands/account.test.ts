@@ -33,9 +33,8 @@ describe('OZ Account Contract', () => {
 
       const oz = loadContract(CONTRACT_LIST.ACCOUNT)
       const ozContract = new Contract(oz.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await ozContract.getPublicKey()
-      const onChainPubKey = response[0]
-      expect(onChainPubKey).toEqual(new BN(publicKey.split('x')[1], 16))
+      const { publicKey: onChainPubKey }= await ozContract.getPublicKey()
+      expect(onChainPubKey).toEqual(BigInt(publicKey))
     },
     TIMEOUT,
   )

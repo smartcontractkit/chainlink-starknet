@@ -1,4 +1,4 @@
-import { number, constants, encode } from 'starknet'
+import { num, constants, encode } from 'starknet'
 import BN from 'bn.js'
 import { encoding } from '@chainlink/gauntlet-contracts-ocr2'
 
@@ -9,7 +9,7 @@ export function bytesToFelts(data: Uint8Array): string[] {
 
   // prefix with len
   let len = data.byteLength
-  felts.push(number.toBN(len).toString())
+  felts.push(num.toBigInt(len).toString())
 
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
@@ -20,26 +20,28 @@ export function bytesToFelts(data: Uint8Array): string[] {
   return felts
 }
 
-export function feltsToBytes(felts: BN[]): Buffer {
+export function feltsToBytes(felts: string[]): Buffer {
+  console.log(felts)
   let data = []
 
   // TODO: validate len > 1
 
   // TODO: validate it fits into 54 bits
-  let length = felts.shift()?.toNumber()!
+  // TODO:
+  // let length = Number(felts.shift())
 
-  for (const felt of felts) {
-    let chunk = felt.toArray('be', Math.min(CHUNK_SIZE, length))
-    data.push(...chunk)
+  // for (const felt of felts) {
+  //   let chunk = felt.toArray('be', Math.min(CHUNK_SIZE, length))
+  //   data.push(...chunk)
 
-    length -= chunk.length
-  }
+  //   length -= chunk.length
+  // }
 
   return Buffer.from(data)
 }
 
 export const decodeOffchainConfigFromEventData = (data: string[]): encoding.OffchainConfig => {
-  const oraclesLen = number.toBN(data[3]).toNumber()
+  const oraclesLen = Number(num.toBigInt(data[3]))
   /** SetConfig event data has the following info:
     0 : previous_config_block_number=prev_block_num,
     1 : latest_config_digest=digest,
@@ -54,10 +56,5 @@ export const decodeOffchainConfigFromEventData = (data: string[]): encoding.Offc
     3 + 2X + 2 + 3 + 3 : offchain_config=offchain_config
    */
   const offchainConfigFelts = data.slice(3 + oraclesLen * 2 + 8)
-  return encoding.deserializeConfig(feltsToBytes(offchainConfigFelts.map((f) => number.toBN(f))))
-}
-
-export function toFelt(int: number | number.BigNumberish): BN {
-  let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
-  return number.toBN(int).umod(prime)
+  return encoding.deserializeConfig(feltsToBytes(offchainConfigFelts))
 }

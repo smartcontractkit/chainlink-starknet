@@ -1,17 +1,16 @@
-import { Account, SequencerProvider, ec, KeyPair, number, uint256 } from 'starknet'
+import { Account, SequencerProvider, ec, uint256 } from 'starknet'
 
 export const ERC20_ADDRESS = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
 
 export const DEVNET_URL = 'http://127.0.0.1:5050'
 const DEVNET_NAME = 'devnet'
-
 // This function loads options from the environment.
 // It returns options for Devnet as default when nothing is configured in the environment.
 export const makeFunderOptsFromEnv = () => {
   const network = process.env.NETWORK || DEVNET_NAME
   const gateway = process.env.NODE_URL || DEVNET_URL
   const accountAddr = process.env.ACCOUNT?.toLowerCase()
-  const keyPair = ec.getKeyPair(process.env.ACCOUNT_PRIVATE_KEY)
+  const keyPair = ec.starkCurve.utils.randomPrivateKey()
 
   return { network, gateway, accountAddr, keyPair }
 }
@@ -25,7 +24,7 @@ interface FunderOptions {
   network?: string
   gateway?: string
   accountAddr?: string
-  keyPair?: KeyPair
+  keyPair?: string
 }
 
 // Define the Strategy to use depending on the network.
@@ -85,8 +84,7 @@ class AllowanceFundingStrategy implements IFundingStrategy {
         uint256.bnToUint256(account.amount).low.toString(),
         uint256.bnToUint256(account.amount).high.toString(),
       ]
-      const result = await operator.getNonce()
-      const nonce = number.toBN(result).toNumber()
+      const nonce = await operator.getNonce()
       const hash = await operator.execute(
         {
           contractAddress: ERC20_ADDRESS,

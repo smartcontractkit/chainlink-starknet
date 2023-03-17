@@ -3,7 +3,7 @@ import {
   IStarknetProvider,
   makeInspectionCommand,
 } from '@chainlink/starknet-gauntlet'
-import { number } from 'starknet'
+import { num } from 'starknet'
 import { CATEGORIES } from '../../../lib/categories'
 import { contractLoader } from '../../../lib/contracts'
 
@@ -24,8 +24,8 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   return {
     toCompare: null,
     result: {
-      signers: signers.signers.map((o) => number.toHex(o)),
-      threshold: number.toBN(threshold.confirmations_required).toNumber(),
+      signers: signers.signers.map((o) => num.toHex(o)),
+      threshold: threshold.confirmations_required,
     },
   }
 }

@@ -11,6 +11,7 @@ import {
   Signature,
   Call,
   InvocationsSignerDetails,
+  ec,
 } from 'starknet'
 import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
 
@@ -90,12 +91,12 @@ class LedgerSigner implements SignerInterface {
 
   async signDeployAccountTransaction(transaction: DeployAccountSignerDetails): Promise<Signature> {
     // TODO: implement this
-    return []
+    return new ec.starkCurve.Signature(BigInt(0), BigInt(0))
   }
 
   async signDeclareTransaction(transaction: DeclareSignerDetails): Promise<Signature> {
     // TODO: implement this
-    return []
+    return new ec.starkCurve.Signature(BigInt(0), BigInt(0))
   }
 
   async signMessage(data: typedData.TypedData, accountAddress: string): Promise<Signature> {
@@ -109,10 +110,10 @@ class LedgerSigner implements SignerInterface {
       throw new Error(`Unable to sign the message: ${response.errorMessage}`)
     }
 
-    return [
-      encode.addHexPrefix(encode.buf2hex(response.r)),
-      encode.addHexPrefix(encode.buf2hex(response.s)),
-    ]
+    return new ec.starkCurve.Signature(
+      BigInt(encode.addHexPrefix(encode.buf2hex(response.r))),
+      BigInt(encode.addHexPrefix(encode.buf2hex(response.s))),
+    )
   }
 }
 
