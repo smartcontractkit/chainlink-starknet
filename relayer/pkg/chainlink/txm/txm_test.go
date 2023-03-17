@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
 	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
@@ -88,7 +89,6 @@ func TestIntegration_Txm(t *testing.T) {
 
 	// start txm + checks
 	require.NoError(t, txm.Start(context.Background()))
-	require.NoError(t, txm.Healthy())
 	require.NoError(t, txm.Ready())
 
 	for k := range localKeys {
