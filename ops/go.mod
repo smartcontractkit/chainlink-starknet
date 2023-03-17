@@ -7,7 +7,7 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.29.0
 	github.com/smartcontractkit/chainlink-env v0.3.19
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230221200635-404a44389f85
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221102160912-61646f534e3a
 	github.com/smartcontractkit/chainlink-testing-framework v1.10.5
 	github.com/stretchr/testify v1.8.1
