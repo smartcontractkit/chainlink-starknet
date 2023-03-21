@@ -7,7 +7,8 @@ import (
 	"os"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/rs/zerolog/log"
+
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
 )
 
 func (testState *Test) fundNodes() error {
+	l := utils.GetTestLogger(testState.T)
 	var nAccounts []string
 	var err error
 	for _, key := range testState.GetNodeKeys() {
@@ -39,7 +41,7 @@ func (testState *Test) fundNodes() error {
 	if testState.Common.Testnet {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
-			log.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
+			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
 			_, err = testState.Sg.TransferToken(ethAddressGoerli, key, "100000000000000000") // Transferring 1 ETH to each node
 			if err != nil {
 				return err

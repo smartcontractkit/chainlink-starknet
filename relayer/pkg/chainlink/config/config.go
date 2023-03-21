@@ -2,7 +2,6 @@ package config
 
 import (
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -43,17 +42,14 @@ type Config interface {
 
 	// client config
 	RequestTimeout() time.Duration
-
-	Update(db.ChainCfg)
 }
 
 var _ Config = (*config)(nil)
 
 type config struct {
-	defaults  ConfigSet
-	dbCfg     db.ChainCfg
-	dbCfgLock sync.RWMutex
-	lggr      logger.Logger
+	defaults ConfigSet
+	dbCfg    db.ChainCfg
+	lggr     logger.Logger
 }
 
 func NewConfig(dbCfg db.ChainCfg, lggr logger.Logger) *config {
@@ -64,16 +60,8 @@ func NewConfig(dbCfg db.ChainCfg, lggr logger.Logger) *config {
 	}
 }
 
-func (c *config) Update(dbCfg db.ChainCfg) {
-	c.dbCfgLock.Lock()
-	c.dbCfg = dbCfg
-	c.dbCfgLock.Unlock()
-}
-
 func (c *config) OCR2CachePollPeriod() time.Duration {
-	c.dbCfgLock.RLock()
 	ch := c.dbCfg.OCR2CachePollPeriod
-	c.dbCfgLock.RUnlock()
 	if ch != nil {
 		return ch.Duration()
 	}
@@ -81,9 +69,7 @@ func (c *config) OCR2CachePollPeriod() time.Duration {
 }
 
 func (c *config) OCR2CacheTTL() time.Duration {
-	c.dbCfgLock.RLock()
 	ch := c.dbCfg.OCR2CacheTTL
-	c.dbCfgLock.RUnlock()
 	if ch != nil {
 		return ch.Duration()
 	}
@@ -91,9 +77,7 @@ func (c *config) OCR2CacheTTL() time.Duration {
 }
 
 func (c *config) RequestTimeout() time.Duration {
-	c.dbCfgLock.RLock()
 	ch := c.dbCfg.RequestTimeout
-	c.dbCfgLock.RUnlock()
 	if ch != nil {
 		return ch.Duration()
 	}
@@ -101,9 +85,7 @@ func (c *config) RequestTimeout() time.Duration {
 }
 
 func (c *config) TxTimeout() time.Duration {
-	c.dbCfgLock.RLock()
 	ch := c.dbCfg.TxTimeout
-	c.dbCfgLock.RUnlock()
 	if ch != nil {
 		return ch.Duration()
 	}
@@ -111,9 +93,7 @@ func (c *config) TxTimeout() time.Duration {
 }
 
 func (c *config) TxSendFrequency() time.Duration {
-	c.dbCfgLock.RLock()
 	ch := c.dbCfg.TxSendFrequency
-	c.dbCfgLock.RUnlock()
 	if ch != nil {
 		return ch.Duration()
 	}
@@ -121,9 +101,7 @@ func (c *config) TxSendFrequency() time.Duration {
 }
 
 func (c *config) TxMaxBatchSize() int {
-	c.dbCfgLock.RLock()
 	ch := c.dbCfg.TxMaxBatchSize
-	c.dbCfgLock.RUnlock()
 	if ch.Valid {
 		return int(ch.Int64)
 	}

@@ -18,13 +18,14 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
+
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
 
 var (
@@ -114,8 +115,9 @@ func (testState *Test) DeployEnv() {
 
 // SetupClients Sets up the starknet client
 func (testState *Test) SetupClients() {
+	l := utils.GetTestLogger(testState.T)
 	if testState.Common.Testnet {
-		log.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", testState.Common.L2RPCUrl))
+		l.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", testState.Common.L2RPCUrl))
 	} else {
 		testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
 		if testState.Common.Env.Cfg.InsideK8s {
@@ -232,6 +234,7 @@ func (testState *Test) GetDefaultJuelsPerFeeCoinSource() string {
 }
 
 func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
+	l := utils.GetTestLogger(testState.T)
 	ctx := context.Background() // context background used because timeout handled by requestTimeout param
 	// assert new rounds are occurring
 	details := ocr2.TransmissionDetails{}
@@ -258,7 +261,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	assert.GreaterOrEqual(testState.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
 
 	for start := time.Now(); time.Since(start) < testState.Common.TTL; {
-		log.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TTL))
+		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TTL))
 		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
 		require.NoError(testState.T, err, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
@@ -268,23 +271,23 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 		// end condition: rounds have been stuck
 		if stuck && stuckCount > 50 {
-			log.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
+			l.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 			break
 		}
 
-		log.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
+		l.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
 		err = testState.SetMockServerValue("", mockServerValue)
 		if err != nil {
-			log.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
+			l.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
 		}
 		// try to fetch rounds
 		time.Sleep(5 * time.Second)
 
 		if err != nil {
-			log.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
+			l.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 			continue
 		}
-		log.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
+		l.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
 
 		// continue if no changes
 		if res.Epoch == 0 && res.Round == 0 {
@@ -311,7 +314,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			assert.Equal(testState.T, res.Digest, details.Digest, "Config digest should not change")
 		} else {
 			if res.Digest != details.Digest {
-				log.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
+				l.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
 			}
 		}
 		if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
