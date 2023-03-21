@@ -1,28 +1,28 @@
 package devnet
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-env/client"
+	"github.com/smartcontractkit/chainlink-env/config"
 	"github.com/smartcontractkit/chainlink-env/environment"
-	"os"
+	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
+
+const NetworkName = "starknet-dev"
 
 type Chart struct {
 	HelmProps *HelmProps
 	Props     *Props
 }
 type Props struct {
-	NetworkName string   `envconfig:"network_name"`
-	Simulated   bool     `envconfig:"network_simulated"`
-	HttpURLs    []string `envconfig:"http_url"`
-	WsURLs      []string `envconfig:"ws_url"`
-	Values      map[string]interface{}
 }
 
 type HelmProps struct {
 	Name    string
 	Path    string
-	Values  *map[string]interface{}
+	Values  *map[string]any
 	Version string
 }
 
@@ -30,7 +30,7 @@ func (m Chart) IsDeploymentNeeded() bool {
 	return true
 }
 
-func (m Chart) GetProps() interface{} {
+func (m Chart) GetProps() any {
 	return m.Props
 }
 
@@ -42,7 +42,7 @@ func (m Chart) GetPath() string {
 	return m.HelmProps.Path
 }
 
-func (m Chart) GetValues() *map[string]interface{} {
+func (m Chart) GetValues() *map[string]any {
 	return m.HelmProps.Values
 }
 
@@ -59,55 +59,48 @@ func (m Chart) ExportData(e *environment.Environment) error {
 	if err != nil {
 		return err
 	}
-	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetLocalHttp)
-	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetInternalHttp)
+	e.URLs[NetworkName] = append(e.URLs[NetworkName], devnetLocalHttp)
+	e.URLs[NetworkName] = append(e.URLs[NetworkName], devnetInternalHttp)
 	log.Info().Str("Name", "Devnet").Str("URLs", devnetLocalHttp).Msg("Devnet network")
 	return nil
 }
 
-func defaultProps() *Props {
-	return &Props{
-		NetworkName: "starknet-dev",
-		Values: map[string]interface{}{
-			"replicas": "1",
-			"starknet-dev": map[string]interface{}{
-				"image": map[string]interface{}{
-					"image":   "shardlabs/starknet-devnet",
-					"version": "v0.3.5",
-				},
-				"resources": map[string]interface{}{
-					"requests": map[string]interface{}{
-						"cpu":    "1000m",
-						"memory": "1024Mi",
-					},
-					"limits": map[string]interface{}{
-						"cpu":    "1000m",
-						"memory": "1024Mi",
-					},
-				},
-				"seed":      "123",
-				"real_node": "false",
+func defaultProps() map[string]any {
+	return map[string]any{
+		"replicas": "1",
+		"starknet-dev": map[string]any{
+			"image": map[string]any{
+				"image":   "shardlabs/starknet-devnet",
+				"version": "v0.3.5",
 			},
+			"resources": map[string]any{
+				"requests": map[string]any{
+					"cpu":    "1000m",
+					"memory": "1024Mi",
+				},
+				"limits": map[string]any{
+					"cpu":    "1000m",
+					"memory": "1024Mi",
+				},
+			},
+			"seed":      "123",
+			"real_node": "false",
 		},
 	}
+
 }
 
-func New(helmVersion string, props *Props) environment.ConnectedChart {
-	defaultPath := "../../ops/charts/devnet"
-	_, InsideK8s := os.LookupEnv("INSIDE_K8")
-	if InsideK8s {
-		defaultPath = "/root/ops/charts/devnet"
-	}
-	if props == nil {
-		props = defaultProps()
+func New(props *Props) environment.ConnectedChart {
+	dp := defaultProps()
+	if props != nil {
+		config.MustMerge(&dp, props)
 	}
 
 	return Chart{
 		HelmProps: &HelmProps{
-			Name:    "starknet-dev",
-			Path:    defaultPath,
-			Values:  &props.Values,
-			Version: helmVersion,
+			Name:   NetworkName,
+			Path:   fmt.Sprintf("%s/charts/devnet", utils.OpsRoot),
+			Values: &dp,
 		},
 		Props: props,
 	}

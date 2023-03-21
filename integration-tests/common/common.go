@@ -2,8 +2,15 @@ package common
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/alias"
@@ -15,10 +22,6 @@ import (
 	"github.com/smartcontractkit/chainlink/core/services/relay"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"gopkg.in/guregu/null.v4"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -38,15 +41,11 @@ type Common struct {
 	ChainId             string
 	NodeCount           int
 	TTL                 time.Duration
-	InsideK8            bool
 	Testnet             bool
-	CLImage             string
-	CLVersion           string
 	L2RPCUrl            string
 	PrivateKey          string
 	Account             string
 	ClConfig            map[string]interface{}
-	EnvConfig           map[string]interface{}
 	K8Config            *environment.Config
 	Env                 *environment.Environment
 }
@@ -61,8 +60,8 @@ func New() *Common {
 		ServiceKeyL2:        serviceKeyL2,
 	}
 	// Checking if count of OCR nodes is defined in ENV
-	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
-	if nodeCountDefined && nodeCountSet != "" {
+	nodeCountSet := getEnv("NODE_COUNT")
+	if nodeCountSet != "" {
 		c.NodeCount, err = strconv.Atoi(nodeCountSet)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
@@ -72,8 +71,8 @@ func New() *Common {
 	}
 
 	// Checking if TTL env var is set in ENV
-	ttlValue, ttlDefined := os.LookupEnv("TTL")
-	if ttlDefined && ttlValue != "" {
+	ttlValue := getEnv("TTL")
+	if ttlValue != "" {
 		duration, err := time.ParseDuration(ttlValue)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
@@ -86,23 +85,22 @@ func New() *Common {
 		panic("Please define TTL of env")
 	}
 
-	// Checking if version needs to be overridden env var is set in ENV
-	envClImage, clImageDefined := os.LookupEnv("CL_IMAGE")
-	envClVersion, clVersionDefined := os.LookupEnv("CL_VERSION")
-	if clImageDefined && clVersionDefined {
-		c.CLImage = envClImage
-		c.CLVersion = envClVersion
-	} else {
-		panic("Please define CL_IMAGE and CL_VERSION")
-	}
-
 	// Setting optional parameters
-	_, c.InsideK8 = os.LookupEnv("INSIDE_K8")
-	c.L2RPCUrl, c.Testnet = os.LookupEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
-	c.PrivateKey, _ = os.LookupEnv("PRIVATE_KEY")
-	c.Account, _ = os.LookupEnv("ACCOUNT")
+	c.L2RPCUrl = getEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
+	c.Testnet = c.L2RPCUrl != ""
+	c.PrivateKey = getEnv("PRIVATE_KEY")
+	c.Account = getEnv("ACCOUNT")
 
 	return c
+}
+
+// getEnv gets the environment variable if it exists and sets it for the remote runner
+func getEnv(v string) string {
+	val := os.Getenv(v)
+	if val != "" {
+		os.Setenv(fmt.Sprintf("TEST_%s", v), val)
+	}
+	return val
 }
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
@@ -215,34 +213,37 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	return nil
 }
 
-func (c *Common) Default() {
-	c.K8Config = &environment.Config{InsideK8s: c.InsideK8, NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL}
-	c.EnvConfig = map[string]interface{}{
-		"STARKNET_ENABLED":            "true",
-		"EVM_ENABLED":                 "false",
-		"EVM_RPC_ENABLED":             "false",
-		"CHAINLINK_DEV":               "false",
-		"FEATURE_OFFCHAIN_REPORTING2": "true",
-		"feature_offchain_reporting":  "false",
-		"P2P_NETWORKING_STACK":        "V2",
-		"P2PV2_LISTEN_ADDRESSES":      "0.0.0.0:6690",
-		"P2PV2_DELTA_DIAL":            "5s",
-		"P2PV2_DELTA_RECONCILE":       "5s",
-		"p2p_listen_port":             "0",
+func (c *Common) Default(t *testing.T) {
+	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
+	starknetUrl := fmt.Sprintf("http://%s:%d", serviceKeyL2, 5000)
+	if c.Testnet {
+		starknetUrl = c.L2RPCUrl
 	}
+	baseTOML := fmt.Sprintf(`[[Starknet]]
+Enabled = true
+ChainID = '%s'
+[[Starknet.Nodes]]
+Name = 'primary'
+URL = '%s'
+
+[OCR2]
+Enabled = true
+
+[P2P]
+[P2P.V2]
+Enabled = true
+DeltaDial = '5s'
+DeltaReconcile = '5s'
+ListenAddresses = ['0.0.0.0:6690']
+`, c.ChainId, starknetUrl)
+	log.Debug().Str("toml", baseTOML).Msg("TOML")
 	c.ClConfig = map[string]interface{}{
 		"replicas": c.NodeCount,
-		"env":      c.EnvConfig,
-		"chainlink": map[string]interface{}{
-			"image": map[string]interface{}{
-				"image":   c.CLImage,
-				"version": c.CLVersion,
-			},
-		},
+		"toml":     baseTOML,
 	}
 	c.Env = environment.New(c.K8Config).
-		AddHelm(devnet.New("0.0.11", nil)).
+		AddHelm(devnet.New(nil)).
 		AddHelm(mockservercfg.New(nil)).
 		AddHelm(mockserver.New(nil)).
-		AddHelm(chainlink.NewVersioned(0, "0.0.11", c.ClConfig))
+		AddHelm(chainlink.New(0, c.ClConfig))
 }
