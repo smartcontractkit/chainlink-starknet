@@ -123,7 +123,7 @@ func (testState *Test) SetupClients() {
 		if testState.Common.Env.Cfg.InsideK8s {
 			testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
 		}
-		log.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
+		l.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
 		testState.Devnet = testState.Devnet.NewStarkNetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
 	}
 }
