@@ -7,7 +7,6 @@ import (
 	"os"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
@@ -20,6 +19,7 @@ var (
 func (testState *Test) fundNodes() error {
 	l := utils.GetTestLogger(testState.T)
 	var nAccounts []string
+	var err error
 	for _, key := range testState.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return errors.New("stark key can't be empty")
@@ -59,6 +59,7 @@ func (testState *Test) fundNodes() error {
 }
 
 func (testState *Test) deployLinkToken() error {
+	var err error
 	testState.LinkTokenAddr, err = testState.Sg.DeployLinkTokenContract()
 	if err != nil {
 		return err
@@ -71,6 +72,7 @@ func (testState *Test) deployLinkToken() error {
 }
 
 func (testState *Test) deployAccessController() error {
+	var err error
 	testState.AccessControllerAddr, err = testState.Sg.DeployAccessControllerContract()
 	if err != nil {
 		return err
@@ -83,8 +85,7 @@ func (testState *Test) deployAccessController() error {
 }
 
 func (testState *Test) setConfigDetails(ocrAddress string) error {
-	var cfg *ops.OCR2Config
-	cfg, err = testState.LoadOCR2Config()
+	cfg, err := testState.LoadOCR2Config()
 	if err != nil {
 		return err
 	}
@@ -94,11 +95,11 @@ func (testState *Test) setConfigDetails(ocrAddress string) error {
 		return err
 	}
 	_, err = testState.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
-	return nil
+	return err
 }
 
 func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
-	err = testState.Sg.InstallDependencies()
+	err := testState.Sg.InstallDependencies()
 	if err != nil {
 		return err
 	}
@@ -141,9 +142,5 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 	}
 
 	err = testState.setConfigDetails(testState.OCRAddr)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

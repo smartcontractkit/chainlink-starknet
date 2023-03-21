@@ -27,9 +27,9 @@ error appears, but instead log it.
 
 `NODE_COUNT` - number of OCR nodes
 
-`CL_IMAGE` - Chainlink docker image repo
+`CHAINLINK_IMAGE` - Chainlink docker image repo
 
-`CL_VERSION` - Chainlink docker image version
+`CHAINLINK_VERSION` - Chainlink docker image version
 
 `L2_RPC_URL` - This will override the L2 url, used for testnet (optional)
 

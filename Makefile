@@ -54,6 +54,14 @@ ifneq ($(CI),true)
 endif
 endif
 
+.PHONY: nix-container
+nix-container:
+	docker run -it --rm -v $(shell pwd):/repo -e NIX_USER_CONF_FILES=/repo/nix.conf --workdir /repo nixos/nix:latest /bin/sh
+
+.PHONY: nix-flake-update
+nix-flake-update:
+	docker run -it --rm -v $(shell pwd):/repo -e NIX_USER_CONF_FILES=/repo/nix.conf --workdir /repo nixos/nix:latest /bin/sh -c "nix flake update"
+
 .PHONY: build
 build: build-go build-ts
 
@@ -188,13 +196,25 @@ test-integration: test-integration-smoke test-integration-contracts test-integra
 
 .PHONY: test-integration-smoke
 test-integration-smoke: test-integration-prep
-	cd integration-tests/smoke/ && \
-		go test --timeout=2h -v
+	cd integration-tests/ && \
+		go test --timeout=2h -v ./smoke
+
+# CI Already has already ran test-integration-prep
+.PHONY: test-integration-smoke-ci
+test-integration-smoke-ci:
+	cd integration-tests/ && \
+		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
-	cd integration-tests/soak/ && \
-		go test --timeout=1h -v
+	cd integration-tests/ && \
+		go test --timeout=1h -v ./soak
+
+# CI Already has already ran test-integration-prep
+.PHONY: test-integration-soak-ci
+test-integration-soak-ci:
+	cd integration-tests/ && \
+		go test --timeout=1h -v -count=1 -json ./soak 2>&1 | tee /tmp/gotest.log | gotestfmt
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
