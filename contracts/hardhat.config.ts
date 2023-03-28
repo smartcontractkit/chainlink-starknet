@@ -1,7 +1,6 @@
 import { HardhatUserConfig } from 'hardhat/types'
 import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-waffle'
 import '@nomicfoundation/hardhat-chai-matchers'
 
 const COMPILER_SETTINGS = {
