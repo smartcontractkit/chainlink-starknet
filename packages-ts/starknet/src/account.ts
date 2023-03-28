@@ -85,11 +85,6 @@ class AllowanceFundingStrategy implements IFundingStrategy {
         uint256.bnToUint256(account.amount).low.toString(),
         uint256.bnToUint256(account.amount).high.toString(),
       ]
-      const estimatFee = await operator.estimateFee({
-        contractAddress: ERC20_ADDRESS,
-        entrypoint: 'transfer',
-        calldata: data,
-      })
       const result = await operator.getNonce()
       const nonce = number.toBN(result).toNumber()
       const hash = await operator.execute(
@@ -99,7 +94,7 @@ class AllowanceFundingStrategy implements IFundingStrategy {
           calldata: data,
         },
         undefined,
-        { maxFee: estimatFee.suggestedMaxFee, nonce },
+        { nonce },
       )
       await provider.waitForTransaction(hash.transaction_hash)
     }
