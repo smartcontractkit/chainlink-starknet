@@ -66,7 +66,8 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
       mockStarknetMessagingArtifact,
       deployer,
     )
-    mockStarknetMessaging = await mockStarknetMessagingFactory.deploy()
+    const messageCancellationDelay = 5 * 60 // seconds
+    mockStarknetMessaging = await mockStarknetMessagingFactory.deploy(messageCancellationDelay)
     await mockStarknetMessaging.deployed()
 
     await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)

@@ -79,7 +79,8 @@ export async function consumerValidator() {
     deployer,
   )
 
-  mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy()
+  const messageCancellationDelay = 5 * 60 // seconds
+  mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy(messageCancellationDelay)
   await mockStarkNetMessenger.deployed()
 
   const UptimeFeedArtifact = loadContractPath(UPTIME_FEED_PATH, UPTIME_FEED_NAME)
