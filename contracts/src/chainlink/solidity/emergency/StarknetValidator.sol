@@ -49,7 +49,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   event FundsWithdrawn(address indexed recipient, uint256 amount);
 
   /**
-   * @param starkNetMessaging the address of the Starknet Messaging contract
+   * @param starknetMessaging the address of the Starknet Messaging contract
    * @param configAC the address of the AccessController contract managing config access
    * @param gasPriceL1Feed address of the L1 gas price feed (used to approximate bridge L1 -> L2 message cost)
    * @param source the source aggregator that we'll read data from (on retries)
@@ -57,14 +57,14 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param gasEstimate the initial gas estimate for sending a message from L1 -> L2
    */
   constructor(
-    address starkNetMessaging,
+    address starknetMessaging,
     address configAC,
     address gasPriceL1Feed,
     address source,
     uint256 l2Feed,
     uint256 gasEstimate
   ) {
-    if (starkNetMessaging == address(0)) {
+    if (starknetMessaging == address(0)) {
       revert InvalidStarknetMessagingAddress();
     }
 
@@ -72,7 +72,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
       revert InvalidL2FeedAddress();
     }
 
-    STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
+    STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starknetMessaging);
     L2_UPTIME_FEED_ADDR = l2Feed;
 
     _setSourceAggregator(source);
