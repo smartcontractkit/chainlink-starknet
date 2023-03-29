@@ -67,7 +67,8 @@ describe('StarkNetValidator', () => {
       'MockStarkNetMessaging',
       deployer,
     )
-    mockStarkNetMessaging = await mockStarkNetMessagingFactory.deploy()
+    const messageCancellationDelay = 5 * 60 // seconds
+    mockStarkNetMessaging = await mockStarkNetMessagingFactory.deploy(messageCancellationDelay)
     await mockStarkNetMessaging.deployed()
 
     // Deploy the mock feed
