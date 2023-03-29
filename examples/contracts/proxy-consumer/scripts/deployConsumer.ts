@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { Account, Provider, Contract, json, ec } from 'starknet'
 
-// StarkNet network: Either goerli-alpha or mainnet-alpha
+// Starknet network: Either goerli-alpha or mainnet-alpha
 const network = 'goerli-alpha'
 
 // The Cairo contract that is compiled and ready to declare and deploy
@@ -9,7 +9,7 @@ const consumerContractName = 'Proxy_consumer'
 const consumerClassHash = '0x75f25b359402fa046e2b9c17d00138772b51c647c0352eb16954e9e39df4ca6'
 
 /**
- * Network: StarkNet Goerli testnet
+ * Network: Starknet Goerli testnet
  * Aggregator: LINK/USD
  * Address: 0x2579940ca3c41e7119283ceb82cd851c906cbb1510908a913d434861fdcb245
  * Find more feed address at:

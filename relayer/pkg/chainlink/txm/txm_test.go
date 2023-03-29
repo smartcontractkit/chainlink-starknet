@@ -24,7 +24,7 @@ import (
 )
 
 func TestIntegration_Txm(t *testing.T) {
-	url := ops.SetupLocalStarkNetNode(t)
+	url := ops.SetupLocalStarknetNode(t)
 	rawLocalKeys := ops.TestKeys(t, 2) // generate 2 keys
 
 	// parse keys into expected format

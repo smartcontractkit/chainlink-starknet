@@ -20,7 +20,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
-  // L2 StarkNet
+  // L2 Starknet
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   let owner: Account
   let tokenBridge: StarknetContract
@@ -61,7 +61,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
     const starkNetERC20BridgeCode = await starkNetERC20BridgeFactory.deploy()
     await starkNetERC20BridgeCode.deployed()
 
-    const mockStarknetMessagingArtifact = await loadContract_Solidity('MockStarkNetMessaging')
+    const mockStarknetMessagingArtifact = await loadContract_Solidity('MockStarknetMessaging')
     const mockStarknetMessagingFactory = await ethers.getContractFactoryFromArtifact(
       mockStarknetMessagingArtifact,
       deployer,

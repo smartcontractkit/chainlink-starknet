@@ -20,8 +20,8 @@ const UPTIME_FEED_PATH =
 const UPTIME_FEED_NAME = 'sequencer_uptime_feed'
 
 let validator: Contract
-let mockStarkNetMessengerFactory: ContractFactory
-let mockStarkNetMessenger: Contract
+let mockStarknetMessengerFactory: ContractFactory
+let mockStarknetMessenger: Contract
 let deployer: SignerWithAddress
 let eoaValidator: SignerWithAddress
 let networkUrl: string
@@ -67,21 +67,21 @@ export async function consumerValidator() {
     '73786976294838220258' /** answeredInRound */,
   )
 
-  const validatorArtifact = await loadContract_Solidity('emergency', 'StarkNetValidator')
+  const validatorArtifact = await loadContract_Solidity('emergency', 'StarknetValidator')
   const validatorFactory = await ethers.getContractFactoryFromArtifact(validatorArtifact, deployer)
 
   const mockStarknetMessagingArtifact = await loadContract_Solidity(
     'mocks',
-    'MockStarkNetMessaging',
+    'MockStarknetMessaging',
   )
-  mockStarkNetMessengerFactory = await ethers.getContractFactoryFromArtifact(
+  mockStarknetMessengerFactory = await ethers.getContractFactoryFromArtifact(
     mockStarknetMessagingArtifact,
     deployer,
   )
 
   const messageCancellationDelay = 5 * 60 // seconds
-  mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy(messageCancellationDelay)
-  await mockStarkNetMessenger.deployed()
+  mockStarknetMessenger = await mockStarknetMessengerFactory.deploy(messageCancellationDelay)
+  await mockStarknetMessenger.deployed()
 
   const UptimeFeedArtifact = loadContractPath(UPTIME_FEED_PATH, UPTIME_FEED_NAME)
 
@@ -92,7 +92,7 @@ export async function consumerValidator() {
   )
 
   validator = await validatorFactory.deploy(
-    mockStarkNetMessenger.address,
+    mockStarknetMessenger.address,
     mockAccessController.address,
     mockGasPriceFeed.address,
     mockAggregator.address,
@@ -117,7 +117,7 @@ export async function consumerValidator() {
 }
 
 async function callFunction() {
-  await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessenger.address)
+  await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessenger.address)
 
   await validator.connect(eoaValidator).validate(0, 0, 1, 1)
 
