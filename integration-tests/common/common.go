@@ -114,15 +114,15 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBund
 		return nil, nil, err
 	}
 	for _, n := range ChainlinkNodes {
-		_, _, err = n.CreateStarknetChain(&client.StarknetChainAttributes{
+		_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
 			Type:    c.ChainName,
 			ChainID: c.ChainId,
-			Config:  client.StarknetChainConfig{},
+			Config:  client.StarkNetChainConfig{},
 		})
 		if err != nil {
 			return nil, nil, err
 		}
-		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
+		_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
 			Name:    c.ChainName,
 			ChainID: c.ChainId,
 			Url:     env.URLs[c.ServiceKeyL2][1],
@@ -153,7 +153,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	oracleSpec := job.OCR2OracleSpec{
 		ContractID:                  ocrControllerAddress,
-		Relay:                       relay.Starknet,
+		Relay:                       relay.StarkNet,
 		RelayConfig:                 relayConfig,
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
@@ -187,7 +187,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 		oracleSpec = job.OCR2OracleSpec{
 			ContractID:                  ocrControllerAddress,
-			Relay:                       relay.Starknet,
+			Relay:                       relay.StarkNet,
 			RelayConfig:                 relayConfig,
 			PluginType:                  "median",
 			OCRKeyBundleID:              null.StringFrom(cc.NKeys[nIdx].OCR2Key.Data.ID),
