@@ -69,13 +69,13 @@ func TestOCRBasic(testState *testing.T) {
 	t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.Cc.ChainlinkNodes, t.Common.ChainName, t.Common.ChainId)
 	require.NoError(testState, err)
 	for _, n := range t.Cc.ChainlinkNodes {
-		_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
+		_, _, err = n.CreateStarknetChain(&client.StarknetChainAttributes{
 			Type:    t.Common.ChainName,
 			ChainID: t.Common.ChainId,
-			Config:  client.StarkNetChainConfig{},
+			Config:  client.StarknetChainConfig{},
 		})
 		require.NoError(testState, err)
-		_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
+		_, _, err = n.CreateStarknetNode(&client.StarknetNodeAttributes{
 			Name:    t.Common.ChainName,
 			ChainID: t.Common.ChainId,
 			Url:     L2RpcUrl,

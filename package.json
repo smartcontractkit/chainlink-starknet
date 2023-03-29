@@ -2,7 +2,7 @@
   "name": "chainlink-starknet",
   "private": true,
   "version": "0.0.1",
-  "description": "Chainlink's StarkNet integration monorepo",
+  "description": "Chainlink's Starknet integration monorepo",
   "workspaces": [
     "contracts",
     "examples/contracts/*",
