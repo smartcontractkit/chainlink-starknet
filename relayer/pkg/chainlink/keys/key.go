@@ -28,7 +28,7 @@ func (raw Raw) Key() Key {
 
 // String returns description
 func (raw Raw) String() string {
-	return "<StarkNet Raw Private Key>"
+	return "<Starknet Raw Private Key>"
 }
 
 // GoString wraps String()
@@ -42,7 +42,7 @@ type PublicKey struct {
 	X, Y *big.Int
 }
 
-// Key represents StarkNet key
+// Key represents Starknet key
 type Key struct {
 	priv *big.Int
 	pub  PublicKey
@@ -92,7 +92,7 @@ func (key Key) Raw() Raw {
 
 // String is the print-friendly format of the Key
 func (key Key) String() string {
-	return fmt.Sprintf("StarkNetKey{PrivateKey: <redacted>, Contract Address: %s}", key.AccountAddressStr())
+	return fmt.Sprintf("StarknetKey{PrivateKey: <redacted>, Contract Address: %s}", key.AccountAddressStr())
 }
 
 // GoString wraps String()

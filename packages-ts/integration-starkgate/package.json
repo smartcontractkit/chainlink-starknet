@@ -13,8 +13,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.1.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
+    "@nomiclabs/hardhat-ethers": "^2.1.0",
     "@shardlabs/starknet-hardhat-plugin": "^0.7.1",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^9.1.1",

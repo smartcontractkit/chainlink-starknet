@@ -9,8 +9,8 @@ import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
 import "../../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
-/// @title StarkNetValidator - makes cross chain calls to update the Sequencer Uptime Feed on L2
-contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
+/// @title StarknetValidator - makes cross chain calls to update the Sequencer Uptime Feed on L2
+contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
   // Config for L1 -> L2 message cost approximation
   struct GasConfig {
     uint256 gasEstimate;
@@ -19,7 +19,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   int256 private constant ANSWER_SEQ_OFFLINE = 1;
 
-  uint256 public immutable SELECTOR_STARK_UPDATE_STATUS = _selectorStarkNet("update_status");
+  uint256 public immutable SELECTOR_STARK_UPDATE_STATUS = _selectorStarknet("update_status");
   uint256 public immutable L2_UPTIME_FEED_ADDR;
 
   IStarknetMessaging public immutable STARKNET_CROSS_DOMAIN_MESSENGER;
@@ -28,9 +28,9 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   AccessControllerInterface private s_configAC;
   GasConfig private s_gasConfig;
 
-  /// @notice StarkNet messaging contract address - the address is 0.
-  error InvalidStarkNetMessagingAddress();
-  /// @notice StarkNet uptime feed address - the address is 0.
+  /// @notice Starknet messaging contract address - the address is 0.
+  error InvalidStarknetMessagingAddress();
+  /// @notice Starknet uptime feed address - the address is 0.
   error InvalidL2FeedAddress();
   /// @notice Error thrown when the source aggregator address is 0
   error InvalidSourceAggregatorAddress();
@@ -49,7 +49,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   event FundsWithdrawn(address indexed recipient, uint256 amount);
 
   /**
-   * @param starkNetMessaging the address of the StarkNet Messaging contract
+   * @param starknetMessaging the address of the Starknet Messaging contract
    * @param configAC the address of the AccessController contract managing config access
    * @param gasPriceL1Feed address of the L1 gas price feed (used to approximate bridge L1 -> L2 message cost)
    * @param source the source aggregator that we'll read data from (on retries)
@@ -57,22 +57,22 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param gasEstimate the initial gas estimate for sending a message from L1 -> L2
    */
   constructor(
-    address starkNetMessaging,
+    address starknetMessaging,
     address configAC,
     address gasPriceL1Feed,
     address source,
     uint256 l2Feed,
     uint256 gasEstimate
   ) {
-    if (starkNetMessaging == address(0)) {
-      revert InvalidStarkNetMessagingAddress();
+    if (starknetMessaging == address(0)) {
+      revert InvalidStarknetMessagingAddress();
     }
 
     if (l2Feed == 0) {
       revert InvalidL2FeedAddress();
     }
 
-    STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starkNetMessaging);
+    STARKNET_CROSS_DOMAIN_MESSENGER = IStarknetMessaging(starknetMessaging);
     L2_UPTIME_FEED_ADDR = l2Feed;
 
     _setSourceAggregator(source);
@@ -90,11 +90,11 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   /**
    * @notice versions:
    *
-   * - StarkNetValidator 0.1.0: initial release
+   * - StarknetValidator 0.1.0: initial release
    * @inheritdoc TypeAndVersionInterface
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "StarkNetValidator 0.1.0";
+    return "StarknetValidator 0.1.0";
   }
 
   /// @notice Returns the gas configuration for sending cross chain messages.
@@ -152,7 +152,7 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     payload[0] = toUInt256(status);
     payload[1] = block.timestamp;
 
-    // Make the StarkNet x-domain call.
+    // Make the Starknet x-domain call.
     // NOTICE: we ignore the output of this call (msgHash, nonce).
     // We also don't raise any events as the 'LogMessageToL2' event will be emitted from the messaging contract.
     STARKNET_CROSS_DOMAIN_MESSENGER.sendMessageToL2{value: fee}(
@@ -171,11 +171,11 @@ contract StarkNetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /**
    * @notice The selector is the starknet_keccak hash of the function name
-   * @dev StarkNet keccak is defined as the first 250 bits of the Keccak256 hash.
+   * @dev Starknet keccak is defined as the first 250 bits of the Keccak256 hash.
    *   This is just Keccak256 augmented in order to fit into a field element.
    * @param fn string function name
    */
-  function _selectorStarkNet(string memory fn) internal pure returns (uint256) {
+  function _selectorStarknet(string memory fn) internal pure returns (uint256) {
     bytes32 digest = keccak256(abi.encodePacked(fn));
     return uint256(digest) % 2**250; // get last 250 bits
   }

@@ -8,8 +8,8 @@ require (
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartcontractkit/chainlink v1.12.1-0.20230314231502-a098ccdd9358
 	github.com/smartcontractkit/chainlink-env v0.3.19
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230214070706-9544d04bb4d8
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230223033525-5be75fb81118
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230329070929-8b04273864dc
 	github.com/smartcontractkit/chainlink-testing-framework v1.10.9-0.20230301123015-fa17d1a4dc61
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230314231502-a098ccdd9358
 )

@@ -48,7 +48,7 @@ func init() {
 }
 
 type Test struct {
-	Devnet                *devnet.StarkNetDevnetClient
+	Devnet                *devnet.StarknetDevnetClient
 	Cc                    *ChainlinkClient
 	Starknet              *starknet.Client
 	OCR2Client            *ocr2.Client
@@ -124,7 +124,7 @@ func (testState *Test) SetupClients() {
 			testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
 		}
 		l.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
-		testState.Devnet = testState.Devnet.NewStarkNetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
+		testState.Devnet = testState.Devnet.NewStarknetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
 	}
 }
 
@@ -164,13 +164,13 @@ func (testState *Test) SetUpNodes(mockServerVal int) {
 	require.NoError(testState.T, err, "Creating jobs should not fail")
 }
 
-// GetStarkNetAddress Returns the local StarkNET address
-func (testState *Test) GetStarkNetAddress() string {
+// GetStarknetAddress Returns the local StarkNET address
+func (testState *Test) GetStarknetAddress() string {
 	return testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0]
 }
 
-// GetStarkNetAddressRemote Returns the remote StarkNET address
-func (testState *Test) GetStarkNetAddressRemote() string {
+// GetStarknetAddressRemote Returns the remote StarkNET address
+func (testState *Test) GetStarknetAddressRemote() string {
 	return testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1]
 }
 
@@ -195,7 +195,7 @@ func (testState *Test) GetChainlinkClient() *ChainlinkClient {
 	return testState.Cc
 }
 
-func (testState *Test) GetStarknetDevnetClient() *devnet.StarkNetDevnetClient {
+func (testState *Test) GetStarknetDevnetClient() *devnet.StarknetDevnetClient {
 	return testState.Devnet
 }
 

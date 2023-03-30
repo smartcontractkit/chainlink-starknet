@@ -35,8 +35,8 @@ var (
 	DevnetSalt         = big.NewInt(20)
 )
 
-// SetupLocalStarkNetNode sets up a local starknet node via cli, and returns the url
-func SetupLocalStarkNetNode(t *testing.T) string {
+// SetupLocalStarknetNode sets up a local starknet node via cli, and returns the url
+func SetupLocalStarknetNode(t *testing.T) string {
 	port := utils.MustRandomPort(t)
 	url := "http://127.0.0.1:" + port
 	cmd := exec.Command("starknet-devnet",
