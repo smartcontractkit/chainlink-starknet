@@ -1,3 +1,4 @@
 starknet-artifacts/
 cache/
 target/
+node_modules/
