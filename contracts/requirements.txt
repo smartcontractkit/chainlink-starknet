@@ -1,8 +1,6 @@
 ecdsa
 fastecdsa
 sympy
-cairo-lang==0.10.3
-starknet-devnet>=0.4.6
+cairo-lang>=0.11.0.1
+starknet-devnet>=0.5.0a1
 openzeppelin-cairo-contracts==0.5.0
-# TODO: workaround devnet 0.4.x issues, remove on 0.5.x
-web3==6.0.0b4
