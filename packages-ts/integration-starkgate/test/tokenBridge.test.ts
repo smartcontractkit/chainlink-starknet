@@ -20,7 +20,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
-  // L2 StarkNet
+  // L2 Starknet
   const networkUrl: string = (network.config as HttpNetworkConfig).url
   let owner: Account
   let tokenBridge: StarknetContract
@@ -53,20 +53,21 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
     ;[deployer] = await ethers.getSigners()
     // Different .json artifact - incompatible with 'ethers.getContractFactoryFromArtifact'
     const starknetERC20BridgeArtifact = await loadContract_InternalStarkgate('StarknetERC20Bridge')
-    const starkNetERC20BridgeFactory = new ethers.ContractFactory(
+    const starknetERC20BridgeFactory = new ethers.ContractFactory(
       starknetERC20BridgeArtifact.abi,
       starknetERC20BridgeArtifact.bytecode,
       deployer,
     )
-    const starkNetERC20BridgeCode = await starkNetERC20BridgeFactory.deploy()
-    await starkNetERC20BridgeCode.deployed()
+    const starknetERC20BridgeCode = await starknetERC20BridgeFactory.deploy()
+    await starknetERC20BridgeCode.deployed()
 
-    const mockStarknetMessagingArtifact = await loadContract_Solidity('MockStarkNetMessaging')
+    const mockStarknetMessagingArtifact = await loadContract_Solidity('MockStarknetMessaging')
     const mockStarknetMessagingFactory = await ethers.getContractFactoryFromArtifact(
       mockStarknetMessagingArtifact,
       deployer,
     )
-    mockStarknetMessaging = await mockStarknetMessagingFactory.deploy()
+    const messageCancellationDelay = 5 * 60 // seconds
+    mockStarknetMessaging = await mockStarknetMessagingFactory.deploy(messageCancellationDelay)
     await mockStarknetMessaging.deployed()
 
     await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
@@ -89,7 +90,7 @@ describe('Test StarkGate token bridge + link_token.cairo', function () {
       ethers.utils.hexZeroPad(mockStarknetMessaging.address, 32),
     ])
     let encode_data = inter.encodeFunctionData('initialize(bytes data)', [data])
-    const proxy = await proxyFactory.deploy(starkNetERC20BridgeCode.address, encode_data)
+    const proxy = await proxyFactory.deploy(starknetERC20BridgeCode.address, encode_data)
     await proxy.deployed()
 
     starknetERC20Bridge = await ethers.getContractAt(starknetERC20BridgeArtifact.abi, proxy.address)

@@ -1,10 +1,10 @@
 import { Provider, CallContractResponse } from 'starknet'
 
-// StarkNet network: Either goerli-alpha or mainnet-alpha
+// Starknet network: Either goerli-alpha or mainnet-alpha
 const network = 'goerli-alpha'
 
 /**
- * Network: StarkNet Goerli testnet
+ * Network: Starknet Goerli testnet
  * Aggregator: LINK/USD
  * Address: 0x2579940ca3c41e7119283ceb82cd851c906cbb1510908a913d434861fdcb245
  * Find more proxy address at:
