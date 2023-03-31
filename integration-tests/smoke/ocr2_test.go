@@ -54,7 +54,7 @@ func TestOCRBasic(t *testing.T) {
 	testState.SetUpNodes(mockServerVal)
 
 	err = testState.ValidateRounds(10, false)
-	require.NoError(t, err, "Validating round should not fail")
+	require.NoError(t, err, "Validating round should not fail ")
 
 	err = actions.TeardownSuite(testState.T, testState.Common.Env, "./", testState.GetChainlinkNodes(), nil, zapcore.DPanicLevel, nil)
 	require.NoError(testState.T, err)
