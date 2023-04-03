@@ -16,7 +16,7 @@ jobs:
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       # Install nix
       - name: Install Nix
         uses: cachix/install-nix-action@5c11eae19dba042788936d4f1c9685fdd814ac49 # v19
@@ -32,5 +32,15 @@ jobs:
         with:
           publish: nix develop -c yarn release
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Dispatch Relayer release
+      - name: Release relayer
+        run: gh workflow run .github/workflows/release/starknet-relayer.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Dispatch Gauntlet CLI build & release
+      - name: Build and release Gauntlet CLI
+        run: gh workflow run .github/workflows/release/starknet-gauntlet-cli.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

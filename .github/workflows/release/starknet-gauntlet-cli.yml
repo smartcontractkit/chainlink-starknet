@@ -1,9 +1,7 @@
 name: Starknet Gauntlet CLI Release
 
 on:
-  push:
-    tags:
-      - "@chainlink/starknet-gauntlet-cli@[0-9]+.[0-9]+.[0-9]"
+  workflow_dispatch:
 
 jobs:
   starknet-gauntlet-cli-release:
