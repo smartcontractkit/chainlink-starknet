@@ -6,7 +6,7 @@ require (
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/rs/zerolog v1.29.0
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/chainlink v1.11.0
+	github.com/smartcontractkit/chainlink v1.13.0
 	github.com/smartcontractkit/chainlink-env v0.3.19
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230329070929-8b04273864dc
