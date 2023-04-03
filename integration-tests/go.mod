@@ -325,8 +325,6 @@ require (
 )
 
 replace (
-	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.0.0
-
 	// Fix go mod tidy issue for ambiguous imports from go-ethereum
 	// See https://github.com/ugorji/go/issues/279
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
@@ -335,9 +333,6 @@ replace (
 
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	// fixes deprecation warnings and keychain undefined bugs on macOS
-	// See https://github.com/99designs/keyring/issues/94
-	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 	github.com/prometheus/common => github.com/prometheus/common v0.10.0
 
 	github.com/satori/go.uuid => github.com/satori/go.uuid v1.2.0
