@@ -12,7 +12,6 @@ require (
 	github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230206171751-46f607a40771
-	gopkg.in/guregu/null.v4 v4.0.0
 )
 
 require (
