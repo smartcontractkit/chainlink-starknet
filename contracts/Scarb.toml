@@ -13,3 +13,6 @@ test = "cairo-test ."
 # Note: currently testing doesn't work with dependencies
 [dependencies]
 # quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
+
+[[target.starknet-contract]]
+
