@@ -4,7 +4,7 @@ mod SimpleWriteAccessController {
     use chainlink::libraries::access_controller::AccessController;
 
     struct Storage {
-        _enabled: bool,
+        _check_enabled: bool,
         _access_list: LegacyMap<ContractAddress, bool>,
     }
 
@@ -27,7 +27,7 @@ mod SimpleWriteAccessController {
                 return true;
             }
 
-            let check_enabled = _enabled::read();
+            let check_enabled = _check_enabled::read();
             if !check_enabled {
                 return true;
             }
@@ -39,6 +39,11 @@ mod SimpleWriteAccessController {
             let allowed = SimpleWriteAccessController::has_access(user, ArrayTrait::new());
             assert(allowed, 'address does not have access');
         }
+    }
+
+    #[constructor]
+    fn constructor(owner_address: ContractAddress) {
+        initializer(owner_address);
     }
 
     #[external]
@@ -74,9 +79,9 @@ mod SimpleWriteAccessController {
     #[external]
     fn enable_access_check() {
         // TODO: Ownable.assert_only_owner();
-        let check_enabled = _enabled::read();
+        let check_enabled = _check_enabled::read();
         if !check_enabled {
-            _enabled::write(true);
+            _check_enabled::write(true);
             CheckAccessEnabled();
         }
     }
@@ -84,10 +89,19 @@ mod SimpleWriteAccessController {
     #[external]
     fn disable_access_check() {
         // TODO: Ownable.assert_only_owner();
-        let check_enabled = _enabled::read();
+        let check_enabled = _check_enabled::read();
         if check_enabled {
-            _enabled::write(false);
+            _check_enabled::write(false);
             CheckAccessDisabled();
         }
+    }
+
+    ///
+    /// Internals
+    ///
+
+    fn initializer(owner_address: ContractAddress) {
+        // TODO: Ownable.initializer(owner_address)
+        _check_enabled::write(true);
     }
 }
