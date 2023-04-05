@@ -7,7 +7,7 @@ on:
       cl_branch_ref:
         description: Chainlink repo branch to integrate with
         required: true
-        default: develop
+        default: 4cb47f43167758f1a28beb1fff89bf0cc7b95a59
         type: string
 
 # Only run 1 of this workflow at a time per PR
