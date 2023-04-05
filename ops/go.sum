@@ -275,8 +275,8 @@ github.com/smartcontractkit/chainlink-env v0.3.19 h1:BpmWITiUWH4Cv5+9nal35DEic6S
 github.com/smartcontractkit/chainlink-env v0.3.19/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7 h1:TClDxiM7MbjYlmEjqel7npTveEEhCZ4uNH6e94qw4u0=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7/go.mod h1:Uqt8amCr4U4/6n+pvr1OMlNBzSqYSr6oeWAaBsBdPYE=
-github.com/smartcontractkit/chainlink-testing-framework v1.10.5 h1:ootxWDetsic0bjVKIdeG8of41Hfs4COiVfRXAfEvWDU=
-github.com/smartcontractkit/chainlink-testing-framework v1.10.5/go.mod h1:2irDY+bwucSGyBt6YCVP94xJiX+q3qY0R51q1ENAQq8=
+github.com/smartcontractkit/chainlink-testing-framework v1.9.2 h1:G0YehxYdnlLKW9e1uA7VKDsh5bMeiKIf+HKwDiJMfvc=
+github.com/smartcontractkit/chainlink-testing-framework v1.9.2/go.mod h1:Mw//I5NWOxgEV84RvouWqt0Uaexs5hA4kjeKcPizDRI=
 github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8 h1:KcTNxuP5g3GGUqn3WJe7KKnTixqfVZjmHnMAnKkLGJw=
 github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=

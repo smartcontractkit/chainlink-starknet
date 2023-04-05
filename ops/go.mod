@@ -9,7 +9,7 @@ require (
 	github.com/smartcontractkit/chainlink-env v0.3.19
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221102160912-61646f534e3a
-	github.com/smartcontractkit/chainlink-testing-framework v1.10.5
+	github.com/smartcontractkit/chainlink-testing-framework v1.9.2
 	github.com/stretchr/testify v1.8.1
 )
 
