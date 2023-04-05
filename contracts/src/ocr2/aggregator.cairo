@@ -1,7 +1,7 @@
 
 // TODO: round_id should probably be u128 then felt252 when prefixed
 
-#[derive(Copy, Drop, PartialEq)]
+#[derive(Copy, Drop, Serde, PartialEq)]
 struct Round {
     round_id: u128,
     answer: u128,
@@ -27,7 +27,7 @@ mod Aggregator {
     use starknet::ContractAddressZeroable;
     use zeroable::Zeroable;
 
-    use starknet::ContractAddress;    
+    use starknet::ContractAddress;
 
     use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
@@ -90,10 +90,10 @@ mod Aggregator {
 
     struct Storage {
         /// Maximum number of faulty oracles
-        _f: u8,        
+        _f: u8,
         _epoch_and_round: felt252, // TODO
         _latest_aggregator_round_id: u128, // TODO:
-        _answer_range: bool, // TODO        
+        _answer_range: bool, // TODO
         _decimals: u8,
         _description: felt252,
         _latest_config_block_number: felt252,
@@ -172,7 +172,7 @@ mod Aggregator {
         }
 
         fn type_and_version() -> felt252 {
-            0 // TODO            
+            0 // TODO
         }
 
     }
