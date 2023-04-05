@@ -6,12 +6,12 @@ require (
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/rs/zerolog v1.29.0
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/chainlink v1.9.0
+	github.com/smartcontractkit/chainlink v1.10.0
 	github.com/smartcontractkit/chainlink-env v0.3.19
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230329070929-8b04273864dc
-    github.com/smartcontractkit/chainlink-testing-framework v1.7.9-0.20221103145957-d40b562b818b
-    github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221102233518-1e61a9b970a2
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221206105830-e9411b085b4a
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221103134312-d40949720ad3
+	github.com/smartcontractkit/chainlink-testing-framework v1.9.2
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230120175917-456bc0c86b97
 
 )
 
@@ -53,20 +53,21 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.4.0 // indirect
-	github.com/onsi/gomega v1.23.0 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/regen-network/cosmos-proto v0.3.1 // indirect
 	github.com/sasha-s/go-deadlock v0.2.1-0.20190427202633-1595213edefa // indirect
 	github.com/smartcontractkit/terra.go v1.0.3-0.20220108002221-62b39252ee16 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tendermint/tendermint v0.34.15 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/terra-money/core v0.5.20 // indirect
-	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
+	github.com/umbracle/ethgo v0.1.3 // indirect
+	github.com/umbracle/fastrlp v0.0.0-20220527094140-59d5dd30e722 // indirect
+	github.com/valyala/fastjson v1.4.1 // indirect
 	github.com/zondax/hid v0.9.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect

@@ -8,7 +8,7 @@ require (
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7
-	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
+	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20221206105830-e9411b085b4a
 	github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230206171751-46f607a40771
