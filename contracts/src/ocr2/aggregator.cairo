@@ -1,9 +1,7 @@
-
-// TODO: round_id should probably be u128 then felt252 when prefixed
-
 #[derive(Copy, Drop, Serde, PartialEq)]
 struct Round {
-    round_id: u128,
+    // used as u128 internally, but necessary for phase-prefixed round ids as returned by proxy
+    round_id: felt252,
     answer: u128,
     block_num: u64,
     started_at: u64,
@@ -25,6 +23,7 @@ mod Aggregator {
     use starknet::get_caller_address;
     use starknet::contract_address_const;
     use starknet::ContractAddressZeroable;
+    use integer::U128IntoFelt252;
     use zeroable::Zeroable;
 
     use starknet::ContractAddress;
@@ -143,7 +142,7 @@ mod Aggregator {
             let latest_round_id = _latest_aggregator_round_id::read();
             let transmission = _transmissions::read(latest_round_id);
             Round {
-                round_id: latest_round_id,
+                round_id: latest_round_id.into(),
                 answer: transmission.answer,
                 block_num: transmission.block_num,
                 started_at: transmission.observation_timestamp,
@@ -155,7 +154,7 @@ mod Aggregator {
             // TODO: require_access()
             let transmission = _transmissions::read(round_id);
             Round {
-                round_id,
+                round_id: round_id.into(),
                 answer: transmission.answer,
                 block_num: transmission.block_num,
                 started_at: transmission.observation_timestamp,
