@@ -6,9 +6,9 @@ require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/prometheus/client_golang v1.14.0
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230412143414-b1e534d34592
-	github.com/smartcontractkit/libocr v0.0.0-20230112103111-f100435787c8
+	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/multierr v1.9.0
 )
