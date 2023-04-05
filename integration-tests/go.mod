@@ -6,12 +6,13 @@ require (
 	github.com/dontpanicdao/caigo v0.4.0
 	github.com/rs/zerolog v1.29.0
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/chainlink v1.10.0
+	github.com/smartcontractkit/chainlink v1.9.0
 	github.com/smartcontractkit/chainlink-env v0.3.19
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230329070929-8b04273864dc
-	github.com/smartcontractkit/chainlink-testing-framework v1.7.9-0.20221103145957-d40b562b818b
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221102233518-1e61a9b970a2
+    github.com/smartcontractkit/chainlink-testing-framework v1.7.9-0.20221103145957-d40b562b818b
+    github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20221102233518-1e61a9b970a2
+
 )
 
 require (
