@@ -88,8 +88,8 @@ require (
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82 // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc // indirect
 	github.com/spf13/cobra v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
