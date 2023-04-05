@@ -41,7 +41,7 @@ jobs:
           this-job-name: Build Custom CL Image
         continue-on-error: true
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@4545d028c82e92035a10b2d49da8df267da16bf7 # v2.1.5
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@4545d028c82e92035a10b2d49da8df267da16bf7 # v2.1.2
         with:
           cl_repo: smartcontractkit/chainlink
           cl_ref: 4cb47f43167758f1a28beb1fff89bf0cc7b95a59
