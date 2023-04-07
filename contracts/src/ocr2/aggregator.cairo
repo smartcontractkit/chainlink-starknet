@@ -73,6 +73,8 @@ mod Aggregator {
     use hash::LegacyHash;
     use super::SpanLegacyHash;
 
+    const GIGA: u128 = 1000000000_u128;
+
     const MAX_ORACLES: u32 = 31_u32;
 
     #[event]
@@ -195,7 +197,7 @@ mod Aggregator {
 
         // billing
         _billing_access_controller: ContractAddress,
-        _billing: bool, //TODO
+        _billing: Billing,
 
         // payee management
         _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
@@ -229,10 +231,12 @@ mod Aggregator {
         }
 
         fn description() -> felt252 {
+            // TODO: require_access()
             _description::read()
         }
 
         fn decimals() -> u8 {
+            // TODO: require_access()
             _decimals::read()
         }
 
@@ -504,7 +508,7 @@ mod Aggregator {
         observation_timestamp: u64,
         observers: felt252, // TODO:
         observations: Array<u128>,
-        juels_per_fee_coin: u128, // TODO: u256?
+        juels_per_fee_coin: u128,
         gas_price: u128,// TODO:
         signatures: Array<Signature>,
     ) {
@@ -663,6 +667,26 @@ mod Aggregator {
 
     // --- Queries
 
+    #[view]
+    fn description() -> felt252 {
+        Aggregator::description()
+    }
+
+    #[view]
+    fn decimals() -> u8 {
+        Aggregator::decimals()
+    }
+
+    #[view]
+    fn latest_round_data() -> Round {
+        Aggregator::latest_round_data()
+    }
+
+    #[view]
+    fn round_data(round_id: u128) -> Round {
+        Aggregator::round_data(round_id)
+    }
+
     // --- Set LINK Token
 
     #[event]
@@ -722,11 +746,64 @@ mod Aggregator {
 
     // --- Billing Config
 
-    #[event]
-    fn BillingSet(
-        config: bool // TODO:
-    ) {}
+    #[derive(Copy, Drop, Serde)]
+    struct Billing {
+        // TODO: use a single felt via (observation_payment, transmission_payment) = split_felt()?
+        observation_payment_gjuels: u32,
+        transmission_payment_gjuels: u32,
+        gas_base: u32,
+        gas_per_signature: u32,
+    }
 
+    impl BillingStorageAccess of StorageAccess::<Billing> {
+        fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Billing> {
+            Result::Ok(
+                Billing {
+                    observation_payment_gjuels: storage_read_syscall(
+                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
+                    )?.try_into().unwrap(),
+                    transmission_payment_gjuels: storage_read_syscall(
+                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
+                    )?.try_into().unwrap(),
+                    gas_base: storage_read_syscall(
+                        address_domain, storage_address_from_base_and_offset(base, 2_u8)
+                    )?.try_into().unwrap(),
+                    gas_per_signature: storage_read_syscall(
+                        address_domain, storage_address_from_base_and_offset(base, 3_u8)
+                    )?.try_into().unwrap(),
+                }
+            )
+        }
+
+        fn write(address_domain: u32, base: StorageBaseAddress, value: Billing) -> SyscallResult::<()> {
+            storage_write_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.observation_payment_gjuels.into()
+            )?;
+            storage_write_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.transmission_payment_gjuels.into()
+            )?;
+            storage_write_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 2_u8), value.gas_base.into()
+            )?;
+            storage_write_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 3_u8), value.gas_per_signature.into()
+            )
+        }
+    }
+
+    #[event]
+    fn BillingSet(config: Billing) {}
+
+    #[external]
+    fn set_billing(config: Billing) {
+        // TODO: has_billing_access();
+
+        pay_oracles();
+
+        _billing::write(config);
+
+        BillingSet(config);
+    }
 
     // --- Payments and Withdrawals
 
@@ -737,6 +814,25 @@ mod Aggregator {
         amount: u256,
         link_token: ContractAddress,
     ) {}
+
+    #[external]
+    fn withdraw_payment(transmitter: ContractAddress) {
+
+    }
+
+    fn _owed_payment(oracle: @Oracle) -> u128 {
+        if *oracle.index == 0_usize {
+            return 0_u128;
+        }
+
+        let billing = _billing::read();
+
+        let latest_round_id = _latest_aggregator_round_id::read();
+        let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
+        let rounds = latest_round_id - from_round_id;
+
+        (rounds * billing.observation_payment_gjuels * GIGA) + *oracle.payment_juels
+    }
 
     fn pay_oracles() {}
 
