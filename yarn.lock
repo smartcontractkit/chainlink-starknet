@@ -319,11 +319,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@chainlink-dev/starkgate-contracts@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-contracts/-/starkgate-contracts-0.0.3.tgz#915008fec43fbb15a3c87f686e74c06f3e55ca4d"
-  integrity sha512-QqL+2w+WWCGg6Tw885wij/6ZWkJwGFeO+QUHg5ow9bQmgG600QpnTL5EdItvmlbUIjwNFrKkh0zyyDnwRVGhRQ==
-
 "@chainlink-dev/starkgate-open-zeppelin@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@chainlink-dev/starkgate-open-zeppelin/-/starkgate-open-zeppelin-0.5.0.tgz#9fea55dfb599b4de1e4608260968ddc2ab51c330"
@@ -4588,25 +4583,6 @@ internal-slot@^1.0.4:
     get-intrinsic "^1.1.3"
     has "^1.0.3"
     side-channel "^1.0.4"
-
-internals-starkgate-contracts@^0.0.0:
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/internals-starkgate-contracts/-/internals-starkgate-contracts-0.0.0.tgz#93d85cd670a7f0257de45091eeacf6037b2122ea"
-  integrity sha512-P26ftro7Z7QaZ7fZ0njSAMpeiDLNwZoXeDANK9keHSP/ZEu4KeGyVMOzBuFKmrDw1nG6vP8q2wh5hI7w1EHvAA==
-
-internals-starkgate-contracts@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/internals-starkgate-contracts/-/internals-starkgate-contracts-0.0.2.tgz#08b8f68a198a80b3197064edbf1e8caa3fda8f29"
-  integrity sha512-Ig29kLZtGmf2z/elr98AM6BFJfSWv8zRU7fVzaV2RpY+WItJjOWWLMBVLhmD4qyZkcPVBfUO8WTMZlJDSBxS9Q==
-  dependencies:
-    internals-starkgate-contracts "^0.0.0"
-
-internals-starkgate-contracts@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/internals-starkgate-contracts/-/internals-starkgate-contracts-0.0.3.tgz#d19f550b65bf153c8d1862d4a27e7fab28af370b"
-  integrity sha512-yCP3lpegs1XJstX2JDLTpLBH4t7Yet7P058hG1ZBN/BVP6nVMIsd1CW11Qq9zUY67c5BX9cSxaqxaP1Yih1AxA==
-  dependencies:
-    internals-starkgate-contracts "^0.0.2"
 
 interpret@^1.0.0:
   version "1.4.0"
