@@ -1,6 +1,6 @@
-# Chainlink StarkNet Documentation
+# Chainlink Starknet Documentation
 
-This repository is a monorepo of the various components required for Chainlink on StarkNet.
+This repository is a monorepo of the various components required for Chainlink on Starknet.
 
 - [Contracts](../contracts)
   <!-- - [Chainlink Relay plugin](../pkg/terra) -->

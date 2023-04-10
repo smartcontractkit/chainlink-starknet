@@ -13,16 +13,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type StarkNetDevnetClient struct {
+type StarknetDevnetClient struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	client   *resty.Client
 	dumpPath string
 }
 
-func (devnet *StarkNetDevnetClient) NewStarkNetDevnetClient(rpcUrl string, dumpPath string) *StarkNetDevnetClient {
+func (devnet *StarknetDevnetClient) NewStarknetDevnetClient(rpcUrl string, dumpPath string) *StarknetDevnetClient {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &StarkNetDevnetClient{
+	return &StarknetDevnetClient{
 		ctx:      ctx,
 		cancel:   cancel,
 		client:   resty.New().SetBaseURL(rpcUrl),
@@ -31,7 +31,7 @@ func (devnet *StarkNetDevnetClient) NewStarkNetDevnetClient(rpcUrl string, dumpP
 }
 
 // AutoSyncL1 auto calls /flush/ every 2 seconds to sync L1<>L2
-func (devnet *StarkNetDevnetClient) AutoSyncL1() {
+func (devnet *StarknetDevnetClient) AutoSyncL1() {
 	t := time.NewTicker(2 * time.Second)
 	go func() {
 		for {
@@ -51,7 +51,7 @@ func (devnet *StarkNetDevnetClient) AutoSyncL1() {
 }
 
 // AutoDumpState dumps devnet state every 10 sec
-func (devnet *StarkNetDevnetClient) AutoDumpState() {
+func (devnet *StarknetDevnetClient) AutoDumpState() {
 	t := time.NewTicker(20 * time.Minute)
 	go func() {
 		for {
@@ -61,7 +61,7 @@ func (devnet *StarkNetDevnetClient) AutoDumpState() {
 				return
 			case <-t.C:
 				log.Debug().Msg("Dumping state")
-				_, err := devnet.client.R().SetBody(map[string]interface{}{
+				_, err := devnet.client.R().SetBody(map[string]any{
 					"path": devnet.dumpPath,
 				}).Post("/dump")
 				if err != nil {
@@ -73,7 +73,7 @@ func (devnet *StarkNetDevnetClient) AutoDumpState() {
 }
 
 // AutoLoadState auto loads last saved devnet state on contract not found
-func (devnet *StarkNetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddress string) {
+func (devnet *StarknetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddress string) {
 	t := time.NewTicker(15 * time.Second)
 	go func() {
 		for {
@@ -85,7 +85,7 @@ func (devnet *StarkNetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddres
 				log.Debug().Msg("Checking for devnet OCR contract errors")
 				_, err := client.LatestTransmissionDetails(devnet.ctx, caigotypes.HexToHash(ocrAddress))
 				if err != nil && strings.Contains(err.Error(), "is not deployed") {
-					_, err = devnet.client.R().SetBody(map[string]interface{}{
+					_, err = devnet.client.R().SetBody(map[string]any{
 						"path": devnet.dumpPath,
 					}).Post("/load")
 					if err != nil {
@@ -99,9 +99,9 @@ func (devnet *StarkNetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddres
 }
 
 // FundAccounts Funds provided accounts with 100 eth each
-func (devnet *StarkNetDevnetClient) FundAccounts(l2AccList []string) error {
+func (devnet *StarknetDevnetClient) FundAccounts(l2AccList []string) error {
 	for _, key := range l2AccList {
-		res, err := devnet.client.R().SetBody(map[string]interface{}{
+		res, err := devnet.client.R().SetBody(map[string]any{
 			"address": key,
 			"amount":  1e21,
 		}).Post("/mint")
@@ -114,8 +114,8 @@ func (devnet *StarkNetDevnetClient) FundAccounts(l2AccList []string) error {
 }
 
 // LoadL1MessagingContract loads and sets up the L1 messaging contract and URL
-func (devnet *StarkNetDevnetClient) LoadL1MessagingContract(l1RpcUrl string) error {
-	resp, err := devnet.client.R().SetBody(map[string]interface{}{
+func (devnet *StarknetDevnetClient) LoadL1MessagingContract(l1RpcUrl string) error {
+	resp, err := devnet.client.R().SetBody(map[string]any{
 		"networkUrl": l1RpcUrl,
 	}).Post("/postman/load_l1_messaging_contract")
 	if err != nil {

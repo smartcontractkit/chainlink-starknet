@@ -1,5 +1,5 @@
 {
-  description = "StarkNet integration";
+  description = "Starknet integration";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

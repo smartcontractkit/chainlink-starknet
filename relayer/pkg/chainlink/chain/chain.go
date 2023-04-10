@@ -6,7 +6,6 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
@@ -24,7 +23,6 @@ type Chain interface {
 	types.Service
 
 	Config() config.Config
-	UpdateConfig(*db.ChainCfg)
 
 	TxManager() txm.TxManager
 	Reader() (starknet.Reader, error)
