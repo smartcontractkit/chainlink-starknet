@@ -183,7 +183,6 @@ mod Aggregator {
         _f: u8,        
         _latest_epoch_and_round: u64, // (u32, u32)
         _latest_aggregator_round_id: u128,
-        // _answer_range: (u128, u128), // TODO        
         _min_answer: u128,
         _max_answer: u128,
         _decimals: u8,
@@ -213,9 +212,14 @@ mod Aggregator {
         _proposed_payees: LegacyMap<ContractAddress, ContractAddress> // <transmitter, payment_address>
     }
 
+    fn require_access() {
+        let caller = starknet::info::get_caller_address();
+        // TODO: assert(SimpleReadAccessController.check_access(address));
+    }
+
     impl Aggregator of IAggregator {
         fn latest_round_data() -> Round {
-            // TODO: require_access()
+            require_access();
             let latest_round_id = _latest_aggregator_round_id::read();
             let transmission = _transmissions::read(latest_round_id);
             Round {
@@ -228,7 +232,7 @@ mod Aggregator {
         }
 
         fn round_data(round_id: u128) -> Round {
-            // TODO: require_access()
+            require_access();
             let transmission = _transmissions::read(round_id);
             Round {
                 round_id: round_id.into(),
@@ -240,12 +244,12 @@ mod Aggregator {
         }
 
         fn description() -> felt252 {
-            // TODO: require_access()
+            require_access();
             _description::read()
         }
 
         fn decimals() -> u8 {
-            // TODO: require_access()
+            require_access();
             _decimals::read()
         }
 
@@ -268,12 +272,11 @@ mod Aggregator {
         description: felt252
     ) {
         Ownable::initializer(owner);
-        // SimpleReadAccessController.initialize
+        // TODO: SimpleReadAccessController.initialize
         _link_token::write(link);
         _billing_access_controller::write(billing_access_controller);
 
-        // assert_lt (min, max)
-        // _answer_range::write((min_answer, max_answer));
+        assert(min_answer < max_answer, '');
         _min_answer::write(min_answer);
         _max_answer::write(max_answer);
 
@@ -302,6 +305,7 @@ mod Aggregator {
     fn accept_ownership() {
         Ownable::accept_ownership()
     }
+
     #[external]
     fn renounce_ownership() {
         Ownable::renounce_ownership()
@@ -356,7 +360,7 @@ mod Aggregator {
     ) -> felt252 { // digest
         Ownable::assert_only_owner();
         assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
-        assert((3_u8 * f).into().try_into().unwrap() < oracles.len(), 'faulty-oracle f too high'); // NOTE: messy cast 
+        assert((3_u8 * f).into().try_into().unwrap() < oracles.len(), 'faulty-oracle f too high');
         assert(f > 0_u8, 'f must be positive');
 
         assert(onchain_config.len() == 0_u32, 'onchain_config must be empty');
@@ -838,13 +842,28 @@ mod Aggregator {
 
     #[external]
     fn set_billing(config: Billing) {
-        // TODO: has_billing_access();
+        has_billing_access();
 
         pay_oracles();
 
         _billing::write(config);
 
         BillingSet(config);
+    }
+
+    fn has_billing_access() {
+        let caller = starknet::info::get_caller_address();
+        let owner = Ownable::owner();
+
+        // owner always has access
+        if caller == owner {
+            return ();
+        }
+
+        let access_controller = _billing_access_controller::read();
+
+        // TODO:
+        // IAccessController.check_access(contract_address=access_controller, user=caller);
     }
 
     // --- Payments and Withdrawals
@@ -905,7 +924,6 @@ mod Aggregator {
         // NOTE: equivalent to converting u128 to u256
         let amount = u256 { high: 0_u128, low: amount };
 
-        // TODO:
         let token = IERC20Dispatcher { contract_address: link_token };
         token.transfer(recipient: payee, amount: amount);
 
@@ -966,7 +984,6 @@ mod Aggregator {
         let link_token = _link_token::read();
         let contract_address = starknet::info::get_contract_address();
 
-        let balance = 0_u128;
         let token = IERC20Dispatcher { contract_address: link_token };
         let balance = token.balance_of(account: contract_address);
         // entire link supply fits into u96 so this should not fail
@@ -974,7 +991,7 @@ mod Aggregator {
         let balance: u128 = balance.low;
 
         let due = total_link_due();
-        balance - due
+        balance - due // TODO: value here could be negative!
     }
 
     // --- Transmitter Payment
