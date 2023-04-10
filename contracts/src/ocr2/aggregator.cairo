@@ -984,27 +984,28 @@ mod Aggregator {
     #[external]
     fn set_payees(payees: Array<PayeeConfig>) {
         // TODO: Ownable.assert_only_owner()
-        let len = payees.len();
-        set_payee(payees, len)
+        set_payee(payees)
     }
 
-    fn set_payee(payees: Array<PayeeConfig>, len: usize) {
-        if len == 0_usize {
-            return ();
-        }
+    fn set_payee(mut payees: Array<PayeeConfig>) {
+        let payee = match payees.pop_front() {
+            Option::Some(payee) => payee,
+            Option::None(_) => {
+                // No more payees left!
+                return ();
+            }
+        };
 
-        let payee = payees[len];
-
-        let current_payee = _payees::read(*payee.transmitter);
+        let current_payee = _payees::read(payee.transmitter);
         let is_unset = current_payee.is_zero();
-        let is_same = current_payee == *payee.payee;
+        let is_same = current_payee == payee.payee;
         assert(is_unset | is_same, 'payee already set');
 
-        _payees::write(*payee.transmitter, *payee.payee);
+        _payees::write(payee.transmitter, payee.payee);
 
-        PayeeshipTransferred(*payee.transmitter, current_payee, *payee.payee);
+        PayeeshipTransferred(payee.transmitter, current_payee, payee.payee);
 
-        set_payee(payees, len - 1_usize)
+        set_payee(payees)
     }
 
     #[external]
