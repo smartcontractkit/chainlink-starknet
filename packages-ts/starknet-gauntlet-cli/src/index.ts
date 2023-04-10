@@ -10,7 +10,7 @@ import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
 import {
   L2Commands as L2StarkgateCommands,
   InspectionCommands as StarkgateInspectionCommands,
-} from '@chainlink/starknet-gauntlet-starkgate'
+} from '@chainlink/starknet-gauntlet-token'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
 import {
   L1Commands as L1EmergencyProtocolCommands,

@@ -30,7 +30,7 @@
     "@chainlink/starknet-gauntlet-argent": "*",
     "@chainlink/starknet-gauntlet-example": "*",
     "@chainlink/starknet-gauntlet-ocr2": "*",
-    "@chainlink/starknet-gauntlet-starkgate": "*",
+    "@chainlink/starknet-gauntlet-token": "*",
     "@chainlink/starknet-gauntlet-multisig": "*",
     "@chainlink/starknet-gauntlet-emergency-protocol": "*",
     "@chainlink/starknet-gauntlet-ledger": "*"

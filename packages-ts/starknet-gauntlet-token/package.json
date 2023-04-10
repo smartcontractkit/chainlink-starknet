@@ -1,5 +1,5 @@
 {
-  "name": "@chainlink/starknet-gauntlet-starkgate",
+  "name": "@chainlink/starknet-gauntlet-token",
   "version": "0.0.1",
   "description": "Gauntlet Starknet Starkgate contracts",
   "keywords": [
@@ -15,7 +15,7 @@
   "scripts": {
     "gauntlet": "ts-node ./src/index.ts",
     "lint": "tsc",
-    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-starkgate --passWithNoTests",
+    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-token --passWithNoTests",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
     "format": "yarn prettier --write ./src",
