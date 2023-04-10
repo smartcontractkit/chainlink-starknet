@@ -72,6 +72,7 @@ mod Aggregator {
     use box::BoxTrait;
     use hash::LegacyHash;
     use super::SpanLegacyHash;
+    use chainlink::libraries::ownable::Ownable;
 
     // NOTE: remove duplication once we can directly use the trait
     #[abi]
@@ -266,7 +267,7 @@ mod Aggregator {
         decimals: u8,
         description: felt252
     ) {
-        // Ownable.initialize
+        Ownable::initializer(owner);
         // SimpleReadAccessController.initialize
         _link_token::write(link);
         _billing_access_controller::write(billing_access_controller);
@@ -327,7 +328,7 @@ mod Aggregator {
         offchain_config_version: u64,
         offchain_config: Array<felt252>,
     ) -> felt252 { // digest
-        // TODO: Ownable.assert_only_owner()
+        Ownable::assert_only_owner();
         assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
         assert((3_u8 * f).into().try_into().unwrap() < oracles.len(), 'faulty-oracle f too high'); // NOTE: messy cast 
         assert(f > 0_u8, 'f must be positive');
@@ -713,7 +714,7 @@ mod Aggregator {
 
     #[external]
     fn set_link_token(link_token: ContractAddress, recipient: ContractAddress) {
-        // TODO: Ownable.assert_only_owner()
+        Ownable::assert_only_owner();
 
         let old_token = _link_token::read();
 
@@ -748,7 +749,7 @@ mod Aggregator {
 
     #[external]
     fn set_billing_access_controller(access_controller: ContractAddress) {
-        // TODO: Ownable.assert_only_owner()
+        Ownable::assert_only_owner();
 
         let old_controller = _billing_access_controller::read();
         if access_controller == old_controller {
@@ -990,7 +991,7 @@ mod Aggregator {
 
     #[external]
     fn set_payees(payees: Array<PayeeConfig>) {
-        // TODO: Ownable.assert_only_owner()
+        Ownable::assert_only_owner();
         set_payee(payees)
     }
 
