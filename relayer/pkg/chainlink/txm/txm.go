@@ -53,13 +53,17 @@ type starktxm struct {
 
 func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
 	return &starktxm{
-		lggr:      lggr,
+		lggr:      logger.Named(lggr, "StarknetTxm"),
 		queue:     make(chan Tx, MaxQueueLen),
 		stop:      make(chan struct{}),
 		getClient: getClient,
 		ks:        keystore,
 		cfg:       cfg,
 	}, nil
+}
+
+func (txm *starktxm) Name() string {
+	return txm.lggr.Name()
 }
 
 func (txm *starktxm) Start(ctx context.Context) error {
@@ -199,6 +203,10 @@ func (txm *starktxm) Healthy() error {
 
 func (txm *starktxm) Ready() error {
 	return txm.starter.Ready()
+}
+
+func (txm *starktxm) HealthReport() map[string]error {
+	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
 func (txm *starktxm) Enqueue(sender caigotypes.Hash, tx caigotypes.FunctionCall) error {

@@ -15,12 +15,12 @@ export const addCompilationToNetwork = async (fullyQualifiedName: string) => {
       throw Error('Cannot find build info')
     }
     const { solcVersion, input, output } = buildInfo
-    console.log('Sending compilation result for StarkNetValidator test')
+    console.log('Sending compilation result for StarknetValidator test')
     await network.provider.request({
       method: 'hardhat_addCompilationResult',
       params: [solcVersion, input, output],
     })
-    console.log('Successfully sent compilation result for StarkNetValidator test')
+    console.log('Successfully sent compilation result for StarknetValidator test')
   }
 }
 
