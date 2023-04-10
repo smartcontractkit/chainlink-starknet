@@ -73,6 +73,14 @@ mod Aggregator {
     use hash::LegacyHash;
     use super::SpanLegacyHash;
 
+    // NOTE: remove duplication once we can directly use the trait
+    #[abi]
+    trait IERC20 {
+        fn balance_of(account: ContractAddress) -> u256;
+        fn transfer(recipient: ContractAddress, amount: u256) -> bool;
+        // fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
+    }
+
     const GIGA: u128 = 1000000000_u128;
 
     const MAX_ORACLES: u32 = 31_u32;
@@ -404,7 +412,7 @@ mod Aggregator {
         remove_oracles(n - 1_usize)
     }
 
-    // TODO: explore using a slice/Span + pop_front rather than index
+    // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
     fn add_oracles(oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
         if len == 0_usize {
             _oracles_len::write(len);
@@ -715,16 +723,15 @@ mod Aggregator {
 
         let contract_address = starknet::info::get_contract_address();
 
-        // TODO
         // call balanceOf as a sanity check to confirm we're talking to a token
-        // IERC20.balanceOf(contract_address=link_token, account=contract_address);
+        let token = IERC20Dispatcher { contract_address: link_token };
+        token.balance_of(account: contract_address);
 
         pay_oracles();
 
-        // TODO: 
         // transfer remaining balance to recipient
-        // let (amount: Uint256) = IERC20.balanceOf(contract_address=link_token, account=contract_address);
-        // IERC20.transfer(contract_address=old_token, recipient=recipient, amount=amount);
+        let amount = token.balance_of(account: contract_address);
+        token.transfer(recipient, amount);
 
         _link_token::write(link_token);
 
@@ -872,7 +879,8 @@ mod Aggregator {
         let amount = u256 { high: 0_u128, low: amount };
 
         // TODO:
-        // IERC20.transfer(contract_address=link_token, recipient=payee, amount=amount);
+        let token = IERC20Dispatcher { contract_address: link_token };
+        token.transfer(recipient: payee, amount: amount);
 
         // Reset payment
         _reward_from_aggregator_round_id::write(oracle.index, latest_round_id);
@@ -932,12 +940,11 @@ mod Aggregator {
         let contract_address = starknet::info::get_contract_address();
 
         let balance = 0_u128;
-        // TODO:
-        // let (balance_: Uint256) = IERC20.balanceOf(
-        //     contract_address=link_token, account=contract_address
-        // );
-        // // entire link supply fits into u96 so this should not fail
-        // let (balance) = uint256_to_felt(balance_);
+        let token = IERC20Dispatcher { contract_address: link_token };
+        let balance = token.balance_of(account: contract_address);
+        // entire link supply fits into u96 so this should not fail
+        assert(balance.high == 0_u128, 'balance too high');
+        let balance: u128 = balance.low;
 
         let due = total_link_due();
         balance - due
