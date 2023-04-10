@@ -281,6 +281,32 @@ mod Aggregator {
         _description::write(description);
     }
 
+    // --- Ownership ---
+
+    #[view]
+    fn owner() -> ContractAddress {
+        Ownable::owner()
+    }
+
+    #[view]
+    fn proposed_owner() -> ContractAddress {
+        Ownable::proposed_owner()
+    }
+
+    #[external]
+    fn transfer_ownership(new_owner: ContractAddress) {
+        Ownable::transfer_ownership(new_owner)
+    }
+
+    #[external]
+    fn accept_ownership() {
+        Ownable::accept_ownership()
+    }
+    #[external]
+    fn renounce_ownership() {
+        Ownable::renounce_ownership()
+    }
+
     // --- Validation ---
 
     // NOTE: Currently unimplemented:
