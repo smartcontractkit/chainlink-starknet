@@ -30,7 +30,7 @@ const config: Config.InitialOptions = {
     projectConfig('starknet-gauntlet-multisig'),
     projectConfig('starknet-gauntlet-ocr2'),
     projectConfig('starknet-gauntlet-oz'),
-    projectConfig('starknet-gauntlet-starkgate'),
+    projectConfig('starknet-gauntlet-token'),
     projectConfig('starknet-gauntlet-emergency-protocol'),
   ],
 }

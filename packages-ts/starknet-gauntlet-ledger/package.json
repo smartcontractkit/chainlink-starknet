@@ -15,7 +15,7 @@
     ],
     "scripts": {
       "lint": "tsc",
-      "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-starkgate --passWithNoTests",
+      "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-token --passWithNoTests",
       "test:ci": "yarn test --ci",
       "format": "yarn prettier --write ./src",
       "format:check": "yarn prettier --check ./src",
