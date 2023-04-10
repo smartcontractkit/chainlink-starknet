@@ -40,7 +40,7 @@ mod Ownable {
     //
     // Modifiers
     //
-    fn _assert_only_owner() {
+    fn assert_only_owner() {
         let owner = _owner::read();
         let caller = starknet::get_caller_address();
         // todo augustus: verify i can remove this (caller is the zero address should not be possible anymore with introduction of fees)
@@ -69,7 +69,7 @@ mod Ownable {
     #[external]
     fn transfer_ownership(new_owner: ContractAddress) {
         assert(!new_owner.is_zero(), 'Ownable: transfer to 0');
-        _assert_only_owner();
+        assert_only_owner();
 
         _proposed_owner::write(new_owner);
         let previous_owner = _owner::read();
@@ -91,7 +91,7 @@ mod Ownable {
     // todo augustus: verify we don't need this (this isn't even defined in the solidity contracts for Simple[Read/Write]AccessController)
     #[external]
     fn renounce_ownership() {
-        _assert_only_owner();
+        assert_only_owner();
         _accept_ownership_transfer(starknet::contract_address_const::<0>());
     }
 
