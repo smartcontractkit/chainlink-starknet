@@ -954,7 +954,28 @@ mod Aggregator {
 
     #[external]
     fn withdraw_funds(recipient: ContractAddress, amount: u256) {
-        // TODO:
+        has_billing_access();
+
+        let link_token = _link_token::read();
+        let contract_address = starknet::info::get_contract_address();
+
+        let due = total_link_due();
+        // NOTE: equivalent to converting u128 to u256
+        let due = u256 { high: 0_u128, low: due };
+
+        let token = IERC20Dispatcher { contract_address: link_token };
+        let balance = token.balance_of(account: contract_address);
+
+        assert(due <= balance, 'amount due exceeds balance');
+        let available = balance - due;
+
+        // Transfer as much as there is available
+        let amount = if available < amount {
+            available
+        } else {
+            amount
+        };
+        token.transfer(recipient, amount);
     }
 
     fn total_link_due() -> u128 {
