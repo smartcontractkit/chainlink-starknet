@@ -241,7 +241,7 @@ mod Aggregator {
         }
 
         fn type_and_version() -> felt252 {
-            0 // TODO
+            'ocr2/aggregator.cairo 1.0.0'
         }
 
     }
@@ -406,17 +406,17 @@ mod Aggregator {
 
     // TODO: explore using a slice/Span + pop_front rather than index
     fn add_oracles(oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
-        // NOTE: index should start with 1 here because storage is 0-initialized.
-        // That way signers(pkey) => 0 indicates "not present"
-        let index = index + 1_usize;
-
         if len == 0_usize {
             _oracles_len::write(len);
             return ();
         }
 
+        // NOTE: index should start with 1 here because storage is 0-initialized.
+        // That way signers(pkey) => 0 indicates "not present"
+        let index = index + 1_usize;
+
         let oracle = oracles[index];
-        // TODO: check for duplicates
+        // check for duplicates
         let existing_signer = _signers::read(*oracle.signer);
         assert(existing_signer == 0_usize, 'repeated signer');
 
@@ -454,8 +454,7 @@ mod Aggregator {
         state = LegacyHash::hash(state, contract_address);
         state = LegacyHash::hash(state, config_count);
         state = LegacyHash::hash(state, oracles.len());
-        // TODO: for oracle in oracles, hash each
-        state = LegacyHash::hash(state, oracles.span());
+        state = LegacyHash::hash(state, oracles.span()); // for oracle in oracles, hash each
         state = LegacyHash::hash(state, f);
         state = LegacyHash::hash(state, 3); // onchain_config.len() = 3
         state = LegacyHash::hash(state, *onchain_config.version);
@@ -509,9 +508,10 @@ mod Aggregator {
         observers: felt252, // TODO:
         observations: Array<u128>,
         juels_per_fee_coin: u128,
-        gas_price: u128,// TODO:
+        gas_price: u128,
         signatures: Array<Signature>,
     ) {
+        let signatures_len = signatures.len();
     
         let epoch_and_round = _latest_epoch_and_round::read();
         assert(epoch_and_round < epoch_and_round, 'stale report');
@@ -526,7 +526,7 @@ mod Aggregator {
         assert(report_context.config_digest == config_digest, 'config digest mismatch');
 
         let f = _f::read();
-        assert(signatures.len().into() == (f + 1_u8).into(), 'wrong number of signatures');
+        assert(signatures_len.into() == (f + 1_u8).into(), 'wrong number of signatures');
 
         let msg = hash_report(
             @report_context,
@@ -538,8 +538,7 @@ mod Aggregator {
         );
 
         // TODO: assert error here
-        let signatures_len = signatures.len();
-        verify_signatures(msg, @signatures, signatures_len, integer::u256_from_felt252(0));
+        verify_signatures(msg, signatures, integer::u256_from_felt252(0));
 
         // report():
 
@@ -573,9 +572,7 @@ mod Aggregator {
         // NOTE: Usually validating via validator would happen here, currently disabled
 
         let billing = _billing::read();
-    
-        // TODO: calculate_reimbursement
-        let reimbursement_juels = 1_u128;
+        let reimbursement_juels = calculate_reimbursement(juels_per_fee_coin, signatures_len, gas_price, billing);
 
         // end report()
 
@@ -593,8 +590,8 @@ mod Aggregator {
             reimbursement_juels,
         );
 
-        // TODO: pay transmitter
-        let payment = 1_u128;
+        // pay transmitter
+        let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into().try_into().unwrap() * GIGA);
         // TODO: check overflow
 
         _transmitters::write(
@@ -626,28 +623,34 @@ mod Aggregator {
     }
 
     // TODO: signed_count feels more inefficient as u256
-    fn verify_signatures(msg: felt252, signatures: @Array<Signature>, len: usize, signed_count: u256) {
-        if len == 0_usize {
-            // Check all signatures are unique (we only saw each pubkey once)
-            // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
-            // ensures 31 bytes is enough to store a count for each oracle. Whenever the MAX_ORACLES
-            // is updated the mask below should also be updated.
-            assert(MAX_ORACLES == 31_u32, '');
-            // TODO: 
-            return ();
-        }
+    fn verify_signatures(msg: felt252, mut signatures: Array<Signature>, signed_count: u256) {
+        let signature = match signatures.pop_front() {
+            Option::Some(signature) => signature,
+            Option::None(_) => {
+                // No more signatures left!
 
-        // TODO:
-        let signature = signatures[0_usize];
+                // Check all signatures are unique (we only saw each pubkey once)
+                // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
+                // ensures 31 bytes is enough to store a count for each oracle. Whenever the MAX_ORACLES
+                // is updated the mask below should also be updated.
+                assert(MAX_ORACLES == 31_u32, '');
+                // TODO: 
+                // let (masked) = bitwise_and(
+                //     signed_count, 0x01010101010101010101010101010101010101010101010101010101010101
+                // );
+                // assert(signed_count == masked, 'duplicate signer');
+                return ();
+            }
+        };
 
-        let index = _signers::read(*signature.public_key);
+        let index = _signers::read(signature.public_key);
         assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
 
         let is_valid = ecdsa::check_ecdsa_signature(
             msg,
-            *signature.public_key,
-            *signature.r,
-            *signature.s
+            signature.public_key,
+            signature.r,
+            signature.s
         );
 
         assert(is_valid, '');
@@ -657,7 +660,7 @@ mod Aggregator {
         // let (shift) = pow(2, 8 * index);
         // let signed_count = signed_count + shift;
 
-        verify_signatures(msg, signatures, len - 1_usize, signed_count)
+        verify_signatures(msg, signatures, signed_count)
     }
 
     #[view]
@@ -685,6 +688,11 @@ mod Aggregator {
     #[view]
     fn round_data(round_id: u128) -> Round {
         Aggregator::round_data(round_id)
+    }
+
+    #[view]
+    fn type_and_version() -> felt252 {
+        Aggregator::type_and_version()
     }
 
     // --- Set LINK Token
@@ -817,7 +825,13 @@ mod Aggregator {
 
     #[external]
     fn withdraw_payment(transmitter: ContractAddress) {
+        let caller = starknet::info::get_caller_address();
+        let payee = _payees::read(transmitter);
+        assert(caller == payee, 'only payee can withdraw');
 
+        let latest_round_id = _latest_aggregator_round_id::read();
+        let link_token = _link_token::read();
+        pay_oracle(transmitter, latest_round_id, link_token)
     }
 
     fn _owed_payment(oracle: @Oracle) -> u128 {
@@ -831,12 +845,119 @@ mod Aggregator {
         let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
         let rounds = latest_round_id - from_round_id;
 
-        (rounds * billing.observation_payment_gjuels * GIGA) + *oracle.payment_juels
+        (rounds * billing.observation_payment_gjuels.into().try_into().unwrap() * GIGA) + *oracle.payment_juels
     }
 
-    fn pay_oracles() {}
+    #[view]
+    fn owed_payment(transmitter: ContractAddress) -> u128 {
+        let oracle = _transmitters::read(transmitter);
+        _owed_payment(@oracle)
+    }
+
+    fn pay_oracle(transmitter: ContractAddress, latest_round_id: u128, link_token: ContractAddress) {
+        let oracle = _transmitters::read(transmitter);
+        if oracle.index == 0_usize {
+            return ();
+        }
+
+        let amount = _owed_payment(@oracle);
+        // if zero, fastpath return to avoid empty transfers
+        if amount == 0_u128 {
+            return ();
+        }
+
+        let payee = _payees::read(transmitter);
+
+        // NOTE: equivalent to converting u128 to u256
+        let amount = u256 { high: 0_u128, low: amount };
+
+        // TODO:
+        // IERC20.transfer(contract_address=link_token, recipient=payee, amount=amount);
+
+        // Reset payment
+        _reward_from_aggregator_round_id::write(oracle.index, latest_round_id);
+        _transmitters::write(transmitter, Oracle { index: oracle.index, payment_juels: 0_u128 });
+
+        OraclePaid(transmitter, payee, amount, link_token);
+    }
+
+    fn pay_oracles() {
+        let len = _oracles_len::read();
+        let latest_round_id = _latest_aggregator_round_id::read();
+        let link_token = _link_token::read();
+        pay_oracles_(len, latest_round_id, link_token)
+    }
+
+    fn pay_oracles_(index: usize, latest_round_id: u128, link_token: ContractAddress) {
+        if index == 0_usize {
+            return ();
+        }
+    
+        let transmitter = _transmitters_list::read(index);
+        pay_oracle(transmitter, latest_round_id, link_token);
+
+        pay_oracles_(index - 1_usize, latest_round_id, link_token)
+    }
+
+    #[external]
+    fn withdraw_funds(recipient: ContractAddress, amount: u256) {
+        // TODO:
+    }
+
+    fn total_link_due() -> u128 {
+        let len = _oracles_len::read();
+        let latest_round_id = _latest_aggregator_round_id::read();
+    
+        total_link_due_(len, latest_round_id, 0_u128, 0_u128)
+    }
+    fn total_link_due_(index: usize, latest_round_id: u128, total_rounds: u128, payments_juels: u128) -> u128 {
+        if index == 0_usize {
+            let billing = _billing::read();
+            return (total_rounds * billing.observation_payment_gjuels.into().try_into().unwrap() * GIGA) + payments_juels;
+        }
+
+        let transmitter = _transmitters_list::read(index);
+        let oracle = _transmitters::read(transmitter);
+        assert(oracle.index != 0_usize, ''); // 0 == undefined
+
+        let from_round_id = _reward_from_aggregator_round_id::read(oracle.index);
+        let rounds = latest_round_id - from_round_id;
+
+        total_link_due_(index - 1_usize, latest_round_id, total_rounds + rounds, payments_juels + oracle.payment_juels)
+    }
+
+    #[view]
+    fn link_available_for_payment() -> u128 {
+        let link_token = _link_token::read();
+        let contract_address = starknet::info::get_contract_address();
+
+        let balance = 0_u128;
+        // TODO:
+        // let (balance_: Uint256) = IERC20.balanceOf(
+        //     contract_address=link_token, account=contract_address
+        // );
+        // // entire link supply fits into u96 so this should not fail
+        // let (balance) = uint256_to_felt(balance_);
+
+        let due = total_link_due();
+        balance - due
+    }
 
     // --- Transmitter Payment
+
+    const MARGIN: u128 = 115_u128;
+
+    fn calculate_reimbursement(juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: Billing) -> u128 {
+        // // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
+        // // NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
+        // // gas_base = 14951, gas_per_signature = 13
+        // let exact_gas = config.gas_base + (signature_count * config.gas_per_signature);
+        // let (gas: felt, _) = unsigned_div_rem(exact_gas * MARGIN, 100);  // scale to 115% for some margin
+        // let amount = gas * gas_price;
+        // let amount_juels = amount * juels_per_fee_coin;
+        // amount_juels
+        0_u128
+    }
 
     // --- Payee Management
 
@@ -854,4 +975,59 @@ mod Aggregator {
         current: ContractAddress,
     ) {}
 
+    #[derive(Copy, Drop, Serde)]
+    struct PayeeConfig {
+        transmitter: ContractAddress,    
+        payee: ContractAddress,
+    }
+
+    #[external]
+    fn set_payees(payees: Array<PayeeConfig>) {
+        // TODO: Ownable.assert_only_owner()
+        let len = payees.len();
+        set_payee(payees, len)
+    }
+
+    fn set_payee(payees: Array<PayeeConfig>, len: usize) {
+        if len == 0_usize {
+            return ();
+        }
+
+        let payee = payees[len];
+
+        let current_payee = _payees::read(*payee.transmitter);
+        let is_unset = current_payee.is_zero();
+        let is_same = current_payee == *payee.payee;
+        assert(is_unset | is_same, 'payee already set');
+
+        _payees::write(*payee.transmitter, *payee.payee);
+
+        PayeeshipTransferred(*payee.transmitter, current_payee, *payee.payee);
+
+        set_payee(payees, len - 1_usize)
+    }
+
+    #[external]
+    fn transfer_payeeship(transmitter: ContractAddress, proposed: ContractAddress) {
+        assert(!proposed.is_zero(), 'cannot transfer to zero address');
+        let caller = starknet::info::get_caller_address();
+        let payee = _payees::read(transmitter);
+        assert(caller == payee, 'only current payee can update');
+        assert(caller != proposed, 'cannot transfer to self');
+
+        _proposed_payees::write(transmitter, proposed);
+        PayeeshipTransferRequested(transmitter, payee, proposed)
+    }
+
+    #[external]
+    fn accept_payeeship(transmitter: ContractAddress) {
+        let proposed = _proposed_payees::read(transmitter);
+        let caller = starknet::info::get_caller_address();
+        assert(caller == proposed, 'only proposed payee can accept');
+        let previous = _payees::read(transmitter);
+
+        _payees::write(transmitter, proposed);
+        _proposed_payees::write(transmitter, Zeroable::zero());
+        PayeeshipTransferred(transmitter, previous, caller)
+    }
 }
