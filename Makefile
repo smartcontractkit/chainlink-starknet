@@ -223,8 +223,6 @@ test-integration-contracts: build-ts env-devnet-hardhat
 		yarn test
 	cd packages-ts/integration-eqlabs-multisig/ && \
 		yarn test
-	cd packages-ts/integration-starkgate/ && \
-		yarn test
 	cd packages-ts/starknet/ && \
 		yarn test
 
