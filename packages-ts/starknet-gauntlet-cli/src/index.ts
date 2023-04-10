@@ -8,7 +8,6 @@ import {
 } from '@chainlink/starknet-gauntlet-example'
 import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
 import {
-  L1Commands as L1StarkgateCommands,
   L2Commands as L2StarkgateCommands,
   InspectionCommands as StarkgateInspectionCommands,
 } from '@chainlink/starknet-gauntlet-starkgate'
@@ -120,7 +119,7 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const L1ExecuteCommands = [...L1StarkgateCommands, ...L1EmergencyProtocolCommands]
+const L1ExecuteCommands = [...L1EmergencyProtocolCommands]
 const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
