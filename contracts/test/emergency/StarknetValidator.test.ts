@@ -100,7 +100,7 @@ describe('StarknetValidator', () => {
 
   beforeEach(async () => {
     // Deploy the L1 StarknetValidator
-    const starknetValidatorFactory = await ethers.getContractFactory('StarknetValidator', deployer)
+    starknetValidatorFactory = await ethers.getContractFactory('StarknetValidator', deployer)
     starknetValidator = await starknetValidatorFactory.deploy(
       mockStarknetMessaging.address,
       mockAccessController.address,
