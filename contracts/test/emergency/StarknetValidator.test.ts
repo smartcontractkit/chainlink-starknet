@@ -14,7 +14,7 @@ import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts
 import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { account, addCompilationToNetwork } from '@chainlink/starknet'
-import { StarkNetValidator__factory, StarkNetValidator } from '../../typechain-types'
+import { StarknetValidator__factory, StarknetValidator } from '../../typechain-types'
 
 describe('StarknetValidator', () => {
   /** Fake L2 target */
@@ -27,8 +27,8 @@ describe('StarknetValidator', () => {
   let eoaValidator: SignerWithAddress
   let alice: SignerWithAddress
 
-  let starknetValidatorFactory: StarkNetValidator__factory
-  let starknetValidator: StarkNetValidator
+  let starknetValidatorFactory: StarknetValidator__factory
+  let starknetValidator: StarknetValidator
   let mockStarknetMessagingFactory: ContractFactory
   let mockStarknetMessaging: Contract
   let mockGasPriceFeed: MockContract
