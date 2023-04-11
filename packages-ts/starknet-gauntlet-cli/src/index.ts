@@ -119,7 +119,7 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const L1ExecuteCommands = [...L1EmergencyProtocolCommands]
+const L1ExecuteCommands: any[] = [...L1EmergencyProtocolCommands]
 const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
