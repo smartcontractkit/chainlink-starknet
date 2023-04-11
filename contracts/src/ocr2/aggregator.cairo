@@ -53,6 +53,8 @@ mod Aggregator {
     use starknet::contract_address_const;
     use starknet::ContractAddressZeroable;
     use integer::U128IntoFelt252;
+    use integer::u128s_from_felt252;
+    use integer::U128sFromFelt252Result;
     use zeroable::Zeroable;
 
     use starknet::ContractAddress;
@@ -485,10 +487,11 @@ mod Aggregator {
         add_oracles(oracles, index, len - 1_usize, latest_round_id)
     }
 
-    // const DIGEST_MASK: felt252 = 2 ** (252 - 12) - 1;
-    // const PREFIX: felt252 = 4 * 2 ** (252 - 12);
-    const DIGEST_MASK: felt252 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    const PREFIX: felt252 =  0x4000000000000000000000000000000000000000000000000000000000000;
+    const SHIFT_128: felt252 = 0x100000000000000000000000000000000;
+    // 4 * 2 ** (124 - 12)
+    const HALF_PREFIX: u128 = 0x40000000000000000000000000000_u128;
+    // 2 ** (124 - 12) - 1
+    const HALF_DIGEST_MASK: u128 = 0xffffffffffffffffffffffffffff_u128;
 
     fn config_digest_from_data(
         chain_id: felt252,
@@ -515,11 +518,20 @@ mod Aggregator {
         state = LegacyHash::hash(state, offchain_config.len());
         state = LegacyHash::hash(state, offchain_config.span());
 
-        state
-        // TODO: clamp first two bytes with the config digest prefix
-        // NOTE: Cairo 1.0 missing bitwise operations on felt252
-        // let masked = state & DIGEST_MASK;
-        // masked + PREFIX
+        // since there's no bitwise ops on felt252, we split into two u128s and recombine.
+        // we only need to clamp and prefix the top bits.
+        let (top, bottom) = match u128s_from_felt252(state) {
+            U128sFromFelt252Result::Narrow(val) => {
+                // TODO: panic? theoretically possible to have only zeroes?
+                (0_u128, val)
+            },
+            U128sFromFelt252Result::Wide((val1, val2)) => (val1, val2)
+        };
+
+        let masked_top = (top & HALF_DIGEST_MASK) | HALF_PREFIX;
+        let masked = (masked_top.into() * SHIFT_128) + bottom.into();
+
+        masked
     }
 
     #[view]
