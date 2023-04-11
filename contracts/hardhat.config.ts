@@ -2,6 +2,8 @@ import { HardhatUserConfig } from 'hardhat/types'
 import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
+import 'solidity-coverage'
+import '@typechain/hardhat'
 
 const COMPILER_SETTINGS = {
   optimizer: {
