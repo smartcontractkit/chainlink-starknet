@@ -8,15 +8,15 @@ mod SimpleReadAccessController {
 
     #[constructor]
     fn constructor(owner_address: ContractAddress) {
-        // SimpleWriteAccessController::initializer(owner_address)
+        SimpleWriteAccessController::initializer(owner_address)
     }
 
     impl SimpleReadAccessController of AccessController {
         fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-            // let has_access = SimpleWriteAccessController::has_access(user, data);
-            // if has_access {
-            //     return true;
-            // }
+            let has_access = SimpleWriteAccessController::has_access(user, data);
+            if has_access {
+                return true;
+            }
 
             if user.is_zero() {
                 return true;
@@ -26,12 +26,12 @@ mod SimpleReadAccessController {
         }
 
         fn check_access(user: ContractAddress) {
-            // let allowed = SimpleWriteAccessController::has_access(user, ArrayTrait::new());
-            // assert(allowed, 'address does not have access');
+            let allowed = SimpleWriteAccessController::has_access(user, ArrayTrait::new());
+            assert(allowed, 'address does not have access');
         }
     }
 
-    #[external]
+    #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
         SimpleReadAccessController::has_access(user, data)
     }
@@ -39,5 +39,13 @@ mod SimpleReadAccessController {
     #[external]
     fn check_access(user: ContractAddress) {
         SimpleReadAccessController::check_access(user)
+    }
+
+    ///
+    /// Internals
+    ///
+
+    fn initializer(owner_address: ContractAddress) {
+        SimpleWriteAccessController::initializer(owner_address);
     }
 }

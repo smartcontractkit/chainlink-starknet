@@ -2,6 +2,7 @@
 mod SimpleWriteAccessController {
     use starknet::ContractAddress;
     use chainlink::libraries::access_controller::AccessController;
+    use chainlink::libraries::ownable::Ownable;
 
     struct Storage {
         _check_enabled: bool,
@@ -53,12 +54,12 @@ mod SimpleWriteAccessController {
 
     #[external]
     fn check_access(user: ContractAddress) {
-        SimpleWriteAccessController::check_access(user)
+        SimpleWriteAccessController::check_access(user);
     }
 
     #[external]
     fn add_access(user: ContractAddress) {
-        // TODO: Ownable.assert_only_owner();
+        Ownable::assert_only_owner();
         let has_access = _access_list::read(user);
         if !has_access {
             _access_list::write(user, true);
@@ -68,7 +69,7 @@ mod SimpleWriteAccessController {
 
     #[external]
     fn remove_access(user: ContractAddress) {
-        // TODO: Ownable.assert_only_owner();
+        Ownable::assert_only_owner();
         let has_access = _access_list::read(user);
         if has_access {
             _access_list::write(user, false);
@@ -78,7 +79,7 @@ mod SimpleWriteAccessController {
 
     #[external]
     fn enable_access_check() {
-        // TODO: Ownable.assert_only_owner();
+        Ownable::assert_only_owner();
         let check_enabled = _check_enabled::read();
         if !check_enabled {
             _check_enabled::write(true);
@@ -88,7 +89,7 @@ mod SimpleWriteAccessController {
 
     #[external]
     fn disable_access_check() {
-        // TODO: Ownable.assert_only_owner();
+        Ownable::assert_only_owner();
         let check_enabled = _check_enabled::read();
         if check_enabled {
             _check_enabled::write(false);
@@ -101,7 +102,7 @@ mod SimpleWriteAccessController {
     ///
 
     fn initializer(owner_address: ContractAddress) {
-        // TODO: Ownable.initializer(owner_address)
+        Ownable::initializer(owner_address);
         _check_enabled::write(true);
     }
 }
