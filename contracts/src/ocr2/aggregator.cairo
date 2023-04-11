@@ -73,6 +73,7 @@ mod Aggregator {
     use hash::LegacyHash;
     use super::SpanLegacyHash;
     use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
 
     // NOTE: remove duplication once we can directly use the trait
     #[abi]
@@ -214,7 +215,7 @@ mod Aggregator {
 
     fn require_access() {
         let caller = starknet::info::get_caller_address();
-        // TODO: assert(SimpleReadAccessController.check_access(address));
+        SimpleReadAccessController::check_access(caller);
     }
 
     impl Aggregator of IAggregator {
@@ -271,8 +272,7 @@ mod Aggregator {
         decimals: u8,
         description: felt252
     ) {
-        Ownable::initializer(owner);
-        // TODO: SimpleReadAccessController.initialize
+        SimpleReadAccessController::initializer(owner); // also initializes ownable
         _link_token::write(link);
         _billing_access_controller::write(billing_access_controller);
 
@@ -309,6 +309,18 @@ mod Aggregator {
     #[external]
     fn renounce_ownership() {
         Ownable::renounce_ownership()
+    }
+
+    // -- SimpleReadAccessController --
+
+    #[external]
+    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
+        SimpleReadAccessController::has_access(user, data)
+    }
+
+    #[external]
+    fn check_access(user: ContractAddress) {
+        SimpleReadAccessController::check_access(user)
     }
 
     // --- Validation ---
@@ -519,6 +531,7 @@ mod Aggregator {
         (config_count, block_number, config_digest)
     }
 
+    // TODO:
     // #[view]
     // fn transmitters() {
     //
@@ -576,7 +589,6 @@ mod Aggregator {
             gas_price
         );
 
-        // TODO: assert error here
         verify_signatures(msg, signatures, integer::u256_from_felt252(0));
 
         // report():
@@ -1020,9 +1032,9 @@ mod Aggregator {
     const MARGIN: u128 = 115_u128;
 
     fn calculate_reimbursement(juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: Billing) -> u128 {
-        // // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
-        // // NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
-        // // gas_base = 14951, gas_per_signature = 13
+        // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
+        // NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
+        // gas_base = 14951, gas_per_signature = 13
         // let exact_gas = config.gas_base + (signature_count * config.gas_per_signature);
         // let (gas: felt, _) = unsigned_div_rem(exact_gas * MARGIN, 100);  // scale to 115% for some margin
         // let amount = gas * gas_price;
