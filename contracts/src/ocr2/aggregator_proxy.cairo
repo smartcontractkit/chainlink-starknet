@@ -45,8 +45,9 @@ mod AggregatorProxy {
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
+    use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
 
-    // TODO: should these use u256 instead?
     const SHIFT: felt252 = 0x100000000000000000000000000000000_felt252;
     const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff_felt252;
 
@@ -106,8 +107,7 @@ mod AggregatorProxy {
             }
         }
         fn round_data(round_id: felt252) -> Round {
-            // TODO: need to check how felt252 gets split here - we need phase id from initial 124 bits,
-            // and round_id with last 128.
+            // TODO: panic if Narrow since phase_id should never be 0
             let (phase_id, round_id) = match u128s_from_felt252(round_id) {
                 U128sFromFelt252Result::Narrow(val) => (0_u128, val),
                 U128sFromFelt252Result::Wide((val1, val2)) => (val1, val2)
@@ -149,13 +149,54 @@ mod AggregatorProxy {
 
     #[constructor]
     fn constructor(owner: ContractAddress, address: ContractAddress) {
-        // TODO: SimpleReadAccessController.initializer(owner)
+        SimpleReadAccessController::initializer(owner);
         _set_aggregator(address);
     }
 
+    // --- Ownership ---
+
+    #[view]
+    fn owner() -> ContractAddress {
+        Ownable::owner()
+    }
+
+    #[view]
+    fn proposed_owner() -> ContractAddress {
+        Ownable::proposed_owner()
+    }
+
+    #[external]
+    fn transfer_ownership(new_owner: ContractAddress) {
+        Ownable::transfer_ownership(new_owner)
+    }
+
+    #[external]
+    fn accept_ownership() {
+        Ownable::accept_ownership()
+    }
+
+    #[external]
+    fn renounce_ownership() {
+        Ownable::renounce_ownership()
+    }
+
+    // -- SimpleReadAccessController --
+
+    #[external]
+    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
+        SimpleReadAccessController::has_access(user, data)
+    }
+
+    #[external]
+    fn check_access(user: ContractAddress) {
+        SimpleReadAccessController::check_access(user)
+    }
+
+    //
+
     #[external]
     fn propose_aggregator(address: ContractAddress) {
-        // TODO: Ownable.assert_only_owner()
+        Ownable::assert_only_owner();
         assert(!address.is_zero(), 'proposed address is 0');
         _proposed_aggregator::write(address);
 
@@ -165,7 +206,7 @@ mod AggregatorProxy {
 
     #[external]
     fn confirm_aggregator(address: ContractAddress) {
-        // TODO: Ownable.assert_only_owner()
+        Ownable::assert_only_owner();
         assert(!address.is_zero(), 'confirm address is 0');
         let phase = _current_phase::read();
         let previous = phase.aggregator;
@@ -239,9 +280,7 @@ mod AggregatorProxy {
     }
 
     fn _require_access() {
-      // TODO: access check
-      //
-      // let address = get_caller_address();
-      // SimpleReadAccessController.check_access(address);
+       let caller = starknet::info::get_caller_address();
+       SimpleReadAccessController::check_access(caller);
     }
 }
