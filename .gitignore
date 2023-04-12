@@ -13,6 +13,8 @@ bin
 
 .DS_Store
 .temp/
+coverage/
+coverage.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

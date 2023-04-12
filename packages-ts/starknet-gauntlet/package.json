@@ -25,6 +25,7 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
+    "@chainlink/evm-gauntlet": "^0.0.2",
     "@chainlink/gauntlet-core": "0.3.1",
     "cross-fetch": "^3.1.5"
   }

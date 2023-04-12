@@ -11,6 +11,7 @@ import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
+import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { account, addCompilationToNetwork } from '@chainlink/starknet'
 
@@ -25,6 +26,7 @@ describe('StarknetValidator', () => {
   let eoaValidator: SignerWithAddress
   let alice: SignerWithAddress
 
+  let starknetValidatorFactory: ContractFactory
   let starknetValidator: Contract
   let mockStarknetMessagingFactory: ContractFactory
   let mockStarknetMessaging: Contract
@@ -97,7 +99,7 @@ describe('StarknetValidator', () => {
 
   beforeEach(async () => {
     // Deploy the L1 StarknetValidator
-    const starknetValidatorFactory = await ethers.getContractFactory('StarknetValidator', deployer)
+    starknetValidatorFactory = await ethers.getContractFactory('StarknetValidator', deployer)
     starknetValidator = await starknetValidatorFactory.deploy(
       mockStarknetMessaging.address,
       mockAccessController.address,
@@ -113,9 +115,8 @@ describe('StarknetValidator', () => {
 
   describe('#constructor', () => {
     it('reverts when the StarknetMessaging address is zero', async () => {
-      const factory = await ethers.getContractFactory('StarknetValidator', deployer)
       await expect(
-        factory.deploy(
+        starknetValidatorFactory.deploy(
           ethers.constants.AddressZero,
           mockAccessController.address,
           mockGasPriceFeed.address,
@@ -127,9 +128,8 @@ describe('StarknetValidator', () => {
     })
 
     it('reverts when the L2 feed is zero', async () => {
-      const factory = await ethers.getContractFactory('StarknetValidator', deployer)
       await expect(
-        factory.deploy(
+        starknetValidatorFactory.deploy(
           mockStarknetMessaging.address,
           mockAccessController.address,
           mockGasPriceFeed.address,
@@ -141,9 +141,8 @@ describe('StarknetValidator', () => {
     })
 
     it('reverts when the Aggregator address is zero', async () => {
-      const factory = await ethers.getContractFactory('StarknetValidator', deployer)
       await expect(
-        factory.deploy(
+        starknetValidatorFactory.deploy(
           mockStarknetMessaging.address,
           mockAccessController.address,
           mockGasPriceFeed.address,
@@ -155,9 +154,8 @@ describe('StarknetValidator', () => {
     })
 
     it('reverts when the L1 Gas Price feed address is zero', async () => {
-      const factory = await ethers.getContractFactory('StarknetValidator', deployer)
       await expect(
-        factory.deploy(
+        starknetValidatorFactory.deploy(
           mockStarknetMessaging.address,
           mockAccessController.address,
           ethers.constants.AddressZero,
@@ -190,7 +188,7 @@ describe('StarknetValidator', () => {
       expect(BigInt(actual)).to.equal(expected)
 
       const computedActual = await starknetValidator.SELECTOR_STARK_UPDATE_STATUS()
-      expect(BigInt(computedActual)).to.equal(expected)
+      expect(computedActual).to.equal(expected)
     })
   })
 
@@ -198,6 +196,43 @@ describe('StarknetValidator', () => {
     describe('when called by account with no access', () => {
       it('reverts', async () => {
         await expect(starknetValidator.connect(alice).retry()).to.be.revertedWith('No access')
+      })
+    })
+
+    describe('when called by account with access', () => {
+      it('transaction succeeds', async () => {
+        const waffleMockStarknetMessaging = await deployMockContract(deployer, starknetMessagingAbi)
+        await waffleMockStarknetMessaging.mock.sendMessageToL2.returns(
+          ethers.utils.formatBytes32String('0'),
+          0,
+        )
+        await mockAggregator.mock.latestRoundData.returns(
+          '0' /** roundId */,
+          1 /** answer */,
+          '0' /** startedAt */,
+          '0' /** updatedAt */,
+          '0' /** answeredInRound */,
+        )
+        await mockGasPriceFeed.mock.latestRoundData.returns(
+          '0' /** roundId */,
+          1 /** answer */,
+          '0' /** startedAt */,
+          '0' /** updatedAt */,
+          '0' /** answeredInRound */,
+        )
+
+        const starknetValidator = await starknetValidatorFactory.deploy(
+          waffleMockStarknetMessaging.address,
+          mockAccessController.address,
+          mockGasPriceFeed.address,
+          mockAggregator.address,
+          l2Contract.address,
+          0,
+        )
+
+        await starknetValidator.addAccess(deployer.address)
+
+        await starknetValidator.retry()
       })
     })
   })
@@ -223,6 +258,13 @@ describe('StarknetValidator', () => {
         const newACAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
         await starknetValidator.connect(deployer).setConfigAC(newACAddr)
         expect(await starknetValidator.getConfigAC()).to.equal(newACAddr)
+      })
+
+      it('no-op if new address equals previous address', async () => {
+        const tx = await starknetValidator.setConfigAC(mockAccessController.address)
+        const receipt = await tx.wait()
+        expect(receipt.events).is.empty
+        expect(await starknetValidator.getConfigAC()).to.equal(mockAccessController.address)
       })
     })
   })
@@ -253,7 +295,16 @@ describe('StarknetValidator', () => {
       })
 
       it('sets the source aggregator address', async () => {
-        await starknetValidator.connect(deployer).setSourceAggregator(mockAggregator.address)
+        expect(await starknetValidator.getSourceAggregator()).to.hexEqual(mockAggregator.address)
+      })
+
+      it('does nothing if new address equal to previous', async () => {
+        const tx = await starknetValidator
+          .connect(deployer)
+          .setSourceAggregator(mockAggregator.address)
+        const receipt = await tx.wait()
+        expect(receipt.events).to.be.empty
+
         expect(await starknetValidator.getSourceAggregator()).to.hexEqual(mockAggregator.address)
       })
     })
