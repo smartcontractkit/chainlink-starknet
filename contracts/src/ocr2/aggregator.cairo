@@ -18,6 +18,7 @@ trait IAggregator {
 
 use array::ArrayTrait;
 use array::SpanTrait;
+use option::OptionTrait;
 use hash::LegacyHash;
 
 fn hash_span<
@@ -29,6 +30,7 @@ fn hash_span<
     match item {
         Option::Some(x) => {
             let s = LegacyHash::hash(state, *x);
+            gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
             hash_span(s, value)
         },
         Option::None(_) => state,
@@ -454,6 +456,7 @@ mod Aggregator {
         let transmitter = _transmitters_list::read(n);
         _transmitters::write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
 
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         remove_oracles(n - 1_usize)
     }
 
@@ -484,6 +487,7 @@ mod Aggregator {
 
         _reward_from_aggregator_round_id::write(index, latest_round_id);
 
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         add_oracles(oracles, index, len - 1_usize, latest_round_id)
     }
 
@@ -723,6 +727,7 @@ mod Aggregator {
         // let (shift) = pow(2, 8 * index);
         // let signed_count = signed_count + shift;
 
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         verify_signatures(msg, signatures, signed_count)
     }
 
@@ -973,6 +978,7 @@ mod Aggregator {
         let transmitter = _transmitters_list::read(index);
         pay_oracle(transmitter, latest_round_id, link_token);
 
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         pay_oracles_(index - 1_usize, latest_round_id, link_token)
     }
 
@@ -1021,6 +1027,7 @@ mod Aggregator {
         let from_round_id = _reward_from_aggregator_round_id::read(oracle.index);
         let rounds = latest_round_id - from_round_id;
 
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         total_link_due_(index - 1_usize, latest_round_id, total_rounds + rounds, payments_juels + oracle.payment_juels)
     }
 
@@ -1101,6 +1108,7 @@ mod Aggregator {
 
         PayeeshipTransferred(payee.transmitter, current_payee, payee.payee);
 
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         set_payee(payees)
     }
 
