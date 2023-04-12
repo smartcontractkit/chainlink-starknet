@@ -36,6 +36,21 @@ fn hash_span<
         Option::None(_) => state,
     }
 }
+
+fn pow(n: u128, m: u128) -> u128 {
+    if m == 0_u128 {
+        return 1_u128;
+    }
+    gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
+    let half = pow(n, m / 2_u128);
+    let total = half * half;
+    if (m % 2_u128) == 1_u128 {
+        total * n
+    } else {
+        total
+    }
+}
+
 // TODO: wrap hash_span
 impl SpanLegacyHash<
     T,
@@ -76,6 +91,7 @@ mod Aggregator {
     use box::BoxTrait;
     use hash::LegacyHash;
     use super::SpanLegacyHash;
+    use super::pow;
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
 
@@ -605,7 +621,15 @@ mod Aggregator {
             gas_price
         );
 
-        verify_signatures(msg, ref signatures, integer::u256_from_felt252(0));
+        // Check all signatures are unique (we only saw each pubkey once)
+        // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
+        // ensures we have enough bits to store a count for each oracle. Whenever the MAX_ORACLES
+        // is updated, the signed_count parameter should be reconsidered.
+        //
+        // Although 31 bits is enough, we use a u128 here for simplicity because BitAnd and BitOr
+        // operators are defined only for u128 and u256.
+        assert(MAX_ORACLES == 31_u32, '');
+        verify_signatures(msg, ref signatures, 0_u128);
 
         // report():
 
@@ -690,28 +714,22 @@ mod Aggregator {
     }
 
     // TODO: signed_count feels more inefficient as u256
-    fn verify_signatures(msg: felt252, ref signatures: Array<Signature>, signed_count: u256) {
+    fn verify_signatures(msg: felt252, ref signatures: Array<Signature>, mut signed_count: u128) {
         let signature = match signatures.pop_front() {
             Option::Some(signature) => signature,
             Option::None(_) => {
                 // No more signatures left!
-
-                // Check all signatures are unique (we only saw each pubkey once)
-                // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
-                // ensures 31 bytes is enough to store a count for each oracle. Whenever the MAX_ORACLES
-                // is updated the mask below should also be updated.
-                assert(MAX_ORACLES == 31_u32, '');
-                // TODO: 
-                // let (masked) = bitwise_and(
-                //     signed_count, 0x01010101010101010101010101010101010101010101010101010101010101
-                // );
-                // assert(signed_count == masked, 'duplicate signer');
                 return ();
             }
         };
 
         let index = _signers::read(signature.public_key);
         assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
+
+        let indexed_bit = pow(2_u128, index.into().try_into().unwrap() - 1_u128);
+        let prev_signed_count = signed_count;
+        signed_count = signed_count | indexed_bit;
+        assert(prev_signed_count != signed_count, 'duplicate signer');
 
         let is_valid = ecdsa::check_ecdsa_signature(
             msg,
@@ -721,11 +739,6 @@ mod Aggregator {
         );
 
         assert(is_valid, '');
-
-        // signed_count + 1 << (8 * index)
-        // TODO:
-        // let (shift) = pow(2, 8 * index);
-        // let signed_count = signed_count + shift;
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         verify_signatures(msg, ref signatures, signed_count)
