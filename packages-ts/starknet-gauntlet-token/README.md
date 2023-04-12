@@ -1,4 +1,4 @@
-# Gauntlet Starknet Commands for Starkgate Contracts
+# Gauntlet Starknet Commands for LINK Token
 
 ## Token
 
