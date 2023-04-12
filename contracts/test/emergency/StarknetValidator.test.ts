@@ -131,7 +131,7 @@ describe('StarknetValidator', () => {
     it('reverts when the L2 feed is zero', async () => {
       await expect(
         starknetValidatorFactory.deploy(
-          mockStarkNetMessaging.address,
+          mockStarknetMessaging.address,
           mockAccessController.address,
           mockGasPriceFeed.address,
           mockAggregator.address,
@@ -144,7 +144,7 @@ describe('StarknetValidator', () => {
     it('reverts when the Aggregator address is zero', async () => {
       await expect(
         starknetValidatorFactory.deploy(
-          mockStarkNetMessaging.address,
+          mockStarknetMessaging.address,
           mockAccessController.address,
           mockGasPriceFeed.address,
           ethers.constants.AddressZero,
@@ -157,7 +157,7 @@ describe('StarknetValidator', () => {
     it('reverts when the L1 Gas Price feed address is zero', async () => {
       await expect(
         starknetValidatorFactory.deploy(
-          mockStarkNetMessaging.address,
+          mockStarknetMessaging.address,
           mockAccessController.address,
           ethers.constants.AddressZero,
           mockAggregator.address,
@@ -202,8 +202,8 @@ describe('StarknetValidator', () => {
 
     describe('when called by account with access', () => {
       it('transaction succeeds', async () => {
-        const waffleMockStarkNetMessaging = await deployMockContract(deployer, starknetMessagingAbi)
-        await waffleMockStarkNetMessaging.mock.sendMessageToL2.returns(
+        const waffleMockStarknetMessaging = await deployMockContract(deployer, starknetMessagingAbi)
+        await waffleMockStarknetMessaging.mock.sendMessageToL2.returns(
           ethers.utils.formatBytes32String('0'),
           0,
         )
@@ -223,7 +223,7 @@ describe('StarknetValidator', () => {
         )
 
         const starknetValidator = await starknetValidatorFactory.deploy(
-          waffleMockStarkNetMessaging.address,
+          waffleMockStarknetMessaging.address,
           mockAccessController.address,
           mockGasPriceFeed.address,
           mockAggregator.address,
