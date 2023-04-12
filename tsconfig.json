@@ -22,10 +22,13 @@
       "path": "./packages-ts/starknet-gauntlet-example"
     },
     {
-      "path": "./packages-ts/starknet-gauntlet-starkgate"
+      "path": "./packages-ts/starknet-gauntlet-token"
     },
     {
       "path": "./packages-ts/starknet-gauntlet-ocr2"
+    },
+    {
+      "path": "./packages-ts/starknet-gauntlet-emergency-protocol"
     },
     {
       "path": "./packages-ts/starknet-gauntlet-ledger"

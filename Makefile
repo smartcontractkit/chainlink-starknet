@@ -223,8 +223,6 @@ test-integration-contracts: build-ts env-devnet-hardhat
 		yarn test
 	cd packages-ts/integration-eqlabs-multisig/ && \
 		yarn test
-	cd packages-ts/integration-starkgate/ && \
-		yarn test
 	cd packages-ts/starknet/ && \
 		yarn test
 
@@ -245,7 +243,9 @@ test-integration-gauntlet: build-ts env-devnet-hardhat-down
 		yarn test
 	cd packages-ts/starknet-gauntlet-oz/ && \
 		yarn test
-	cd packages-ts/starknet-gauntlet-starkgate/ && \
+	cd packages-ts/starknet-gauntlet-token/ && \
+		yarn test
+	cd packages-ts/starknet-gauntlet-emergency-protocol/ && \
 		yarn test
 
 .PHONY: test-ts

@@ -1,6 +1,7 @@
 import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
 import { IStarknetProvider } from '../provider'
 import { IStarknetWallet } from '../wallet'
+import { makeProvider } from '@chainlink/evm-gauntlet'
 
 export interface Env {
   providerUrl: string

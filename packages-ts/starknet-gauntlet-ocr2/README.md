@@ -11,7 +11,7 @@ ACCOUNT=0x...
 LINK=0x...
 ```
 
-Note: The [token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/starknet-gauntlet-starkgate) should only be deployed once and the same contract should be used for very aggregator
+Note: The [token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/starknet-gauntlet-token) should only be deployed once and the same contract should be used for very aggregator
 
 ## Deploy an Access Controller Contract
 
@@ -27,7 +27,7 @@ This command will generate a new Access Controller address and will give the det
 
 Run the following command substituting the following attributes:
 
-1. <TOKEN_CONTRACT> with the [deployed token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/starknet-gauntlet-starkgate)
+1. <TOKEN_CONTRACT> with the [deployed token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/starknet-gauntlet-token)
 2. <ACCESS_CONTROLLER_CONTRACT> with the access controller contract you deployed in the previous section
 
 ```bash

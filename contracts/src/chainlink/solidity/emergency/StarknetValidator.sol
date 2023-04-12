@@ -119,9 +119,9 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @return bool true if transaction succeeds.
    */
   function validate(
-    uint256, /* previousRoundId */
-    int256, /* previousAnswer */
-    uint256, /* currentRoundId */
+    uint256 /* previousRoundId */,
+    int256 /* previousAnswer */,
+    uint256 /* currentRoundId */,
     int256 currentAnswer
   ) external override checkAccess returns (bool) {
     return _sendUpdateMessageToL2(currentAnswer);
@@ -177,7 +177,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    */
   function _selectorStarknet(string memory fn) internal pure returns (uint256) {
     bytes32 digest = keccak256(abi.encodePacked(fn));
-    return uint256(digest) % 2**250; // get last 250 bits
+    return uint256(digest) % 2 ** 250; // get last 250 bits
   }
 
   /**
