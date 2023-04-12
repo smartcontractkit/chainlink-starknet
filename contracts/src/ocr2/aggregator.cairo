@@ -577,7 +577,7 @@ mod Aggregator {
         observations: Array<u128>,
         juels_per_fee_coin: u128,
         gas_price: u128,
-        signatures: Array<Signature>,
+        mut signatures: Array<Signature>,
     ) {
         let signatures_len = signatures.len();
     
@@ -605,7 +605,7 @@ mod Aggregator {
             gas_price
         );
 
-        verify_signatures(msg, signatures, integer::u256_from_felt252(0));
+        verify_signatures(msg, ref signatures, integer::u256_from_felt252(0));
 
         // report():
 
@@ -690,7 +690,7 @@ mod Aggregator {
     }
 
     // TODO: signed_count feels more inefficient as u256
-    fn verify_signatures(msg: felt252, mut signatures: Array<Signature>, signed_count: u256) {
+    fn verify_signatures(msg: felt252, ref signatures: Array<Signature>, signed_count: u256) {
         let signature = match signatures.pop_front() {
             Option::Some(signature) => signature,
             Option::None(_) => {
@@ -728,7 +728,7 @@ mod Aggregator {
         // let signed_count = signed_count + shift;
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        verify_signatures(msg, signatures, signed_count)
+        verify_signatures(msg, ref signatures, signed_count)
     }
 
     #[view]
