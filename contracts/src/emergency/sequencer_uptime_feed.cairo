@@ -43,7 +43,7 @@ mod SequencerUptimeFeed {
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
 
-    #[derive(Copy, Drop, Serde, PartialEq)]
+    #[derive(Copy, Drop, Serde)]
     struct RoundTransmission {
         answer: bool,
         block_num: u64,
