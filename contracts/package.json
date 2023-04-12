@@ -12,21 +12,18 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@ethereum-waffle/mock-contract": "^4.0.4",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@shardlabs/starknet-hardhat-plugin": "^0.7.1",
-    "@typechain/ethers-v5": "^10.2.0",
-    "@typechain/hardhat": "^6.1.5",
     "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",
     "cairo-ls": "^0.0.4",
     "chai": "^4.3.6",
-    "@ethereum-waffle/mock-contract": "^4.0.4",
     "ethers": "^5.6.8",
     "hardhat": "^2.10.2",
-    "solidity-coverage": "^0.8.2",
-    "typechain": "^8.1.1"
+    "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.2",
