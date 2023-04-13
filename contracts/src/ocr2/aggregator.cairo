@@ -640,7 +640,7 @@ mod Aggregator {
         _latest_epoch_and_round::write(report_context.epoch_and_round);
 
         let median_idx = observations_len / 2_usize;
-        let median = observations[median_idx];
+        let median = *observations[median_idx];
 
         // TODO: Validate median in min-max range
 
@@ -653,7 +653,7 @@ mod Aggregator {
         _transmissions::write(
             round_id,
             Transmission {
-                answer: *median,
+                answer: median,
                 block_num: block_info.block_number,
                 observation_timestamp,
                 transmission_timestamp: block_info.block_timestamp,
@@ -669,7 +669,7 @@ mod Aggregator {
 
         NewTransmission(
             round_id,
-            *median,
+            median,
              caller,
             observation_timestamp,
             observers,
