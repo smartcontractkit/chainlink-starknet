@@ -12,7 +12,7 @@ impl Felt252TryIntoBool of TryInto::<felt252, bool> {
 
 impl BoolIntoFelt252 of Into::<bool, felt252> {
     fn into(self: bool) -> felt252 {
-        if (self) {
+        if self {
             return 1;
         }
         return 0;
@@ -41,11 +41,11 @@ mod SequencerUptimeFeed {
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
     use chainlink::ocr2::aggregator::Round;
-    use chainlink::ocr2::aggregator::IAggregator; 
+    use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Aggregator::Transmission;
     use chainlink::ocr2::aggregator::Aggregator::TransmissionStorageAccess;
 
-    const ETH_ADDRESS_BOUND: felt252  = 0x10000000000000000000000000000000000000000; // 2**160
+    const ETH_ADDRESS_BOUND: felt252 = 0x10000000000000000000000000000000000000000; // 2**160
 
     struct Storage {
         // l1 sender is an ethereum address
@@ -65,7 +65,9 @@ mod SequencerUptimeFeed {
     fn AnswerUpdated(current: u128, round_id: u128, timestamp: u64) {}
 
     #[event]
-    fn UpdateIgnored(latest_status: u128, latest_timestamp: u64, incoming_status: u128, incoming_timestamp: u64) {}
+    fn UpdateIgnored(
+        latest_status: u128, latest_timestamp: u64, incoming_status: u128, incoming_timestamp: u64
+    ) {}
 
     #[event]
     fn L1SenderTransferred(from_address: felt252, to_address: felt252) {}
@@ -80,7 +82,7 @@ mod SequencerUptimeFeed {
                 answer: round_transmission.answer,
                 block_num: round_transmission.block_num,
                 started_at: round_transmission.observation_timestamp,
-                updated_at: round_transmission.transmission_timestamp,   
+                updated_at: round_transmission.transmission_timestamp,
             }
         }
 
@@ -93,7 +95,7 @@ mod SequencerUptimeFeed {
                 answer: round_transmission.answer,
                 block_num: round_transmission.block_num,
                 started_at: round_transmission.observation_timestamp,
-                updated_at: round_transmission.transmission_timestamp,   
+                updated_at: round_transmission.transmission_timestamp,
             }
         }
 
@@ -122,12 +124,14 @@ mod SequencerUptimeFeed {
         let latest_round_id = _latest_round_id::read();
         let latest_round = _round_transmissions::read(latest_round_id);
 
-        if (timestamp <= latest_round.observation_timestamp) {
-            UpdateIgnored(latest_round.answer, latest_round.transmission_timestamp, status, timestamp);
+        if timestamp <= latest_round.observation_timestamp {
+            UpdateIgnored(
+                latest_round.answer, latest_round.transmission_timestamp, status, timestamp
+            );
             return ();
         }
 
-        if (latest_round.answer == status) {
+        if latest_round.answer == status {
             _update_round(latest_round_id, latest_round);
         } else {
             // only increment round when status flips
@@ -142,12 +146,12 @@ mod SequencerUptimeFeed {
 
         // convert both to u256 (felts don't implement PartialOrd)
         assert(address.into() < ETH_ADDRESS_BOUND.into(), 'invalid eth address');
-    
+
         assert(address != 0, '0 address not allowed');
 
         let old_address = _l1_sender::read();
 
-        if (old_address != address) {
+        if old_address != address {
             _l1_sender::write(address);
             L1SenderTransferred(old_address, address);
         }
@@ -226,7 +230,7 @@ mod SequencerUptimeFeed {
         SimpleReadAccessController::has_access(user, data)
     }
 
-     #[external]
+    #[external]
     fn check_access(user: ContractAddress) {
         SimpleReadAccessController::check_access(user)
     }
@@ -245,7 +249,7 @@ mod SequencerUptimeFeed {
         SimpleWriteAccessController::remove_access(user)
     }
 
-     #[external]
+    #[external]
     fn enable_access_check() {
         SimpleWriteAccessController::enable_access_check()
     }
@@ -262,7 +266,7 @@ mod SequencerUptimeFeed {
 
     fn require_access() {
         let sender = starknet::info::get_caller_address();
-         SimpleReadAccessController::check_access(sender);
+        SimpleReadAccessController::check_access(sender);
     }
 
     fn initializer(initial_status: u128, owner_address: ContractAddress) {
