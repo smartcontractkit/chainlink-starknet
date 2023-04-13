@@ -1,4 +1,4 @@
-BIN_DIR = bin
+BIN_DIR = $(abspath bin)
 export GOPATH ?= $(shell go env GOPATH)
 export GO111MODULE ?= on
 
@@ -255,6 +255,29 @@ test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
 test-ts-contracts: build-ts-contracts build-ts-workspace env-devnet-hardhat
 	cd contracts/ && \
 		yarn test
+
+.PHONY: build-cairo-test
+# TODO: we could use cargo build --out-dir when stabilized
+build-cairo-test:
+	mkdir -p $(BIN_DIR) && \
+	cd vendor/cairo && \
+	cargo build --release --bin cairo-test && \
+	ln -sf ../vendor/cairo/target/release/cairo-test $(BIN_DIR)
+
+.PHONY: build-scarb
+build-scarb:
+	mkdir -p $(BIN_DIR) && \
+	cd vendor/scarb && \
+	cargo build --release --bin scarb && \
+	ln -sf ../vendor/scarb/target/release/scarb $(BIN_DIR)
+
+.PHONY: build-contracts
+build-contracts: build-scarb
+	cd contracts && PATH="$(BIN_DIR)" scarb build
+
+.PHONY: test-cairo-contracts
+test-cairo-contracts: build-cairo-test build-scarb
+	cd contracts && PATH="$(BIN_DIR)" scarb run test
 
 # TODO: this script needs to be replaced with a predefined K8s enviroment
 .PHONY: env-devnet-hardhat
