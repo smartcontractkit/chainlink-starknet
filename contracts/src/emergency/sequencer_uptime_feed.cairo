@@ -1,10 +1,10 @@
 impl Felt252TryIntoBool of TryInto::<felt252, bool> {
     fn try_into(self: felt252) -> Option<bool> {
         if self == 0 {
-            return Option::Some(false);
+            Option::Some(false);
         }
         if self == 1 {
-            return Option::Some(true);
+            Option::Some(true);
         }
         Option::None(())
     }
@@ -41,99 +41,46 @@ mod SequencerUptimeFeed {
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
     use chainlink::ocr2::aggregator::Round;
-    use chainlink::ocr2::aggregator::IAggregator;
+    use chainlink::ocr2::aggregator::IAggregator; 
+    use chainlink::ocr2::aggregator::Aggregator::Transmission;
+    use chainlink::ocr2::aggregator::Aggregator::TransmissionStorageAccess;
 
-    #[derive(Copy, Drop, Serde)]
-    struct RoundTransmission {
-        answer: bool,
-        block_num: u64,
-        started_at: u64,
-        updated_at: u64        
-    }
-
-    impl RoundTransmissionAccess of StorageAccess::<RoundTransmission> {
-        fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<RoundTransmission> {
-            Result::Ok(
-                RoundTransmission {
-                    answer: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
-                    block_num: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
-                    started_at: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 2_u8)
-                    )?.try_into().unwrap(),
-                    updated_at: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 3_u8)
-                    )?.try_into().unwrap(),
-                }
-            )
-        }
-
-        fn write(
-            address_domain: u32, base: StorageBaseAddress, value: RoundTransmission
-        ) -> SyscallResult::<()> {
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 0_u8),
-                value.answer.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 1_u8),
-                value.block_num.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 2_u8),
-                value.started_at.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 3_u8),
-                value.updated_at.into()
-            )
-        }
-    }
-
+    const ETH_ADDRESS_BOUND: felt252  = 0x10000000000000000000000000000000000000000; // 2**160
 
     struct Storage {
         // l1 sender is an ethereum address
-        _l1_sender: u256,
+        _l1_sender: felt252,
         // maps round id to round transmission
-        _round_transmissions: LegacyMap<u128, RoundTransmission>,
+        _round_transmissions: LegacyMap<u128, Transmission>,
         _latest_round_id: u128,
     }
 
     #[event]
-    fn RoundUpdated(status: bool, updated_at: u64) {}
+    fn RoundUpdated(status: u128, updated_at: u64) {}
 
     #[event]
     fn NewRound(round_id: u128, started_by: ContractAddress, started_at: u64) {}
 
     #[event]
-    fn AnswerUpdated(current: bool, round_id: u128, timestamp: u64) {}
+    fn AnswerUpdated(current: u128, round_id: u128, timestamp: u64) {}
 
     #[event]
-    fn UpdateIgnored(latest_status: bool, latest_timestamp: u64, incoming_status: bool, incoming_timestamp: u64) {}
+    fn UpdateIgnored(latest_status: u128, latest_timestamp: u64, incoming_status: u128, incoming_timestamp: u64) {}
 
     #[event]
-    fn L1SenderTransferred(from_address: u256, to_address: u256) {}
+    fn L1SenderTransferred(from_address: felt252, to_address: felt252) {}
 
     impl Aggregator of IAggregator {
         fn latest_round_data() -> Round {
             require_access();
             let latest_round_id = _latest_round_id::read();
             let round_transmission = _round_transmissions::read(latest_round_id);
-            // bool -> felt252 -> u128
-            let answer: u128 = round_transmission.answer.into().try_into().unwrap();
             Round {
                 round_id: latest_round_id.into(),
-                answer: answer,
+                answer: round_transmission.answer,
                 block_num: round_transmission.block_num,
-                started_at: round_transmission.started_at,
-                updated_at: round_transmission.updated_at,   
+                started_at: round_transmission.observation_timestamp,
+                updated_at: round_transmission.transmission_timestamp,   
             }
         }
 
@@ -141,14 +88,12 @@ mod SequencerUptimeFeed {
             require_access();
             assert(round_id < _latest_round_id::read(), 'invalid round id');
             let round_transmission = _round_transmissions::read(round_id);
-            // bool -> felt252 -> u128
-            let answer: u128 = round_transmission.answer.into().try_into().unwrap();
             Round {
                 round_id: round_id.into(),
-                answer: answer,
+                answer: round_transmission.answer,
                 block_num: round_transmission.block_num,
-                started_at: round_transmission.started_at,
-                updated_at: round_transmission.updated_at,   
+                started_at: round_transmission.observation_timestamp,
+                updated_at: round_transmission.transmission_timestamp,   
             }
         }
 
@@ -166,19 +111,19 @@ mod SequencerUptimeFeed {
     }
 
     #[constructor]
-    fn constructor(initial_status: bool, owner_address: ContractAddress) {
+    fn constructor(initial_status: u128, owner_address: ContractAddress) {
         initializer(initial_status, owner_address);
     }
 
     #[l1_handler]
-    fn update_status(from_address: felt252, status: bool, timestamp: u64) {
-        assert(_l1_sender::read() == from_address.into(), 'EXPECTED_FROM_BRIDGE_ONLY');
+    fn update_status(from_address: felt252, status: u128, timestamp: u64) {
+        assert(_l1_sender::read() == from_address, 'EXPECTED_FROM_BRIDGE_ONLY');
 
         let latest_round_id = _latest_round_id::read();
         let latest_round = _round_transmissions::read(latest_round_id);
 
-        if (timestamp <= latest_round.started_at) {
-            UpdateIgnored(latest_round.answer, latest_round.started_at, status, timestamp);
+        if (timestamp <= latest_round.observation_timestamp) {
+            UpdateIgnored(latest_round.answer, latest_round.transmission_timestamp, status, timestamp);
             return ();
         }
 
@@ -192,14 +137,13 @@ mod SequencerUptimeFeed {
     }
 
     #[external]
-    fn set_l1_sender(address: u256) {
+    fn set_l1_sender(address: felt252) {
         Ownable::assert_only_owner();
-        // because u256 literals are not supported
-        let ETH_ADDRESS_BOUND = u256 { high: 0x100000000_u128, low: 0_u128 }; // 2 ** 160
-        let ZERO = u256 { high: 0_u128, low: 0_u128 };
 
-        assert(address < ETH_ADDRESS_BOUND, 'invalid eth address');
-        assert(address != ZERO, '0 address not allowed');
+        // convert both to u256 (felts don't implement PartialOrd)
+        assert(address.into() < ETH_ADDRESS_BOUND.into(), 'invalid eth address');
+    
+        assert(address != 0, '0 address not allowed');
 
         let old_address = _l1_sender::read();
 
@@ -207,11 +151,10 @@ mod SequencerUptimeFeed {
             _l1_sender::write(address);
             L1SenderTransferred(old_address, address);
         }
-
     }
 
     #[view]
-    fn l1_sender() -> u256 {
+    fn l1_sender() -> felt252 {
         _l1_sender::read()
     }
 
@@ -322,24 +265,24 @@ mod SequencerUptimeFeed {
          SimpleReadAccessController::check_access(sender);
     }
 
-    fn initializer(initial_status: bool, owner_address: ContractAddress) {
+    fn initializer(initial_status: u128, owner_address: ContractAddress) {
         SimpleReadAccessController::initializer(owner_address);
         let round_id = 1_u128;
         let timestamp = starknet::info::get_block_timestamp();
         _record_round(round_id, initial_status, timestamp);
     }
 
-    fn _record_round(round_id: u128, status: bool, timestamp: u64) {
+    fn _record_round(round_id: u128, status: u128, timestamp: u64) {
         _latest_round_id::write(round_id);
         let block_info = starknet::info::get_block_info().unbox();
         let block_number = block_info.block_number;
         let block_timestamp = block_info.block_timestamp;
 
-        let round = RoundTransmission {
+        let round = Transmission {
             answer: status,
             block_num: block_number,
-            started_at: timestamp,
-            updated_at: block_timestamp,
+            observation_timestamp: timestamp,
+            transmission_timestamp: block_timestamp,
         };
         _round_transmissions::write(round_id, round);
 
@@ -349,10 +292,10 @@ mod SequencerUptimeFeed {
         AnswerUpdated(status, round_id, timestamp);
     }
 
-    fn _update_round(round_id: u128, mut round: RoundTransmission) {
-        round.updated_at = starknet::info::get_block_timestamp();
+    fn _update_round(round_id: u128, mut round: Transmission) {
+        round.transmission_timestamp = starknet::info::get_block_timestamp();
         _round_transmissions::write(round_id, round);
 
-        RoundUpdated(round.answer, round.updated_at);
+        RoundUpdated(round.answer, round.transmission_timestamp);
     }
 }
