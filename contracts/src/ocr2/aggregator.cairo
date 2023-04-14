@@ -145,24 +145,22 @@ mod Aggregator {
 
     impl OracleStorageAccess of StorageAccess::<Oracle> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Oracle> {
+            let value = storage_read_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 0_u8)
+            )?;
+            let (index, payment_juels) = split_felt(value);
             Result::Ok(
                 Oracle {
-                    index: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
-                    payment_juels: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
+                    index: index.into().try_into().unwrap(),
+                    payment_juels,
                 }
             )
         }
 
         fn write(address_domain: u32, base: StorageBaseAddress, value: Oracle) -> SyscallResult::<()> {
+            let value =  value.index.into() * SHIFT_128 + value.payment_juels.into();
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.index.into()
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.payment_juels.into()
+                address_domain, storage_address_from_base_and_offset(base, 0_u8), value
             )
         }
     }
