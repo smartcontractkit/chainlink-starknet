@@ -713,7 +713,6 @@ mod Aggregator {
         state
     }
 
-    // TODO: signed_count feels more inefficient as u256
     fn verify_signatures(msg: felt252, ref signatures: Array<Signature>, mut signed_count: u128) {
         let signature = match signatures.pop_front() {
             Option::Some(signature) => signature,
@@ -834,6 +833,11 @@ mod Aggregator {
 
     // --- Billing Config
 
+    #[abi]
+    trait IAccessController {
+      fn check_access(user: ContractAddress);
+    }
+
     #[derive(Copy, Drop, Serde)]
     struct Billing {
         // TODO: use a single felt via (observation_payment, transmission_payment) = split_felt()?
@@ -903,9 +907,8 @@ mod Aggregator {
         }
 
         let access_controller = _billing_access_controller::read();
-
-        // TODO:
-        // IAccessController.check_access(contract_address=access_controller, user=caller);
+        let access_controller = IAccessControllerDispatcher { contract_address: access_controller };
+        access_controller.check_access(caller);
     }
 
     // --- Payments and Withdrawals
