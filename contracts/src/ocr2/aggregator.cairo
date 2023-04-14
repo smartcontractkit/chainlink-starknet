@@ -37,6 +37,7 @@ fn hash_span<
     }
 }
 
+// TODO: consider switching to lookups
 fn pow(n: u128, m: u128) -> u128 {
     if m == 0_u128 {
         return 1_u128;
@@ -44,12 +45,24 @@ fn pow(n: u128, m: u128) -> u128 {
     gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
     let half = pow(n, m / 2_u128);
     let total = half * half;
+    // TODO: check if (& 1) is cheaper
     if (m % 2_u128) == 1_u128 {
         total * n
     } else {
         total
     }
 }
+
+use integer::U128IntoFelt252;
+use integer::u128s_from_felt252;
+use integer::U128sFromFelt252Result;
+fn split_felt(felt: felt252) -> (u128, u128) {
+    match u128s_from_felt252(felt) {
+        U128sFromFelt252Result::Narrow(low) => (0_u128, low),
+        U128sFromFelt252Result::Wide((high, low)) => (high, low),
+    }
+}
+
 
 // TODO: wrap hash_span
 impl SpanLegacyHash<
@@ -66,6 +79,7 @@ impl SpanLegacyHash<
 mod Aggregator {
     use super::IAggregator;
     use super::Round;
+    use super::split_felt;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
     use starknet::ContractAddressZeroable;
@@ -123,7 +137,6 @@ mod Aggregator {
         reimbursement: u128
     ) {}
 
-    // TODO: should we pack into (index, payment) = split_felt()? index is u8, payment is u128
     #[derive(Copy, Drop, Serde)]
     struct Oracle {
         index: usize,
@@ -134,24 +147,22 @@ mod Aggregator {
 
     impl OracleStorageAccess of StorageAccess::<Oracle> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Oracle> {
+            let value = storage_read_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 0_u8)
+            )?;
+            let (index, payment_juels) = split_felt(value);
             Result::Ok(
                 Oracle {
-                    index: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
-                    payment_juels: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
+                    index: index.into().try_into().unwrap(),
+                    payment_juels,
                 }
             )
         }
 
         fn write(address_domain: u32, base: StorageBaseAddress, value: Oracle) -> SyscallResult::<()> {
+            let value =  value.index.into() * SHIFT_128 + value.payment_juels.into();
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.index.into()
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.payment_juels.into()
+                address_domain, storage_address_from_base_and_offset(base, 0_u8), value
             )
         }
     }
@@ -166,36 +177,29 @@ mod Aggregator {
 
     impl TransmissionStorageAccess of StorageAccess::<Transmission> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
+            let block_num_and_answer = storage_read_syscall(address_domain, storage_address_from_base_and_offset(base, 0_u8))?;
+            let (block_num, answer) = split_felt(block_num_and_answer);
+            let timestamps = storage_read_syscall(address_domain, storage_address_from_base_and_offset(base, 1_u8))?;
+            let (observation_timestamp, transmission_timestamp) = split_felt(timestamps);
+
             Result::Ok(
                 Transmission {
-                    answer: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
-                    block_num: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
-                    observation_timestamp: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 2_u8)
-                    )?.try_into().unwrap(),
-                    transmission_timestamp: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 3_u8)
-                    )?.try_into().unwrap(),
+                    answer ,
+                    block_num: block_num.into().try_into().unwrap(),
+                    observation_timestamp: observation_timestamp.into().try_into().unwrap(),
+                    transmission_timestamp: transmission_timestamp.into().try_into().unwrap(),
                 }
             )
         }
 
         fn write(address_domain: u32, base: StorageBaseAddress, value: Transmission) -> SyscallResult::<()> {
+            let block_num_and_answer = value.block_num.into() * SHIFT_128 + value.answer.into();
+            let timestamps = value.observation_timestamp.into() * SHIFT_128 + value.transmission_timestamp.into();
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.answer.into()
+                address_domain, storage_address_from_base_and_offset(base, 0_u8), block_num_and_answer
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.block_num.into()
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 2_u8), value.observation_timestamp.into()
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 3_u8), value.transmission_timestamp.into()
+                address_domain, storage_address_from_base_and_offset(base, 1_u8), timestamps
             )
         }
     }
@@ -563,14 +567,7 @@ mod Aggregator {
 
         // since there's no bitwise ops on felt252, we split into two u128s and recombine.
         // we only need to clamp and prefix the top bits.
-        let (top, bottom) = match u128s_from_felt252(state) {
-            U128sFromFelt252Result::Narrow(val) => {
-                // TODO: panic? theoretically possible to have only zeroes?
-                (0_u128, val)
-            },
-            U128sFromFelt252Result::Wide((val1, val2)) => (val1, val2)
-        };
-
+        let (top, bottom) = split_felt(state);
         let masked_top = (top & HALF_DIGEST_MASK) | HALF_PREFIX;
         let masked = (masked_top.into() * SHIFT_128) + bottom.into();
 
@@ -625,7 +622,7 @@ mod Aggregator {
 
         // validate transmitter
         let caller = starknet::info::get_caller_address();
-        let oracle = _transmitters::read(caller);
+        let mut oracle = _transmitters::read(caller);
         assert(oracle.index != 0_usize, 'unknown sender'); // 0 index = uninitialized
 
         // Validate config digest matches latest_config_digest
@@ -708,10 +705,8 @@ mod Aggregator {
         let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into().try_into().unwrap() * GIGA);
         // TODO: check overflow
 
-        _transmitters::write(
-            caller,
-            Oracle { index: oracle.index, payment_juels: oracle.payment_juels + payment } // TODO: modify oracle via oracle.payment_juels += payment?
-        );
+        oracle.payment_juels += payment;
+        _transmitters::write(caller, oracle);
 
     }
 
@@ -736,7 +731,6 @@ mod Aggregator {
         state
     }
 
-    // TODO: signed_count feels more inefficient as u256
     fn verify_signatures(msg: felt252, ref signatures: Array<Signature>, mut signed_count: u128) {
         let signature = match signatures.pop_front() {
             Option::Some(signature) => signature,
@@ -857,9 +851,13 @@ mod Aggregator {
 
     // --- Billing Config
 
+    #[abi]
+    trait IAccessController {
+      fn check_access(user: ContractAddress);
+    }
+
     #[derive(Copy, Drop, Serde)]
     struct Billing {
-        // TODO: use a single felt via (observation_payment, transmission_payment) = split_felt()?
         observation_payment_gjuels: u32,
         transmission_payment_gjuels: u32,
         gas_base: u32,
@@ -926,9 +924,8 @@ mod Aggregator {
         }
 
         let access_controller = _billing_access_controller::read();
-
-        // TODO:
-        // IAccessController.check_access(contract_address=access_controller, user=caller);
+        let access_controller = IAccessControllerDispatcher { contract_address: access_controller };
+        access_controller.check_access(caller);
     }
 
     // --- Payments and Withdrawals
@@ -1068,7 +1065,7 @@ mod Aggregator {
     }
 
     #[view]
-    fn link_available_for_payment() -> u128 {
+    fn link_available_for_payment() -> (bool, u128) { // (is negative, absolute difference)
         let link_token = _link_token::read();
         let contract_address = starknet::info::get_contract_address();
 
@@ -1079,7 +1076,11 @@ mod Aggregator {
         let balance: u128 = balance.low;
 
         let due = total_link_due();
-        balance - due // TODO: value here could be negative!
+        if balance > due {
+            (false, balance - due)
+        } else {
+            (true, due - balance)
+        }
     }
 
     // --- Transmitter Payment
