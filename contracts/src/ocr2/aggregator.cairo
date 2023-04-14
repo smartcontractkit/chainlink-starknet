@@ -134,7 +134,6 @@ mod Aggregator {
         reimbursement: u128
     ) {}
 
-    // TODO: should we pack into (index, payment) = split_felt()? index is u8, payment is u128
     #[derive(Copy, Drop, Serde)]
     struct Oracle {
         index: usize,
@@ -598,7 +597,7 @@ mod Aggregator {
 
         // validate transmitter
         let caller = starknet::info::get_caller_address();
-        let oracle = _transmitters::read(caller);
+        let mut oracle = _transmitters::read(caller);
         assert(oracle.index != 0_usize, 'unknown sender'); // 0 index = uninitialized
 
         // Validate config digest matches latest_config_digest
@@ -681,10 +680,8 @@ mod Aggregator {
         let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into().try_into().unwrap() * GIGA);
         // TODO: check overflow
 
-        _transmitters::write(
-            caller,
-            Oracle { index: oracle.index, payment_juels: oracle.payment_juels + payment } // TODO: modify oracle via oracle.payment_juels += payment?
-        );
+        oracle.payment_juels += payment;
+        _transmitters::write(caller, oracle);
 
     }
 
@@ -836,7 +833,6 @@ mod Aggregator {
 
     #[derive(Copy, Drop, Serde)]
     struct Billing {
-        // TODO: use a single felt via (observation_payment, transmission_payment) = split_felt()?
         observation_payment_gjuels: u32,
         transmission_payment_gjuels: u32,
         gas_base: u32,
