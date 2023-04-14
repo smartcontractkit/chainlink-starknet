@@ -51,6 +51,17 @@ fn pow(n: u128, m: u128) -> u128 {
     }
 }
 
+use integer::U128IntoFelt252;
+use integer::u128s_from_felt252;
+use integer::U128sFromFelt252Result;
+fn split_felt(felt: felt252) -> (u128, u128) {
+    match u128s_from_felt252(felt) {
+        U128sFromFelt252Result::Narrow(low) => (0_u128, low),
+        U128sFromFelt252Result::Wide((high, low)) => (high, low),
+    }
+}
+
+
 // TODO: wrap hash_span
 impl SpanLegacyHash<
     T,
@@ -66,6 +77,7 @@ impl SpanLegacyHash<
 mod Aggregator {
     use super::IAggregator;
     use super::Round;
+    use super::split_felt;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
     use starknet::ContractAddressZeroable;
@@ -165,36 +177,29 @@ mod Aggregator {
 
     impl TransmissionStorageAccess of StorageAccess::<Transmission> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
+            let block_num_and_answer = storage_read_syscall(address_domain, storage_address_from_base_and_offset(base, 0_u8))?;
+            let (block_num, answer) = split_felt(block_num_and_answer);
+            let timestamps = storage_read_syscall(address_domain, storage_address_from_base_and_offset(base, 1_u8))?;
+            let (observation_timestamp, transmission_timestamp) = split_felt(timestamps);
+
             Result::Ok(
                 Transmission {
-                    answer: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
-                    block_num: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
-                    observation_timestamp: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 2_u8)
-                    )?.try_into().unwrap(),
-                    transmission_timestamp: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 3_u8)
-                    )?.try_into().unwrap(),
+                    answer ,
+                    block_num: block_num.into().try_into().unwrap(),
+                    observation_timestamp: observation_timestamp.into().try_into().unwrap(),
+                    transmission_timestamp: transmission_timestamp.into().try_into().unwrap(),
                 }
             )
         }
 
         fn write(address_domain: u32, base: StorageBaseAddress, value: Transmission) -> SyscallResult::<()> {
+            let block_num_and_answer = value.block_num.into() * SHIFT_128 + value.answer.into();
+            let timestamps = value.observation_timestamp.into() * SHIFT_128 + value.transmission_timestamp.into();
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.answer.into()
+                address_domain, storage_address_from_base_and_offset(base, 0_u8), block_num_and_answer
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.block_num.into()
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 2_u8), value.observation_timestamp.into()
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 3_u8), value.transmission_timestamp.into()
+                address_domain, storage_address_from_base_and_offset(base, 1_u8), timestamps
             )
         }
     }
