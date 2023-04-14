@@ -543,14 +543,7 @@ mod Aggregator {
 
         // since there's no bitwise ops on felt252, we split into two u128s and recombine.
         // we only need to clamp and prefix the top bits.
-        let (top, bottom) = match u128s_from_felt252(state) {
-            U128sFromFelt252Result::Narrow(val) => {
-                // TODO: panic? theoretically possible to have only zeroes?
-                (0_u128, val)
-            },
-            U128sFromFelt252Result::Wide((val1, val2)) => (val1, val2)
-        };
-
+        let (top, bottom) = split_felt(state);
         let masked_top = (top & HALF_DIGEST_MASK) | HALF_PREFIX;
         let masked = (masked_top.into() * SHIFT_128) + bottom.into();
 
