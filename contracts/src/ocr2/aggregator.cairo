@@ -1048,7 +1048,7 @@ mod Aggregator {
     }
 
     #[view]
-    fn link_available_for_payment() -> u128 {
+    fn link_available_for_payment() -> (bool, u128) { // (is negative, absolute difference)
         let link_token = _link_token::read();
         let contract_address = starknet::info::get_contract_address();
 
@@ -1059,7 +1059,11 @@ mod Aggregator {
         let balance: u128 = balance.low;
 
         let due = total_link_due();
-        balance - due // TODO: value here could be negative!
+        if balance > due {
+            (false, balance - due)
+        } else {
+            (true, due - balance)
+        }
     }
 
     // --- Transmitter Payment
