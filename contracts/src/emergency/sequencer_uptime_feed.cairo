@@ -1,28 +1,5 @@
-impl Felt252TryIntoBool of TryInto::<felt252, bool> {
-    fn try_into(self: felt252) -> Option<bool> {
-        if self == 0 {
-            Option::Some(false);
-        }
-        if self == 1 {
-            Option::Some(true);
-        }
-        Option::None(())
-    }
-}
-
-impl BoolIntoFelt252 of Into::<bool, felt252> {
-    fn into(self: bool) -> felt252 {
-        if self {
-            return 1;
-        }
-        return 0;
-    }
-}
-
 #[contract]
 mod SequencerUptimeFeed {
-    use super::Felt252TryIntoBool;
-    use super::BoolIntoFelt252;
     use starknet::ContractAddress;
     use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
