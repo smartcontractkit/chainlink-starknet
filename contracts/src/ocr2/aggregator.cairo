@@ -561,11 +561,22 @@ mod Aggregator {
         (config_count, block_number, config_digest)
     }
 
-    // TODO:
-    // #[view]
-    // fn transmitters() {
-    //
-    // }
+     #[view]
+     fn transmitters() -> Array<ContractAddress> {
+        let len = _oracles_len::read();
+        let result = ArrayTrait::new();
+        transmitters_(len, 0_usize, result)
+     }
+
+    fn transmitters_(len: usize, index: usize, mut result: Array<ContractAddress>) -> Array<ContractAddress> {
+        if len == 0_usize {
+            return result;
+        }
+        let index = index + 1_usize;
+        let transmitter = _transmitters_list::read(index);
+        result.append(transmitter);
+        transmitters_(len - 1_usize, index, result)
+    }
 
     // --- Transmission ---
 
