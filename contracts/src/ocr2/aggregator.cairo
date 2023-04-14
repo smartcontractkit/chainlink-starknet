@@ -37,6 +37,7 @@ fn hash_span<
     }
 }
 
+// TODO: consider switching to lookups
 fn pow(n: u128, m: u128) -> u128 {
     if m == 0_u128 {
         return 1_u128;
@@ -44,6 +45,7 @@ fn pow(n: u128, m: u128) -> u128 {
     gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
     let half = pow(n, m / 2_u128);
     let total = half * half;
+    // TODO: check if (& 1) is cheaper
     if (m % 2_u128) == 1_u128 {
         total * n
     } else {
