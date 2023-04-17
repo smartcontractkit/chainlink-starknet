@@ -483,7 +483,7 @@ mod Aggregator {
     // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
     fn add_oracles(oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
         if len == 0_usize {
-            _oracles_len::write(len);
+            _oracles_len::write(index);
             return ();
         }
 
