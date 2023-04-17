@@ -487,11 +487,12 @@ mod Aggregator {
             return ();
         }
 
+        let oracle = oracles.at(index);
+
         // NOTE: index should start with 1 here because storage is 0-initialized.
         // That way signers(pkey) => 0 indicates "not present"
         let index = index + 1_usize;
 
-        let oracle = oracles[index];
         // check for duplicates
         let existing_signer = _signers::read(*oracle.signer);
         assert(existing_signer == 0_usize, 'repeated signer');
