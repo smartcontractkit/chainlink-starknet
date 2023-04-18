@@ -46,19 +46,17 @@ type starktxm struct {
 	ks      keys.Keystore
 	cfg     Config
 
-	// TODO: use lazy loaded client
-	client    *starknet.Client
-	getClient func() (*starknet.Client, error)
+	client *utils.LazyLoad[*starknet.Client]
 }
 
 func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
 	return &starktxm{
-		lggr:      logger.Named(lggr, "StarknetTxm"),
-		queue:     make(chan Tx, MaxQueueLen),
-		stop:      make(chan struct{}),
-		getClient: getClient,
-		ks:        keystore,
-		cfg:       cfg,
+		lggr:   logger.Named(lggr, "StarknetTxm"),
+		queue:  make(chan Tx, MaxQueueLen),
+		stop:   make(chan struct{}),
+		client: utils.NewLazyLoad(getClient),
+		ks:     keystore,
+		cfg:    cfg,
 	}, nil
 }
 
@@ -77,9 +75,7 @@ func (txm *starktxm) Start(ctx context.Context) error {
 func (txm *starktxm) run() {
 	defer txm.done.Done()
 
-	// TODO: func not available without importing core
-	// ctx, cancel := utils.ContextFromChan(txm.stop)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := utils.ContextFromChan(txm.stop)
 	defer cancel()
 
 	tick := time.After(0)
@@ -90,15 +86,11 @@ func (txm *starktxm) run() {
 			start := time.Now()
 
 			// fetch client if needed (before processing txs to preserve queue)
-			if txm.client == nil {
-				var err error
-				txm.client, err = txm.getClient()
-				if err != nil {
-					txm.lggr.Errorw("unable to fetch client", "error", err)
-					tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
-					txm.client = nil                                                                   // reset
-					continue
-				}
+			if _, err := txm.client.Get(); err != nil {
+				txm.lggr.Errorw("unable to fetch client", "error", err)
+				tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
+				txm.client.Reset()                                                                 // reset
+				continue
 			}
 
 			// calculate total txs to process
@@ -153,8 +145,12 @@ func (txm *starktxm) run() {
 const FEE_MARGIN uint64 = 115
 
 func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
+	client, err := txm.client.Get()
+	if err != nil {
+		return txhash, errors.Wrap(err, "broadcast batch: failed to fetch client")
+	}
 	// create new account
-	account, err := caigo.NewGatewayAccount(privKey, sender.String(), txm.client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewGatewayAccount(privKey, sender.String(), client.Gw, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
