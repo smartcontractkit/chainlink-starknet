@@ -108,6 +108,7 @@ mod Aggregator {
     use super::pow;
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
+    use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
 
     // NOTE: remove duplication once we can directly use the trait
     #[abi]
@@ -345,6 +346,28 @@ mod Aggregator {
     #[external]
     fn check_access(user: ContractAddress) {
         SimpleReadAccessController::check_access(user)
+    }
+
+    // -- SimpleWriteAccessController --
+
+    #[external]
+    fn add_access(user: ContractAddress) {
+        SimpleWriteAccessController::add_access(user)
+    }
+
+    #[external]
+    fn remove_access(user: ContractAddress) {
+        SimpleWriteAccessController::remove_access(user)
+    }
+
+     #[external]
+    fn enable_access_check() {
+        SimpleWriteAccessController::enable_access_check()
+    }
+
+    #[external]
+    fn disable_access_check() {
+        SimpleWriteAccessController::disable_access_check()
     }
 
     // --- Validation ---
