@@ -575,6 +575,7 @@ mod Aggregator {
         let index = index + 1_usize;
         let transmitter = _transmitters_list::read(index);
         result.append(transmitter);
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
         transmitters_(len - 1_usize, index, result)
     }
 
