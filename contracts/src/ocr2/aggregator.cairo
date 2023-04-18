@@ -506,15 +506,16 @@ mod Aggregator {
     // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
     fn add_oracles(oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
         if len == 0_usize {
-            _oracles_len::write(len);
+            _oracles_len::write(index);
             return ();
         }
+
+        let oracle = oracles.at(index);
 
         // NOTE: index should start with 1 here because storage is 0-initialized.
         // That way signers(pkey) => 0 indicates "not present"
         let index = index + 1_usize;
 
-        let oracle = oracles[index];
         // check for duplicates
         let existing_signer = _signers::read(*oracle.signer);
         assert(existing_signer == 0_usize, 'repeated signer');
@@ -583,11 +584,23 @@ mod Aggregator {
         (config_count, block_number, config_digest)
     }
 
-    // TODO:
-    // #[view]
-    // fn transmitters() {
-    //
-    // }
+     #[view]
+     fn transmitters() -> Array<ContractAddress> {
+        let len = _oracles_len::read();
+        let result = ArrayTrait::new();
+        transmitters_(len, 0_usize, result)
+     }
+
+    fn transmitters_(len: usize, index: usize, mut result: Array<ContractAddress>) -> Array<ContractAddress> {
+        if len == 0_usize {
+            return result;
+        }
+        let index = index + 1_usize;
+        let transmitter = _transmitters_list::read(index);
+        result.append(transmitter);
+        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
+        transmitters_(len - 1_usize, index, result)
+    }
 
     // --- Transmission ---
 
