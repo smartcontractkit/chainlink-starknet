@@ -11,12 +11,11 @@ import (
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
 
-	"github.com/smartcontractkit/chainlink-starknet/ops"
+	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
@@ -25,14 +24,14 @@ import (
 )
 
 func TestIntegration_Txm(t *testing.T) {
-	url := ops.SetupLocalStarknetNode(t)
-	rawLocalKeys := ops.TestKeys(t, 2) // generate 2 keys
+	url := SetupLocalStarknetNode(t)
+	rawLocalKeys := TestKeys(t, 2) // generate 2 keys
 
 	// parse keys into expected format
 	localKeys := map[string]keys.Key{}
 	for _, k := range rawLocalKeys {
 		key := keys.Raw(k).Key()
-		account := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+		account := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), DevnetClassHash, DevnetSalt))
 		localKeys[account] = key
 	}
 

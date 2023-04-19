@@ -7,10 +7,8 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.29.0
 	github.com/smartcontractkit/chainlink-env v0.3.19
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221102160912-61646f534e3a
 	github.com/smartcontractkit/chainlink-testing-framework v1.10.5
-	github.com/stretchr/testify v1.8.1
 )
 
 require (
@@ -89,9 +87,11 @@ require (
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230316183824-9f1e5e11e2b7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20221121171434-482da3ed36d8 // indirect
 	github.com/spf13/cobra v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.5.0 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
