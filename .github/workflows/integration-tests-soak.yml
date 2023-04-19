@@ -48,7 +48,7 @@ jobs:
       contents: read
     steps:
       - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@8489879838862929f43f7d7cd1b33903965cf507
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@dbc0d20743bdf6d74ec05aabcc0628076a48180f
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
