@@ -12,6 +12,7 @@ import (
 
 type Keystore interface {
 	Get(id string) (Key, error)
+	GetAll() ([]Key, error)
 }
 
 type NonceManager interface {

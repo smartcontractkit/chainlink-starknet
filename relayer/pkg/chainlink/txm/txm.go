@@ -45,19 +45,23 @@ type starktxm struct {
 	queue   chan Tx
 	ks      keys.Keystore
 	cfg     Config
+	nonce   keys.NonceManager
 
 	client *utils.LazyLoad[*starknet.Client]
 }
 
 func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
-	return &starktxm{
+	txm := &starktxm{
 		lggr:   logger.Named(lggr, "StarknetTxm"),
 		queue:  make(chan Tx, MaxQueueLen),
 		stop:   make(chan struct{}),
 		client: utils.NewLazyLoad(getClient),
 		ks:     keystore,
 		cfg:    cfg,
-	}, nil
+	}
+	txm.nonce = keys.NewNonceManager(txm.lggr, txm.client, txm.ks)
+
+	return txm, nil
 }
 
 func (txm *starktxm) Name() string {
@@ -66,6 +70,10 @@ func (txm *starktxm) Name() string {
 
 func (txm *starktxm) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("starktxm", func() error {
+		if err := txm.nonce.Start(ctx); err != nil {
+			return err
+		}
+
 		txm.done.Add(1) // waitgroup: tx sender
 		go txm.run()
 		return nil
@@ -112,6 +120,7 @@ func (txm *starktxm) run() {
 			var wg sync.WaitGroup
 			wg.Add(len(txsBySender))
 			for sender, txs := range txsBySender {
+				// TODO: does this work if mempool is FIFO?
 				go func(sender caigotypes.Hash, txs []caigotypes.FunctionCall) {
 
 					// fetch key matching sender address
@@ -155,10 +164,16 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
 
+	nonce, err := txm.nonce.NextNonce(sender, client.Gw.ChainId)
+	if err != nil {
+		return txhash, errors.Wrap(err, "failed to get nonce")
+	}
+
 	// get fee for txm
+	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
 	if err != nil {
-		return txhash, errors.Errorf("failed to estimate fee: %s", err)
+		return txhash, errors.Wrap(err, "failed to estimate fee")
 	}
 
 	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
@@ -166,14 +181,15 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
 	details := caigotypes.ExecuteDetails{
 		MaxFee: max,
+		Nonce:  nonce,
 	}
 
-	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
 	// transmit txs
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {
+		// TODO: handle nonce errors (retry?)
 		return txhash, errors.Errorf("failed to invoke tx: %s", err)
 	}
 
@@ -182,7 +198,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 		return txhash, errors.New("execute response and error are nil")
 	}
 
-	return res.TransactionHash, nil
+	return res.TransactionHash, txm.nonce.IncrementNextNonce(sender, client.Gw.ChainId, nonce)
 }
 
 func (txm *starktxm) Close() error {

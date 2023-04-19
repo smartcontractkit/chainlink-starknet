@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 
@@ -50,6 +51,7 @@ func TestIntegration_Txm(t *testing.T) {
 			return nil
 		},
 	)
+	ks.On("GetAll").Return(maps.Values(localKeys), nil)
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
@@ -57,17 +59,19 @@ func TestIntegration_Txm(t *testing.T) {
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
 
-	// test fail first client
-	failed := false
+	// test failing client in txm loop
+	// first call - nonce syncer - success
+	// second call - txm start loop - fail
+	// third+more call - txm loop - success
+	var count int
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	// should be called twice
 	getClient := func() (*starknet.Client, error) {
+		count += 1
 		wg.Done()
-		if !failed {
-			failed = true
-
+		if count == 2 {
 			// test return not nil
 			return &starknet.Client{}, errors.New("random test error")
 		}
@@ -76,7 +80,7 @@ func TestIntegration_Txm(t *testing.T) {
 	}
 
 	// mock config to prevent import cycle
-	cfg := new(txmmock.Config)
+	cfg := txmmock.NewConfig(t)
 	cfg.On("TxMaxBatchSize").Return(100)
 	cfg.On("TxSendFrequency").Return(15 * time.Second)
 	cfg.On("TxTimeout").Return(10 * time.Second)
