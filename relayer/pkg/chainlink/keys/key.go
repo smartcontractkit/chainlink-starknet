@@ -18,6 +18,8 @@ func (raw Raw) Key() Key {
 	k := Key{}
 	var err error
 
+	k.hash = defaultContractHash
+	k.salt = defaultSalt
 	k.priv = new(big.Int).SetBytes(raw)
 	k.pub.X, k.pub.Y, err = caigo.Curve.PrivateToPoint(k.priv)
 	if err != nil {
@@ -46,6 +48,8 @@ type PublicKey struct {
 type Key struct {
 	priv *big.Int
 	pub  PublicKey
+	hash *big.Int
+	salt *big.Int
 }
 
 // New creates new Key
@@ -75,7 +79,7 @@ func (key Key) ID() string {
 // This is the primary identifier for onchain interactions
 // the private key is identified by this
 func (key Key) AccountAddressStr() string {
-	return "0x" + hex.EncodeToString(PubKeyToAccount(key.pub, defaultContractHash, defaultSalt))
+	return "0x" + hex.EncodeToString(PubKeyToAccount(key.pub, key.hash, key.salt))
 }
 
 // StarkKeyStr is the starknet public key associated to the private key

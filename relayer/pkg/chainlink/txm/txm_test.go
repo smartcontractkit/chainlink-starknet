@@ -4,7 +4,6 @@ package txm
 
 import (
 	"context"
-	"encoding/hex"
 	"sync"
 	"testing"
 	"time"
@@ -31,8 +30,8 @@ func TestIntegration_Txm(t *testing.T) {
 	localKeys := map[string]keys.Key{}
 	for _, k := range rawLocalKeys {
 		key := keys.Raw(k).Key()
-		account := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), DevnetClassHash, DevnetSalt))
-		localKeys[account] = key
+		key.Set(DevnetClassHash, DevnetSalt)
+		localKeys[key.AccountAddressStr()] = key
 	}
 
 	// mock keystore
