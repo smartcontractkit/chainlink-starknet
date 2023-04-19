@@ -58,11 +58,11 @@ func (nm *nonceManager) Start(ctx context.Context) error {
 	defer nm.lock.Unlock()
 	for i := range keys {
 		addr := keys[i].AccountAddressStr()
-		n, err := client.AccountNonce(ctx, caigotypes.HexToHash(addr))
-		if err != nil {
-			return err
-		}
-		nm.n[addr] = n
+		// n, err := client.AccountNonce(ctx, caigotypes.HexToHash(addr))
+		// if err != nil {
+		// 	return err
+		// }
+		nm.n[addr] = big.NewInt(0)
 	}
 	return nil
 }
