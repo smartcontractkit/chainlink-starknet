@@ -24,7 +24,7 @@ interface FunderOptions {
   network?: string
   gateway?: string
   accountAddr?: string
-  keyPair?: string
+  keyPair?: Uint8Array
 }
 
 // Define the Strategy to use depending on the network.
