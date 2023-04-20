@@ -11,6 +11,7 @@ describe('LinkToken', function () {
   const funder = new account.Funder(opts)
 
   let receiverFactory: StarknetContractFactory
+  let linkReceiverFactory: StarknetContractFactory
   let tokenFactory: StarknetContractFactory
   let receiver: StarknetContract
   let recipient: StarknetContract
@@ -128,9 +129,9 @@ describe('LinkToken', function () {
     const amount = 1000
 
     before(async () => {
-      const receiverFactory = await starknet.getContractFactory('link_receiver')
-      const classHash = await owner.declare(receiverFactory)
-      recipient = await owner.deploy(receiverFactory, { class_hash: classHash })
+      linkReceiverFactory = await starknet.getContractFactory('link_receiver')
+      const classHash = await owner.declare(linkReceiverFactory)
+      recipient = await owner.deploy(linkReceiverFactory, { class_hash: classHash })
 
       const { remaining: allowance } = await token.call('allowance', {
         owner: owner.starknetContract.address,
