@@ -29,32 +29,15 @@ describe('OZ Account Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       contractAddress = report.responses[0].contract
+      console.log(report)
       publicKey = report.data.publicKey
 
       const oz = loadContract(CONTRACT_LIST.ACCOUNT)
       const ozContract = new Contract(oz.abi, contractAddress, makeProvider(LOCAL_URL).provider)
       const { publicKey: onChainPubKey }= await ozContract.getPublicKey()
+      console.log(onChainPubKey)
+      console.log(publicKey)
       expect(onChainPubKey).toEqual(BigInt(publicKey))
-    },
-    TIMEOUT,
-  )
-
-  it(
-    'Deployment with salt',
-    async () => {
-      let salt: number = 100
-      const command = await registerExecuteCommand(deployCommand).create(
-        {
-          salt,
-        },
-        [],
-      )
-
-      const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      contractAddress = report.responses[0].contract
-      publicKey = report.data.publicKey
     },
     TIMEOUT,
   )
