@@ -13,34 +13,6 @@ type Config struct {
 	mock.Mock
 }
 
-// TxMaxBatchSize provides a mock function with given fields:
-func (_m *Config) TxMaxBatchSize() int {
-	ret := _m.Called()
-
-	var r0 int
-	if rf, ok := ret.Get(0).(func() int); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	return r0
-}
-
-// TxSendFrequency provides a mock function with given fields:
-func (_m *Config) TxSendFrequency() time.Duration {
-	ret := _m.Called()
-
-	var r0 time.Duration
-	if rf, ok := ret.Get(0).(func() time.Duration); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(time.Duration)
-	}
-
-	return r0
-}
-
 // TxTimeout provides a mock function with given fields:
 func (_m *Config) TxTimeout() time.Duration {
 	ret := _m.Called()

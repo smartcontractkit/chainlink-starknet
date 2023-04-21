@@ -90,65 +90,32 @@ func (txm *starktxm) run() {
 	ctx, cancel := utils.ContextFromChan(txm.stop)
 	defer cancel()
 
-	tick := time.After(0)
-
 	for {
 		select {
-		case <-tick:
-			start := time.Now()
+		// TODO: loop should read from tx storage instead of directly from queue
+		case tx := <-txm.queue:
+			sender := tx.sender
+			txs := []caigotypes.FunctionCall{tx.call}
 
-			// fetch client if needed (before processing txs to preserve queue)
-			if _, err := txm.client.Get(); err != nil {
-				txm.lggr.Errorw("unable to fetch client", "error", err)
-				tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
-				txm.client.Reset()                                                                 // reset
+			// fetch key matching sender address
+			key, err := txm.ks.Get(sender.String())
+			if err != nil {
+				txm.lggr.Errorw("failed to retrieve key", "id", sender, "error", err)
 				continue
 			}
 
-			// calculate total txs to process
-			txLen := len(txm.queue)
-			if txLen > txm.cfg.TxMaxBatchSize() {
-				txLen = txm.cfg.TxMaxBatchSize()
+			// parse key to expected format
+			privKeyBytes := key.Raw()
+			privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
+
+			// broadcast tx serially - wait until accepted by mempool before processing next
+			hash, err := txm.broadcast(ctx, privKey, sender, txs)
+			if err != nil {
+				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
+			} else {
+				txm.lggr.Infow("transaction broadcast", "txhash", hash)
 			}
 
-			// fetch batch and split by sender
-			txsBySender := map[caigotypes.Hash][]caigotypes.FunctionCall{}
-			for i := 0; i < txLen; i++ {
-				tx := <-txm.queue
-				txsBySender[tx.sender] = append(txsBySender[tx.sender], tx.call)
-			}
-			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
-			txm.lggr.Debugw("batch details", "batches", txsBySender)
-
-			// async process of tx batches
-			var wg sync.WaitGroup
-			wg.Add(len(txsBySender))
-			for sender, txs := range txsBySender {
-				// TODO: does this work if mempool is FIFO?
-				go func(sender caigotypes.Hash, txs []caigotypes.FunctionCall) {
-
-					// fetch key matching sender address
-					key, err := txm.ks.Get(sender.String())
-					if err != nil {
-						txm.lggr.Errorw("failed to retrieve key", "id", sender, "error", err)
-					} else {
-						// parse key to expected format
-						privKeyBytes := key.Raw()
-						privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
-
-						// broadcast batch based on sender
-						hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
-						if err != nil {
-							txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
-						} else {
-							txm.lggr.Infow("transaction broadcast", "txhash", hash)
-						}
-					}
-					wg.Done()
-				}(sender, txs)
-			}
-			wg.Wait()
-			tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start))
 		case <-txm.stop:
 			return
 		}
@@ -157,7 +124,7 @@ func (txm *starktxm) run() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
 	if err != nil {
 		return txhash, errors.Wrap(err, "broadcast batch: failed to fetch client")
@@ -175,6 +142,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 
 	// get fee for txm
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
+	// can we estimate fee without calling estimate - tbd with 1.0
 	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
 	if err != nil {
 		return txhash, errors.Wrap(err, "failed to estimate fee")
