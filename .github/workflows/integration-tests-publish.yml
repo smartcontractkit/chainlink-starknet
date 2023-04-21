@@ -37,5 +37,6 @@ jobs:
           file: ./integration-tests/test.Dockerfile
           build-args: |
             SUITES="smoke soak"
+            IMAGE_VERSION=v0.3.29
           AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
