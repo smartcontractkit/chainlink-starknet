@@ -62,8 +62,6 @@ func TestIntegration_Txm(t *testing.T) {
 
 	// mock config to prevent import cycle
 	cfg := txmmock.NewConfig(t)
-	cfg.On("TxMaxBatchSize").Return(100)
-	cfg.On("TxSendFrequency").Return(15 * time.Second)
 	cfg.On("TxTimeout").Return(10 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)
