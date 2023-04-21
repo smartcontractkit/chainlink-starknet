@@ -133,11 +133,10 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 		return err
 	}
 	
-	// TODO - Uncomment when gauntlet link token mint is fixed
-	//_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
-	//if err != nil {
-	//	return err
-	//}
+	_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
+	if err != nil {
+		return err
+	}
 	_, err = testState.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, testState.OCRAddr)
 	if err != nil {
 		return err
