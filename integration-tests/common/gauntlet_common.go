@@ -132,10 +132,10 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 	if err != nil {
 		return err
 	}
-	_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
-	if err != nil {
-		return err
-	}
+	//_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
+	//if err != nil {
+	//	return err
+	//}
 	_, err = testState.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, testState.OCRAddr)
 	if err != nil {
 		return err
