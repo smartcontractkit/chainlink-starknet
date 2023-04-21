@@ -1,4 +1,4 @@
-// taken from OpenZeppelin
+// taken from OpenZeppelin: https://github.com/OpenZeppelin/cairo-contracts/blob/42a160f1f011414e5044b5174e56dcaa73876aae/src/openzeppelin/token/erc20.cairo
 
 use starknet::ContractAddress;
 

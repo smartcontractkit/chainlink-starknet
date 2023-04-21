@@ -7,7 +7,6 @@ trait IERC677Receiver {
     fn supports_interface(interface_id: felt252) -> bool;
 }
 
-#[contract]
 mod ERC677 {
     use starknet::ContractAddress;
     use chainlink::libraries::token::erc20::ERC20;
@@ -24,7 +23,6 @@ mod ERC677 {
     #[event]
     fn Transfer(from: ContractAddress, to: ContractAddress, value: u256, data: Array<felt252>) {}
 
-    #[external]
     fn transfer_and_call(to: ContractAddress, value: u256, data: Array<felt252>) -> bool {
         let sender = starknet::info::get_caller_address();
 
