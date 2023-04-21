@@ -4,14 +4,14 @@ package smoke_test
 import (
 	"flag"
 	"fmt"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
+	"go.uber.org/zap/zapcore"
 	"testing"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
@@ -56,6 +56,9 @@ func TestOCRBasic(t *testing.T) {
 	err = testState.ValidateRounds(10, false)
 	require.NoError(t, err, "Validating round should not fail")
 
-	err = actions.TeardownSuite(testState.T, testState.Common.Env, "./", testState.GetChainlinkNodes(), nil, zapcore.DPanicLevel, nil)
-	require.NoError(testState.T, err)
+	t.Cleanup(func() {
+		err = actions.TeardownSuite(t, testState.Common.Env, utils.ProjectRoot, testState.Cc.ChainlinkNodes, nil, zapcore.ErrorLevel)
+		require.NoError(t, err, "Error tearing down environment")
+	})
+
 }
