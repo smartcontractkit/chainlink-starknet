@@ -59,7 +59,11 @@ func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func(
 		ks:     keystore,
 		cfg:    cfg,
 	}
-	txm.nonce = keys.NewNonceManager(txm.lggr, txm.client, txm.ks)
+	client, err := txm.client.Get()
+	if err != nil {
+		return txm, err
+	}
+	txm.nonce = keys.NewNonceManager(txm.lggr, client, txm.ks)
 
 	return txm, nil
 }
@@ -164,7 +168,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
 
-	nonce, err := txm.nonce.NextNonce(sender, client.Gw.ChainId)
+	nonce, err := txm.nonce.NextSequence(sender, client.Gw.ChainId)
 	if err != nil {
 		return txhash, errors.Wrap(err, "failed to get nonce")
 	}
@@ -198,7 +202,7 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 		return txhash, errors.New("execute response and error are nil")
 	}
 
-	return res.TransactionHash, txm.nonce.IncrementNextNonce(sender, client.Gw.ChainId, nonce)
+	return res.TransactionHash, txm.nonce.IncrementNextSequence(sender, client.Gw.ChainId, nonce)
 }
 
 func (txm *starktxm) Close() error {
