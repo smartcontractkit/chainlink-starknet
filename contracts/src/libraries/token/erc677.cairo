@@ -4,8 +4,9 @@ use starknet::ContractAddress;
 trait IERC677Receiver {
     fn on_token_transfer(sender: ContractAddress, value: u256, data: Array<felt252>);
     // implements EIP-165, where function selectors are defined by Ethereum ABI using the ethereum function signatures
-    fn supports_interface(interface_id: felt252) -> bool;
+    fn supports_interface(interface_id: u32) -> bool;
 }
+
 
 mod ERC677 {
     use starknet::ContractAddress;
@@ -18,7 +19,7 @@ mod ERC677 {
     use super::IERC677ReceiverDispatcher;
     use super::IERC677ReceiverDispatcherTrait;
 
-    const IERC677_RECEIVER_ID: felt252 = 0xa53f2491;
+    const IERC677_RECEIVER_ID: u32 = 0xa53f2491_u32;
 
     #[event]
     fn Transfer(from: ContractAddress, to: ContractAddress, value: u256, data: Array<felt252>) {}
@@ -32,9 +33,9 @@ mod ERC677 {
         let receiver = IERC677ReceiverDispatcher { contract_address: to };
 
         let supports = receiver.supports_interface(IERC677_RECEIVER_ID);
-        if supports {
-            receiver.on_token_transfer(sender, value, data);
-        }
+        // if supports {
+        //     receiver.on_token_transfer(sender, value, data);
+        // }
         true
     }
 }

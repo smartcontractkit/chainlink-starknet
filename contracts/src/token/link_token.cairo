@@ -141,6 +141,7 @@ mod LinkToken {
     fn only_minter() {
         let caller = starknet::get_caller_address();
         let minter = minter();
+        // todo: can we remove this check because it's already in the constructor
         assert(!minter.is_zero(), 'minter is 0');
         assert(caller == minter, 'only minter');
     }
