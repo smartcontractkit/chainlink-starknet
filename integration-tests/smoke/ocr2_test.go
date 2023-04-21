@@ -33,7 +33,6 @@ func TestOCRBasic(t *testing.T) {
 	testState = &common.Test{
 		T: t,
 	}
-
 	testState.Common = common.New()
 	testState.Common.Default(t)
 	// Setting this to the root of the repo for cmd exec func for Gauntlet
@@ -54,7 +53,7 @@ func TestOCRBasic(t *testing.T) {
 	}
 	testState.SetUpNodes(mockServerVal)
 
-	err = testState.ValidateRounds(1, false)
+	err = testState.ValidateRounds(10, false)
 	require.NoError(t, err, "Validating round should not fail")
 
 	t.Cleanup(func() {

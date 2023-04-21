@@ -332,7 +332,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			increasing = 0
 		}
 	}
-	l.Info().Msg("Exited loop")
 	if !isSoak {
 		assert.GreaterOrEqual(testState.T, increasing, rounds, "Round + epochs should be increasing")
 		assert.Equal(testState.T, positive, true, "Positive value should have been submitted")
