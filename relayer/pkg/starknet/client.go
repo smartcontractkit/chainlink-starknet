@@ -211,7 +211,7 @@ func (c *Client) AccountNonce(ctx context.Context, address caigotypes.Hash) (*bi
 		defer cancel()
 	}
 
-	out, err := c.Gw.AccountNonce(ctx, address)
+	out, err := c.Gw.Nonce(ctx, address.String(), "")
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.AccountNonce")
 	}

@@ -18,6 +18,6 @@ type Keystore interface {
 type NonceManager interface {
 	types.Service
 
-	NextNonce(address caigotypes.Hash, chainID string) (*big.Int, error)
-	IncrementNextNonce(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
+	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
+	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
 }

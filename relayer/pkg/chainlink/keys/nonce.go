@@ -2,7 +2,6 @@ package keys
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -11,15 +10,21 @@ import (
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
+
+//go:generate mockery --name NonceManagerClient --output ./mocks/ --case=underscore --filename nonce_manager_client.go
+
+type NonceManagerClient interface {
+	ChainID(context.Context) (string, error)
+	AccountNonce(context.Context, caigotypes.Hash) (*big.Int, error)
+}
 
 var _ NonceManager = (*nonceManager)(nil)
 
 type nonceManager struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
-	client  *utils.LazyLoad[*starknet.Client]
+	client  NonceManagerClient
 	ks      Keystore
 
 	chainId string
@@ -27,7 +32,7 @@ type nonceManager struct {
 	lock    sync.RWMutex
 }
 
-func NewNonceManager(lggr logger.Logger, client *utils.LazyLoad[*starknet.Client], ks Keystore) *nonceManager {
+func NewNonceManager(lggr logger.Logger, client NonceManagerClient, ks Keystore) *nonceManager {
 	return &nonceManager{
 		lggr:   logger.Named(lggr, "NonceManager"),
 		client: client,
@@ -37,34 +42,31 @@ func NewNonceManager(lggr logger.Logger, client *utils.LazyLoad[*starknet.Client
 }
 
 func (nm *nonceManager) Start(ctx context.Context) error {
-	client, err := nm.client.Get()
-	if err != nil {
-		return err
-	}
+	return nm.starter.StartOnce(nm.Name(), func() error {
+		// get chain ID
+		id, err := nm.client.ChainID(ctx)
+		if err != nil {
+			return err
+		}
+		nm.chainId = id
 
-	// get chain ID
-	id, err := client.ChainID(ctx)
-	if err != nil {
-		return err
-	}
-	nm.chainId = id
-
-	// get keys + nonces
-	keys, err := nm.ks.GetAll()
-	if err != nil {
-		return err
-	}
-	nm.lock.Lock()
-	defer nm.lock.Unlock()
-	for i := range keys {
-		addr := keys[i].AccountAddressStr()
-		// n, err := client.AccountNonce(ctx, caigotypes.HexToHash(addr))
-		// if err != nil {
-		// 	return err
-		// }
-		nm.n[addr] = big.NewInt(0)
-	}
-	return nil
+		// get keys + nonces
+		keys, err := nm.ks.GetAll()
+		if err != nil {
+			return err
+		}
+		nm.lock.Lock()
+		defer nm.lock.Unlock()
+		for i := range keys {
+			addr := keys[i].AccountAddressStr()
+			n, err := nm.client.AccountNonce(ctx, caigotypes.HexToHash(addr))
+			if err != nil {
+				return err
+			}
+			nm.n[addr] = n
+		}
+		return nil
+	})
 }
 
 func (nm *nonceManager) Ready() error {
@@ -76,26 +78,24 @@ func (nm *nonceManager) Name() string {
 }
 
 func (nm *nonceManager) Close() error {
-	return nil
+	return nm.starter.StopOnce(nm.Name(), func() error { return nil })
 }
 
 func (nm *nonceManager) HealthReport() map[string]error {
 	return map[string]error{nm.Name(): nm.starter.Healthy()}
 }
 
-func (nm *nonceManager) NextNonce(addr caigotypes.Hash, chainId string) (*big.Int, error) {
+func (nm *nonceManager) NextSequence(addr caigotypes.Hash, chainId string) (*big.Int, error) {
 	if err := nm.validate(addr, chainId); err != nil {
 		return nil, err
 	}
 
-	n, exists := nm.n[addr.String()]
-	if !exists {
-		return nil, errors.New("nonce does not exist for key")
-	}
-	return n, nil
+	nm.lock.RLock()
+	defer nm.lock.RUnlock()
+	return nm.n[addr.String()], nil
 }
 
-func (nm *nonceManager) IncrementNextNonce(addr caigotypes.Hash, chainId string, currentNonce *big.Int) error {
+func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Hash, chainId string, currentNonce *big.Int) error {
 	if err := nm.validate(addr, chainId); err != nil {
 		return err
 	}

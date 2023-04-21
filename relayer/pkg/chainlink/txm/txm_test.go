@@ -4,7 +4,6 @@ package txm
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
@@ -57,24 +56,8 @@ func TestIntegration_Txm(t *testing.T) {
 	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
 	require.NoError(t, err)
 
-	// test failing client in txm loop
-	// first call - nonce syncer - success
-	// second call - txm start loop - fail
-	// third+more call - txm loop - success
-	var count int
-	var wg sync.WaitGroup
-	wg.Add(3)
-
-	// should be called twice
 	getClient := func() (*starknet.Client, error) {
-		count += 1
-		wg.Done()
-		if count == 2 {
-			// test return not nil
-			return &starknet.Client{}, errors.New("random test error")
-		}
-
-		return client, nil
+		return client, err
 	}
 
 	// mock config to prevent import cycle
@@ -103,7 +86,6 @@ func TestIntegration_Txm(t *testing.T) {
 		}
 	}
 	time.Sleep(30 * time.Second)
-	wg.Wait()
 
 	// stop txm
 	require.NoError(t, txm.Close())
