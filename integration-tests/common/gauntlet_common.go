@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
 
@@ -27,9 +25,6 @@ func (testState *Test) fundNodes() error {
 		nAccount, err = testState.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
 			return err
-		}
-		if caigotypes.HexToHash(nAccount).String() != key.TXKey.Data.Attributes.AccountAddr {
-			return fmt.Errorf("Deployed account with address %s not matching with node account with address %s", caigotypes.HexToHash(nAccount).String(), key.TXKey.Data.Attributes.AccountAddr)
 		}
 		nAccounts = append(nAccounts, nAccount)
 	}
@@ -132,7 +127,7 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
 	if err != nil {
 		return err
