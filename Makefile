@@ -136,18 +136,18 @@ format-go-mod-tidy:
 	cd ./integration-tests && go mod tidy
 
 .PHONY: format-cairo
-format-cairo:
+format-cairo: build-cairo-format
 	find ./contracts/src -name "*.cairo" -type f \
-		-exec cairo-format -i --one_item_per_line {} +
+		-exec $(BIN_DIR)/cairo-format -i {} +
 	find ./examples -name "*.cairo" -type f \
-		-exec cairo-format -i --one_item_per_line {} +
+		-exec $(BIN_DIR)/cairo-format -i {} +
 
 .PHONY: format-cairo-check
-format-cairo-check:
+format-cairo-check: build-cairo-format
 	find ./contracts/src -name "*.cairo" -type f \
-		-exec cairo-format -c --one_item_per_line {} +
+		-exec $(BIN_DIR)/cairo-format -c {} +
 	find ./examples -name "*.cairo" -type f \
-		-exec cairo-format -c --one_item_per_line {} +
+		-exec $(BIN_DIR)/cairo-format -c {} +
 
 .PHONY: format-ts
 format-ts:
@@ -264,6 +264,14 @@ build-cairo-test:
 	cd vendor/cairo && \
 	cargo build --release --bin cairo-test && \
 	ln -sf ../vendor/cairo/target/release/cairo-test $(BIN_DIR)
+
+.PHONY: build-cairo-format
+# TODO: we could use cargo build --out-dir when stabilized
+build-cairo-format:
+	mkdir -p $(BIN_DIR) && \
+	cd vendor/cairo && \
+	cargo build --release --bin cairo-format && \
+	ln -sf ../vendor/cairo/target/release/cairo-format $(BIN_DIR)
 
 .PHONY: build-scarb
 build-scarb:
