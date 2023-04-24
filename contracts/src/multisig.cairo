@@ -2,9 +2,9 @@ use array::ArrayTrait;
 use option::OptionTrait;
 
 fn assert_unique_values<T,
-impl TCopy: Copy<T>,
-impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>,
+impl TCopy: Copy::<T>,
+impl TDrop: Drop::<T>,
+impl TPartialEq: PartialEq::<T>,
 >(
     a: @Array::<T>
 ) {
@@ -13,9 +13,9 @@ impl TPartialEq: PartialEq<T>,
 }
 
 fn _assert_unique_values_loop<T,
-impl TCopy: Copy<T>,
-impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>,
+impl TCopy: Copy::<T>,
+impl TDrop: Drop::<T>,
+impl TPartialEq: PartialEq::<T>,
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
@@ -24,14 +24,14 @@ impl TPartialEq: PartialEq<T>,
     }
     if k >= len {
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        _assert_unique_values_loop(a, len, j + 1, j + 2);
+        _assert_unique_values_loop(a, len, j + 1_usize, j + 2_usize);
         return ();
     }
     let j_val = *a.at(j);
     let k_val = *a.at(k);
     assert(j_val != k_val, 'duplicate values');
     gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-    _assert_unique_values_loop(a, len, j, k + 1);
+    _assert_unique_values_loop(a, len, j, k + 1_usize);
 }
 
 
@@ -85,7 +85,7 @@ mod Multisig {
         confirmations: usize,
     }
 
-    impl TransactionStorageAccess of StorageAccess<Transaction> {
+    impl TransactionStorageAccess of StorageAccess::<Transaction> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transaction> {
             Result::Ok(
                 Transaction {
@@ -181,7 +181,7 @@ mod Multisig {
     fn get_signers() -> Array<ContractAddress> {
         let signers_len = _signers_len::read();
         let mut signers = ArrayTrait::new();
-        _get_signers_range(0, signers_len, ref signers);
+        _get_signers_range(0_usize, signers_len, ref signers);
         signers
     }
 
@@ -207,7 +207,7 @@ mod Multisig {
     }
 
     #[view]
-    fn get_transaction(nonce: u128) -> (Transaction, Array<felt252>) {
+    fn get_transaction(nonce: u128) -> (Transaction, Array::<felt252>) {
         let transaction = _transactions::read(nonce);
 
         let mut calldata = ArrayTrait::new();
@@ -241,7 +241,7 @@ mod Multisig {
 
         let caller = get_caller_address();
         TransactionSubmitted(caller, nonce, to);
-        _next_nonce::write(nonce + 1);
+        _next_nonce::write(nonce + 1_u128);
     }
 
     #[external]
@@ -254,7 +254,7 @@ mod Multisig {
 
         // TODO: write a single field instead of the whole transaction?
         let mut transaction = _transactions::read(nonce);
-        transaction.confirmations += 1;
+        transaction.confirmations += 1_usize;
         _transactions::write(nonce, transaction);
 
         let caller = get_caller_address();
@@ -273,7 +273,7 @@ mod Multisig {
 
         // TODO: write a single field instead of the whole transaction?
         let mut transaction = _transactions::read(nonce);
-        transaction.confirmations -= 1;
+        transaction.confirmations -= 1_usize;
         _transactions::write(nonce, transaction);
 
         let caller = get_caller_address();
@@ -364,7 +364,7 @@ mod Multisig {
         _tx_valid_since::write(tx_valid_since);
 
         _signers_len::write(signers_len);
-        _set_signers_range(0, signers_len, @signers);
+        _set_signers_range(0_usize, signers_len, @signers);
 
         SignersSet(signers);
     }
@@ -379,7 +379,7 @@ mod Multisig {
         _signers::write(index, Zeroable::zero());
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        _clean_signers_range(index + 1, len);
+        _clean_signers_range(index + 1_usize, len);
     }
 
     fn _set_signers_range(index: usize, len: usize, signers: @Array<ContractAddress>) {
@@ -392,7 +392,7 @@ mod Multisig {
         _is_signer::write(signer, true);
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        _set_signers_range(index + 1, len, signers);
+        _set_signers_range(index + 1_usize, len, signers);
     }
 
     fn _get_signers_range(index: usize, len: usize, ref signers: Array<ContractAddress>) {
@@ -404,7 +404,7 @@ mod Multisig {
         signers.append(signer);
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        _get_signers_range(index + 1, len, ref signers);
+        _get_signers_range(index + 1_usize, len, ref signers);
     }
 
     fn _set_transaction_calldata_range(
@@ -418,7 +418,7 @@ mod Multisig {
         _transaction_calldata::write((nonce, index), calldata_arg);
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        _set_transaction_calldata_range(nonce, index + 1, len, calldata);
+        _set_transaction_calldata_range(nonce, index + 1_usize, len, calldata);
     }
 
     fn _get_transaction_calldata_range(
@@ -432,7 +432,7 @@ mod Multisig {
         calldata.append(calldata_arg);
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        _get_transaction_calldata_range(nonce, index + 1, len, ref calldata);
+        _get_transaction_calldata_range(nonce, index + 1_usize, len, ref calldata);
     }
 
     fn _set_threshold(threshold: usize) {
@@ -484,13 +484,13 @@ mod Multisig {
     }
 
     fn _require_valid_threshold(threshold: usize, signers_len: usize) {
-        if threshold == 0 {
-            if signers_len == 0 {
+        if threshold == 0_usize {
+            if signers_len == 0_usize {
                 return ();
             }
         }
 
-        assert(threshold >= 1, 'invalid threshold, too small');
+        assert(threshold >= 1_usize, 'invalid threshold, too small');
         assert(threshold <= signers_len, 'invalid threshold, too large');
     }
 
