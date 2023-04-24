@@ -27,15 +27,20 @@ export function feltsToBytes(felts: string[]): Buffer {
   // TODO: validate len > 1
 
   // TODO: validate it fits into 54 bits
-  // TODO:
-  // let length = Number(felts.shift())
+  let length = Number(BigInt(felts.shift()))
 
-  // for (const felt of felts) {
-  //   let chunk = felt.toArray('be', Math.min(CHUNK_SIZE, length))
-  //   data.push(...chunk)
+  for (const felt of felts) {
+    let size = Math.min(CHUNK_SIZE, length)
+    let chunk = Uint8Array.from(Buffer.from(felt, 'hex'))
+    let filler = chunk.length - size
+    // pad to size
+    while (filler > 0) {
+      data.push(0)
+    }
+    data.push(...chunk)
 
-  //   length -= chunk.length
-  // }
+    length -= chunk.length
+  }
 
   return Buffer.from(data)
 }
