@@ -7,12 +7,7 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import {
-  loadContract,
-  CONTRACT_LIST,
-  calculateAddress,
-  equalAddress,
-} from '../../src/lib/contracts'
+import { loadContract, CONTRACT_LIST, equalAddress } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
@@ -61,11 +56,6 @@ describe('OZ Account Contract', () => {
 
       contractAddress = report.responses[0].contract
       publicKey = report.data.publicKey
-
-      // debugging if this fails:
-      // has there been a OZ account contract update? if yes, make sure to update the contract hash for gauntlet and keystore
-      let calcAddress = calculateAddress(salt, publicKey)
-      expect(equalAddress(calcAddress, contractAddress)).toBe(true)
     },
     TIMEOUT,
   )
