@@ -75,7 +75,7 @@ describe('StarknetValidator', () => {
 
     // Deploy the mock feed
     mockGasPriceFeed = await deployMockContract(deployer, aggregatorAbi)
-    mockGasPriceFeed.mock.latestRoundData.returns(
+    await mockGasPriceFeed.mock.latestRoundData.returns(
       '73786976294838220258' /** roundId */,
       '96800000000' /** answer */,
       '163826896' /** startedAt */,
@@ -88,7 +88,7 @@ describe('StarknetValidator', () => {
 
     // Deploy the mock aggregator
     mockAggregator = await deployMockContract(deployer, aggregatorAbi)
-    mockAggregator.mock.latestRoundData.returns(
+    await mockAggregator.mock.latestRoundData.returns(
       '73786976294838220258' /** roundId */,
       1 /** answer */,
       '163826896' /** startedAt */,
@@ -202,18 +202,18 @@ describe('StarknetValidator', () => {
     describe('when called by account with access', () => {
       it('transaction succeeds', async () => {
         const waffleMockStarknetMessaging = await deployMockContract(deployer, starknetMessagingAbi)
-        waffleMockStarknetMessaging.mock.sendMessageToL2.returns(
+        await waffleMockStarknetMessaging.mock.sendMessageToL2.returns(
           ethers.utils.formatBytes32String('0'),
           0,
         )
-        mockAggregator.mock.latestRoundData.returns(
+        await mockAggregator.mock.latestRoundData.returns(
           '0' /** roundId */,
           1 /** answer */,
           '0' /** startedAt */,
           '0' /** updatedAt */,
           '0' /** answeredInRound */,
         )
-        mockGasPriceFeed.mock.latestRoundData.returns(
+        await mockGasPriceFeed.mock.latestRoundData.returns(
           '0' /** roundId */,
           1 /** answer */,
           '0' /** startedAt */,
@@ -313,7 +313,7 @@ describe('StarknetValidator', () => {
   describe('#setGasConfig', () => {
     describe('when called by non owner without access', () => {
       beforeEach(async () => {
-        mockAccessController.mock.hasAccess.returns(false)
+        await mockAccessController.mock.hasAccess.returns(false)
       })
 
       it('reverts', async () => {
@@ -353,7 +353,7 @@ describe('StarknetValidator', () => {
     describe('when access controller address is set', () => {
       describe('when called by an address with access', () => {
         beforeEach(async () => {
-          mockAccessController.mock.hasAccess.returns(true)
+          await mockAccessController.mock.hasAccess.returns(true)
         })
 
         it('correctly sets the gas config', async () => {
@@ -394,7 +394,7 @@ describe('StarknetValidator', () => {
 
       describe('when called by an address without access', () => {
         beforeEach(async () => {
-          mockAccessController.mock.hasAccess.returns(false)
+          await mockAccessController.mock.hasAccess.returns(false)
         })
 
         it('correctly sets the gas config', async () => {
