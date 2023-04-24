@@ -9,6 +9,8 @@ on:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    # TODO: re-enable when amarna supports cairo 1.0
+    if: false
     steps:
       - uses: actions/checkout@v3
       - name: Run Amarna
