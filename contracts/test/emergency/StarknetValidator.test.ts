@@ -469,6 +469,9 @@ describe('StarknetValidator', () => {
       expect(msgFromL1).to.have.a.lengthOf(1)
       expect(resp.consumed_messages.from_l2).to.be.empty
 
+      console.log(resp)
+      console.log(msgFromL1)
+
       expect(msgFromL1[0].args.from_address).to.hexEqual(starknetValidator.address)
       expect(msgFromL1[0].args.to_address).to.hexEqual(l2Contract.address)
       expect(msgFromL1[0].address).to.hexEqual(mockStarknetMessaging.address)
