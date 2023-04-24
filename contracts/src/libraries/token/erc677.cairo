@@ -33,9 +33,9 @@ mod ERC677 {
         let receiver = IERC677ReceiverDispatcher { contract_address: to };
 
         let supports = receiver.supports_interface(IERC677_RECEIVER_ID);
-        // if supports {
-        //     receiver.on_token_transfer(sender, value, data);
-        // }
+        if supports {
+            receiver.on_token_transfer(sender, value, data);
+        }
         true
     }
 }
