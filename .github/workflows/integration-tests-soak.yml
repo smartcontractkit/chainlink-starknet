@@ -56,7 +56,8 @@ jobs:
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
       - name: Build Image
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@dbc0d20743bdf6d74ec05aabcc0628076a48180f
+        # note using a temporary commit for build-image that works around the go get issues, replace when go get issues are fixed please
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cosmos_one_off
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
