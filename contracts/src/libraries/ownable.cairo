@@ -5,7 +5,7 @@ use starknet::ContractAddress;
 mod Ownable {
     use starknet::ContractAddress;
     use starknet::contract_address_const;
-    use starknet::ContractAddressZeroable;
+    use starknet::contract_address::ContractAddressZeroable;
     use zeroable::Zeroable;
 
     struct Storage {
@@ -21,7 +21,7 @@ mod Ownable {
     fn OwnershipTransferred(previous_owner: ContractAddress, newOwner: ContractAddress) {}
 
     #[event]
-    fn OwnershipTransferRequested(from: starknet::ContractAddress, to: starknet::ContractAddress){}
+    fn OwnershipTransferRequested(from: starknet::ContractAddress, to: starknet::ContractAddress) {}
 
     //
     // Constructor
@@ -29,7 +29,7 @@ mod Ownable {
 
     #[constructor]
     fn constructor(owner: ContractAddress) {
-      initializer(owner);
+        initializer(owner);
     }
 
     fn initializer(owner: ContractAddress) {

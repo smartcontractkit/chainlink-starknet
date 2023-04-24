@@ -1,7 +1,7 @@
 #[contract]
 mod SimpleReadAccessController {
     use starknet::ContractAddress;
-    use starknet::ContractAddressZeroable;
+    use starknet::contract_address::ContractAddressZeroable;
     use zeroable::Zeroable;
     use chainlink::libraries::access_controller::AccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;

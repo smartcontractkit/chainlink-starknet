@@ -10,7 +10,7 @@ trait IMintableToken {
 #[contract]
 mod LinkToken {
     use starknet::ContractAddress;
-    use starknet::ContractAddressZeroable;
+    use starknet::contract_address::ContractAddressZeroable;
     use zeroable::Zeroable;
 
     use chainlink::libraries::token::erc20::ERC20;

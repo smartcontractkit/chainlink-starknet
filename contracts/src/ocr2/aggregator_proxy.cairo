@@ -26,7 +26,7 @@ mod AggregatorProxy {
 
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
-    use starknet::ContractAddressZeroable;
+    use starknet::contract_address::ContractAddressZeroable;
     use starknet::Felt252TryIntoContractAddress;
     use integer::Felt252TryIntoU128;
     use starknet::StorageAccess;
@@ -58,7 +58,7 @@ mod AggregatorProxy {
         aggregator: ContractAddress
     }
 
-    impl PhaseStorageAccess of StorageAccess::<Phase> {
+    impl PhaseStorageAccess of StorageAccess<Phase> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Phase> {
             Result::Ok(
                 Phase {
@@ -72,12 +72,16 @@ mod AggregatorProxy {
             )
         }
 
-        fn write(address_domain: u32, base: StorageBaseAddress, value: Phase) -> SyscallResult::<()> {
+        fn write(
+            address_domain: u32, base: StorageBaseAddress, value: Phase
+        ) -> SyscallResult::<()> {
             storage_write_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 0_u8), value.id.into()
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.aggregator.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 1_u8),
+                value.aggregator.into()
             )
         }
     }
@@ -205,7 +209,7 @@ mod AggregatorProxy {
         SimpleWriteAccessController::remove_access(user)
     }
 
-     #[external]
+    #[external]
     fn enable_access_check() {
         SimpleWriteAccessController::enable_access_check()
     }
@@ -295,15 +299,12 @@ mod AggregatorProxy {
     fn _set_aggregator(address: ContractAddress) {
         let phase = _current_phase::read();
         let new_phase_id = phase.id + 1_u128;
-        _current_phase::write(Phase {
-            id: new_phase_id,
-            aggregator: address
-        });
+        _current_phase::write(Phase { id: new_phase_id, aggregator: address });
         _phases::write(new_phase_id, address);
     }
 
     fn _require_access() {
-       let caller = starknet::info::get_caller_address();
-       SimpleReadAccessController::check_access(caller);
+        let caller = starknet::info::get_caller_address();
+        SimpleReadAccessController::check_access(caller);
     }
 }
