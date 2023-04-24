@@ -264,7 +264,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230419191810-4d1ea0132d4c
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82
 	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc // indirect
 	github.com/smartcontractkit/ocr2keepers v0.6.14 // indirect
 	github.com/smartcontractkit/ocr2vrf v0.0.0-20230313164535-dce9b4be73a3 // indirect
