@@ -461,6 +461,9 @@ describe('StarknetValidator', () => {
 
       // Simulate L1 transmit + validate
       await starknetValidator.addAccess(eoaValidator.address)
+      // by default the gas config is 0, we need to change it or we will submit a 0 fee
+      const newGasEstimate = 1
+      await starknetValidator.connect(deployer).setGasConfig(newGasEstimate, mockGasPriceFeed.address)
       await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1)
 
       // Simulate the L1 - L2 comms
