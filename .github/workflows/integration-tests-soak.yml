@@ -57,7 +57,7 @@ jobs:
       - name: Build Image
         if: steps.check-image.outputs.exists == 'false'
         # note using a temporary commit for build-image that works around the go get issues, replace when go get issues are fixed please
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@cosmos_one_off
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@a2bf54158aa0a77a55f432347bc9ecf8ef642c2b # cosmos_one_off
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
