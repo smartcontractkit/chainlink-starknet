@@ -3,7 +3,9 @@ use starknet::ContractAddress;
 // TODO: check if the IMintableToken interface required by StarkGate changes for cairo 1.0
 #[abi]
 trait IMintableToken {
+    #[external]
     fn permissionedMint(account: ContractAddress, amount: u256);
+    #[external]
     fn permissionedBurn(account: ContractAddress, amount: u256);
 }
 
