@@ -137,16 +137,16 @@ format-go-mod-tidy:
 .PHONY: format-cairo
 format-cairo:
 	find ./contracts/src -name "*.cairo" -type f \
-		-exec $(BIN_DIR)/cairo-format -i {} +
+		-exec cairo-format -i {} +
 	find ./examples -name "*.cairo" -type f \
-		-exec $(BIN_DIR)/cairo-format -i {} +
+		-exec cairo-format -i {} +
 
 .PHONY: format-cairo-check
 format-cairo-check:
 	find ./contracts/src -name "*.cairo" -type f \
-		-exec $(BIN_DIR)/cairo-format -c {} +
+		-exec cairo-format -c {} +
 	find ./examples -name "*.cairo" -type f \
-		-exec $(BIN_DIR)/cairo-format -c {} +
+		-exec cairo-format -c {} +
 
 .PHONY: format-ts
 format-ts:
