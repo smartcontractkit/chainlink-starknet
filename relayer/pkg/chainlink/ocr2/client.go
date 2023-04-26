@@ -11,7 +11,7 @@ import (
 
 	caigogw "github.com/smartcontractkit/caigo/gateway"
 	caigotypes "github.com/smartcontractkit/caigo/types"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 

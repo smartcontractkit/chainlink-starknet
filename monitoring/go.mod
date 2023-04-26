@@ -3,11 +3,11 @@ module github.com/smartcontractkit/chainlink-starknet/monitoring
 go 1.20
 
 require (
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531175356-03a8f54e3528
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
-	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3
+	github.com/smartcontractkit/libocr v0.0.0-20230531174957-6e75d6e613d1
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/multierr v1.9.0
 )
@@ -26,7 +26,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -46,7 +46,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.39.0 // indirect
+	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/riferrei/srclient v0.5.4 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1 // indirect

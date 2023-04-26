@@ -1,8 +1,8 @@
 package medianreport
 
 import (
-	"github.com/smartcontractkit/libocr/offchainreporting2/chains/evmutil"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 )
 
 // NOTE: this should sit in the ocr2 package but that causes import cycles

@@ -6,8 +6,9 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086
-	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531175356-03a8f54e3528
+	// WARNING: Experimental version of libocr - do not merge until this is officially released!
+	github.com/smartcontractkit/libocr v0.0.0-20230531174957-6e75d6e613d1
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
@@ -25,7 +26,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.3 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect

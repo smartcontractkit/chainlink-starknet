@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 )
 
 func parseEpochAndRound(felt *big.Int) (epoch uint32, round uint8) {

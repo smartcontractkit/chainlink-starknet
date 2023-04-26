@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/reportingplugin/median"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

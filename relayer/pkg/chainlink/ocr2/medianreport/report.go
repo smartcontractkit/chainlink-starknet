@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/reportingplugin/median"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 )
 
 var _ median.ReportCodec = (*ReportCodec)(nil)

@@ -8,7 +8,7 @@ import (
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/bigbigendian"
-	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/reportingplugin/median"
 )
 
 const (

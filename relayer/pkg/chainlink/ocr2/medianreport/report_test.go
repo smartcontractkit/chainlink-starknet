@@ -11,7 +11,7 @@ import (
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/commontypes"
-	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/reportingplugin/median"
 )
 
 func TestBuildReport(t *testing.T) {
