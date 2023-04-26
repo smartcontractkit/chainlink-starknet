@@ -11,6 +11,7 @@ import (
 	"github.com/dontpanicdao/caigo"
 	"github.com/dontpanicdao/caigo/gateway"
 	caigotypes "github.com/dontpanicdao/caigo/types"
+	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -27,6 +28,7 @@ const (
 
 type TxManager interface {
 	Enqueue(caigotypes.Hash, caigotypes.FunctionCall) error
+	InflightCount() int
 }
 
 type Tx struct {
@@ -199,9 +201,7 @@ func (txm *starktxm) confirmLoop() {
 	ctx, cancel := utils.ContextFromChan(txm.stop)
 	defer cancel()
 
-	// TODO: move to config
-	confirmationPoll := 5 * time.Second
-	tick := time.After(confirmationPoll)
+	tick := time.After(txm.cfg.ConfirmationPoll())
 
 	txm.lggr.Debugw("confirmLoop: started")
 	for {
@@ -239,7 +239,7 @@ func (txm *starktxm) confirmLoop() {
 			return
 		}
 
-		tick = time.After(utils.WithJitter(confirmationPoll - time.Since(start)))
+		tick = time.After(utils.WithJitter(txm.cfg.ConfirmationPoll() - time.Since(start)))
 	}
 }
 
@@ -276,4 +276,12 @@ func (txm *starktxm) Enqueue(sender caigotypes.Hash, tx caigotypes.FunctionCall)
 	}
 
 	return nil
+}
+
+func (txm *starktxm) InflightCount() (count int) {
+	list := maps.Values(txm.txStore.GetUnconfirmed())
+	for i := range list {
+		count += len(list[i])
+	}
+	return
 }

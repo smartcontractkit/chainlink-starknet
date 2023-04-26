@@ -6,5 +6,6 @@ import "time"
 
 // txm config
 type Config interface {
+	ConfirmationPoll() time.Duration
 	TxTimeout() time.Duration
 }
