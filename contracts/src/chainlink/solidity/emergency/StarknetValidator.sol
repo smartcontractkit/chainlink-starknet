@@ -123,7 +123,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     int256 /* previousAnswer */,
     uint256 /* currentRoundId */,
     int256 currentAnswer
-  ) external override checkAccess returns (bool) {
+  ) external payable override checkAccess returns (bool) {
     return _sendUpdateMessageToL2(currentAnswer);
   }
 
@@ -131,7 +131,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @notice retries to send the latest answer as update message to L2
    * @dev only with access, useful in cases where a previous x-domain message was handeled unsuccessfully.
    */
-  function retry() external checkAccess returns (bool) {
+  function retry() external payable checkAccess returns (bool) {
     (, int256 latestAnswer, , , ) = AggregatorV3Interface(s_source).latestRoundData();
     return _sendUpdateMessageToL2(latestAnswer);
   }
