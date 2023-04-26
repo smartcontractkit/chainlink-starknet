@@ -155,6 +155,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   function _sendUpdateMessageToL2(int256 answer) internal returns (bool) {
     // Bridge fees are paid on L1
     uint256 fee = _approximateFee();
+    require(msg.value >= fee, "Insufficent L1 -> L2 fee");
 
     // Fill payload with `status` and `timestamp`
     uint256[] memory payload = new uint256[](2);
