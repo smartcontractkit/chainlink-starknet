@@ -12,15 +12,15 @@ import (
 // TxStore tracks broadcast & unconfirmed txs
 type TxStore struct {
 	lock         sync.RWMutex
-	nonceToHash  map[*big.Int]string // map nonce to txhash
-	hashToNonce  map[string]*big.Int // map hash to nonce
-	currentNonce *big.Int            // minimum nonce
+	nonceToHash  map[int64]string // map nonce to txhash
+	hashToNonce  map[string]int64 // map hash to nonce
+	currentNonce *big.Int         // minimum nonce
 }
 
 func NewTxStore(current *big.Int) *TxStore {
 	return &TxStore{
-		nonceToHash:  map[*big.Int]string{},
-		hashToNonce:  map[string]*big.Int{},
+		nonceToHash:  map[int64]string{},
+		hashToNonce:  map[string]int64{},
 		currentNonce: current,
 	}
 }
@@ -32,19 +32,22 @@ func (s *TxStore) Save(nonce *big.Int, hash string) error {
 	if s.currentNonce.Cmp(nonce) == 1 {
 		return fmt.Errorf("nonce too low: %s < %s (lowest)", nonce, s.currentNonce)
 	}
-	if h, exists := s.nonceToHash[nonce]; exists {
+	if h, exists := s.nonceToHash[nonce.Int64()]; exists {
 		return fmt.Errorf("nonce used: tried to use nonce (%s) for tx (%s), already used by (%s)", nonce, hash, h)
+	}
+	if n, exists := s.hashToNonce[hash]; exists {
+		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%d)", hash, nonce, n)
 	}
 
 	// store hash
-	s.nonceToHash[nonce] = hash
-	s.hashToNonce[hash] = nonce
+	s.nonceToHash[nonce.Int64()] = hash
+	s.hashToNonce[hash] = nonce.Int64()
 
 	// find next unused nonce
-	_, exists := s.nonceToHash[s.currentNonce]
+	_, exists := s.nonceToHash[s.currentNonce.Int64()]
 	for exists {
 		s.currentNonce.Add(s.currentNonce, big.NewInt(1))
-		_, exists = s.nonceToHash[s.currentNonce]
+		_, exists = s.nonceToHash[s.currentNonce.Int64()]
 	}
 	return nil
 }
@@ -56,8 +59,9 @@ func (s *TxStore) Confirm(hash string) error {
 	if nonce, exists := s.hashToNonce[hash]; exists {
 		delete(s.hashToNonce, hash)
 		delete(s.nonceToHash, nonce)
+		return nil
 	}
-	return fmt.Errorf("tx hash does not exist: %s", hash)
+	return fmt.Errorf("tx hash does not exist - it may already be confirmed: %s", hash)
 }
 
 func (s *TxStore) GetUnconfirmed() []string {
@@ -107,7 +111,7 @@ func (c ChainTxStore) GetUnconfirmed() map[caigotypes.Hash][]string {
 
 func (c ChainTxStore) validate(from caigotypes.Hash) error {
 	if _, exists := c[from]; !exists {
-		return fmt.Errorf("from address does not exist on ChainTxStore: %s", from)
+		return fmt.Errorf("from address does not exist: %s", from)
 	}
 	return nil
 }
