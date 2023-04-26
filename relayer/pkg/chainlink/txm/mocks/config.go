@@ -13,6 +13,20 @@ type Config struct {
 	mock.Mock
 }
 
+// ConfirmationPoll provides a mock function with given fields:
+func (_m *Config) ConfirmationPoll() time.Duration {
+	ret := _m.Called()
+
+	var r0 time.Duration
+	if rf, ok := ret.Get(0).(func() time.Duration); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(time.Duration)
+	}
+
+	return r0
+}
+
 // TxTimeout provides a mock function with given fields:
 func (_m *Config) TxTimeout() time.Duration {
 	ret := _m.Called()

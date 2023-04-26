@@ -9,6 +9,7 @@ import (
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
@@ -63,6 +64,7 @@ func TestIntegration_Txm(t *testing.T) {
 	// mock config to prevent import cycle
 	cfg := txmmock.NewConfig(t)
 	cfg.On("TxTimeout").Return(10 * time.Second)
+	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)
 	require.NoError(t, err)
@@ -74,6 +76,7 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, txm.Start(context.Background()))
 	require.NoError(t, txm.Ready())
 
+	// TODO: fix after devnet versions are upgraded
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
 		for i := 0; i < 5; i++ {
@@ -83,9 +86,20 @@ func TestIntegration_Txm(t *testing.T) {
 			}))
 		}
 	}
-	time.Sleep(30 * time.Second)
+	time.Sleep(5 * time.Second)
+	var empty bool
+	for i := 0; i < 60; i++ {
+		count := txm.InflightCount()
+		t.Logf("inflight count: %d", count)
+
+		if count == 0 {
+			empty = true
+			break
+		}
+	}
 
 	// stop txm
+	assert.True(t, empty, "txm timed out while trying to confirm transactions")
 	require.NoError(t, txm.Close())
 	require.Error(t, txm.Ready())
 }
