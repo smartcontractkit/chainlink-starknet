@@ -21,11 +21,9 @@ use array::SpanTrait;
 use option::OptionTrait;
 use hash::LegacyHash;
 
-fn hash_span<
-    T,
-    impl THash: LegacyHash::<T>,
-    impl TCopy: Copy::<T>
->(state: felt252, mut value: Span<T>) -> felt252 {
+fn hash_span<T, impl THash: LegacyHash::<T>, impl TCopy: Copy::<T>>(
+    state: felt252, mut value: Span<T>
+) -> felt252 {
     let item = value.pop_front();
     match item {
         Option::Some(x) => {
@@ -63,13 +61,10 @@ fn split_felt(felt: felt252) -> (u128, u128) {
     }
 }
 
-
 // TODO: wrap hash_span
-impl SpanLegacyHash<
-    T,
-    impl THash: LegacyHash::<T>,
-    impl TCopy: Copy::<T>
-> of LegacyHash::<Span<T>> {
+impl SpanLegacyHash<T,
+impl THash: LegacyHash::<T>,
+impl TCopy: Copy::<T>> of LegacyHash::<Span<T>> {
     fn hash(state: felt252, mut value: Span<T>) -> felt252 {
         hash_span(state, value)
     }
@@ -115,7 +110,7 @@ mod Aggregator {
     trait IERC20 {
         fn balance_of(account: ContractAddress) -> u256;
         fn transfer(recipient: ContractAddress, amount: u256) -> bool;
-        // fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
+    // fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
     }
 
     const GIGA: u128 = 1000000000_u128;
@@ -140,7 +135,6 @@ mod Aggregator {
     #[derive(Copy, Drop, Serde)]
     struct Oracle {
         index: usize,
-
         // entire supply of LINK always fits into u96, so u128 is safe to use
         payment_juels: u128,
     }
@@ -151,16 +145,13 @@ mod Aggregator {
                 address_domain, storage_address_from_base_and_offset(base, 0_u8)
             )?;
             let (index, payment_juels) = split_felt(value);
-            Result::Ok(
-                Oracle {
-                    index: index.into().try_into().unwrap(),
-                    payment_juels,
-                }
-            )
+            Result::Ok(Oracle { index: index.into().try_into().unwrap(), payment_juels,  })
         }
 
-        fn write(address_domain: u32, base: StorageBaseAddress, value: Oracle) -> SyscallResult::<()> {
-            let value =  value.index.into() * SHIFT_128 + value.payment_juels.into();
+        fn write(
+            address_domain: u32, base: StorageBaseAddress, value: Oracle
+        ) -> SyscallResult::<()> {
+            let value = value.index.into() * SHIFT_128 + value.payment_juels.into();
             storage_write_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 0_u8), value
             )
@@ -177,14 +168,18 @@ mod Aggregator {
 
     impl TransmissionStorageAccess of StorageAccess::<Transmission> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
-            let block_num_and_answer = storage_read_syscall(address_domain, storage_address_from_base_and_offset(base, 0_u8))?;
+            let block_num_and_answer = storage_read_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 0_u8)
+            )?;
             let (block_num, answer) = split_felt(block_num_and_answer);
-            let timestamps = storage_read_syscall(address_domain, storage_address_from_base_and_offset(base, 1_u8))?;
+            let timestamps = storage_read_syscall(
+                address_domain, storage_address_from_base_and_offset(base, 1_u8)
+            )?;
             let (observation_timestamp, transmission_timestamp) = split_felt(timestamps);
 
             Result::Ok(
                 Transmission {
-                    answer ,
+                    answer,
                     block_num: block_num.into().try_into().unwrap(),
                     observation_timestamp: observation_timestamp.into().try_into().unwrap(),
                     transmission_timestamp: transmission_timestamp.into().try_into().unwrap(),
@@ -192,11 +187,16 @@ mod Aggregator {
             )
         }
 
-        fn write(address_domain: u32, base: StorageBaseAddress, value: Transmission) -> SyscallResult::<()> {
+        fn write(
+            address_domain: u32, base: StorageBaseAddress, value: Transmission
+        ) -> SyscallResult::<()> {
             let block_num_and_answer = value.block_num.into() * SHIFT_128 + value.answer.into();
-            let timestamps = value.observation_timestamp.into() * SHIFT_128 + value.transmission_timestamp.into();
+            let timestamps = value.observation_timestamp.into() * SHIFT_128
+                + value.transmission_timestamp.into();
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), block_num_and_answer
+                address_domain,
+                storage_address_from_base_and_offset(base, 0_u8),
+                block_num_and_answer
             )?;
             storage_write_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 1_u8), timestamps
@@ -206,7 +206,7 @@ mod Aggregator {
 
     struct Storage {
         /// Maximum number of faulty oracles
-        _f: u8,        
+        _f: u8,
         _latest_epoch_and_round: u64, // (u32, u32)
         _latest_aggregator_round_id: u128,
         _min_answer: u128,
@@ -216,7 +216,6 @@ mod Aggregator {
         _latest_config_block_number: u64,
         _config_count: u64,
         _latest_config_digest: felt252,
-
         // _oracles: Array<Oracle>, // NOTE: array can't be used in storage
         _oracles_len: usize,
         _transmitters: LegacyMap<ContractAddress, Oracle>, // <pkey, Oracle>
@@ -225,17 +224,15 @@ mod Aggregator {
         _transmitters_list: LegacyMap<usize, ContractAddress>,
         _reward_from_aggregator_round_id: LegacyMap<usize, u128>, // <index, round_id>
         _transmissions: LegacyMap<u128, Transmission>,
-
         // link token
         _link_token: ContractAddress,
-
         // billing
         _billing_access_controller: ContractAddress,
         _billing: Billing,
-
         // payee management
         _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
-        _proposed_payees: LegacyMap<ContractAddress, ContractAddress> // <transmitter, payment_address>
+        _proposed_payees: LegacyMap<ContractAddress,
+        ContractAddress> // <transmitter, payment_address>
     }
 
     fn require_access() {
@@ -282,7 +279,6 @@ mod Aggregator {
         fn type_and_version() -> felt252 {
             'ocr2/aggregator.cairo 1.0.0'
         }
-
     }
 
     // ---
@@ -360,7 +356,7 @@ mod Aggregator {
         SimpleWriteAccessController::remove_access(user)
     }
 
-     #[external]
+    #[external]
     fn enable_access_check() {
         SimpleWriteAccessController::enable_access_check()
     }
@@ -391,7 +387,7 @@ mod Aggregator {
     #[derive(Copy, Drop, Serde)]
     struct OracleConfig {
         signer: felt252,
-        transmitter: ContractAddress,    
+        transmitter: ContractAddress,
     }
 
     impl OracleConfigLegacyHash of LegacyHash::<OracleConfig> {
@@ -427,11 +423,7 @@ mod Aggregator {
         let min_answer = _min_answer::read();
         let max_answer = _max_answer::read();
 
-        let computed_onchain_config = OnchainConfig {
-            version: 1_u8,
-            min_answer,
-            max_answer,
-        };
+        let computed_onchain_config = OnchainConfig { version: 1_u8, min_answer, max_answer,  };
 
         // TODO: validate answer range
 
@@ -475,7 +467,7 @@ mod Aggregator {
 
         ConfigSet(
             prev_block_num,
-            digest,            
+            digest,
             config_count,
             oracles,
             f,
@@ -584,14 +576,16 @@ mod Aggregator {
         (config_count, block_number, config_digest)
     }
 
-     #[view]
-     fn transmitters() -> Array<ContractAddress> {
+    #[view]
+    fn transmitters() -> Array<ContractAddress> {
         let len = _oracles_len::read();
         let result = ArrayTrait::new();
         transmitters_(len, 0_usize, result)
-     }
+    }
 
-    fn transmitters_(len: usize, index: usize, mut result: Array<ContractAddress>) -> Array<ContractAddress> {
+    fn transmitters_(
+        len: usize, index: usize, mut result: Array<ContractAddress>
+    ) -> Array<ContractAddress> {
         if len == 0_usize {
             return result;
         }
@@ -607,7 +601,7 @@ mod Aggregator {
     #[derive(Copy, Drop, Serde)]
     struct Signature {
         r: felt252,
-        s: felt252,    
+        s: felt252,
         public_key: felt252,
     }
 
@@ -629,7 +623,7 @@ mod Aggregator {
         mut signatures: Array<Signature>,
     ) {
         let signatures_len = signatures.len();
-    
+
         let epoch_and_round = _latest_epoch_and_round::read();
         assert(epoch_and_round < epoch_and_round, 'stale report');
 
@@ -696,17 +690,19 @@ mod Aggregator {
         // NOTE: Usually validating via validator would happen here, currently disabled
 
         let billing = _billing::read();
-        let reimbursement_juels = calculate_reimbursement(juels_per_fee_coin, signatures_len, gas_price, billing);
+        let reimbursement_juels = calculate_reimbursement(
+            juels_per_fee_coin, signatures_len, gas_price, billing
+        );
 
         // end report()
 
         NewTransmission(
             round_id,
             median,
-             caller,
+            caller,
             observation_timestamp,
             observers,
-             observations,
+            observations,
             juels_per_fee_coin,
             gas_price,
             report_context.config_digest,
@@ -715,12 +711,12 @@ mod Aggregator {
         );
 
         // pay transmitter
-        let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into().try_into().unwrap() * GIGA);
+        let payment = reimbursement_juels
+            + (billing.transmission_payment_gjuels.into().try_into().unwrap() * GIGA);
         // TODO: check overflow
 
         oracle.payment_juels += payment;
         _transmitters::write(caller, oracle);
-
     }
 
     fn hash_report(
@@ -762,10 +758,7 @@ mod Aggregator {
         assert(prev_signed_count != signed_count, 'duplicate signer');
 
         let is_valid = ecdsa::check_ecdsa_signature(
-            msg,
-            signature.public_key,
-            signature.r,
-            signature.s
+            msg, signature.public_key, signature.r, signature.s
         );
 
         assert(is_valid, '');
@@ -809,10 +802,7 @@ mod Aggregator {
     // --- Set LINK Token
 
     #[event]
-    fn LinkTokenSet(
-        old_link_token: ContractAddress,
-        new_link_token: ContractAddress,
-    ) {}
+    fn LinkTokenSet(old_link_token: ContractAddress, new_link_token: ContractAddress, ) {}
 
     #[external]
     fn set_link_token(link_token: ContractAddress, recipient: ContractAddress) {
@@ -845,8 +835,7 @@ mod Aggregator {
 
     #[event]
     fn BillingAccessControllerSet(
-        old_controller: ContractAddress,
-        new_controller: ContractAddress,
+        old_controller: ContractAddress, new_controller: ContractAddress, 
     ) {}
 
     #[external]
@@ -866,7 +855,7 @@ mod Aggregator {
 
     #[abi]
     trait IAccessController {
-      fn check_access(user: ContractAddress);
+        fn check_access(user: ContractAddress);
     }
 
     #[derive(Copy, Drop, Serde)]
@@ -897,18 +886,28 @@ mod Aggregator {
             )
         }
 
-        fn write(address_domain: u32, base: StorageBaseAddress, value: Billing) -> SyscallResult::<()> {
+        fn write(
+            address_domain: u32, base: StorageBaseAddress, value: Billing
+        ) -> SyscallResult::<()> {
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.observation_payment_gjuels.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 0_u8),
+                value.observation_payment_gjuels.into()
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.transmission_payment_gjuels.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 1_u8),
+                value.transmission_payment_gjuels.into()
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 2_u8), value.gas_base.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 2_u8),
+                value.gas_base.into()
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 3_u8), value.gas_per_signature.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 3_u8),
+                value.gas_per_signature.into()
             )
         }
     }
@@ -973,7 +972,8 @@ mod Aggregator {
         let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
         let rounds = latest_round_id - from_round_id;
 
-        (rounds * billing.observation_payment_gjuels.into().try_into().unwrap() * GIGA) + *oracle.payment_juels
+        (rounds * billing.observation_payment_gjuels.into().try_into().unwrap() * GIGA)
+            + *oracle.payment_juels
     }
 
     #[view]
@@ -982,7 +982,9 @@ mod Aggregator {
         _owed_payment(@oracle)
     }
 
-    fn pay_oracle(transmitter: ContractAddress, latest_round_id: u128, link_token: ContractAddress) {
+    fn pay_oracle(
+        transmitter: ContractAddress, latest_round_id: u128, link_token: ContractAddress
+    ) {
         let oracle = _transmitters::read(transmitter);
         if oracle.index == 0_usize {
             return ();
@@ -1020,7 +1022,7 @@ mod Aggregator {
         if index == 0_usize {
             return ();
         }
-    
+
         let transmitter = _transmitters_list::read(index);
         pay_oracle(transmitter, latest_round_id, link_token);
 
@@ -1057,13 +1059,18 @@ mod Aggregator {
     fn total_link_due() -> u128 {
         let len = _oracles_len::read();
         let latest_round_id = _latest_aggregator_round_id::read();
-    
+
         total_link_due_(len, latest_round_id, 0_u128, 0_u128)
     }
-    fn total_link_due_(index: usize, latest_round_id: u128, total_rounds: u128, payments_juels: u128) -> u128 {
+    fn total_link_due_(
+        index: usize, latest_round_id: u128, total_rounds: u128, payments_juels: u128
+    ) -> u128 {
         if index == 0_usize {
             let billing = _billing::read();
-            return (total_rounds * billing.observation_payment_gjuels.into().try_into().unwrap() * GIGA) + payments_juels;
+            return (total_rounds
+                * billing.observation_payment_gjuels.into().try_into().unwrap()
+                * GIGA)
+                + payments_juels;
         }
 
         let transmitter = _transmitters_list::read(index);
@@ -1074,7 +1081,12 @@ mod Aggregator {
         let rounds = latest_round_id - from_round_id;
 
         gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        total_link_due_(index - 1_usize, latest_round_id, total_rounds + rounds, payments_juels + oracle.payment_juels)
+        total_link_due_(
+            index - 1_usize,
+            latest_round_id,
+            total_rounds + rounds,
+            payments_juels + oracle.payment_juels
+        )
     }
 
     #[view]
@@ -1100,7 +1112,9 @@ mod Aggregator {
 
     const MARGIN: u128 = 115_u128;
 
-    fn calculate_reimbursement(juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: Billing) -> u128 {
+    fn calculate_reimbursement(
+        juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: Billing
+    ) -> u128 {
         // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
         // NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
         // gas_base = 14951, gas_per_signature = 13
@@ -1116,21 +1130,17 @@ mod Aggregator {
 
     #[event]
     fn PayeeshipTransferRequested(
-        transmitter: ContractAddress,
-        current: ContractAddress,
-        proposed: ContractAddress,
+        transmitter: ContractAddress, current: ContractAddress, proposed: ContractAddress, 
     ) {}
 
     #[event]
     fn PayeeshipTransferred(
-        transmitter: ContractAddress,
-        previous: ContractAddress,
-        current: ContractAddress,
+        transmitter: ContractAddress, previous: ContractAddress, current: ContractAddress, 
     ) {}
 
     #[derive(Copy, Drop, Serde)]
     struct PayeeConfig {
-        transmitter: ContractAddress,    
+        transmitter: ContractAddress,
         payee: ContractAddress,
     }
 
