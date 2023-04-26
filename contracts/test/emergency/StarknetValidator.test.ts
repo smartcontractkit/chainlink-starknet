@@ -463,17 +463,17 @@ describe('StarknetValidator', () => {
       await starknetValidator.addAccess(eoaValidator.address)
       // by default the gas config is 0, we need to change it or we will submit a 0 fee
       const newGasEstimate = 1
+      console.log("setGasConfig")
       await starknetValidator.connect(deployer).setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+      console.log("validate")
       await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1)
+      console.log("flush")
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()
       const msgFromL1 = resp.consumed_messages.from_l1
       expect(msgFromL1).to.have.a.lengthOf(1)
       expect(resp.consumed_messages.from_l2).to.be.empty
-
-      console.log(resp)
-      console.log(msgFromL1)
 
       expect(msgFromL1[0].args.from_address).to.hexEqual(starknetValidator.address)
       expect(msgFromL1[0].args.to_address).to.hexEqual(l2Contract.address)
