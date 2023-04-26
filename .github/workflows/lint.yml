@@ -32,5 +32,9 @@ jobs:
       - name: Install
         run: nix develop -c yarn install --frozen-lockfile
 
-      - name: Check
-        run: nix develop -c make format-check
+      # NOTE: Runs outside the nix environment because starknet-devnet still pulls in 0.x cairo which ends up taking precedence.
+      - name: Check Cairo
+        run: make format-cairo-check
+
+      - name: Check Typescript
+        run: nix develop -c make format-ts-check
