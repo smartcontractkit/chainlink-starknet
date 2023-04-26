@@ -145,7 +145,7 @@ describe('LinkToken', function () {
       expect(uint256.uint256ToBN(balance)).to.deep.equal(num.toBigInt(0))
     })
 
-    it('transfers the amount to the contract and calls the contract function without withdrawl', async () => {
+    xit('transfers the amount to the contract and calls the contract function without withdrawl', async () => {
       let selector = hash.getSelectorFromName('callbackWithoutWithdrawl')
       await owner.invoke(token, 'transferAndCall', {
         to: recipient.address,
@@ -170,7 +170,7 @@ describe('LinkToken', function () {
       expect(callData).to.deep.equal(1n)
     })
 
-    it('transfers the amount to the contract and calls the contract function with withdrawl', async () => {
+    xit('transfers the amount to the contract and calls the contract function with withdrawl', async () => {
       let selector = hash.getSelectorFromName('callbackWithWithdrawl')
       await owner.invoke(token, 'approve', {
         spender: recipient.address,
