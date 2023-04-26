@@ -116,7 +116,7 @@ mod Multisig {
             address_domain: u32, base: StorageBaseAddress, value: Transaction
         ) -> SyscallResult::<()> {
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.to.into(),
+                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.to.into(), 
             )?;
             storage_write_syscall(
                 address_domain,
