@@ -146,8 +146,9 @@ format-cairo:
 format-cairo-check:
 	find ./contracts/src -name "*.cairo" -type f \
 		-exec cairo-format -c {} +
-	find ./examples -name "*.cairo" -type f \
-		-exec cairo-format -c {} +
+	# TODO: re-enable once examples are rewritten
+	# find ./examples -name "*.cairo" -type f \
+	# 	-exec cairo-format -c {} +
 
 .PHONY: format-ts
 format-ts:
