@@ -260,7 +260,7 @@ test-ts-contracts: build-ts-contracts build-ts-workspace env-devnet-hardhat
 
 .PHONY: build-contracts
 build-contracts:
-	cd contracts && scarb build
+	cd contracts && scarb --profile release build
 
 .PHONY: test-cairo-contracts
 test-cairo-contracts:
