@@ -93,7 +93,7 @@ func TestIntegration_Txm(t *testing.T) {
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
 		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(key, caigotypes.FunctionCall{
+			require.NoError(t, txm.Enqueue(key, key, caigotypes.FunctionCall{
 				ContractAddress:    key, // send to self
 				EntryPointSelector: "get_nonce",
 			}))
