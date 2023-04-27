@@ -86,7 +86,7 @@ type medianProvider struct {
 	reportCodec        median.ReportCodec
 }
 
-func NewMedianProvider(chainID string, contractAddress string, senderAddress string, basereader starknet.Reader, cfg Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
+func NewMedianProvider(chainID string, contractAddress string, senderAddress string, accountAddress string, basereader starknet.Reader, cfg Config, txm txm.TxManager, lggr logger.Logger) (*medianProvider, error) {
 	lggr = logger.Named(lggr, "MedianProvider")
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
@@ -94,7 +94,7 @@ func NewMedianProvider(chainID string, contractAddress string, senderAddress str
 	}
 
 	cache := NewTransmissionsCache(cfg, configProvider.reader, lggr)
-	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress, txm)
+	transmitter := NewContractTransmitter(cache, contractAddress, senderAddress, accountAddress, txm)
 
 	return &medianProvider{
 		configProvider:     configProvider,
