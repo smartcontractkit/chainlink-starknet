@@ -19,6 +19,13 @@ type StarknetGauntlet struct {
 	options *gauntlet.ExecCommandOptions
 }
 
+type AddAccessArgs struct {
+	ContractType string
+	Address      string
+	Aggregator   string
+	User         string
+}
+
 // GauntletResponse Default response output for starknet gauntlet commands
 type GauntletResponse struct {
 	Responses []struct {
@@ -200,8 +207,76 @@ func (sg *StarknetGauntlet) SetConfigDetails(cfg string, ocrAddress string) (str
 	return sg.gr.Responses[0].Contract, nil
 }
 
-func (sg *StarknetGauntlet) AddAccess(aggregator, address string) (string, error) {
-	_, err := sg.G.ExecCommand([]string{"ocr2:add_access", fmt.Sprintf("--address=%s", address), aggregator}, *sg.options)
+func (sg *StarknetGauntlet) AddAccess(args AddAccessArgs) (string, error) {
+	flags := []string{
+		fmt.Sprintf("%s:add_access", args.ContractType),
+		fmt.Sprintf("--address=%s", args.Address),
+	}
+	if args.User != "" {
+		flags = append(flags, args.User)
+	}
+	flags = append(flags, args.Aggregator)
+	_, err := sg.G.ExecCommand(flags, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) DeploySequencer(initalStatus int) (string, error) {
+	_, err := sg.G.ExecCommand([]string{"sequencer_uptime_feed:deploy", fmt.Sprintf("--initialStatus=%d", initalStatus)}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) DeployValidator(starkNetMessaging string, configAC string, gasPriceL1Feed string, source string, gasEstimate string, l2Feed string) (string, error) {
+	_, err := sg.G.ExecCommand([]string{"StarknetValidator:deploy", fmt.Sprintf("--starkNetMessaging=%s", starkNetMessaging), fmt.Sprintf("--configAC=%s", configAC), fmt.Sprintf("--gasPriceL1Feed=%s", gasPriceL1Feed), fmt.Sprintf("--source=%s", source), fmt.Sprintf("--gasEstimate=%s", gasEstimate), fmt.Sprintf("--l2Feed=%s", l2Feed)}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) SetL1Sender(address string, uptimeFeedAddress string) (string, error) {
+	_, err := sg.G.ExecCommand([]string{"sequencer_uptime_feed:set_l1_sender", fmt.Sprintf("--address=%s", address), uptimeFeedAddress}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) InspectUptimeFeed(address string, uptimeFeedAddress string) (string, error) {
+	_, err := sg.G.ExecCommand([]string{"sequencer_uptime_feed:inspect", fmt.Sprintf("--address=%s", address), uptimeFeedAddress}, *sg.options)
+	if err != nil {
+		return "", err
+	}
+	sg.gr, err = sg.FetchGauntletJsonOutput()
+	if err != nil {
+		return "", err
+	}
+	return sg.gr.Responses[0].Contract, nil
+}
+
+func (sg *StarknetGauntlet) ValidateEVC(previousRoundId string, previousAnswer string, currentRoundId string, currentAnswer string, ocr2Addr string) (string, error) {
+	_, err := sg.G.ExecCommand([]string{"StarknetValidator:validate", fmt.Sprintf("--previousRoundId=%s", previousRoundId), fmt.Sprintf("--previousAnswer=%s", previousAnswer), fmt.Sprintf("--currentRoundId=%s", currentRoundId), fmt.Sprintf("--currentAnswer=%s", currentAnswer), ocr2Addr}, *sg.options)
 	if err != nil {
 		return "", err
 	}
