@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"os"
 
 	caigotypes "github.com/dontpanicdao/caigo/types"
@@ -128,11 +129,18 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 	if err != nil {
 		return err
 	}
-	_, err = testState.Sg.AddAccess(testState.OCRAddr, testState.ProxyAddr)
+	args := gauntlet.AddAccessArgs{
+		ContractType: "ocr",
+		Address:      testState.OCRAddr,
+		Aggregator:   testState.ProxyAddr,
+		User:         "",
+	}
+
+	_, err = testState.Sg.AddAccess(args)
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
 	if err != nil {
 		return err
