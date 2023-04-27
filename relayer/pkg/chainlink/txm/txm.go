@@ -24,12 +24,13 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(caigotypes.Hash, caigotypes.FunctionCall) error
+	Enqueue(caigotypes.Hash, caigotypes.Hash, caigotypes.FunctionCall) error
 }
 
 type Tx struct {
-	sender caigotypes.Hash
-	call   caigotypes.FunctionCall
+	senderAddress  caigotypes.Hash
+	accountAddress caigotypes.Hash
+	call           caigotypes.FunctionCall
 }
 
 type StarkTXM interface {
@@ -107,40 +108,50 @@ func (txm *starktxm) run() {
 				txLen = txm.cfg.TxMaxBatchSize()
 			}
 
-			// fetch batch and split by sender
-			txsBySender := map[caigotypes.Hash][]caigotypes.FunctionCall{}
+			type senderAccountPair struct {
+				senderAddress  caigotypes.Hash
+				accountAddress caigotypes.Hash
+			}
+
+			// split the transactions by sender and account address for batching.
+			// this avoids assuming that there is always a 1:1 mapping from sender addresses
+			// onto account addresses.
+			txsByAccount := map[senderAccountPair][]caigotypes.FunctionCall{}
 			for i := 0; i < txLen; i++ {
 				tx := <-txm.queue
-				txsBySender[tx.sender] = append(txsBySender[tx.sender], tx.call)
+				key := senderAccountPair{
+					senderAddress:  tx.senderAddress,
+					accountAddress: tx.accountAddress,
+				}
+				txsByAccount[key] = append(txsByAccount[key], tx.call)
 			}
-			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
-			txm.lggr.Debugw("batch details", "batches", txsBySender)
+			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsByAccount))
+			txm.lggr.Debugw("batch details", "batches", txsByAccount)
 
 			// async process of tx batches
 			var wg sync.WaitGroup
-			wg.Add(len(txsBySender))
-			for sender, txs := range txsBySender {
-				go func(sender caigotypes.Hash, txs []caigotypes.FunctionCall) {
-
+			wg.Add(len(txsByAccount))
+			for key, txs := range txsByAccount {
+				go func(senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, txs []caigotypes.FunctionCall) {
 					// fetch key matching sender address
-					key, err := txm.ks.Get(sender.String())
+					key, err := txm.ks.Get(senderAddress.String())
 					if err != nil {
-						txm.lggr.Errorw("failed to retrieve key", "id", sender, "error", err)
+						txm.lggr.Errorw("failed to retrieve key", "id", senderAddress, "error", err)
 					} else {
 						// parse key to expected format
 						privKeyBytes := key.Raw()
 						privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
 
-						// broadcast batch based on sender
-						hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
+						// broadcast batch based on account address
+						hash, err := txm.broadcastBatch(ctx, privKey, accountAddress, txs)
 						if err != nil {
-							txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
+							txm.lggr.Errorw("transaction failed to broadcast", "error", err, "account", accountAddress, "batchTx", txs)
 						} else {
 							txm.lggr.Infow("transaction broadcast", "txhash", hash)
 						}
 					}
 					wg.Done()
-				}(sender, txs)
+				}(key.senderAddress, key.accountAddress, txs)
 			}
 			wg.Wait()
 			tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start))
@@ -152,9 +163,9 @@ func (txm *starktxm) run() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, accountAddress caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
 	// create new account
-	account, err := caigo.NewGatewayAccount(privKey, sender.String(), txm.client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewGatewayAccount(privKey, accountAddress.String(), txm.client.Gw, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, errors.Errorf("failed to create new account: %s", err)
 	}
@@ -209,9 +220,9 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(sender caigotypes.Hash, tx caigotypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) error {
 	select {
-	case txm.queue <- Tx{sender: sender, call: tx}:
+	case txm.queue <- Tx{senderAddress: senderAddress, accountAddress: accountAddress, call: tx}:
 	default:
 		return errors.Errorf("failed to enqueue transaction: %+v", tx)
 	}
