@@ -280,6 +280,16 @@ mod AggregatorProxy {
     }
 
     #[view]
+    fn latest_round_data() -> Round {
+        AggregatorProxy::latest_round_data()
+    }
+
+    #[view]
+    fn round_data(round_id: felt252) -> Round {
+        AggregatorProxy::round_data(round_id)
+    }
+
+    #[view]
     fn description() -> felt252 {
         AggregatorProxy::description()
     }
