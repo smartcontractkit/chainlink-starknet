@@ -4,7 +4,7 @@ import {
   ExecuteCommandConfig,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { ec, hash } from 'starknet'
+import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { accountContractLoader, CONTRACT_LIST, equalAddress } from '../../lib/contracts'
 
@@ -20,9 +20,9 @@ const makeUserInput = async (flags, _, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   // If public key is not provided, generate a new address
-  const keypair = ec.genKeyPair()
-  const generatedPK = '0x' + keypair.getPrivate('hex')
-  const pubkey = flags.publicKey || env.publicKey || ec.getStarkKey(ec.getKeyPair(generatedPK))
+  const keypair = ec.starkCurve.utils.randomPrivateKey()
+  const generatedPK = '0x' + Buffer.from(keypair).toString('hex')
+  const pubkey = flags.publicKey || env.publicKey || ec.starkCurve.getStarkKey(keypair)
   const salt: number = flags.salt ? +flags.salt : undefined
   return {
     publicKey: pubkey,

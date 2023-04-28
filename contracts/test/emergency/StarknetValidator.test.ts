@@ -1,6 +1,6 @@
 import { ethers, starknet, network } from 'hardhat'
 import { Contract, ContractFactory } from 'ethers'
-import { hash, number } from 'starknet'
+import { hash } from 'starknet'
 import {
   Account,
   StarknetContractFactory,
@@ -61,7 +61,7 @@ describe('StarknetValidator', () => {
 
     l2Contract = await defaultAccount.deploy(l2ContractFactory, {
       initial_status: 0,
-      owner_address: number.toBN(defaultAccount.starknetContract.address),
+      owner_address: defaultAccount.starknetContract.address,
     })
 
     // Deploy the MockStarknetMessaging contract used to simulate L1 - L2 comms
@@ -459,9 +459,23 @@ describe('StarknetValidator', () => {
       // Load the mock messaging contract
       await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
+      // Return gas price of 1
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        1 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+
       // Simulate L1 transmit + validate
       await starknetValidator.addAccess(eoaValidator.address)
-      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1)
+      // by default the gas config is 0, we need to change it or we will submit a 0 fee
+      const newGasEstimate = 1
+      await starknetValidator
+        .connect(deployer)
+        .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1, { value: 1 }) // gasPrice (1) * newGasEstimate (1)
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()
@@ -482,9 +496,23 @@ describe('StarknetValidator', () => {
       // Load the mock messaging contract
       await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
+      // Return gas price of 1
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        1 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+
       // Simulate L1 transmit + validate
       await starknetValidator.addAccess(eoaValidator.address)
-      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127) // incorrect value
+      // by default the gas config is 0, we need to change it or we will submit a 0 fee
+      const newGasEstimate = 1
+      await starknetValidator
+        .connect(deployer)
+        .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127, { value: 1 }) // incorrect value
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()
@@ -505,13 +533,27 @@ describe('StarknetValidator', () => {
       // Load the mock messaging contract
       await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
+      // Return gas price of 1
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        1 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+
       // Simulate L1 transmit + validate
       await starknetValidator.addAccess(eoaValidator.address)
       const c = starknetValidator.connect(eoaValidator)
-      await c.validate(0, 0, 1, 1)
-      await c.validate(0, 0, 1, 1)
-      await c.validate(0, 0, 1, 127) // incorrect value
-      await c.validate(0, 0, 1, 0) // final status
+      // by default the gas config is 0, we need to change it or we will submit a 0 fee
+      const newGasEstimate = 1
+      await starknetValidator
+        .connect(deployer)
+        .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+      await c.validate(0, 0, 1, 1, { value: 1 })
+      await c.validate(0, 0, 1, 1, { value: 1 })
+      await c.validate(0, 0, 1, 127, { value: 1 }) // incorrect value
+      await c.validate(0, 0, 1, 0, { value: 1 }) // final status
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()

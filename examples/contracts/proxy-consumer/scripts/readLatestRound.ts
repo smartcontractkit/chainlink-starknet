@@ -1,14 +1,5 @@
 import fs from 'fs'
-import {
-  Account,
-  Provider,
-  Contract,
-  CallContractResponse,
-  json,
-  ec,
-  transaction,
-  Status,
-} from 'starknet'
+import { Account, Provider, Contract, CallContractResponse, json, ec } from 'starknet'
 
 // Starknet network: Either goerli-alpha or mainnet-alpha
 const network = 'goerli-alpha'

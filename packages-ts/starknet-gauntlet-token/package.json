@@ -29,7 +29,6 @@
     "@chainlink/gauntlet-core": "0.3.1",
     "@chainlink/starknet-gauntlet": "*",
     "@chainlink/starknet-gauntlet-oz": "*",
-    "ethers": "^5.6.9",
-    "starknet": "^4.17.1"
+    "ethers": "^5.6.9"
   }
 }
