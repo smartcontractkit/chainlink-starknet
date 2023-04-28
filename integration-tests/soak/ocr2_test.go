@@ -43,7 +43,7 @@ func TestOCRSoak(t *testing.T) {
 	err = testState.Sg.SetupNetwork(testState.Common.L2RPCUrl)
 	require.NoError(t, err, "Setting up network should not fail")
 	time.Sleep(8 * time.Hour)
-	err = testState.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
+	err = testState.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
 	require.NoError(t, err, "Deploying contracts should not fail")
 	if !testState.Common.Testnet {
 		testState.Devnet.AutoLoadState(testState.OCR2Client, testState.OCRAddr)
