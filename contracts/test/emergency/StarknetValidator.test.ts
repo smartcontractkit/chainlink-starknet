@@ -109,8 +109,6 @@ describe('StarknetValidator', () => {
       0,
     )
 
-    await starknetValidator.receive({ value: ethers.utils.parseEther("1") })
-
     // Point the L2 feed contract to receive from the L1 StarknetValidator contract
     await defaultAccount.invoke(l2Contract, 'set_l1_sender', { address: starknetValidator.address })
   })
@@ -432,6 +430,12 @@ describe('StarknetValidator', () => {
   })
 
   describe('#validate', () => {
+    beforeEach(async () => {
+      await expect(
+        deployer.sendTransaction({ to: starknetValidator.address, value: 100n })
+      ).to.changeEtherBalance(starknetValidator, 100n)
+    })
+
     it('reverts if `StarknetValidator.validate` called by account with no access', async () => {
       const c = starknetValidator.connect(eoaValidator)
       await expect(c.validate(0, 0, 1, 1)).to.be.revertedWith('No access')
@@ -577,9 +581,9 @@ describe('StarknetValidator', () => {
 
   describe('#withdrawFunds', () => {
     beforeEach(async () => {
-      await deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
-      const balance = await ethers.provider.getBalance(starknetValidator.address)
-      expect(balance).to.equal(10n)
+      await expect(() =>
+        deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
+      ).to.changeEtherBalance(starknetValidator, 10n)
     })
 
     describe('when called by non owner', () => {
@@ -607,9 +611,9 @@ describe('StarknetValidator', () => {
 
   describe('#withdrawFundsTo', () => {
     beforeEach(async () => {
-      await deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
-      const balance = await ethers.provider.getBalance(starknetValidator.address)
-      expect(balance).to.equal(10n)
+      await expect(() =>
+        deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
+      ).to.changeEtherBalance(starknetValidator, 10)
     })
 
     describe('when called by non owner', () => {
