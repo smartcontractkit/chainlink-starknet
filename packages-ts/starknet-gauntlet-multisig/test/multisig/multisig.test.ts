@@ -129,7 +129,7 @@ describe('Multisig', () => {
         makeProvider(LOCAL_URL).provider,
       )
       const { threshold } = await multisigContract.get_threshold()
-      expect(threshold.toNumber()).toEqual(2)
+      expect(Number(threshold)).toEqual(2)
     },
     TIMEOUT,
   )

@@ -46,7 +46,7 @@ func TestOCRBasic(t *testing.T) {
 	}
 	err = testState.Sg.SetupNetwork(testState.Common.L2RPCUrl)
 	require.NoError(t, err, "Setting up gauntlet network should not fail")
-	err = testState.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
+	err = testState.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
 	require.NoError(t, err, "Deploying contracts should not fail")
 	if !testState.Common.Testnet {
 		testState.Devnet.AutoLoadState(testState.OCR2Client, testState.OCRAddr)

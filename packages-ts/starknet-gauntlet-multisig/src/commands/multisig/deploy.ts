@@ -5,7 +5,7 @@ import {
   isValidAddress,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { number } from 'starknet'
+import { num } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
 
@@ -14,7 +14,7 @@ type UserInput = {
   threshold: string
 }
 
-type ContractInput = [signersLen: string, ...signers: string[], threshold: string]
+type ContractInput = [signersLen: number, ...signers: string[], threshold: number]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -47,11 +47,7 @@ const makeContractInput = async (
   input: UserInput,
   context: ExecutionContext,
 ): Promise<ContractInput> => {
-  return [
-    number.toFelt(input.signers.length),
-    ...input.signers.map((addr) => number.toFelt(number.toBN(addr))),
-    number.toFelt(input.threshold),
-  ]
+  return [input.signers.length, ...input.signers, parseInt(input.threshold)]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (

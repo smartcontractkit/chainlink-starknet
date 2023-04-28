@@ -1,13 +1,18 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { hexPadStart } from '@chainlink/starknet'
 
 export type BeforeFn = () => Promise<TestData>
 export type TestData = {
   ownable: StarknetContract
   alice: Account
   bob: Account
+}
+
+// NOTICE: Leading zeros are trimmed for an encoded felt (number).
+//   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
+const hexPadStart = (data: number | bigint, len: number) => {
+  return `0x${data.toString(16).padStart(len, '0')}`
 }
 
 const ADDRESS_LEN = 32 * 2 // 32 bytes (hex)

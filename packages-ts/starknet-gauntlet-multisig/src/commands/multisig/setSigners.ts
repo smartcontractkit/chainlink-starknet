@@ -4,7 +4,6 @@ import {
   ExecutionContext,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
 import { validateSigners } from './deploy'
@@ -24,7 +23,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return [input.signers.map((addr) => number.toFelt(number.toBN(addr)))]
+  return [input.signers]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
