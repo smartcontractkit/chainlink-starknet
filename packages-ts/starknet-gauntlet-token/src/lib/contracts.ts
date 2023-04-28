@@ -1,6 +1,5 @@
 import fs from 'fs'
-import { CompiledContract, json } from 'starknet'
-import { ContractFactory } from 'ethers'
+import { json } from 'starknet'
 
 export enum CONTRACT_LIST {
   TOKEN = 'token',
@@ -8,30 +7,25 @@ export enum CONTRACT_LIST {
 
 // todo: remove when stable contract artifacts release available
 const CONTRACT_NAME_TO_ARTIFACT_NAME = {
-  [CONTRACT_LIST.TOKEN]: 'link_token',
+  [CONTRACT_LIST.TOKEN]: 'LinkToken',
 }
 
-export const loadTokenContract = (name: CONTRACT_LIST): CompiledContract => {
+export const loadTokenContract = (name: CONTRACT_LIST) => {
   const artifactName = CONTRACT_NAME_TO_ARTIFACT_NAME[name]
-  return json.parse(
-    fs
-      .readFileSync(
-        `${__dirname}/../../../../contracts/starknet-artifacts/src/chainlink/cairo/token/starkgate/presets/${artifactName}.cairo/${artifactName}.json`,
-      )
-      .toString('ascii'),
-  )
-}
-
-export const loadOZContract = (name: CONTRACT_LIST): any => {
-  const artifactName = CONTRACT_NAME_TO_ARTIFACT_NAME[name]
-  const abi = json.parse(
-    fs
-      .readFileSync(
-        `${__dirname}/../../../../node_modules/@openzeppelin/contracts/build/contracts/${artifactName}.json`,
-      )
-      .toString('ascii'),
-  )
-  return new ContractFactory(abi?.abi, abi?.bytecode)
+  return {
+    contract: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../contracts/target/release/chainlink_${artifactName}.sierra.json`,
+        'utf-8',
+      ),
+    ),
+    casm: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../contracts/target/release/chainlink_${artifactName}.casm.json`,
+        'utf-8',
+      ),
+    ),
+  }
 }
 
 export const tokenContractLoader = () => loadTokenContract(CONTRACT_LIST.TOKEN)
