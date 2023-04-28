@@ -15,4 +15,6 @@ test = "cairo-test --starknet ."
 # quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
 
 [[target.starknet-contract]]
+sierra = true
+casm = true
 
