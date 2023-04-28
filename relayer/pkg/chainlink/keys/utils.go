@@ -15,10 +15,6 @@ import (
 // constants
 var (
 	byteLen = 32
-
-	// note: the contract hash must match the corresponding OZ gauntlet command hash - otherwise addresses will not correspond
-	defaultContractHash, _ = new(big.Int).SetString("0x0750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062", 0)
-	defaultSalt            = big.NewInt(100)
 )
 
 // PubKeyToContract implements the pubkey to deployed account given contract hash + salt

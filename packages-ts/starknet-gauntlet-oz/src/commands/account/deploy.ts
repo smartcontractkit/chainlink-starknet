@@ -6,12 +6,7 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { ec, hash } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import {
-  accountContractLoader,
-  CONTRACT_LIST,
-  calculateAddress,
-  equalAddress,
-} from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST, equalAddress } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
@@ -66,22 +61,6 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
   contract
     ? deps.logger.success(`Account contract located at ${contract}`)
     : deps.logger.error('Account contract deployment failed')
-
-  if (input.user.salt != undefined) {
-    const calcAddr = calculateAddress(input.user.salt, input.user.publicKey)
-
-    // log error if address mismatch
-    if (!equalAddress(contract, calcAddr)) {
-      deps.logger
-        .error(`Deployed account contract address (${contract}) does not match calculated account contract address (${calcAddr}).
-        There is likely a difference in hash of the deployed contract and the CONTRACT_HASH constant`)
-      deps.logger.warn(
-        `Account addresses must match otherwise this could cause mismatched keys with chainlink node.`,
-      )
-    } else {
-      deps.logger.success(`Deployed account matches expected contract address`)
-    }
-  }
 
   return {
     publicKey: input.user.publicKey,

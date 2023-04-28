@@ -90,6 +90,10 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 		return nil, errors.Wrap(err, "couldn't unmarshal RelayConfig")
 	}
 
+	if relayConfig.AccountAddress == "" {
+		return nil, errors.New("no account address in relay config")
+	}
+
 	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initilize Chain")
@@ -100,7 +104,7 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 	if err != nil {
 		return nil, errors.Wrap(err, "error in NewMedianProvider chain.Reader")
 	}
-	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, pargs.TransmitterID, reader, chain.Config(), chain.TxManager(), r.lggr)
+	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, pargs.TransmitterID, relayConfig.AccountAddress, reader, chain.Config(), chain.TxManager(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initilize MedianProvider")
 	}
