@@ -56,6 +56,7 @@ type Test struct {
 	mockServer            *ctfClient.MockserverClient
 	L1RPCUrl              string
 	Common                *Common
+	AccountAddresses      []string
 	LinkTokenAddr         string
 	OCRAddr               string
 	AccessControllerAddr  string
