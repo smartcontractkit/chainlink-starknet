@@ -6805,9 +6805,9 @@ starknet@^4.17.1:
     url-join "^4.0.1"
 
 starknet@^5.2.0:
-  version "5.6.0"
-  resolved "https://registry.yarnpkg.com/starknet/-/starknet-5.6.0.tgz#332badefc84c76b8423d76b44383a4be514ff463"
-  integrity sha512-Z7HMEhKevXQqTJ5xDtQPirxbZmXD6aoQcoIMzCf6TyIPpv7n1leDFI2nbHSBPVa58GZLTBx94da9X7wxjIpjKg==
+  version "5.8.0"
+  resolved "https://registry.yarnpkg.com/starknet/-/starknet-5.8.0.tgz#ac18f7eb978aa5649e51defbb50b03f1ef6c2f43"
+  integrity sha512-PZ1+ulh9lxSNG1ukWx+rguWAHdxhyI6EBrWkJH/ifHAxK6tWoRJslI7PSD+Zt3nGJKC27b+RAE2UhD617K1t+g==
   dependencies:
     "@noble/curves" "^0.8.2"
     isomorphic-fetch "^3.0.0"
