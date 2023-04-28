@@ -14,23 +14,23 @@ var (
 	nAccount         string
 )
 
-func (testState *Test) fundNodes() error {
+func (testState *Test) fundNodes() ([]string, error) {
 	l := utils.GetTestLogger(testState.T)
 	var nAccounts []string
 	var err error
 	for _, key := range testState.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
-			return errors.New("stark key can't be empty")
+			return nil, errors.New("stark key can't be empty")
 		}
 		nAccount, err = testState.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		nAccounts = append(nAccounts, nAccount)
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if testState.Common.Testnet {
@@ -39,18 +39,18 @@ func (testState *Test) fundNodes() error {
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
 			_, err = testState.Sg.TransferToken(ethAddressGoerli, key, "100000000000000000") // Transferring 1 ETH to each node
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
 	} else {
 		err = testState.Devnet.FundAccounts(nAccounts)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return nAccounts, nil
 }
 
 func (testState *Test) deployLinkToken() error {
@@ -99,7 +99,7 @@ func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionVal
 		return err
 	}
 
-	err = testState.fundNodes()
+	testState.AccountAddresses, err = testState.fundNodes()
 	if err != nil {
 		return err
 	}
