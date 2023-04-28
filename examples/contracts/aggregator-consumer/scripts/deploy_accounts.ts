@@ -1,6 +1,6 @@
 import fs from 'fs'
 import dotenv from 'dotenv'
-import { ec, stark } from 'starknet'
+import { ec, CallData } from 'starknet'
 import { loadContract_Account, createDeployerAccount, makeProvider } from './utils'
 
 dotenv.config({ path: __dirname + '/../.env' })
@@ -34,7 +34,7 @@ async function createAccount(): Promise<UserAccount> {
   const privateKey = ec.starkCurve.utils.randomPrivateKey()
 
   const starkKeyPub = ec.starkCurve.getStarkKey(privateKey)
-  const OZaccountConstructorCallData = stark.compileCalldata({ publicKey: starkKeyPub })
+  const OZaccountConstructorCallData = CallData.compile({ publicKey: starkKeyPub })
 
   const declareTx = await predeployedAccount.declare({
     classHash: '0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f',
