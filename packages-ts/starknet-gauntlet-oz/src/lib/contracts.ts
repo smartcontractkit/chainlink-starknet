@@ -1,19 +1,26 @@
 import fs from 'fs'
-import { CompiledContract, json, hash } from 'starknet'
+import { json } from 'starknet'
 import BN from 'bn.js'
 
 export enum CONTRACT_LIST {
   ACCOUNT = 'Account',
 }
 
-export const loadContract = (name: CONTRACT_LIST): CompiledContract => {
-  return json.parse(
-    fs
-      .readFileSync(
-        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.5.0/${name}.cairo/${name}.json`,
-      )
-      .toString('ascii'),
-  )
+export const loadContract = (name: CONTRACT_LIST) => {
+  return {
+    contract: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../contracts/target/release/chainlink_${name}.sierra.json`,
+        'utf-8',
+      ),
+    ),
+    casm: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../contracts/target/release/chainlink_${name}.casm.json`,
+        'utf-8',
+      ),
+    ),
+  }
 }
 
 export const accountContractLoader = () => loadContract(CONTRACT_LIST.ACCOUNT)
