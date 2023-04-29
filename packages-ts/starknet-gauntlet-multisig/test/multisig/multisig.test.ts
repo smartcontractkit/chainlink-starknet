@@ -122,9 +122,9 @@ describe('Multisig', () => {
       report = await executeCommand.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const multisig = loadContract(CONTRACT_LIST.MULTISIG)
+      const { contract } = loadContract(CONTRACT_LIST.MULTISIG)
       const multisigContract = new Contract(
-        multisig.abi,
+        contract.abi,
         multisigContractAddress,
         makeProvider(LOCAL_URL).provider,
       )
@@ -205,9 +205,9 @@ describe('Multisig', () => {
       report = await executeCommand.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const multisig = loadContract(CONTRACT_LIST.MULTISIG)
+      const { contract } = loadContract(CONTRACT_LIST.MULTISIG)
       const multisigContract = new Contract(
-        multisig.abi,
+        contract.abi,
         multisigContractAddress,
         makeProvider(LOCAL_URL).provider,
       )
