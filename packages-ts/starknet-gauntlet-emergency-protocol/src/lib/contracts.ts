@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { CompiledContract, json } from 'starknet'
+import { json } from 'starknet'
 import { ContractFactory } from 'ethers'
 
 export enum CONTRACT_LIST {
@@ -7,14 +7,21 @@ export enum CONTRACT_LIST {
   STARKNET_VALIDATOR = 'starknet_validator',
 }
 
-export const uptimeFeedContractLoader = (): CompiledContract => {
-  return json.parse(
-    fs
-      .readFileSync(
-        `${__dirname}/../../../../contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed/sequencer_uptime_feed.cairo/sequencer_uptime_feed.json`,
-      )
-      .toString('ascii'),
-  )
+export const uptimeFeedContractLoader = () => {
+  return {
+    contract: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../contracts/target/release/chainlink_SequencerUptimeFeed.sierra.json`,
+        'utf-8',
+      ),
+    ),
+    casm: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../contracts/target/release/chainlink_SequencerUptimeFeed.casm.json`,
+        'utf-8',
+      ),
+    ),
+  }
 }
 
 export const starknetValidatorContractLoader = (): ContractFactory => {
@@ -22,8 +29,8 @@ export const starknetValidatorContractLoader = (): ContractFactory => {
     fs
       .readFileSync(
         `${__dirname}/../../../../contracts/artifacts/solidity/emergency/StarknetValidator.sol/StarknetValidator.json`,
+        'utf-8'
       )
-      .toString('ascii'),
   )
   return new ContractFactory(abi?.abi, abi?.bytecode)
 }
