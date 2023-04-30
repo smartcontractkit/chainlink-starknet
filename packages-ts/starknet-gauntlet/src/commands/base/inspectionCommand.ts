@@ -1,9 +1,10 @@
 import BaseCommand from '@chainlink/gauntlet-core/dist/commands/internal/base'
-import { CompiledContract, Contract } from 'starknet'
+import { CompiledContract, CompiledSierraCasm, Contract, hash } from 'starknet'
 import { CommandCtor, Input } from '.'
 import { InspectionDependencies } from '../../dependencies'
 import { IStarknetProvider } from '../../provider'
 import { CommandUX, makeCommandId } from './command'
+import { LoadContractResult } from './executeCommand'
 
 export interface InspectUserInput<UI, CompareInput> {
   input: UI
@@ -54,7 +55,7 @@ export interface InspectCommandConfig<UI, CI, CompareInput, QueryResult> {
     message: string
     resultType: 'success' | 'failed'
   }[]
-  loadContract: () => CompiledContract
+  loadContract: () => LoadContractResult
 }
 
 export interface InspectCommandInstance<QueryResult> {
@@ -77,6 +78,7 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
     input: Input<InspectUserInput<UI, CompareInput>, CI>
 
     contract: CompiledContract
+    compiledContractHash?: string
 
     // UX
     static id = makeCommandId(config.ux.category, config.ux.function, config.ux.suffixes)
@@ -92,7 +94,11 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
       c.contractAddress = args[0]
 
       c.input = await c.buildCommandInput(flags, args)
-      c.contract = config.loadContract()
+      const loadResult = config.loadContract()
+      c.contract = loadResult.contract
+      if (loadResult.casm) {
+        c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
+      }
 
       return c
     }
