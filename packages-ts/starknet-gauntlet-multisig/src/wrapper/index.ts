@@ -13,6 +13,7 @@ import { TransactionResponse } from '@chainlink/starknet-gauntlet/dist/transacti
 import {
   Call,
   CompiledContract,
+  CompiledSierraCasm,
   Contract,
   addAddressPadding,
   num,
@@ -55,6 +56,7 @@ export const wrapCommand = <UI, CI>(
     account: string
     executionContext: ExecutionContext
     contract: CompiledContract
+    compiledContractHash?: string
 
     input: Input<UserInput, ContractInput>
 
@@ -80,7 +82,11 @@ export const wrapCommand = <UI, CI>(
       c.contractAddress = args[0]
       c.account = env.account
       c.multisigAddress = env.multisig
-      c.contract = contractLoader()
+      const loadResult = contractLoader()
+      c.contract = loadResult.contract
+      if (loadResult.casm) {
+        c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
+      }
 
       c.executionContext = {
         provider: c.provider,
