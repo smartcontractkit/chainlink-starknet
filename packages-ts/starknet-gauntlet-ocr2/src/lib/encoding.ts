@@ -1,16 +1,38 @@
-import { num, constants, encode } from 'starknet'
+import { num, constants, cairo } from 'starknet'
 import BN from 'bn.js'
 import { encoding } from '@chainlink/gauntlet-contracts-ocr2'
 
 const CHUNK_SIZE = 31
 
-export function bytesToFelts(data: Uint8Array): string[] {
-  let felts: string[] = []
+function packUint8Array(data: Uint8Array | Buffer): bigint {
+  let result: bigint = BigInt(0)
+  for (let i = 0; i < data.length; i++) {
+    result = (result << BigInt(8)) | BigInt(data[i])
+  }
+  return result
+}
 
+export function bytesToFelts(data: Uint8Array | Buffer): string[] {
+  const felts: string[] = []
+
+  // prefix with data length
+  felts.push(cairo.felt(data.byteLength))
+
+  // chunk every 31 bytes
+  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+    const chunk = data.slice(i, i + CHUNK_SIZE)
+    // cairo.felt() does not support packing a Uint8Array natively.
+    const packedValue = packUint8Array(chunk)
+    felts.push(cairo.felt(packedValue))
+  }
+  return felts
+}
+
+export function bytesToFeltsDeprecated(data: Uint8Array): string[] {
+  let felts: string[] = []
   // prefix with len
   let len = data.byteLength
   felts.push(num.toBigInt(len).toString())
-
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     const chunk = data.slice(i, i + CHUNK_SIZE)
@@ -20,26 +42,37 @@ export function bytesToFelts(data: Uint8Array): string[] {
   return felts
 }
 
+const MAX_LEN: bigint = (BigInt(1) << BigInt(54)) - BigInt(1)
+
 export function feltsToBytes(felts: string[]): Buffer {
-  console.log(felts)
-  let data = []
+  const data: number[] = []
 
-  // TODO: validate len > 1
+  if (!felts.length) {
+    throw new Error('Felt string is empty')
+  }
 
-  // TODO: validate it fits into 54 bits
-  let length = Number(BigInt(felts.shift()))
+  const remainingLengthBigInt = BigInt(felts.shift())
+  if (remainingLengthBigInt > MAX_LEN) {
+    throw new Error('Length does not fit in 54 bits')
+  }
 
-  for (const felt of felts) {
-    let size = Math.min(CHUNK_SIZE, length)
-    let chunk = Uint8Array.from(Buffer.from(felt, 'hex'))
-    let filler = chunk.length - size
-    // pad to size
-    while (filler > 0) {
-      data.push(0)
+  let remainingLength = Number(remainingLengthBigInt)
+  for (let felt of felts) {
+    if (remainingLength <= 0) {
+      throw new Error(
+        `Too many felts (${felts.length}) for length ${remainingLengthBigInt.toString()}`,
+      )
     }
-    data.push(...chunk)
-
-    length -= chunk.length
+    const chunkSize = Math.min(CHUNK_SIZE, remainingLength)
+    let packedValue: bigint = BigInt(felt)
+    const unpackedValues: number[] = []
+    for (let i = 0; i < chunkSize; i++) {
+      unpackedValues.push(Number(packedValue & BigInt(0xff)))
+      packedValue = packedValue >> BigInt(8)
+    }
+    unpackedValues.reverse()
+    data.push(...unpackedValues)
+    remainingLength -= chunkSize
   }
 
   return Buffer.from(data)
