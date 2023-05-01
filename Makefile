@@ -223,7 +223,7 @@ test-integration-soak-ci:
 test-integration-contracts: build-ts env-devnet-hardhat
 	cd examples/contracts/aggregator-consumer/ && \
 		yarn test
-	cd packages-ts/integration-eqlabs-multisig/ && \
+	cd packages-ts/integration-multisig/ && \
 		yarn test
 	cd packages-ts/starknet/ && \
 		yarn test

@@ -1,5 +1,5 @@
 {
-  "name": "@chainlink/starknet-integration-tests-eqlabs-multisig",
+  "name": "@chainlink/starknet-integration-tests-multisig",
   "version": "1.0.0",
   "description": "Multisig integration test",
   "main": "index.js",
