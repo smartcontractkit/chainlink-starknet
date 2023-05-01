@@ -46,11 +46,12 @@ const config: HardhatUserConfig = {
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050',
+      args: ['--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
     },
     integratedDevnet: {
       url: 'http://127.0.0.1:5050',
       venv: 'active',
-      args: ['--lite-mode'],
+      args: ['--lite-mode', '--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
       // dockerizedVersion: "0.2.0"
     },
   },
