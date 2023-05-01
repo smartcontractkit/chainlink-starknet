@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Simple contracts to read Chainlink data feeds on-chain and off-chain",
   "scripts": {
-    "build": "yarn hardhat starknet-compile",
+    "build": "scarb --release profile build",
     "deploy": "yarn ts-node ./scripts/deployConsumer.ts",
     "readLatestRound": "yarn ts-node ./scripts/readLatestRound.ts",
     "readLatestRoundOffChain": "yarn ts-node ./scripts/readLatestRoundOffChain.ts"
