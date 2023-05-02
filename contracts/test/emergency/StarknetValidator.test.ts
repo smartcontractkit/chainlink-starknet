@@ -38,9 +38,7 @@ describe('StarknetValidator', () => {
   let l2Contract: StarknetContract
 
   before(async () => {
-    await addCompilationToNetwork(
-      'solidity/emergency/StarknetValidator.sol:StarknetValidator',
-    )
+    await addCompilationToNetwork('solidity/emergency/StarknetValidator.sol:StarknetValidator')
 
     // Deploy L2 account
     defaultAccount = await starknet.OpenZeppelinAccount.createAccount()
