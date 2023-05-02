@@ -58,7 +58,7 @@ const config: HardhatUserConfig = {
     timeout: 10000000,
   },
   paths: {
-    sources: './src',
+    sources: './solidity',
     starknetSources: './src',
     cairoPaths: ['./vendor/starkware-libs/starkgate-contracts/src'],
   },

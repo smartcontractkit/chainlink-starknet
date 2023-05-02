@@ -21,7 +21,7 @@ export const starknetValidatorContractLoader = (): ContractFactory => {
   const abi = JSON.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../../contracts/artifacts/src/chainlink/solidity/emergency/StarknetValidator.sol/StarknetValidator.json`,
+        `${__dirname}/../../../../contracts/artifacts/solidity/emergency/StarknetValidator.sol/StarknetValidator.json`,
       )
       .toString('ascii'),
   )

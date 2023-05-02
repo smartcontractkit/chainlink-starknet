@@ -7,7 +7,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
-import "../../../../vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/IStarknetMessaging.sol";
+import "../../vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
 /// @title StarknetValidator - makes cross chain calls to update the Sequencer Uptime Feed on L2
 contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
