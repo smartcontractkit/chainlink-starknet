@@ -39,7 +39,6 @@
   venvDir = "./.venv";
 
   postShellHook = ''
-    pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
     helm repo update
   '';
 }
