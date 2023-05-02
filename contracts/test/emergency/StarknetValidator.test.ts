@@ -39,7 +39,7 @@ describe('StarknetValidator', () => {
 
   before(async () => {
     await addCompilationToNetwork(
-      'src/chainlink/solidity/emergency/StarknetValidator.sol:StarknetValidator',
+      'solidity/emergency/StarknetValidator.sol:StarknetValidator',
     )
 
     // Deploy L2 account

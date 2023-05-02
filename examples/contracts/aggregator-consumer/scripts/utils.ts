@@ -32,7 +32,7 @@ export const loadContract_Solidity = (path: string, name: string): any => {
   return json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../../contracts/artifacts/src/chainlink/solidity/${path}/${name}.sol/${name}.json`,
+        `${__dirname}/../../../../contracts/artifacts/solidity/${path}/${name}.sol/${name}.json`,
       )
       .toString('ascii'),
   )
