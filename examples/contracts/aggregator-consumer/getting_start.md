@@ -8,7 +8,7 @@
 
 4. Open that link https://faucet.goerli.starknet.io/ and past the address to get some faucet. If you can not get faucet you can transfer some eth from one of you L1 accounts to starknet https://goerli.starkgate.starknet.io/.
 
-5. When you have be able to get some faucet you can deploy your account `starknet deploy_account` (for more information take a look at this documentation https://starknet.io/docs/hello_starknet/account_setup.html).
+5. When you have been able to get some faucet you can deploy your account `starknet deploy_account` (for more information take a look at this documentation https://starknet.io/docs/hello_starknet/account_setup.html).
 
 6. Create a `.env` in `exemples/contracts/aggregator-consumer`and copy past your account address under `DEPLOYER_ACCOUNT_ADDRESS` and you private key under `DEPLOYER_PRIVATE_KEY`. You can find the private key in your home directory under `.starknet_accounts` folder in `starknet_open_zeppelin_accounts.json`.
 
