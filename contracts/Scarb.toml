@@ -16,3 +16,6 @@ test = "cairo-test --starknet ."
 
 [[target.starknet-contract]]
 
+[lib]
+target = "chainlink"
+
