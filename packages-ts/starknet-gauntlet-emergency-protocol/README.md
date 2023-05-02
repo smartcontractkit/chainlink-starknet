@@ -23,10 +23,10 @@ This deploys a new instance of the `StarknetValidator` contract on **L1**
 
 `<L2_FEED>` is the layer 2 feed
 
-`<K_VALUE>` is a scalar value which will be multiply the gas fee. K = 100 would mean the effective multiple is 1 (it is divided by 100 in the contract since solidity does not have floating point values).
+`<GAS_ADJUSTMENT>` is the percentage adjustment made to the gas cost. For example, a value of 110 would equate to 110% of the original gas cost (or equivalently, a 10% bump in price, or equivalently a 1.1 times the original cost)
 
 ```bash
-yarn gauntlet StarknetValidator:deploy --starkNetMessaging=<STARKNET_MESSAGING> --configAC=<CONFIG_AC> --gasPriceL1Feed=<GAS_PRICE_L1_FEED> --source=<SOURCE_AGGREGATOR> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<L2_FEED> --network=<NETWORK>
+yarn gauntlet StarknetValidator:deploy --starkNetMessaging=<STARKNET_MESSAGING> --configAC=<CONFIG_AC> --gasPriceL1Feed=<GAS_PRICE_L1_FEED> --source=<SOURCE_AGGREGATOR> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<L2_FEED> --gasAdjustment <GAS_ADJUSTMENT> --network=<NETWORK>
 ```
 
 - Accept Ownership
