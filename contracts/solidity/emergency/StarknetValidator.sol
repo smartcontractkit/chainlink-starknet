@@ -6,7 +6,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
-import "../../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
+import "../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
 // import "@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol";
 // NOTE: can't use ^ because it isn't defined with payable attribute
