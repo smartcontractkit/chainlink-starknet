@@ -175,7 +175,7 @@ describe('StarknetValidator', () => {
       const gasConfig = await starknetValidator.getGasConfig()
       expect(gasConfig.gasEstimate).to.equal(0) // Initialized with 0 in before function
       expect(gasConfig.gasPriceL1Feed).to.hexEqual(mockGasPriceFeed.address)
-      expect(gasConfig.k).to.equal(0)
+      expect(gasConfig.gasAdjustment).to.equal(0)
     })
 
     it('is initialized with the correct access controller address', async () => {
@@ -334,22 +334,22 @@ describe('StarknetValidator', () => {
       it('correctly sets the gas config', async () => {
         const newGasEstimate = 25000
         const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        // k is divided by 100, so equivalently it's a 1.1 multiple (10% bump)
-        const newK = 110
-        await starknetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr, newK)
+        // gasAdjustment of 110 equates to 1.1x
+        const newGasAdjustment = 110
+        await starknetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr, newGasAdjustment)
         const gasConfig = await starknetValidator.getGasConfig()
         expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
         expect(gasConfig.gasPriceL1Feed).to.hexEqual(newFeedAddr)
-        expect(gasConfig.k).to.equal(newK)
+        expect(gasConfig.gasAdjustment).to.equal(newGasAdjustment)
       })
 
       it('emits an event', async () => {
         const newGasEstimate = 25000
         const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-        const newK = 110
-        await expect(starknetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr, newK))
+        const newGasAdjustment = 110
+        await expect(starknetValidator.connect(deployer).setGasConfig(newGasEstimate, newFeedAddr, newGasAdjustment))
           .to.emit(starknetValidator, 'GasConfigSet')
-          .withArgs(newGasEstimate, newFeedAddr, newK)
+          .withArgs(newGasEstimate, newFeedAddr, newGasAdjustment)
       })
 
       describe('when l1 gas price feed address is the zero address', () => {
@@ -370,23 +370,23 @@ describe('StarknetValidator', () => {
         it('correctly sets the gas config', async () => {
           const newGasEstimate = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          const newK = 110
-          await starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newK)
+          const newGasAdjustment = 110
+          await starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newGasAdjustment)
           const gasConfig = await starknetValidator.getGasConfig()
           expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
           expect(gasConfig.gasPriceL1Feed).to.hexEqual(newFeedAddr)
-          expect(gasConfig.k).to.equal(newK)
+          expect(gasConfig.gasAdjustment).to.equal(newGasAdjustment)
         })
 
         it('emits an event', async () => {
           const newGasEstimate = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          const newK = 110
+          const newGasAdjustment = 110
           await expect(
-            starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newK),
+            starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newGasAdjustment),
           )
             .to.emit(starknetValidator, 'GasConfigSet')
-            .withArgs(newGasEstimate, newFeedAddr, newK)
+            .withArgs(newGasEstimate, newFeedAddr, newGasAdjustment)
         })
 
         describe('when l1 gas price feed address is the zero address', () => {
@@ -414,23 +414,23 @@ describe('StarknetValidator', () => {
         it('correctly sets the gas config', async () => {
           const newGasEstimate = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          const newK = 110
-          await starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newK)
+          const newGasAdjustment = 110
+          await starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newGasAdjustment)
           const gasConfig = await starknetValidator.getGasConfig()
           expect(gasConfig.gasEstimate).to.equal(newGasEstimate)
           expect(gasConfig.gasPriceL1Feed).to.hexEqual(newFeedAddr)
-          expect(gasConfig.k).to.equal(newK)
+          expect(gasConfig.gasAdjustment).to.equal(newGasAdjustment)
         })
 
         it('emits an event', async () => {
           const newGasEstimate = 25000
           const newFeedAddr = '0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4'
-          const newK = 110
+          const newGasAdjustment = 110
           await expect(
-            starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newK),
+            starknetValidator.connect(eoaValidator).setGasConfig(newGasEstimate, newFeedAddr, newGasAdjustment),
           )
             .to.emit(starknetValidator, 'GasConfigSet')
-            .withArgs(newGasEstimate, newFeedAddr, newK)
+            .withArgs(newGasEstimate, newFeedAddr, newGasAdjustment)
         })
 
         describe('when l1 gas price feed address is the zero address', () => {
@@ -448,11 +448,21 @@ describe('StarknetValidator', () => {
 
   describe('#approximateGasPrice', () => {
     it('calculates gas price with scalar coefficient', async () => {
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        96800000000 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+      // 96800000000 is the mocked value from gas feed
       const expectedGasPrice = BigNumber.from(96800000000).mul(110).div(100)
 
       await starknetValidator.connect(deployer).setGasConfig(0, mockGasPriceFeed.address, 110)
 
-      expect(await starknetValidator.connect(deployer).approximateGasPrice()).to.equal(expectedGasPrice);
+      const gasPrice = await starknetValidator.connect(deployer).approximateGasPrice()
+
+      expect(gasPrice).to.equal(expectedGasPrice)
     })
   })
 
