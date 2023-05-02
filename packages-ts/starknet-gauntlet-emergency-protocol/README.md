@@ -24,7 +24,7 @@ This deploys a new instance of the `StarknetValidator` contract on **L1**
 `<L2_FEED>` is the layer 2 feed
 
 ```bash
-yarn gauntlet StarknetValidator:deploy --starkNetMessaging=<STARKNET_MESSAGING> --configAC=<CONFIG_AC> --gasPriceL1Feed=<GAS_PRICE_L1_FEED> --source=<SOURCE_AGGREGATOR> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<L2_FEED> --network=<NETWORK>
+yarn gauntlet starknet_validator:deploy --starkNetMessaging=<STARKNET_MESSAGING> --configAC=<CONFIG_AC> --gasPriceL1Feed=<GAS_PRICE_L1_FEED> --source=<L1_EOA> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<L2_FEED> --network=<NETWORK>
 ```
 
 - Accept Ownership
@@ -32,7 +32,7 @@ yarn gauntlet StarknetValidator:deploy --starkNetMessaging=<STARKNET_MESSAGING> 
 Will accept ownership of the contract. This should be done after the current owner transfers ownership.
 
 ```bash
-yarn gauntlet StarknetValidator:accept_ownership --network=<NETWORK> <CONTRACT_ADDRESS>
+yarn gauntlet starknet_validator:accept_ownership --network=<NETWORK> <CONTRACT_ADDRESS>
 ```
 
 - Transfers Ownership
@@ -40,7 +40,7 @@ yarn gauntlet StarknetValidator:accept_ownership --network=<NETWORK> <CONTRACT_A
 Will transfer ownership to a new owner. The new owner must accept ownership to take control of the contract.
 
 ```bash
-yarn gauntlet StarknetValidator:transfer_ownership --to=<NEW_PROPOSED_OWNER> <CONTRACT_ADDRESS> --network=<NETWORK>
+yarn gauntlet starknet_validator:transfer_ownership --to=<NEW_PROPOSED_OWNER> <CONTRACT_ADDRESS> --network=<NETWORK>
 ```
 
 - Add Access
@@ -48,7 +48,16 @@ yarn gauntlet StarknetValidator:transfer_ownership --to=<NEW_PROPOSED_OWNER> <CO
 Allows an address to write to the validator
 
 ```bash
-yarn gauntlet StarknetValidator:add_access --address=<ADDRESS> --network=<NETWORK> <CONTRACT_ADDRESS>
+yarn gauntlet starknet_validator:add_access --address=<ADDRESS> --network=<NETWORK> <CONTRACT_ADDRESS>
+```
+
+- Validate
+
+Calls validate on the validator contract
+
+```bash
+yarn gauntlet starknet_validator:validate --previousRoundId=<PREV_ROUND_ID> --previousAnswer=<PREV_ANSWER> --currentRoundId=<CURR_ROUND_ID> --currentAnswer=<CURR_ANSWER> <VALIDATOR_ADDRESS> --network=<NETWORK>
+
 ```
 
 ### Sequencer Uptime Feed
@@ -72,7 +81,7 @@ This sets the L1 sender address. This is to control, which L1 address can write 
 --address is the L1 sender address, which should be the deployed StarknetValidator.sol contract
 
 ```bash
-yarn gauntlet sequencer_uptime_feed:set_l1_sender --network=<NETWORK> --address=<ADDRESS>
+yarn gauntlet sequencer_uptime_feed:set_l1_sender --network=<NETWORK> --address=<ADDRESS>  <L2_FEED>
 ```
 
 - Inspect
