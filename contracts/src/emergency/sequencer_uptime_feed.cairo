@@ -184,7 +184,7 @@ mod SequencerUptimeFeed {
     }
 
     #[external]
-    fn transfer_owernship(new_owner: ContractAddress) {
+    fn transfer_ownership(new_owner: ContractAddress) {
         Ownable::transfer_ownership(new_owner)
     }
 
