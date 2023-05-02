@@ -10,7 +10,7 @@ export interface UserInput {
   source: string
   gasEstimate: number
   l2Feed: string
-  k: number
+  gasAdjustment: number
 }
 
 type ContractInput = [
@@ -20,7 +20,7 @@ type ContractInput = [
   source: string,
   l2Feed: string,
   gasEstimate: number,
-  k: number
+  gasAdjustment: number,
 ]
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
@@ -31,7 +31,7 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
     input.source,
     input.l2Feed,
     input.gasEstimate,
-    input.k
+    input.gasAdjustment,
   ]
 }
 
@@ -44,7 +44,7 @@ const makeUserInput = async (flags): Promise<UserInput> => {
     source: flags.source,
     gasEstimate: flags.gasEstimate,
     l2Feed: flags.l2Feed,
-    k: flags.k
+    gasAdjustment: flags.gasAdjustment,
   }
 }
 
@@ -90,9 +90,9 @@ const validateL2Feed = async (input) => {
   return true
 }
 
-const validateK = async (input) => {
-  if (isNaN(Number(input.k))) {
-    throw new Error(`Invalid k value (must be number): ${input.k}`)
+const validateGasAdjustment = async (input) => {
+  if (isNaN(Number(input.gasAdjustment))) {
+    throw new Error(`Invalid gasAdjustment value (must be number): ${input.gasAdjustment}`)
   }
   return true
 }
@@ -105,7 +105,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
     description:
       'Deploys a StarknetValidator contract. Starknet messaging contract is address officially deployed by starkware industries. ',
     examples: [
-      `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=<ADDRESS> --configAC=<ADDRESS>--gasPriceL1Feed=<ADDRESS> --source=<ADDRESS> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<ADDRESS> --k=<K_VALUE> --network=<NETWORK>`,
+      `${CATEGORIES.STARKNET_VALIDATOR}:deploy --starkNetMessaging=<ADDRESS> --configAC=<ADDRESS>--gasPriceL1Feed=<ADDRESS> --source=<ADDRESS> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<ADDRESS> --gasAdjustment=<GAS_ADJUSTMENT> --network=<NETWORK>`,
     ],
   },
   makeUserInput,
@@ -117,7 +117,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
     validateGasEstimate,
     validateSourceAggregator,
     validateL2Feed,
-    validateK,
+    validateGasAdjustment,
   ],
   loadContract: starknetValidatorContractLoader,
 }
