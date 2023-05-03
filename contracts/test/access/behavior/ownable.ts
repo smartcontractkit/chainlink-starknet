@@ -23,16 +23,16 @@ const addresses = (t: TestData) => ({
 })
 
 const expectOwner = async (c: StarknetContract, expected: string) => {
-  const { owner: raw } = await c.call('owner')
+  const { response } = await c.call('owner')
 
-  const owner = hexPadStart(raw, ADDRESS_LEN)
+  const owner = hexPadStart(response, ADDRESS_LEN)
   expect(owner).to.deep.equal(expected)
 }
 
 const expectProposedOwner = async (c: StarknetContract, expected: string) => {
-  const { proposed_owner: raw } = await c.call('proposed_owner')
+  const { response } = await c.call('proposed_owner')
 
-  const proposedOwner = hexPadStart(raw, ADDRESS_LEN)
+  const proposedOwner = hexPadStart(response, ADDRESS_LEN)
   expect(proposedOwner).to.deep.equal(expected)
 }
 
