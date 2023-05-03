@@ -42,6 +42,7 @@ const config: HardhatUserConfig = {
         accountPath: '~/.starknet_accounts',
       },
     },
+    requestTimeout: 1000000,
   },
   networks: {
     devnet: {
@@ -61,7 +62,8 @@ const config: HardhatUserConfig = {
   paths: {
     sources: './solidity',
     starknetSources: './src',
-    cairoPaths: ['./vendor/starkware-libs/starkgate-contracts/src'],
+    starknetArtifacts: './target/release',
+    cairoPaths: [],
   },
 }
 
