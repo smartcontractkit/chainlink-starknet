@@ -62,6 +62,7 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 10000000,
+    file: './test/setup.ts',
   },
   paths: {
     sources: './solidity',
