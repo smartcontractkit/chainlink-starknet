@@ -6,7 +6,7 @@ import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { account } from '@chainlink/starknet'
 
-describe('aggregator_proxy.cairo', function () {
+describe('AggregatorProxy', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -18,20 +18,18 @@ describe('aggregator_proxy.cairo', function () {
   let proxy: StarknetContract
 
   before(async function () {
-    // assumes contract.cairo and events.cairo has been compiled
-    aggregatorContractFactory = await starknet.getContractFactory('ocr2/mocks/MockAggregator')
-    proxyContractFactory = await starknet.getContractFactory('ocr2/aggregator_proxy')
+    aggregatorContractFactory = await starknet.getContractFactory('mock_aggregator')
+    proxyContractFactory = await starknet.getContractFactory('aggregator_proxy')
 
     owner = await starknet.OpenZeppelinAccount.createAccount()
 
     await funder.fund([{ account: owner.address, amount: 1e21 }])
     await owner.deployAccount()
 
-    await owner.declare(aggregatorContractFactory)
+    await owner.declare(aggregatorContractFactory, { maxFee: 1e20 })
     aggregator = await owner.deploy(aggregatorContractFactory, { decimals: 8 })
 
-    await owner.declare(proxyContractFactory)
-
+    await owner.declare(proxyContractFactory, { maxFee: 1e20 })
     proxy = await owner.deploy(proxyContractFactory, {
       owner: owner.address,
       address: aggregator.address,
@@ -60,7 +58,7 @@ describe('aggregator_proxy.cairo', function () {
       })
 
       // query latest round
-      let { round } = await proxy.call('latest_round_data')
+      let { response: round } = await proxy.call('latest_round_data')
       // TODO: split_felt the round_id and check phase=1 round=1
       assert.equal(round.answer, '10')
       assert.equal(round.block_num, '1')
@@ -84,11 +82,11 @@ describe('aggregator_proxy.cairo', function () {
       })
 
       // query latest round, it should still point to the old aggregator
-      round = (await proxy.call('latest_round_data')).round
+      round = (await proxy.call('latest_round_data')).response
       assert.equal(round.answer, '10')
 
       // but the proposed round should be newer
-      round = (await proxy.call('proposed_latest_round_data')).round
+      round = (await proxy.call('proposed_latest_round_data')).response
       assert.equal(round.answer, '12')
 
       // confirm the new aggregator
@@ -96,14 +94,14 @@ describe('aggregator_proxy.cairo', function () {
         address: new_aggregator.address,
       })
 
-      const phase_aggregator = await proxy.call('aggregator', {})
-      assert.equal(phase_aggregator.aggregator, num.toBigInt(new_aggregator.address))
+      const { response: address } = await proxy.call('aggregator', {})
+      assert.equal(address, num.toBigInt(new_aggregator.address))
 
-      const phase_id = await proxy.call('phase_id', {})
-      assert.equal(phase_id.phase_id, 2n)
+      const { response: phaseId } = await proxy.call('phase_id', {})
+      assert.equal(phaseId, 2n)
 
       // query latest round, it should now point to the new aggregator
-      round = (await proxy.call('latest_round_data')).round
+      round = (await proxy.call('latest_round_data')).response
       assert.equal(round.answer, '12')
     })
   })
