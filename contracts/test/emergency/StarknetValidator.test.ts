@@ -55,7 +55,7 @@ describe('StarknetValidator', () => {
 
     // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    await defaultAccount.declare(l2ContractFactory)
+    await defaultAccount.declare(l2ContractFactory, { maxFee: 1e20 })
 
     l2Contract = await defaultAccount.deploy(l2ContractFactory, {
       initial_status: 0,
@@ -434,7 +434,7 @@ describe('StarknetValidator', () => {
     })
 
     it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
-      const { round } = await l2Contract.call('latest_round_data')
+      const { response: round } = await l2Contract.call('latest_round_data')
       expect(round.answer).to.equal(0n)
     })
 
@@ -524,7 +524,7 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
-      expect(res.round.answer).to.equal(0n) // status unchanged - incorrect value treated as false
+      expect(res.response.answer).to.equal(0n) // status unchanged - incorrect value treated as false
     })
 
     it('should send multiple messages', async () => {
@@ -565,7 +565,7 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
-      expect(res.round.answer).to.equal(0n) // final status 0
+      expect(res.response.answer).to.equal(0n) // final status 0
     })
   })
 
