@@ -1,14 +1,14 @@
 import { assert, expect } from 'chai'
-import BN from 'bn.js'
 import { starknet } from 'hardhat'
-import { ec, hash, num, uint256 } from 'starknet'
+import { ec, hash, num, cairo } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { account, expectInvokeErrorMsg } from '@chainlink/starknet'
+import { account, expectInvokeError } from '@chainlink/starknet'
 
 interface Oracle {
-  signer: Uint8Array
+  // hex string
+  signer: string
   transmitter: Account
 }
 
@@ -17,44 +17,33 @@ const CHUNK_SIZE = 31
 // Observers - max 31 oracles or 31 bytes
 const OBSERVERS_MAX = 31
 const OBSERVERS_HEX = '0x00010203000000000000000000000000000000000000000000000000000000'
-const INT128_MIN = BigInt(-2) ** BigInt(128 - 1)
-const INT128_MAX = BigInt(2) ** BigInt(128 - 1) - BigInt(1)
+const UINT128_MAX = BigInt(2) ** BigInt(128) - BigInt(1)
 
-function encodeBytes(data: Uint8Array): string[] {
-  let felts = []
+function packUint8Array(data: Uint8Array | Buffer): bigint {
+  let result: bigint = BigInt(0)
+  for (let i = 0; i < data.length; i++) {
+    result = (result << BigInt(8)) | BigInt(data[i])
+  }
+  return result
+}
 
-  // prefix with len
-  let len = data.byteLength
-  felts.push(num.toBigInt(len).toString())
+export function encodeBytes(data: Uint8Array | Buffer): string[] {
+  const felts: string[] = []
+
+  // prefix with data length
+  felts.push(cairo.felt(data.byteLength))
 
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     const chunk = data.slice(i, i + CHUNK_SIZE)
-    // cast to int
-    felts.push(new BN(chunk, 'be').toString())
+    // cairo.felt() does not support packing a Uint8Array natively.
+    const packedValue = packUint8Array(chunk)
+    felts.push(cairo.felt(packedValue))
   }
   return felts
 }
 
-function decodeBytes(felts: BN[]): Uint8Array {
-  let data = []
-
-  // TODO: validate len > 1
-
-  // TODO: validate it fits into 54 bits
-  let length = felts.shift()?.toNumber()!
-
-  for (const felt of felts) {
-    let chunk = felt.toArray('be', Math.min(CHUNK_SIZE, length))
-    data.push(...chunk)
-
-    length -= chunk.length
-  }
-
-  return new Uint8Array(data)
-}
-
-describe('aggregator.cairo', function () {
+describe('Aggregator', function() {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -76,8 +65,7 @@ describe('aggregator.cairo', function () {
   let answer: string
 
   before(async () => {
-    // assumes contract.cairo and events.cairo has been compiled
-    aggregatorFactory = await starknet.getContractFactory('ocr2/aggregator')
+    aggregatorFactory = await starknet.getContractFactory('aggregator')
 
     // can also be declared as
     // account = (await starknet.deployAccount("OpenZeppelin")) as OpenZeppelinAccount
@@ -88,15 +76,15 @@ describe('aggregator.cairo', function () {
     await owner.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
-    await owner.declare(tokenFactory)
-    token = await owner.deploy(tokenFactory, { owner: owner.starknetContract.address })
+    await owner.declare(tokenFactory, { maxFee: 1e20 })
+    token = await owner.deploy(tokenFactory, { minter: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
-      amount: uint256.bnToUint256(100_000_000_000),
+      amount: 100_000_000_000,
     })
 
-    await owner.declare(aggregatorFactory)
+    await owner.declare(aggregatorFactory, { maxFee: 1e20 })
 
     aggregator = await owner.deploy(aggregatorFactory, {
       owner: BigInt(owner.starknetContract.address),
@@ -118,7 +106,7 @@ describe('aggregator.cairo', function () {
       await transmitter.deployAccount()
 
       return {
-        signer: ec.starkCurve.utils.randomPrivateKey(),
+        signer: '0x' + Buffer.from(ec.starkCurve.utils.randomPrivateKey()).toString('hex'),
         transmitter,
         // payee
       }
@@ -149,12 +137,12 @@ describe('aggregator.cairo', function () {
     await owner.invoke(aggregator, 'set_config', config)
     console.log('Config: %O', config)
 
-    let result = await aggregator.call('latest_config_details')
-    config_digest = result.config_digest
+    let { response } = await aggregator.call('latest_config_details')
+    config_digest = response[2]
     console.log(`Config digest: 0x${config_digest.toString(16)}`)
 
     // Immitate the fetch done by relay to confirm latest_config_details_works
-    let block = await starknet.getBlock({ blockNumber: result.block_number })
+    let block = await starknet.getBlock({ blockNumber: response.block_number })
     let events = block.transaction_receipts[0].events
 
     assert.isNotEmpty(events)
@@ -180,7 +168,7 @@ describe('aggregator.cairo', function () {
     return { ownable: aggregator, alice, bob }
   })
 
-  describe('OCR aggregator behavior', function () {
+  describe('OCR aggregator behavior', function() {
     let transmit = async (epoch_and_round: number, answer: num.BigNumberish): Promise<any> => {
       let extra_hash = 1
       let observation_timestamp = 1
@@ -212,19 +200,26 @@ describe('aggregator.cairo', function () {
         juels_per_fee_coin,
         gas_price,
       ]
-      let reportDigest = hash.computeHashOnElements(reportData)
+      console.log('report data:', reportData)
+      const reportDigest = hash.computeHashOnElements(reportData)
       console.log('Report data: %O', reportData)
       console.log(`Report digest: ${reportDigest}`)
 
       console.log('Report signatures - START')
-      let signatures = []
+      const signatures = []
       for (let { signer } of oracles.slice(0, f + 1)) {
-        let signature = ec.starkCurve.sign(reportDigest, signer)
-        let r = signature.r
-        let s = signature.s
-        const pubKey = num.toHex(ec.starkCurve.getStarkKey(signer))
-        signatures.push({ r, s, public_key: pubKey })
-        console.log({ pubKey, privKey: signer, r, s })
+        const signature = ec.starkCurve.sign(reportDigest, signer)
+        const { r, s } = signature
+        const starkKey = ec.starkCurve.getStarkKey(signer)
+        const pubKey = '0x' + Buffer.from(ec.starkCurve.getPublicKey(signer)).toString('hex')
+        signatures.push({ r, s, public_key: starkKey })
+        console.log({
+          starkKey,
+          pubKey,
+          privKey: signer,
+          r,
+          s,
+        })
       }
       console.log('Report signatures - END\n')
 
@@ -287,7 +282,7 @@ describe('aggregator.cairo', function () {
 
       const lenObservers = OBSERVERS_MAX * 2 // 31 bytes (hex)
       assert.equal(hexPadStart(e.data.observers, lenObservers), OBSERVERS_HEX)
-      assert.equal(e.data.observations_len, 4n)
+      assert.equal(e.data.observations.length, 4n)
 
       assert.equal(hexPadStart(e.data.config_digest, len), hexPadStart(config_digest, len))
     })
@@ -295,7 +290,7 @@ describe('aggregator.cairo', function () {
     it('should transmit correctly', async () => {
       await transmit(2, 99)
 
-      let { round } = await aggregator.call('latest_round_data')
+      let { response: round } = await aggregator.call('latest_round_data')
       assert.equal(round.round_id, 2)
       assert.equal(round.answer, 99)
 
@@ -309,59 +304,14 @@ describe('aggregator.cairo', function () {
         expect.fail()
       } catch (err: any) {
         // Round should be unchanged
-        let { round: new_round } = await aggregator.call('latest_round_data')
+        let { response: new_round } = await aggregator.call('latest_round_data')
         assert.deepEqual(round, new_round)
       }
     })
 
-    it('should transmit with max_int_128bit correctly', async () => {
-      answer = BigInt(INT128_MAX).toString(10)
-      try {
-        await transmit(4, answer) // TODO: toFelt()
-        expect.fail()
-      } catch (error: any) {
-        const matches = error?.message.match(/Error message: (.+?)\n/g)
-        if (!matches) {
-          console.log('answer is in int128 range but not in min-max range')
-        }
-      }
-
-      try {
-        const tooBig = INT128_MAX + 1n
-        answer = BigInt(tooBig).toString(10)
-        await transmit(4, answer)
-        expect.fail()
-      } catch (err: any) {
-        expectInvokeErrorMsg(
-          err?.message,
-          `Error message: Aggregator: value not in int128 range: ${answer}\n`,
-        )
-      }
+    it('should transmit with max u128 value correctly', async () => {
+      await expectInvokeError(transmit(4, UINT128_MAX), 'median is out of min-max range')
     })
-
-    // it('should transmit with min_int_128bit correctly', async () => {
-    //   answer = BigInt(INT128_MIN).toString(10)
-    //   try {
-    //     await transmit(4, answer) // TODO: toFelt()
-    //   } catch (err: any) {
-    //     const matches = err?.message.match(/Error message: (.+?)\n/g)
-    //     if (!matches) {
-    //       console.log('answer is in int128 range but not in min-max range')
-    //     }
-    //   }
-    //
-    //   try {
-    //     const tooBig = INT128_MIN - 1n
-    //     answer = BigInt(tooBig).toString(10)
-    //     await transmit(4, answer) // TODO: toFelt()
-    //     expect.fail()
-    //   } catch (err: any) {
-    //     expectInvokeErrorMsg(
-    //       err?.message,
-    //       `Error message: Aggregator: value not in int128 range: ${answer}\n`,
-    //     )
-    //   }
-    // })
 
     it('payee management', async () => {
       let payees = oracles.map((oracle) => ({
@@ -399,7 +349,7 @@ describe('aggregator.cairo', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -411,7 +361,7 @@ describe('aggregator.cairo', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
@@ -424,25 +374,29 @@ describe('aggregator.cairo', function () {
       // NOTE: previous test changed oracle0's payee to oracle1
       let payee = oracles[1].transmitter
       aggregator.call
-      let { amount: owed } = await aggregator.call('owed_payment', {
+      let { response: owed } = await aggregator.call('owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })
       // several rounds happened so we are owed payment
       assert.ok(owed > 0)
 
+      const availableToValue = ([is_negative, abs_difference]: [boolean, bigint]): bigint => {
+        return is_negative ? -abs_difference : abs_difference
+      }
+
       // no funds on contract, so no LINK available for payment
-      let { available } = await aggregator.call('link_available_for_payment')
-      assert.ok(available < 0) // should be negative: we owe payments
+      let { response: available } = await aggregator.call('link_available_for_payment')
+      assert.ok(availableToValue(available) < 0) // should be negative: we owe payments
 
       // deposit LINK to contract
       await owner.invoke(token, 'transfer', {
         recipient: aggregator.address,
-        amount: uint256.bnToUint256(100_000_000_000),
+        amount: 100_000_000_000,
       })
 
       // we have enough funds available now
-      available = (await aggregator.call('link_available_for_payment')).available
-      assert.ok(available > 0)
+      available = (await aggregator.call('link_available_for_payment')).response
+      assert.ok(availableToValue(available) > 0)
 
       // attempt to withdraw the payment
       await payee.invoke(aggregator, 'withdraw_payment', {
@@ -450,15 +404,15 @@ describe('aggregator.cairo', function () {
       })
 
       // balance as transferred to payee
-      let { balance } = await token.call('balanceOf', {
+      let { response: balance } = await token.call('balance_of', {
         account: payee.starknetContract.address,
       })
 
-      assert.ok(num.toBigInt(owed) === uint256.uint256ToBN(balance))
+      assert.ok(owed === balance)
 
       // owed payment is now zero
       {
-        let { amount: owed } = await aggregator.call('owed_payment', {
+        let { response: owed } = await aggregator.call('owed_payment', {
           transmitter: oracle.transmitter.starknetContract.address,
         })
         assert.ok(owed == 0)
