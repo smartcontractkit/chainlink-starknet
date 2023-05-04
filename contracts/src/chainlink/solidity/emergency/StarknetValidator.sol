@@ -28,6 +28,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     uint256 gasEstimate;
     address gasPriceL1Feed;
     // gasAdjustment of 100 equals 1x (see setGasConfig for more info)
+    // recommended value is 130 because as of writing L2 gas price is equal to L1 gas price
     uint32 gasAdjustment;
   }
 
@@ -54,7 +55,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   error AccessForbidden();
 
   /// @notice This event is emitted when the gas config is set.
-  event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed, uint32 k);
+  event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed, uint32 gasAdjustment);
   /// @notice emitted when a new gas access-control contract is set
   event ConfigACSet(address indexed previous, address indexed current);
   /// @notice emitted when a new source aggregator contract is set
@@ -185,6 +186,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     return gasPrice * s_gasConfig.gasEstimate;
   }
 
+  /// @notice calculates the gas price accounting for the gasAdjustment values
   function approximateGasPrice() public view returns (uint256) {
     (, int256 fastGasPriceInWei, , , ) = AggregatorV3Interface(s_gasConfig.gasPriceL1Feed).latestRoundData();
     return (uint256(fastGasPriceInWei) * uint256(s_gasConfig.gasAdjustment)) / 100;
