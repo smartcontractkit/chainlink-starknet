@@ -6,7 +6,8 @@
   "workspaces": [
     "contracts",
     "examples/contracts/*",
-    "packages-ts/*"
+    "packages-ts/*",
+    "examples/latest_contracts"
   ],
   "keywords": [
     "typescript",
