@@ -11,14 +11,18 @@ trait IMintableToken {
 
 #[contract]
 mod LinkToken {
+    use super::IMintableToken;
+
+    use zeroable::Zeroable;
+    
     use starknet::ContractAddress;
     use starknet::ContractAddressZeroable;
-    use zeroable::Zeroable;
+    use starknet::class_hash::ClassHash;
 
     use chainlink::libraries::token::erc20::ERC20;
     use chainlink::libraries::token::erc677::ERC677;
-
-    use super::IMintableToken;
+    use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     const NAME: felt252 = 'ChainLink Token';
     const SYMBOL: felt252 = 'LINK';
@@ -41,10 +45,11 @@ mod LinkToken {
 
 
     #[constructor]
-    fn constructor(minter: ContractAddress) {
+    fn constructor(minter: ContractAddress, owner: ContractAddress) {
         ERC20::initializer(NAME, SYMBOL);
         assert(!minter.is_zero(), 'minter is 0');
         _minter::write(minter);
+        Ownable::initializer(owner);
     }
 
     #[view]
@@ -73,6 +78,43 @@ mod LinkToken {
     #[external]
     fn permissionedBurn(account: ContractAddress, amount: u256) {
         MintableToken::permissionedBurn(account, amount)
+    }
+
+    //
+    //  Upgradeable
+    //
+    #[external]
+    fn upgrade(impl_hash: ClassHash) {
+        Upgradeable::upgrade_only_owner(impl_hash)
+    }
+
+    //
+    // Ownership
+    //
+
+    #[view]
+    fn owner() -> ContractAddress {
+        Ownable::owner()
+    }
+
+    #[view]
+    fn proposed_owner() -> ContractAddress {
+        Ownable::proposed_owner()
+    }
+
+    #[external]
+    fn transfer_ownership(new_owner: ContractAddress) {
+        Ownable::transfer_ownership(new_owner)
+    }
+
+    #[external]
+    fn accept_ownership() {
+        Ownable::accept_ownership()
+    }
+
+    #[external]
+    fn renounce_ownership() {
+        Ownable::renounce_ownership()
     }
 
 

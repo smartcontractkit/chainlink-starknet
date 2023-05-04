@@ -44,7 +44,6 @@ mod AggregatorProxy {
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
-    use starknet::class_hash::ClassHashZeroable;
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
@@ -192,7 +191,7 @@ mod AggregatorProxy {
 
     #[external]
     fn upgrade(impl_hash: ClassHash) {
-        Upgradeable::upgrade(impl_hash)
+        Upgradeable::upgrade_only_owner(impl_hash)
     }
 
     // -- SimpleReadAccessController --

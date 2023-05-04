@@ -21,7 +21,7 @@ fn setup() -> ContractAddress {
 fn test_upgrade_non_owner() {
     let sender = setup();
 
-    Upgradeable::upgrade(class_hash_const::<1>());
+    Upgradeable::upgrade_only_owner(class_hash_const::<1>());
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn test_upgrade_zero_hash() {
 
     Ownable::constructor(sender);
 
-    Upgradeable::upgrade(class_hash_const::<0>());
+    Upgradeable::upgrade_only_owner(class_hash_const::<0>());
 }
 
 // replace_class_syscall() not yet supported in tests
@@ -44,5 +44,5 @@ fn test_upgrade_hash() {
 
     Ownable::constructor(sender);
 
-    Upgradeable::upgrade(class_hash_const::<1>());
+    Upgradeable::upgrade_only_owner(class_hash_const::<1>());
 }

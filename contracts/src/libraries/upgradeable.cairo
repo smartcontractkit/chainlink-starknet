@@ -11,8 +11,12 @@ mod Upgradeable {
     #[event]
     fn Upgraded(implementation: ClassHash) {}
 
-    fn upgrade(impl_hash: ClassHash) {
+    fn upgrade_only_owner(impl_hash: ClassHash) {
         Ownable::assert_only_owner();
+        upgrade(impl_hash);
+    }
+
+    fn upgrade(impl_hash: ClassHash) {
         assert(!impl_hash.is_zero(), 'Class hash cannot be zero');
         replace_class_syscall(impl_hash);
         Upgraded(impl_hash);

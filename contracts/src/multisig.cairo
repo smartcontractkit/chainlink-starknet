@@ -37,9 +37,15 @@ impl TPartialEq: PartialEq::<T>,
 
 #[contract]
 mod Multisig {
+    use super::assert_unique_values;
+
+    use traits::Into;
+    use traits::TryInto;
+    use zeroable::Zeroable;
     use array::ArrayTrait;
     use array::ArrayTCloneImpl;
     use option::OptionTrait;
+    
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
     use starknet::Felt252TryIntoContractAddress;
@@ -52,11 +58,9 @@ mod Multisig {
     use starknet::storage_address_from_base_and_offset;
     use starknet::storage_read_syscall;
     use starknet::storage_write_syscall;
-    use traits::Into;
-    use traits::TryInto;
-    use zeroable::Zeroable;
+    use starknet::class_hash::ClassHash;
 
-    use super::assert_unique_values;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     #[event]
     fn TransactionSubmitted(signer: ContractAddress, nonce: u128, to: ContractAddress) {}
@@ -218,6 +222,12 @@ mod Multisig {
     }
 
     /// Externals
+
+    #[external]
+    fn upgrade(impl_hash: ClassHash) {
+        _require_multisig();
+        Upgradeable::upgrade(impl_hash)
+    }
 
     #[external]
     fn submit_transaction(

@@ -3,6 +3,7 @@ use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
 use chainlink::multisig::assert_unique_values;
 use chainlink::multisig::Multisig;
+use starknet::class_hash::class_hash_const;
 
 // TODO: test execute_confirmation happy path with mocked
 // call_contract_syscall
@@ -280,3 +281,25 @@ fn test_execute_confirmation_below_threshold() {
     Multisig::confirm_transaction(nonce: 0);
     Multisig::execute_transaction(nonce: 0);
 }
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected = ('only multisig allowed', ))]
+fn test_upgrade_not_multisig() {
+    let account = contract_address_const::<777>();
+    set_caller_address(account);
+
+    Multisig::upgrade(class_hash_const::<1>())
+}
+
+// wait until replace_class_syscall is implemented by cairo test
+#[test]
+#[ignore]
+#[available_gas(2000000)]
+fn test_upgrade() {
+    // deploy multisig contract
+    // get address of multisig contract 
+    // set sender to different address than multisig contract
+    // call Multisig::upgrade(class_hash_const::<1>())
+}
+
