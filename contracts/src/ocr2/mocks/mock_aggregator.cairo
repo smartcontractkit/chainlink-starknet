@@ -37,6 +37,8 @@ mod MockAggregator {
         observations.append(2_u128);
         observations.append(3_u128);
 
+        _latest_aggregator_round_id::write(new_round_id);
+
         NewTransmission(
             new_round_id,
             answer,
