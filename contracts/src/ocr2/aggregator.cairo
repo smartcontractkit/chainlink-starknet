@@ -64,36 +64,39 @@ impl TCopy: Copy::<T>> of LegacyHash::<Span<T>> {
 mod Aggregator {
     use super::IAggregator;
     use super::Round;
-    use starknet::get_caller_address;
-    use starknet::contract_address_const;
-    use starknet::ContractAddressZeroable;
+    use super::SpanLegacyHash;
+    use super::pow;
+
+    use array::ArrayTrait;
+    use array::SpanTrait;
+    use box::BoxTrait;
+    use hash::LegacyHash;
     use integer::U128IntoFelt252;
     use integer::u128s_from_felt252;
     use integer::U128sFromFelt252Result;
     use zeroable::Zeroable;
+    use traits::Into;
+    use traits::TryInto;
+    use option::OptionTrait;
 
     use starknet::ContractAddress;
-
+    use starknet::get_caller_address;
+    use starknet::contract_address_const;
+    use starknet::ContractAddressZeroable;
     use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
     use starknet::storage_read_syscall;
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
-    use traits::Into;
-    use traits::TryInto;
-    use option::OptionTrait;
+    use starknet::class_hash::ClassHash;
+    use starknet::class_hash::ClassHashZeroable;
 
-    use array::ArrayTrait;
-    use array::SpanTrait;
-    use box::BoxTrait;
-    use hash::LegacyHash;
-    use super::SpanLegacyHash;
-    use super::pow;
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
     use chainlink::utils::split_felt;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     // NOTE: remove duplication once we can directly use the trait
     #[abi]
@@ -293,6 +296,13 @@ mod Aggregator {
 
         _decimals::write(decimals);
         _description::write(description);
+    }
+
+    // --- Upgradeable ---
+
+    #[external]
+    fn upgrade(impl_hash: ClassHash) {
+        Upgradeable::upgrade(impl_hash)
     }
 
     // --- Ownership ---

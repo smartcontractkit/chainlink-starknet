@@ -7,6 +7,8 @@ mod SequencerUptimeFeed {
     use starknet::storage_read_syscall;
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
+    use starknet::class_hash::ClassHash;
+    use starknet::class_hash::ClassHashZeroable;
 
     use box::BoxTrait;
     use traits::Into;
@@ -21,6 +23,7 @@ mod SequencerUptimeFeed {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Aggregator::Transmission;
     use chainlink::ocr2::aggregator::Aggregator::TransmissionStorageAccess;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     const ETH_ADDRESS_BOUND: felt252 = 0x10000000000000000000000000000000000000000; // 2**160
 
@@ -139,6 +142,14 @@ mod SequencerUptimeFeed {
         _l1_sender::read()
     }
 
+    ///
+    /// Upgradeable
+    ///
+
+    #[external]
+    fn upgrade(impl_hash: ClassHash) {
+        Upgradeable::upgrade(impl_hash)
+    }
 
     ///
     /// Aggregator

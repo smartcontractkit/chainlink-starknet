@@ -41,6 +41,7 @@ mod SimpleReadAccessController {
     fn check_access(user: ContractAddress) {
         SimpleReadAccessController::check_access(user)
     }
+    
 
     ///
     /// Internals

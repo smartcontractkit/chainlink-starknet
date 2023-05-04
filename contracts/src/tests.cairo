@@ -5,3 +5,4 @@ mod test_multisig;
 mod test_ownable;
 mod test_erc677;
 mod test_link_token;
+mod test_upgradeable;
