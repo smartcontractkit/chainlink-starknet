@@ -1106,15 +1106,17 @@ mod Aggregator {
     fn calculate_reimbursement(
         juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: Billing
     ) -> u128 {
+        // TODO: determine new values for these constants
         // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
-        // NOTE: seems a bit odd since each ecdsa is supposed to be 25.6 gas: https://docs.starknet.io/docs/Fees/fee-mechanism/
         // gas_base = 14951, gas_per_signature = 13
-        // let exact_gas = config.gas_base + (signature_count * config.gas_per_signature);
-        // let (gas: felt, _) = unsigned_div_rem(exact_gas * MARGIN, 100);  // scale to 115% for some margin
-        // let amount = gas * gas_price;
-        // let amount_juels = amount * juels_per_fee_coin;
-        // amount_juels
-        0_u128
+        let signature_count_u128: u128 = signature_count.into().try_into().unwrap();
+        let gas_base_u128: u128 = config.gas_base.into().try_into().unwrap();
+        let gas_per_signature_u128: u128 = config.gas_per_signature.into().try_into().unwrap();
+
+        let exact_gas = gas_base_u128 + (signature_count_u128 * gas_per_signature_u128);
+        let gas = exact_gas * MARGIN / 100_u128; // scale to 115% for some margin
+        let amount = gas * gas_price;
+        amount * juels_per_fee_coin
     }
 
     // --- Payee Management
