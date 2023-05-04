@@ -51,16 +51,6 @@ fn pow(n: u128, m: u128) -> u128 {
     }
 }
 
-use integer::U128IntoFelt252;
-use integer::u128s_from_felt252;
-use integer::U128sFromFelt252Result;
-fn split_felt(felt: felt252) -> (u128, u128) {
-    match u128s_from_felt252(felt) {
-        U128sFromFelt252Result::Narrow(low) => (0_u128, low),
-        U128sFromFelt252Result::Wide((high, low)) => (high, low),
-    }
-}
-
 // TODO: wrap hash_span
 impl SpanLegacyHash<T,
 impl THash: LegacyHash::<T>,
@@ -74,7 +64,6 @@ impl TCopy: Copy::<T>> of LegacyHash::<Span<T>> {
 mod Aggregator {
     use super::IAggregator;
     use super::Round;
-    use super::split_felt;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
     use starknet::ContractAddressZeroable;
@@ -104,6 +93,7 @@ mod Aggregator {
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
+    use chainlink::utils::split_felt;
 
     // NOTE: remove duplication once we can directly use the trait
     #[abi]
