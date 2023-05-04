@@ -297,7 +297,7 @@ mod Aggregator {
         _link_token::write(link);
         _billing_access_controller::write(billing_access_controller);
 
-        assert(min_answer < max_answer, '');
+        assert(min_answer < max_answer, 'min >= max');
         _min_answer::write(min_answer);
         _max_answer::write(max_answer);
 
@@ -423,9 +423,7 @@ mod Aggregator {
         let min_answer = _min_answer::read();
         let max_answer = _max_answer::read();
 
-        let computed_onchain_config = OnchainConfig { version: 1_u8, min_answer, max_answer,  };
-
-        // TODO: validate answer range
+        let computed_onchain_config = OnchainConfig { version: 1_u8, min_answer, max_answer };
 
         pay_oracles();
 
@@ -616,7 +614,7 @@ mod Aggregator {
     fn transmit(
         report_context: ReportContext,
         observation_timestamp: u64,
-        observers: felt252, // TODO:
+        observers: felt252,
         observations: Array<u128>,
         juels_per_fee_coin: u128,
         gas_price: u128,
@@ -669,7 +667,10 @@ mod Aggregator {
         let median_idx = observations_len / 2_usize;
         let median = *observations[median_idx];
 
-        // TODO: Validate median in min-max range
+        // Validate median in min-max range
+        let min_answer = _min_answer::read();
+        let max_answer = _max_answer::read();
+        assert(min_answer <= median & median <= max_answer, 'median is out of min-max range');
 
         let prev_round_id = _latest_aggregator_round_id::read();
         let round_id = prev_round_id + 1_u128;
