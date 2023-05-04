@@ -101,6 +101,7 @@ mod AggregatorProxy {
 
     impl AggregatorProxy of IAggregatorProxy {
         fn latest_round_data() -> Round {
+            _require_access();
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             let round = aggregator.latest_round_data();
@@ -113,6 +114,7 @@ mod AggregatorProxy {
             }
         }
         fn round_data(round_id: felt252) -> Round {
+            _require_access();
             let (phase_id, round_id) = split_felt(round_id);
             let address = _phases::read(phase_id);
             assert(!address.is_zero(), 'aggregator address is 0');
