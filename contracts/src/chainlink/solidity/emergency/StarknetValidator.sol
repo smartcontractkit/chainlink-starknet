@@ -25,10 +25,12 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   // Message Cost = gasAdjustment * gasEstimate * gasPriceL1Feed / 100
   struct GasConfig {
     // gas units derived from starknet estimate_message_fee
+    // recommended value is 17300 at time of writing
     uint256 gasEstimate;
     address gasPriceL1Feed;
     // gasAdjustment of 100 equals 1x (see setGasConfig for more info)
-    // recommended value is 130 because as of writing L2 gas price is equal to L1 gas price
+    // recommended value is 130 (or 1.3x) because at time of writing
+    // L2 gas price is equal to L1 gas price + some margin
     uint32 gasAdjustment;
   }
 

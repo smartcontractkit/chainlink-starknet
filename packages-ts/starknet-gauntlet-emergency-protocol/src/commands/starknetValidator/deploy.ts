@@ -91,8 +91,11 @@ const validateL2Feed = async (input) => {
 }
 
 const validateGasAdjustment = async (input) => {
-  if (isNaN(Number(input.gasAdjustment))) {
+  const gasAdjustment = Number(input.gasAdjustment)
+  if (isNaN(gasAdjustment)) {
     throw new Error(`Invalid gasAdjustment value (must be number): ${input.gasAdjustment}`)
+  } else if (gasAdjustment < 100) {
+    throw new Error(`gasAdjustment should be at least 100 (or 1x the L1 gas price)`)
   }
   return true
 }
