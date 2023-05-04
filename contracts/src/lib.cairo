@@ -2,6 +2,7 @@
 
 mod ocr2;
 mod libraries;
+mod utils;
 mod emergency;
 mod multisig;
 mod token;

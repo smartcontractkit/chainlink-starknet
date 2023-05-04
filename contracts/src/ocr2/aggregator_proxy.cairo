@@ -48,6 +48,7 @@ mod AggregatorProxy {
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
+    use chainlink::utils::split_felt;
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000_felt252;
     const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff_felt252;
@@ -112,11 +113,7 @@ mod AggregatorProxy {
             }
         }
         fn round_data(round_id: felt252) -> Round {
-            // TODO: panic if Narrow since phase_id should never be 0
-            let (phase_id, round_id) = match u128s_from_felt252(round_id) {
-                U128sFromFelt252Result::Narrow(val) => (0_u128, val),
-                U128sFromFelt252Result::Wide((val1, val2)) => (val1, val2)
-            };
+            let (phase_id, round_id) = split_felt(round_id);
             let address = _phases::read(phase_id);
             assert(!address.is_zero(), 'aggregator address is 0');
 
