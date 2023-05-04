@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+  },
+  "include": [
+    "scripts/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "files": [
+    "./hardhat.config.ts"
+  ]
+}
