@@ -18,6 +18,7 @@ mod SimpleReadAccessController {
                 return true;
             }
 
+            // NOTICE: access is granted to direct calls, to enable off-chain reads.
             if user.is_zero() {
                 return true;
             }
@@ -26,7 +27,7 @@ mod SimpleReadAccessController {
         }
 
         fn check_access(user: ContractAddress) {
-            let allowed = SimpleWriteAccessController::has_access(user, ArrayTrait::new());
+            let allowed = SimpleReadAccessController::has_access(user, ArrayTrait::new());
             assert(allowed, 'address does not have access');
         }
     }
