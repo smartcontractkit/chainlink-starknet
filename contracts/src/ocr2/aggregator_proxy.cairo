@@ -247,7 +247,6 @@ mod AggregatorProxy {
     fn proposed_latest_round_data() -> Round {
         _require_access();
         let address = _proposed_aggregator::read();
-        // TODO: zero address check?
         let aggregator = IAggregatorDispatcher { contract_address: address };
         aggregator.latest_round_data()
     }
@@ -256,7 +255,6 @@ mod AggregatorProxy {
     fn proposed_round_data(round_id: felt252) -> Round {
         _require_access();
         let address = _proposed_aggregator::read();
-        // TODO: zero address check?
         let round_id128: u128 = round_id.try_into().unwrap();
         let aggregator = IAggregatorDispatcher { contract_address: address };
         aggregator.round_data(round_id128)
