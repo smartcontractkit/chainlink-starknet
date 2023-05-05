@@ -42,7 +42,7 @@ fn setup() -> ContractAddress {
 fn test_upgrade() {
     let sender = setup();
 
-    Upgradeable::_upgrade(class_hash_const::<1>());
+    Upgradeable::upgrade(class_hash_const::<1>());
 }
 
 #[test]
@@ -51,6 +51,6 @@ fn test_upgrade() {
 fn test_upgrade_zero_hash() {
     let sender = setup();
 
-    Upgradeable::_upgrade(class_hash_const::<0>());
+    Upgradeable::upgrade(class_hash_const::<0>());
 }
 

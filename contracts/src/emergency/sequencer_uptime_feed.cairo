@@ -147,9 +147,9 @@ mod SequencerUptimeFeed {
 
     // todo add test calling with non owner once calvin's changes are merged
     #[external]
-    fn upgrade(impl_hash: ClassHash) {
+    fn upgrade(new_class_hash: ClassHash) {
         Ownable::assert_only_owner();
-        Upgradeable::_upgrade(impl_hash)
+        Upgradeable::upgrade(new_class_hash)
     }
 
     ///
