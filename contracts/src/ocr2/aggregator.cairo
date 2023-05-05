@@ -66,7 +66,6 @@ mod Aggregator {
     use super::Round;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
-    use starknet::ContractAddressZeroable;
     use integer::U128IntoFelt252;
     use integer::u128s_from_felt252;
     use integer::U128sFromFelt252Result;
