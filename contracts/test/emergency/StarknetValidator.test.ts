@@ -483,6 +483,12 @@ describe('StarknetValidator', () => {
   })
 
   describe('#validate', () => {
+    beforeEach(async () => {
+      await expect(
+        deployer.sendTransaction({ to: starknetValidator.address, value: 100n })
+      ).to.changeEtherBalance(starknetValidator, 100n)
+    })
+
     it('reverts if `StarknetValidator.validate` called by account with no access', async () => {
       const c = starknetValidator.connect(eoaValidator)
       await expect(c.validate(0, 0, 1, 1)).to.be.revertedWith('No access')
@@ -521,6 +527,8 @@ describe('StarknetValidator', () => {
         '0' /** answeredInRound */,
       )
 
+
+
       // Simulate L1 transmit + validate
       await starknetValidator.addAccess(eoaValidator.address)
       // by default the gas config is 0, we need to change it or we will submit a 0 fee
@@ -528,7 +536,7 @@ describe('StarknetValidator', () => {
       await starknetValidator
         .connect(deployer)
         .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
-      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1, { value: 1 }) // gasPrice (1) * newGasEstimate (1)
+      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1) // gasPrice (1) * newGasEstimate (1)
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()
@@ -565,7 +573,7 @@ describe('StarknetValidator', () => {
       await starknetValidator
         .connect(deployer)
         .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
-      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127, { value: 1 }) // incorrect value
+      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127) // incorrect value
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()
@@ -603,10 +611,10 @@ describe('StarknetValidator', () => {
       await starknetValidator
         .connect(deployer)
         .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
-      await c.validate(0, 0, 1, 1, { value: 1 })
-      await c.validate(0, 0, 1, 1, { value: 1 })
-      await c.validate(0, 0, 1, 127, { value: 1 }) // incorrect value
-      await c.validate(0, 0, 1, 0, { value: 1 }) // final status
+      await c.validate(0, 0, 1, 1)
+      await c.validate(0, 0, 1, 1)
+      await c.validate(0, 0, 1, 127) // incorrect value
+      await c.validate(0, 0, 1, 0) // final status
 
       // Simulate the L1 - L2 comms
       const resp = await starknet.devnet.flush()
@@ -626,9 +634,9 @@ describe('StarknetValidator', () => {
 
   describe('#withdrawFunds', () => {
     beforeEach(async () => {
-      await deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
-      const balance = await ethers.provider.getBalance(starknetValidator.address)
-      expect(balance).to.equal(10n)
+      await expect(() =>
+        deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
+      ).to.changeEtherBalance(starknetValidator, 10n)
     })
 
     describe('when called by non owner', () => {
@@ -656,9 +664,9 @@ describe('StarknetValidator', () => {
 
   describe('#withdrawFundsTo', () => {
     beforeEach(async () => {
-      await deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
-      const balance = await ethers.provider.getBalance(starknetValidator.address)
-      expect(balance).to.equal(10n)
+      await expect(() =>
+        deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
+      ).to.changeEtherBalance(starknetValidator, 10)
     })
 
     describe('when called by non owner', () => {

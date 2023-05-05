@@ -1,23 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/TypeAndVersionInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
 import "../../../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
-
-// import "@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol";
-// NOTE: can't use ^ because it isn't defined with payable attribute
-interface AggregatorValidatorInterface {
-  function validate(
-    uint256 previousRoundId,
-    int256 previousAnswer,
-    uint256 currentRoundId,
-    int256 currentAnswer
-  ) external payable returns (bool);
-}
 
 /// @title StarknetValidator - makes cross chain calls to update the Sequencer Uptime Feed on L2
 contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
@@ -141,7 +131,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     int256 /* previousAnswer */,
     uint256 /* currentRoundId */,
     int256 currentAnswer
-  ) external payable override checkAccess returns (bool) {
+  ) external override checkAccess returns (bool) {
     return _sendUpdateMessageToL2(currentAnswer);
   }
 
@@ -149,7 +139,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @notice retries to send the latest answer as update message to L2
    * @dev only with access, useful in cases where a previous x-domain message was handeled unsuccessfully.
    */
-  function retry() external payable checkAccess returns (bool) {
+  function retry() external checkAccess returns (bool) {
     (, int256 latestAnswer, , , ) = AggregatorV3Interface(s_source).latestRoundData();
     return _sendUpdateMessageToL2(latestAnswer);
   }
@@ -163,7 +153,6 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   function _sendUpdateMessageToL2(int256 answer) internal returns (bool) {
     // Bridge fees are paid on L1
     uint256 fee = _approximateFee();
-    require(msg.value >= fee, "Insufficent L1 -> L2 fee");
 
     // Fill payload with `status` and `timestamp`
     uint256[] memory payload = new uint256[](2);
