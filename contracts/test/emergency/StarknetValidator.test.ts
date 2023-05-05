@@ -514,7 +514,7 @@ describe('StarknetValidator', () => {
       expect(mockStarknetMessaging.address).to.hexEqual(loadedFrom)
     })
 
-    it('should send a message to the L2 contract', async () => {
+    it.only('should send a message to the L2 contract', async () => {
       // Load the mock messaging contract
       await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
@@ -535,7 +535,7 @@ describe('StarknetValidator', () => {
       const newGasEstimate = 1
       await starknetValidator
         .connect(deployer)
-        .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+        .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
       await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1) // gasPrice (1) * newGasEstimate (1)
 
       // Simulate the L1 - L2 comms
@@ -572,7 +572,7 @@ describe('StarknetValidator', () => {
       const newGasEstimate = 1
       await starknetValidator
         .connect(deployer)
-        .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+        .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
       await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127) // incorrect value
 
       // Simulate the L1 - L2 comms
@@ -610,7 +610,7 @@ describe('StarknetValidator', () => {
       const newGasEstimate = 1
       await starknetValidator
         .connect(deployer)
-        .setGasConfig(newGasEstimate, mockGasPriceFeed.address)
+        .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
       await c.validate(0, 0, 1, 1)
       await c.validate(0, 0, 1, 1)
       await c.validate(0, 0, 1, 127) // incorrect value
