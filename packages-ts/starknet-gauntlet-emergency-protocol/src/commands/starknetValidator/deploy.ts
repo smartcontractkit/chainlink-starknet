@@ -46,7 +46,7 @@ const makeUserInput = async (flags): Promise<UserInput> => {
     gasEstimate: flags.gasEstimate,
     l2Feed: flags.l2Feed,
     gasAdjustment: flags.gasAdjustment,
-    unsafe: Boolean(flags.unsafe)
+    unsafe: Boolean(flags.unsafe),
   }
 }
 
@@ -100,7 +100,9 @@ const validateGasAdjustment = async (input) => {
   if (isNaN(gasAdjustment)) {
     throw new Error(`Invalid gasAdjustment value (must be number): ${input.gasAdjustment}`)
   } else if (gasAdjustment < 100 && !input.unsafe) {
-    throw new Error(`gasAdjustment should be at least 100 (or 1x the L1 gas price). Use --unsafe flag to disable safety check.`)
+    throw new Error(
+      `gasAdjustment should be at least 100 (or 1x the L1 gas price). Use --unsafe flag to disable safety check.`,
+    )
   }
   return true
 }

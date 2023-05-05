@@ -92,19 +92,19 @@ starknet estimate_message_fee \
 Make sure that the `L1_SENDER_ADDR` is equal to the l1 sender storage variable on the uptime feed, or else the gateway will respond with a revert instead of the values. If you don't set the l1 sender storage variable, it'll be 0 by default (as in the example below)
 
 Example Query and response:
+
 ```
 starknet estimate_message_fee \
   --feeder_gateway_url=https://alpha4.starknet.io/feeder_gateway/ \
   --from_address 0x0 \
   --address=0x06f4279f832de1afd94ab79aa1766628d2c1e70bc7f74bfba3335db8e728a7e6 \
   --function update_status \
-  --inputs 0x1 123123 
+  --inputs 0x1 123123
 
 The estimated fee is: 3739595758116898 WEI (0.003740 ETH).
 Gas usage: 17266
 Gas price: 216587267353 WEI
 ```
-
 
 In order to reliably ensure that cross chain messages are sent with sufficient gas, the estimate is multiplied by a buffer. At the time of writing (Starknet v.0.11.0), Starkware has told us that L2 gas prices are equal to L1 gas prices and are denominated in Ethereum Wei, so we use L1 gas price feed to get the gas price:
 
@@ -118,7 +118,7 @@ gasFee = buffer * l1GasPrice * numGasUnits
 
 The gas units that it costs is also derived from the starknet estimate_message_fee command (as shown above).
 
-As of the time of writing (Starknet v. 0.11.0), we recommend a gasAdjustment of 130 (or 1.3x buffer) and a gas units to be 17300. 
+As of the time of writing (Starknet v. 0.11.0), we recommend a gasAdjustment of 130 (or 1.3x buffer) and a gas units to be 17300.
 
 ### Layer2 Sequencer Health External Adapter
 
