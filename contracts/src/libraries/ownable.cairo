@@ -5,7 +5,6 @@ use starknet::ContractAddress;
 mod Ownable {
     use starknet::ContractAddress;
     use starknet::contract_address_const;
-    use starknet::ContractAddressZeroable;
     use zeroable::Zeroable;
 
     struct Storage {
