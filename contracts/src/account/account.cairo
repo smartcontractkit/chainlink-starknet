@@ -1,6 +1,5 @@
 // copied from https://github.com/OpenZeppelin/cairo-contracts/pull/616
 
-
 use serde::Serde;
 use array::ArrayTrait;
 use starknet::ContractAddress;
