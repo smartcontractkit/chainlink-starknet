@@ -2,7 +2,7 @@
 mod MockAggregator {
     use array::ArrayTrait;
     use starknet::contract_address_const;
-     use traits::Into;
+    use traits::Into;
 
     use chainlink::ocr2::aggregator::Aggregator::Transmission;
     use chainlink::ocr2::aggregator::Aggregator::TransmissionStorageAccess;
@@ -21,11 +21,13 @@ mod MockAggregator {
     }
 
     #[external]
-    fn set_latest_round_data(answer: u128, block_num: u64, observation_timestamp: u64, transmission_timestamp: u64) {
+    fn set_latest_round_data(
+        answer: u128, block_num: u64, observation_timestamp: u64, transmission_timestamp: u64
+    ) {
         let new_round_id = _latest_aggregator_round_id::read() + 1_u128;
         _transmissions::write(
             new_round_id,
-            Transmission{
+            Transmission {
                 answer: answer,
                 block_num: block_num,
                 observation_timestamp: observation_timestamp,
@@ -59,7 +61,7 @@ mod MockAggregator {
         let latest_round_id = _latest_aggregator_round_id::read();
         let transmission = _transmissions::read(latest_round_id);
 
-        Round{
+        Round {
             round_id: latest_round_id.into(),
             answer: transmission.answer,
             block_num: transmission.block_num,
@@ -72,5 +74,4 @@ mod MockAggregator {
     fn decimals() -> u8 {
         _decimals::read()
     }
-
 }

@@ -21,7 +21,7 @@ use array::SpanTrait;
 use option::OptionTrait;
 use hash::LegacyHash;
 
-fn hash_span<T, impl THash: LegacyHash::<T>, impl TCopy: Copy::<T>>(
+fn hash_span<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>>(
     state: felt252, mut value: Span<T>
 ) -> felt252 {
     let item = value.pop_front();
@@ -52,9 +52,7 @@ fn pow(n: u128, m: u128) -> u128 {
 }
 
 // TODO: wrap hash_span
-impl SpanLegacyHash<T,
-impl THash: LegacyHash::<T>,
-impl TCopy: Copy::<T>> of LegacyHash::<Span<T>> {
+impl SpanLegacyHash<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>> of LegacyHash<Span<T>> {
     fn hash(state: felt252, mut value: Span<T>) -> felt252 {
         hash_span(state, value)
     }
@@ -128,7 +126,7 @@ mod Aggregator {
         payment_juels: u128,
     }
 
-    impl OracleStorageAccess of StorageAccess::<Oracle> {
+    impl OracleStorageAccess of StorageAccess<Oracle> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Oracle> {
             let value = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 0_u8)
@@ -155,7 +153,7 @@ mod Aggregator {
         transmission_timestamp: u64,
     }
 
-    impl TransmissionStorageAccess of StorageAccess::<Transmission> {
+    impl TransmissionStorageAccess of StorageAccess<Transmission> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
             let block_num_and_answer = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 0_u8)
@@ -379,7 +377,7 @@ mod Aggregator {
         transmitter: ContractAddress,
     }
 
-    impl OracleConfigLegacyHash of LegacyHash::<OracleConfig> {
+    impl OracleConfigLegacyHash of LegacyHash<OracleConfig> {
         fn hash(mut state: felt252, value: OracleConfig) -> felt252 {
             state = LegacyHash::hash(state, value.signer);
             state = LegacyHash::hash(state, value.transmitter);
@@ -701,8 +699,7 @@ mod Aggregator {
         );
 
         // pay transmitter
-        let payment = reimbursement_juels
-            + (billing.transmission_payment_gjuels.into() * GIGA);
+        let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
         // TODO: check overflow
 
         oracle.payment_juels += payment;
@@ -856,7 +853,7 @@ mod Aggregator {
         gas_per_signature: u32,
     }
 
-    impl BillingStorageAccess of StorageAccess::<Billing> {
+    impl BillingStorageAccess of StorageAccess<Billing> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Billing> {
             Result::Ok(
                 Billing {
@@ -962,8 +959,7 @@ mod Aggregator {
         let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
         let rounds = latest_round_id - from_round_id;
 
-        (rounds * billing.observation_payment_gjuels.into() * GIGA)
-            + *oracle.payment_juels
+        (rounds * billing.observation_payment_gjuels.into() * GIGA) + *oracle.payment_juels
     }
 
     #[view]
@@ -1057,9 +1053,7 @@ mod Aggregator {
     ) -> u128 {
         if index == 0_usize {
             let billing = _billing::read();
-            return (total_rounds
-                * billing.observation_payment_gjuels.into()
-                * GIGA)
+            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA)
                 + payments_juels;
         }
 
