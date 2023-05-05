@@ -58,7 +58,7 @@ mod AggregatorProxy {
         aggregator: ContractAddress
     }
 
-    impl PhaseStorageAccess of StorageAccess::<Phase> {
+    impl PhaseStorageAccess of StorageAccess<Phase> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Phase> {
             Result::Ok(
                 Phase {

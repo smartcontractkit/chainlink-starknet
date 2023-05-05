@@ -10,7 +10,7 @@ use chainlink::multisig::Multisig;
 // TODO: test set_signers with recursive call
 // TODO: test set_signers_and_thershold with recursive call
 
-fn sample_calldata()  -> Array::<felt252> {
+fn sample_calldata() -> Array::<felt252> {
     let mut calldata = ArrayTrait::new();
     calldata.append(1);
     calldata.append(2);
@@ -114,12 +114,7 @@ fn test_submit_transaction() {
     set_caller_address(signer);
     let to = contract_address_const::<42>();
     let function_selector = 10;
-    Multisig::submit_transaction(
-        :to,
-        :function_selector,
-        calldata: sample_calldata(),
-        nonce: 0
-    );
+    Multisig::submit_transaction(:to, :function_selector, calldata: sample_calldata(), nonce: 0);
 
     let (transaction, calldata) = Multisig::get_transaction(0);
     assert(transaction.to == to, 'should match target address');
@@ -127,7 +122,7 @@ fn test_submit_transaction() {
     assert(transaction.calldata_len == sample_calldata().len(), 'should match calldata length');
     assert(!transaction.executed, 'should not be executed');
     assert(transaction.confirmations == 0, 'should not have confirmations');
-    // TODO: compare calldata when loops are supported
+// TODO: compare calldata when loops are supported
 }
 
 #[test]
