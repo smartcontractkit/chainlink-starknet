@@ -15,34 +15,42 @@ fn setup() -> ContractAddress {
     account
 }
 
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('Ownable: caller is not owner', ))]
-fn test_upgrade_non_owner() {
-    let sender = setup();
+// #[test]
+// #[available_gas(2000000)]
+// #[should_panic(expected = ('Ownable: caller is not owner', ))]
+// fn test_upgrade_non_owner() {
+//     let sender = setup();
 
-    Upgradeable::upgrade_only_owner(class_hash_const::<1>());
-}
+//     Upgradeable::upgrade_only_owner(class_hash_const::<1>());
+// }
 
-#[test]
-#[available_gas(2000000)]
-#[should_panic(expected = ('Class hash cannot be zero', ))]
-fn test_upgrade_zero_hash() {
-    let sender = setup();
+// #[test]
+// #[available_gas(2000000)]
+// #[should_panic(expected = ('Class hash cannot be zero', ))]
+// fn test_upgrade_zero_hash() {
+//     let sender = setup();
 
-    Ownable::constructor(sender);
+//     Ownable::constructor(sender);
 
-    Upgradeable::upgrade_only_owner(class_hash_const::<0>());
-}
+//     Upgradeable::upgrade_only_owner(class_hash_const::<0>());
+// }
 
 // replace_class_syscall() not yet supported in tests
 #[test]
 #[ignore]
 #[available_gas(2000000)]
-fn test_upgrade_hash() {
+fn test_upgrade() {
     let sender = setup();
 
-    Ownable::constructor(sender);
-
-    Upgradeable::upgrade_only_owner(class_hash_const::<1>());
+    Upgradeable::_upgrade(class_hash_const::<1>());
 }
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('Class hash cannot be zero', ))]
+fn test_upgrade_zero_hash() {
+    let sender = setup();
+
+    Upgradeable::_upgrade(class_hash_const::<0>());
+}
+

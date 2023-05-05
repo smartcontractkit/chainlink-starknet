@@ -298,7 +298,8 @@ mod Aggregator {
 
     #[external]
     fn upgrade(impl_hash: ClassHash) {
-        Upgradeable::upgrade_only_owner(impl_hash)
+        Ownable::assert_only_owner();
+        Upgradeable::_upgrade(impl_hash)
     }
 
     // --- Ownership ---
