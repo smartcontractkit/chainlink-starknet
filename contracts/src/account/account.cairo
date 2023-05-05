@@ -48,7 +48,6 @@ mod Account {
     use starknet::get_tx_info;
     use starknet::get_caller_address;
     use starknet::get_contract_address;
-    use starknet::ContractAddressZeroable;
 
     use super::Call;
     use super::ERC165_ACCOUNT_ID;

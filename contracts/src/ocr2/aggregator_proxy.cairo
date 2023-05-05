@@ -26,7 +26,6 @@ mod AggregatorProxy {
 
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
-    use starknet::ContractAddressZeroable;
     use starknet::Felt252TryIntoContractAddress;
     use integer::Felt252TryIntoU128;
     use starknet::StorageAccess;
