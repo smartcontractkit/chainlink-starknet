@@ -49,3 +49,5 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+
+replace github.com/dontpanicdao/caigo => github.com/smartcontractkit/caigo v0.0.0-20230505061009-1ab14f83e97d
