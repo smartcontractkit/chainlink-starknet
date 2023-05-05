@@ -21,7 +21,7 @@ use array::SpanTrait;
 use option::OptionTrait;
 use hash::LegacyHash;
 
-fn hash_span<T, impl THash: LegacyHash::<T>, impl TCopy: Copy::<T>>(
+fn hash_span<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>>(
     state: felt252, mut value: Span<T>
 ) -> felt252 {
     let item = value.pop_front();
@@ -52,9 +52,7 @@ fn pow(n: u128, m: u128) -> u128 {
 }
 
 // TODO: wrap hash_span
-impl SpanLegacyHash<T,
-impl THash: LegacyHash::<T>,
-impl TCopy: Copy::<T>> of LegacyHash::<Span<T>> {
+impl SpanLegacyHash<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>> of LegacyHash<Span<T>> {
     fn hash(state: felt252, mut value: Span<T>) -> felt252 {
         hash_span(state, value)
     }
@@ -82,7 +80,6 @@ mod Aggregator {
     use starknet::ContractAddress;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
-    use starknet::ContractAddressZeroable;
     use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
@@ -131,7 +128,7 @@ mod Aggregator {
         payment_juels: u128,
     }
 
-    impl OracleStorageAccess of StorageAccess::<Oracle> {
+    impl OracleStorageAccess of StorageAccess<Oracle> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Oracle> {
             let value = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 0_u8)
@@ -158,7 +155,7 @@ mod Aggregator {
         transmission_timestamp: u64,
     }
 
-    impl TransmissionStorageAccess of StorageAccess::<Transmission> {
+    impl TransmissionStorageAccess of StorageAccess<Transmission> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
             let block_num_and_answer = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 0_u8)
@@ -389,7 +386,7 @@ mod Aggregator {
         transmitter: ContractAddress,
     }
 
-    impl OracleConfigLegacyHash of LegacyHash::<OracleConfig> {
+    impl OracleConfigLegacyHash of LegacyHash<OracleConfig> {
         fn hash(mut state: felt252, value: OracleConfig) -> felt252 {
             state = LegacyHash::hash(state, value.signer);
             state = LegacyHash::hash(state, value.transmitter);
@@ -414,7 +411,7 @@ mod Aggregator {
     ) -> felt252 { // digest
         Ownable::assert_only_owner();
         assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
-        assert((3_u8 * f).into().try_into().unwrap() < oracles.len(), 'faulty-oracle f too high');
+        assert((3_u8 * f).into() < oracles.len(), 'faulty-oracle f too high');
         assert(f > 0_u8, 'f must be positive');
 
         assert(onchain_config.len() == 0_u32, 'onchain_config must be empty');
@@ -634,7 +631,7 @@ mod Aggregator {
         assert(report_context.config_digest == config_digest, 'config digest mismatch');
 
         let f = _f::read();
-        assert(signatures_len.into() == (f + 1_u8).into(), 'wrong number of signatures');
+        assert(signatures_len == (f + 1_u8).into(), 'wrong number of signatures');
 
         let msg = hash_report(
             @report_context,
@@ -659,7 +656,7 @@ mod Aggregator {
 
         let observations_len = observations.len();
         assert(observations_len <= MAX_ORACLES, '');
-        assert(f.into().try_into().unwrap() < observations_len, '');
+        assert(f.into() < observations_len, '');
 
         _latest_epoch_and_round::write(report_context.epoch_and_round);
 
@@ -711,8 +708,7 @@ mod Aggregator {
         );
 
         // pay transmitter
-        let payment = reimbursement_juels
-            + (billing.transmission_payment_gjuels.into().try_into().unwrap() * GIGA);
+        let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
         // TODO: check overflow
 
         oracle.payment_juels += payment;
@@ -752,7 +748,7 @@ mod Aggregator {
         let index = _signers::read(signature.public_key);
         assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
 
-        let indexed_bit = pow(2_u128, index.into().try_into().unwrap() - 1_u128);
+        let indexed_bit = pow(2_u128, index.into() - 1_u128);
         let prev_signed_count = signed_count;
         signed_count = signed_count | indexed_bit;
         assert(prev_signed_count != signed_count, 'duplicate signer');
@@ -866,7 +862,7 @@ mod Aggregator {
         gas_per_signature: u32,
     }
 
-    impl BillingStorageAccess of StorageAccess::<Billing> {
+    impl BillingStorageAccess of StorageAccess<Billing> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Billing> {
             Result::Ok(
                 Billing {
@@ -972,8 +968,7 @@ mod Aggregator {
         let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
         let rounds = latest_round_id - from_round_id;
 
-        (rounds * billing.observation_payment_gjuels.into().try_into().unwrap() * GIGA)
-            + *oracle.payment_juels
+        (rounds * billing.observation_payment_gjuels.into() * GIGA) + *oracle.payment_juels
     }
 
     #[view]
@@ -1067,9 +1062,7 @@ mod Aggregator {
     ) -> u128 {
         if index == 0_usize {
             let billing = _billing::read();
-            return (total_rounds
-                * billing.observation_payment_gjuels.into().try_into().unwrap()
-                * GIGA)
+            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA)
                 + payments_juels;
         }
 
@@ -1118,9 +1111,9 @@ mod Aggregator {
         // TODO: determine new values for these constants
         // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
         // gas_base = 14951, gas_per_signature = 13
-        let signature_count_u128: u128 = signature_count.into().try_into().unwrap();
-        let gas_base_u128: u128 = config.gas_base.into().try_into().unwrap();
-        let gas_per_signature_u128: u128 = config.gas_per_signature.into().try_into().unwrap();
+        let signature_count_u128: u128 = signature_count.into();
+        let gas_base_u128: u128 = config.gas_base.into();
+        let gas_per_signature_u128: u128 = config.gas_per_signature.into();
 
         let exact_gas = gas_base_u128 + (signature_count_u128 * gas_per_signature_u128);
         let gas = exact_gas * MARGIN / 100_u128; // scale to 115% for some margin

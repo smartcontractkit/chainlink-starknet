@@ -2,9 +2,9 @@ use array::ArrayTrait;
 use option::OptionTrait;
 
 fn assert_unique_values<T,
-impl TCopy: Copy::<T>,
-impl TDrop: Drop::<T>,
-impl TPartialEq: PartialEq::<T>,
+impl TCopy: Copy<T>,
+impl TDrop: Drop<T>,
+impl TPartialEq: PartialEq<T>,
 >(
     a: @Array::<T>
 ) {
@@ -13,9 +13,9 @@ impl TPartialEq: PartialEq::<T>,
 }
 
 fn _assert_unique_values_loop<T,
-impl TCopy: Copy::<T>,
-impl TDrop: Drop::<T>,
-impl TPartialEq: PartialEq::<T>,
+impl TCopy: Copy<T>,
+impl TDrop: Drop<T>,
+impl TPartialEq: PartialEq<T>,
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
@@ -89,7 +89,7 @@ mod Multisig {
         confirmations: usize,
     }
 
-    impl TransactionStorageAccess of StorageAccess::<Transaction> {
+    impl TransactionStorageAccess of StorageAccess<Transaction> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transaction> {
             Result::Ok(
                 Transaction {

@@ -1,10 +1,8 @@
-// copied from https://github.com/OpenZeppelin/cairo-contracts/pull/583
+// copied from https://github.com/OpenZeppelin/cairo-contracts/pull/616
 
 use serde::Serde;
 use array::ArrayTrait;
-use array::SpanTrait;
 use starknet::ContractAddress;
-use starknet::contract_address::ContractAddressSerde;
 
 const ERC165_ACCOUNT_ID: u32 = 0xa66bd575_u32;
 const ERC1271_VALIDATED: u32 = 0x1626ba7e_u32;
@@ -24,29 +22,33 @@ fn check_gas() {
     }
 }
 
+#[derive(Serde, Drop)]
 struct Call {
     to: ContractAddress,
     selector: felt252,
     calldata: Array<felt252>
 }
 
+#[abi]
+trait IAccount {
+    fn __validate__(calls: Array<Call>) -> felt252;
+    fn __validate_declare__(class_hash: felt252) -> felt252;
+}
+
 #[account_contract]
 mod Account {
-    use box::BoxTrait;
     use array::SpanTrait;
     use array::ArrayTrait;
+    use box::BoxTrait;
     use option::OptionTrait;
     use zeroable::Zeroable;
     use ecdsa::check_ecdsa_signature;
+    use serde::ArraySerde;
     use starknet::get_tx_info;
     use starknet::get_caller_address;
     use starknet::get_contract_address;
-    use starknet::contract_address::ContractAddressPartialEq;
-    use starknet::contract_address::ContractAddressZeroable;
 
     use super::Call;
-    use super::ArrayCallSerde;
-    use super::ArrayCallDrop;
     use super::ERC165_ACCOUNT_ID;
     use super::ERC1271_VALIDATED;
     use super::TRANSACTION_VERSION;
@@ -91,11 +93,9 @@ mod Account {
         _execute_calls(calls, ArrayTrait::new())
     }
 
-    // todo: fix Span serde
-    // #[external]
+    #[external]
     fn __validate__(mut calls: Array<Call>) -> felt252 {
         _validate_transaction()
-
     }
 
     #[external]
@@ -194,59 +194,4 @@ mod Account {
         let Call{to, selector, calldata } = call;
         starknet::call_contract_syscall(to, selector, calldata.span()).unwrap_syscall()
     }
-}
-
-impl ArrayCallDrop of Drop::<Array<Call>>;
-
-impl CallSerde of Serde::<Call> {
-    fn serialize(ref output: Array<felt252>, input: Call) {
-        let Call{to, selector, calldata } = input;
-        Serde::serialize(ref output, to);
-        Serde::serialize(ref output, selector);
-        Serde::serialize(ref output, calldata);
-    }
-
-    fn deserialize(ref serialized: Span<felt252>) -> Option<Call> {
-        let to = Serde::<ContractAddress>::deserialize(ref serialized)?;
-        let selector = Serde::<felt252>::deserialize(ref serialized)?;
-        let calldata = Serde::<Array::<felt252>>::deserialize(ref serialized)?;
-        Option::Some(Call { to, selector, calldata })
-    }
-}
-
-impl ArrayCallSerde of Serde::<Array<Call>> {
-    fn serialize(ref output: Array<felt252>, mut input: Array<Call>) {
-        Serde::<usize>::serialize(ref output, input.len());
-        serialize_array_call_helper(ref output, input);
-    }
-
-    fn deserialize(ref serialized: Span<felt252>) -> Option<Array<Call>> {
-        let length = *serialized.pop_front()?;
-        let mut arr = ArrayTrait::new();
-        deserialize_array_call_helper(ref serialized, arr, length)
-    }
-}
-
-fn serialize_array_call_helper(ref output: Array<felt252>, mut input: Array<Call>) {
-    check_gas();
-    match input.pop_front() {
-        Option::Some(value) => {
-            Serde::<Call>::serialize(ref output, value);
-            serialize_array_call_helper(ref output, input);
-        },
-        Option::None(_) => {},
-    }
-}
-
-fn deserialize_array_call_helper(
-    ref serialized: Span<felt252>, mut curr_output: Array<Call>, remaining: felt252
-) -> Option<Array<Call>> {
-    if remaining == 0 {
-        return Option::Some(curr_output);
-    }
-
-    check_gas();
-
-    curr_output.append(Serde::<Call>::deserialize(ref serialized)?);
-    deserialize_array_call_helper(ref serialized, curr_output, remaining - 1)
 }

@@ -32,7 +32,6 @@ mod AggregatorProxy {
 
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
-    use starknet::ContractAddressZeroable;
     use starknet::Felt252TryIntoContractAddress;
     use integer::Felt252TryIntoU128;
     use starknet::StorageAccess;
@@ -62,7 +61,7 @@ mod AggregatorProxy {
         aggregator: ContractAddress
     }
 
-    impl PhaseStorageAccess of StorageAccess::<Phase> {
+    impl PhaseStorageAccess of StorageAccess<Phase> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Phase> {
             Result::Ok(
                 Phase {

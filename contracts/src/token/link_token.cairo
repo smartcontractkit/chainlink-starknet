@@ -16,7 +16,6 @@ mod LinkToken {
     use zeroable::Zeroable;
     
     use starknet::ContractAddress;
-    use starknet::ContractAddressZeroable;
     use starknet::class_hash::ClassHash;
 
     use chainlink::libraries::token::erc20::ERC20;
