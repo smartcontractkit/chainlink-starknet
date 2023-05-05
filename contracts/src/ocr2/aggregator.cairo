@@ -610,7 +610,7 @@ mod Aggregator {
         let signatures_len = signatures.len();
 
         let epoch_and_round = _latest_epoch_and_round::read();
-        assert(epoch_and_round < epoch_and_round, 'stale report');
+        assert(epoch_and_round < report_context.epoch_and_round, 'stale report');
 
         // validate transmitter
         let caller = starknet::info::get_caller_address();
