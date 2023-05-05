@@ -122,7 +122,7 @@ func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (blo
 	}
 
 	block, err = c.Gw.Block(ctx, &caigogw.BlockOptions{
-		BlockNumber: blockNum,
+		BlockNumber: &blockNum,
 	})
 	if err != nil {
 		return block, errors.Wrap(err, "couldn't get block by number")
