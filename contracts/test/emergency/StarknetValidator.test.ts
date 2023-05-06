@@ -13,7 +13,7 @@ import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { account, addCompilationToNetwork } from '@chainlink/starknet'
+import { account, addCompilationToNetwork, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 describe('StarknetValidator', () => {
   /** Fake L2 target */
@@ -55,7 +55,7 @@ describe('StarknetValidator', () => {
 
     // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    await defaultAccount.declare(l2ContractFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(defaultAccount.declare(l2ContractFactory, { maxFee: 1e20 }))
 
     l2Contract = await defaultAccount.deploy(l2ContractFactory, {
       initial_status: 0,
