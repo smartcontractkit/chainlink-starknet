@@ -4,7 +4,7 @@ import { num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account } from '@chainlink/starknet'
+import { account, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 describe('AggregatorProxy', function () {
   this.timeout(TIMEOUT)
@@ -26,10 +26,10 @@ describe('AggregatorProxy', function () {
     await funder.fund([{ account: owner.address, amount: 1e21 }])
     await owner.deployAccount()
 
-    await owner.declare(aggregatorContractFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(owner.declare(aggregatorContractFactory, { maxFee: 1e20 }))
     aggregator = await owner.deploy(aggregatorContractFactory, { decimals: 8 })
 
-    await owner.declare(proxyContractFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(owner.declare(proxyContractFactory, { maxFee: 1e20 }))
     proxy = await owner.deploy(proxyContractFactory, {
       owner: owner.address,
       address: aggregator.address,
