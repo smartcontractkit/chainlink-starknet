@@ -4,7 +4,7 @@ import { ec, hash, num, cairo } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { account, expectInvokeError } from '@chainlink/starknet'
+import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 interface Oracle {
   // hex string
@@ -43,7 +43,7 @@ export function encodeBytes(data: Uint8Array | Buffer): string[] {
   return felts
 }
 
-describe('Aggregator', function() {
+describe('Aggregator', function () {
   this.timeout(TIMEOUT)
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -76,7 +76,7 @@ describe('Aggregator', function() {
     await owner.deployAccount()
 
     const tokenFactory = await starknet.getContractFactory('link_token')
-    await owner.declare(tokenFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(owner.declare(tokenFactory, { maxFee: 1e20 }))
     token = await owner.deploy(tokenFactory, { minter: owner.starknetContract.address })
 
     await owner.invoke(token, 'permissionedMint', {
@@ -84,7 +84,7 @@ describe('Aggregator', function() {
       amount: 100_000_000_000,
     })
 
-    await owner.declare(aggregatorFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(owner.declare(aggregatorFactory, { maxFee: 1e20 }))
 
     aggregator = await owner.deploy(aggregatorFactory, {
       owner: BigInt(owner.starknetContract.address),
@@ -168,7 +168,7 @@ describe('Aggregator', function() {
     return { ownable: aggregator, alice, bob }
   })
 
-  describe('OCR aggregator behavior', function() {
+  describe('OCR aggregator behavior', function () {
     let transmit = async (epoch_and_round: number, answer: num.BigNumberish): Promise<any> => {
       let extra_hash = 1
       let observation_timestamp = 1
@@ -349,7 +349,7 @@ describe('Aggregator', function() {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) { }
+      } catch (err: any) {}
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -361,7 +361,7 @@ describe('Aggregator', function() {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) { }
+      } catch (err: any) {}
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
