@@ -67,3 +67,16 @@ export const expectSpecificMsg = (actual: string, expected: string) => {
     expect.fail(`\nActual: ${actual}\n\nExpected:\n\tFelt hex: ${expectedHex}\n\tText: ${expected}`)
   }
 }
+
+// Starknet v0.11.0 and higher only allow declaring a class once:
+// https://github.com/starkware-libs/starknet-specs/pull/85
+export const expectSuccessOrDeclared = async (declareContractPromise: Promise<any>) => {
+  try {
+    await declareContractPromise
+  } catch (err: any) {
+    if (/Class with hash 0x[0-9a-f]+ is already declared\./.test(err?.message)) {
+      return // force
+    }
+    expect.fail(err)
+  }
+}
