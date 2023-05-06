@@ -3,7 +3,7 @@ import { starknet } from 'hardhat'
 import { StarknetContract, Account, StarknetContractFactory } from 'hardhat/types/runtime'
 import { num } from 'starknet'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account, expectInvokeError } from '@chainlink/starknet'
+import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 describe('SequencerUptimeFeed', function () {
   this.timeout(1_000_000)
@@ -28,9 +28,9 @@ describe('SequencerUptimeFeed', function () {
     await nonOwner.deployAccount()
 
     feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    owner.declare(feedFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(owner.declare(feedFactory, { maxFee: 1e20 }))
     proxyFactory = await starknet.getContractFactory('aggregator_proxy')
-    owner.declare(proxyFactory, { maxFee: 1e20 })
+    await expectSuccessOrDeclared(owner.declare(proxyFactory, { maxFee: 1e20 }))
   })
 
   shouldBehaveLikeOwnableContract(async () => {
