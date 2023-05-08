@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.0;
 
 /*
   Library to provide basic storage, in storage location out of the low linear address space.
@@ -13,7 +13,7 @@ library NamedStorage {
     {
         bytes32 location = keccak256(abi.encodePacked(tag_));
         assembly {
-            randomVariable_slot := location
+            randomVariable.slot := location
         }
     }
 
@@ -24,7 +24,7 @@ library NamedStorage {
     {
         bytes32 location = keccak256(abi.encodePacked(tag_));
         assembly {
-            randomVariable_slot := location
+            randomVariable.slot := location
         }
     }
 
@@ -35,7 +35,7 @@ library NamedStorage {
     {
         bytes32 location = keccak256(abi.encodePacked(tag_));
         assembly {
-            randomVariable_slot := location
+            randomVariable.slot := location
         }
     }
 
