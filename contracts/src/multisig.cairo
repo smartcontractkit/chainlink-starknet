@@ -224,9 +224,9 @@ mod Multisig {
     /// Externals
 
     #[external]
-    fn upgrade(new_class_hash: ClassHash) {
+    fn upgrade(new_impl: ClassHash) {
         _require_multisig();
-        Upgradeable::upgrade(new_class_hash)
+        Upgradeable::upgrade(new_impl)
     }
 
     #[external]

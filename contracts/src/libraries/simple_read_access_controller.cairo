@@ -1,9 +1,14 @@
 #[contract]
-mod SimpleReadAccessController {
-    use starknet::ContractAddress;
+mod SimpleReadAccessController {    
     use zeroable::Zeroable;
+
+    use starknet::ContractAddress;
+    use starknet::class_hash::ClassHash;
+    
+    use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::access_controller::AccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     #[constructor]
     fn constructor(owner_address: ContractAddress) {
@@ -40,7 +45,16 @@ mod SimpleReadAccessController {
     fn check_access(user: ContractAddress) {
         SimpleReadAccessController::check_access(user)
     }
-    
+
+    ///
+    /// Upgradeable
+    ///
+
+    #[external]
+    fn upgrade(new_impl: ClassHash) {
+        Ownable::assert_only_owner();
+        Upgradeable::upgrade(new_impl)
+    }
 
     ///
     /// Internals

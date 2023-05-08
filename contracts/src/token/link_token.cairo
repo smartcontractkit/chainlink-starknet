@@ -83,9 +83,9 @@ mod LinkToken {
     //  Upgradeable
     //
     #[external]
-    fn upgrade(new_class_hash: ClassHash) {
+    fn upgrade(new_impl: ClassHash) {
         Ownable::assert_only_owner();
-        Upgradeable::upgrade(new_class_hash)
+        Upgradeable::upgrade(new_impl)
     }
 
     //
@@ -185,8 +185,6 @@ mod LinkToken {
     fn only_minter() {
         let caller = starknet::get_caller_address();
         let minter = minter();
-        // todo: can we remove this check because it's already in the constructor
-        assert(!minter.is_zero(), 'minter is 0');
         assert(caller == minter, 'only minter');
     }
 }

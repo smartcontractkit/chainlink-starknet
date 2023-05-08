@@ -189,9 +189,9 @@ mod AggregatorProxy {
     // -- Upgradeable -- 
 
     #[external]
-    fn upgrade(new_class_hash: ClassHash) {
+    fn upgrade(new_impl: ClassHash) {
         Ownable::assert_only_owner();
-        Upgradeable::upgrade(new_class_hash)
+        Upgradeable::upgrade(new_impl)
     }
 
     // -- SimpleReadAccessController --
