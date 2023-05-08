@@ -11,13 +11,17 @@ trait IMintableToken {
 
 #[contract]
 mod LinkToken {
-    use starknet::ContractAddress;
+    use super::IMintableToken;
+
     use zeroable::Zeroable;
+    
+    use starknet::ContractAddress;
+    use starknet::class_hash::ClassHash;
 
     use chainlink::libraries::token::erc20::ERC20;
     use chainlink::libraries::token::erc677::ERC677;
-
-    use super::IMintableToken;
+    use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     const NAME: felt252 = 'ChainLink Token';
     const SYMBOL: felt252 = 'LINK';
@@ -40,10 +44,11 @@ mod LinkToken {
 
 
     #[constructor]
-    fn constructor(minter: ContractAddress) {
+    fn constructor(minter: ContractAddress, owner: ContractAddress) {
         ERC20::initializer(NAME, SYMBOL);
         assert(!minter.is_zero(), 'minter is 0');
         _minter::write(minter);
+        Ownable::initializer(owner);
     }
 
     #[view]
@@ -72,6 +77,44 @@ mod LinkToken {
     #[external]
     fn permissionedBurn(account: ContractAddress, amount: u256) {
         MintableToken::permissionedBurn(account, amount)
+    }
+
+    //
+    //  Upgradeable
+    //
+    #[external]
+    fn upgrade(new_impl: ClassHash) {
+        Ownable::assert_only_owner();
+        Upgradeable::upgrade(new_impl)
+    }
+
+    //
+    // Ownership
+    //
+
+    #[view]
+    fn owner() -> ContractAddress {
+        Ownable::owner()
+    }
+
+    #[view]
+    fn proposed_owner() -> ContractAddress {
+        Ownable::proposed_owner()
+    }
+
+    #[external]
+    fn transfer_ownership(new_owner: ContractAddress) {
+        Ownable::transfer_ownership(new_owner)
+    }
+
+    #[external]
+    fn accept_ownership() {
+        Ownable::accept_ownership()
+    }
+
+    #[external]
+    fn renounce_ownership() {
+        Ownable::renounce_ownership()
     }
 
 
@@ -142,8 +185,6 @@ mod LinkToken {
     fn only_minter() {
         let caller = starknet::get_caller_address();
         let minter = minter();
-        // todo: can we remove this check because it's already in the constructor
-        assert(!minter.is_zero(), 'minter is 0');
         assert(caller == minter, 'only minter');
     }
 }
