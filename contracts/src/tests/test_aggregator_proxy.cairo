@@ -3,9 +3,9 @@ use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::syscalls::deploy_syscall;
 use starknet::class_hash::Felt252TryIntoClassHash;
+use starknet::class_hash::class_hash_const;
 
 use array::ArrayTrait;
-
 use traits::Into;
 use traits::TryInto;
 use option::OptionTrait;
@@ -56,6 +56,12 @@ fn setup() -> (
 
 #[test]
 #[available_gas(2000000)]
+#[should_panic(expected: ('Ownable: caller is not owner', ))]
+fn test_upgrade_non_owner() {
+    let (_, _, _, _, _) = setup();
+    AggregatorProxy::upgrade(class_hash_const::<123>());
+}
+
 fn test_query_latest_round_data() {
     let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
     // init aggregator proxy with mock aggregator

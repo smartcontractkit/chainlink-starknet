@@ -4,6 +4,7 @@ use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::contract_address_const;
 use traits::Into;
+use starknet::class_hash::class_hash_const;
 
 // only tests link token specific functionality 
 // erc20 and erc677 functionality is already tested elsewhere
@@ -21,14 +22,14 @@ fn setup() -> ContractAddress {
 fn test_constructor_zero_address() {
     let sender = setup();
 
-    LinkToken::constructor(Zeroable::zero());
+    LinkToken::constructor(Zeroable::zero(), sender);
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_constructor() {
     let sender = setup();
-    LinkToken::constructor(sender);
+    LinkToken::constructor(sender, sender);
 
     assert(LinkToken::minter() == sender, 'minter valid');
     assert(LinkToken::name() == 'ChainLink Token', 'name valid');
@@ -39,7 +40,7 @@ fn test_constructor() {
 #[available_gas(2000000)]
 fn test_permissioned_mint_from_minter() {
     let sender = setup();
-    LinkToken::constructor(sender);
+    LinkToken::constructor(sender, sender);
     let to = contract_address_const::<908>();
 
     let zero: felt252 = 0;
@@ -59,7 +60,7 @@ fn test_permissioned_mint_from_minter() {
 fn test_permissioned_mint_from_nonminter() {
     let sender = setup();
     let minter = contract_address_const::<111>();
-    LinkToken::constructor(minter);
+    LinkToken::constructor(minter, sender);
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
@@ -72,7 +73,7 @@ fn test_permissioned_mint_from_nonminter() {
 fn test_permissioned_burn_from_minter() {
     let zero = 0;
     let sender = setup();
-    LinkToken::constructor(sender);
+    LinkToken::constructor(sender, sender);
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
@@ -100,10 +101,22 @@ fn test_permissioned_burn_from_minter() {
 fn test_permissioned_burn_from_nonminter() {
     let sender = setup();
     let minter = contract_address_const::<111>();
-    LinkToken::constructor(minter);
+    LinkToken::constructor(minter, sender);
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
     LinkToken::permissionedBurn(to, amount.into());
 }
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('Ownable: caller is not owner', ))]
+fn test_upgrade_non_owner() {
+    let sender = setup();
+    LinkToken::constructor(sender, contract_address_const::<111>());
+    
+    LinkToken::upgrade(class_hash_const::<123>());
+}
+
+
 

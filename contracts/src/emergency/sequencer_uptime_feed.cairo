@@ -7,6 +7,7 @@ mod SequencerUptimeFeed {
     use starknet::storage_read_syscall;
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
+    use starknet::class_hash::ClassHash;
 
     use box::BoxTrait;
     use traits::Into;
@@ -21,6 +22,7 @@ mod SequencerUptimeFeed {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Aggregator::Transmission;
     use chainlink::ocr2::aggregator::Aggregator::TransmissionStorageAccess;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     const ETH_ADDRESS_BOUND: felt252 = 0x10000000000000000000000000000000000000000; // 2**160
 
@@ -139,6 +141,16 @@ mod SequencerUptimeFeed {
         _l1_sender::read()
     }
 
+    ///
+    /// Upgradeable
+    ///
+
+    // todo add test calling with non owner once calvin's changes are merged
+    #[external]
+    fn upgrade(new_impl: ClassHash) {
+        Ownable::assert_only_owner();
+        Upgradeable::upgrade(new_impl)
+    }
 
     ///
     /// Aggregator
