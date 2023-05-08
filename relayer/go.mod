@@ -5,8 +5,8 @@ go 1.20
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
-	github.com/dontpanicdao/caigo v0.4.0
 	github.com/pkg/errors v0.9.1
+	github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82
 	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc
 	github.com/stretchr/testify v1.8.2
@@ -49,5 +49,3 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-replace github.com/dontpanicdao/caigo => github.com/smartcontractkit/caigo v0.0.0-20230505061009-1ab14f83e97d

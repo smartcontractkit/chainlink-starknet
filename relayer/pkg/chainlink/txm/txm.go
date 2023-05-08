@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/smartcontractkit/caigo"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"

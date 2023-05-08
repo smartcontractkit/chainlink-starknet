@@ -7,7 +7,7 @@ import (
 	"math/big"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/caigo"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
@@ -36,7 +36,7 @@ func PubKeyToStarkKey(pubkey PublicKey) []byte {
 	return starknet.PadBytes(pubkey.X.Bytes(), byteLen)
 }
 
-// reimplements parts of https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// reimplements parts of https://github.com/smartcontractkit/caigo/blob/main/utils.go#L85
 // generate the PK as a pseudo-random number in the interval [1, CurveOrder - 1]
 // using io.Reader, and Key struct
 func GenerateKey(material io.Reader) (k Key, err error) {
