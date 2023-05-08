@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

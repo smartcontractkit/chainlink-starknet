@@ -264,8 +264,6 @@ github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKoh
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
-github.com/dontpanicdao/caigo v0.4.0 h1:S0wRKh2EZ9qj6IfHZIGXxiJF37emRCqnZwDhRb1+DJ4=
-github.com/dontpanicdao/caigo v0.4.0/go.mod h1:1YuwgcVLODaS/n0vfuYN/Q0mdWs8UDfDMkSpUdkKXD4=
 github.com/duo-labs/webauthn v0.0.0-20210727191636-9f1b88ef44cc h1:mLNknBMRNrYNf16wFFUyhSAe1tISZN7oAfal4CZ2OxY=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
@@ -1300,6 +1298,8 @@ github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/slack-go/slack v0.12.2 h1:x3OppyMyGIbbiyFhsBmpf9pwkUzMhthJMRNmNlA4LaQ=
 github.com/slack-go/slack v0.12.2/go.mod h1:hlGi5oXA+Gt+yWTPP0plCdRKmjsDxecdHxYQdlMQKOw=
+github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3 h1:6RsuA0LBbC/6DgTYzg659Pw7GKktubj1GzTcB/VNC44=
+github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-cosmos v0.1.7-0.20230424184432-20550926ba07 h1:LBjS7F3Xy9jYlgiEMMMU5f+i/v7oZ97MYseyF6aY7ts=
 github.com/smartcontractkit/chainlink-env v0.3.29 h1:hcIw/BeuB0wKiiE3umAUNBZzWkHO24XF3OW9xSrlMbI=
 github.com/smartcontractkit/chainlink-env v0.3.29/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
