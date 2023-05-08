@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo/gateway"
+	"github.com/smartcontractkit/caigo/gateway"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

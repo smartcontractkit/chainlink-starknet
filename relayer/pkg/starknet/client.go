@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigogw "github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
