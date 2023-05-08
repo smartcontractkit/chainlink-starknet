@@ -12,7 +12,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.0",
+    "@shardlabs/starknet-hardhat-plugin": "git+https://github.com/cfal/starknet-hardhat-plugin#a1a48597a38bda10fcecdafa23e99bfe5b969a75",
     "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",
