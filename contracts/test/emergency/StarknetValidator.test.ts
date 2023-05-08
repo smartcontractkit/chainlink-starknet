@@ -432,7 +432,7 @@ describe('StarknetValidator', () => {
   describe('#validate', () => {
     beforeEach(async () => {
       await expect(
-        deployer.sendTransaction({ to: starknetValidator.address, value: 100n })
+        deployer.sendTransaction({ to: starknetValidator.address, value: 100n }),
       ).to.changeEtherBalance(starknetValidator, 100n)
     })
 
@@ -473,8 +473,6 @@ describe('StarknetValidator', () => {
         '0' /** updatedAt */,
         '0' /** answeredInRound */,
       )
-
-
 
       // Simulate L1 transmit + validate
       await starknetValidator.addAccess(eoaValidator.address)
@@ -582,7 +580,7 @@ describe('StarknetValidator', () => {
   describe('#withdrawFunds', () => {
     beforeEach(async () => {
       await expect(() =>
-        deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
+        deployer.sendTransaction({ to: starknetValidator.address, value: 10 }),
       ).to.changeEtherBalance(starknetValidator, 10n)
     })
 
@@ -612,7 +610,7 @@ describe('StarknetValidator', () => {
   describe('#withdrawFundsTo', () => {
     beforeEach(async () => {
       await expect(() =>
-        deployer.sendTransaction({ to: starknetValidator.address, value: 10 })
+        deployer.sendTransaction({ to: starknetValidator.address, value: 10 }),
       ).to.changeEtherBalance(starknetValidator, 10)
     })
 
