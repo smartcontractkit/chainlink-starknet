@@ -1,8 +1,11 @@
 #[contract]
 mod SimpleWriteAccessController {
     use starknet::ContractAddress;
+    use starknet::class_hash::ClassHash;
+
     use chainlink::libraries::access_controller::AccessController;
     use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     struct Storage {
         _check_enabled: bool,
@@ -95,6 +98,15 @@ mod SimpleWriteAccessController {
             _check_enabled::write(false);
             CheckAccessDisabled();
         }
+    }
+
+    ///
+    /// Upgradeable
+    ///
+    #[external]
+    fn upgrade(new_impl: ClassHash) {
+        Ownable::assert_only_owner();
+        Upgradeable::upgrade(new_impl)
     }
 
     ///
