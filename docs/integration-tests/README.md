@@ -78,21 +78,20 @@ and [here](../../integration-tests/soak/soak_runner_test.go)
 
 Here you will find pod logs for all the chainlink nodes as well as Devnet / Geth
 
-
 # Testing wiki
 
 ## Testnet
 
 - Chain name - `Starknet`
 - Chain ID - `SN_GOERLI`
-    - Testnet 1 - `[https://alpha4.starknet.io](https://alpha4.starknet.io)`
-    - Testnet 2 - [`https://alpha4-2.starknet.io`](https://alpha4-2.starknet.io/)
+  - Testnet 1 - `[https://alpha4.starknet.io](https://alpha4.starknet.io)`
+  - Testnet 2 - [`https://alpha4-2.starknet.io`](https://alpha4-2.starknet.io/)
 
 ## Mainnet
 
 - Chain name - `Starknet`
 - Chain ID - `SN_MAIN`
-    - `[https://alpha-mainnet.starknet.io](https://alpha-mainnet.starknet.io)`
+  - `[https://alpha-mainnet.starknet.io](https://alpha-mainnet.starknet.io)`
 
 # Node config
 
@@ -168,73 +167,73 @@ yarn gauntlet ocr2:set_billing --observationPaymentGjuels=<value> --transmission
 ```
 
 8. Set config
-    1. Example config testnet
 
-    ```bash
-    {
-        "f": 1,
-        "signers": [
-            "ocr2on_starknet_0371028377bfd793b7e2965757e348309e7242802d20253da6ab81c8eb4b4051",
-            "ocr2on_starknet_073cadfc4474e8c6c79f66fa609da1dbcd5be4299ff9b1f71646206d1faca1fc",
-            "ocr2on_starknet_0386d1a9d93792c426739f73afa1d0b19782fbf30ae27ce33c9fbd4da659cd80",
-            "ocr2on_starknet_005360052758819ba2af790469a28353b7ff6f8b84176064ab572f6cc20e5fb4"
-        ],
-        "transmitters": [
-            "0x0...",
-            "0x0...",
-            "0x0...",
-            "0x0..."
-        ],
-        "onchainConfig": "",
-        "offchainConfig": {
-            "deltaProgressNanoseconds": 8000000000,
-            "deltaResendNanoseconds": 30000000000,
-            "deltaRoundNanoseconds": 3000000000,
-            "deltaGraceNanoseconds": 1000000000,
-            "deltaStageNanoseconds": 20000000000,
-            "rMax": 5,
-            "s": [
-                1,
-                1,
-                1,
-                1
-            ],
-            "offchainPublicKeys": [
-                "ocr2off_starknet_0...",
-                "ocr2off_starknet_0...",
-                "ocr2off_starknet_0...",
-                "ocr2off_starknet_0..."
-            ],
-            "peerIds": [
-                "12D3..",
-                "12D3..",
-                "12D3..",
-                "12D3.."
-            ],
-            "reportingPluginConfig": {
-                "alphaReportInfinite": false,
-                "alphaReportPpb": 0,
-                "alphaAcceptInfinite": false,
-                "alphaAcceptPpb": 0,
-                "deltaCNanoseconds": 1000000000
-            },
-            "maxDurationQueryNanoseconds": 0,
-            "maxDurationObservationNanoseconds": 1000000000,
-            "maxDurationReportNanoseconds": 2000000000,
-            "maxDurationShouldAcceptFinalizedReportNanoseconds": 2000000000,
-            "maxDurationShouldTransmitAcceptedReportNanoseconds": 2000000000,
-            "configPublicKeys": [
-                "ocr2cfg_starknet_...",
-                "ocr2cfg_starknet_...",
-                "ocr2cfg_starknet_...",
-                "ocr2cfg_starknet_..."
-            ]
-        },
-        "offchainConfigVersion": 2,
-        "secret": "some secret you want"
-    }
-    ```
+   1. Example config testnet
 
+   ```bash
+   {
+       "f": 1,
+       "signers": [
+           "ocr2on_starknet_0371028377bfd793b7e2965757e348309e7242802d20253da6ab81c8eb4b4051",
+           "ocr2on_starknet_073cadfc4474e8c6c79f66fa609da1dbcd5be4299ff9b1f71646206d1faca1fc",
+           "ocr2on_starknet_0386d1a9d93792c426739f73afa1d0b19782fbf30ae27ce33c9fbd4da659cd80",
+           "ocr2on_starknet_005360052758819ba2af790469a28353b7ff6f8b84176064ab572f6cc20e5fb4"
+       ],
+       "transmitters": [
+           "0x0...",
+           "0x0...",
+           "0x0...",
+           "0x0..."
+       ],
+       "onchainConfig": "",
+       "offchainConfig": {
+           "deltaProgressNanoseconds": 8000000000,
+           "deltaResendNanoseconds": 30000000000,
+           "deltaRoundNanoseconds": 3000000000,
+           "deltaGraceNanoseconds": 1000000000,
+           "deltaStageNanoseconds": 20000000000,
+           "rMax": 5,
+           "s": [
+               1,
+               1,
+               1,
+               1
+           ],
+           "offchainPublicKeys": [
+               "ocr2off_starknet_0...",
+               "ocr2off_starknet_0...",
+               "ocr2off_starknet_0...",
+               "ocr2off_starknet_0..."
+           ],
+           "peerIds": [
+               "12D3..",
+               "12D3..",
+               "12D3..",
+               "12D3.."
+           ],
+           "reportingPluginConfig": {
+               "alphaReportInfinite": false,
+               "alphaReportPpb": 0,
+               "alphaAcceptInfinite": false,
+               "alphaAcceptPpb": 0,
+               "deltaCNanoseconds": 1000000000
+           },
+           "maxDurationQueryNanoseconds": 0,
+           "maxDurationObservationNanoseconds": 1000000000,
+           "maxDurationReportNanoseconds": 2000000000,
+           "maxDurationShouldAcceptFinalizedReportNanoseconds": 2000000000,
+           "maxDurationShouldTransmitAcceptedReportNanoseconds": 2000000000,
+           "configPublicKeys": [
+               "ocr2cfg_starknet_...",
+               "ocr2cfg_starknet_...",
+               "ocr2cfg_starknet_...",
+               "ocr2cfg_starknet_..."
+           ]
+       },
+       "offchainConfigVersion": 2,
+       "secret": "some secret you want"
+   }
+   ```
 
 ```bash
 yarn gauntlet ocr2:set_config --input=<cfg> <ocr_addr>
