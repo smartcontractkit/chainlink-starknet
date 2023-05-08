@@ -4,3 +4,4 @@ mod simple_write_access_controller;
 mod simple_read_access_controller;
 mod token;
 mod upgradeable;
+mod mocks;

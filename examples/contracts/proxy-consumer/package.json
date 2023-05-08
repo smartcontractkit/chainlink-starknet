@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@shardlabs/starknet-hardhat-plugin": "git+https://github.com/cfal/starknet-hardhat-plugin#a1a48597a38bda10fcecdafa23e99bfe5b969a75"
+    "@shardlabs/starknet-hardhat-plugin": "git+https://github.com/augustbleeds/starknet-hardhat-plugin#ae53af4"
   },
   "dependencies": {
     "starknet": "^4.17.1"
