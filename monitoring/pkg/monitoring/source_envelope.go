@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/caigo"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
 	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
