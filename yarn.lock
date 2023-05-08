@@ -1828,9 +1828,15 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
+<<<<<<< HEAD
 "@shardlabs/starknet-hardhat-plugin@git+https://github.com/augustbleeds/starknet-hardhat-plugin#ae53af4":
   version "0.8.0-alpha.1"
   resolved "git+https://github.com/augustbleeds/starknet-hardhat-plugin#ae53af4fc5063e0d6befc585b8b112e386946f8d"
+=======
+"@shardlabs/starknet-hardhat-plugin@git+https://github.com/0xSpaceShard/starknet-hardhat-plugin#4a5fb197b8c4e0cb3f25d8defe50347116b78174":
+  version "0.8.0-alpha.1"
+  resolved "git+https://github.com/0xSpaceShard/starknet-hardhat-plugin#4a5fb197b8c4e0cb3f25d8defe50347116b78174"
+>>>>>>> d252c1a5 (yarn.lock: update)
   dependencies:
     "@nomiclabs/hardhat-docker" "^2.0.2"
     axios "^1.0.0"
@@ -3357,6 +3363,7 @@ emoji-regex@^9.2.2:
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-9.2.2.tgz#840c8803b0d8047f4ff0cf963176b32d4ef3ed72"
   integrity sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==
 
+<<<<<<< HEAD
 enc-utils@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/enc-utils/-/enc-utils-3.0.0.tgz#65935d2d6a867fa0ae995f05f3a2f055ce764dcf"
@@ -3365,6 +3372,8 @@ enc-utils@^3.0.0:
     is-typedarray "1.0.0"
     typedarray-to-buffer "3.1.5"
 
+=======
+>>>>>>> d252c1a5 (yarn.lock: update)
 end-of-stream@^1.0.0, end-of-stream@^1.1.0, end-of-stream@^1.4.1:
   version "1.4.4"
   resolved "https://registry.yarnpkg.com/end-of-stream/-/end-of-stream-1.4.4.tgz#5ae64a5f45057baf3626ec14da0ca5e4b2431eb0"
