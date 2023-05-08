@@ -56,6 +56,6 @@
     "typescript": "4.7.2"
   },
   "dependencies": {
-    "starknet": "^5.2.0"
+    "starknet": "git+https://github.com/cfal/starknet.js#b530af3192651da33dfa02d9c0d20abf47470d4e"
   }
 }
