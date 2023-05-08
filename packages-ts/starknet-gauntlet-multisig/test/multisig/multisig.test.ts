@@ -128,7 +128,7 @@ describe('Multisig', () => {
         multisigContractAddress,
         makeProvider(LOCAL_URL).provider,
       )
-      const { threshold } = await multisigContract.get_threshold()
+      const threshold = await multisigContract.get_threshold()
       expect(Number(threshold)).toEqual(2)
     },
     TIMEOUT,
@@ -211,7 +211,7 @@ describe('Multisig', () => {
         multisigContractAddress,
         makeProvider(LOCAL_URL).provider,
       )
-      const { signers } = await multisigContract.get_signers()
+      const signers = await multisigContract.get_signers()
       expect(signers).toHaveLength(4)
     },
     TIMEOUT,
