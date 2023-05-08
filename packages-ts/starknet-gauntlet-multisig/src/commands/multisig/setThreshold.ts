@@ -23,7 +23,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 }
 
 const validateThreshold = async (input: UserInput, context: ExecutionContext) => {
-  const signers = (await context.contract.get_signers()).signers
+  const signers = await context.contract.get_signers()
   return validateThresholdWithSigners({ ...input, signers })
 }
 
