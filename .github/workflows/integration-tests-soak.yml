@@ -26,8 +26,18 @@ on:
         required: true
         default: 72h
         type: string
-
-
+      test_duration:
+        description: Duration of soak
+        required: true
+        default: 72h
+        type: string
+      private_key:
+        description: Private key, ignore for devnet
+        required: false
+        type: string
+      account:
+        description: Account address, ignore for devnet
+        required: false
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -81,9 +91,10 @@ jobs:
     env:
       CHAINLINK_ENV_USER: ${{ github.actor }}
       L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
+      TEST_DURATION: ${{ github.event.inputs.test_duration }}
       NODE_COUNT: ${{ github.event.inputs.node_count }}
-      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
-      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
+      PRIVATE_KEY: ${{ github.event.inputs.private_key }}
+      ACCOUNT: ${{ github.event.inputs.account }}
       TTL: ${{ github.event.inputs.ttl }}
       DETACH_RUNNER: true
       TEST_SUITE: soak

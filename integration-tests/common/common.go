@@ -42,6 +42,7 @@ type Common struct {
 	ChainId             string
 	NodeCount           int
 	TTL                 time.Duration
+	TestDuration        time.Duration
 	Testnet             bool
 	L2RPCUrl            string
 	PrivateKey          string
@@ -76,17 +77,30 @@ func New() *Common {
 	if ttlValue != "" {
 		duration, err := time.ParseDuration(ttlValue)
 		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+			panic(fmt.Sprintf("Please define a proper duration for the namespace: %v", err))
 		}
 		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
 		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+			panic(fmt.Sprintf("Please define a proper duration for the namespace: %v", err))
 		}
 	} else {
 		panic("Please define TTL of env")
 	}
 
 	// Setting optional parameters
+	testDurationValue := getEnv("TEST_DURATION")
+	if testDurationValue != "" {
+		duration, err := time.ParseDuration(ttlValue)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+		c.TestDuration, err = time.ParseDuration(*alias.ShortDur(duration))
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+	} else {
+		c.TestDuration = time.Duration(time.Minute * 15)
+	}
 	c.L2RPCUrl = getEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
 	c.Testnet = c.L2RPCUrl != ""
 	c.PrivateKey = getEnv("PRIVATE_KEY")
