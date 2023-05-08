@@ -3,7 +3,6 @@ module github.com/smartcontractkit/chainlink-starknet/monitoring
 go 1.20
 
 require (
-	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/prometheus/client_golang v1.14.0
 	github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82
@@ -14,6 +13,7 @@ require (
 )
 
 require (
+	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
