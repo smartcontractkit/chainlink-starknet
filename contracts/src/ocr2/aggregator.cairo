@@ -552,6 +552,8 @@ mod Aggregator {
         state = LegacyHash::hash(state, offchain_config_version);
         state = LegacyHash::hash(state, offchain_config.len());
         state = LegacyHash::hash(state, offchain_config.span());
+        let len: usize = 3 + 1 + oracles.len() + 6 + 1 + offchain_config.len();
+        state = LegacyHash::hash(state, len);
 
         // since there's no bitwise ops on felt252, we split into two u128s and recombine.
         // we only need to clamp and prefix the top bits.
@@ -620,7 +622,7 @@ mod Aggregator {
         let signatures_len = signatures.len();
 
         let epoch_and_round = _latest_epoch_and_round::read();
-        assert(epoch_and_round < epoch_and_round, 'stale report');
+        assert(epoch_and_round < report_context.epoch_and_round, 'stale report');
 
         // validate transmitter
         let caller = starknet::info::get_caller_address();
@@ -734,6 +736,8 @@ mod Aggregator {
         state = LegacyHash::hash(state, observations.span());
         state = LegacyHash::hash(state, juels_per_fee_coin);
         state = LegacyHash::hash(state, gas_price);
+        let len: usize = 5 + 1 + observations.len() + 2;
+        state = LegacyHash::hash(state, len);
         state
     }
 
