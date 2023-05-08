@@ -514,7 +514,7 @@ describe('StarknetValidator', () => {
       expect(mockStarknetMessaging.address).to.hexEqual(loadedFrom)
     })
 
-    it.only('should send a message to the L2 contract', async () => {
+    it('should send a message to the L2 contract', async () => {
       // Load the mock messaging contract
       await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address)
 
