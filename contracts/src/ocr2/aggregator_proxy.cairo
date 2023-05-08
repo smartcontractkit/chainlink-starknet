@@ -24,6 +24,12 @@ mod AggregatorProxy {
     use super::IAggregatorDispatcher;
     use super::IAggregatorDispatcherTrait;
 
+    use integer::u128s_from_felt252;
+    use option::OptionTrait;
+    use traits::Into;
+    use traits::TryInto;
+    use zeroable::Zeroable;
+
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
     use starknet::Felt252TryIntoContractAddress;
@@ -36,11 +42,7 @@ mod AggregatorProxy {
     use starknet::storage_read_syscall;
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
-    use integer::u128s_from_felt252;
-    use option::OptionTrait;
-    use traits::Into;
-    use traits::TryInto;
-    use zeroable::Zeroable;
+    use starknet::class_hash::ClassHash;
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
@@ -48,6 +50,7 @@ mod AggregatorProxy {
     use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
     use chainlink::utils::split_felt;
+    use chainlink::libraries::upgradeable::Upgradeable;
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000_felt252;
     const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff_felt252;
@@ -181,6 +184,14 @@ mod AggregatorProxy {
     #[external]
     fn renounce_ownership() {
         Ownable::renounce_ownership()
+    }
+
+    // -- Upgradeable -- 
+
+    #[external]
+    fn upgrade(new_impl: ClassHash) {
+        Ownable::assert_only_owner();
+        Upgradeable::upgrade(new_impl)
     }
 
     // -- SimpleReadAccessController --
