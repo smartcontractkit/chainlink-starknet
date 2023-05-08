@@ -4,10 +4,10 @@ go 1.20
 
 require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
-	github.com/dontpanicdao/caigo v0.4.0
 	github.com/prometheus/client_golang v1.14.0
+	github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230412143414-b1e534d34592
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/multierr v1.9.0
