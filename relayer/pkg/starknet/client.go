@@ -106,7 +106,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 		defer cancel()
 	}
 
-	block, err := c.Gw.Block(ctx, nil)
+	block, err := c.Gw.Block(ctx, &caigogw.BlockOptions{Tag: "latest"})
 	if err != nil {
 		return height, errors.Wrap(err, "error in client.LatestBlockHeight")
 	}
