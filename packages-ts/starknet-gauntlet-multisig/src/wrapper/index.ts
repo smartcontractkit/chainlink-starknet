@@ -112,7 +112,7 @@ export const wrapCommand = <UI, CI>(
     }
 
     fetchMultisigState = async (address: string, proposalId?: number): Promise<State> => {
-      const [{ signers }, { threshold }] = await Promise.all(
+      const [signers, threshold] = await Promise.all(
         ['get_signers', 'get_threshold'].map((func) => {
           return this.executionContext.contract[func]()
         }),
@@ -124,21 +124,23 @@ export const wrapCommand = <UI, CI>(
       }
 
       if (isNaN(proposalId)) return { multisig }
-      const proposal = await this.executionContext.contract.get_transaction(proposalId)
+      const { 0: tx, 1: calldata } = await this.executionContext.contract.get_transaction(
+        proposalId,
+      )
       return {
         multisig,
         proposal: {
           id: proposalId,
-          confirmations: proposal.tx.confirmations,
+          confirmations: tx.confirmations,
           data: {
-            contractAddress: addAddressPadding(proposal.tx.to),
-            entrypoint: encode.addHexPrefix(num.toHex(num.toBigInt(proposal.tx.function_selector))),
-            calldata: proposal.tx_calldata.map((v) => num.toBigInt(v).toString()),
+            contractAddress: addAddressPadding(tx.to),
+            entrypoint: encode.addHexPrefix(num.toHex(num.toBigInt(tx.function_selector))),
+            calldata: calldata.map((v) => num.toBigInt(v).toString()),
           },
           nextAction:
-            Number(num.toBigInt(proposal.tx.executed)) !== 0
+            Number(num.toBigInt(tx.executed)) !== 0
               ? Action.NONE
-              : proposal.tx.confirmations >= multisig.threshold
+              : tx.confirmations >= multisig.threshold
               ? Action.EXECUTE
               : Action.APPROVE,
         },
@@ -188,7 +190,7 @@ export const wrapCommand = <UI, CI>(
       }
       const message = await this.command.makeMessage()
       if (!this.initialState.proposal) {
-        const { res: nonce } = await this.executionContext.contract.get_transactions_len()
+        const nonce = await this.executionContext.contract.get_transactions_len()
         return [this.makeProposeMessage(message[0], nonce)]
       }
 
