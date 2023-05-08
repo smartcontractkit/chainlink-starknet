@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"sync"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
 	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -170,7 +169,7 @@ func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress,
 	if len(results) < 1 {
 		return nil, fmt.Errorf("insufficient data from balanceOf '%v': %w", results, err)
 	}
-	linkBalance := junotypes.HexToFelt(results[0]).Big()
+	linkBalance := caigotypes.HexToBN(results[0])
 	if linkBalance.Cmp(zeroBigInt) == 0 {
 		return nil, fmt.Errorf("contract's LINK balance should not be zero")
 	}
