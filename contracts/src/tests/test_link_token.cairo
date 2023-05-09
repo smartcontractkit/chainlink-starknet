@@ -114,9 +114,7 @@ fn test_permissioned_burn_from_nonminter() {
 fn test_upgrade_non_owner() {
     let sender = setup();
     LinkToken::constructor(sender, contract_address_const::<111>());
-    
+
     LinkToken::upgrade(class_hash_const::<123>());
 }
-
-
 
