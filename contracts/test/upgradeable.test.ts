@@ -1,7 +1,6 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account, StarknetContractFactory } from 'hardhat/types/runtime'
-import { num, Provider, Contract, hash } from 'starknet'
 import { account, expectInvokeError, expectSuccessOrDeclared, expectCallError } from '@chainlink/starknet'
 const starkwareCrypto = require('@starkware-industries/starkware-crypto-utils')
 
@@ -16,7 +15,6 @@ describe('upgradeable', function () {
     let nonUpgradeableFactory: StarknetContractFactory
     let upgradeableContract: StarknetContract
 
-    const provider = new Provider({ sequencer: { baseUrl: starknet.networkConfig.url! } })
 
     // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
     before(async function () {
@@ -56,16 +54,8 @@ describe('upgradeable', function () {
             // should error because the contract has upgraded and no longer has foo function
             await expectCallError(upgradeableContract.call('foo'))
 
-            // we're not able to directly call bar via hardhat StarknetContract because 
-            // hardhat is still checking the abi of the old class hash (line below will error)
-            // so we use starknet.js directly
-            // expect((await upgradeableContract.call('bar')).response).to.equal(true)
-
-            const { abi: testAbi } = await provider.getClassAt(upgradeableContract.address)
-            if (testAbi === undefined) { throw new Error("no abi.") }
-            const afterUpgradeContract = new Contract(testAbi, upgradeableContract.address, provider)
-
-            expect((await afterUpgradeContract.call('bar')).toString()).to.equal('true')
+            const afterUpgradeContract = nonUpgradeableFactory.getContractAt(upgradeableContract.address)
+            expect((await afterUpgradeContract.call('bar')).response).to.equal(true)
         })
 
         it('reverts if new implementation class hash does not exist', async () => {
