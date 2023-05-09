@@ -7,7 +7,6 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { tokenContractLoader } from '../../lib/contracts'
-import { uint256 } from 'starknet'
 
 type UserInput = {
   address: string
@@ -43,12 +42,12 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   result: QueryResult
 }> => {
   const [queryRes] = results
-  const { balance } = queryRes
+  const balance = queryRes
 
   return {
     toCompare: null,
     result: {
-      balance: uint256.uint256ToBN(balance).toString(),
+      balance: balance.toString(),
     },
   }
 }
@@ -61,7 +60,7 @@ const commandConfig: InspectCommandConfig<UserInput, ContractInput, null, QueryR
       `${CATEGORIES.TOKEN}:balance_of --network=<NETWORK> --address=<ACCOUNT_ADDRESS> <TOKEN_CONTRACT_ADDRESS>`,
     ],
   },
-  queries: ['balanceOf'],
+  queries: ['balance_of'],
   makeUserInput,
   makeContractInput,
   makeComparisionData,
