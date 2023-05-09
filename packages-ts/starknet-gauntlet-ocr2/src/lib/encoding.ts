@@ -79,20 +79,27 @@ export function feltsToBytes(felts: string[]): Buffer {
 }
 
 export const decodeOffchainConfigFromEventData = (data: string[]): encoding.OffchainConfig => {
-  const oraclesLen = Number(num.toBigInt(data[3]))
-  /** SetConfig event data has the following info:
-    0 : previous_config_block_number=prev_block_num,
-    1 : latest_config_digest=digest,
-    2 : config_count=config_count,
-    3 : oracles_len=oracles_len, // It includes both signer and transmitter addresses
-    3 + 2X : oracles=oracles,
-    3 + 2X + 1 : f=f,
-    3 + 2X + 2 + 3 : onchain_config_len=OnchainConfig.SIZE = 3
-    onchain_config=onchain_config,
-    3 + 2X + 2 + 3 + 1 : offchain_config_version=offchain_config_version,
-    3 + 2X + 2 + 3 + 2 : offchain_config_len=offchain_config_len,
-    3 + 2X + 2 + 3 + 3 : offchain_config=offchain_config
-   */
-  const offchainConfigFelts = data.slice(3 + oraclesLen * 2 + 8)
+  // The ConfigSet event is defined as:
+  // fn ConfigSet(
+  //   previous_config_block_number: u64,
+  //   latest_config_digest: felt252,
+  //   config_count: u64,
+  //   oracles: Array<OracleConfig>,
+  //   f: u8,
+  //   onchain_config: Array<felt252>,
+  //   offchain_config_version: u64,
+  //   offchain_config: Array<felt252>,
+  //)
+  const oraclesLenIndex = 3
+  const oraclesLen = Number(BigInt(data[oraclesLenIndex]))
+  const oracleStructSize = 2
+  const fIndex = oraclesLenIndex + oraclesLen * oracleStructSize + 1
+  const onchainConfigLenIndex = fIndex + 1
+  const onchainConfigLen = Number(BigInt(data[onchainConfigLenIndex]))
+  const offchainConfigVersionIndex = onchainConfigLenIndex + onchainConfigLen + 1
+  const offchainConfigArrayLenIndex = offchainConfigVersionIndex + 1
+  const offchainConfigStartIndex = offchainConfigArrayLenIndex + 1
+
+  const offchainConfigFelts = data.slice(offchainConfigStartIndex)
   return encoding.deserializeConfig(feltsToBytes(offchainConfigFelts))
 }
