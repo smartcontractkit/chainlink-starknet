@@ -14,7 +14,7 @@ mod LinkToken {
     use super::IMintableToken;
 
     use zeroable::Zeroable;
-    
+
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 

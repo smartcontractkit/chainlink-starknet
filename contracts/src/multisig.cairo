@@ -45,7 +45,7 @@ mod Multisig {
     use array::ArrayTrait;
     use array::ArrayTCloneImpl;
     use option::OptionTrait;
-    
+
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
     use starknet::Felt252TryIntoContractAddress;

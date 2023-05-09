@@ -7,8 +7,6 @@ use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
 
 
-
-
 // TODO: aggregator tests
 
 #[test]
@@ -61,5 +59,4 @@ fn setup() -> ContractAddress {
 fn test_upgrade_non_owner() {
     let sender = setup();
     Aggregator::upgrade(class_hash_const::<123>());
-
 }

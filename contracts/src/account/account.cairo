@@ -8,7 +8,8 @@ const ERC165_ACCOUNT_ID: u32 = 0xa66bd575_u32;
 const ERC1271_VALIDATED: u32 = 0x1626ba7e_u32;
 
 const TRANSACTION_VERSION: felt252 = 1;
-const QUERY_VERSION: felt252 = 340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
+const QUERY_VERSION: felt252 =
+    340282366920938463463374607431768211457; // 2**128 + TRANSACTION_VERSION
 
 #[inline(always)]
 fn check_gas() {
@@ -62,7 +63,7 @@ mod Account {
     //
 
     struct Storage {
-        public_key: felt252,
+        public_key: felt252, 
     }
 
     #[constructor]
@@ -105,9 +106,7 @@ mod Account {
 
     #[external]
     fn __validate_deploy__(
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        _public_key: felt252
+        class_hash: felt252, contract_address_salt: felt252, _public_key: felt252
     ) -> felt252 {
         _validate_transaction()
     }
@@ -167,15 +166,14 @@ mod Account {
         let valid_length = signature.len() == 2_u32;
 
         valid_length & check_ecdsa_signature(
-            message,
-            public_key::read(),
-            *signature.at(0_u32),
-            *signature.at(1_u32)
+            message, public_key::read(), *signature.at(0_u32), *signature.at(1_u32)
         )
     }
 
     #[internal]
-    fn _execute_calls(mut calls: Array<Call>, mut res: Array<Span<felt252>>) -> Array<Span<felt252>> {
+    fn _execute_calls(
+        mut calls: Array<Call>, mut res: Array<Span<felt252>>
+    ) -> Array<Span<felt252>> {
         check_gas();
         match calls.pop_front() {
             Option::Some(call) => {
