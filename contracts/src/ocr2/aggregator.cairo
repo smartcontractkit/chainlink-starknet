@@ -927,6 +927,11 @@ mod Aggregator {
         BillingSet(config);
     }
 
+    #[view]
+    fn billing() -> Billing {
+        _billing::read()
+    }
+
     fn has_billing_access() {
         let caller = starknet::info::get_caller_address();
         let owner = Ownable::owner();
