@@ -15,6 +15,7 @@ use chainlink::ocr2::mocks::mock_aggregator::MockAggregator;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
+use chainlink::tests::test_ownable::should_behave_like_ownable_contract;
 
 #[abi]
 trait IMockAggregator {
@@ -52,6 +53,21 @@ fn setup() -> (
 
     // Return account, mock aggregator address and mock aggregator contract
     (account, mockAggregatorAddr1, mockAggregator1, mockAggregatorAddr2, mockAggregator2)
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_ownable() {
+    let (account, mockAggregatorAddr, _, _, _) = setup();
+    // Deploy aggregator proxy
+    let mut calldata = ArrayTrait::new();
+    calldata.append(account.into()); // owner = account
+    calldata.append(mockAggregatorAddr.into());
+    let (aggregatorProxyAddr, _) = deploy_syscall(
+        AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+
+    should_behave_like_ownable_contract(aggregatorProxyAddr, account);
 }
 
 #[test]

@@ -2,6 +2,7 @@ use chainlink::libraries::ownable::Ownable;
 use starknet::contract_address_const;
 use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
+use starknet::testing::set_contract_address;
 use zeroable::Zeroable;
 
 fn setup() -> (ContractAddress, ContractAddress) {
@@ -121,3 +122,45 @@ fn test_renounce_ownership_panics_if_not_owner() {
     set_caller_address(other_user);
     Ownable::renounce_ownership();
 }
+//
+// General ownable contract tests
+//
+
+#[abi]
+trait IOwnable {
+    fn owner() -> ContractAddress;
+    fn proposed_owner() -> ContractAddress;
+    fn transfer_ownership(new_owner: ContractAddress);
+    fn accept_ownership();
+    fn renounce_ownership();
+}
+
+fn should_behave_like_ownable_contract(contract_addr: ContractAddress, owner: ContractAddress) {
+    let contract = IOwnableDispatcher { contract_address: contract_addr };
+    let acc2: ContractAddress = contract_address_const::<2222>();
+
+    // check owner is set correctly
+    assert(owner == contract.owner(), 'owner does not match');
+    let caller = starknet::get_caller_address();
+    assert(!caller.is_zero(), 'test1');
+
+    // transfer ownership - check owner unchanged and proposed owner set correctly
+    set_contract_address(owner); // required to call contract as owner
+    let caller = starknet::get_caller_address();
+    assert(!caller.is_zero(), 'test2');
+    assert(caller == owner, 'test3');
+    contract.transfer_ownership(acc2);
+    assert(owner == contract.owner(), 'owner should remain unchanged');
+    assert(acc2 == contract.proposed_owner(), 'acc2 should be proposed owner');
+
+    // accept ownership - check owner changed and proposed owner set to zero
+    set_contract_address(acc2); // required to call function as acc2
+    contract.accept_ownership();
+    assert(contract.owner() == acc2, 'failed to change ownership');
+    assert(contract.proposed_owner().is_zero(), 'proposed owner should be zero');
+
+    // renounce ownership
+    contract.renounce_ownership();
+    assert(contract.owner().is_zero(), 'owner not 0 after renounce');
+}
+
