@@ -7,7 +7,7 @@
     "contracts",
     "examples/contracts/*",
     "packages-ts/*",
-    "examples/latest_contracts"
+    "examples/new_contracts/*"
   ],
   "keywords": [
     "typescript",

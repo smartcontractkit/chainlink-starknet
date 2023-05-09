@@ -1,5 +1,5 @@
 {
-  "name": "proxy-consumer",
+  "name": "proxy_consumer",
   "version": "1.0.0",
   "description": "Simple contracts to read Chainlink data feeds on-chain and off-chain",
   "scripts": {

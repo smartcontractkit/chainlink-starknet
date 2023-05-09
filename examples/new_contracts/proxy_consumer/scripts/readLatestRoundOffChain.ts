@@ -1,4 +1,4 @@
-import { Provider, CallContractResponse } from 'starknet'
+import { Provider, CallContractResponse, constants } from 'starknet'
 
 // Starknet network: Either goerli-alpha or mainnet-alpha
 const network = 'goerli-alpha'
@@ -15,7 +15,7 @@ const dataFeedAddress = '0x2579940ca3c41e7119283ceb82cd851c906cbb1510908a913d434
 export async function readLatestRoundOffChain() {
   const provider = new Provider({
     sequencer: {
-      network: network,
+      network: constants.NetworkName.SN_GOERLI,
     },
   })
 
