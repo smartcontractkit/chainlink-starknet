@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/smartcontractkit/caigo"
 	caigotypes "github.com/smartcontractkit/caigo/types"
-	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
@@ -126,12 +126,12 @@ func (txm *starktxm) run() {
 				txsByAccount[key] = append(txsByAccount[key], tx.call)
 			}
 			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsByAccount))
-			txm.lggr.Debugw("batch details", "batches", txsByAccount)
 
 			// async process of tx batches
 			var wg sync.WaitGroup
 			wg.Add(len(txsByAccount))
 			for key, txs := range txsByAccount {
+				txm.lggr.Debugw("batch details", "accountAddress", key.accountAddress, "senderAddress", key.senderAddress, "txs", txs)
 				go func(senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, txs []caigotypes.FunctionCall) {
 					// fetch key matching sender address
 					key, err := txm.ks.Get(senderAddress.String())
