@@ -147,8 +147,7 @@ describe('OCR2 Contract', () => {
         contractAddress,
         makeProvider(LOCAL_URL).provider,
       )
-      const response = await ocr2Contract.billing()
-      const { config: billing } = response
+      const billing = await ocr2Contract.billing()
       expect(billing.observation_payment_gjuels).toEqual(BigInt(1))
       expect(billing.transmission_payment_gjuels).toEqual(BigInt(1))
     },
@@ -171,8 +170,7 @@ describe('OCR2 Contract', () => {
       const provider = makeProvider(LOCAL_URL).provider
       const { contract } = loadContract(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(contract.abi, contractAddress, provider)
-      const response = await ocr2Contract.transmitters()
-      const { transmitters: resultTransmitters } = response
+      const resultTransmitters = await ocr2Contract.transmitters()
 
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
