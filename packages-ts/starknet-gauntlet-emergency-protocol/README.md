@@ -19,7 +19,7 @@ This deploys a new instance of the `StarknetValidator` contract on **L1**
 `<SOURCE>` is the address of source aggregator. Source aggregator should be added to access control of starknet validator contract to be able to call
 `validate` on the starknet validator
 
-`<GAS_ESTIMATE>` is a number that represents l1 gas estimate. As of the time of writing, with the initial version of the cairo 1 sequencer uptime contract, we recommend a value of 17300 on mainnet. On devnet or testnet you may choose 1 to save gas.
+`<GAS_ESTIMATE>` is a number that represents l1 gas estimate of the cost of doing l2 work. As of the time of writing, we recommend a value of 17300 on mainnet (for the cairo-1 contract version SequencerUptimeFeed 1.0.0). On devnet or testnet you may choose 1 to save gas.
 
 `<L2_FEED>` is the layer 2 feed
 
