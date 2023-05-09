@@ -2,9 +2,9 @@ import { expect } from 'chai'
 import { starknet } from 'hardhat'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
 import { num, hash } from 'starknet'
-import { account } from '@chainlink/starknet'
+import { account, expectSuccessOrDeclared } from '@chainlink/starknet'
 
-describe('Multisig integration tests', function () {
+describe('Multisig integration tests', function() {
   this.timeout(300_000)
 
   const opts = account.makeFunderOptsFromEnv()
@@ -16,7 +16,7 @@ describe('Multisig integration tests', function () {
 
   let multisig: StarknetContract
 
-  before(async function () {
+  before(async function() {
     account1 = await starknet.OpenZeppelinAccount.createAccount()
     account2 = await starknet.OpenZeppelinAccount.createAccount()
     account3 = await starknet.OpenZeppelinAccount.createAccount()
@@ -32,8 +32,8 @@ describe('Multisig integration tests', function () {
   })
 
   it('Deploy contract', async () => {
-    let multisigFactory = await starknet.getContractFactory('Multisig')
-    await account1.declare(multisigFactory)
+    let multisigFactory = await starknet.getContractFactory('multisig')
+    await expectSuccessOrDeclared(account1.declare(multisigFactory, { maxFee: 1e20 }))
 
     multisig = await account1.deploy(multisigFactory, {
       signers: [
@@ -82,7 +82,7 @@ describe('Multisig integration tests', function () {
 
     {
       const res = await multisig.call('get_threshold')
-      expect(res.threshold).to.equal(newThreshold)
+      expect(res.response).to.equal(newThreshold)
     }
   })
 })
