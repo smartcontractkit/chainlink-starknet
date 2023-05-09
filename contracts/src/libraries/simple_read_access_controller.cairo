@@ -1,10 +1,10 @@
 #[contract]
-mod SimpleReadAccessController {    
+mod SimpleReadAccessController {
     use zeroable::Zeroable;
 
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
-    
+
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::access_controller::AccessController;
     use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
