@@ -4,11 +4,16 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "compile:cairo": "hardhat starknet-compile",
+        "compile:cairo": "scarb --profile release build",
         "compile": "yarn compile:cairo",
-        "test": "npx hardhat --network localhost test",
-        "readDecimals": "npx ts-node ./scripts/readDecimals.ts",
-        "readLatestRound": "npx ts-node ./scripts/readLatestRound.ts"
+        "test": "yarn hardhat --network localhost test",
+        "deployAccount": "yarn ts-node ./scripts/deploy_accounts.ts",
+        "deployContracts": "yarn ts-node ./scripts/deploy_contracts.ts",
+        "readDecimals": "yarn ts-node ./scripts/readDecimals.ts",
+        "readLatestRound": "yarn ts-node ./scripts/readLatestRound.ts",
+        "readContinuously": "yarn ts-node ./scripts/readContinuously.ts",
+        "updateLatestRound": "yarn ts-node ./scripts/updateLatestRound.ts",
+        "getLatestPriceSeqCheck": "yarn ts-node ./scripts/getLatestPrice.ts"
     },
     "keywords": [],
     "author": "",

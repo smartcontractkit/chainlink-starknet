@@ -11,9 +11,9 @@ Set up your environment to run the examples. Make sure to clone this repo before
     ```
     We use git submodules to pin specific versions of cairo and scarb (you'll see this come into play later).
 
-1. Setup your local Starknet environment. We will install starknet cli, the rust cairo compiler, and scarb which is a framework and dependency manager for cairo. If you already have them installed, feel free to skip this step (if you later find that your versions are not working, follow the steps below because they are pinned to specific versions).
+1. Setup your local Starknet environment. We will install starknet cli tools, the rust cairo compiler, and scarb which is a framework and dependency manager for cairo. If you already have them installed, feel free to skip this step (if you later find that your versions are not working, follow the steps below because they are pinned to specific versions).
     ```
-    # Part 1: Install starknet cli via virtualenv
+    # Part 1: Install starknet cli tools via virtualenv
     
     cd chainlink-starknet
     # tested on python 3.9 and onwards

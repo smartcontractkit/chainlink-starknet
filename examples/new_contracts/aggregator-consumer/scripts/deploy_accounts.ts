@@ -1,11 +1,9 @@
-import fs from 'fs'
-import dotenv from 'dotenv'
+import * as fs from 'fs'
+import * as dotenv from 'dotenv'
 import { starknet } from 'hardhat'
-import { OpenZeppelinAccount } from '@shardlabs/starknet-hardhat-plugin/dist/src/account'
-import { exit } from 'node:process';
-import { PredeployedAccount } from '@shardlabs/starknet-hardhat-plugin/dist/src/devnet-utils';
-import { loadContract_Account, makeProvider } from './utils';
-import { Account, CallData, ec, hash } from 'starknet';
+import { exit } from 'node:process'
+import { loadContract_Account, makeProvider } from './utils'
+import { Account, CallData, ec, hash } from 'starknet'
 
 const ENV_PATH = __dirname + '/../.env'
 

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import dotenv from 'dotenv'
-import { CompiledContract, json, ec, Account, Provider, constants } from 'starknet'
+import { CompiledContract, json, ec, Account, Provider, constants, CairoAssembly } from 'starknet'
 
 const DEVNET_NAME = 'devnet'
 
@@ -8,7 +8,7 @@ export const loadContract_Account = (name: string): CompiledContract => {
   return json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../../../node_modules/@shardlabs/starknet-hardhat-plugin/dist/contract-artifacts/OpenZeppelinAccount/0.5.1/${name}.cairo/${name}.json`,
+        `${__dirname}/../../../../node_modules/@shardlabs/starknet-hardhat-plugin/dist/contract-artifacts/OpenZeppelinAccount/0.5.1/${name}.cairo/${name}.json`,
       )
       .toString('ascii'),
   )
@@ -17,13 +17,21 @@ export const loadContract_Account = (name: string): CompiledContract => {
 export const loadContract = (name: string): CompiledContract => {
   return json.parse(
     fs
-      .readFileSync(`${__dirname}/../target/release/chainlink_examples_${name}.json`)
+      .readFileSync(`${__dirname}/../target/release/chainlink_examples_${name}.sierra.json`)
+      .toString('ascii'),
+  )
+}
+
+export const loadCasmContract = (name: string): CairoAssembly => {
+  return json.parse(
+    fs
+      .readFileSync(`${__dirname}/../target/release/chainlink_examples_${name}.casm.json`)
       .toString('ascii'),
   )
 }
 
 
-export const loadContractPath = (path: string): CompiledContract => {
+export const loadContractPath = (path: string): CompiledContract | CairoAssembly => {
   return json.parse(
     fs.readFileSync(`${__dirname}/${path}.json`).toString('ascii'),
   )

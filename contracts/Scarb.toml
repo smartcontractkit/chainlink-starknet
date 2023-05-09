@@ -15,6 +15,10 @@ test = "cairo-test --starknet ."
 # quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
 
 [[target.starknet-contract]]
+# note these two options only work on scarb 0.2.0 and forward
+casm = true
+# Emit Python-powered hints in order to run compiled CASM class with legacy Cairo VM.
+casm-add-pythonic-hints = true
 
 [lib]
 target = "chainlink"

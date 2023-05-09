@@ -3,7 +3,6 @@
 mod AggregatorPriceConsumerWithSequencer {
     use box::BoxTrait;
     use starknet::ContractAddress;
-    use starknet::ContractAddressZeroable;
     use zeroable::Zeroable;
     use traits::Into;
 
