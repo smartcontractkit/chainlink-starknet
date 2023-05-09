@@ -136,10 +136,10 @@ func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var peerIds []string
 	var txKeys []string
 	var cfgKeys []string
-	for _, key := range testState.Cc.NKeys {
+	for i, key := range testState.Cc.NKeys {
 		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
-		txKeys = append(txKeys, key.TXKey.Data.ID)
+		txKeys = append(txKeys, testState.AccountAddresses[i])
 		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
