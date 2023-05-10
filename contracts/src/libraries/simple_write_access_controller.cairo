@@ -50,6 +50,11 @@ mod SimpleWriteAccessController {
         initializer(owner_address);
     }
 
+    #[view]
+    fn type_and_version() -> felt252 {
+        'SimpleWriteAccessController 1.0.0'
+    }
+
     #[external]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
         SimpleWriteAccessController::has_access(user, data)

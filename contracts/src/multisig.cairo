@@ -221,6 +221,11 @@ mod Multisig {
         (transaction, calldata)
     }
 
+    #[view]
+    fn type_and_version() -> felt252 {
+        'Multisig 1.0.0'
+    }
+
     /// Externals
 
     #[external]
