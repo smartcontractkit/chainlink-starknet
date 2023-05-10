@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.0;
 
 import '../../vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/StarknetMessaging.sol';
 
@@ -8,7 +8,7 @@ import '../../vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/s
  For Devnet L1 <> L2 communication testing, we have to replace IStarknetCore with the MockStarknetMessaging.sol contract
  */
 contract MockStarknetMessaging is StarknetMessaging {
-    constructor(uint256 MessageCancellationDelay) public {
+    constructor(uint256 MessageCancellationDelay) {
         messageCancellationDelay(MessageCancellationDelay);
     }
 

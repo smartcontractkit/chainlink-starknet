@@ -95,6 +95,6 @@ func TestOCRBasic(testState *testing.T) {
 		URL:  "ADAPTER_URL", // ADAPTER_URL e.g https://adapters.main.sand.cldev.sh/coinmetrics
 	})
 
-	err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
+	err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr, t.AccountAddresses)
 	require.NoError(testState, err)
 }

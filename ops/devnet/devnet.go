@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 
 	"github.com/go-resty/resty/v2"

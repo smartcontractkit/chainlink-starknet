@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 

@@ -8,7 +8,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"

@@ -7,7 +7,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/caigo"
 )
 
 // Raw represents the Stark private key
