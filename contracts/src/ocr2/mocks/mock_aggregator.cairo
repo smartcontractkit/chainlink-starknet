@@ -25,6 +25,9 @@ mod MockAggregator {
         answer: u128, block_num: u64, observation_timestamp: u64, transmission_timestamp: u64
     ) {
         let new_round_id = _latest_aggregator_round_id::read() + 1_u128;
+
+        // update both storage variables
+        _latest_aggregator_round_id::write(new_round_id);
         _transmissions::write(
             new_round_id,
             Transmission {
