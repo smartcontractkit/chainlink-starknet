@@ -42,9 +42,6 @@ func PubKeyToStarkKey(pubkey PublicKey) []byte {
 func GenerateKey(material io.Reader) (k Key, err error) {
 	max := new(big.Int).Sub(caigo.Curve.N, big.NewInt(1))
 
-	k.hash = defaultContractHash
-	k.salt = defaultSalt
-
 	k.priv, err = rand.Int(material, max)
 	if err != nil {
 		return k, err

@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"sync"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -49,22 +49,6 @@ func (nm *nonceManager) Start(ctx context.Context) error {
 			return err
 		}
 		nm.chainId = id
-
-		// get keys + nonces
-		keys, err := nm.ks.GetAll()
-		if err != nil {
-			return err
-		}
-		nm.lock.Lock()
-		defer nm.lock.Unlock()
-		for i := range keys {
-			addr := keys[i].AccountAddressStr()
-			n, err := nm.client.AccountNonce(ctx, caigotypes.HexToHash(addr))
-			if err != nil {
-				return err
-			}
-			nm.n[addr] = n
-		}
 		return nil
 	})
 }
@@ -83,6 +67,24 @@ func (nm *nonceManager) Close() error {
 
 func (nm *nonceManager) HealthReport() map[string]error {
 	return map[string]error{nm.Name(): nm.starter.Healthy()}
+}
+
+// Register is used because we cannot pre-fetch nonces. the pubkey is known before hand, but the account address is not known until a job is started and sends a tx
+func (nm *nonceManager) Register(ctx context.Context, addr caigotypes.Hash, chainId string) error {
+	if chainId != nm.chainId {
+		return fmt.Errorf("chain id does not match: %s (expected) != %s (got)", nm.chainId, chainId)
+	}
+
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
+	if _, exists := nm.n[addr.String()]; !exists {
+		n, err := nm.client.AccountNonce(ctx, addr)
+		if err != nil {
+			return err
+		}
+		nm.n[addr.String()] = n
+	}
+	return nil
 }
 
 func (nm *nonceManager) NextSequence(addr caigotypes.Hash, chainId string) (*big.Int, error) {

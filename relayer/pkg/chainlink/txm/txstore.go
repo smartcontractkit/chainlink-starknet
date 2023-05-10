@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"sync"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"golang.org/x/exp/maps"
 )
 

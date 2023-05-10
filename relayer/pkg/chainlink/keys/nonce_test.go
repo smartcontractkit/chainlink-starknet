@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/stretchr/testify/assert"
@@ -26,13 +26,14 @@ func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (keys
 
 	// mock returns
 	key := keys.MustNewInsecure(rand.Reader)
-	ks.On("GetAll").Return([]keys.Key{key}, nil).Once()
+	keyHash := caigotypes.HexToHash(key.ID()) // using key id directly rather than deriving random account address
 	c.On("ChainID", mock.Anything).Return(chainID, nil).Once()
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(utils.Context(t)))
+	require.NoError(t, nm.Register(utils.Context(t), keyHash, chainID))
 
-	return nm, caigotypes.HexToHash(key.AccountAddressStr()), func() { require.NoError(t, nm.Close()) }
+	return nm, keyHash, func() { require.NoError(t, nm.Close()) }
 }
 
 func TestNonceManager_NextSequence(t *testing.T) {

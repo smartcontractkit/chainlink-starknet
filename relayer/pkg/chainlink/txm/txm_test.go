@@ -7,12 +7,11 @@ import (
 	"testing"
 	"time"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/pkg/errors"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 
@@ -30,8 +29,7 @@ func TestIntegration_Txm(t *testing.T) {
 	localKeys := map[string]keys.Key{}
 	for _, k := range rawLocalKeys {
 		key := keys.Raw(k).Key()
-		key.Set(DevnetClassHash, DevnetSalt)
-		localKeys[key.AccountAddressStr()] = key
+		localKeys[key.ID()] = key
 	}
 
 	// mock keystore
@@ -49,7 +47,6 @@ func TestIntegration_Txm(t *testing.T) {
 			return nil
 		},
 	)
-	ks.On("GetAll").Return(maps.Values(localKeys), nil)
 
 	lggr, err := logger.New()
 	require.NoError(t, err)
@@ -76,13 +73,12 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, txm.Start(context.Background()))
 	require.NoError(t, txm.Ready())
 
-	// TODO: fix after devnet versions are upgraded
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
 		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(key, key, caigotypes.FunctionCall{
-				ContractAddress:    key, // send to self
-				EntryPointSelector: "get_nonce",
+			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(localKeys[k].DevnetAccountAddrStr()), caigotypes.FunctionCall{
+				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
+				EntryPointSelector: "total_supply",
 			}))
 		}
 	}

@@ -46,8 +46,6 @@ type PublicKey struct {
 type Key struct {
 	priv *big.Int
 	pub  PublicKey
-	hash *big.Int
-	salt *big.Int
 }
 
 // New creates new Key
