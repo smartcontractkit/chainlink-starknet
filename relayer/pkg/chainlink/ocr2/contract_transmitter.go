@@ -109,5 +109,5 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 }
 
 func (c *contractTransmitter) FromAccount() types.Account {
-	return types.Account(c.senderAddress.String())
+	return types.Account(c.accountAddress.String())
 }
