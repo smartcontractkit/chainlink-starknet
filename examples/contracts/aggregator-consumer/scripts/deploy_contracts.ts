@@ -4,19 +4,14 @@ import fs from 'fs'
 import dotenv from 'dotenv'
 
 const CONSUMER_NAME = 'Aggregator_consumer'
-const CONSUMER_CLASS_HASH = '0x68600b3eaf7ed249a0a70fae5c1e2d33f61ab403e4ac89b371f073a6c1c3c64'
 
 const MOCK_NAME = 'MockAggregator'
-const MOCK_CLASS_HASH = '0x21d95032de10675f3814955ef5cae12d3daa717955b54f600888111e56779d3'
 
 const PRICE_CONSUMER_NAME = 'Price_Consumer_With_Sequencer_Check'
-const PRICE_CONSUMER_CLASS_HASH =
-  '0x401d4cc6d7018330e200bca23dfa7ff5199af0f19b81f7d3ca9c2c0ce3fd892'
 
 const UPTIME_FEED_PATH =
   '../../../../contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed'
 const UPTIME_FEED_NAME = 'sequencer_uptime_feed'
-const UPTIME_FEED_HASH = '0x149c2a0a58155a8a091ded689a5fdcccd596bb0c74b301f678c1b46b690f432'
 
 const DECIMALS = '18'
 
@@ -31,9 +26,8 @@ export async function deployContract() {
 
   const account = createDeployerAccount(provider)
 
-  const declareDeployMock = await account.declareDeploy({
+  const declareDeployMock = await account.declareAndDeploy({
     contract: MockArtifact,
-    classHash: MOCK_CLASS_HASH,
     constructorCalldata: [DECIMALS],
   })
 
@@ -43,9 +37,8 @@ export async function deployContract() {
     provider,
   )
 
-  const declareDeployAggregator = await account.declareDeploy({
+  const declareDeployAggregator = await account.declareAndDeploy({
     contract: AggregatorArtifact,
-    classHash: CONSUMER_CLASS_HASH,
     constructorCalldata: [mockDeploy.address as string],
   })
 
@@ -55,9 +48,8 @@ export async function deployContract() {
     provider,
   )
 
-  const declareDeployUptimeFeed = await account.declareDeploy({
+  const declareDeployUptimeFeed = await account.declareAndDeploy({
     contract: UptimeFeedArtifact,
-    classHash: UPTIME_FEED_HASH,
     constructorCalldata: ['0', account.address],
   })
 
@@ -67,9 +59,8 @@ export async function deployContract() {
     provider,
   )
 
-  const declareDeployPriceConsumer = await account.declareDeploy({
+  const declareDeployPriceConsumer = await account.declareAndDeploy({
     contract: priceConsumerArtifact,
-    classHash: PRICE_CONSUMER_CLASS_HASH,
     constructorCalldata: [uptimeFeedDeploy.address as string, mockDeploy.address as string],
   })
 

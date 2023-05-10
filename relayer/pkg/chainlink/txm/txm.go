@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
-	"github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/smartcontractkit/caigo"
+	"github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
@@ -27,13 +27,14 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(caigotypes.Hash, caigotypes.FunctionCall) error
+	Enqueue(caigotypes.Hash, caigotypes.Hash, caigotypes.FunctionCall) error
 	InflightCount() int
 }
 
 type Tx struct {
-	sender caigotypes.Hash
-	call   caigotypes.FunctionCall
+	senderAddress  caigotypes.Hash
+	accountAddress caigotypes.Hash
+	call           caigotypes.FunctionCall
 }
 
 type StarkTXM interface {
@@ -117,9 +118,9 @@ func (txm *starktxm) broadcastLoop() {
 			tx := <-txm.queue
 
 			// fetch key matching sender address
-			key, err := txm.ks.Get(tx.sender.String())
+			key, err := txm.ks.Get(tx.senderAddress.String())
 			if err != nil {
-				txm.lggr.Errorw("failed to retrieve key", "id", tx.sender, "error", err)
+				txm.lggr.Errorw("failed to retrieve key", "id", tx.senderAddress, "error", err)
 				continue
 			}
 
@@ -128,7 +129,7 @@ func (txm *starktxm) broadcastLoop() {
 			privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
 
 			// broadcast tx serially - wait until accepted by mempool before processing next
-			hash, err := txm.broadcast(ctx, privKey, tx.sender, tx.call)
+			hash, err := txm.broadcast(ctx, privKey, tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
 			} else {
@@ -140,19 +141,19 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, privKey string, sender caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
 	txs := []caigotypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewGatewayAccount(privKey, sender.String(), client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewGatewayAccount(privKey, accountAddress.String(), client.Gw, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(sender, client.Gw.ChainId)
+	nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
@@ -189,8 +190,8 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, sender caigo
 
 	// update nonce if transaction is successful
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(sender, client.Gw.ChainId, nonce),
-		txm.txStore.Save(sender, nonce, res.TransactionHash),
+		txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
+		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
 	)
 	return res.TransactionHash, err
 }
@@ -263,14 +264,14 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(sender caigotypes.Hash, tx caigotypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) error {
 	// validate key exists for sender
-	if _, err := txm.ks.Get(sender.String()); err != nil {
+	if _, err := txm.ks.Get(senderAddress.String()); err != nil {
 		return err
 	}
 
 	select {
-	case txm.queue <- Tx{sender: sender, call: tx}:
+	case txm.queue <- Tx{senderAddress: senderAddress, accountAddress: accountAddress, call: tx}:
 	default:
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}

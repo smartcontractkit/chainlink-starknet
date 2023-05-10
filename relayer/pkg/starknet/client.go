@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigogw "github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
@@ -106,7 +106,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 		defer cancel()
 	}
 
-	block, err := c.Gw.Block(ctx, nil)
+	block, err := c.Gw.Block(ctx, &caigogw.BlockOptions{Tag: "latest"})
 	if err != nil {
 		return height, errors.Wrap(err, "error in client.LatestBlockHeight")
 	}
@@ -122,7 +122,7 @@ func (c *Client) BlockByNumberGateway(ctx context.Context, blockNum uint64) (blo
 	}
 
 	block, err = c.Gw.Block(ctx, &caigogw.BlockOptions{
-		BlockNumber: blockNum,
+		BlockNumber: &blockNum,
 	})
 	if err != nil {
 		return block, errors.Wrap(err, "couldn't get block by number")

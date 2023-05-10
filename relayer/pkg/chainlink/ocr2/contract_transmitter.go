@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
@@ -22,20 +22,23 @@ type contractTransmitter struct {
 
 	contractAddress caigotypes.Hash
 	senderAddress   caigotypes.Hash
+	accountAddress  caigotypes.Hash
 
 	txm txm.TxManager
 }
 
 func NewContractTransmitter(
 	reader *transmissionsCache,
-	contract string,
-	sender string,
+	contractAddress string,
+	senderAddress string,
+	accountAddress string,
 	txm txm.TxManager,
 ) *contractTransmitter {
 	return &contractTransmitter{
 		reader:          reader,
-		contractAddress: caigotypes.HexToHash(contract),
-		senderAddress:   caigotypes.HexToHash(sender),
+		contractAddress: caigotypes.HexToHash(contractAddress),
+		senderAddress:   caigotypes.HexToHash(senderAddress),
+		accountAddress:  caigotypes.HexToHash(accountAddress),
 		txm:             txm,
 	}
 }
@@ -81,7 +84,7 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[:32]))   // public key
 	}
 
-	err = c.txm.Enqueue(c.senderAddress, caigotypes.FunctionCall{
+	err = c.txm.Enqueue(c.senderAddress, c.accountAddress, caigotypes.FunctionCall{
 		ContractAddress:    c.contractAddress,
 		EntryPointSelector: "transmit",
 		Calldata:           transmitPayload,
@@ -106,5 +109,5 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 }
 
 func (c *contractTransmitter) FromAccount() types.Account {
-	return types.Account(c.senderAddress.String())
+	return types.Account(c.accountAddress.String())
 }

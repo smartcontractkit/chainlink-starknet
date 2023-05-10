@@ -40,5 +40,6 @@ juelsPerFeeCoinSource = """
 """
 
 [relayConfig]
-chainID  = "goerli-alpha-4"
-nodeName = "goerli-alpha-4-node-1" # optional, defaults to random node with 'chainID'
+chainID        = "goerli-alpha-4"
+accountAddress = "<insert account contract address>"
+nodeName       = "goerli-alpha-4-node-1" # optional, defaults to random node with 'chainID'

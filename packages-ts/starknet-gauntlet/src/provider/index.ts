@@ -6,10 +6,8 @@ import {
   CompiledContract,
   Account,
   Call,
-  number,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
-import { starknetClassHash } from './classHashCommand'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
@@ -89,13 +87,10 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
-    const classHash = await starknetClassHash(contract)
-
-    const tx = await this.account.declareDeploy({
-      classHash,
+    const tx = await this.account.declareAndDeploy({
       contract,
       salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
-      unique: false,
+      // unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 

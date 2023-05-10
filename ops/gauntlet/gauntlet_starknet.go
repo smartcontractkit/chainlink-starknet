@@ -117,7 +117,7 @@ func (sg *StarknetGauntlet) DeployLinkTokenContract() (string, error) {
 }
 
 func (sg *StarknetGauntlet) MintLinkToken(token, to, amount string) (string, error) {
-	_, err := sg.G.ExecCommand([]string{"token:mint", fmt.Sprintf("--account=%s", to), fmt.Sprintf("--amount=%s", amount), token}, *sg.options)
+	_, err := sg.G.ExecCommand([]string{"token:mint", fmt.Sprintf("--recipient=%s", to), fmt.Sprintf("--amount=%s", amount), token}, *sg.options)
 	if err != nil {
 		return "", err
 	}

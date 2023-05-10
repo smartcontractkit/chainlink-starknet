@@ -15,7 +15,7 @@ import {
   CompiledContract,
   Contract,
   addAddressPadding,
-  number,
+  num,
   encode,
   hash,
   validateAndParseAddress,
@@ -106,15 +106,15 @@ export const wrapCommand = <UI, CI>(
     }
 
     fetchMultisigState = async (address: string, proposalId?: number): Promise<State> => {
-      const [signers, threshold] = await Promise.all(
+      const [{ signers }, { threshold }] = await Promise.all(
         ['get_signers', 'get_threshold'].map((func) => {
           return this.executionContext.contract[func]()
         }),
       )
       const multisig = {
         address,
-        threshold: number.toBN(threshold.threshold).toNumber(),
-        signers: signers.signers.map((o) => number.toHex(o)),
+        threshold,
+        signers: signers.map((o) => num.toHex(o)),
       }
 
       if (isNaN(proposalId)) return { multisig }
@@ -126,13 +126,11 @@ export const wrapCommand = <UI, CI>(
           confirmations: proposal.tx.confirmations,
           data: {
             contractAddress: addAddressPadding(proposal.tx.to),
-            entrypoint: encode.addHexPrefix(
-              number.toBN(proposal.tx.function_selector).toString('hex'),
-            ),
-            calldata: proposal.tx_calldata.map((v) => number.toBN(v).toString()),
+            entrypoint: encode.addHexPrefix(num.toHex(num.toBigInt(proposal.tx.function_selector))),
+            calldata: proposal.tx_calldata.map((v) => num.toBigInt(v).toString()),
           },
           nextAction:
-            number.toBN(proposal.tx.executed).toNumber() !== 0
+            Number(num.toBigInt(proposal.tx.executed)) !== 0
               ? Action.NONE
               : proposal.tx.confirmations >= multisig.threshold
               ? Action.EXECUTE
@@ -153,7 +151,7 @@ export const wrapCommand = <UI, CI>(
     makeProposeMessage: ProposalAction = (message, proposalId) => {
       const invocation = this.executionContext.contract.populate('submit_transaction', [
         this.contractAddress,
-        number.toBN(hash.getSelectorFromName(message.entrypoint)),
+        hash.getSelectorFromName(message.entrypoint),
         message.calldata,
         proposalId,
       ])
@@ -184,7 +182,7 @@ export const wrapCommand = <UI, CI>(
       }
       const message = await this.command.makeMessage()
       if (!this.initialState.proposal) {
-        const nonce = await this.executionContext.contract.get_transactions_len()
+        const { res: nonce } = await this.executionContext.contract.get_transactions_len()
         return [this.makeProposeMessage(message[0], nonce)]
       }
 
@@ -277,7 +275,7 @@ export const wrapCommand = <UI, CI>(
         const txInfo = (await this.provider.provider.getTransactionReceipt(
           tx.hash,
         )) as InvokeTransactionReceiptResponse
-        proposalId = Number(number.hexToDecimalString((txInfo.events[0] as any).data[1]))
+        proposalId = Number(num.hexToDecimalString((txInfo.events[0] as any).data[1]))
       }
 
       const data = await this.afterExecute(result, proposalId)
