@@ -15,7 +15,7 @@
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.0",
-    "@shardlabs/starknet-hardhat-plugin": "git+https://github.com/0xSpaceShard/starknet-hardhat-plugin#4a5fb197b8c4e0cb3f25d8defe50347116b78174",
+    "@shardlabs/starknet-hardhat-plugin": "git+https://github.com/cfal/starknet-hardhat-plugin#a68f0dc7cf535440bdeacfed5d5d752c3e87e6a3",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",
