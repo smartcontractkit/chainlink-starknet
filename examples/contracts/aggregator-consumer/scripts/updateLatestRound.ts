@@ -66,7 +66,7 @@ async function callFunction(transmission: Transmission) {
     [mock.abi],
     { maxFee: 1e18 },
   )
-  console.log('Waiting for Tx to be Accepted on Starknet - Aggregator consumer Deployment...')
+  console.log('Waiting for Tx to be Accepted on Starknet: Updating the Latest Round')
   await provider.waitForTransaction(transaction.transaction_hash)
 }
 

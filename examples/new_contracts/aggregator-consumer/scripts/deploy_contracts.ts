@@ -31,7 +31,7 @@ export async function deployContract() {
 
   const account = createDeployerAccount(provider)
 
-  console.log("Deploying accounts...(this may take 3-5 minutes)")
+  console.log("Deploying Contracts...(this may take 3-5 minutes)")
 
   const declareDeployAggregator = await account.declareAndDeploy({
     casm: loadCasmContract(AGGREGATOR),

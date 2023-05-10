@@ -7,8 +7,18 @@ const UPTIME_FEED_PATH = '../../../../contracts/target/release/chainlink_Sequenc
 
 dotenv.config({ path: __dirname + '/../.env' })
 
-const SEQUENCER_STALE = Buffer.from('L2 seq up & report stale', 'utf8').toString('hex')
-console.log(SEQUENCER_STALE, 'sequencer stale msg')
+const SEQ_UP_REPORT_STALE = 'L2 seq up & report stale'
+const SEQ_DOWN_REPORT_STALE = 'L2 seq down & report stale'
+const SEQ_DOWN_REPORT_OK = 'L2 seq down & report ok'
+
+const HEX_SEQ_UP_REPORT_STALE = revertMessageHex(SEQ_UP_REPORT_STALE)
+const HEX_SEQ_DOWN_REPORT_STALE = revertMessageHex(SEQ_DOWN_REPORT_STALE)
+const HEX_SEQ_DOWN_REPORT_OK = revertMessageHex(SEQ_DOWN_REPORT_OK)
+
+function revertMessageHex(msg: string): string {
+  return Buffer.from(msg, 'utf8').toString('hex')
+}
+
 
 export async function getLatestPrice() {
   const provider = makeProvider()
@@ -40,16 +50,31 @@ export async function getLatestPrice() {
     console.log('Waiting to get latest price')
     const latestPrice = await priceConsumer.call('get_latest_price', [])
     console.log('answer= ', latestPrice)
-    return latestPrice
   } catch (e) {
-    // this will occur if at least 60 seconds have elapsed
-    // see AggregatorPriceConsumerWithSequencer for more info
-    if (e instanceof GatewayError && e.message.includes(SEQUENCER_STALE)) {
-      console.log('sequencer is up but stale so the call is reverted')
+    // transaction reverted because sequencer is down or report is stale
+    console.log("Getting latest price not possible (reason below)")
+    if (e instanceof GatewayError) {
+      switch (true) {
+        case e.message.includes(HEX_SEQ_UP_REPORT_STALE): {
+          console.log(SEQ_UP_REPORT_STALE)
+          break
+        }
+        case e.message.includes(HEX_SEQ_DOWN_REPORT_STALE): {
+          console.log(SEQ_DOWN_REPORT_STALE)
+          break
+        }
+        case e.message.includes(HEX_SEQ_DOWN_REPORT_OK): {
+          console.log(SEQ_DOWN_REPORT_OK)
+          break
+        }
+        default:
+          console.log(e)
+          break
+      }
+    } else {
+      console.log(e)
     }
-
   }
-
 }
 
 getLatestPrice()

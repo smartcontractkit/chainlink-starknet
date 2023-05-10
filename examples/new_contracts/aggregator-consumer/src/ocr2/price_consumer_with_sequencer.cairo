@@ -40,21 +40,21 @@ mod AggregatorPriceConsumerWithSequencer {
     #[external]
     fn assert_sequencer_healthy() {
         let round = IAggregatorDispatcher{
-            contract_address: _aggregator_address::read()
+            contract_address: _uptime_feed_address::read()
         }.latest_round_data();
         let timestamp = starknet::info::get_block_info().unbox().block_timestamp;
 
         // After 60 sec the report is considered stale
         let report_stale = timestamp - round.updated_at > 60_u64;
 
-        // 0 if the sequencer is up and 1 if it is down
+        // 0 if the sequencer is up and 1 if it is down. No other options besides 1 and 0
         match round.answer.into() {
             0 => {
                 assert(!report_stale, 'L2 seq up & report stale');
             },
             _ => {
                 assert(!report_stale, 'L2 seq down & report stale');
-                assert(false, 'L2 seq off & report ok');
+                assert(false, 'L2 seq down & report ok');
             }
         }
     }

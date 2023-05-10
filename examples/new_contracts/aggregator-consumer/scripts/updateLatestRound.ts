@@ -64,7 +64,7 @@ async function callFunction(transmission: Transmission) {
     ]
   )
 
-  console.log('Waiting for Tx to be Accepted on Starknet - Aggregator consumer Deployment...')
+  console.log('Waiting for Tx to be Accepted on Starknet: Updating Latest Round')
   await provider.waitForTransaction(tx.transaction_hash)
 }
 

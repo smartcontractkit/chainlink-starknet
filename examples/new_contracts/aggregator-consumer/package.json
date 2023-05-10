@@ -13,7 +13,7 @@
         "readLatestRound": "yarn ts-node ./scripts/readLatestRound.ts",
         "readContinuously": "yarn ts-node ./scripts/readContinuously.ts",
         "updateLatestRound": "yarn ts-node ./scripts/updateLatestRound.ts",
-        "getLatestPriceSeqCheck": "yarn ts-node ./scripts/getLatestPrice.ts"
+        "getLatestPriceSeqCheck": "yarn ts-node ./scripts/getLatestPriceSeqCheck.ts"
     },
     "keywords": [],
     "author": "",
