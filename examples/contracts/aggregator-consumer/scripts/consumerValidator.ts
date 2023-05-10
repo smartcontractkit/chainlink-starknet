@@ -5,7 +5,7 @@ import { HttpNetworkConfig } from 'hardhat/types'
 import dotenv from 'dotenv'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { Account, Contract as StarknetContract } from 'starknet'
+import { Account, CompiledContract, Contract as StarknetContract } from 'starknet'
 import {
   createDeployerAccount,
   loadContractPath,
@@ -15,9 +15,9 @@ import {
 } from './utils'
 
 dotenv.config({ path: __dirname + '/../.env' })
-const UPTIME_FEED_PATH =
-  '../../../../contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed'
-const UPTIME_FEED_NAME = 'sequencer_uptime_feed'
+const UPTIME_FEED_PATH = '../../../../contracts/target/release/chainlink_SequencerUptimeFeed'
+
+// TODO: need to modify when the cairo-1.0 branch is rebased to include StarknetValidator changes
 
 let validator: Contract
 let mockStarknetMessengerFactory: ContractFactory
@@ -83,13 +83,15 @@ export async function consumerValidator() {
   mockStarknetMessenger = await mockStarknetMessengerFactory.deploy(messageCancellationDelay)
   await mockStarknetMessenger.deployed()
 
-  const UptimeFeedArtifact = loadContractPath(UPTIME_FEED_PATH, UPTIME_FEED_NAME)
+  const UptimeFeedArtifact = loadContractPath(UPTIME_FEED_PATH) as CompiledContract
 
   const mockUptimeFeedDeploy = new StarknetContract(
     UptimeFeedArtifact.abi,
     process.env.UPTIME_FEED as string,
     provider,
   )
+
+  mockUptimeFeedDeploy.connect(account)
 
   validator = await validatorFactory.deploy(
     mockStarknetMessenger.address,
@@ -101,16 +103,11 @@ export async function consumerValidator() {
   )
 
   console.log('Validator address: ', validator.address)
-  const transaction = await account.execute(
-    {
-      contractAddress: mockUptimeFeedDeploy.address,
-      entrypoint: 'set_l1_sender',
-      calldata: [validator.address],
-    },
-    [UptimeFeedArtifact.abi],
-  )
 
-  await provider.waitForTransaction(transaction.transaction_hash)
+  const tx = await mockUptimeFeedDeploy.invoke('set_l1_sender', [validator.address])
+
+
+  await provider.waitForTransaction(tx.transaction_hash)
 
   await validator.addAccess(eoaValidator.address)
   setInterval(callFunction, 60_000)

@@ -1,12 +1,9 @@
 import fs from 'fs'
-import { Account, Provider, Contract, json, ec } from 'starknet'
+import { Account, Provider, Contract, json, ec, constants } from 'starknet'
 
-// Starknet network: Either goerli-alpha or mainnet-alpha
-const network = 'goerli-alpha'
 
 // The Cairo contract that is compiled and ready to declare and deploy
-const consumerContractName = 'Proxy_consumer'
-const consumerClassHash = '0x75f25b359402fa046e2b9c17d00138772b51c647c0352eb16954e9e39df4ca6'
+const consumerContractName = 'ProxyConsumer'
 
 /**
  * Network: Starknet Goerli testnet
@@ -22,28 +19,36 @@ const dataFeedAddress = '0x2579940ca3c41e7119283ceb82cd851c906cbb1510908a913d434
  * ~/.starknet_accounts/starknet_open_zeppelin_accounts.json
  */
 const accountAddress = process.env.DEPLOYER_ACCOUNT_ADDRESS as string
-const accountKeyPair = ec.getKeyPair(process.env.DEPLOYER_PRIVATE_KEY as string)
+const accountPrivateKey = process.env.DEPLOYER_PRIVATE_KEY as string
+const starkKeyPub = ec.starkCurve.getStarkKey(accountPrivateKey)
 
 export async function deployContract() {
   const provider = new Provider({
     sequencer: {
-      network: network,
+      // Starknet network: Either goerli-alpha or mainnet-alpha
+      network: constants.NetworkName.SN_GOERLI,
     },
   })
 
-  const account = new Account(provider, accountAddress, accountKeyPair)
+  const account = new Account(provider, accountAddress, accountPrivateKey)
 
   const consumerContract = json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../starknet-artifacts/contracts/${consumerContractName}.cairo/${consumerContractName}.json`,
+        `${__dirname}/../target/release/proxy_consumer_${consumerContractName}.sierra.json`,
       )
       .toString('ascii'),
   )
 
-  const declareDeployConsumer = await account.declareDeploy({
+  const declareDeployConsumer = await account.declareAndDeploy({
     contract: consumerContract,
-    classHash: consumerClassHash,
+    casm: json.parse(
+      fs
+        .readFileSync(
+          `${__dirname}/../target/release/proxy_consumer_${consumerContractName}.casm.json`,
+        )
+        .toString('ascii'),
+    ),
     constructorCalldata: [dataFeedAddress as string],
   })
 

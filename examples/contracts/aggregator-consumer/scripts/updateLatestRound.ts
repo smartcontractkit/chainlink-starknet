@@ -32,12 +32,14 @@ async function updateLatestRound() {
     transmission_timestamp: 0,
   }
 
-  const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY as string)
-  account = new Account(provider, process.env.ACCOUNT_ADDRESS as string, keyPair)
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY as string
+  account = new Account(provider, process.env.DEPLOYER_ACCOUNT_ADDRESS as string, privateKey)
 
   const MockArtifact = loadContract(CONTRACT_NAME)
 
   mock = new Contract(MockArtifact.abi, process.env.MOCK as string)
+  mock.connect(account)
+
   transmission.answer = Number(await input('Enter a number for new answer: '))
   transmission.block_num = Number(await input('Enter a number for new block_num: '))
   transmission.observation_timestamp = Number(
@@ -48,26 +50,22 @@ async function updateLatestRound() {
   )
   rl.close()
 
-  callFunction(transmission)
+  await callFunction(transmission)
 }
 
 async function callFunction(transmission: Transmission) {
-  const transaction = await account.execute(
-    {
-      contractAddress: mock.address,
-      entrypoint: 'set_latest_round_data',
-      calldata: [
-        transmission.answer,
-        transmission.block_num,
-        transmission.observation_timestamp,
-        transmission.transmission_timestamp,
-      ],
-    },
-    [mock.abi],
-    { maxFee: 1e18 },
+  const tx = await mock.invoke(
+    'set_latest_round_data',
+    [
+      transmission.answer,
+      transmission.block_num,
+      transmission.observation_timestamp,
+      transmission.transmission_timestamp,
+    ]
   )
-  console.log('Waiting for Tx to be Accepted on Starknet: Updating the Latest Round')
-  await provider.waitForTransaction(transaction.transaction_hash)
+
+  console.log('Waiting for Tx to be Accepted on Starknet: Updating Latest Round')
+  await provider.waitForTransaction(tx.transaction_hash)
 }
 
 function input(prompt: string) {

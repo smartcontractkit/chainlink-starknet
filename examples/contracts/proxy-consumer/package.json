@@ -1,18 +1,15 @@
 {
-  "name": "proxy_consumer",
+  "name": "proxy-consumer",
   "version": "1.0.0",
   "description": "Simple contracts to read Chainlink data feeds on-chain and off-chain",
   "scripts": {
-    "build": "yarn hardhat starknet-compile",
+    "build": "scarb --profile release build",
     "deploy": "yarn ts-node ./scripts/deployConsumer.ts",
     "readLatestRound": "yarn ts-node ./scripts/readLatestRound.ts",
     "readLatestRoundOffChain": "yarn ts-node ./scripts/readLatestRoundOffChain.ts"
   },
   "license": "MIT",
-  "devDependencies": {
-    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.0"
-  },
   "dependencies": {
-    "starknet": "^4.17.1"
+    "starknet": "^5.2.0"
   }
 }
