@@ -19,12 +19,16 @@ This deploys a new instance of the `StarknetValidator` contract on **L1**
 `<SOURCE>` is the address of source aggregator. Source aggregator should be added to access control of starknet validator contract to be able to call
 `validate` on the starknet validator
 
-`<GAS_ESTIMATE>` is a number that represents l1 gas estimate
+`<GAS_ESTIMATE>` is a number that represents l1 gas estimate of the cost of doing l2 work. As of the time of writing, we recommend a value of 17300 on mainnet (for the cairo-1 contract version SequencerUptimeFeed 1.0.0). On devnet or testnet you may choose 1 to save gas.
 
 `<L2_FEED>` is the layer 2 feed
 
+`<GAS_ADJUSTMENT>` is the percentage adjustment made to the gas cost. For example, a value of 110 would equate to 110% of the original gas cost (or equivalently, a 10% bump in price, or equivalently a 1.1 times the original cost). For simplicity sake recommend a value of 130 on mainnet, devnet, or testnet. If you set it below 100, you'll need to pass in the `--unsafe` flag as well.
+
+`(Optional) --unsafe`: Flag passed in to specify a gas adjustment below 100
+
 ```bash
-yarn gauntlet starknet_validator:deploy --starkNetMessaging=<STARKNET_MESSAGING> --configAC=<CONFIG_AC> --gasPriceL1Feed=<GAS_PRICE_L1_FEED> --source=<L1_EOA> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<L2_FEED> --network=<NETWORK>
+yarn gauntlet starknet_validator:deploy --starkNetMessaging=<STARKNET_MESSAGING> --configAC=<CONFIG_AC> --gasPriceL1Feed=<GAS_PRICE_L1_FEED> --source=<SOURCE_AGGREGATOR> --gasEstimate=<GAS_ESTIMATE> --l2Feed=<L2_FEED> --gasAdjustment=<GAS_ADJUSTMENT> --network=<NETWORK>
 ```
 
 - Accept Ownership
