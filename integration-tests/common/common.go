@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo/gateway"
+	"github.com/smartcontractkit/caigo/gateway"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
@@ -136,7 +136,7 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBund
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
-func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
+func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
@@ -147,16 +147,16 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	}
 
 	// Defining relay config
-	relayConfig := job.JSONConfig{
+	bootstrapRelayConfig := job.JSONConfig{
 		"nodeName":       fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuid.NewV4().String()),
-		"accountAddress": fmt.Sprintf("\"%s\"", c.Account),
+		"accountAddress": fmt.Sprintf("\"%s\"", accountAddresses[0]),
 		"chainID":        fmt.Sprintf("\"%s\"", c.ChainId),
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
 		ContractID:                  ocrControllerAddress,
 		Relay:                       relay.StarkNet,
-		RelayConfig:                 relayConfig,
+		RelayConfig:                 bootstrapRelayConfig,
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	// Setting up bootstrap node
@@ -185,6 +185,11 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		_, err := n.CreateBridge(cc.bTypeAttr)
 		if err != nil {
 			return err
+		}
+		relayConfig := job.JSONConfig{
+			"nodeName":       bootstrapRelayConfig["nodeName"],
+			"accountAddress": fmt.Sprintf("\"%s\"", accountAddresses[nIdx]),
+			"chainID":        bootstrapRelayConfig["chainID"],
 		}
 
 		oracleSpec = job.OCR2OracleSpec{

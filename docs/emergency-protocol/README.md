@@ -4,7 +4,7 @@
 
 Today Chainlink price feeds are used by many DeFi protocols to secure billions of dollars. Whilst feeds report fresh prices the majority of the time, L2 feeds will report stale price data whenever the L2 chain stops producing new blocks. This can happen whenever the L2 Sequencer fails to process any new transactions. Whenever this happens, an arbitrage opportunity is created for malicious actors to take advantage of the price difference between the price inside and outside the L2 chain.
 
-The Starknet Emergency Protocol provides a way for Chainlink price feed consumers to guard against the scenario described above. The protocol tracks the last known health of the Sequencer and reports it's health on chain along with the timestamp of when it either comes back online or goes offline. This allows consuming contracts to implement a grace period in their contracts to revert transactions whenever the Sequencer is down.
+The Starknet Emergency Protocol provides a way for Chainlink price feed consumers to guard against the scenario described above. The protocol tracks the last known health of the Sequencer and reports its health on chain along with the timestamp of when it either comes back online or goes offline. This allows consuming contracts to implement a grace period in their contracts to revert transactions whenever the Sequencer is down.
 
 For more background information check the [official docs.](https://docs.chain.link/docs/l2-sequencer-flag/)
 
@@ -73,33 +73,52 @@ In the event that the Sequencer is down, messages will not be transmitted from L
 
 ### Bridge Fees
 
-As of version v0.10.0, Starknet has begun introducing fees to send messages from L1 to L2. These fees are used to pay for the transaction
-on L2. This has been done so that the Sequencer has an incentive to process L2 messags. Whilst today `v0.10.0` still processes messages sent
-with `msg.value = 0`, Starknet has plans to charge a non 0 fee in the upcoming release. As the Emergency Protocol needs to send messages cross chain,
+As of writing, on version v0.11.0, Starknet has begun charging mandatory fees to send messages from L1 to L2. These fees are used to pay for the transaction
+on L2. As the Emergency Protocol needs to send messages cross chain,
 the protocol needs a way to estimate gas fees. Currently, the `StarkwareValidator` contract on L1 does the following to estimate the amount of required
 gas.
 
-1. Estimate gas fees by running the command below. The command is from Starkware's standard CLI.
+1. Estimate gas fees by running the command below. The command is from Starkware's standard CLI (using version 0.11.0.x)
 
 ```
 starknet estimate_message_fee \
-  --feeder_gateway_url=https://alpha4.starknet.io/feeder_gateway/ \
-  --abi=contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed/sequencer_uptime_feed.cairo/sequencer_uptime_feed.json \
-  --from_address ${FROM} \
-  --address ${TO} \
+  --feeder_gateway_url=https://alpha4.starknet.io/feeder_gateway/
+  --from_address ${L1_SENDER_ADDR} \
+  --address ${UPTIME_FEED_ADDR} \
   --function update_status \
   --inputs ${STATUS} ${TIMESTAMP}
 ```
 
-In order to reliably ensure that cross chain messages are sent with sufficient gas, the estimate is multiplied by a buffer. This buffer
-is arbitrarily chosen depending on what the Ops team determines to be a sufficient buffer.
+Make sure that the `L1_SENDER_ADDR` is equal to the l1 sender storage variable on the uptime feed, or else the gateway will respond with a revert instead of the values. If you don't set the l1 sender storage variable, it'll be 0 by default (as in the example below)
 
-2. Read the current L1 gas price from Chainlink's L1 gas price feed
-3. Estimate gas as the product of the steps above.
+Example Query and response:
+
+```
+starknet estimate_message_fee \
+  --feeder_gateway_url=https://alpha4.starknet.io/feeder_gateway/ \
+  --from_address 0x0 \
+  --address=0x06f4279f832de1afd94ab79aa1766628d2c1e70bc7f74bfba3335db8e728a7e6 \
+  --function update_status \
+  --inputs 0x1 123123
+
+The estimated fee is: 3739595758116898 WEI (0.003740 ETH).
+Gas usage: 17266
+Gas price: 216587267353 WEI
+```
+
+In order to reliably ensure that cross chain messages are sent with sufficient gas, the estimate is multiplied by a buffer. At the time of writing (Starknet v.0.11.0), Starkware has told us that L2 gas prices are equal to L1 gas prices and are denominated in Ethereum Wei, so we use L1 gas price feed to get the gas price:
+
+1. Read the current L1 gas price from Chainlink's L1 gas price feed
+2. Multiply gas price by a buffer
+3. Multiply product of above by the number of gas units
 
 ```solidity
-gasFee = gasUnitsIncludingBuffer * l1GasPrice
+gasFee = buffer * l1GasPrice * numGasUnits
 ```
+
+The gas units that it costs is also derived from the starknet estimate_message_fee command (as shown above).
+
+As of the time of writing (Starknet v. 0.11.0), we recommend a gasAdjustment of 130 (or 1.3x buffer) and a gas units to be 17300.
 
 ### Layer2 Sequencer Health External Adapter
 

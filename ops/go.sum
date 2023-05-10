@@ -70,8 +70,6 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0/go.mod h1:DZGJHZMqrU4JJqFAWUS2U
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
-github.com/dontpanicdao/caigo v0.4.0 h1:S0wRKh2EZ9qj6IfHZIGXxiJF37emRCqnZwDhRb1+DJ4=
-github.com/dontpanicdao/caigo v0.4.0/go.mod h1:1YuwgcVLODaS/n0vfuYN/Q0mdWs8UDfDMkSpUdkKXD4=
 github.com/edsrzf/mmap-go v1.1.0 h1:6EUwBLQ/Mcr1EYLE4Tn1VdW1A4ckqCQWZBw8Hr0kjpQ=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153 h1:yUdfgN0XgIJw7foRItutHYUIhlcKzcSf5vDpdhQAKTc=
 github.com/emicklei/go-restful/v3 v3.9.0 h1:XwGDlfxEnQZzuopoqxwSEllNcCOM9DhhFyhFIIGKwxE=
@@ -273,6 +271,8 @@ github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdh
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/shirou/gopsutil v3.21.11+incompatible h1:+1+c1VGhc88SSonWP6foOcLhvnKlUeu/erjjvaPEYiI=
 github.com/shirou/gopsutil v3.21.11+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
+github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3 h1:6RsuA0LBbC/6DgTYzg659Pw7GKktubj1GzTcB/VNC44=
+github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-env v0.3.29 h1:hcIw/BeuB0wKiiE3umAUNBZzWkHO24XF3OW9xSrlMbI=
 github.com/smartcontractkit/chainlink-env v0.3.29/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230422214339-5fee8d7f3f82 h1:FX7LW/czuotFwzfK3UavL7HkKQv6fn/5wzcZASdKWQ0=
