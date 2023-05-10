@@ -270,6 +270,16 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 		return err
 	}
 
+	client, err := txm.client.Get()
+	if err != nil {
+		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
+	}
+
+	// register account for nonce manager
+	if err := txm.nonce.Register(context.TODO(), accountAddress, client.Gw.ChainId); err != nil {
+		return err
+	}
+
 	select {
 	case txm.queue <- Tx{senderAddress: senderAddress, accountAddress: accountAddress, call: tx}:
 	default:
