@@ -101,8 +101,38 @@ mod SimpleWriteAccessController {
     }
 
     ///
+    /// Ownership
+    ///
+
+    #[view]
+    fn owner() -> ContractAddress {
+        Ownable::owner()
+    }
+
+    #[view]
+    fn proposed_owner() -> ContractAddress {
+        Ownable::proposed_owner()
+    }
+
+    #[external]
+    fn transfer_ownership(new_owner: ContractAddress) {
+        Ownable::transfer_ownership(new_owner)
+    }
+
+    #[external]
+    fn accept_ownership() {
+        Ownable::accept_ownership()
+    }
+
+    #[external]
+    fn renounce_ownership() {
+        Ownable::renounce_ownership()
+    }
+
+    ///
     /// Upgradeable
     ///
+
     #[external]
     fn upgrade(new_impl: ClassHash) {
         Ownable::assert_only_owner();

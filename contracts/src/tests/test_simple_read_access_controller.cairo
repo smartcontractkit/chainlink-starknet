@@ -21,13 +21,11 @@ fn setup() -> ContractAddress {
     account
 }
 
-#[ignore]
 #[test]
 #[available_gas(2000000)]
 fn test_ownable() {
     let account = setup();
-    // TODO: controller currently does not expose ownable functions,
-    // refactor to separate lib from deployable contract
+    // Deploy simple read access controller
     let mut calldata = ArrayTrait::new();
     calldata.append(account.into()); // owner
     let (simpleReadAccessControllerAddr, _) = deploy_syscall(
