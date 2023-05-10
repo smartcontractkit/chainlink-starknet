@@ -1,5 +1,5 @@
-import { Account, Contract, Provider, ec, number } from 'starknet'
-import { loadContract, makeProvider } from './utils'
+import { Account, CompiledContract, Contract, Provider, ec, number } from 'starknet'
+import { loadContract, loadContractPath, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
 interface Transmission {
@@ -10,6 +10,7 @@ interface Transmission {
 }
 
 const CONTRACT_NAME = 'MockAggregator'
+const CONTRACT_PATH = '../../../../contracts/target/release/chainlink_MockAggregator'
 let account: Account
 let mock: Contract
 let transmission: Transmission
@@ -35,7 +36,7 @@ async function updateLatestRound() {
   const privateKey = process.env.DEPLOYER_PRIVATE_KEY as string
   account = new Account(provider, process.env.DEPLOYER_ACCOUNT_ADDRESS as string, privateKey)
 
-  const MockArtifact = loadContract(CONTRACT_NAME)
+  const MockArtifact = loadContractPath(`${CONTRACT_PATH}.sierra`) as CompiledContract
 
   mock = new Contract(MockArtifact.abi, process.env.MOCK as string)
   mock.connect(account)
