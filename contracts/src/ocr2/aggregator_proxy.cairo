@@ -47,8 +47,7 @@ mod AggregatorProxy {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::libraries::ownable::Ownable;
-    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
-    use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
+    use chainlink::libraries::access_controller::AccessController;
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
@@ -155,7 +154,8 @@ mod AggregatorProxy {
 
     #[constructor]
     fn constructor(owner: ContractAddress, address: ContractAddress) {
-        SimpleReadAccessController::initializer(owner);
+        Ownable::initializer(owner);
+        AccessController::initializer();
         _set_aggregator(address);
     }
 
@@ -194,38 +194,35 @@ mod AggregatorProxy {
         Upgradeable::upgrade(new_impl)
     }
 
-    // -- SimpleReadAccessController --
+    // -- Access Control --
 
-    #[external]
+    #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        SimpleReadAccessController::has_access(user, data)
+        AccessController::has_access(user, data)
     }
-
-    #[external]
-    fn check_access(user: ContractAddress) {
-        SimpleReadAccessController::check_access(user)
-    }
-
-    // -- SimpleWriteAccessController --
 
     #[external]
     fn add_access(user: ContractAddress) {
-        SimpleWriteAccessController::add_access(user)
+        Ownable::assert_only_owner();
+        AccessController::add_access(user)
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
-        SimpleWriteAccessController::remove_access(user)
+        Ownable::assert_only_owner();
+        AccessController::remove_access(user)
     }
 
     #[external]
     fn enable_access_check() {
-        SimpleWriteAccessController::enable_access_check()
+        Ownable::assert_only_owner();
+        AccessController::enable_access_check()
     }
 
     #[external]
     fn disable_access_check() {
-        SimpleWriteAccessController::disable_access_check()
+        Ownable::assert_only_owner();
+        AccessController::disable_access_check()
     }
 
     //
@@ -322,6 +319,6 @@ mod AggregatorProxy {
 
     fn _require_access() {
         let caller = starknet::info::get_caller_address();
-        SimpleReadAccessController::check_access(caller);
+        AccessController::check_access(caller);
     }
 }

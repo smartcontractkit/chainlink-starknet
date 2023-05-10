@@ -16,8 +16,6 @@ mod SequencerUptimeFeed {
 
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::access_controller::AccessController;
-    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
-    use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Aggregator::Transmission;
@@ -211,41 +209,36 @@ mod SequencerUptimeFeed {
     }
 
     ///
-    /// SimpleReadAccessController
+    /// Access Control
     ///
 
-    #[external]
+    #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        SimpleReadAccessController::has_access(user, data)
+        AccessController::has_access(user, data)
     }
-
-    #[external]
-    fn check_access(user: ContractAddress) {
-        SimpleReadAccessController::check_access(user)
-    }
-
-    ///
-    /// SimpleWriteAccessController
-    ///
 
     #[external]
     fn add_access(user: ContractAddress) {
-        SimpleWriteAccessController::add_access(user)
+        Ownable::assert_only_owner();
+        AccessController::add_access(user);
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
-        SimpleWriteAccessController::remove_access(user)
+        Ownable::assert_only_owner();
+        AccessController::remove_access(user);
     }
 
     #[external]
     fn enable_access_check() {
-        SimpleWriteAccessController::enable_access_check()
+        Ownable::assert_only_owner();
+        AccessController::enable_access_check();
     }
 
     #[external]
     fn disable_access_check() {
-        SimpleWriteAccessController::disable_access_check()
+        Ownable::assert_only_owner();
+        AccessController::disable_access_check();
     }
 
 
@@ -255,11 +248,12 @@ mod SequencerUptimeFeed {
 
     fn require_access() {
         let sender = starknet::info::get_caller_address();
-        SimpleReadAccessController::check_access(sender);
+        AccessController::check_access(sender);
     }
 
     fn initializer(initial_status: u128, owner_address: ContractAddress) {
-        SimpleReadAccessController::initializer(owner_address);
+        Ownable::initializer(owner_address);
+        AccessController::initializer();
         let round_id = 1_u128;
         // TODO: unavailable in alpha.6
         // let timestamp = starknet::info::get_block_timestamp();

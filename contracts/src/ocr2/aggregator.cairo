@@ -89,8 +89,7 @@ mod Aggregator {
     use starknet::class_hash::ClassHash;
 
     use chainlink::libraries::ownable::Ownable;
-    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
-    use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
+    use chainlink::libraries::access_controller::AccessController;
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
@@ -226,7 +225,7 @@ mod Aggregator {
 
     fn require_access() {
         let caller = starknet::info::get_caller_address();
-        SimpleReadAccessController::check_access(caller);
+        AccessController::check_access(caller);
     }
 
     impl Aggregator of IAggregator {
@@ -282,7 +281,8 @@ mod Aggregator {
         decimals: u8,
         description: felt252
     ) {
-        SimpleReadAccessController::initializer(owner); // also initializes ownable
+        Ownable::initializer(owner);
+        AccessController::initializer();
         _link_token::write(link);
         _billing_access_controller::write(billing_access_controller);
 
@@ -329,38 +329,35 @@ mod Aggregator {
         Ownable::renounce_ownership()
     }
 
-    // -- SimpleReadAccessController --
+    // -- Access Control --
 
-    #[external]
+    #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        SimpleReadAccessController::has_access(user, data)
+        AccessController::has_access(user, data)
     }
-
-    #[external]
-    fn check_access(user: ContractAddress) {
-        SimpleReadAccessController::check_access(user)
-    }
-
-    // -- SimpleWriteAccessController --
 
     #[external]
     fn add_access(user: ContractAddress) {
-        SimpleWriteAccessController::add_access(user)
+        Ownable::assert_only_owner();
+        AccessController::add_access(user)
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
-        SimpleWriteAccessController::remove_access(user)
+        Ownable::assert_only_owner();
+        AccessController::remove_access(user)
     }
 
     #[external]
     fn enable_access_check() {
-        SimpleWriteAccessController::enable_access_check()
+        Ownable::assert_only_owner();
+        AccessController::enable_access_check()
     }
 
     #[external]
     fn disable_access_check() {
-        SimpleWriteAccessController::disable_access_check()
+        Ownable::assert_only_owner();
+        AccessController::disable_access_check()
     }
 
     // --- Validation ---
