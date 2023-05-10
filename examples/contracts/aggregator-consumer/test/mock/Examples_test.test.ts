@@ -63,7 +63,7 @@ describe('ExamplesTests', function () {
       {
         contractAddress: mock.address,
         entrypoint: 'set_latest_round_data',
-        calldata: [number.toFelt(42), number.toFelt(3), number.toFelt(9876), number.toFelt(27839)],
+        calldata: [42, 3, 9876, 27839],
       },
       [mock.abi],
     )

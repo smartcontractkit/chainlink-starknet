@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.0;
 
 interface IStarknetMessagingEvents {
     // This event needs to be compatible with the one defined in Output.sol.

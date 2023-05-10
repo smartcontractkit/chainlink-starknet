@@ -7,7 +7,7 @@ import (
 	"math/big"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/caigo"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
@@ -15,10 +15,6 @@ import (
 // constants
 var (
 	byteLen = 32
-
-	// note: the contract hash must match the corresponding OZ gauntlet command hash - otherwise addresses will not correspond
-	defaultContractHash, _ = new(big.Int).SetString("0x0750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062", 0)
-	defaultSalt            = big.NewInt(100)
 )
 
 // PubKeyToContract implements the pubkey to deployed account given contract hash + salt
@@ -40,7 +36,7 @@ func PubKeyToStarkKey(pubkey PublicKey) []byte {
 	return starknet.PadBytes(pubkey.X.Bytes(), byteLen)
 }
 
-// reimplements parts of https://github.com/dontpanicdao/caigo/blob/main/utils.go#L85
+// reimplements parts of https://github.com/smartcontractkit/caigo/blob/main/utils.go#L85
 // generate the PK as a pseudo-random number in the interval [1, CurveOrder - 1]
 // using io.Reader, and Key struct
 func GenerateKey(material io.Reader) (k Key, err error) {

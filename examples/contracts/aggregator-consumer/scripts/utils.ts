@@ -1,6 +1,6 @@
 import fs from 'fs'
 import dotenv from 'dotenv'
-import { CompiledContract, json, ec, Account, Provider } from 'starknet'
+import { CompiledContract, json, ec, Account, Provider, constants } from 'starknet'
 
 const DEVNET_NAME = 'devnet'
 
@@ -56,8 +56,7 @@ export function createDeployerAccount(provider: Provider): Account {
     throw new Error('Deployer account address or private key is undefined!')
   }
 
-  const deployerKeyPair = ec.getKeyPair(privateKey)
-  return new Account(provider, accountAddress, deployerKeyPair)
+  return new Account(provider, accountAddress, privateKey)
 }
 
 export const makeProvider = () => {
@@ -73,7 +72,7 @@ export const makeProvider = () => {
   } else {
     return new Provider({
       sequencer: {
-        network: 'goerli-alpha',
+        network: constants.NetworkName.SN_GOERLI,
       },
     })
   }

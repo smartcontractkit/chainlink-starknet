@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/caigo"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"

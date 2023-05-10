@@ -3,8 +3,8 @@ package starknet
 import (
 	"testing"
 
-	caigogw "github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -144,9 +144,9 @@ describe('OCR2 Contract', () => {
       const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
       const response = await ocr2Contract.billing()
-      const billing = response[0]
-      expect(billing.observation_payment_gjuels.toNumber()).toEqual(1)
-      expect(billing.transmission_payment_gjuels.toNumber()).toEqual(1)
+      const { config: billing } = response
+      expect(billing.observation_payment_gjuels).toEqual(BigInt(1))
+      expect(billing.transmission_payment_gjuels).toEqual(BigInt(1))
     },
     TIMEOUT,
   )
@@ -168,7 +168,7 @@ describe('OCR2 Contract', () => {
       const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(ocr2.abi, contractAddress, provider)
       const response = await ocr2Contract.transmitters()
-      const resultTrasmitters = response[0]
+      const { transmitters: resultTransmitters } = response
 
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
@@ -188,9 +188,7 @@ describe('OCR2 Contract', () => {
       expect(eventSigners).toEqual(
         signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16)),
       ) // remove all prefixes
-      expect(resultTrasmitters).toEqual(
-        transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)),
-      )
+      expect(resultTransmitters).toEqual(transmitters.map((transmitter) => BigInt(transmitter)))
     },
     TIMEOUT,
   )

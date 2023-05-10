@@ -7,6 +7,7 @@
     python39Packages.pip
     python39Packages.venvShellHook
     python39Packages.fastecdsa # so libgmp is correctly sourced
+    zlib # for numpy
     gmp
     nodejs-18_x
     (yarn.override { nodejs = nodejs-18_x; })
@@ -31,7 +32,7 @@
     libusb1
   ];
 
-  LD_LIBRARY_PATH="${stdenv.cc.cc.lib}/lib64:$LD_LIBRARY_PATH";
+  LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.zlib stdenv.cc.cc.lib]; # lib64
   HELM_REPOSITORY_CONFIG=./.helm-repositories.yaml;
 
   venvDir = "./.venv";

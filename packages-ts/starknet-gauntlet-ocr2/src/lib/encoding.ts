@@ -1,16 +1,38 @@
-import { number, constants, encode } from 'starknet'
+import { num, constants, cairo } from 'starknet'
 import BN from 'bn.js'
 import { encoding } from '@chainlink/gauntlet-contracts-ocr2'
 
 const CHUNK_SIZE = 31
 
-export function bytesToFelts(data: Uint8Array): string[] {
-  let felts: string[] = []
+function packUint8Array(data: Uint8Array | Buffer): bigint {
+  let result: bigint = BigInt(0)
+  for (let i = 0; i < data.length; i++) {
+    result = (result << BigInt(8)) | BigInt(data[i])
+  }
+  return result
+}
 
+export function bytesToFelts(data: Uint8Array | Buffer): string[] {
+  const felts: string[] = []
+
+  // prefix with data length
+  felts.push(cairo.felt(data.byteLength))
+
+  // chunk every 31 bytes
+  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+    const chunk = data.slice(i, i + CHUNK_SIZE)
+    // cairo.felt() does not support packing a Uint8Array natively.
+    const packedValue = packUint8Array(chunk)
+    felts.push(cairo.felt(packedValue))
+  }
+  return felts
+}
+
+export function bytesToFeltsDeprecated(data: Uint8Array): string[] {
+  let felts: string[] = []
   // prefix with len
   let len = data.byteLength
-  felts.push(number.toBN(len).toString())
-
+  felts.push(num.toBigInt(len).toString())
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     const chunk = data.slice(i, i + CHUNK_SIZE)
@@ -20,26 +42,44 @@ export function bytesToFelts(data: Uint8Array): string[] {
   return felts
 }
 
-export function feltsToBytes(felts: BN[]): Buffer {
-  let data = []
+const MAX_LEN: bigint = (BigInt(1) << BigInt(54)) - BigInt(1)
 
-  // TODO: validate len > 1
+export function feltsToBytes(felts: string[]): Buffer {
+  const data: number[] = []
 
-  // TODO: validate it fits into 54 bits
-  let length = felts.shift()?.toNumber()!
+  if (!felts.length) {
+    throw new Error('Felt string is empty')
+  }
 
-  for (const felt of felts) {
-    let chunk = felt.toArray('be', Math.min(CHUNK_SIZE, length))
-    data.push(...chunk)
+  const remainingLengthBigInt = BigInt(felts.shift())
+  if (remainingLengthBigInt > MAX_LEN) {
+    throw new Error('Length does not fit in 54 bits')
+  }
 
-    length -= chunk.length
+  let remainingLength = Number(remainingLengthBigInt)
+  for (let felt of felts) {
+    if (remainingLength <= 0) {
+      throw new Error(
+        `Too many felts (${felts.length}) for length ${remainingLengthBigInt.toString()}`,
+      )
+    }
+    const chunkSize = Math.min(CHUNK_SIZE, remainingLength)
+    let packedValue: bigint = BigInt(felt)
+    const unpackedValues: number[] = []
+    for (let i = 0; i < chunkSize; i++) {
+      unpackedValues.push(Number(packedValue & BigInt(0xff)))
+      packedValue = packedValue >> BigInt(8)
+    }
+    unpackedValues.reverse()
+    data.push(...unpackedValues)
+    remainingLength -= chunkSize
   }
 
   return Buffer.from(data)
 }
 
 export const decodeOffchainConfigFromEventData = (data: string[]): encoding.OffchainConfig => {
-  const oraclesLen = number.toBN(data[3]).toNumber()
+  const oraclesLen = Number(num.toBigInt(data[3]))
   /** SetConfig event data has the following info:
     0 : previous_config_block_number=prev_block_num,
     1 : latest_config_digest=digest,
@@ -54,10 +94,5 @@ export const decodeOffchainConfigFromEventData = (data: string[]): encoding.Offc
     3 + 2X + 2 + 3 + 3 : offchain_config=offchain_config
    */
   const offchainConfigFelts = data.slice(3 + oraclesLen * 2 + 8)
-  return encoding.deserializeConfig(feltsToBytes(offchainConfigFelts.map((f) => number.toBN(f))))
-}
-
-export function toFelt(int: number | number.BigNumberish): BN {
-  let prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
-  return number.toBN(int).umod(prime)
+  return encoding.deserializeConfig(feltsToBytes(offchainConfigFelts))
 }

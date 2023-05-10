@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 

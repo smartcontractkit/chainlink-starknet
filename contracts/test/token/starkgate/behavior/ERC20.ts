@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { StarknetContract, Account } from 'hardhat/types/runtime'
-import { uint256, number } from 'starknet'
+import { uint256, num } from 'starknet'
 import { TIMEOUT } from '../../../constants'
 import { expectInvokeError } from '@chainlink/starknet/src/utils'
 
@@ -23,13 +23,13 @@ const expectERC20Balance = async (token: StarknetContract, acc: Account, expecte
     account: acc.starknetContract.address,
   })
   const balance = uint256.uint256ToBN(raw)
-  expect(balance).to.deep.equal(number.toBN(expected))
+  expect(balance).to.deep.equal(num.toBigInt(expected))
 }
 
 const expectERC20TotalSupply = async (token: StarknetContract, expected: number) => {
   const { totalSupply: raw } = await token.call('totalSupply', {})
   const totalSupply = uint256.uint256ToBN(raw)
-  expect(totalSupply).to.deep.equal(number.toBN(expected))
+  expect(totalSupply).to.deep.equal(num.toBigInt(expected))
 }
 
 export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {

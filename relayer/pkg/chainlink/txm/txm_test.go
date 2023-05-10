@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -80,7 +80,7 @@ func TestIntegration_Txm(t *testing.T) {
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
 		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(key, caigotypes.FunctionCall{
+			require.NoError(t, txm.Enqueue(key, key, caigotypes.FunctionCall{
 				ContractAddress:    key, // send to self
 				EntryPointSelector: "get_nonce",
 			}))

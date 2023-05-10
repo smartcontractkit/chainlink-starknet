@@ -7,7 +7,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/dontpanicdao/caigo"
+	"github.com/smartcontractkit/caigo"
 )
 
 // Raw represents the Stark private key
@@ -18,8 +18,6 @@ func (raw Raw) Key() Key {
 	k := Key{}
 	var err error
 
-	k.hash = defaultContractHash
-	k.salt = defaultSalt
 	k.priv = new(big.Int).SetBytes(raw)
 	k.pub.X, k.pub.Y, err = caigo.Curve.PrivateToPoint(k.priv)
 	if err != nil {
@@ -72,14 +70,7 @@ func newFrom(reader io.Reader) (Key, error) {
 
 // ID gets Key ID
 func (key Key) ID() string {
-	return key.AccountAddressStr()
-}
-
-// this is the derived contract address, the contract is deployed using the StarkKeyStr
-// This is the primary identifier for onchain interactions
-// the private key is identified by this
-func (key Key) AccountAddressStr() string {
-	return "0x" + hex.EncodeToString(PubKeyToAccount(key.pub, key.hash, key.salt))
+	return key.StarkKeyStr()
 }
 
 // StarkKeyStr is the starknet public key associated to the private key
@@ -96,7 +87,7 @@ func (key Key) Raw() Raw {
 
 // String is the print-friendly format of the Key
 func (key Key) String() string {
-	return fmt.Sprintf("StarknetKey{PrivateKey: <redacted>, Contract Address: %s}", key.AccountAddressStr())
+	return fmt.Sprintf("StarknetKey{PrivateKey: <redacted>, StarkKey: %s}", key.StarkKeyStr())
 }
 
 // GoString wraps String()

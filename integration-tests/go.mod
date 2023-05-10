@@ -3,15 +3,15 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.20
 
 require (
-	github.com/dontpanicdao/caigo v0.4.0
 	github.com/rs/zerolog v1.29.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
+	github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3
 	github.com/smartcontractkit/chainlink-env v0.3.29
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230329070929-8b04273864dc
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230418232145-9b83bdc20e8a
-	github.com/smartcontractkit/chainlink/v2 v2.0.0-20230418232145-9b83bdc20e8a
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230420131147-ce3c53a39d07
+	github.com/smartcontractkit/chainlink/v2 v2.1.0-beta0.0.20230427051455-edb338fd2536
 )
 
 require (
@@ -255,7 +255,7 @@ require (
 	github.com/pyroscope-io/godeltaprof v0.1.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
@@ -264,10 +264,10 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230418142941-22572bf2b14a
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230424181359-6cb4dc745ec7
 	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc // indirect
 	github.com/smartcontractkit/ocr2keepers v0.6.14 // indirect
-	github.com/smartcontractkit/ocr2vrf v0.0.0-20230313164535-dce9b4be73a3 // indirect
+	github.com/smartcontractkit/ocr2vrf v0.0.0-20230425184732-a793ac75f0a3 // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
 	github.com/smartcontractkit/wsrpc v0.6.2-0.20230317160629-382a1ac921d8 // indirect
 	github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 // indirect
@@ -375,13 +375,7 @@ replace (
 	github.com/smartcontractkit/chainlink-starknet/ops => ../ops
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
 
-	// The Loki - Grafana - Prometheus - Cortex stack is all sorts of wack
-	github.com/weaveworks/common => github.com/weaveworks/common v0.0.0-20200625145055-4b1847531bc9
-	google.golang.org/grpc => google.golang.org/grpc v1.29.1
-
 	// K8s imports are weird
 	k8s.io/api => k8s.io/api v0.25.4
 	k8s.io/client-go => k8s.io/client-go v0.25.4
 )
-
-exclude k8s.io/client-go v12.0.0+incompatible

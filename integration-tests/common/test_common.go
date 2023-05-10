@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -56,6 +56,7 @@ type Test struct {
 	mockServer            *ctfClient.MockserverClient
 	L1RPCUrl              string
 	Common                *Common
+	AccountAddresses      []string
 	LinkTokenAddr         string
 	OCRAddr               string
 	AccessControllerAddr  string
@@ -135,10 +136,10 @@ func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var peerIds []string
 	var txKeys []string
 	var cfgKeys []string
-	for _, key := range testState.Cc.NKeys {
+	for i, key := range testState.Cc.NKeys {
 		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
-		txKeys = append(txKeys, key.TXKey.Data.ID)
+		txKeys = append(txKeys, testState.AccountAddresses[i])
 		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
@@ -160,7 +161,7 @@ func (testState *Test) SetUpNodes(mockServerVal int) {
 	})
 	err := testState.SetMockServerValue("", mockServerVal)
 	require.NoError(testState.T, err, "Setting mock server value should not fail")
-	err = testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr)
+	err = testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
 	require.NoError(testState.T, err, "Creating jobs should not fail")
 }
 
@@ -331,7 +332,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			increasing = 0
 		}
 	}
-
 	if !isSoak {
 		assert.GreaterOrEqual(testState.T, increasing, rounds, "Round + epochs should be increasing")
 		assert.Equal(testState.T, positive, true, "Positive value should have been submitted")
