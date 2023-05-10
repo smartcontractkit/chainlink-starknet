@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
@@ -109,5 +109,5 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 }
 
 func (c *contractTransmitter) FromAccount() types.Account {
-	return types.Account(c.senderAddress.String())
+	return types.Account(c.accountAddress.String())
 }

@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
