@@ -14,7 +14,7 @@ interface UserAccount {
     privateKey: string
 }
 
-export async function fetchAccount() {
+export async function deployAccount() {
     const account = await createAccount()
 
     try {
@@ -26,6 +26,7 @@ export async function fetchAccount() {
     }
 
     exit(0); // must manually exit due to ts-node weirdness
+
 }
 
 async function createAccount(): Promise<UserAccount> {
@@ -77,5 +78,5 @@ async function createAccount(): Promise<UserAccount> {
     return { address: contract_address, privateKey: '0x' + Buffer.from(privateKey).toString('hex') }
 }
 
-fetchAccount()
+deployAccount()
 

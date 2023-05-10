@@ -20,6 +20,7 @@ export async function readDecimals() {
   const decimals = await consumer.call('read_decimals')
 
   console.log('decimals= ', decimals.toString())
+  return decimals
 }
 
 readDecimals()
