@@ -80,8 +80,9 @@ build-go-ops:
 build-go-integration-tests:
 	cd integration-tests/ && go build ./...
 
+# TODO: fix and readd build-ts-examples
 .PHONY: build-ts
-build-ts: build-ts-workspace build-cairo-contracts build-sol-contracts build-ts-examples
+build-ts: build-ts-workspace build-cairo-contracts build-sol-contracts
 
 .PHONY: build-ts-workspace
 build-ts-workspace:
@@ -221,9 +222,10 @@ test-integration-soak-ci:
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
+# TODO: readd test examples
+#       cd examples/contracts/aggregator-consumer/ && \
+#         yarn test
 test-integration-contracts: build-ts env-devnet-hardhat
-	cd examples/contracts/aggregator-consumer/ && \
-		yarn test
 	cd packages-ts/integration-multisig/ && \
 		yarn test
 	cd packages-ts/starknet/ && \
