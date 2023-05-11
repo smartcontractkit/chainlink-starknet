@@ -11,7 +11,8 @@ import {
   IntegratedDevnet,
   devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract, CONTRACT_LIST } from '../../src/lib/contracts'
+import { loadContract } from '@chainlink/starknet-gauntlet'
+import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
