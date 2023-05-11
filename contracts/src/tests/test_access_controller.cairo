@@ -3,7 +3,7 @@ use starknet::testing::set_caller_address;
 use starknet::contract_address_const;
 use starknet::class_hash::class_hash_const;
 
-use chainlink::access_control::simple_write_access_controller::SimpleWriteAccessController;
+use chainlink::access_control::access_controller::AccessController;
 
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
@@ -17,5 +17,5 @@ fn setup() -> ContractAddress {
 fn test_upgrade_not_owner() {
     let sender = setup();
 
-    SimpleWriteAccessController::upgrade(class_hash_const::<2>());
+    AccessController::upgrade(class_hash_const::<2>());
 }

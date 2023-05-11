@@ -15,7 +15,7 @@ mod SequencerUptimeFeed {
     use option::OptionTrait;
 
     use chainlink::libraries::ownable::Ownable;
-    use chainlink::libraries::access_controller::AccessController;
+    use chainlink::libraries::access_control::AccessControl;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Aggregator::Transmission;
@@ -51,7 +51,7 @@ mod SequencerUptimeFeed {
 
     impl Aggregator of IAggregator {
         fn latest_round_data() -> Round {
-            require_access();
+            _require_read_access();
             let latest_round_id = _latest_round_id::read();
             let round_transmission = _round_transmissions::read(latest_round_id);
             Round {
@@ -64,7 +64,7 @@ mod SequencerUptimeFeed {
         }
 
         fn round_data(round_id: u128) -> Round {
-            require_access();
+            _require_read_access();
             assert(round_id < _latest_round_id::read(), 'invalid round id');
             let round_transmission = _round_transmissions::read(round_id);
             Round {
@@ -91,7 +91,7 @@ mod SequencerUptimeFeed {
 
     #[constructor]
     fn constructor(initial_status: u128, owner_address: ContractAddress) {
-        initializer(initial_status, owner_address);
+        _initializer(initial_status, owner_address);
     }
 
     #[l1_handler]
@@ -214,31 +214,31 @@ mod SequencerUptimeFeed {
 
     #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        AccessController::has_access(user, data)
+        AccessControl::has_access(user, data)
     }
 
     #[external]
     fn add_access(user: ContractAddress) {
         Ownable::assert_only_owner();
-        AccessController::add_access(user);
+        AccessControl::add_access(user);
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
         Ownable::assert_only_owner();
-        AccessController::remove_access(user);
+        AccessControl::remove_access(user);
     }
 
     #[external]
     fn enable_access_check() {
         Ownable::assert_only_owner();
-        AccessController::enable_access_check();
+        AccessControl::enable_access_check();
     }
 
     #[external]
     fn disable_access_check() {
         Ownable::assert_only_owner();
-        AccessController::disable_access_check();
+        AccessControl::disable_access_check();
     }
 
 
@@ -246,14 +246,14 @@ mod SequencerUptimeFeed {
     /// Internals
     ///
 
-    fn require_access() {
+    fn _require_read_access() {
         let sender = starknet::info::get_caller_address();
-        AccessController::check_access(sender);
+        AccessControl::check_read_access(sender);
     }
 
-    fn initializer(initial_status: u128, owner_address: ContractAddress) {
+    fn _initializer(initial_status: u128, owner_address: ContractAddress) {
         Ownable::initializer(owner_address);
-        AccessController::initializer();
+        AccessControl::initializer();
         let round_id = 1_u128;
         // TODO: unavailable in alpha.6
         // let timestamp = starknet::info::get_block_timestamp();

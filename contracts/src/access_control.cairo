@@ -1,2 +1,1 @@
-mod simple_read_access_controller;
-mod simple_write_access_controller;
+mod access_controller;

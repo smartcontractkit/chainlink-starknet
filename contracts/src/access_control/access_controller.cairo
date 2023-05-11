@@ -1,45 +1,45 @@
 #[contract]
-mod SimpleWriteAccessController {
+mod AccessController {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
-    use chainlink::libraries::access_controller::AccessController;
+    use chainlink::libraries::access_control::AccessControl;
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::upgradeable::Upgradeable;
 
     #[constructor]
     fn constructor(owner_address: ContractAddress) {
         Ownable::initializer(owner_address);
-        AccessController::initializer();
+        AccessControl::initializer();
     }
 
     #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        AccessController::has_access(user, data)
+        AccessControl::has_access(user, data)
     }
 
     #[external]
     fn add_access(user: ContractAddress) {
         Ownable::assert_only_owner();
-        AccessController::add_access(user);
+        AccessControl::add_access(user);
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
         Ownable::assert_only_owner();
-        AccessController::remove_access(user);
+        AccessControl::remove_access(user);
     }
 
     #[external]
     fn enable_access_check() {
         Ownable::assert_only_owner();
-        AccessController::enable_access_check();
+        AccessControl::enable_access_check();
     }
 
     #[external]
     fn disable_access_check() {
         Ownable::assert_only_owner();
-        AccessController::disable_access_check();
+        AccessControl::disable_access_check();
     }
 
     ///

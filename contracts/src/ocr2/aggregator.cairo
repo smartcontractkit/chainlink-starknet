@@ -89,7 +89,7 @@ mod Aggregator {
     use starknet::class_hash::ClassHash;
 
     use chainlink::libraries::ownable::Ownable;
-    use chainlink::libraries::access_controller::AccessController;
+    use chainlink::libraries::access_control::AccessControl;
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
@@ -223,14 +223,14 @@ mod Aggregator {
         ContractAddress> // <transmitter, payment_address>
     }
 
-    fn require_access() {
+    fn _require_read_access() {
         let caller = starknet::info::get_caller_address();
-        AccessController::check_access(caller);
+        AccessControl::check_read_access(caller);
     }
 
     impl Aggregator of IAggregator {
         fn latest_round_data() -> Round {
-            require_access();
+            _require_read_access();
             let latest_round_id = _latest_aggregator_round_id::read();
             let transmission = _transmissions::read(latest_round_id);
             Round {
@@ -243,7 +243,7 @@ mod Aggregator {
         }
 
         fn round_data(round_id: u128) -> Round {
-            require_access();
+            _require_read_access();
             let transmission = _transmissions::read(round_id);
             Round {
                 round_id: round_id.into(),
@@ -255,12 +255,12 @@ mod Aggregator {
         }
 
         fn description() -> felt252 {
-            require_access();
+            _require_read_access();
             _description::read()
         }
 
         fn decimals() -> u8 {
-            require_access();
+            _require_read_access();
             _decimals::read()
         }
 
@@ -282,7 +282,7 @@ mod Aggregator {
         description: felt252
     ) {
         Ownable::initializer(owner);
-        AccessController::initializer();
+        AccessControl::initializer();
         _link_token::write(link);
         _billing_access_controller::write(billing_access_controller);
 
@@ -333,31 +333,31 @@ mod Aggregator {
 
     #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        AccessController::has_access(user, data)
+        AccessControl::has_access(user, data)
     }
 
     #[external]
     fn add_access(user: ContractAddress) {
         Ownable::assert_only_owner();
-        AccessController::add_access(user)
+        AccessControl::add_access(user);
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
         Ownable::assert_only_owner();
-        AccessController::remove_access(user)
+        AccessControl::remove_access(user);
     }
 
     #[external]
     fn enable_access_check() {
         Ownable::assert_only_owner();
-        AccessController::enable_access_check()
+        AccessControl::enable_access_check();
     }
 
     #[external]
     fn disable_access_check() {
         Ownable::assert_only_owner();
-        AccessController::disable_access_check()
+        AccessControl::disable_access_check();
     }
 
     // --- Validation ---

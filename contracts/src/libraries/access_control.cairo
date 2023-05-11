@@ -1,5 +1,5 @@
 #[contract]
-mod AccessController {
+mod AccessControl {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
     use zeroable::Zeroable;
@@ -16,10 +16,10 @@ mod AccessController {
     fn RemovedAccess(user: ContractAddress) {}
 
     #[event]
-    fn AccessControllerEnabled() {}
+    fn AccessControlEnabled() {}
 
     #[event]
-    fn AccessControllerDisabled() {}
+    fn AccessControlDisabled() {}
 
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
         let has_access = _access_list::read(user);
@@ -32,7 +32,16 @@ mod AccessController {
             return true;
         }
 
-        // NOTICE: access is granted to direct calls, to enable off-chain reads.
+        false
+    }
+
+    fn has_read_access(user: ContractAddress, data: Array<felt252>) -> bool {
+        let _has_access = has_access(user, data);
+        if _has_access {
+            return true;
+        }
+
+        // NOTICE: read access is granted to direct calls, to enable off-chain reads.
         if user.is_zero() {
             return true;
         }
@@ -42,7 +51,12 @@ mod AccessController {
 
     fn check_access(user: ContractAddress) {
         let allowed = has_access(user, ArrayTrait::new());
-        assert(allowed, 'address does not have access');
+        assert(allowed, 'user does not have access');
+    }
+
+    fn check_read_access(user: ContractAddress) {
+        let allowed = has_read_access(user, ArrayTrait::new());
+        assert(allowed, 'user does not have read access');
     }
 
     //
@@ -51,7 +65,7 @@ mod AccessController {
 
     fn initializer() {
         _check_enabled::write(true);
-        AccessControllerEnabled();
+        AccessControlEnabled();
     }
 
     fn add_access(user: ContractAddress) {
@@ -74,7 +88,7 @@ mod AccessController {
         let check_enabled = _check_enabled::read();
         if !check_enabled {
             _check_enabled::write(true);
-            AccessControllerEnabled();
+            AccessControlEnabled();
         }
     }
 
@@ -82,7 +96,7 @@ mod AccessController {
         let check_enabled = _check_enabled::read();
         if check_enabled {
             _check_enabled::write(false);
-            AccessControllerDisabled();
+            AccessControlDisabled();
         }
     }
 }

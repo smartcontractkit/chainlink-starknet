@@ -1,4 +1,4 @@
 mod ownable;
-mod access_controller;
+mod access_control;
 mod token;
 mod upgradeable;
