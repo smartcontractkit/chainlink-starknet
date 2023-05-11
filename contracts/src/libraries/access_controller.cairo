@@ -2,6 +2,7 @@
 mod AccessController {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
+    use zeroable::Zeroable;
 
     struct Storage {
         _check_enabled: bool,
