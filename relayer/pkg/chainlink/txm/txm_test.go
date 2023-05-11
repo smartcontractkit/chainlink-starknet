@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smartcontractkit/caigo/test"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,12 +24,20 @@ import (
 
 func TestIntegration_Txm(t *testing.T) {
 	url := SetupLocalStarknetNode(t)
-	rawLocalKeys := TestKeys(t, 2) // generate 2 keys
+	// url := "http://127.0.0.1:5050/"
+	devnet := test.NewDevNet(url)
+	accounts, err := devnet.Accounts()
+	require.NoError(t, err)
 
 	// parse keys into expected format
 	localKeys := map[string]keys.Key{}
-	for _, k := range rawLocalKeys {
-		key := keys.Raw(k).Key()
+	for i := 0; i < 2; i++ {
+		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
+		require.NoError(t, err)
+
+		key := keys.Raw(privKey).Key()
+		assert.Equal(t, caigotypes.HexToHash(accounts[i].PublicKey), caigotypes.HexToHash(key.ID()))
+		assert.Equal(t, caigotypes.HexToHash(accounts[i].Address), caigotypes.HexToHash(key.DevnetAccountAddrStr()))
 		localKeys[key.ID()] = key
 	}
 
