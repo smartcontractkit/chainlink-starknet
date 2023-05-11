@@ -7,9 +7,6 @@ on:
       - main
   pull_request:
 
-env:
-  CAIRO_VERSION: v1.0.0-alpha.6
-
 jobs:
   lint_format_check:
     name: Format Check
@@ -23,11 +20,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Setup Cairo for Linux
-        run: |
-          wget https://github.com/starkware-libs/cairo/releases/download/${{ env.CAIRO_VERSION }}/release-x86_64-unknown-linux-musl.tar.gz
-          tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
-          echo "$GITHUB_WORKSPACE/cairo/bin" >> $GITHUB_PATH
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
 
       - name: Install
         run: nix develop -c yarn install --frozen-lockfile
