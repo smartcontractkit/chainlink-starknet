@@ -41,6 +41,11 @@ mod SimpleReadAccessController {
         SimpleReadAccessController::has_access(user, data)
     }
 
+    #[view]
+    fn type_and_version() -> felt252 {
+        'SimpleReadAccessController 1.0.0'
+    }
+
     #[external]
     fn check_access(user: ContractAddress) {
         SimpleReadAccessController::check_access(user)
