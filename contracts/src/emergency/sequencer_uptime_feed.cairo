@@ -255,9 +255,7 @@ mod SequencerUptimeFeed {
         Ownable::initializer(owner_address);
         AccessControl::initializer();
         let round_id = 1_u128;
-        // TODO: unavailable in alpha.6
-        // let timestamp = starknet::info::get_block_timestamp();
-        let timestamp = starknet::info::get_block_info().unbox().block_timestamp;
+        let timestamp = starknet::info::get_block_timestamp();
         _record_round(round_id, initial_status, timestamp);
     }
 
@@ -282,9 +280,7 @@ mod SequencerUptimeFeed {
     }
 
     fn _update_round(round_id: u128, mut round: Transmission) {
-        // TODO: unavailable in alpha.6
-        // round.transmission_timestamp = starknet::info::get_block_timestamp();
-        round.transmission_timestamp = starknet::info::get_block_info().unbox().block_timestamp;
+        round.transmission_timestamp = starknet::info::get_block_timestamp();
         _round_transmissions::write(round_id, round);
 
         RoundUpdated(round.answer, round.transmission_timestamp);
