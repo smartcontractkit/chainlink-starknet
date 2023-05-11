@@ -47,8 +47,7 @@ mod AggregatorProxy {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::libraries::ownable::Ownable;
-    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
-    use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
+    use chainlink::libraries::access_control::AccessControl;
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
@@ -103,7 +102,7 @@ mod AggregatorProxy {
 
     impl AggregatorProxy of IAggregatorProxy {
         fn latest_round_data() -> Round {
-            _require_access();
+            _require_read_access();
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             let round = aggregator.latest_round_data();
@@ -116,7 +115,7 @@ mod AggregatorProxy {
             }
         }
         fn round_data(round_id: felt252) -> Round {
-            _require_access();
+            _require_read_access();
             let (phase_id, round_id) = split_felt(round_id);
             let address = _phases::read(phase_id);
             assert(!address.is_zero(), 'aggregator address is 0');
@@ -133,14 +132,14 @@ mod AggregatorProxy {
             }
         }
         fn description() -> felt252 {
-            _require_access();
+            _require_read_access();
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.description()
         }
 
         fn decimals() -> u8 {
-            _require_access();
+            _require_read_access();
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.decimals()
@@ -155,7 +154,8 @@ mod AggregatorProxy {
 
     #[constructor]
     fn constructor(owner: ContractAddress, address: ContractAddress) {
-        SimpleReadAccessController::initializer(owner);
+        Ownable::initializer(owner);
+        AccessControl::initializer();
         _set_aggregator(address);
     }
 
@@ -194,38 +194,35 @@ mod AggregatorProxy {
         Upgradeable::upgrade(new_impl)
     }
 
-    // -- SimpleReadAccessController --
+    // -- Access Control --
 
-    #[external]
+    #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        SimpleReadAccessController::has_access(user, data)
+        AccessControl::has_access(user, data)
     }
-
-    #[external]
-    fn check_access(user: ContractAddress) {
-        SimpleReadAccessController::check_access(user)
-    }
-
-    // -- SimpleWriteAccessController --
 
     #[external]
     fn add_access(user: ContractAddress) {
-        SimpleWriteAccessController::add_access(user)
+        Ownable::assert_only_owner();
+        AccessControl::add_access(user)
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
-        SimpleWriteAccessController::remove_access(user)
+        Ownable::assert_only_owner();
+        AccessControl::remove_access(user)
     }
 
     #[external]
     fn enable_access_check() {
-        SimpleWriteAccessController::enable_access_check()
+        Ownable::assert_only_owner();
+        AccessControl::enable_access_check()
     }
 
     #[external]
     fn disable_access_check() {
-        SimpleWriteAccessController::disable_access_check()
+        Ownable::assert_only_owner();
+        AccessControl::disable_access_check()
     }
 
     //
@@ -257,7 +254,7 @@ mod AggregatorProxy {
 
     #[view]
     fn proposed_latest_round_data() -> Round {
-        _require_access();
+        _require_read_access();
         let address = _proposed_aggregator::read();
         let aggregator = IAggregatorDispatcher { contract_address: address };
         aggregator.latest_round_data()
@@ -265,7 +262,7 @@ mod AggregatorProxy {
 
     #[view]
     fn proposed_round_data(round_id: felt252) -> Round {
-        _require_access();
+        _require_read_access();
         let address = _proposed_aggregator::read();
         let round_id128: u128 = round_id.try_into().unwrap();
         let aggregator = IAggregatorDispatcher { contract_address: address };
@@ -274,14 +271,14 @@ mod AggregatorProxy {
 
     #[view]
     fn aggregator() -> ContractAddress {
-        _require_access();
+        _require_read_access();
         let phase = _current_phase::read();
         phase.aggregator
     }
 
     #[view]
     fn phase_id() -> u128 {
-        _require_access();
+        _require_read_access();
         let phase = _current_phase::read();
         phase.id
     }
@@ -320,8 +317,8 @@ mod AggregatorProxy {
         _phases::write(new_phase_id, address);
     }
 
-    fn _require_access() {
+    fn _require_read_access() {
         let caller = starknet::info::get_caller_address();
-        SimpleReadAccessController::check_access(caller);
+        AccessControl::check_read_access(caller);
     }
 }

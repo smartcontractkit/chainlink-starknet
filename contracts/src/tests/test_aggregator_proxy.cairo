@@ -82,7 +82,7 @@ fn test_query_latest_round_data() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('address does not have access', ))]
+#[should_panic(expected: ('user does not have read access', ))]
 fn test_query_latest_round_data_without_access() {
     let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
     // init aggregator proxy with mock aggregator
