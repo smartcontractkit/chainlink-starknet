@@ -3,11 +3,11 @@ module github.com/smartcontractkit/chainlink-starknet/ops
 go 1.20
 
 require (
-	github.com/dontpanicdao/caigo v0.4.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.29.1
+	github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3
 	github.com/smartcontractkit/chainlink-env v0.3.29
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20221102160912-61646f534e3a
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
 )
 

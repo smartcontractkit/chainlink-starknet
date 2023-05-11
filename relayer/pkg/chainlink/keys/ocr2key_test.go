@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/assert"

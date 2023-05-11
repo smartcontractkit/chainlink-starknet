@@ -1,30 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/TypeAndVersionInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/SimpleWriteAccessController.sol";
 import "@chainlink/contracts/src/v0.8/dev/vendor/openzeppelin-solidity/v4.3.1/contracts/utils/Address.sol";
-import "../../vendor/starkware-libs/starkgate-contracts-solidity-v0.8/src/starkware/starknet/solidity/IStarknetMessaging.sol";
-
-// import "@chainlink/contracts/src/v0.8/interfaces/AggregatorValidatorInterface.sol";
-// NOTE: can't use ^ because it isn't defined with payable attribute
-interface AggregatorValidatorInterface {
-  function validate(
-    uint256 previousRoundId,
-    int256 previousAnswer,
-    uint256 currentRoundId,
-    int256 currentAnswer
-  ) external payable returns (bool);
-}
+import "../../vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/IStarknetMessaging.sol";
 
 /// @title StarknetValidator - makes cross chain calls to update the Sequencer Uptime Feed on L2
 contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterface, SimpleWriteAccessController {
   // Config for L1 -> L2 message cost approximation
+  // Message Cost = gasAdjustment * gasEstimate * gasPriceL1Feed / 100
   struct GasConfig {
+    // gas units derived from starknet estimate_message_fee
+    // recommended value is 17300 at time of writing
     uint256 gasEstimate;
     address gasPriceL1Feed;
+    // gasAdjustment of 100 equals 1x (see setGasConfig for more info)
+    // recommended value is 130 (or 1.3x) because at time of writing
+    // L2 gas price is equal to L1 gas price + some margin
+    uint32 gasAdjustment;
   }
 
   int256 private constant ANSWER_SEQ_OFFLINE = 1;
@@ -50,7 +47,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   error AccessForbidden();
 
   /// @notice This event is emitted when the gas config is set.
-  event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed);
+  event GasConfigSet(uint256 gasEstimate, address indexed gasPriceL1Feed, uint32 gasAdjustment);
   /// @notice emitted when a new gas access-control contract is set
   event ConfigACSet(address indexed previous, address indexed current);
   /// @notice emitted when a new source aggregator contract is set
@@ -72,7 +69,8 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     address gasPriceL1Feed,
     address source,
     uint256 l2Feed,
-    uint256 gasEstimate
+    uint256 gasEstimate,
+    uint32 gasAdjustment
   ) {
     if (starknetMessaging == address(0)) {
       revert InvalidStarknetMessagingAddress();
@@ -87,7 +85,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
     _setSourceAggregator(source);
     _setConfigAC(configAC);
-    _setGasConfig(gasEstimate, gasPriceL1Feed);
+    _setGasConfig(gasEstimate, gasPriceL1Feed, gasAdjustment);
   }
 
   /// @notice converts a bool to uint256.
@@ -133,7 +131,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
     int256 /* previousAnswer */,
     uint256 /* currentRoundId */,
     int256 currentAnswer
-  ) external payable override checkAccess returns (bool) {
+  ) external override checkAccess returns (bool) {
     return _sendUpdateMessageToL2(currentAnswer);
   }
 
@@ -141,7 +139,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @notice retries to send the latest answer as update message to L2
    * @dev only with access, useful in cases where a previous x-domain message was handeled unsuccessfully.
    */
-  function retry() external payable checkAccess returns (bool) {
+  function retry() external checkAccess returns (bool) {
     (, int256 latestAnswer, , , ) = AggregatorV3Interface(s_source).latestRoundData();
     return _sendUpdateMessageToL2(latestAnswer);
   }
@@ -155,7 +153,6 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   function _sendUpdateMessageToL2(int256 answer) internal returns (bool) {
     // Bridge fees are paid on L1
     uint256 fee = _approximateFee();
-    require(msg.value >= fee, "Insufficent L1 -> L2 fee");
 
     // Fill payload with `status` and `timestamp`
     uint256[] memory payload = new uint256[](2);
@@ -176,8 +173,14 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /// @notice L1 oracle is asked for a fast L1 gas price, and the price multiplied by the configured gas estimate
   function _approximateFee() internal view returns (uint256) {
+    uint256 gasPrice = approximateGasPrice();
+    return gasPrice * s_gasConfig.gasEstimate;
+  }
+
+  /// @notice calculates the gas price accounting for the gasAdjustment values
+  function approximateGasPrice() public view returns (uint256) {
     (, int256 fastGasPriceInWei, , , ) = AggregatorV3Interface(s_gasConfig.gasPriceL1Feed).latestRoundData();
-    return uint256(fastGasPriceInWei) * s_gasConfig.gasEstimate;
+    return (uint256(fastGasPriceInWei) * uint256(s_gasConfig.gasAdjustment)) / 100;
   }
 
   /**
@@ -196,9 +199,15 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param gasEstimate The estimated units of gas to execute the transaction on L2.
    * This value should include any buffer to include.
    * @param gasPriceL1Feed The address of the fast gas L1 feed on L1.
+   * @param gasAdjustment Percentage of the the cost to use. Ex: gasAdjustment of 120
+   * means 120% of original value, 1.2x multiplier, or 20% increase (all mean the same thing)
    */
-  function setGasConfig(uint256 gasEstimate, address gasPriceL1Feed) external onlyOwnerOrConfigAccess {
-    _setGasConfig(gasEstimate, gasPriceL1Feed);
+  function setGasConfig(
+    uint256 gasEstimate,
+    address gasPriceL1Feed,
+    uint32 gasAdjustment
+  ) external onlyOwnerOrConfigAccess {
+    _setGasConfig(gasEstimate, gasPriceL1Feed, gasAdjustment);
   }
 
   /**
@@ -206,13 +215,15 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param gasEstimate The estimated units of gas to execute the transaction on L2.
    * This value should include any buffer to include.
    * @param gasPriceL1Feed The address of the fast gas L1 feed on L1.
+   * @param gasAdjustment Percentage of the the cost to use. Ex: gasAdjustment of 120
+   * means 120% of original value, 1.2x multiplier, or 20% increase (all mean the same thing)
    */
-  function _setGasConfig(uint256 gasEstimate, address gasPriceL1Feed) internal {
+  function _setGasConfig(uint256 gasEstimate, address gasPriceL1Feed, uint32 gasAdjustment) internal {
     if (gasPriceL1Feed == address(0)) {
       revert InvalidGasPriceL1FeedAddress();
     }
-    s_gasConfig = GasConfig(gasEstimate, gasPriceL1Feed);
-    emit GasConfigSet(gasEstimate, gasPriceL1Feed);
+    s_gasConfig = GasConfig(gasEstimate, gasPriceL1Feed, gasAdjustment);
+    emit GasConfigSet(gasEstimate, gasPriceL1Feed, gasAdjustment);
   }
 
   /**
