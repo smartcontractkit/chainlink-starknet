@@ -6,7 +6,8 @@ import {
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
-import { bytesToFelts, decodeOffchainConfigFromEventData } from '../../lib/encoding'
+import { bytesToFelts } from '@chainlink/starknet-gauntlet'
+import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { InvokeTransactionReceiptResponse } from 'starknet'
 

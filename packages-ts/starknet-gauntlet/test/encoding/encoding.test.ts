@@ -1,4 +1,22 @@
-import { bytesToFelts, bytesToFeltsDeprecated, feltsToBytes } from '../../src/lib/encoding'
+import BN from 'bn.js'
+import { num } from 'starknet'
+import { bytesToFelts, feltsToBytes } from '../../src/encoding'
+
+const CHUNK_SIZE = 31
+
+export function bytesToFeltsDeprecated(data: Uint8Array): string[] {
+  let felts: string[] = []
+  // prefix with len
+  let len = data.byteLength
+  felts.push(num.toBigInt(len).toString())
+  // chunk every 31 bytes
+  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+    const chunk = data.slice(i, i + CHUNK_SIZE)
+    // cast to int
+    felts.push(new BN(chunk, 'be').toString())
+  }
+  return felts
+}
 
 function createUint8Array(len: number): Uint8Array {
   const ret: Uint8Array = new Uint8Array(len)
