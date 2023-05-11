@@ -11,7 +11,8 @@ import {
   LOCAL_URL,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
-import { CONTRACT_LIST, loadContract } from '../../src/lib/contracts'
+import { loadContract } from '@chainlink/starknet-gauntlet'
+import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('Multisig', () => {

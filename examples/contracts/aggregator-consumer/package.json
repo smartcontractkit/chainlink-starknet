@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile:cairo": "scarb --profile release build",
-    "compile": "yarn compile:cairo",
     "test": "npx hardhat --network localhost test",
     "readDecimals": "npx ts-node ./scripts/readDecimals.ts",
     "readLatestRound": "npx ts-node ./scripts/readLatestRound.ts"

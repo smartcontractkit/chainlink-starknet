@@ -1,16 +1,8 @@
-<<<<<<< HEAD
 import fs from 'fs'
 import { json } from 'starknet'
-=======
-import { loadContract } from '@chainlink/starknet-gauntlet'
->>>>>>> cairo-1.0
+import { LoadContractResult } from '../commands/base/executeCommand'
 
-export enum CONTRACT_LIST {
-  EXAMPLE = 'example',
-}
-
-<<<<<<< HEAD
-export const loadContract = (name: CONTRACT_LIST) => {
+export const loadContract = (name: string): LoadContractResult => {
   return {
     contract: json.parse(
       fs.readFileSync(
@@ -26,7 +18,3 @@ export const loadContract = (name: CONTRACT_LIST) => {
     ),
   }
 }
-
-=======
->>>>>>> cairo-1.0
-export const tokenContractLoader = () => loadContract(CONTRACT_LIST.EXAMPLE)

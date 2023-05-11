@@ -3357,6 +3357,7 @@ emoji-regex@^9.2.2:
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-9.2.2.tgz#840c8803b0d8047f4ff0cf963176b32d4ef3ed72"
   integrity sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==
 
+<<<<<<< HEAD
 enc-utils@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/enc-utils/-/enc-utils-3.0.0.tgz#65935d2d6a867fa0ae995f05f3a2f055ce764dcf"
@@ -3365,6 +3366,8 @@ enc-utils@^3.0.0:
     is-typedarray "1.0.0"
     typedarray-to-buffer "3.1.5"
 
+=======
+>>>>>>> cairo-1.0
 end-of-stream@^1.0.0, end-of-stream@^1.1.0, end-of-stream@^1.4.1:
   version "1.4.4"
   resolved "https://registry.yarnpkg.com/end-of-stream/-/end-of-stream-1.4.4.tgz#5ae64a5f45057baf3626ec14da0ca5e4b2431eb0"
@@ -6968,9 +6971,16 @@ starknet@^4.17.1, starknet@^4.22.0:
     ts-custom-error "^3.3.1"
     url-join "^4.0.1"
 
+<<<<<<< HEAD
 "starknet@git+https://github.com/0xs34n/starknet.js#afe2f91c9e27f14a532d940bd5ac59d0d290186d":
   version "5.9.2"
   resolved "git+https://github.com/0xs34n/starknet.js#afe2f91c9e27f14a532d940bd5ac59d0d290186d"
+=======
+starknet@^5.10.0:
+  version "5.10.0"
+  resolved "https://registry.yarnpkg.com/starknet/-/starknet-5.10.0.tgz#e76dbd802b962b6daf7f5452795e3e332a50c56a"
+  integrity sha512-yN8mjUKI4nK4+SXdqXXL9H+6CRUWLmw2zCBrNgokwL19dXzim63eqwEBJdZZcSaE2GzAe4J9PqLPm4ri8Ews+Q==
+>>>>>>> cairo-1.0
   dependencies:
     "@noble/curves" "^0.8.2"
     isomorphic-fetch "^3.0.0"

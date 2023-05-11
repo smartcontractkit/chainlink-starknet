@@ -1,7 +1,7 @@
 package starknet
 
 import (
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 )
 
 type CallOps struct {

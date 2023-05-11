@@ -1,10 +1,15 @@
 import { assert, expect } from 'chai'
 import { starknet } from 'hardhat'
-import { ec, hash, num, cairo } from 'starknet'
+import { ec, hash, num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
+import {
+  account,
+  expectInvokeError,
+  expectSuccessOrDeclared,
+  bytesToFelts,
+} from '@chainlink/starknet'
 
 interface Oracle {
   // hex string
@@ -12,36 +17,10 @@ interface Oracle {
   transmitter: Account
 }
 
-const CHUNK_SIZE = 31
-
 // Observers - max 31 oracles or 31 bytes
 const OBSERVERS_MAX = 31
 const OBSERVERS_HEX = '0x00010203000000000000000000000000000000000000000000000000000000'
 const UINT128_MAX = BigInt(2) ** BigInt(128) - BigInt(1)
-
-function packUint8Array(data: Uint8Array | Buffer): bigint {
-  let result: bigint = BigInt(0)
-  for (let i = 0; i < data.length; i++) {
-    result = (result << BigInt(8)) | BigInt(data[i])
-  }
-  return result
-}
-
-export function encodeBytes(data: Uint8Array | Buffer): string[] {
-  const felts: string[] = []
-
-  // prefix with data length
-  felts.push(cairo.felt(data.byteLength))
-
-  // chunk every 31 bytes
-  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-    const chunk = data.slice(i, i + CHUNK_SIZE)
-    // cairo.felt() does not support packing a Uint8Array natively.
-    const packedValue = packUint8Array(chunk)
-    felts.push(cairo.felt(packedValue))
-  }
-  return felts
-}
 
 describe('Aggregator', function () {
   this.timeout(TIMEOUT)
@@ -77,7 +56,10 @@ describe('Aggregator', function () {
 
     const tokenFactory = await starknet.getContractFactory('link_token')
     await expectSuccessOrDeclared(owner.declare(tokenFactory, { maxFee: 1e20 }))
-    token = await owner.deploy(tokenFactory, { minter: owner.starknetContract.address })
+    token = await owner.deploy(tokenFactory, {
+      minter: owner.starknetContract.address,
+      owner: owner.starknetContract.address,
+    })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
@@ -119,8 +101,8 @@ describe('Aggregator', function () {
     let onchain_config: number[] = []
     let offchain_config_version = 2
     let offchain_config = new Uint8Array([1])
-    let offchain_config_encoded = encodeBytes(offchain_config)
-    console.log('Encoded offchain_config: %O', encodeBytes(offchain_config))
+    let offchain_config_encoded = bytesToFelts(offchain_config)
+    console.log('Encoded offchain_config: %O', offchain_config_encoded)
 
     let config = {
       oracles: oracles.map((oracle) => {
@@ -349,7 +331,7 @@ describe('Aggregator', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -361,7 +343,7 @@ describe('Aggregator', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
