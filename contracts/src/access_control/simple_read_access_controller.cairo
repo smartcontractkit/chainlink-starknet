@@ -53,6 +53,11 @@ mod SimpleReadAccessController {
     /// Upgradeable
     ///
 
+    #[view]
+    fn type_and_version() -> felt252 {
+        'ReadAccessController 1.0.0'
+    }
+
     #[external]
     fn upgrade(new_impl: ClassHash) {
         Ownable::assert_only_owner();
