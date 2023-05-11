@@ -31,6 +31,11 @@ mod AccessController {
             return true;
         }
 
+        // NOTICE: access is granted to direct calls, to enable off-chain reads.
+        if user.is_zero() {
+            return true;
+        }
+
         false
     }
 
