@@ -43,7 +43,7 @@ mod SimpleReadAccessController {
 
     #[view]
     fn type_and_version() -> felt252 {
-        'SimpleReadAccessController 1.0.0'
+        'ReadAccessController 1.0.0'
     }
 
     #[external]
