@@ -15,7 +15,7 @@ use chainlink::ocr2::mocks::mock_aggregator::MockAggregator;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
-use chainlink::tests::test_ownable::should_behave_like_ownable_contract;
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 #[abi]
 trait IMockAggregator {
@@ -67,7 +67,7 @@ fn test_ownable() {
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     ).unwrap();
 
-    should_behave_like_ownable_contract(aggregatorProxyAddr, account);
+    should_implement_ownable(aggregatorProxyAddr, account);
 }
 
 #[test]

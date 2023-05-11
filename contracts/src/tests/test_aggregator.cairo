@@ -13,7 +13,7 @@ use core::result::ResultTrait;
 
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
-use chainlink::tests::test_ownable::should_behave_like_ownable_contract;
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 
 // TODO: aggregator tests
@@ -78,7 +78,7 @@ fn test_ownable() {
         Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     ).unwrap();
 
-    should_behave_like_ownable_contract(aggregatorAddr, account);
+    should_implement_ownable(aggregatorAddr, account);
 }
 
 

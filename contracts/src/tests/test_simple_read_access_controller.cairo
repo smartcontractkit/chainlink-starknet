@@ -13,7 +13,7 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
-use chainlink::tests::test_ownable::should_behave_like_ownable_contract;
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
@@ -32,7 +32,7 @@ fn test_ownable() {
         SimpleReadAccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     ).unwrap();
 
-    should_behave_like_ownable_contract(simpleReadAccessControllerAddr, account);
+    should_implement_ownable(simpleReadAccessControllerAddr, account);
 }
 
 #[test]

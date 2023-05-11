@@ -13,7 +13,7 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::token::link_token::LinkToken;
-use chainlink::tests::test_ownable::should_behave_like_ownable_contract;
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 // only tests link token specific functionality 
 // erc20 and erc677 functionality is already tested elsewhere
@@ -37,7 +37,7 @@ fn test_ownable() {
         LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     ).unwrap();
 
-    should_behave_like_ownable_contract(linkAddr, account);
+    should_implement_ownable(linkAddr, account);
 }
 
 #[test]

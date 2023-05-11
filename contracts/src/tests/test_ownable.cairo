@@ -135,7 +135,7 @@ trait IOwnable {
     fn renounce_ownership();
 }
 
-fn should_behave_like_ownable_contract(contract_addr: ContractAddress, owner: ContractAddress) {
+fn should_implement_ownable(contract_addr: ContractAddress, owner: ContractAddress) {
     let contract = IOwnableDispatcher { contract_address: contract_addr };
     let acc2: ContractAddress = contract_address_const::<2222>();
 
