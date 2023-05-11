@@ -24,7 +24,7 @@ jobs:
         uses: ./.github/actions/install-cairo
 
       - name: Install starknet-devnet (via venv+pip)
-        run: pip install -r contracts/requirements.txt -c contracts/constraints.txt
+        run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt
 
       - name: Test
         run: nix develop -c make test-integration-gauntlet
