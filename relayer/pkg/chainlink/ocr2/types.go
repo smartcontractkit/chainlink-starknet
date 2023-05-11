@@ -18,16 +18,14 @@ type ContractConfigDetails struct {
 	Digest types.ConfigDigest
 }
 
-func NewContractConfigDetails(blockFelt junotypes.Felt, digestFelt junotypes.Felt) (ccd ContractConfigDetails, err error) {
-	block := blockFelt.Big()
-
-	digest, err := types.BytesToConfigDigest(digestFelt.Bytes())
+func NewContractConfigDetails(blockNum *big.Int, digestBytes []byte) (ccd ContractConfigDetails, err error) {
+	digest, err := types.BytesToConfigDigest(digestBytes)
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't decode config digest")
 	}
 
 	return ContractConfigDetails{
-		Block:  block.Uint64(),
+		Block:  blockNum.Uint64(),
 		Digest: digest,
 	}, nil
 }
@@ -50,10 +48,7 @@ type BillingDetails struct {
 	TransmissionPaymentGJuels uint64
 }
 
-func NewBillingDetails(observationPaymentFelt junotypes.Felt, transmissionPaymentFelt junotypes.Felt) (bd BillingDetails, err error) {
-	observationPaymentGJuels := observationPaymentFelt.Big()
-	transmissionPaymentGJuels := transmissionPaymentFelt.Big()
-
+func NewBillingDetails(observationPaymentGJuels *big.Int, transmissionPaymentGJuels *big.Int) (bd BillingDetails, err error) {
 	return BillingDetails{
 		ObservationPaymentGJuels:  observationPaymentGJuels.Uint64(),
 		TransmissionPaymentGJuels: transmissionPaymentGJuels.Uint64(),
