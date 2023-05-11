@@ -89,7 +89,7 @@ mod LinkToken {
     }
 
     //
-    // Ownership
+    // Ownable
     //
 
     #[view]

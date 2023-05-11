@@ -182,7 +182,7 @@ mod SequencerUptimeFeed {
     }
 
     ///
-    /// Ownership
+    /// Ownable
     ///
 
     #[view]

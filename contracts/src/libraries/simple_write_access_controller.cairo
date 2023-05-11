@@ -101,7 +101,7 @@ mod SimpleWriteAccessController {
     }
 
     ///
-    /// Ownership
+    /// Ownable
     ///
 
     #[view]
