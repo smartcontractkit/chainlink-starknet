@@ -56,7 +56,10 @@ describe('Aggregator', function () {
 
     const tokenFactory = await starknet.getContractFactory('link_token')
     await expectSuccessOrDeclared(owner.declare(tokenFactory, { maxFee: 1e20 }))
-    token = await owner.deploy(tokenFactory, { minter: owner.starknetContract.address })
+    token = await owner.deploy(tokenFactory, {
+      minter: owner.starknetContract.address,
+      owner: owner.starknetContract.address,
+    })
 
     await owner.invoke(token, 'permissionedMint', {
       account: owner.starknetContract.address,
