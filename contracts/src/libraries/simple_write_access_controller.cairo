@@ -52,7 +52,7 @@ mod SimpleWriteAccessController {
 
     #[view]
     fn type_and_version() -> felt252 {
-        'SimpleWriteAccessController 1.0.0'
+        'WriteAccessController 1.0.0'
     }
 
     #[external]
