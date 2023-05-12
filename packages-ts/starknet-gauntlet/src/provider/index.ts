@@ -15,6 +15,7 @@ interface IProvider<P> {
   send: () => Promise<TransactionResponse>
   deployContract: (
     contract: CompiledContract,
+    compiledClassHash: string,
     input: any,
     wait?: boolean,
     salt?: number,
@@ -83,12 +84,14 @@ class Provider implements IStarknetProvider {
 
   deployContract = async (
     contract: CompiledContract,
+    compiledClassHash?: string,
     input: any = [],
     wait = true,
     salt = undefined,
   ) => {
     const tx = await this.account.declareAndDeploy({
       contract,
+      compiledClassHash,
       salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
       // unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),

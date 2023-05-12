@@ -15,6 +15,7 @@ use chainlink::ocr2::mocks::mock_aggregator::MockAggregator;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 #[abi]
 trait IMockAggregator {
@@ -56,6 +57,21 @@ fn setup() -> (
 
 #[test]
 #[available_gas(2000000)]
+fn test_ownable() {
+    let (account, mockAggregatorAddr, _, _, _) = setup();
+    // Deploy aggregator proxy
+    let mut calldata = ArrayTrait::new();
+    calldata.append(account.into()); // owner = account
+    calldata.append(mockAggregatorAddr.into());
+    let (aggregatorProxyAddr, _) = deploy_syscall(
+        AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+
+    should_implement_ownable(aggregatorProxyAddr, account);
+}
+
+#[test]
+#[available_gas(2000000)]
 #[should_panic(expected: ('Ownable: caller is not owner', ))]
 fn test_upgrade_non_owner() {
     let (_, _, _, _, _) = setup();
@@ -82,7 +98,7 @@ fn test_query_latest_round_data() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('address does not have access', ))]
+#[should_panic(expected: ('user does not have read access', ))]
 fn test_query_latest_round_data_without_access() {
     let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
     // init aggregator proxy with mock aggregator

@@ -1,6 +1,5 @@
 use starknet::ContractAddress;
 
-// TODO: check if the IMintableToken interface required by StarkGate changes for cairo 1.0
 #[abi]
 trait IMintableToken {
     #[external]
@@ -54,6 +53,11 @@ mod LinkToken {
     #[view]
     fn minter() -> ContractAddress {
         _minter::read()
+    }
+
+    #[view]
+    fn type_and_version() -> felt252 {
+        'LinkToken 1.0.0'
     }
 
     // 

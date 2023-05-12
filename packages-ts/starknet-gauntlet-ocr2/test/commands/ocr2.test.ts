@@ -11,7 +11,8 @@ import {
   IntegratedDevnet,
   devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract_Ocr2, CONTRACT_LIST } from '../../src/lib/contracts'
+import { loadContract } from '@chainlink/starknet-gauntlet'
+import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
@@ -141,10 +142,13 @@ describe('OCR2 Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await ocr2Contract.billing()
-      const { config: billing } = response
+      const { contract } = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2Contract = new Contract(
+        contract.abi,
+        contractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
+      const billing = await ocr2Contract.billing()
       expect(billing.observation_payment_gjuels).toEqual(BigInt(1))
       expect(billing.transmission_payment_gjuels).toEqual(BigInt(1))
     },
@@ -165,10 +169,9 @@ describe('OCR2 Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const provider = makeProvider(LOCAL_URL).provider
-      const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(ocr2.abi, contractAddress, provider)
-      const response = await ocr2Contract.transmitters()
-      const { transmitters: resultTransmitters } = response
+      const { contract } = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2Contract = new Contract(contract.abi, contractAddress, provider)
+      const resultTransmitters = await ocr2Contract.transmitters()
 
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260

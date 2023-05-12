@@ -3,7 +3,8 @@
 # juno requires building with clang, not gcc
 (pkgs.mkShell.override { stdenv = pkgs.clangStdenv; }) {
   buildInputs = with pkgs; [
-   (rust-bin.stable.latest.default.override { extensions = ["rust-src"]; })
+    stdenv.cc.cc.lib
+    (rust-bin.stable.latest.default.override { extensions = ["rust-src"]; })
     python39
     python39Packages.pip
     python39Packages.venvShellHook

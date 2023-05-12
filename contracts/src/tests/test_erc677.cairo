@@ -1,17 +1,19 @@
-use chainlink::libraries::token::erc677::ERC677;
 use starknet::ContractAddress;
 use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
+use starknet::syscalls::deploy_syscall;
+use starknet::class_hash::Felt252TryIntoClassHash;
+
 use array::ArrayTrait;
 use traits::Into;
+use traits::TryInto;
 use zeroable::Zeroable;
+use option::OptionTrait;
+use core::result::ResultTrait;
+
 use chainlink::token::mock::valid_erc667_receiver::ValidReceiver;
 use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
-use starknet::syscalls::deploy_syscall;
-use traits::TryInto;
-use option::OptionTrait;
-use starknet::class_hash::Felt252TryIntoClassHash;
-use core::result::ResultTrait;
+use chainlink::libraries::token::erc677::ERC677;
 
 #[abi]
 trait MockValidReceiver {

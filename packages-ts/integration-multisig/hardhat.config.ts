@@ -19,10 +19,14 @@ const config: HardhatUserConfig = {
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050/',
+      args: ['--cairo-compiler-manifest', '../../vendor/cairo/Cargo.toml'],
     },
   },
   paths: {
-    starknetArtifacts: '../../node_modules/starsign-multisig/starknet-artifacts/contracts',
+    sources: './solidity',
+    starknetSources: '../../contracts/src',
+    starknetArtifacts: '../../contracts/target/release',
+    cairoPaths: [],
   },
 }
 
