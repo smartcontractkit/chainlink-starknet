@@ -139,8 +139,8 @@ mod SequencerUptimeFeed {
     }
 
     #[view]
-    fn l1_sender() -> felt252 {
-        _l1_sender::read()
+    fn l1_sender() -> EthAddress {
+        _l1_sender::read().try_into().unwrap()
     }
 
     ///
