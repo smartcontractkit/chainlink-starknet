@@ -58,7 +58,8 @@ func TestIntegration_Txm(t *testing.T) {
 		},
 	)
 
-	lggr, err := logger.New()
+	lcfg := logger.Config{Level: -1} // debug level
+	lggr, err := lcfg.New()
 	require.NoError(t, err)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
