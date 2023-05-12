@@ -1,9 +1,9 @@
-use chainlink::libraries::ownable::Ownable;
 use starknet::contract_address_const;
 use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::testing::set_contract_address;
 use zeroable::Zeroable;
+use chainlink::libraries::ownable::Ownable;
 
 fn setup() -> (ContractAddress, ContractAddress) {
     let owner: ContractAddress = contract_address_const::<1>();

@@ -1,5 +1,14 @@
 use starknet::ContractAddress;
 
+#[abi]
+trait IOwnable {
+    fn owner() -> ContractAddress;
+    fn proposed_owner() -> ContractAddress;
+    fn transfer_ownership(new_owner: ContractAddress);
+    fn accept_ownership();
+    fn renounce_ownership();
+}
+
 // todo augustus: whoever implements ownable must also expose external functions owner() and proposed_owner()
 #[contract]
 mod Ownable {
