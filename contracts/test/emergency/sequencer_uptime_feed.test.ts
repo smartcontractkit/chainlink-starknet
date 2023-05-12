@@ -90,7 +90,7 @@ describe('SequencerUptimeFeed', function () {
 
       await expectInvokeError(
         owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 }),
-        'address does not have access',
+        'user does not have access',
       )
     })
 
@@ -145,7 +145,7 @@ describe('SequencerUptimeFeed', function () {
       await accWithoutAccess.deployAccount()
       await expectInvokeError(
         accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
-        'address does not have access',
+        'user does not have read access',
       )
     })
 
