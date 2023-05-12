@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
 	"github.com/smartcontractkit/caigo/test"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +61,7 @@ func TestIntegration_Txm(t *testing.T) {
 	lggr, err := logger.New()
 	require.NoError(t, err)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
+	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
 	require.NoError(t, err)
 
 	getClient := func() (*starknet.Client, error) {
