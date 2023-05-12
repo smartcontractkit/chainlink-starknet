@@ -15,7 +15,7 @@ impl TPartialEq: PartialEq<T>,
 fn _assert_unique_values_loop<T,
 impl TCopy: Copy<T>,
 impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>, 
+impl TPartialEq: PartialEq<T>,
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
