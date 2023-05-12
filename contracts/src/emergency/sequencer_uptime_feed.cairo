@@ -216,6 +216,11 @@ mod SequencerUptimeFeed {
         AccessControl::has_access(user, data)
     }
 
+    #[view]
+    fn check_access(user: ContractAddress) {
+        AccessControl::check_access(user)
+    }
+
     #[external]
     fn add_access(user: ContractAddress) {
         Ownable::assert_only_owner();
