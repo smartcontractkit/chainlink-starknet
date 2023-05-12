@@ -7,9 +7,6 @@ on:
       - main
   pull_request:
 
-env:
-  CAIRO_VERSION: v1.0.0-alpha.6
-
 jobs:
   lint_format_check:
     name: Format Check
