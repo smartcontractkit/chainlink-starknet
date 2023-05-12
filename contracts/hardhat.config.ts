@@ -21,10 +21,6 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: '0.6.12',
-        settings: COMPILER_SETTINGS,
-      },
-      {
         version: '0.8.15',
         settings: COMPILER_SETTINGS,
       },
@@ -46,25 +42,29 @@ const config: HardhatUserConfig = {
         accountPath: '~/.starknet_accounts',
       },
     },
+    requestTimeout: 1000000,
   },
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050',
+      args: ['--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
     },
     integratedDevnet: {
       url: 'http://127.0.0.1:5050',
       venv: 'active',
-      args: ['--lite-mode'],
+      args: ['--lite-mode', '--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
       // dockerizedVersion: "0.2.0"
     },
   },
   mocha: {
     timeout: 10000000,
+    file: './test/setup.ts',
   },
   paths: {
     sources: './solidity',
     starknetSources: './src',
-    cairoPaths: ['./vendor/starkware-libs/starkgate-contracts/src'],
+    starknetArtifacts: './target/release',
+    cairoPaths: [],
   },
 }
 

@@ -10,8 +10,8 @@ import (
 	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 
-	caigogw "github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -67,10 +67,10 @@ func (c *Client) BillingDetails(ctx context.Context, address caigotypes.Hash) (b
 		return bd, errors.New("unexpected result length")
 	}
 
-	observationPaymentFelt := junotypes.HexToFelt(res[0])
-	transmissionPaymentFelt := junotypes.HexToFelt(res[1])
+	observationPayment := junotypes.HexToFelt(res[0]).Big()
+	transmissionPayment := junotypes.HexToFelt(res[1]).Big()
 
-	bd, err = NewBillingDetails(observationPaymentFelt, transmissionPaymentFelt)
+	bd, err = NewBillingDetails(observationPayment, transmissionPayment)
 	if err != nil {
 		return bd, errors.Wrap(err, "couldn't initialize billing details")
 	}
@@ -97,7 +97,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address caigotypes.Has
 	blockNum := junotypes.HexToFelt(res[1])
 	configDigest := junotypes.HexToFelt(res[2])
 
-	ccd, err = NewContractConfigDetails(blockNum, configDigest)
+	ccd, err = NewContractConfigDetails(blockNum.Big(), configDigest.Bytes())
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't initialize config details")
 	}

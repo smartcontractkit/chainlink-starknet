@@ -15,4 +15,8 @@ test = "cairo-test --starknet ."
 # quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
 
 [[target.starknet-contract]]
-
+sierra = true
+casm = true
+# pythonic hints are necessary for cairo-lang to parse the casm file:
+# Unsupported compiled class format. Cairo 1.0 compiled class must contain the attribute `pythonic_hints`.
+casm-add-pythonic-hints = true

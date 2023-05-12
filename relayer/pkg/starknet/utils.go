@@ -7,7 +7,7 @@ import (
 	"math/big"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
@@ -133,14 +133,6 @@ func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
 	}
 
 	return out, nil
-}
-
-func StringsToJunoFelts(in []string) []junotypes.Felt {
-	out := make([]junotypes.Felt, len(in))
-	for i := 0; i < len(in); i++ {
-		out[i] = junotypes.HexToFelt(in[i])
-	}
-	return out
 }
 
 // CompareAddress compares different hex starknet addresses with potentially different 0 padding

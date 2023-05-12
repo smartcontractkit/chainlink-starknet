@@ -1,8 +1,8 @@
 package starknet
 
 import (
-	caigogw "github.com/dontpanicdao/caigo/gateway"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 )
 
 func IsEventFromContract(event *caigogw.Event, address caigotypes.Hash, eventName string) bool {

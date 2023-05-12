@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
-	caigotypes "github.com/dontpanicdao/caigo/types"
+	"github.com/smartcontractkit/caigo"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/mock"

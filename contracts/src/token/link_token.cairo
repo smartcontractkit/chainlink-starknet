@@ -56,6 +56,11 @@ mod LinkToken {
         _minter::read()
     }
 
+    #[view]
+    fn type_and_version() -> felt252 {
+        'LinkToken 1.0.0'
+    }
+
     // 
     // ERC677
     //
@@ -89,7 +94,7 @@ mod LinkToken {
     }
 
     //
-    // Ownable
+    // Ownership
     //
 
     #[view]

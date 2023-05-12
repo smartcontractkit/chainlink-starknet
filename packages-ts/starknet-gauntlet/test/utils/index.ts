@@ -16,7 +16,9 @@ export const loadContract = (name: string): CompiledContract => {
   return json.parse(fs.readFileSync(`${__dirname}/../__mocks__/${name}.json`).toString('ascii'))
 }
 
-export const loadExampleContract = () => loadContract('example')
+export const loadExampleContract = (): any => {
+  return { contract: loadContract('example') }
+}
 
 export const noop = () => {}
 

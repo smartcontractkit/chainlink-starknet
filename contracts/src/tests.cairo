@@ -7,5 +7,4 @@ mod test_ownable;
 mod test_erc677;
 mod test_link_token;
 mod test_upgradeable;
-mod test_simple_write_access_controller;
-mod test_simple_read_access_controller;
+mod test_access_controller;

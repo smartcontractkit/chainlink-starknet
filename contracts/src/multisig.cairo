@@ -1,10 +1,8 @@
 use array::ArrayTrait;
 use option::OptionTrait;
 
-fn assert_unique_values<T,
-impl TCopy: Copy<T>,
-impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>,
+fn assert_unique_values<
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
 >(
     a: @Array::<T>
 ) {
@@ -12,10 +10,8 @@ impl TPartialEq: PartialEq<T>,
     _assert_unique_values_loop(a, len, 0_usize, 1_usize);
 }
 
-fn _assert_unique_values_loop<T,
-impl TCopy: Copy<T>,
-impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>,
+fn _assert_unique_values_loop<
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
@@ -219,6 +215,11 @@ mod Multisig {
         _get_transaction_calldata_range(nonce, 0_usize, calldata_len, ref calldata);
 
         (transaction, calldata)
+    }
+
+    #[view]
+    fn type_and_version() -> felt252 {
+        'Multisig 1.0.0'
     }
 
     /// Externals
