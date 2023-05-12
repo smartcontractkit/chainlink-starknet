@@ -546,7 +546,7 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
-      expect(res.round.answer).to.equal(1n)
+      expect(res.response.answer).to.equal(1n)
     })
 
     it('should always send a **boolean** message to L2 contract', async () => {
