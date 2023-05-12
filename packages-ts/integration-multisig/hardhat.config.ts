@@ -22,6 +22,10 @@ const config: HardhatUserConfig = {
       args: ['--cairo-compiler-manifest', '../../vendor/cairo/Cargo.toml'],
     },
   },
+  mocha: {
+    timeout: 10000000,
+    file: '../../contracts/test/setup.ts',
+  },
   paths: {
     sources: './solidity',
     starknetSources: '../../contracts/src',
