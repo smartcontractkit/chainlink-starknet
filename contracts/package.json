@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile:cairo": "scarb --profile release build",
     "compile:solidity": "hardhat compile",
     "test": "hardhat --network localhost test"
   },
