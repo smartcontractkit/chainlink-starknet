@@ -69,7 +69,7 @@ func TestIntegration_Txm(t *testing.T) {
 
 	// mock config to prevent import cycle
 	cfg := txmmock.NewConfig(t)
-	cfg.On("TxTimeout").Return(10 * time.Second)
+	cfg.On("TxTimeout").Return(10 * time.Second) // I'm guessing this should actually just be 10?
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)

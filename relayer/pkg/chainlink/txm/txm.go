@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"sync"
 	"time"
 
@@ -153,29 +152,30 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
-	if err != nil {
-		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
-	}
+	// nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
+	// if err != nil {
+	// 	return txhash, fmt.Errorf("failed to get nonce: %+w", err)
+	// }
 
-	// get fee for txm
-	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
-	// can we estimate fee without calling estimate - tbd with 1.0
-	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
-	if err != nil {
-		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
-	}
+	// // get fee for txm
+	// // optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
+	// // can we estimate fee without calling estimate - tbd with 1.0
+	// feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
+	// if err != nil {
+	// 	return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
+	// }
 
-	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
-	expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
-	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
-	details := caigotypes.ExecuteDetails{
-		MaxFee: max,
-		Nonce:  nonce,
-	}
+	// fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
+	// expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
+	// max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
+	// details := caigotypes.ExecuteDetails{
+	// 	MaxFee: max,
+	// 	Nonce:  nonce,
+	// }
+	details := caigotypes.ExecuteDetails{}
 
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*10*time.Second) // TODO: for some reason the TxTimeout isn't correct and immediately times out
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {
@@ -189,10 +189,10 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 	}
 
 	// update nonce if transaction is successful
-	err = errors.Join(
-		txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
-		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
-	)
+	// err = errors.Join(
+	// 	txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
+	// 	txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
+	// )
 	return res.TransactionHash, err
 }
 
