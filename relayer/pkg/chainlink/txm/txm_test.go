@@ -24,8 +24,7 @@ import (
 )
 
 func TestIntegration_Txm(t *testing.T) {
-	// url := SetupLocalStarknetNode(t)
-	url := "http://127.0.0.1:5050/"
+	url := SetupLocalStarknetNode(t)
 	devnet := test.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
