@@ -16,6 +16,10 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  mocha: {
+    timeout: 10000000,
+    file: '../../contracts/test/setup.ts',
+  },
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050/',
