@@ -1,8 +1,10 @@
 use array::ArrayTrait;
 use option::OptionTrait;
 
-fn assert_unique_values<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
+fn assert_unique_values<T,
+impl TCopy: Copy<T>,
+impl TDrop: Drop<T>,
+impl TPartialEq: PartialEq<T>,
 >(
     a: @Array::<T>
 ) {
@@ -10,8 +12,10 @@ fn assert_unique_values<
     _assert_unique_values_loop(a, len, 0_usize, 1_usize);
 }
 
-fn _assert_unique_values_loop<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
+fn _assert_unique_values_loop<T,
+impl TCopy: Copy<T>,
+impl TDrop: Drop<T>,
+impl TPartialEq: PartialEq<T>, 
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
