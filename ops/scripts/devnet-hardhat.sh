@@ -39,7 +39,7 @@ docker run \
   --volume "${cairo_path}:/cairo" \
   --entrypoint sh \
   "shardlabs/starknet-devnet:${container_version}" \
-  -c '(wget https://sh.rustup.rs -O - | sh -s -- -y) && apk add gmp-dev g++ gcc libffi-dev && PATH="/root/.cargo/bin:${PATH}" starknet-devnet --lite-mode --cairo-compiler-manifest /cairo/Cargo.toml'
+  -c '(wget https://sh.rustup.rs -O - | sh -s -- -y) && apk add gmp-dev g++ gcc libffi-dev && PATH="/root/.cargo/bin:${PATH}" starknet-devnet --lite-mode --host 0.0.0.0 --cairo-compiler-manifest /cairo/Cargo.toml'
 
 echo "Starting hardhat..."
 docker run --net container:chainlink-starknet.starknet-devnet -d --name chainlink-starknet.hardhat ethereumoptimism/hardhat-node:nightly
