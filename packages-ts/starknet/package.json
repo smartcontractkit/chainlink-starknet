@@ -23,7 +23,7 @@
     "bundle": "yarn build && pkg ."
   },
   "devDependencies": {
-    "@shardlabs/starknet-hardhat-plugin": "0.8.0-alpha.2",
+    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.2",
     "hardhat": "^2.10.2"
   }
 }

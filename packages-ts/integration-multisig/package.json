@@ -12,7 +12,11 @@
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
+<<<<<<< HEAD
     "@shardlabs/starknet-hardhat-plugin": "0.8.0-alpha.2",
+=======
+    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.2",
+>>>>>>> cairo-1.0
     "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",

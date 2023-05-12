@@ -135,14 +135,6 @@ func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
 	return out, nil
 }
 
-func StringsToJunoFelts(in []string) []junotypes.Felt {
-	out := make([]junotypes.Felt, len(in))
-	for i := 0; i < len(in); i++ {
-		out[i] = junotypes.HexToFelt(in[i])
-	}
-	return out
-}
-
 // CompareAddress compares different hex starknet addresses with potentially different 0 padding
 func CompareAddress(a, b string) bool {
 	aBytes, err := caigotypes.HexToBytes(a)

@@ -1,5 +1,4 @@
 # starkware-libs vendor contracts
 
-Here we duplicate the `starkware-libs/starkgate-contracts` project as we couldn't find a way to properly import it via NPM (only a few .cairo contracts packaged), PyPI (N/A), or a submodule (complex build).
-
-- `starkware-libs/starkgate-contracts` - fork of the original repo at [c08863a](https://github.com/starkware-libs/starkgate-contracts/commit/c08863a1f08226c09f1d0748124192e848d73db9) which loosens the `pragma` declaration for a few interfaces to support v0.8 (includes only the files we use)
+- `starkware-libs/starkgate-contracts` - fork of the original repo at [c08863a](https://github.com/starkware-libs/starkgate-contracts/commit/c08863a1f08226c09f1d0748124192e848d73db9) includes only `std_contracts/ERC20/permitted.cairo`
+- `starkware-libs/cairo-lang` fork of the original repo at [v0.11.0.2](https://github.com/starkware-libs/cairo-lang/tree/v0.11.0.2/src/starkware/starknet) which loosens the `pragma` declaration for a few interfaces to support v0.8 (includes only the files we use)

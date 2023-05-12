@@ -77,7 +77,7 @@ mod AccessController {
 
     #[view]
     fn type_and_version() -> felt252 {
-        'WriteAccessController 1.0.0'
+        'AccessController 1.0.0'
     }
 
     #[external]
