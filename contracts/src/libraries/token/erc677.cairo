@@ -19,7 +19,8 @@ mod ERC677 {
     use super::IERC677ReceiverDispatcher;
     use super::IERC677ReceiverDispatcherTrait;
 
-    const IERC677_RECEIVER_ID: u32 = 0xa53f2491_u32;
+    // ethereum function selector of "onTokenTransfer(address,uint256,bytes)"
+    const IERC677_RECEIVER_ID: u32 = 0xa4c0ed36_u32;
 
     #[event]
     fn Transfer(from: ContractAddress, to: ContractAddress, value: u256, data: Array<felt252>) {}
