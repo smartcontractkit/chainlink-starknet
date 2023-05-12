@@ -89,7 +89,7 @@ func TestIntegration_Txm(t *testing.T) {
 		for i := 0; i < 5; i++ {
 			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(localKeys[k].DevnetAccountAddrStr()), caigotypes.FunctionCall{
 				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
-				EntryPointSelector: "total_supply",
+				EntryPointSelector: "totalSupply",
 			}))
 		}
 	}
