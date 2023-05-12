@@ -1,9 +1,11 @@
-use array::ArrayTrait;
 use starknet::contract_address_const;
 use starknet::testing::set_caller_address;
+use starknet::class_hash::class_hash_const;
+
+use array::ArrayTrait;
+
 use chainlink::multisig::assert_unique_values;
 use chainlink::multisig::Multisig;
-use starknet::class_hash::class_hash_const;
 
 // TODO: test execute_confirmation happy path with mocked
 // call_contract_syscall

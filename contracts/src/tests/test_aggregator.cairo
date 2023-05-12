@@ -2,10 +2,18 @@ use starknet::testing::set_caller_address;
 use starknet::ContractAddress;
 use starknet::contract_address_const;
 use starknet::class_hash::class_hash_const;
+use starknet::class_hash::Felt252TryIntoClassHash;
+use starknet::syscalls::deploy_syscall;
+
+use array::ArrayTrait;
+use traits::Into;
+use traits::TryInto;
+use option::OptionTrait;
+use core::result::ResultTrait;
 
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
-
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 // TODO: aggregator tests
 
@@ -50,6 +58,26 @@ fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
     set_caller_address(account);
     account
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_ownable() {
+    let account = setup();
+    // Deploy aggregator
+    let mut calldata = ArrayTrait::new();
+    calldata.append(account.into()); // owner
+    calldata.append(contract_address_const::<777>().into()); // link token
+    calldata.append(0); // min_answer
+    calldata.append(100); // max_answer
+    calldata.append(contract_address_const::<999>().into()); // billing access controller
+    calldata.append(8); // decimals
+    calldata.append(123); // description
+    let (aggregatorAddr, _) = deploy_syscall(
+        Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+
+    should_implement_ownable(aggregatorAddr, account);
 }
 
 

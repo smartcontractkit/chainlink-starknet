@@ -1,3 +1,14 @@
+use starknet::ContractAddress;
+
+#[abi]
+trait IOwnable {
+    fn owner() -> ContractAddress;
+    fn proposed_owner() -> ContractAddress;
+    fn transfer_ownership(new_owner: ContractAddress);
+    fn accept_ownership();
+    fn renounce_ownership();
+}
+
 #[contract]
 mod Ownable {
     use starknet::ContractAddress;
