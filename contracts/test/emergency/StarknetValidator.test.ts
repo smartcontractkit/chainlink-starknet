@@ -11,7 +11,7 @@ import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
-import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
+import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/cairo-lang/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { account, addCompilationToNetwork, expectSuccessOrDeclared } from '@chainlink/starknet'
 
