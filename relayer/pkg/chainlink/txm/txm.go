@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"sync"
 	"time"
 
@@ -27,7 +28,7 @@ const (
 
 type TxManager interface {
 	Enqueue(caigotypes.Hash, caigotypes.Hash, caigotypes.FunctionCall) error
-	InflightCount() int
+	InflightCount() (int, int)
 }
 
 type Tx struct {
@@ -152,34 +153,33 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	// nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
-	// if err != nil {
-	// 	return txhash, fmt.Errorf("failed to get nonce: %+w", err)
-	// }
+	nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
+	}
 
-	// // get fee for txm
-	// // optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
-	// // can we estimate fee without calling estimate - tbd with 1.0
-	// feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
-	// if err != nil {
-	// 	return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
-	// }
+	// get fee for txm
+	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
+	// can we estimate fee without calling estimate - tbd with 1.0
+	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
+	if err != nil {
+		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
+	}
 
-	// fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
-	// expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
-	// max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
-	// details := caigotypes.ExecuteDetails{
-	// 	MaxFee: max,
-	// 	Nonce:  nonce,
-	// }
-	details := caigotypes.ExecuteDetails{}
+	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
+	expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
+	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
+	details := caigotypes.ExecuteDetails{
+		MaxFee: max,
+		Nonce:  nonce,
+	}
 
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*10*time.Second) // TODO: for some reason the TxTimeout isn't correct and immediately times out
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {
-		// TODO: handle nonce errors - what kind of errors occur?
+		// TODO: handle initial broadcast errors - what kind of errors occur?
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 
@@ -189,10 +189,10 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 	}
 
 	// update nonce if transaction is successful
-	// err = errors.Join(
-	// 	txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
-	// 	txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
-	// )
+	err = errors.Join(
+		txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
+		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
+	)
 	return res.TransactionHash, err
 }
 
@@ -289,10 +289,10 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 	return nil
 }
 
-func (txm *starktxm) InflightCount() (count int) {
+func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
 	list := maps.Values(txm.txStore.GetUnconfirmed())
 	for i := range list {
-		count += len(list[i])
+		unconfirmed += len(list[i])
 	}
-	return
+	return len(txm.queue), unconfirmed
 }

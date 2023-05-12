@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
 
@@ -8,8 +9,8 @@ var (
 	// seed = 0 keys for starknet-devnet
 	PrivateKeys0Seed = txm.PrivateKeys0Seed
 
-	DevnetClassHash = txm.DevnetClassHash
-	DevnetSalt      = txm.DevnetSalt
+	DevnetClassHash = keys.DevnetClassHash
+	DevnetSalt      = keys.DevnetSalt
 )
 
 // OCR2Config Default config for OCR2 for starknet

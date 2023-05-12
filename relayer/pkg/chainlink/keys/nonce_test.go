@@ -99,5 +99,4 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	next, err = nm.NextSequence(k, chainId)
 	require.NoError(t, err)
 	assert.Equal(t, initPlusOne, next)
-
 }

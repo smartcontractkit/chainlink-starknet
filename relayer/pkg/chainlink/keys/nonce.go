@@ -108,7 +108,7 @@ func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Hash, chainId stri
 	if n.Cmp(currentNonce) != 0 {
 		return fmt.Errorf("mismatched nonce for %s: %s (expected) != %s (got)", addr, n, currentNonce)
 	}
-	nm.n[addr.String()] = n.Add(n, big.NewInt(1))
+	nm.n[addr.String()] = big.NewInt(n.Int64() + 1)
 	return nil
 }
 

@@ -24,15 +24,15 @@ import (
 )
 
 func TestIntegration_Txm(t *testing.T) {
-	url := SetupLocalStarknetNode(t)
-	// url := "http://127.0.0.1:5050/"
+	// url := SetupLocalStarknetNode(t)
+	url := "http://127.0.0.1:5050/"
 	devnet := test.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
 
 	// parse keys into expected format
 	localKeys := map[string]keys.Key{}
-	for i := 0; i < 2; i++ {
+	for i := range accounts {
 		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
 		require.NoError(t, err)
 
@@ -86,23 +86,23 @@ func TestIntegration_Txm(t *testing.T) {
 
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
-		for i := 0; i < 5; i++ {
+		for i := 0; i < 2; i++ {
 			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(localKeys[k].DevnetAccountAddrStr()), caigotypes.FunctionCall{
 				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
 				EntryPointSelector: "totalSupply",
 			}))
 		}
 	}
-	time.Sleep(5 * time.Second)
 	var empty bool
 	for i := 0; i < 60; i++ {
-		count := txm.InflightCount()
-		t.Logf("inflight count: %d", count)
+		queued, unconfirmed := txm.InflightCount()
+		t.Logf("inflight count: queued (%d), unconfirmed (%d)", queued, unconfirmed)
 
-		if count == 0 {
+		if queued == 0 && unconfirmed == 0 {
 			empty = true
 			break
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	// stop txm
