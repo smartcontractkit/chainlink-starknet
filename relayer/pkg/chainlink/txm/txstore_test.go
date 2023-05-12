@@ -1,6 +1,7 @@
 package txm
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -79,7 +80,7 @@ func TestTxStore(t *testing.T) {
 			wg.Done()
 		}()
 		wg.Wait()
-		assert.True(t, err0 != err1 && (err0 != nil || err1 != nil))
+		assert.True(t, !errors.Is(err0, err1) && (err0 != nil || err1 != nil))
 	})
 
 	t.Run("confirm", func(t *testing.T) {
@@ -121,7 +122,7 @@ func TestTxStore(t *testing.T) {
 			wg.Done()
 		}()
 		wg.Wait()
-		assert.True(t, err0 != err1 && (err0 != nil || err1 != nil))
+		assert.True(t, !errors.Is(err0, err1) && (err0 != nil || err1 != nil))
 	})
 }
 
