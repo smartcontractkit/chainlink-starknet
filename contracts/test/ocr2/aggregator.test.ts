@@ -4,12 +4,8 @@ import { ec, hash, num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
-import {
-  account,
-  expectInvokeError,
-  expectSuccessOrDeclared,
-  bytesToFelts,
-} from '@chainlink/starknet'
+import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
+import { bytesToFelts } from '@chainlink/starknet-gauntlet'
 
 interface Oracle {
   // hex string
