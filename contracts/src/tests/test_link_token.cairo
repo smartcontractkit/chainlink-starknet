@@ -1,10 +1,19 @@
-use chainlink::token::link_token::LinkToken;
-use zeroable::Zeroable;
 use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::contract_address_const;
-use traits::Into;
 use starknet::class_hash::class_hash_const;
+use starknet::class_hash::Felt252TryIntoClassHash;
+use starknet::syscalls::deploy_syscall;
+
+use array::ArrayTrait;
+use traits::Into;
+use traits::TryInto;
+use zeroable::Zeroable;
+use option::OptionTrait;
+use core::result::ResultTrait;
+
+use chainlink::token::link_token::LinkToken;
+use chainlink::tests::test_ownable::should_implement_ownable;
 
 // only tests link token specific functionality 
 // erc20 and erc677 functionality is already tested elsewhere
@@ -14,6 +23,21 @@ fn setup() -> ContractAddress {
     // Set account as default caller
     set_caller_address(account);
     account
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_ownable() {
+    let account = setup();
+    // Deploy LINK token
+    let mut calldata = ArrayTrait::new();
+    calldata.append(class_hash_const::<123>().into()); // minter
+    calldata.append(account.into()); // owner
+    let (linkAddr, _) = deploy_syscall(
+        LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+
+    should_implement_ownable(linkAddr, account);
 }
 
 #[test]
