@@ -47,12 +47,7 @@ mod AggregatorProxy {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::libraries::ownable::Ownable;
-<<<<<<< HEAD
-    use chainlink::libraries::simple_read_access_controller::SimpleReadAccessController;
-    use chainlink::libraries::simple_write_access_controller::SimpleWriteAccessController;
-=======
     use chainlink::libraries::access_control::AccessControl;
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
@@ -107,11 +102,7 @@ mod AggregatorProxy {
 
     impl AggregatorProxy of IAggregatorProxy {
         fn latest_round_data() -> Round {
-<<<<<<< HEAD
-            _require_access();
-=======
             _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             let round = aggregator.latest_round_data();
@@ -124,11 +115,7 @@ mod AggregatorProxy {
             }
         }
         fn round_data(round_id: felt252) -> Round {
-<<<<<<< HEAD
-            _require_access();
-=======
             _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
             let (phase_id, round_id) = split_felt(round_id);
             let address = _phases::read(phase_id);
             assert(!address.is_zero(), 'aggregator address is 0');
@@ -145,22 +132,14 @@ mod AggregatorProxy {
             }
         }
         fn description() -> felt252 {
-<<<<<<< HEAD
-            _require_access();
-=======
             _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.description()
         }
 
         fn decimals() -> u8 {
-<<<<<<< HEAD
-            _require_access();
-=======
             _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
             let phase = _current_phase::read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.decimals()
@@ -175,12 +154,8 @@ mod AggregatorProxy {
 
     #[constructor]
     fn constructor(owner: ContractAddress, address: ContractAddress) {
-<<<<<<< HEAD
-        SimpleReadAccessController::initializer(owner);
-=======
         Ownable::initializer(owner);
         AccessControl::initializer();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
         _set_aggregator(address);
     }
 
@@ -219,25 +194,6 @@ mod AggregatorProxy {
         Upgradeable::upgrade(new_impl)
     }
 
-<<<<<<< HEAD
-    // -- SimpleReadAccessController --
-
-    #[external]
-    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        SimpleReadAccessController::has_access(user, data)
-    }
-
-    #[external]
-    fn check_access(user: ContractAddress) {
-        SimpleReadAccessController::check_access(user)
-    }
-
-    // -- SimpleWriteAccessController --
-
-    #[external]
-    fn add_access(user: ContractAddress) {
-        SimpleWriteAccessController::add_access(user)
-=======
     // -- Access Control --
 
     #[view]
@@ -249,37 +205,24 @@ mod AggregatorProxy {
     fn add_access(user: ContractAddress) {
         Ownable::assert_only_owner();
         AccessControl::add_access(user)
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
     }
 
     #[external]
     fn remove_access(user: ContractAddress) {
-<<<<<<< HEAD
-        SimpleWriteAccessController::remove_access(user)
-=======
         Ownable::assert_only_owner();
         AccessControl::remove_access(user)
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
     }
 
     #[external]
     fn enable_access_check() {
-<<<<<<< HEAD
-        SimpleWriteAccessController::enable_access_check()
-=======
         Ownable::assert_only_owner();
         AccessControl::enable_access_check()
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
     }
 
     #[external]
     fn disable_access_check() {
-<<<<<<< HEAD
-        SimpleWriteAccessController::disable_access_check()
-=======
         Ownable::assert_only_owner();
         AccessControl::disable_access_check()
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
     }
 
     //
@@ -311,11 +254,7 @@ mod AggregatorProxy {
 
     #[view]
     fn proposed_latest_round_data() -> Round {
-<<<<<<< HEAD
-        _require_access();
-=======
         _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
         let address = _proposed_aggregator::read();
         let aggregator = IAggregatorDispatcher { contract_address: address };
         aggregator.latest_round_data()
@@ -323,11 +262,7 @@ mod AggregatorProxy {
 
     #[view]
     fn proposed_round_data(round_id: felt252) -> Round {
-<<<<<<< HEAD
-        _require_access();
-=======
         _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
         let address = _proposed_aggregator::read();
         let round_id128: u128 = round_id.try_into().unwrap();
         let aggregator = IAggregatorDispatcher { contract_address: address };
@@ -336,22 +271,14 @@ mod AggregatorProxy {
 
     #[view]
     fn aggregator() -> ContractAddress {
-<<<<<<< HEAD
-        _require_access();
-=======
         _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
         let phase = _current_phase::read();
         phase.aggregator
     }
 
     #[view]
     fn phase_id() -> u128 {
-<<<<<<< HEAD
-        _require_access();
-=======
         _require_read_access();
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
         let phase = _current_phase::read();
         phase.id
     }
@@ -390,14 +317,8 @@ mod AggregatorProxy {
         _phases::write(new_phase_id, address);
     }
 
-<<<<<<< HEAD
-    fn _require_access() {
-        let caller = starknet::info::get_caller_address();
-        SimpleReadAccessController::check_access(caller);
-=======
     fn _require_read_access() {
         let caller = starknet::info::get_caller_address();
         AccessControl::check_read_access(caller);
->>>>>>> 46ee16921b53945562670843862fd7d759b4a629
     }
 }

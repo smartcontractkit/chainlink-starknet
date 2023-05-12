@@ -2,7 +2,7 @@ use starknet::testing::set_caller_address;
 use starknet::ContractAddress;
 use starknet::contract_address_const;
 use starknet::class_hash::class_hash_const;
-< < < < < < < HEAD use starknet::class_hash::Felt252TryIntoClassHash;
+use starknet::class_hash::Felt252TryIntoClassHash;
 use starknet::syscalls::deploy_syscall;
 
 use array::ArrayTrait;
@@ -14,10 +14,6 @@ use core::result::ResultTrait;
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
 use chainlink::tests::test_ownable::should_implement_ownable;
-== == == =
-use chainlink::ocr2::aggregator::pow;
-use chainlink::ocr2::aggregator::Aggregator;
-> > > > > > > 46 ee16921b53945562670843862fd7d759b4a629
 
 // TODO: aggregator tests
 
