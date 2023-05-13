@@ -71,7 +71,7 @@ describe('Execute with network', () => {
 
   beforeAll(async () => {
     network = await startNetwork({ seed: 0 })
-  }, 15000)
+  }, TIMEOUT)
 
   it(
     'Command deploy execution',

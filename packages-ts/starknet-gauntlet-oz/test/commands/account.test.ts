@@ -18,7 +18,7 @@ describe('OZ Account Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 15000)
+  }, TIMEOUT)
 
   it(
     'Deployment',
