@@ -1,6 +1,5 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import hre from 'hardhat'
 
 function findCommonPrefix(path1: string, path2: string): string {
   const segments1 = path1.split(path.sep)
@@ -43,49 +42,53 @@ function findCairoFiles(dir: string): string[] {
   return filePaths
 }
 
-const src = hre.config.paths.starknetSources
-const target = hre.config.paths.starknetArtifacts
-if (!src || !target) {
-  throw new Error('Missing starknet path config')
-}
+export function prepareHardhatArtifacts() {
+  const hre = require('hardhat')
 
-const root = findCommonPrefix(src, target)
-
-console.log('Cleaning and regenerating hardhat file structure..')
-const generatedPath = path.join(target, src.slice(root.length))
-if (fs.existsSync(generatedPath)) {
-  fs.rmSync(generatedPath, { recursive: true })
-}
-
-const cairoFiles = findCairoFiles(src)
-for (const cairoFile of cairoFiles) {
-  const relativePath = cairoFile
-  const filename = path.basename(relativePath, '.cairo')
-
-  const camelCaseFilename = toCamelCase(filename)
-
-  const sierraFile = `${target}/chainlink_${camelCaseFilename}.sierra.json`
-  const casmFile = `${target}/chainlink_${camelCaseFilename}.casm.json`
-
-  if (!fs.existsSync(sierraFile) || !fs.existsSync(casmFile)) {
-    continue
+  const src = hre.config.paths.starknetSources
+  const target = hre.config.paths.starknetArtifacts
+  if (!src || !target) {
+    throw new Error('Missing starknet path config')
   }
 
-  const subdir = path.dirname(relativePath).slice(root.length)
-  // Create the corresponding directory
-  const targetSubdir = path.join(target, subdir, `${filename}.cairo`)
-  fs.mkdirSync(targetSubdir, { recursive: true })
+  const root = findCommonPrefix(src, target)
 
-  // Copy the sierra and casm files. We need to copy instead of symlink
-  // because hardhat-starknet-plugin does fs.lstatSync to check if the file
-  // exists.
-  fs.copyFileSync(sierraFile, `${targetSubdir}/${filename}.json`)
-  fs.copyFileSync(casmFile, `${targetSubdir}/${filename}.casm`)
+  console.log('Cleaning and regenerating hardhat file structure..')
+  const generatedPath = path.join(target, src.slice(root.length))
+  if (fs.existsSync(generatedPath)) {
+    fs.rmSync(generatedPath, { recursive: true })
+  }
 
-  // Parse and save the ABI JSON
-  const sierraContent = JSON.parse(fs.readFileSync(sierraFile, 'utf8'))
-  fs.writeFileSync(
-    `${targetSubdir}/${filename}_abi.json`,
-    JSON.stringify(sierraContent.abi, null, 2),
-  )
+  const cairoFiles = findCairoFiles(src)
+  for (const cairoFile of cairoFiles) {
+    const relativePath = cairoFile
+    const filename = path.basename(relativePath, '.cairo')
+
+    const camelCaseFilename = toCamelCase(filename)
+
+    const sierraFile = `${target}/chainlink_${camelCaseFilename}.sierra.json`
+    const casmFile = `${target}/chainlink_${camelCaseFilename}.casm.json`
+
+    if (!fs.existsSync(sierraFile) || !fs.existsSync(casmFile)) {
+      continue
+    }
+
+    const subdir = path.dirname(relativePath).slice(root.length)
+    // Create the corresponding directory
+    const targetSubdir = path.join(target, subdir, `${filename}.cairo`)
+    fs.mkdirSync(targetSubdir, { recursive: true })
+
+    // Copy the sierra and casm files. We need to copy instead of symlink
+    // because hardhat-starknet-plugin does fs.lstatSync to check if the file
+    // exists.
+    fs.copyFileSync(sierraFile, `${targetSubdir}/${filename}.json`)
+    fs.copyFileSync(casmFile, `${targetSubdir}/${filename}.casm`)
+
+    // Parse and save the ABI JSON
+    const sierraContent = JSON.parse(fs.readFileSync(sierraFile, 'utf8'))
+    fs.writeFileSync(
+      `${targetSubdir}/${filename}_abi.json`,
+      JSON.stringify(sierraContent.abi, null, 2),
+    )
+  }
 }
