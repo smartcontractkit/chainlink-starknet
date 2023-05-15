@@ -1,4 +1,5 @@
 use starknet::testing::set_caller_address;
+use starknet::testing::set_contract_address;
 use starknet::ContractAddress;
 use starknet::contract_address_const;
 use starknet::class_hash::class_hash_const;
@@ -119,19 +120,84 @@ fn test_upgrade_non_owner() {
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected: ('Ownable: caller is not owner', ))]
-fn test_set_billing() {
+fn test_set_billing_access_controller_not_owner() {
     let (owner, acc2, billingAccessControllerAddr, _) = setup();
+    // Aggregator initialization
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
 
-    // set billing access controller
+    // set billing access controller should revert if caller is not owner
+    set_caller_address(acc2);
     Aggregator::set_billing_access_controller(billingAccessControllerAddr);
+}
 
-    // set billing config
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('caller does not have access', ))]
+fn test_set_billing_config_no_access() {
+    let (owner, acc2, billingAccessControllerAddr, _) = setup();
+    // Aggregator initialization
+    Aggregator::constructor(
+        owner, contract_address_const::<777>(), 0, 100, billingAccessControllerAddr, 8, 123
+    );
+
+    // set billing config as acc2 with no access
     let config: Billing = Billing {
         observation_payment_gjuels: 1,
         transmission_payment_gjuels: 5,
         gas_base: 1,
         gas_per_signature: 1,
     };
+    set_caller_address(acc2);
+    Aggregator::set_billing(config);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_set_billing_config_as_owner() {
+    let (owner, _, billingAccessControllerAddr, _) = setup();
+    // Aggregator initialization
+    Aggregator::constructor(
+        owner, contract_address_const::<777>(), 0, 100, billingAccessControllerAddr, 8, 123
+    );
+
+    // set billing config as owner
+    let config: Billing = Billing {
+        observation_payment_gjuels: 1,
+        transmission_payment_gjuels: 5,
+        gas_base: 1,
+        gas_per_signature: 1,
+    };
+    Aggregator::set_billing(config);
+
+    // check billing config
+    let billing = Aggregator::billing();
+    assert(billing.observation_payment_gjuels == 1, 'should be 1');
+    assert(billing.transmission_payment_gjuels == 5, 'should be 5');
+    assert(billing.gas_base == 1, 'should be 1');
+    assert(billing.gas_per_signature == 1, 'should be 1');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_set_billing_config_as_acc_with_access() {
+    let (owner, acc2, billingAccessControllerAddr, billingAccessController) = setup();
+    // grant acc2 access on access controller
+    set_contract_address(owner);
+    billingAccessController.add_access(acc2);
+
+    // Aggregator initialization
+    Aggregator::constructor(
+        owner, contract_address_const::<777>(), 0, 100, billingAccessControllerAddr, 8, 123
+    );
+
+    // set billing config as acc2 with access
+    let config: Billing = Billing {
+        observation_payment_gjuels: 1,
+        transmission_payment_gjuels: 5,
+        gas_base: 1,
+        gas_per_signature: 1,
+    };
+    set_caller_address(acc2);
     Aggregator::set_billing(config);
 
     // check billing config
