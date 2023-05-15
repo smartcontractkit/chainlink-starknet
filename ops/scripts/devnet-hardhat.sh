@@ -47,12 +47,16 @@ docker run --net container:chainlink-starknet.starknet-devnet -d --name chainlin
 # starknet-devnet startup is slow and requires compiling cairo.
 echo "Waiting for starknet-devnet to become ready.."
 start_time=$(date +%s)
+prev_output=""
 while true
 do
   output=$(docker logs chainlink-starknet.starknet-devnet 2>&1)
+  if [[ "${output}" != "${prev_output}" ]]; then
+    echo -n "${output#$prev_output}"
+    prev_output="${output}"
+  fi
 
   if [[ $output == *"Listening"* ]]; then
-    echo "${output}"
     echo ""
     echo "starknet-devnet is ready."
     exit 0
