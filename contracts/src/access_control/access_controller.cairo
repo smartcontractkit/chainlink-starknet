@@ -1,3 +1,14 @@
+use starknet::ContractAddress;
+
+#[abi]
+trait IAccessController {
+    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
+    fn add_access(user: ContractAddress);
+    fn remove_access(user: ContractAddress);
+    fn enable_access_check();
+    fn disable_access_check();
+}
+
 #[contract]
 mod AccessController {
     use starknet::ContractAddress;
