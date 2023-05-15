@@ -93,14 +93,17 @@ func (c ChainTxStore) Confirm(from caigotypes.Hash, hash string) error {
 	return c[from].Confirm(hash)
 }
 
-func (c ChainTxStore) InflightCount(from caigotypes.Hash) (int, error) {
-	if err := c.validate(from); err != nil {
-		return 0, err
+func (c ChainTxStore) GetAllInflightCount() map[caigotypes.Hash]int {
+	list := map[caigotypes.Hash]int{}
+
+	for i := range c {
+		list[i] = c[i].InflightCount()
 	}
-	return c[from].InflightCount(), nil
+
+	return list
 }
 
-func (c ChainTxStore) GetUnconfirmed() map[caigotypes.Hash][]string {
+func (c ChainTxStore) GetAllUnconfirmed() map[caigotypes.Hash][]string {
 	list := map[caigotypes.Hash][]string{}
 
 	for i := range c {
