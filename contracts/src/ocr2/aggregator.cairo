@@ -88,9 +88,9 @@ mod Aggregator {
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
 
+    use chainlink::utils::split_felt;
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::access_control::AccessControl;
-    use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
     // NOTE: remove duplication once we can directly use the trait
@@ -99,6 +99,16 @@ mod Aggregator {
         fn balance_of(account: ContractAddress) -> u256;
         fn transfer(recipient: ContractAddress, amount: u256) -> bool;
     // fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
+    }
+
+    // NOTE: remove duplication once we can directly use the trait
+    #[abi]
+    trait IAccessController {
+        fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
+        fn add_access(user: ContractAddress);
+        fn remove_access(user: ContractAddress);
+        fn enable_access_check();
+        fn disable_access_check();
     }
 
     const GIGA: u128 = 1000000000_u128;
@@ -851,11 +861,6 @@ mod Aggregator {
 
     // --- Billing Config
 
-    #[abi]
-    trait IAccessController {
-        fn check_access(user: ContractAddress);
-    }
-
     #[derive(Copy, Drop, Serde)]
     struct Billing {
         observation_payment_gjuels: u32,
@@ -940,7 +945,9 @@ mod Aggregator {
 
         let access_controller = _billing_access_controller::read();
         let access_controller = IAccessControllerDispatcher { contract_address: access_controller };
-        access_controller.check_access(caller);
+        assert(
+            access_controller.has_access(caller, ArrayTrait::new()), 'caller does not have access'
+        );
     }
 
     // --- Payments and Withdrawals

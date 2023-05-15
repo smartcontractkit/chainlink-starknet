@@ -13,6 +13,8 @@ use core::result::ResultTrait;
 
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
+use chainlink::ocr2::aggregator::Aggregator::Billing;
+use chainlink::access_control::access_controller::AccessController;
 use chainlink::tests::test_ownable::should_implement_ownable;
 
 // TODO: aggregator tests
@@ -54,16 +56,39 @@ fn test_pow_2_0() {
     assert(pow(2, 31) == 0x80000000, 'expected 0x80000000');
 }
 
-fn setup() -> ContractAddress {
-    let account: ContractAddress = contract_address_const::<777>();
-    set_caller_address(account);
-    account
+#[abi]
+trait IAccessController { // importing from access_controller.cairo doesnt work
+    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
+    fn add_access(user: ContractAddress);
+    fn remove_access(user: ContractAddress);
+    fn enable_access_check();
+    fn disable_access_check();
+}
+
+fn setup() -> (ContractAddress, ContractAddress, ContractAddress, IAccessControllerDispatcher) {
+    let acc1: ContractAddress = contract_address_const::<777>();
+    let acc2: ContractAddress = contract_address_const::<888>();
+    // set acc1 as default caller
+    set_caller_address(acc1);
+
+    // deploy billing access controller
+    let mut calldata = ArrayTrait::new();
+    calldata.append(acc1.into()); // owner = acc1;
+    let (billingAccessControllerAddr, _) = deploy_syscall(
+        AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+    let billingAccessController = IAccessControllerDispatcher {
+        contract_address: billingAccessControllerAddr
+    };
+
+    // return accounts and billing access controller
+    (acc1, acc2, billingAccessControllerAddr, billingAccessController)
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_ownable() {
-    let account = setup();
+    let (account, _, _, _) = setup();
     // Deploy aggregator
     let mut calldata = ArrayTrait::new();
     calldata.append(account.into()); // owner
@@ -87,4 +112,32 @@ fn test_ownable() {
 fn test_upgrade_non_owner() {
     let sender = setup();
     Aggregator::upgrade(class_hash_const::<123>());
+}
+
+// --- Billing tests ---
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('Ownable: caller is not owner', ))]
+fn test_set_billing() {
+    let (owner, acc2, billingAccessControllerAddr, _) = setup();
+
+    // set billing access controller
+    Aggregator::set_billing_access_controller(billingAccessControllerAddr);
+
+    // set billing config
+    let config: Billing = Billing {
+        observation_payment_gjuels: 1,
+        transmission_payment_gjuels: 5,
+        gas_base: 1,
+        gas_per_signature: 1,
+    };
+    Aggregator::set_billing(config);
+
+    // check billing config
+    let billing = Aggregator::billing();
+    assert(billing.observation_payment_gjuels == 1, 'should be 1');
+    assert(billing.transmission_payment_gjuels == 5, 'should be 5');
+    assert(billing.gas_base == 1, 'should be 1');
+    assert(billing.gas_per_signature == 1, 'should be 1');
 }
