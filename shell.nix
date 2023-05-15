@@ -11,8 +11,9 @@
     python39Packages.fastecdsa # so libgmp is correctly sourced
     zlib # for numpy
     gmp
-    nodejs-18_x
-    (yarn.override { nodejs = nodejs-18_x; })
+    # use nodejs 16.x due to https://github.com/NomicFoundation/hardhat/issues/3877
+    nodejs-16_x
+    (yarn.override { nodejs = nodejs-16_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
