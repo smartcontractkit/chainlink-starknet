@@ -216,7 +216,7 @@ func (txm *starktxm) confirmLoop() {
 				break
 			}
 
-			hashes := txm.txStore.GetUnconfirmed()
+			hashes := txm.txStore.GetAllUnconfirmed()
 			for addr := range hashes {
 				for i := range hashes[addr] {
 					hash := hashes[addr][i]
@@ -290,9 +290,9 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 }
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
-	list := maps.Values(txm.txStore.GetUnconfirmed())
+	list := maps.Values(txm.txStore.GetAllInflightCount())
 	for i := range list {
-		unconfirmed += len(list[i])
+		unconfirmed += list[i]
 	}
 	return len(txm.queue), unconfirmed
 }

@@ -140,14 +140,14 @@ func TestChainTxStore(t *testing.T) {
 	assert.Error(t, c.Save(caigotypes.Hash{}, big.NewInt(1), "0x0"))
 
 	// inflight count
-	count, err := c.InflightCount(caigotypes.Hash{})
-	require.NoError(t, err)
+	count, exists := c.GetAllInflightCount()[caigotypes.Hash{}]
+	require.True(t, exists)
 	assert.Equal(t, 1, count)
-	_, err = c.InflightCount(caigotypes.Hash{1})
-	require.ErrorContains(t, err, "from address does not exist")
+	_, exists = c.GetAllInflightCount()[caigotypes.Hash{1}]
+	require.False(t, exists)
 
 	// get unconfirmed
-	list := c.GetUnconfirmed()
+	list := c.GetAllUnconfirmed()
 	assert.Equal(t, 1, len(list))
 	hashes, ok := list[caigotypes.Hash{}]
 	assert.True(t, ok)
@@ -157,10 +157,10 @@ func TestChainTxStore(t *testing.T) {
 	assert.NoError(t, c.Confirm(caigotypes.Hash{}, "0x0"))
 	assert.ErrorContains(t, c.Confirm(caigotypes.Hash{1}, "0x0"), "from address does not exist")
 	assert.Error(t, c.Confirm(caigotypes.Hash{}, "0x1"))
-	list = c.GetUnconfirmed()
+	list = c.GetAllUnconfirmed()
 	assert.Equal(t, 1, len(list))
 	assert.Equal(t, 0, len(list[caigotypes.Hash{}]))
-	count, err = c.InflightCount(caigotypes.Hash{})
-	assert.NoError(t, err)
+	count, exists = c.GetAllInflightCount()[caigotypes.Hash{}]
+	assert.True(t, exists)
 	assert.Equal(t, 0, count)
 }
