@@ -4,10 +4,9 @@ import {
   devnetPrivateKey,
   loadExampleContract,
   registerExecuteCommand,
+  TIMEOUT,
 } from '../utils'
 import { IntegratedDevnet, startNetwork } from '../utils/network'
-
-const TIMEOUT = 100000
 
 let account: string = devnetAccount0Address
 let privateKey: string = devnetPrivateKey
