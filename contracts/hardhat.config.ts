@@ -3,6 +3,7 @@ import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
 import 'solidity-coverage'
+import { prepareHardhatArtifacts } from './test/setup'
 
 const COMPILER_SETTINGS = {
   optimizer: {
@@ -58,7 +59,9 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 10000000,
-    file: './test/setup.ts',
+    rootHooks: {
+      beforeAll: prepareHardhatArtifacts,
+    },
   },
   paths: {
     sources: './solidity',

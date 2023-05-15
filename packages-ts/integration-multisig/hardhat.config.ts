@@ -1,5 +1,7 @@
+import path from 'path'
 import { HardhatUserConfig } from 'hardhat/types'
 import '@shardlabs/starknet-hardhat-plugin'
+import { prepareHardhatArtifacts } from '../../contracts/test/setup'
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -24,7 +26,9 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 10000000,
-    file: '../../contracts/test/setup.ts',
+    rootHooks: {
+      beforeAll: prepareHardhatArtifacts,
+    },
   },
   paths: {
     sources: './solidity',
