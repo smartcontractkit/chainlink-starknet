@@ -258,7 +258,7 @@ test-integration-gauntlet: build-ts env-devnet-hardhat-down
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-ts-contracts
-test-ts-contracts: build-sol-contracts build-ts-workspace env-devnet-hardhat
+test-ts-contracts: build-ts env-devnet-hardhat
 	cd contracts/ && \
 		yarn test
 
