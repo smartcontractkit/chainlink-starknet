@@ -131,10 +131,7 @@ mod SequencerUptimeFeed {
 
         if old_address != address.into() {
             _l1_sender::write(address.into());
-            L1SenderTransferred(
-                old_address.try_into().unwrap(), 
-                address
-            );
+            L1SenderTransferred(old_address.try_into().unwrap(), address);
         }
     }
 
