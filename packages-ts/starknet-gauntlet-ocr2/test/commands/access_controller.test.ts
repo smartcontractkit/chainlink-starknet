@@ -11,7 +11,7 @@ describe('Access Controller Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 15000)
+  }, TIMEOUT)
 
   it(
     'Deployment',

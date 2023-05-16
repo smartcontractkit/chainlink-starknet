@@ -8,15 +8,17 @@ import { CATEGORIES } from '../../lib/categories'
 import { tokenContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
+  minter?: string
   owner?: string
 }
 
-type ContractInput = [owner: string]
+type ContractInput = [minter: string, owner: string]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   return {
+    minter: flags.minter,
     owner: flags.owner,
   }
 }
@@ -26,7 +28,7 @@ const makeContractInput = async (
   context: ExecutionContext,
 ): Promise<ContractInput> => {
   const defaultWallet = context.wallet.getAccountAddress()
-  return [input.owner || defaultWallet]
+  return [input.minter || defaultWallet, input.owner || defaultWallet]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (

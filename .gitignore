@@ -1,5 +1,6 @@
 .direnv
 artifacts/
+vendor/
 accounts.json
 node.json
 package-lock.json

@@ -1,0 +1,7 @@
+[submodule "vendor/cairo"]
+	path = vendor/cairo
+	url = https://github.com/starkware-libs/cairo
+[submodule "vendor/scarb"]
+	path = vendor/scarb
+	url = https://github.com/software-mansion/scarb
+	ignore = dirty
