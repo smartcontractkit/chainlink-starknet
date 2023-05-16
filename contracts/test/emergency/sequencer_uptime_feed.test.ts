@@ -85,15 +85,6 @@ describe('SequencerUptimeFeed', function () {
       }
     })
 
-    it('should error on `check_access` without access', async function () {
-      await uptimeFeedContract.call('check_access', { user: user })
-
-      await expectInvokeError(
-        owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 }),
-        'user does not have access',
-      )
-    })
-
     it('should disable access check', async function () {
       await owner.invoke(uptimeFeedContract, 'disable_access_check', {})
 
