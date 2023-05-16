@@ -207,7 +207,7 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
+		go test --timeout=2h -v -count=1 -json ./smoke
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
@@ -218,7 +218,7 @@ test-integration-soak: test-integration-prep
 .PHONY: test-integration-soak-ci
 test-integration-soak-ci:
 	cd integration-tests/ && \
-		go test --timeout=1h -v -count=1 -json ./soak 2>&1 | tee /tmp/gotest.log | gotestfmt
+		go test --timeout=1h -v -count=1 -json ./soak
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
