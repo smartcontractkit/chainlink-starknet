@@ -22,6 +22,8 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Install Cairo
+      uses: ./.github/actions/install-cairo
     - name: Check if image exists
       id: check-image
       uses: smartcontractkit/chainlink-github-actions/docker/image-exists@8489879838862929f43f7d7cd1b33903965cf507 # v2.1.6
