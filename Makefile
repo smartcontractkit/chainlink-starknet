@@ -212,7 +212,7 @@ test-integration-smoke-ci:
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
 	cd integration-tests/ && \
-		go test --timeout=1h -v ./soak
+		go test --timeout=1h -v -json./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
