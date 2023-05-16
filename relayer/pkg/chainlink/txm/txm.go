@@ -291,8 +291,8 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
 	list := maps.Values(txm.txStore.GetAllInflightCount())
-	for i := range list {
-		unconfirmed += list[i]
+	for _, count := range list {
+		unconfirmed += count
 	}
 	return len(txm.queue), unconfirmed
 }
