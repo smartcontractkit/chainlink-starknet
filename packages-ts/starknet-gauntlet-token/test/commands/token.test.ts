@@ -32,7 +32,7 @@ describe('Token Contract', () => {
     defaultAccount = '0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a'
     defaultPk = '0xe3e70682c2094cac629f6fbed82c07cd'
     defaultBalance = 0
-  }, 15000)
+  }, TIMEOUT)
 
   it(
     'Deploy OZ Account',

@@ -1,5 +1,5 @@
 import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
-import { CompiledContract, Contract, Call } from 'starknet'
+import { CompiledContract, CompiledSierraCasm, Contract, Call, hash } from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies, Env } from '../../dependencies'
 import { IStarknetProvider, wrapResponse } from '../../provider'
@@ -28,6 +28,12 @@ export type AfterExecute<UI, CI> = (
   deps: Pick<Dependencies, 'logger' | 'prompt'>,
 ) => (result: Result<TransactionResponse>) => Promise<any>
 
+export interface LoadContractResult {
+  contract: CompiledContract
+  // for cairo 1.0, `contract` is a sierra artifact and the casm artifact needs to be provided.
+  casm?: CompiledSierraCasm
+}
+
 export interface ExecuteCommandConfig<UI, CI> extends BaseConfig<UI> {
   hooks?: {
     beforeExecute?: BeforeExecute<UI, CI>
@@ -35,7 +41,7 @@ export interface ExecuteCommandConfig<UI, CI> extends BaseConfig<UI> {
   }
   internalFunction?: string
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
-  loadContract: () => CompiledContract
+  loadContract: () => LoadContractResult
 }
 
 export interface ExecuteCommandInstance<UI, CI> {
@@ -45,6 +51,7 @@ export interface ExecuteCommandInstance<UI, CI> {
   account: string
   executionContext: ExecutionContext
   contract: CompiledContract
+  compiledContractHash?: string
 
   input: Input<UI, CI>
 
@@ -68,6 +75,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     account: string
     executionContext: ExecutionContext
     contract: CompiledContract
+    compiledContractHash?: string
 
     input: Input<UI, CI>
 
@@ -87,7 +95,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.provider = deps.makeProvider(env.providerUrl, c.wallet)
       c.contractAddress = args[0]
       c.account = env.account
-      c.contract = config.loadContract()
+
+      const loadResult = config.loadContract()
+      c.contract = loadResult.contract
+      if (loadResult.casm) {
+        c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
+      }
 
       c.executionContext = {
         provider: c.provider,
@@ -172,6 +185,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       const tx = await this.provider.deployContract(
         this.contract,
+        this.compiledContractHash,
         this.input.contract,
         false,
         this.input?.user?.['salt'],

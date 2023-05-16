@@ -1,0 +1,24 @@
+{
+  "name": "@chainlink/starknet-integration-tests-multisig",
+  "version": "1.0.0",
+  "description": "Multisig integration test",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx hardhat --network localhost test"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.22.0",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.2",
+    "@types/chai": "^4.3.3",
+    "@types/elliptic": "^6.4.14",
+    "@types/mocha": "^9.1.1",
+    "chai": "^4.3.6",
+    "ethers": "^5.6.8",
+    "hardhat": "^2.10.2",
+    "starsign-multisig": "^0.3.0"
+  }
+}

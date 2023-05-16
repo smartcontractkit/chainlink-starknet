@@ -3,6 +3,7 @@ import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
 import 'solidity-coverage'
+import { prepareHardhatArtifacts } from './test/setup'
 
 const COMPILER_SETTINGS = {
   optimizer: {
@@ -42,25 +43,31 @@ const config: HardhatUserConfig = {
         accountPath: '~/.starknet_accounts',
       },
     },
+    requestTimeout: 1000000,
   },
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050',
+      args: ['--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
     },
     integratedDevnet: {
       url: 'http://127.0.0.1:5050',
       venv: 'active',
-      args: ['--lite-mode'],
+      args: ['--lite-mode', '--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
       // dockerizedVersion: "0.2.0"
     },
   },
   mocha: {
     timeout: 10000000,
+    rootHooks: {
+      beforeAll: prepareHardhatArtifacts,
+    },
   },
   paths: {
-    sources: './src',
+    sources: './solidity',
     starknetSources: './src',
-    cairoPaths: ['./vendor/starkware-libs/starkgate-contracts/src'],
+    starknetArtifacts: './target/release',
+    cairoPaths: [],
   },
 }
 

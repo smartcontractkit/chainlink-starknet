@@ -23,7 +23,7 @@ The diagram above illustrates the general path of how the Sequencer’s status i
 ### Contracts
 
 - L1 Ethereum (Solditiy):
-  - [StarknetValidator.sol](https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/solidity/emergency/StarknetValidator.sol)
+  - [StarknetValidator.sol](https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/solidity/emergency/StarknetValidator.sol)
 - L2 Starknet (Cairo):
   - [SequencerUptimeFeed.cairo](https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/cairo/emergency/SequencerUptimeFeed/sequencer_uptime_feed.cairo)
 

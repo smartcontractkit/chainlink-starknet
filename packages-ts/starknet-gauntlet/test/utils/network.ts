@@ -1,4 +1,5 @@
 import { ChildProcess, spawn } from 'child_process'
+import path from 'path'
 
 export abstract class IntegratedDevnet {
   protected childProcess: ChildProcess
@@ -49,14 +50,42 @@ class VenvDevnet extends IntegratedDevnet {
     this.command = 'starknet-devnet'
   }
 
-  protected async spawnChildProcess(): Promise<ChildProcess> {
-    let args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
-    if (this.opts?.seed) {
-      args.push('--seed', this.opts.seed.toString())
-    } else {
-      args.push('--seed', '0')
-    }
-    return spawn(this.command, args)
+  protected spawnChildProcess(): Promise<ChildProcess> {
+    return new Promise((resolve, reject) => {
+      const cargoManifest = path.join(__dirname, '../../../../vendor/cairo/Cargo.toml')
+      let args = [
+        '--port',
+        this.port,
+        '--gas-price',
+        '1',
+        '--lite-mode',
+        '--cairo-compiler-manifest',
+        cargoManifest,
+      ]
+      if (this.opts?.seed) {
+        args.push('--seed', this.opts.seed.toString())
+      } else {
+        args.push('--seed', '0')
+      }
+      console.log('Spawning starknet-devnet:', args.join(' '))
+      const childProcess = spawn(this.command, args)
+      childProcess.on('error', reject)
+
+      // starknet-devnet takes time to run the starknet rust compiler once first to get the version.
+      // This calls `cargo run` and requires building on first run, which can take a while. Wait for some program output before we resolve.
+      // ref: https://github.com/0xSpaceShard/starknet-devnet/blob/b7388321471e504a04c831dbc175d5a569b76f0c/starknet_devnet/devnet_config.py#L214
+      childProcess.stdout.setEncoding('utf-8')
+      let initialOutput = ''
+      childProcess.stdout.on('data', (chunk) => {
+        initialOutput += chunk
+        // Wait for the 1st account to be printed out. The 'Listening on ...' line doesn't seem to be output when started without a tty.
+        if (initialOutput.indexOf('Account #0') >= 0) {
+          console.log('Started starknet-devnet')
+          childProcess.stdout.removeAllListeners('data')
+          resolve(childProcess)
+        }
+      })
+    })
   }
 
   protected cleanup(): void {

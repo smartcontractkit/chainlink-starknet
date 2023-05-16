@@ -15,7 +15,7 @@ describe('Sequencer Uptime Feed Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 15000)
+  }, TIMEOUT)
 
   // deploy uptime feed contract
   beforeEach(async () => {

@@ -1,17 +1,20 @@
 import { expect } from 'chai'
 import { starknet } from 'hardhat'
-import { StarknetContract, Account } from 'hardhat/types/runtime'
+import { StarknetContract, Account, StarknetContractFactory } from 'hardhat/types/runtime'
 import { num } from 'starknet'
 import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
-import { account, expectInvokeError } from '@chainlink/starknet'
+import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 describe('SequencerUptimeFeed', function () {
-  this.timeout(300_000)
+  this.timeout(1_000_000)
 
   let owner: Account
   let nonOwner: Account
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
+  let feedFactory: StarknetContractFactory
+  let proxyFactory: StarknetContractFactory
+
   // should be beforeeach, but that'd be horribly slow. Just remember that the tests are not idempotent
   before(async function () {
     owner = await starknet.OpenZeppelinAccount.createAccount()
@@ -23,6 +26,11 @@ describe('SequencerUptimeFeed', function () {
     ])
     await owner.deployAccount()
     await nonOwner.deployAccount()
+
+    feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
+    await expectSuccessOrDeclared(owner.declare(feedFactory, { maxFee: 1e20 }))
+    proxyFactory = await starknet.getContractFactory('aggregator_proxy')
+    await expectSuccessOrDeclared(owner.declare(proxyFactory, { maxFee: 1e20 }))
   })
 
   shouldBehaveLikeOwnableContract(async () => {
@@ -33,13 +41,14 @@ describe('SequencerUptimeFeed', function () {
 
     await bob.deployAccount()
 
-    const feedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    await alice.declare(feedFactory)
-
-    const feed = await alice.deploy(feedFactory, {
-      initial_status: 0,
-      owner_address: num.toBigInt(alice.starknetContract.address),
-    })
+    const feed = await alice.deploy(
+      feedFactory,
+      {
+        initial_status: 0,
+        owner_address: num.toBigInt(alice.starknetContract.address),
+      },
+      { maxFee: 1e20 },
+    )
 
     return { ownable: feed, alice, bob }
   })
@@ -49,10 +58,7 @@ describe('SequencerUptimeFeed', function () {
     let uptimeFeedContract: StarknetContract
 
     before(async function () {
-      const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      await owner.declare(uptimeFeedFactory)
-
-      uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
+      uptimeFeedContract = await owner.deploy(feedFactory, {
         initial_status: 0,
         owner_address: num.toBigInt(owner.starknetContract.address),
       })
@@ -63,19 +69,19 @@ describe('SequencerUptimeFeed', function () {
 
       await expectInvokeError(
         nonOwner.invoke(uptimeFeedContract, 'add_access', { user }),
-        'Ownable: caller is not the owner',
+        'Ownable: caller is not owner',
       )
     })
 
     it('should report access information correctly', async function () {
       {
         const res = await uptimeFeedContract.call('has_access', { user: user, data: [] })
-        expect(res.bool).to.equal(1n)
+        expect(res.response).to.equal(true)
       }
 
       {
         const res = await uptimeFeedContract.call('has_access', { user: user + 1, data: [] })
-        expect(res.bool).to.equal(0n)
+        expect(res.response).to.equal(false)
       }
     })
 
@@ -84,7 +90,7 @@ describe('SequencerUptimeFeed', function () {
 
       await expectInvokeError(
         owner.invoke(uptimeFeedContract, 'check_access', { user: user + 1 }),
-        'SimpleReadAccessController: address does not have access',
+        'user does not have access',
       )
     })
 
@@ -92,24 +98,24 @@ describe('SequencerUptimeFeed', function () {
       await owner.invoke(uptimeFeedContract, 'disable_access_check', {})
 
       const res = await uptimeFeedContract.call('has_access', { user: user + 1, data: [] })
-      expect(res.bool).to.equal(1n)
+      expect(res.response).to.equal(true)
     })
 
     it('should enable access check', async function () {
       await owner.invoke(uptimeFeedContract, 'enable_access_check', {})
 
       const res = await uptimeFeedContract.call('has_access', { user: user + 1, data: [] })
-      expect(res.bool).to.equal(0n)
+      expect(res.response).to.equal(false)
     })
 
     it('should remove user access', async function () {
       const res = await uptimeFeedContract.call('has_access', { user: user, data: [] })
-      expect(res.bool).to.equal(1n)
+      expect(res.response).to.equal(true)
 
       await owner.invoke(uptimeFeedContract, 'remove_access', { user: user })
 
       const new_res = await uptimeFeedContract.call('has_access', { user: user, data: [] })
-      expect(new_res.bool).to.equal(0n)
+      expect(new_res.response).to.equal(false)
     })
   })
 
@@ -118,15 +124,11 @@ describe('SequencerUptimeFeed', function () {
     let proxyContract: StarknetContract
 
     before(async function () {
-      const uptimeFeedFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-      await owner.declare(uptimeFeedFactory)
-      uptimeFeedContract = await owner.deploy(uptimeFeedFactory, {
+      uptimeFeedContract = await owner.deploy(feedFactory, {
         initial_status: 0,
         owner_address: num.toBigInt(owner.starknetContract.address),
       })
 
-      const proxyFactory = await starknet.getContractFactory('aggregator_proxy')
-      await owner.declare(proxyFactory)
       proxyContract = await owner.deploy(proxyFactory, {
         owner: num.toBigInt(owner.starknetContract.address),
         address: num.toBigInt(uptimeFeedContract.address),
@@ -143,26 +145,26 @@ describe('SequencerUptimeFeed', function () {
       await accWithoutAccess.deployAccount()
       await expectInvokeError(
         accWithoutAccess.invoke(proxyContract, 'latest_round_data'),
-        'SimpleReadAccessController: address does not have access',
+        'user does not have read access',
       )
     })
 
     it('should respond via an aggregator_proxy contract', async function () {
       {
         const res = await proxyContract.call('latest_round_data')
-        expect(res.round.answer).to.equal(0n)
+        expect(res.response.answer).to.equal(0n)
       }
 
       {
         const res = await proxyContract.call('description')
-        expect(res.description).to.equal(
+        expect(res.response).to.equal(
           134626335741441605527772921271890603575702899782138692259993464692975953252n,
         )
       }
 
       {
         const res = await proxyContract.call('decimals')
-        expect(res.decimals).to.equal(0n)
+        expect(res.response).to.equal(0n)
       }
 
       // TODO: enable access check and assert correct behaviour
