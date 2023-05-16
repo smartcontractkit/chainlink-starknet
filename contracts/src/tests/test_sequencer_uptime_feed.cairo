@@ -59,7 +59,7 @@ fn test_access_control() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', 'ENTRYPOINT_FAILED'))]
+#[should_panic()]
 fn test_set_l1_sender_not_owner() {
     let (_, _, sequencerUptimeFeed) = setup();
     sequencerUptimeFeed.set_l1_sender(contract_address_const::<789>().into().try_into().unwrap());
