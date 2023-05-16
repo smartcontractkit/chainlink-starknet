@@ -1,13 +1,16 @@
 package keys
 
 import (
+	"bytes"
 	crypto_rand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"math/big"
 
+	"github.com/pkg/errors"
 	"github.com/smartcontractkit/caigo"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 // Raw represents the Stark private key
@@ -101,4 +104,33 @@ func (key Key) ToPrivKey() *big.Int {
 // PublicKey copies public key object
 func (key Key) PublicKey() PublicKey {
 	return key.pub
+}
+
+func Sign(hash *big.Int, key Key) ([]byte, error) {
+
+	r, s, err := caigo.Curve.Sign(hash, key.ToPrivKey())
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// enforce s <= N/2 to prevent signature malleability
+	if s.Cmp(new(big.Int).Rsh(caigo.Curve.N, 1)) > 0 {
+		s.Sub(caigo.Curve.N, s)
+	}
+
+	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
+	expectedLen := 3 * byteLen
+	buff := bytes.NewBuffer([]byte(PubKeyToStarkKey(key.pub)))
+	if _, err := buff.Write(starknet.PadBytes(r.Bytes(), byteLen)); err != nil {
+		return []byte{}, err
+	}
+	if _, err := buff.Write(starknet.PadBytes(s.Bytes(), byteLen)); err != nil {
+		return []byte{}, err
+	}
+
+	out := buff.Bytes()
+	if len(out) != expectedLen {
+		return []byte{}, errors.Errorf("unexpected signature size, got %d want %d", len(out), expectedLen)
+	}
+	return out, nil
 }

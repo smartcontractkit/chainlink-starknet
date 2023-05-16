@@ -1,13 +1,12 @@
 package keys
 
 import (
-	"bytes"
 	"io"
 	"math/big"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/smartcontractkit/caigo"
 	"github.com/pkg/errors"
+	"github.com/smartcontractkit/caigo"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -58,30 +57,7 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 		return []byte{}, err
 	}
 
-	r, s, err := caigo.Curve.Sign(hash, sk.priv)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	// enforce s <= N/2 to prevent signature malleability
-	if s.Cmp(new(big.Int).Rsh(caigo.Curve.N, 1)) > 0 {
-		s.Sub(caigo.Curve.N, s)
-	}
-
-	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
-	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
-	if _, err := buff.Write(starknet.PadBytes(r.Bytes(), byteLen)); err != nil {
-		return []byte{}, err
-	}
-	if _, err := buff.Write(starknet.PadBytes(s.Bytes(), byteLen)); err != nil {
-		return []byte{}, err
-	}
-
-	out := buff.Bytes()
-	if len(out) != sk.MaxSignatureLength() {
-		return []byte{}, errors.Errorf("unexpected signature size, got %d want %d", len(out), sk.MaxSignatureLength())
-	}
-	return out, nil
+	return Sign(hash, sk.Key)
 }
 
 func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
