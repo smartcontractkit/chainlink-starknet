@@ -22,16 +22,15 @@ func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (keys
 	ks := mocks.NewKeystore(t)
 	c := mocks.NewNonceManagerClient(t)
 	lggr := logger.Test(t)
-	nm := keys.NewNonceManager(lggr, c, ks)
+	nm := keys.NewNonceManager(lggr, ks)
 
 	// mock returns
 	key := keys.MustNewInsecure(rand.Reader)
 	keyHash := caigotypes.HexToHash(key.ID()) // using key id directly rather than deriving random account address
-	c.On("ChainID", mock.Anything).Return(chainID, nil).Once()
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(utils.Context(t)))
-	require.NoError(t, nm.Register(utils.Context(t), keyHash, chainID))
+	require.NoError(t, nm.Register(utils.Context(t), keyHash, chainID, c))
 
 	return nm, keyHash, func() { require.NoError(t, nm.Close()) }
 }
@@ -52,13 +51,13 @@ func TestNonceManager_NextSequence(t *testing.T) {
 	// should fail with invalid chain id
 	_, err = nm.NextSequence(k, "invalid_chainId")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("chain id does not match: %s (expected) != %s (got)", chainId, "invalid_chainId"))
+	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
 	randAddr1 := caigotypes.Hash{1}
 	_, err = nm.NextSequence(randAddr1, chainId)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s", randAddr1.String()))
+	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
 }
 
 func TestNonceManager_IncrementNextSequence(t *testing.T) {
@@ -87,13 +86,13 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	// should fail with invalid chain id
 	err = nm.IncrementNextSequence(k, "invalid_chainId", initPlusOne)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("chain id does not match: %s (expected) != %s (got)", chainId, "invalid_chainId"))
+	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
 	randAddr1 := caigotypes.Hash{1}
 	err = nm.IncrementNextSequence(randAddr1, chainId, initPlusOne)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s", randAddr1.String()))
+	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
 
 	// verify it didnt get changed by any erroring calls
 	next, err = nm.NextSequence(k, chainId)

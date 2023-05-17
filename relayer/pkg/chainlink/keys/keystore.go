@@ -18,7 +18,7 @@ type Keystore interface {
 type NonceManager interface {
 	types.Service
 
-	Register(ctx context.Context, address caigotypes.Hash, chainID string) error
+	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
 
 	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
 	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error

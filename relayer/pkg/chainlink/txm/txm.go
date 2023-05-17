@@ -66,12 +66,7 @@ func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func(
 		cfg:     cfg,
 		txStore: ChainTxStore{},
 	}
-	client, err := txm.client.Get()
-	if err != nil {
-		txm.client.Reset()
-		return txm, err
-	}
-	txm.nonce = keys.NewNonceManager(txm.lggr, client, txm.ks)
+	txm.nonce = keys.NewNonceManager(txm.lggr, txm.ks)
 
 	return txm, nil
 }
@@ -227,10 +222,16 @@ func (txm *starktxm) confirmLoop() {
 					})
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
+						continue
+					}
+
+					if status == nil {
+						txm.lggr.Errorw("status was nil", "hash", hash)
+						continue
 					}
 
 					if status.TxStatus == "ACCEPTED_ON_L1" || status.TxStatus == "ACCEPTED_ON_L2" || status.TxStatus == "REJECTED" {
-						txm.lggr.Debugw("tx confirmed", "hash", hash, "status", status)
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status.TxStatus), "hash", hash, "status", status)
 						if err := txm.txStore.Confirm(addr, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 						}
@@ -279,7 +280,7 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 	}
 
 	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, client.Gw.ChainId); err != nil {
+	if err := txm.nonce.Register(context.TODO(), accountAddress, client.Gw.ChainId, client); err != nil {
 		return err
 	}
 
