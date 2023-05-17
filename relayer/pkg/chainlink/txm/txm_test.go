@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 
@@ -24,6 +25,7 @@ import (
 )
 
 func TestIntegration_Txm(t *testing.T) {
+	n := 2 // number of txs per key
 	url := SetupLocalStarknetNode(t)
 	devnet := test.NewDevNet(url)
 	accounts, err := devnet.Accounts()
@@ -31,6 +33,7 @@ func TestIntegration_Txm(t *testing.T) {
 
 	// parse keys into expected format
 	localKeys := map[string]keys.Key{}
+	localAccounts := map[string]string{}
 	for i := range accounts {
 		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
 		require.NoError(t, err)
@@ -38,6 +41,7 @@ func TestIntegration_Txm(t *testing.T) {
 		key := keys.Raw(privKey).Key()
 		assert.Equal(t, caigotypes.HexToHash(accounts[i].PublicKey), caigotypes.HexToHash(key.ID()))
 		localKeys[key.ID()] = key
+		localAccounts[key.ID()] = accounts[i].Address
 	}
 
 	// mock keystore
@@ -56,9 +60,7 @@ func TestIntegration_Txm(t *testing.T) {
 		},
 	)
 
-	lcfg := logger.Config{Level: -1} // debug level
-	lggr, err := lcfg.New()
-	require.NoError(t, err)
+	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
 	require.NoError(t, err)
@@ -84,8 +86,8 @@ func TestIntegration_Txm(t *testing.T) {
 
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
-		for i := 0; i < 2; i++ {
-			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(accounts[i].Address), caigotypes.FunctionCall{
+		for i := 0; i < n; i++ {
+			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(localAccounts[k]), caigotypes.FunctionCall{
 				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
 				EntryPointSelector: "totalSupply",
 			}))
@@ -107,4 +109,6 @@ func TestIntegration_Txm(t *testing.T) {
 	assert.True(t, empty, "txm timed out while trying to confirm transactions")
 	require.NoError(t, txm.Close())
 	require.Error(t, txm.Ready())
+	assert.Equal(t, 0, observer.FilterLevelExact(zapcore.ErrorLevel).Len())                       // assert no error logs
+	assert.Equal(t, n*len(localKeys), len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())) // validate txs were successfully included on chain
 }

@@ -36,32 +36,6 @@ func (_m *Keystore) Get(id string) (keys.Key, error) {
 	return r0, r1
 }
 
-// GetAll provides a mock function with given fields:
-func (_m *Keystore) GetAll() ([]keys.Key, error) {
-	ret := _m.Called()
-
-	var r0 []keys.Key
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]keys.Key, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []keys.Key); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]keys.Key)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 type mockConstructorTestingTNewKeystore interface {
 	mock.TestingT
 	Cleanup(func())
