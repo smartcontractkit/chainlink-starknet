@@ -106,6 +106,9 @@ func (key Key) PublicKey() PublicKey {
 	return key.pub
 }
 
+// Sign creates a signature by concat'ing the public key, and the curve parameters r,s.
+//
+//	public key (32 bytes) + r (32 bytes) + s (32 bytes)
 func Sign(hash *big.Int, key Key) ([]byte, error) {
 
 	r, s, err := caigo.Curve.Sign(hash, key.ToPrivKey())
