@@ -20,10 +20,10 @@ jobs:
     steps:
       - name: Collect Metrics
         id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@8163dcea2f01a0a8fec84b284406ff7af1d2e1c0
+        uses: smartcontractkit/push-gha-metrics-action@v1
         with:
-          basic-auth: ${{ secrets.GRAFANA_CLOUD_BASIC_AUTH }}
-          hostname: ${{ secrets.GRAFANA_CLOUD_HOST }}
+          basic-auth: TESTING_THE_SECRET
+          hostname: TESTING_THE_HOST
           this-job-name: Publish Integration Test Image
         continue-on-error: true
       - name: Checkout the repo
