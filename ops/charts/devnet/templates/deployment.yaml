@@ -21,6 +21,22 @@ spec:
         - name: vol
           hostPath:
             path: /dumps
+        - name: cairo-checkout
+          emptyDir: {}
+      initContainers:
+        - name: git-cairo
+          image: appropriate/curl
+          command: ["/bin/sh"]
+          args:
+            - "-c"
+            - |
+              apk add --no-cache git
+              git clone --single-branch https://github.com/starkware-libs/cairo /cairo
+              cd /cairo
+              git checkout 05867c8
+          volumeMounts:
+            - name: cairo-checkout
+              mountPath: /cairo
       containers:
       - name: {{ .Chart.Name }}
         volumeMounts:
@@ -29,8 +45,11 @@ spec:
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.5.0"}}"
-        args: ["--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+          - name: cairo-checkout
+            mountPath: /cairo
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.5.1"}}"
+        command: ["sh"]
+        args: ["-c", "(wget https://sh.rustup.rs -O - | sh -s -- -y) && apk add gmp-dev g++ gcc libffi-dev && PATH=\"/root/.cargo/bin:${PATH}\" starknet-devnet --lite-mode --host 0.0.0.0 --port {{ .Values.service.internalPort }} --seed {{ .Values.seed }} --cairo-compiler-manifest /cairo/Cargo.toml"]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}
