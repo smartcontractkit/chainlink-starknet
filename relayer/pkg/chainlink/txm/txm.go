@@ -68,6 +68,7 @@ func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func(
 	}
 	client, err := txm.client.Get()
 	if err != nil {
+		txm.client.Reset()
 		return txm, err
 	}
 	txm.nonce = keys.NewNonceManager(txm.lggr, client, txm.ks)
@@ -145,6 +146,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 	txs := []caigotypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
+		txm.client.Reset()
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
@@ -272,6 +274,7 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 
 	client, err := txm.client.Get()
 	if err != nil {
+		txm.client.Reset()
 		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 
