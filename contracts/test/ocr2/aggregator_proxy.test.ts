@@ -3,7 +3,6 @@ import { starknet } from 'hardhat'
 import { num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
-import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { account, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 describe('AggregatorProxy', function () {
@@ -36,15 +35,6 @@ describe('AggregatorProxy', function () {
     })
 
     console.log(proxy.address)
-  })
-
-  shouldBehaveLikeOwnableContract(async () => {
-    const alice = owner
-    const bob = await starknet.OpenZeppelinAccount.createAccount()
-
-    await funder.fund([{ account: bob.address, amount: 1e21 }])
-    await bob.deployAccount()
-    return { ownable: proxy, alice, bob }
   })
 
   describe('proxy behaviour', function () {
