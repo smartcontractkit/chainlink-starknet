@@ -247,7 +247,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	// validate balance in aggregator
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
 		ContractAddress: caigotypes.HexToHash(testState.LinkTokenAddr),
-		Selector:        "balanceOf",
+		Selector:        "balance_of",
 		Calldata:        []string{caigotypes.HexToBN(testState.OCRAddr).String()},
 	})
 	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail")
@@ -257,7 +257,12 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	})
 	require.NoError(testState.T, errAgg, "Reader balance from LINK contract should not fail")
 	balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
-	balAgg, _ := new(big.Int).SetString(resAgg[0], 0)
+	balAgg, _ := new(big.Int).SetString(resAgg[1], 0)
+	isNegative, _ := new(big.Int).SetString(resAgg[0], 0)
+	if isNegative.Sign() > 0 {
+		balAgg = new(big.Int).Neg(balAgg)
+	}
+
 	assert.Equal(testState.T, balLINK.Cmp(big.NewInt(0)), 1, "Aggregator should have non-zero balance")
 	assert.GreaterOrEqual(testState.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
 
