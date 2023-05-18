@@ -776,7 +776,13 @@ mod Aggregator {
     }
 
     #[view]
-    fn latest_transmission_details() {}
+    fn latest_transmission_details() -> (felt252, u64, u128, u64) {
+        let config_digest = _latest_config_digest::read();
+        let latest_round_id = _latest_aggregator_round_id::read();
+        let epoch_and_round = _latest_epoch_and_round::read();
+        let transmission = _transmissions::read(latest_round_id);
+        (config_digest, epoch_and_round, transmission.answer, transmission.transmission_timestamp)
+    }
 
     // --- RequestNewRound
 
