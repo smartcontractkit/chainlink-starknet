@@ -17,6 +17,7 @@ use chainlink::ocr2::aggregator::Aggregator;
 use chainlink::ocr2::aggregator::Aggregator::Billing;
 use chainlink::access_control::access_controller::AccessController;
 use chainlink::tests::test_ownable::should_implement_ownable;
+use chainlink::tests::test_access_controller::should_implement_access_control;
 
 // TODO: aggregator tests
 
@@ -104,6 +105,26 @@ fn test_ownable() {
     ).unwrap();
 
     should_implement_ownable(aggregatorAddr, account);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_access_control() {
+    let (account, _, _, _) = setup();
+    // Deploy aggregator
+    let mut calldata = ArrayTrait::new();
+    calldata.append(account.into()); // owner
+    calldata.append(contract_address_const::<777>().into()); // link token
+    calldata.append(0); // min_answer
+    calldata.append(100); // max_answer
+    calldata.append(contract_address_const::<999>().into()); // billing access controller
+    calldata.append(8); // decimals
+    calldata.append(123); // description
+    let (aggregatorAddr, _) = deploy_syscall(
+        Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+
+    should_implement_access_control(aggregatorAddr, account);
 }
 
 
