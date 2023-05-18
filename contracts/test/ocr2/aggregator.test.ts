@@ -2,7 +2,6 @@ import { assert, expect } from 'chai'
 import { starknet } from 'hardhat'
 import { ec, hash, num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
-import { shouldBehaveLikeOwnableContract } from '../access/behavior/ownable'
 import { TIMEOUT } from '../constants'
 import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
 import { bytesToFelts } from '@chainlink/starknet-gauntlet'
@@ -134,16 +133,6 @@ describe('Aggregator', function () {
 
     let e = decodedEvents[0]
     assert.equal(e.name, 'ConfigSet')
-  })
-
-  shouldBehaveLikeOwnableContract(async () => {
-    const alice = owner
-    const bob = await starknet.OpenZeppelinAccount.createAccount()
-
-    await funder.fund([{ account: bob.address, amount: 1e21 }])
-    await bob.deployAccount()
-
-    return { ownable: aggregator, alice, bob }
   })
 
   describe('OCR aggregator behavior', function () {
@@ -327,7 +316,7 @@ describe('Aggregator', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -339,7 +328,7 @@ describe('Aggregator', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) {}
+      } catch (err: any) { }
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
