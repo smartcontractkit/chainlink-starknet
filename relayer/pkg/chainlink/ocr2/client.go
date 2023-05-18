@@ -127,7 +127,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotyp
 
 	epoch, round := parseEpochAndRound(junotypes.HexToFelt(res[1]).Big())
 
-	latestAnswer := starknet.HexToSignedBig(res[2])
+	latestAnswer := starknet.HexToUnsignedBig(res[2])
 
 	timestampFelt := junotypes.HexToFelt(res[3])
 	// TODO: Int64() can return invalid data if int is too big

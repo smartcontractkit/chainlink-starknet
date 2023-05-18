@@ -7,7 +7,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
-	"github.com/smartcontractkit/libocr/bigbigendian"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
 
@@ -32,31 +31,20 @@ func (codec OnchainConfigCodec) DecodeToFelts(b []byte) ([]*big.Int, error) {
 		return []*big.Int{}, fmt.Errorf("unexpected length of OnchainConfig, expected %v, got %v", length, len(b))
 	}
 
-	configVersion, err := bigbigendian.DeserializeSigned(byteWidth, b[:32])
-	if err != nil {
-		return []*big.Int{}, fmt.Errorf("unable to decode version: %s", err)
-	}
+	// convert from bytes to *big.Int
+	configVersion := new(big.Int).SetBytes(b[:32])
+
 	if OnchainConfigVersion != configVersion.Int64() {
 		return []*big.Int{}, fmt.Errorf("unexpected version of OnchainConfig, expected %v, got %v", OnchainConfigVersion, configVersion.Int64())
 	}
 
-	min, err := bigbigendian.DeserializeSigned(byteWidth, b[byteWidth:2*byteWidth])
-	if err != nil {
-		return []*big.Int{}, err
-	}
-	max, err := bigbigendian.DeserializeSigned(byteWidth, b[2*byteWidth:])
-	if err != nil {
-		return []*big.Int{}, err
-	}
-
-	// ensure felts (used in config digester)
-	min = starknet.SignedBigToFelt(min)
-	max = starknet.SignedBigToFelt(max)
+	min := new(big.Int).SetBytes(b[byteWidth : 2*byteWidth])
+	max := new(big.Int).SetBytes(b[2*byteWidth:])
 
 	return []*big.Int{configVersion, min, max}, nil
 }
 
-// Decode converts the onchainconfig via the outputs of DecodeToFelts into signed big.Ints that libocr expects
+// Decode converts the onchainconfig via the outputs of DecodeToFelts into unsigned big.Ints that libocr expects
 func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	felts, err := codec.DecodeToFelts(b)
 	if err != nil {
@@ -64,8 +52,9 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	}
 
 	// convert felts to big.Ints
-	min := starknet.FeltToSignedBig(&caigotypes.Felt{Int: felts[1]})
-	max := starknet.FeltToSignedBig(&caigotypes.Felt{Int: felts[2]})
+	min := starknet.FeltToUnsignedBig(&caigotypes.Felt{Int: felts[1]})
+
+	max := starknet.FeltToUnsignedBig(&caigotypes.Felt{Int: felts[2]})
 
 	if !(min.Cmp(max) <= 0) {
 		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
@@ -75,9 +64,9 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 }
 
 // TODO: both 'EncodeFromBigInt' and 'EncodeFromFelt' have the same signature - we need a custom type to represent Felts
-// EncodeFromBigInt encodes the config where min & max are big Ints with positive or negative values
+// EncodeFromBigInt encodes the config where min & max are big Ints with non-negative values
 func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]byte, error) {
-	return codec.EncodeFromFelt(version, starknet.SignedBigToFelt(min), starknet.SignedBigToFelt(max))
+	return codec.EncodeFromFelt(version, min, max)
 }
 
 // EncodeFromFelt encodes the config where min & max are big.Int representations of a felt
@@ -87,24 +76,10 @@ func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]by
 		return nil, fmt.Errorf("unexpected version of OnchainConfig, expected %v, got %v", OnchainConfigVersion, version.Int64())
 	}
 
-	versionBytes, err := bigbigendian.SerializeSigned(byteWidth, version)
-	if err != nil {
-		return nil, err
-	}
-
-	minBytes, err := bigbigendian.SerializeSigned(byteWidth, min)
-	if err != nil {
-		return nil, err
-	}
-
-	maxBytes, err := bigbigendian.SerializeSigned(byteWidth, max)
-	if err != nil {
-		return nil, err
-	}
 	result := []byte{}
-	result = append(result, versionBytes...)
-	result = append(result, minBytes...)
-	result = append(result, maxBytes...)
+	result = append(result, version.Bytes()...)
+	result = append(result, min.Bytes()...)
+	result = append(result, max.Bytes()...)
 
 	return result, nil
 }
