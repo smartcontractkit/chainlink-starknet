@@ -74,14 +74,18 @@ spec:
           httpGet:
             path: /is_alive
             port: {{ .Values.service.externalPort }}
-          initialDelaySeconds: 1
+          initialDelaySeconds: 60
           periodSeconds: 30
+          timeoutSeconds: 900
+          failureThreshold: 30
         readinessProbe:
           httpGet:
             path: /is_alive
             port: {{ .Values.service.externalPort }}
-          initialDelaySeconds: 2
-          periodSeconds: 1
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 900
+          failureThreshold: 30
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory }}
