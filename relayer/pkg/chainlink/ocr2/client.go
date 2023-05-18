@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"time"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 
 	caigogw "github.com/smartcontractkit/caigo/gateway"
@@ -67,8 +66,8 @@ func (c *Client) BillingDetails(ctx context.Context, address caigotypes.Hash) (b
 		return bd, errors.New("unexpected result length")
 	}
 
-	observationPayment := junotypes.HexToFelt(res[0]).Big()
-	transmissionPayment := junotypes.HexToFelt(res[1]).Big()
+	observationPayment := caigotypes.StrToFelt(res[0]).Big()
+	transmissionPayment := caigotypes.StrToFelt(res[1]).Big()
 
 	bd, err = NewBillingDetails(observationPayment, transmissionPayment)
 	if err != nil {
@@ -94,8 +93,8 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address caigotypes.Has
 		return ccd, errors.New("unexpected result length")
 	}
 
-	blockNum := junotypes.HexToFelt(res[1])
-	configDigest := junotypes.HexToFelt(res[2])
+	blockNum := caigotypes.StrToFelt(res[1])
+	configDigest := caigotypes.StrToFelt(res[2])
 
 	ccd, err = NewContractConfigDetails(blockNum.Big(), configDigest.Bytes())
 	if err != nil {
@@ -121,15 +120,15 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotyp
 		return td, errors.New("unexpected result length")
 	}
 
-	digest := junotypes.HexToFelt(res[0])
+	digest := caigotypes.StrToFelt(res[0])
 	configDigest := types.ConfigDigest{}
 	digest.Big().FillBytes(configDigest[:])
 
-	epoch, round := parseEpochAndRound(junotypes.HexToFelt(res[1]).Big())
+	epoch, round := parseEpochAndRound(caigotypes.StrToFelt(res[1]).Big())
 
 	latestAnswer := starknet.HexToSignedBig(res[2])
 
-	timestampFelt := junotypes.HexToFelt(res[3])
+	timestampFelt := caigotypes.StrToFelt(res[3])
 	// TODO: Int64() can return invalid data if int is too big
 	unixTime := timestampFelt.Big().Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
@@ -155,9 +154,9 @@ func (c *Client) LatestRoundData(ctx context.Context, address caigotypes.Hash) (
 	if err != nil {
 		return round, errors.Wrap(err, "couldn't call the contract with selector latest_round_data")
 	}
-	felts := []junotypes.Felt{}
+	felts := []*caigotypes.Felt{}
 	for _, result := range results {
-		felts = append(felts, junotypes.HexToFelt(result))
+		felts = append(felts, caigotypes.StrToFelt(result))
 	}
 
 	round, err = NewRoundData(felts)
@@ -178,7 +177,7 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address caigotypes
 	if len(results) != 1 {
 		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
 	}
-	return junotypes.HexToFelt(results[0]).Big(), nil
+	return caigotypes.StrToFelt(results[0]).Big(), nil
 }
 
 func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Hash, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {

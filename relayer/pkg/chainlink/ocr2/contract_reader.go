@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"time"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/pkg/errors"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
