@@ -316,7 +316,7 @@ describe('Aggregator', function () {
           proposed: proposed_payee,
         })
         expect.fail()
-      } catch (err: any) { }
+      } catch (err: any) {}
 
       // successful transfer
       await oracle.invoke(aggregator, 'transfer_payeeship', {
@@ -328,7 +328,7 @@ describe('Aggregator', function () {
       try {
         await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
         expect.fail()
-      } catch (err: any) { }
+      } catch (err: any) {}
 
       // successful accept
       await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
