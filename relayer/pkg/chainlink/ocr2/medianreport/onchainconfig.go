@@ -66,6 +66,9 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 // TODO: both 'EncodeFromBigInt' and 'EncodeFromFelt' have the same signature - we need a custom type to represent Felts
 // EncodeFromBigInt encodes the config where min & max are big Ints with non-negative values
 func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]byte, error) {
+	if min.Sign() == -1 || max.Sign() == -1 {
+		return nil, fmt.Errorf("starknet does not support negative values: min = (%v) and max = (%v)", min, max)
+	}
 	return codec.EncodeFromFelt(version, min, max)
 }
 
@@ -81,14 +84,18 @@ func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]by
 	}
 
 	result := []byte{}
-	result = append(result, version.Bytes()...)
-	result = append(result, min.Bytes()...)
-	result = append(result, max.Bytes()...)
+	versionBytes := make([]byte, byteWidth)
+	minBytes := make([]byte, byteWidth)
+	maxBytes := make([]byte, byteWidth)
+	result = append(result, version.FillBytes(versionBytes)...)
+	result = append(result, min.FillBytes(minBytes)...)
+	result = append(result, max.FillBytes(maxBytes)...)
 
 	return result, nil
 }
 
-// Encode takes the interface that libocr uses (+/- big.Ints) and serializes it into 3 felts
+// Encode takes the interface that libocr uses (big.Ints) and serializes it into 3 felts
 func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
+
 	return codec.EncodeFromBigInt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
 }

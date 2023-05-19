@@ -51,7 +51,7 @@ var (
 		"0x1",
 		"0x3",
 		"0x1",
-		"0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7",
+		"0xa",
 		"0x3b9aca00",
 		"0x2",
 		"0x2",
@@ -127,7 +127,7 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 
 	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromBigInt(
 		big.NewInt(medianreport.OnchainConfigVersion), // version
-		big.NewInt(-10),        // min
+		big.NewInt(10),         // min
 		big.NewInt(1000000000), // max
 	)
 	assert.NoError(t, err)
