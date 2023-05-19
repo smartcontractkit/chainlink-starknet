@@ -402,13 +402,6 @@ mod Aggregator {
         }
     }
 
-    #[derive(Copy, Drop, Serde)]
-    struct OnchainConfig {
-        version: u8,
-        min_answer: u128,
-        max_answer: u128,
-    }
-
     #[external]
     fn set_config(
         oracles: Array<OracleConfig>,
@@ -427,7 +420,10 @@ mod Aggregator {
         let min_answer = _min_answer::read();
         let max_answer = _max_answer::read();
 
-        let computed_onchain_config = OnchainConfig { version: 1_u8, min_answer, max_answer };
+        let mut computed_onchain_config = ArrayTrait::new();
+        computed_onchain_config.append(1); // version
+        computed_onchain_config.append(min_answer.into());
+        computed_onchain_config.append(max_answer.into());
 
         pay_oracles();
 
@@ -473,7 +469,7 @@ mod Aggregator {
             config_count,
             oracles,
             f,
-            onchain_config,
+            computed_onchain_config,
             offchain_config_version,
             offchain_config
         );
@@ -541,7 +537,7 @@ mod Aggregator {
         config_count: u64,
         oracles: @Array<OracleConfig>,
         f: u8,
-        onchain_config: @OnchainConfig,
+        onchain_config: @Array<felt252>,
         offchain_config_version: u64,
         offchain_config: @Array<felt252>,
     ) -> felt252 {
@@ -552,10 +548,8 @@ mod Aggregator {
         state = LegacyHash::hash(state, oracles.len());
         state = LegacyHash::hash(state, oracles.span()); // for oracle in oracles, hash each
         state = LegacyHash::hash(state, f);
-        state = LegacyHash::hash(state, 3); // onchain_config.len() = 3
-        state = LegacyHash::hash(state, *onchain_config.version);
-        state = LegacyHash::hash(state, *onchain_config.min_answer);
-        state = LegacyHash::hash(state, *onchain_config.max_answer);
+        state = LegacyHash::hash(state, onchain_config.len());
+        state = LegacyHash::hash(state, onchain_config.span());
         state = LegacyHash::hash(state, offchain_config_version);
         state = LegacyHash::hash(state, offchain_config.len());
         state = LegacyHash::hash(state, offchain_config.span());
