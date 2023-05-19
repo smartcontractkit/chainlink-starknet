@@ -1,6 +1,7 @@
 package medianreport
 
 import (
+	"fmt"
 	"math"
 	"math/big"
 	"sort"
@@ -33,6 +34,12 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	num := len(oo)
 	if num == 0 {
 		return nil, errors.New("couldn't build report from empty attributed observations")
+	}
+
+	for _, o := range oo {
+		if o.Value.Sign() == -1 || o.JuelsPerFeeCoin.Sign() == -1 {
+			return nil, fmt.Errorf("starknet does not support negative values: value = (%v), fee = (%v)", o.Value, o.JuelsPerFeeCoin)
+		}
 	}
 
 	// preserve original array

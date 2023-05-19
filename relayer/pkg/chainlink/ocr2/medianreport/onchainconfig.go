@@ -70,10 +70,14 @@ func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]
 }
 
 // EncodeFromFelt encodes the config where min & max are big.Int representations of a felt
-// Cairo has no notion of signed values: negative values have to be wrapped into the upper half of PRIME (so 0 to PRIME/2 is positive, PRIME/2 to PRIME is negative)
+// Cairo has no notion of signed values: min and max values will be non-negative
 func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]byte, error) {
 	if version.Uint64() != OnchainConfigVersion {
 		return nil, fmt.Errorf("unexpected version of OnchainConfig, expected %v, got %v", OnchainConfigVersion, version.Int64())
+	}
+
+	if min.Sign() == -1 || max.Sign() == -1 {
+		return nil, fmt.Errorf("starknet does not support negative values: min = (%v) and max = (%v)", min, max)
 	}
 
 	result := []byte{}
