@@ -125,7 +125,7 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 
 	require.Equal(t, e.F, uint8(1))
 
-	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromBigInt(
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
 		big.NewInt(medianreport.OnchainConfigVersion), // version
 		big.NewInt(10),         // min
 		big.NewInt(1000000000), // max

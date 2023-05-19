@@ -63,15 +63,6 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 	return median.OnchainConfig{Min: min, Max: max}, nil
 }
 
-// TODO: both 'EncodeFromBigInt' and 'EncodeFromFelt' have the same signature - we need a custom type to represent Felts
-// EncodeFromBigInt encodes the config where min & max are big Ints with non-negative values
-func (codec OnchainConfigCodec) EncodeFromBigInt(version, min, max *big.Int) ([]byte, error) {
-	if min.Sign() == -1 || max.Sign() == -1 {
-		return nil, fmt.Errorf("starknet does not support negative values: min = (%v) and max = (%v)", min, max)
-	}
-	return codec.EncodeFromFelt(version, min, max)
-}
-
 // EncodeFromFelt encodes the config where min & max are big.Int representations of a felt
 // Cairo has no notion of signed values: min and max values will be non-negative
 func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]byte, error) {
@@ -96,6 +87,5 @@ func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]by
 
 // Encode takes the interface that libocr uses (big.Ints) and serializes it into 3 felts
 func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
-
-	return codec.EncodeFromBigInt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
+	return codec.EncodeFromFelt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
 }
