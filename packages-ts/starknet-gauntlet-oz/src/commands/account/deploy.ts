@@ -40,7 +40,7 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
   input,
   deps,
 ) => async () => {
-  deps.logger.info(`About to deploy an OZ 1.0 Account Contract with:
+  deps.logger.info(`About to deploy an OZ 0.x Account Contract with:
     public key: ${input.contract[0]}
     salt: ${input.user.salt || 'randomly generated'}`)
   if (input.user.privateKey) {
