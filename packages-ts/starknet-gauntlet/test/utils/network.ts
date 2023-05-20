@@ -1,4 +1,5 @@
 import { ChildProcess, spawn } from 'child_process'
+import fs from 'fs'
 import path from 'path'
 
 export abstract class IntegratedDevnet {
@@ -52,16 +53,19 @@ class VenvDevnet extends IntegratedDevnet {
 
   protected spawnChildProcess(): Promise<ChildProcess> {
     return new Promise((resolve, reject) => {
+      const cairoSierraCompilerBuildPath = path.join(
+        __dirname,
+        '../../../../cairo-build/bin/starknet-sierra-compile',
+      )
       const cargoManifest = path.join(__dirname, '../../../../vendor/cairo/Cargo.toml')
-      let args = [
-        '--port',
-        this.port,
-        '--gas-price',
-        '1',
-        '--lite-mode',
-        '--cairo-compiler-manifest',
-        cargoManifest,
-      ]
+      const args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
+      if (fs.existsSync(cairoSierraCompilerBuildPath)) {
+        args.push('--sierra-compiler-path', cairoSierraCompilerBuildPath)
+      } else if (fs.existsSync(cargoManifest)) {
+        args.push('--cairo-compiler-manifest', cargoManifest)
+      } else {
+        return reject(new Error('Could not find cairo package'))
+      }
       if (this.opts?.seed) {
         args.push('--seed', this.opts.seed.toString())
       } else {
