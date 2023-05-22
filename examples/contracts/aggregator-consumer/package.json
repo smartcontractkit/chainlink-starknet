@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile:cairo": "hardhat starknet-compile",
-    "compile": "yarn compile:cairo",
     "test": "npx hardhat --network localhost test",
     "readDecimals": "npx ts-node ./scripts/readDecimals.ts",
     "readLatestRound": "npx ts-node ./scripts/readLatestRound.ts"
@@ -15,7 +13,7 @@
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.0",
-    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.0",
+    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.2",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",

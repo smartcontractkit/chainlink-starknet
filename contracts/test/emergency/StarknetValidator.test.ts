@@ -11,9 +11,9 @@ import { expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
-import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/starkgate-contracts/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
+import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/cairo-lang/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { account, addCompilationToNetwork } from '@chainlink/starknet'
+import { account, addCompilationToNetwork, expectSuccessOrDeclared } from '@chainlink/starknet'
 
 describe('StarknetValidator', () => {
   /** Fake L2 target */
@@ -38,9 +38,7 @@ describe('StarknetValidator', () => {
   let l2Contract: StarknetContract
 
   before(async () => {
-    await addCompilationToNetwork(
-      'src/chainlink/solidity/emergency/StarknetValidator.sol:StarknetValidator',
-    )
+    await addCompilationToNetwork('solidity/emergency/StarknetValidator.sol:StarknetValidator')
 
     // Deploy L2 account
     defaultAccount = await starknet.OpenZeppelinAccount.createAccount()
@@ -57,7 +55,7 @@ describe('StarknetValidator', () => {
 
     // Deploy L2 feed contract
     l2ContractFactory = await starknet.getContractFactory('sequencer_uptime_feed')
-    await defaultAccount.declare(l2ContractFactory)
+    await expectSuccessOrDeclared(defaultAccount.declare(l2ContractFactory, { maxFee: 1e20 }))
 
     l2Contract = await defaultAccount.deploy(l2ContractFactory, {
       initial_status: 0,
@@ -495,7 +493,7 @@ describe('StarknetValidator', () => {
     })
 
     it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
-      const { round } = await l2Contract.call('latest_round_data')
+      const { response: round } = await l2Contract.call('latest_round_data')
       expect(round.answer).to.equal(0n)
     })
 
@@ -548,7 +546,7 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
-      expect(res.round.answer).to.equal(1n)
+      expect(res.response.answer).to.equal(1n)
     })
 
     it('should always send a **boolean** message to L2 contract', async () => {
@@ -585,7 +583,7 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
-      expect(res.round.answer).to.equal(0n) // status unchanged - incorrect value treated as false
+      expect(res.response.answer).to.equal(0n) // status unchanged - incorrect value treated as false
     })
 
     it('should send multiple messages', async () => {
@@ -626,7 +624,7 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const res = await l2Contract.call('latest_round_data')
-      expect(res.round.answer).to.equal(0n) // final status 0
+      expect(res.response.answer).to.equal(0n) // final status 0
     })
   })
 

@@ -53,7 +53,7 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@3ec816fe2e6dd3f70511e8115d86e296818c58f8 # cosmos_one_off
         with:
           cl_repo: smartcontractkit/chainlink
-          cl_ref: 6b935c6ff7ec12b16b3f644b64080dec29b5a2c4
+          cl_ref: ${{ github.event.inputs.cl_branch_ref }}
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
           push_tag: ${{ env.CL_ECR }}:starknet.${{ github.sha }}
@@ -85,6 +85,7 @@ jobs:
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           ref: ${{ github.sha }}
+          submodules: 'recursive'
       - name: Build Image
         uses: ./.github/actions/build-test-image
         with:
