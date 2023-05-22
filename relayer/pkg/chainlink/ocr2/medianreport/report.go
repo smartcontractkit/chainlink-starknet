@@ -86,7 +86,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 
 func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	rLen := len(report)
-	if rLen < prefixSizeBytes+juelsPerFeeCoinSizeBytes {
+	if rLen < prefixSizeBytes+juelsPerFeeCoinSizeBytes+gasPriceSizeBytes {
 		return nil, errors.New("invalid report length")
 	}
 
@@ -105,9 +105,9 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 
 	// Check if the report is big enough
 	n := int(n64)
-	expectedLen := prefixSizeBytes + (observationSizeBytes * n) + juelsPerFeeCoinSizeBytes
+	expectedLen := prefixSizeBytes + (observationSizeBytes * n) + juelsPerFeeCoinSizeBytes + gasPriceSizeBytes
 	if rLen < expectedLen {
-		return nil, errors.New("invalid report length, missing main or juelsPerFeeCoin observations")
+		return nil, errors.New("invalid report length, missing main, juelsPerFeeCoin or gasPrice observations")
 	}
 
 	// Decode observations
@@ -149,6 +149,7 @@ func SplitReport(report types.Report) ([][]byte, error) {
 	//   observations_len
 	//   observations
 	//   juels_per_fee_coin
+	//   gas_price
 	slices := [][]byte{}
 	for i := 0; i < len(report)/chunkSize; i++ {
 		idx := i * chunkSize

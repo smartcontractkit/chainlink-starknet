@@ -1,0 +1,33 @@
+name: Install Cairo and Scarb
+description: A composite action that installs cairo and scarb binaries
+
+inputs:
+  cairo_version:
+    description: Cairo release version
+    default: "v1.0.0-rc0"
+    required: false
+  scarb_version:
+    description: Scarb release version
+    default: "v0.2.0-alpha.1"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Cairo for Linux
+      id: install-cairo
+      shell: bash
+      run: |
+        wget https://github.com/starkware-libs/cairo/releases/download/${{ inputs.cairo_version }}/release-x86_64-unknown-linux-musl.tar.gz
+        tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
+        mv -vf cairo cairo-build
+        echo "$GITHUB_WORKSPACE/cairo-build/bin" >> $GITHUB_PATH
+
+    - name: Setup Scarb for Linux
+      id: install-scarb
+      shell: bash
+      run: |
+        wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu.tar.gz
+        tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu.tar.gz
+        mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu scarb-build
+        echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
