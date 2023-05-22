@@ -14,6 +14,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 
@@ -48,7 +49,7 @@ type starktxm struct {
 	done    sync.WaitGroup
 	stop    chan struct{}
 	queue   chan Tx
-	ks      keys.Keystore
+	ks      keys.KeystoreAdapter //caigo.Keystore //*keys.CaigoAdapter //loop.Keystore
 	cfg     Config
 	nonce   keys.NonceManager
 
@@ -56,13 +57,13 @@ type starktxm struct {
 	txStore ChainTxStore
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
 	txm := &starktxm{
 		lggr:    logger.Named(lggr, "StarknetTxm"),
 		queue:   make(chan Tx, MaxQueueLen),
 		stop:    make(chan struct{}),
 		client:  utils.NewLazyLoad(getClient),
-		ks:      keystore,
+		ks:      keys.NewCaigoAdapter(keystore),
 		cfg:     cfg,
 		txStore: ChainTxStore{},
 	}
@@ -113,19 +114,8 @@ func (txm *starktxm) broadcastLoop() {
 			}
 			tx := <-txm.queue
 
-			// fetch key matching sender address
-			key, err := txm.ks.Get(tx.senderAddress.String())
-			if err != nil {
-				txm.lggr.Errorw("failed to retrieve key", "id", tx.senderAddress, "error", err)
-				continue
-			}
-
-			// parse key to expected format
-			privKeyBytes := key.Raw()
-			privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
-
 			// broadcast tx serially - wait until accepted by mempool before processing next
-			hash, err := txm.broadcast(ctx, privKey, tx.accountAddress, tx.call)
+			hash, err := txm.broadcast(ctx, tx.senderAddress.String(), tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
 			} else {
@@ -137,7 +127,7 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress string, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
 	txs := []caigotypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
@@ -145,7 +135,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewGatewayAccount(privKey, accountAddress.String(), client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewGatewayAccount(senderAddress, accountAddress.String(), txm.ks, client.Gw, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
@@ -269,7 +259,10 @@ func (txm *starktxm) HealthReport() map[string]error {
 
 func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) error {
 	// validate key exists for sender
-	if _, err := txm.ks.Get(senderAddress.String()); err != nil {
+	// use the embedded Loopp Keystore to do this; the spec and design
+	// encourage passing nil data to the loop.Keystore.Sign as way to test
+	// existence of a key
+	if _, err := txm.ks.Loopp().Sign(context.Background(), senderAddress.String(), nil); err != nil {
 		return err
 	}
 
