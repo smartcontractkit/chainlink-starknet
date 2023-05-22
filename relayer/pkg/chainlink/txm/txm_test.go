@@ -4,15 +4,17 @@ package txm
 
 import (
 	"context"
-	"encoding/hex"
-	"sync"
 	"testing"
 	"time"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/pkg/errors"
+	caigogw "github.com/smartcontractkit/caigo/gateway"
+	"github.com/smartcontractkit/caigo/test"
+	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 
@@ -23,15 +25,23 @@ import (
 )
 
 func TestIntegration_Txm(t *testing.T) {
+	n := 2 // number of txs per key
 	url := SetupLocalStarknetNode(t)
-	rawLocalKeys := TestKeys(t, 2) // generate 2 keys
+	devnet := test.NewDevNet(url)
+	accounts, err := devnet.Accounts()
+	require.NoError(t, err)
 
 	// parse keys into expected format
 	localKeys := map[string]keys.Key{}
-	for _, k := range rawLocalKeys {
-		key := keys.Raw(k).Key()
-		account := "0x" + hex.EncodeToString(keys.PubKeyToAccount(key.PublicKey(), DevnetClassHash, DevnetSalt))
-		localKeys[account] = key
+	localAccounts := map[string]string{}
+	for i := range accounts {
+		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
+		require.NoError(t, err)
+
+		key := keys.Raw(privKey).Key()
+		assert.Equal(t, caigotypes.HexToHash(accounts[i].PublicKey), caigotypes.HexToHash(key.ID()))
+		localKeys[key.ID()] = key
+		localAccounts[key.ID()] = accounts[i].Address
 	}
 
 	// mock keystore
@@ -50,35 +60,19 @@ func TestIntegration_Txm(t *testing.T) {
 		},
 	)
 
-	lggr, err := logger.New()
-	require.NoError(t, err)
+	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient("devnet", url, lggr, &timeout)
+	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
 	require.NoError(t, err)
 
-	// test fail first client
-	failed := false
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	// should be called twice
 	getClient := func() (*starknet.Client, error) {
-		wg.Done()
-		if !failed {
-			failed = true
-
-			// test return not nil
-			return &starknet.Client{}, errors.New("random test error")
-		}
-
-		return client, nil
+		return client, err
 	}
 
 	// mock config to prevent import cycle
-	cfg := new(txmmock.Config)
-	cfg.On("TxMaxBatchSize").Return(100)
-	cfg.On("TxSendFrequency").Return(15 * time.Second)
-	cfg.On("TxTimeout").Return(10 * time.Second)
+	cfg := txmmock.NewConfig(t)
+	cfg.On("TxTimeout").Return(10 * time.Second) // I'm guessing this should actually just be 10?
+	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 
 	txm, err := New(lggr, ks, cfg, getClient)
 	require.NoError(t, err)
@@ -92,17 +86,29 @@ func TestIntegration_Txm(t *testing.T) {
 
 	for k := range localKeys {
 		key := caigotypes.HexToHash(k)
-		for i := 0; i < 5; i++ {
-			require.NoError(t, txm.Enqueue(key, key, caigotypes.FunctionCall{
-				ContractAddress:    key, // send to self
-				EntryPointSelector: "get_nonce",
+		for i := 0; i < n; i++ {
+			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(localAccounts[k]), caigotypes.FunctionCall{
+				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
+				EntryPointSelector: "totalSupply",
 			}))
 		}
 	}
-	time.Sleep(30 * time.Second)
-	wg.Wait()
+	var empty bool
+	for i := 0; i < 60; i++ {
+		queued, unconfirmed := txm.InflightCount()
+		t.Logf("inflight count: queued (%d), unconfirmed (%d)", queued, unconfirmed)
+
+		if queued == 0 && unconfirmed == 0 {
+			empty = true
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 
 	// stop txm
+	assert.True(t, empty, "txm timed out while trying to confirm transactions")
 	require.NoError(t, txm.Close())
 	require.Error(t, txm.Ready())
+	assert.Equal(t, 0, observer.FilterLevelExact(zapcore.ErrorLevel).Len())                       // assert no error logs
+	assert.Equal(t, n*len(localKeys), len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())) // validate txs were successfully included on chain
 }
