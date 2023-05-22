@@ -24,13 +24,6 @@ runs:
   steps:
     - name: Install Cairo
       uses: ./.github/actions/install-cairo
-    # Scarb isn't statically linked which doesn't work with nix.
-    # ref: https://github.com/software-mansion/scarb/issues/324
-    - name: Rebuild scarb
-      shell: bash
-      run: |
-        docker run --rm -v "${GITHUB_WORKSPACE}/vendor/scarb":/volume clux/muslrust:stable cargo build --release --bin scarb
-        cp -vf "${GITHUB_WORKSPACE}/vendor/scarb/target/x86_64-unknown-linux-musl/release/scarb" scarb-build/bin/
     - name: Check if image exists
       id: check-image
       uses: smartcontractkit/chainlink-github-actions/docker/image-exists@8489879838862929f43f7d7cd1b33903965cf507 # v2.1.6
