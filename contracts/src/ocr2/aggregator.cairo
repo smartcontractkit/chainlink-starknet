@@ -553,7 +553,15 @@ mod Aggregator {
         state = LegacyHash::hash(state, offchain_config_version);
         state = LegacyHash::hash(state, offchain_config.len());
         state = LegacyHash::hash(state, offchain_config.span());
-        let len: usize = 3 + 1 + oracles.len() + 6 + 1 + offchain_config.len();
+        let len: usize = 3
+            + 1
+            + (oracles.len() * 2)
+            + 1
+            + 1
+            + onchain_config.len()
+            + 1
+            + 1
+            + offchain_config.len();
         state = LegacyHash::hash(state, len);
 
         // since there's no bitwise ops on felt252, we split into two u128s and recombine.
