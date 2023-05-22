@@ -5,13 +5,20 @@ go 1.20
 require (
 	github.com/rs/zerolog v1.29.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/caigo v0.0.0-20230508053235-41120ca1f9f3
+	github.com/smartcontractkit/caigo v0.0.0-20230523144837-b73c89a4d794
 	github.com/smartcontractkit/chainlink-env v0.3.29
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230420131147-ce3c53a39d07
 	github.com/smartcontractkit/chainlink/v2 v2.1.0-beta0.0.20230427051455-edb338fd2536
+)
+
+require (
+	github.com/hashicorp/go-hclog v1.2.2 // indirect
+	github.com/hashicorp/go-plugin v1.4.9 // indirect
+	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
+	github.com/oklog/run v1.1.0 // indirect
 )
 
 require (
