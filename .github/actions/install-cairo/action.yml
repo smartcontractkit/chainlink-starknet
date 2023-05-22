@@ -20,7 +20,8 @@ runs:
       run: |
         wget https://github.com/starkware-libs/cairo/releases/download/${{ inputs.cairo_version }}/release-x86_64-unknown-linux-musl.tar.gz
         tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
-        echo "$GITHUB_WORKSPACE/cairo/bin" >> $GITHUB_PATH
+        mv -vf cairo cairo-build
+        echo "$GITHUB_WORKSPACE/cairo-build/bin" >> $GITHUB_PATH
 
     - name: Setup Scarb for Linux
       id: install-scarb
@@ -28,4 +29,5 @@ runs:
       run: |
         wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu.tar.gz
         tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu.tar.gz
-        echo "$GITHUB_WORKSPACE/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu/bin" >> $GITHUB_PATH
+        mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-gnu scarb-build
+        echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH

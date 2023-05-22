@@ -1,11 +1,21 @@
+import fs from 'fs'
+import { json } from 'starknet'
 import BN from 'bn.js'
-import { loadContract } from '@chainlink/starknet-gauntlet'
 
 export enum CONTRACT_LIST {
   ACCOUNT = 'Account',
 }
 
-export const accountContractLoader = () => loadContract(CONTRACT_LIST.ACCOUNT)
+export const accountContractLoader = () => {
+  return {
+    contract: json.parse(
+      fs.readFileSync(
+        `${__dirname}/../../../../node_modules/@chainlink-dev/starkgate-open-zeppelin/artifacts/0.5.0/Account.cairo/Account.json`,
+        'utf8',
+      ),
+    ),
+  }
+}
 
 // use bignumber libraries to assert addresses are equal
 // handles prepending 0s
