@@ -2,7 +2,6 @@ package txm
 
 import (
 	"bytes"
-	"math/big"
 	"net/http"
 	"os/exec"
 	"testing"
@@ -29,11 +28,6 @@ var (
 		"0xb4862b21fb97d43588561712e8e5216a",
 		"0x259f4329e6f4590b9a164106cf6a659e",
 	}
-
-	// devnet key derivation
-	// https://github.com/Shard-Labs/starknet-devnet/blob/master/starknet_devnet/account.py
-	DevnetClassHash, _ = new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
-	DevnetSalt         = big.NewInt(20)
 )
 
 // SetupLocalStarknetNode sets up a local starknet node via cli, and returns the url

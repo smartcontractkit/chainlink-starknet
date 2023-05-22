@@ -13,9 +13,8 @@ var DefaultConfigSet = ConfigSet{
 	OCR2CachePollPeriod: 5 * time.Second,
 	OCR2CacheTTL:        time.Minute,
 	RequestTimeout:      10 * time.Second,
-	TxTimeout:           time.Minute,
-	TxSendFrequency:     5 * time.Second,
-	TxMaxBatchSize:      100,
+	TxTimeout:           10 * time.Second,
+	ConfirmationPoll:    5 * time.Second,
 }
 
 type ConfigSet struct {
@@ -26,9 +25,8 @@ type ConfigSet struct {
 	RequestTimeout time.Duration
 
 	// txm config
-	TxTimeout       time.Duration
-	TxSendFrequency time.Duration
-	TxMaxBatchSize  int
+	TxTimeout        time.Duration
+	ConfirmationPoll time.Duration
 }
 
 type Config interface {
@@ -46,8 +44,7 @@ type Chain struct {
 	OCR2CacheTTL        *utils.Duration
 	RequestTimeout      *utils.Duration
 	TxTimeout           *utils.Duration
-	TxSendFrequency     *utils.Duration
-	TxMaxBatchSize      *int64
+	ConfirmationPoll    *utils.Duration
 }
 
 func (c *Chain) SetDefaults() {
@@ -63,12 +60,8 @@ func (c *Chain) SetDefaults() {
 	if c.TxTimeout == nil {
 		c.TxTimeout = utils.MustNewDuration(DefaultConfigSet.TxTimeout)
 	}
-	if c.TxSendFrequency == nil {
-		c.TxSendFrequency = utils.MustNewDuration(DefaultConfigSet.TxSendFrequency)
-	}
-	if c.TxMaxBatchSize == nil {
-		i := int64(DefaultConfigSet.TxMaxBatchSize)
-		c.TxMaxBatchSize = &i
+	if c.ConfirmationPoll == nil {
+		c.ConfirmationPoll = utils.MustNewDuration(DefaultConfigSet.ConfirmationPoll)
 	}
 }
 
