@@ -41,6 +41,8 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
   error InvalidL2FeedAddress();
   /// @notice Error thrown when the source aggregator address is 0
   error InvalidSourceAggregatorAddress();
+  /// @notice Error thrown when the access controller address is 0
+  error InvalidAccessControllerAddress();
   /// @notice Error thrown when the l1 gas price feed address is 0
   error InvalidGasPriceL1FeedAddress();
   /// @notice Error thrown when caller is not the owner and does not have access
@@ -240,6 +242,10 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
    * @param accessController The address of the Access Controller for this contract
    */
   function _setConfigAC(address accessController) internal {
+    if (accessController == address(0)) {
+      revert InvalidAccessControllerAddress();
+    }
+
     address previousAccessController = address(s_configAC);
     if (accessController != previousAccessController) {
       // NOTICE: we don't give access to the new source aggregator
