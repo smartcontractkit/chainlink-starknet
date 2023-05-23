@@ -95,14 +95,16 @@ func TestIntegration_Txm(t *testing.T) {
 	}
 	var empty bool
 	for i := 0; i < 60; i++ {
+		time.Sleep(500 * time.Millisecond)
 		queued, unconfirmed := txm.InflightCount()
-		t.Logf("inflight count: queued (%d), unconfirmed (%d)", queued, unconfirmed)
+		accepted := len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())
+		t.Logf("inflight count: queued (%d), unconfirmed (%d), accepted (%d)", queued, unconfirmed, accepted)
 
-		if queued == 0 && unconfirmed == 0 {
+		// check queue + tx store counts are 0, accepted txs == total txs broadcast
+		if queued == 0 && unconfirmed == 0 && n*len(localKeys) == accepted {
 			empty = true
 			break
 		}
-		time.Sleep(500 * time.Millisecond)
 	}
 
 	// stop txm
