@@ -1181,6 +1181,7 @@ mod Aggregator {
         let is_same = current_payee == payee.payee;
         assert(is_unset | is_same, 'payee already set');
 
+        assert(!payee.payee.is_zero(), 'payee address is 0');
         _payees::write(payee.transmitter, payee.payee);
 
         PayeeshipTransferred(payee.transmitter, current_payee, payee.payee);
@@ -1196,6 +1197,7 @@ mod Aggregator {
         let payee = _payees::read(transmitter);
         assert(caller == payee, 'only current payee can update');
         assert(caller != proposed, 'cannot transfer to self');
+        assert(!proposed.is_zero(), 'proposed address is 0');
 
         _proposed_payees::write(transmitter, proposed);
         PayeeshipTransferRequested(transmitter, payee, proposed)
