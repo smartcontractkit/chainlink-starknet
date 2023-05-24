@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/caigo/gateway"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
+	"github.com/smartcontractkit/caigo/gateway"
 	"gopkg.in/guregu/null.v4"
 
 	"github.com/smartcontractkit/chainlink-env/environment"
@@ -261,6 +261,9 @@ ListenAddresses = ['0.0.0.0:6690']
 	c.ClConfig = map[string]interface{}{
 		"replicas": c.NodeCount,
 		"toml":     baseTOML,
+		"db": map[string]any{
+			"stateful": true,
+		},
 	}
 	c.Env = environment.New(c.K8Config).
 		AddHelm(devnet.New(nil)).
