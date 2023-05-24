@@ -3,105 +3,92 @@ package keys
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/smartcontractkit/caigo"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 //go:generate mockery --name KeystoreAdapter --output ./mocks/ --case=underscore --filename keystore.go
 
 // KeystoreAdapter is a starknet-specific adaption layer to translate between the generic Loop Keystore (bytes) and
 // the type specific caigo Keystore (big.Int)
-// The loop.Keystore must be produce a byte representation that can be parsed by the caigo.Keystore implementation
+// The loop.Keystore must be produce a byte representation that can be parsed by the Decode func implementation
 // Users of the interface are responsible to ensure this compatibility.
 type KeystoreAdapter interface {
 	caigo.Keystore
+	// Loopp must return a LOOPp Keystore implementation whose Sign func
+	// is compatible with the [Decode] func implementation
 	Loopp() loop.Keystore
+	// Decode translates from the raw signature of the LOOPp Keystore to that of the Caigo Keystore
+	Decode(ctx context.Context, rawSignature []byte) (*big.Int, *big.Int, error)
 }
 
-// caigoAdapter implements [KeystoreAdapter]
-type caigoAdapter struct {
+// keystoreAdapter implements [KeystoreAdapter]
+type keystoreAdapter struct {
 	looppKs loop.Keystore
 }
 
 // Sign implements the caigo Keystore Sign func.
-func (ca *caigoAdapter) Sign(senderAddress string, hash *big.Int) (*big.Int, *big.Int, error) {
-	raw, err := ca.looppKs.Sign(context.Background(), senderAddress, hash.Bytes())
+func (ca *keystoreAdapter) Sign(ctx context.Context, senderAddress string, hash *big.Int) (*big.Int, *big.Int, error) {
+	raw, err := ca.looppKs.Sign(ctx, senderAddress, hash.Bytes())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error computing loopp keystore signature: %w", err)
 	}
-	starknetSign, err := signatureFromBytes(raw)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error creating starknet signature from raw signature: %w", err)
-	}
-	return starknetSign.x, starknetSign.y, nil
+	return ca.Decode(ctx, raw)
 }
 
-func (ca *caigoAdapter) Loopp() loop.Keystore {
+func (ca *keystoreAdapter) Decode(ctx context.Context, rawSignature []byte) (x *big.Int, y *big.Int, err error) {
+
+	select {
+	case <-ctx.Done():
+		x, y = nil, nil
+		err = ctx.Err()
+	default:
+		starknetSig, serr := signatureFromBytes(rawSignature)
+		if serr != nil {
+			// assign common error with a useful message
+			err = fmt.Errorf("error creating starknet signature from raw signature: %w", serr)
+		}
+		x, y = starknetSig.x, starknetSig.y
+	}
+	return x, y, err
+}
+
+func (ca *keystoreAdapter) Loopp() loop.Keystore {
 	return ca.looppKs
 }
 
-func NewCaigoAdapter(looppKs loop.Keystore) KeystoreAdapter {
-	return &caigoAdapter{looppKs: looppKs}
+// NewKeystoreAdapter instantiates the KeystoreAdapter interface
+// Callers are responsible for ensuring that the given LOOPp Keystore encodes
+// signatures that can be parsed by the Decode function
+func NewKeystoreAdapter(lk loop.Keystore) KeystoreAdapter {
+	return &keystoreAdapter{looppKs: lk}
 }
 
-type NonceManager interface {
-	types.Service
-
-	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
-
-	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
-	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
+type KeyGetter interface {
+	Get(id string) (*big.Int, error)
+}
+type LooppKeystore struct {
+	KeyGetter
 }
 
-const (
-	maxPointByteLen = 32 // stark curve max is 252 bits
-	signatureLen    = 2 * maxPointByteLen
-)
+var _ loop.Keystore = &LooppKeystore{}
 
-// MemKeystore is an in-memory implementation of the LOOPp Keystore interface
-type MemKeystore struct {
-	mu   sync.Mutex
-	keys map[string]*big.Int
-}
+func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]byte, error) {
 
-func NewMemKeystore() *MemKeystore {
-	return &MemKeystore{
-		keys: make(map[string]*big.Int),
-	}
-}
-
-func (ks *MemKeystore) Put(senderAddress string, k *big.Int) {
-	ks.mu.Lock()
-	defer ks.mu.Unlock()
-	ks.keys[senderAddress] = k
-}
-
-var ErrSenderNoExist = errors.New("sender does not exist")
-
-func (ks *MemKeystore) Get(senderAddress string) (*big.Int, error) {
-	ks.mu.Lock()
-	defer ks.mu.Unlock()
-	k, exists := ks.keys[senderAddress]
-	if !exists {
-		return nil, fmt.Errorf("error getting key for sender %s: %w", senderAddress, ErrSenderNoExist)
-	}
-	return k, nil
-}
-
-// Sign implements the LoopKeystore interface
-// this implementation wraps starknet specific curve and expects
-// hash: byte representation (big-endian) of *big.Int.
-func (ks *MemKeystore) Sign(id string, hash []byte) ([]byte, error) {
-	k, err := ks.Get(id)
+	k, err := lk.Get(id)
 	if err != nil {
 		return nil, err
+	}
+
+	// implement loopp spec requires passing nil hash to check existence of id
+	if hash == nil {
+		return nil, nil
 	}
 
 	starkHash := new(big.Int).SetBytes(hash)
@@ -118,6 +105,31 @@ func (ks *MemKeystore) Sign(id string, hash []byte) ([]byte, error) {
 	return s.bytes()
 }
 
+// TODO what is this supposed to return for starknet?
+func (lk *LooppKeystore) Accounts(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("unimplemented")
+}
+
+func NewLooppKeystore(getter KeyGetter) *LooppKeystore {
+	return &LooppKeystore{
+		KeyGetter: getter,
+	}
+}
+
+type NonceManager interface {
+	types.Service
+
+	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
+
+	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
+	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
+}
+
+const (
+	maxPointByteLen = 32 // stark curve max is 252 bits
+	signatureLen    = 2 * maxPointByteLen
+)
+
 // signature is an intermediate representation for translating between a raw-bytes signature and a caigo
 // signature comprised of big.Ints
 type signature struct {
@@ -126,7 +138,7 @@ type signature struct {
 
 func (s *signature) bytes() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	n, err := buf.Write(padBytes(s.x.Bytes(), maxPointByteLen))
+	n, err := buf.Write(starknet.PadBytes(s.x.Bytes(), maxPointByteLen))
 	if err != nil {
 		return nil, fmt.Errorf("error writing 'x' component of signature: %w", err)
 	}
@@ -134,7 +146,7 @@ func (s *signature) bytes() ([]byte, error) {
 		return nil, fmt.Errorf("unexpected write length of 'x' component of signature: wrote %d expected %d", n, maxPointByteLen)
 	}
 
-	n, err = buf.Write(padBytes(s.y.Bytes(), maxPointByteLen))
+	n, err = buf.Write(starknet.PadBytes(s.y.Bytes(), maxPointByteLen))
 	if err != nil {
 		return nil, fmt.Errorf("error writing 'y' component of signature: %w", err)
 	}
@@ -160,15 +172,4 @@ func signatureFromBytes(b []byte) (*signature, error) {
 		x: new(big.Int).SetBytes(x),
 		y: new(big.Int).SetBytes(y),
 	}, nil
-}
-
-// pad bytes  to specific length
-func padBytes(a []byte, length int) []byte {
-	if len(a) < length {
-		pad := make([]byte, length-len(a))
-		return append(pad, a...)
-	}
-
-	// return original if length is >= to specified length
-	return a
 }

@@ -63,11 +63,11 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		queue:   make(chan Tx, MaxQueueLen),
 		stop:    make(chan struct{}),
 		client:  utils.NewLazyLoad(getClient),
-		ks:      keys.NewCaigoAdapter(keystore),
+		ks:      keys.NewKeystoreAdapter(keystore),
 		cfg:     cfg,
 		txStore: ChainTxStore{},
 	}
-	txm.nonce = keys.NewNonceManager(txm.lggr, txm.ks)
+	txm.nonce = keys.NewNonceManager(txm.lggr)
 
 	return txm, nil
 }
