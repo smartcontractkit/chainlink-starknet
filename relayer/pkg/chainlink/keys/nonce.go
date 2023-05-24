@@ -23,16 +23,14 @@ var _ NonceManager = (*nonceManager)(nil)
 type nonceManager struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
-	ks      Keystore
 
 	n    map[string]map[string]*big.Int // map address + chain ID to nonce
 	lock sync.RWMutex
 }
 
-func NewNonceManager(lggr logger.Logger, ks Keystore) *nonceManager {
+func NewNonceManager(lggr logger.Logger) *nonceManager {
 	return &nonceManager{
 		lggr: logger.Named(lggr, "NonceManager"),
-		ks:   ks,
 		n:    map[string]map[string]*big.Int{},
 	}
 }
