@@ -838,9 +838,10 @@ mod Aggregator {
 
         pay_oracles();
 
-        // transfer remaining balance to recipient
-        let amount = token.balance_of(account: contract_address);
-        token.transfer(recipient, amount);
+        // transfer remaining balance of old token to recipient
+        let old_token_dispatcher = IERC20Dispatcher { contract_address: old_token };
+        let amount = old_token_dispatcher.balance_of(account: contract_address);
+        old_token_dispatcher.transfer(recipient, amount);
 
         _link_token::write(link_token);
 
