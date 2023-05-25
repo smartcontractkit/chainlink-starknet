@@ -264,8 +264,8 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230424181359-6cb4dc745ec7
-	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230525161650-dce1bc58b504
+	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3 // indirect
 	github.com/smartcontractkit/ocr2keepers v0.6.14 // indirect
 	github.com/smartcontractkit/ocr2vrf v0.0.0-20230425184732-a793ac75f0a3 // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
@@ -316,7 +316,7 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
+	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
