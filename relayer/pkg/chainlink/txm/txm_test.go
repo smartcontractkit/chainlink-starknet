@@ -45,8 +45,9 @@ func TestIntegration_Txm(t *testing.T) {
 	}
 
 	// mock keystore
-	ks := new(mocks.Keystore)
-	ks.On("Get", mock.AnythingOfType("string")).Return(
+	keyGetter := new(mocks.KeyGetter)
+
+	keyGetter.On("Get", mock.AnythingOfType("string")).Return(
 		func(id string) keys.Key {
 			return localKeys[id]
 		},
@@ -60,6 +61,8 @@ func TestIntegration_Txm(t *testing.T) {
 		},
 	)
 
+	looppKs := keys.NewLooppKeystore(keyGetter)
+	ks := keys.NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)

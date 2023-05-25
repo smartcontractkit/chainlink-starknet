@@ -5,20 +5,13 @@ go 1.20
 require (
 	github.com/rs/zerolog v1.29.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/caigo v0.0.0-20230523144837-b73c89a4d794
+	github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212
 	github.com/smartcontractkit/chainlink-env v0.3.29
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230420131147-ce3c53a39d07
 	github.com/smartcontractkit/chainlink/v2 v2.1.0-beta0.0.20230427051455-edb338fd2536
-)
-
-require (
-	github.com/hashicorp/go-hclog v1.2.2 // indirect
-	github.com/hashicorp/go-plugin v1.4.9 // indirect
-	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
-	github.com/oklog/run v1.1.0 // indirect
 )
 
 require (
@@ -134,10 +127,13 @@ require (
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-hclog v1.2.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/go-plugin v1.4.9 // indirect
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
 	github.com/hdevalence/ed25519consensus v0.0.0-20220222234857-c00d1f31bab3 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/holiman/uint256 v1.2.0 // indirect
@@ -245,6 +241,7 @@ require (
 	github.com/multiformats/go-multistream v0.2.2 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/oklog/run v1.1.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect

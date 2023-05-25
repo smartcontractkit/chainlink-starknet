@@ -285,8 +285,8 @@ github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQD
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/shirou/gopsutil v3.21.11+incompatible h1:+1+c1VGhc88SSonWP6foOcLhvnKlUeu/erjjvaPEYiI=
 github.com/shirou/gopsutil v3.21.11+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
-github.com/smartcontractkit/caigo v0.0.0-20230523144837-b73c89a4d794 h1:CznBrxnPvN92UWKeHTbBbSE4vjWxAe3OkgI3y8m1pxU=
-github.com/smartcontractkit/caigo v0.0.0-20230523144837-b73c89a4d794/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
+github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212 h1:UG0jo7O36AuWEw5plzD14sxqoya+TzKBjNhZ6O9G4Ko=
+github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-env v0.3.29 h1:hcIw/BeuB0wKiiE3umAUNBZzWkHO24XF3OW9xSrlMbI=
 github.com/smartcontractkit/chainlink-env v0.3.29/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230525161650-dce1bc58b504 h1:LQB12lOqT0Kg6s9zq/zDF5egSPXi7Hyar3QBmjkD32w=
