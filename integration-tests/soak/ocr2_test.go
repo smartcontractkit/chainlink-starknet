@@ -4,13 +4,14 @@ package soak_test
 import (
 	"flag"
 	"fmt"
+	"testing"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
-	"testing"
 )
 
 var (
