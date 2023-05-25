@@ -35,8 +35,8 @@ jobs:
         id: collect-gha-metrics
         uses: smartcontractkit/push-gha-metrics-action@90fcbaac8ebf86da9c4d55dba24f6fe3029f0e0b
         with:
-          basic-auth: TEST_AUTH
-          hostname: TEST_AUTH
+          basic-auth: ${{ secrets.GRAFANA_CLOUD_BASIC_AUTH }}
+          hostname: ${{ secrets.GRAFANA_CLOUD_HOST }}
           this-job-name: Build Custom CL Image
         continue-on-error: true
       - name: Check if image exists
