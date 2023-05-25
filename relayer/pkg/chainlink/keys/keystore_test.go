@@ -7,24 +7,27 @@ import (
 	"math/big"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/smartcontractkit/caigo"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/stretchr/testify/require"
 )
 
 func TestKeyStoreAdapter(t *testing.T) {
 	var (
-		getter       = newMemKeyGetter()
-		expectedKey  = big.NewInt(12)
-		expectedAddr = "addr1"
+		getter = newMemKeyGetter()
+
+		starknetPK         = generateTestKey(t)
+		starknetSenderAddr = "legit"
 	)
-	getter.Put(expectedAddr, expectedKey)
+	getter.Put(starknetSenderAddr, starknetPK)
 
 	lk := keys.NewLooppKeystore(getter)
 	adapter := keys.NewKeystoreAdapter(lk)
 	// test that adapter implements the loopp spec. signing nil data should not error
 	// on existing sender id
-	signed, err := adapter.Loopp().Sign(context.Background(), expectedAddr, nil)
+	signed, err := adapter.Loopp().Sign(context.Background(), starknetSenderAddr, nil)
 	require.Nil(t, signed)
 	require.NoError(t, err)
 
@@ -32,10 +35,48 @@ func TestKeyStoreAdapter(t *testing.T) {
 	require.Nil(t, signed)
 	require.Error(t, err)
 
-	x, y, err := adapter.Sign(context.Background(), expectedAddr, big.NewInt(37))
-	require.NotNil(t, x)
-	require.NotNil(t, y)
+	hash, err := caigo.Curve.PedersenHash([]*big.Int{big.NewInt(42)})
 	require.NoError(t, err)
+	r, s, err := adapter.Sign(context.Background(), starknetSenderAddr, hash)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	require.NotNil(t, s)
+
+	pubx, puby, err := caigo.Curve.PrivateToPoint(starknetPK)
+	require.NoError(t, err)
+	require.True(t, caigo.Curve.Verify(hash, r, s, pubx, puby))
+}
+
+func generateTestKey(t *testing.T) *big.Int {
+	// sadly generating a key can fail, but it should happen infrequently
+	// best effort here to  avoid flaky tests
+	var generatorDuration = 1 * time.Second
+	d, exists := t.Deadline()
+	if exists {
+		generatorDuration = time.Until(d) / 2
+	}
+	timer := time.NewTicker(generatorDuration)
+	defer timer.Stop()
+	var key *big.Int
+	var err error
+
+GENERATEKEY:
+	for {
+		select {
+		case <-timer.C:
+			key = nil
+			err = fmt.Errorf("failed to generate test key in allotted time")
+			break GENERATEKEY
+		default:
+			key, err = caigo.Curve.GetRandomPrivateKey()
+			if err == nil {
+				break GENERATEKEY
+			}
+		}
+	}
+
+	require.NoError(t, err)
+	return key
 }
 
 // memKeyGetter is an in-memory implementation of the KeyGetter interface to be used for testing.
