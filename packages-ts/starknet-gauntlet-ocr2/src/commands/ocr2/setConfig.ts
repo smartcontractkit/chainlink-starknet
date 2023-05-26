@@ -8,6 +8,7 @@ import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
 import { bytesToFelts } from '@chainlink/starknet-gauntlet'
 import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
+import { getRDD, getConfigForContract } from '../../lib/rdd'
 import assert from 'assert'
 import { InvokeTransactionReceiptResponse } from 'starknet'
 
@@ -24,7 +25,19 @@ type ContractInput = [
   offchain_config: string[],
 ]
 
+const makeUserInput = (flags: any, args: any, env: any): SetConfigInput => {
+  if (flags.input) return flags.input as SetConfigInput
+
+  const { rdd: rddPath } = flags
+  const rdd = getRDD(rddPath)
+
+  const contract = args[0]
+  const input = getConfigForContract(rdd, contract)
+  return input
+}
+
 const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {
+  // console.log(input)
   const oracles: Oracle[] = input.signers.map((o, i) => {
     // standard format from chainlink node ocr2on_starknet_<key> (no 0x prefix)
     let signer = input.signers[i].replace('ocr2on_starknet_', '') // replace prefix if present
@@ -80,6 +93,7 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 
 const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
   ...SetConfig,
+  makeUserInput: makeUserInput,
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
   hooks: {
