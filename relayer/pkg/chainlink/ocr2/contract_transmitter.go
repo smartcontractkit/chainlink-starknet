@@ -108,6 +108,6 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 	return
 }
 
-func (c *contractTransmitter) FromAccount() (types.Account, error) {
-	return types.Account(c.accountAddress.String()), nil
+func (c *contractTransmitter) FromAccount() types.Account {
+	return types.Account(c.accountAddress.String())
 }
