@@ -58,24 +58,27 @@ func generateTestKey(t *testing.T) *big.Int {
 	timer := time.NewTicker(generatorDuration)
 	defer timer.Stop()
 	var key *big.Int
-	var err error
+	var generationErr error
 
-GENERATEKEY:
-	for {
+	generated := func() bool {
 		select {
 		case <-timer.C:
 			key = nil
-			err = fmt.Errorf("failed to generate test key in allotted time")
-			break GENERATEKEY
+			generationErr = fmt.Errorf("failed to generate test key in allotted time")
+			return true
 		default:
-			key, err = caigo.Curve.GetRandomPrivateKey()
-			if err == nil {
-				break GENERATEKEY
+			key, generationErr = caigo.Curve.GetRandomPrivateKey()
+			if generationErr == nil {
+				return true
 			}
 		}
+		return false
 	}
 
-	require.NoError(t, err)
+	for !generated() {
+		// nolint
+	}
+	require.NoError(t, generationErr)
 	return key
 }
 
