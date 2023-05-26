@@ -1,8 +1,9 @@
 import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
 import { CompiledContract, CompiledSierraCasm, Contract, Call, hash } from 'starknet'
 import { CommandCtor } from '.'
-import { Dependencies, Env } from '../../dependencies'
-import { IStarknetProvider, wrapResponse } from '../../provider'
+import { Dependencies } from '../../dependencies'
+import { IStarknetProvider } from '../../provider'
+import { getRDD } from '../../rdd'
 import { TransactionResponse } from '../../transaction'
 import { IStarknetWallet } from '../../wallet'
 import { makeCommandId, Validation, Input } from './command'
@@ -14,6 +15,7 @@ export interface ExecutionContext {
   provider: IStarknetProvider
   flags: any
   contract: Contract
+  rdd?: any
 }
 
 export type BeforeExecute<UI, CI> = (
@@ -109,6 +111,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         contractAddress: c.contractAddress,
         flags: flags,
         contract: new Contract(c.contract.abi, c.contractAddress ?? '', c.provider.provider),
+      }
+
+      const rdd = flags.rdd || process.env.RDD;
+      if (rdd) {
+        deps.logger.info(`Using RDD from ${rdd}`)
+        c.executionContext.rdd = getRDD(rdd)
       }
 
       c.input = await c.buildCommandInput(flags, args, env)

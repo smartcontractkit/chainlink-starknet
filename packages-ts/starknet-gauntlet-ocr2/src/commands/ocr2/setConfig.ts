@@ -1,9 +1,11 @@
 import {
+  CONTRACT_TYPES,
   AfterExecute,
   ExecuteCommandConfig,
+  ExecutionContext,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
+import { time, BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
 import { bytesToFelts } from '@chainlink/starknet-gauntlet'
@@ -24,7 +26,58 @@ type ContractInput = [
   offchain_config: string[],
 ]
 
-const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> => {
+const makeContractInput = async (input: SetConfigInput, ctx: ExecutionContext): Promise<ContractInput> => {
+  if (ctx.rdd) {
+    const contract = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress];
+    const config = contract.config;
+    const operators = contract.oracles.map((oracle) => ctx.rdd.operators[oracle])
+
+    const publicKeys = operators.map((o) => o.ocr2OffchainPublicKey[0].replace('ocr2off_starknet_', ''))
+    const peerIds = operators.map((o) => o.peerId[0])
+    const operatorConfigPublicKeys = operators.map((o) =>
+      o.ocr2ConfigPublicKey[0].replace('ocr2cfg_starknet_', ''),
+    )
+
+    const offchainConfig: encoding.OffchainConfig = {
+      deltaProgressNanoseconds: time.durationToNanoseconds(config.deltaProgress).toNumber(),
+      deltaResendNanoseconds: time.durationToNanoseconds(config.deltaResend).toNumber(),
+      deltaRoundNanoseconds: time.durationToNanoseconds(config.deltaRound).toNumber(),
+      deltaGraceNanoseconds: time.durationToNanoseconds(config.deltaGrace).toNumber(),
+      deltaStageNanoseconds: time.durationToNanoseconds(config.deltaStage).toNumber(),
+      rMax: config.rMax,
+      s: config.s,
+      offchainPublicKeys: publicKeys,
+      peerIds: peerIds,
+      reportingPluginConfig: {
+        alphaReportInfinite: config.reportingPluginConfig.alphaReportInfinite,
+        alphaReportPpb: Number(config.reportingPluginConfig.alphaReportPpb),
+        alphaAcceptInfinite: config.reportingPluginConfig.alphaAcceptInfinite,
+        alphaAcceptPpb: Number(config.reportingPluginConfig.alphaAcceptPpb),
+        deltaCNanoseconds: time.durationToNanoseconds(config.reportingPluginConfig.deltaC).toNumber(),
+      },
+      maxDurationQueryNanoseconds: time.durationToNanoseconds(config.maxDurationQuery).toNumber(),
+      maxDurationObservationNanoseconds: time.durationToNanoseconds(config.maxDurationObservation).toNumber(),
+      maxDurationReportNanoseconds: time.durationToNanoseconds(config.maxDurationReport).toNumber(),
+      maxDurationShouldAcceptFinalizedReportNanoseconds: time
+        .durationToNanoseconds(config.maxDurationShouldAcceptFinalizedReport)
+        .toNumber(),
+      maxDurationShouldTransmitAcceptedReportNanoseconds: time
+        .durationToNanoseconds(config.maxDurationShouldTransmitAcceptedReport)
+        .toNumber(),
+      configPublicKeys: operatorConfigPublicKeys,
+    };
+
+    input = {
+      f: config.f,
+      signers: operators.map((o) => o.ocr2OnchainPublicKey[0]),
+      transmitters: operators.map((o) => o.ocrNodeAddress[0]),
+      onchainConfig: [],
+      offchainConfig,
+      offchainConfigVersion: 2,
+      ...input
+    };
+  }
+
   const oracles: Oracle[] = input.signers.map((o, i) => {
     // standard format from chainlink node ocr2on_starknet_<key> (no 0x prefix)
     let signer = input.signers[i].replace('ocr2on_starknet_', '') // replace prefix if present
@@ -51,6 +104,9 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
   let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
   return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
+
+// TODO: beforeExecute attempt to deserialize offchainConfig to check for validity
+// TODO: diff onchain config vs proposed config
 
 const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (
   result,

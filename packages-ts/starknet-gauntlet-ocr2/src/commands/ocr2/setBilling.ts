@@ -1,5 +1,4 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
+import { CONTRACT_TYPES, ExecuteCommandConfig, ExecutionContext, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetBilling, SetBillingInput } from '@chainlink/gauntlet-contracts-ocr2'
 
@@ -14,13 +13,18 @@ type ContractInput = [
   },
 ]
 
-const makeContractInput = async (input: StarknetSetBillingInput): Promise<ContractInput> => {
+const makeContractInput = async (input: StarknetSetBillingInput, ctx: ExecutionContext): Promise<ContractInput> => {
+  if (ctx.rdd) {
+    const contract = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress];
+    input = contract.billing;
+  }
+
   return [
     {
-      observation_payment_gjuels: new BN(input.observationPaymentGjuels).toNumber(),
-      transmission_payment_gjuels: new BN(input.transmissionPaymentGjuels).toNumber(),
-      gas_base: new BN(input.gasBase).toNumber(),
-      gas_per_signature: new BN(input.gasPerSignature).toNumber(),
+      observation_payment_gjuels: input.observationPaymentGjuels,
+      transmission_payment_gjuels: input.transmissionPaymentGjuels,
+      gas_base: input.gasBase,
+      gas_per_signature: input.gasPerSignature,
     },
   ]
 }
@@ -30,10 +34,10 @@ const commandConfig: ExecuteCommandConfig<StarknetSetBillingInput, ContractInput
   makeUserInput: (flags: any, args: any): StarknetSetBillingInput => {
     if (flags.input) return flags.input as StarknetSetBillingInput
     return {
-      observationPaymentGjuels: flags.observationPaymentGjuels,
-      transmissionPaymentGjuels: flags.transmissionPaymentGjuels,
-      gasBase: flags.gasBase,
-      gasPerSignature: flags.gasPerSignature,
+      observationPaymentGjuels: parseInt(flags.observationPaymentGjuels),
+      transmissionPaymentGjuels: parseInt(flags.transmissionPaymentGjuels),
+      gasBase: parseInt(flags.gasBase),
+      gasPerSignature: parseInt(flags.gasPerSignature),
     }
   },
   makeContractInput: makeContractInput,
