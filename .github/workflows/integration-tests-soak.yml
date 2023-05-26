@@ -26,8 +26,18 @@ on:
         required: true
         default: 72h
         type: string
-
-
+      test_duration:
+        description: Duration of soak
+        required: true
+        default: 72h
+        type: string
+      private_key:
+        description: Private key, ignore for devnet
+        required: false
+        type: string
+      account:
+        description: Account address, ignore for devnet
+        required: false
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -48,7 +58,7 @@ jobs:
     steps:
       - name: Check if image exists
         id: check-image
-        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@8489879838862929f43f7d7cd1b33903965cf507 # v2.1.6
+        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@2c9f401149f6c25fb632067b7e6626aebeee5d69 # v2.1.6
         with:
           repository: chainlink
           tag: starknet.${{ github.sha }}
@@ -56,8 +66,7 @@ jobs:
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
       - name: Build Image
         if: steps.check-image.outputs.exists == 'false'
-        # note using a temporary commit for build-image that works around the go get issues, replace when go get issues are fixed please
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@a2bf54158aa0a77a55f432347bc9ecf8ef642c2b # cosmos_one_off
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@2c9f401149f6c25fb632067b7e6626aebeee5d69
         with:
           cl_repo: smartcontractkit/chainlink
           # By default we are integrating with CL develop
@@ -81,9 +90,10 @@ jobs:
     env:
       CHAINLINK_ENV_USER: ${{ github.actor }}
       L2_RPC_URL: ${{ github.event.inputs.l2_rpc_url }}
+      TEST_DURATION: ${{ github.event.inputs.test_duration }}
       NODE_COUNT: ${{ github.event.inputs.node_count }}
-      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
-      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
+      PRIVATE_KEY: ${{ github.event.inputs.private_key }}
+      ACCOUNT: ${{ github.event.inputs.account }}
       TTL: ${{ github.event.inputs.ttl }}
       DETACH_RUNNER: true
       TEST_SUITE: soak
@@ -108,7 +118,7 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ce87f8986ca18336cc5015df75916c2ec0a7c4b3 # v2.1.2
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@2c9f401149f6c25fb632067b7e6626aebeee5d69 # v2.1.2
         with:
           test_command_to_run: nix develop -c make test-integration-soak-ci
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download

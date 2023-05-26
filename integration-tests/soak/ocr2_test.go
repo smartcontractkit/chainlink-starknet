@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
@@ -42,7 +41,6 @@ func TestOCRSoak(t *testing.T) {
 	}
 	err = testState.Sg.SetupNetwork(testState.Common.L2RPCUrl)
 	require.NoError(t, err, "Setting up network should not fail")
-	time.Sleep(8 * time.Hour)
 	err = testState.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
 	require.NoError(t, err, "Deploying contracts should not fail")
 	if !testState.Common.Testnet {

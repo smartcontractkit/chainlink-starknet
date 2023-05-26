@@ -60,5 +60,4 @@ func TestOCRBasic(t *testing.T) {
 		err = actions.TeardownSuite(t, testState.Common.Env, utils.ProjectRoot, testState.Cc.ChainlinkNodes, nil, zapcore.ErrorLevel)
 		require.NoError(t, err, "Error tearing down environment")
 	})
-
 }
