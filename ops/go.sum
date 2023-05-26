@@ -289,12 +289,12 @@ github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212 h1:UG0jo7O3
 github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-env v0.3.29 h1:hcIw/BeuB0wKiiE3umAUNBZzWkHO24XF3OW9xSrlMbI=
 github.com/smartcontractkit/chainlink-env v0.3.29/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
-github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230525161650-dce1bc58b504 h1:LQB12lOqT0Kg6s9zq/zDF5egSPXi7Hyar3QBmjkD32w=
-github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230525161650-dce1bc58b504/go.mod h1:zfUba6Okm7zTBxap24I78Vq9z+twHmjXSMBAl2C2Qgc=
+github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230518205430-86610fe3b0a1 h1:6/jM/hJdXMrbhc7QbheD92gMvc1QsOiP5KMKM1ccAoc=
+github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230518205430-86610fe3b0a1/go.mod h1:f7/HKcJWWFzINrkDDlpKsFaU6D+8D4B4OrQxkkCX4oc=
 github.com/smartcontractkit/chainlink-testing-framework v1.11.5 h1:gYSnOQhLxgE0mxwnv015nNnPgH9kcosx+AzPboEFo38=
 github.com/smartcontractkit/chainlink-testing-framework v1.11.5/go.mod h1:0ktPcDE5fFSvNewsaHuC4tGVaiCMQsl5RN/cWO5k0rg=
-github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3 h1:/Gel/U5eIZ/BGGr25OrHaXiVDTAJ5DYX5+UlXp3q7Gg=
-github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
+github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc h1:aSCDAai0Dmbhp/KHTtJnC/EJcaEz4CAO80SKRzRZiQA=
+github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/cobra v1.6.0 h1:42a0n6jwCot1pUmomAp4T7DeMD+20LFv4Q54pxLf2LI=
 github.com/spf13/cobra v1.6.0/go.mod h1:IOw/AERYS7UzyrGinqmz6HLUo219MORXGxhbaJUqzrY=

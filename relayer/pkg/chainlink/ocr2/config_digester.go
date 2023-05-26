@@ -94,15 +94,11 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	digest.FillBytes(configDigest[:])
 
 	// set first two bytes to the digest prefix
-	pre, err := d.ConfigDigestPrefix()
-	if err != nil {
-		return configDigest, err
-	}
-	binary.BigEndian.PutUint16(configDigest[:2], uint16(pre))
+	binary.BigEndian.PutUint16(configDigest[:2], uint16(d.ConfigDigestPrefix()))
 
 	return configDigest, nil
 }
 
-func (offchainConfigDigester) ConfigDigestPrefix() (types.ConfigDigestPrefix, error) {
-	return ConfigDigestPrefixStarknet, nil
+func (offchainConfigDigester) ConfigDigestPrefix() types.ConfigDigestPrefix {
+	return ConfigDigestPrefixStarknet
 }
