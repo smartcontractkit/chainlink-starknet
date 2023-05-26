@@ -6,7 +6,7 @@ require (
 	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212
+	github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230518205430-86610fe3b0a1
 	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc
 	github.com/stretchr/testify v1.8.2

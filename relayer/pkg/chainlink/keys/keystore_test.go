@@ -75,9 +75,10 @@ func generateTestKey(t *testing.T) *big.Int {
 		return false
 	}
 
+	//nolint:all
 	for !generated() {
-		// nolint
 	}
+
 	require.NoError(t, generationErr)
 	return key
 }
