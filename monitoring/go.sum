@@ -210,8 +210,8 @@ github.com/santhosh-tekuri/jsonschema/v5 v5.1.1 h1:lEOLY2vyGIqKWUI9nzsOJRV3mb3WC
 github.com/santhosh-tekuri/jsonschema/v5 v5.1.1/go.mod h1:FKdcjfQW6rpZSnxxUvEA5H/cDPdvJ/SZJQLWWXWGrZ0=
 github.com/shirou/gopsutil v3.21.11+incompatible h1:+1+c1VGhc88SSonWP6foOcLhvnKlUeu/erjjvaPEYiI=
 github.com/shirou/gopsutil v3.21.11+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
-github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212 h1:UG0jo7O36AuWEw5plzD14sxqoya+TzKBjNhZ6O9G4Ko=
-github.com/smartcontractkit/caigo v0.0.0-20230525150744-a65af33d6212/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
+github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a h1:B0WjTVtPW+GNY90rpmiwD/8tf3xr4jFC60sjuznNtRs=
+github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230518205430-86610fe3b0a1 h1:6/jM/hJdXMrbhc7QbheD92gMvc1QsOiP5KMKM1ccAoc=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230518205430-86610fe3b0a1/go.mod h1:f7/HKcJWWFzINrkDDlpKsFaU6D+8D4B4OrQxkkCX4oc=
 github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc h1:aSCDAai0Dmbhp/KHTtJnC/EJcaEz4CAO80SKRzRZiQA=

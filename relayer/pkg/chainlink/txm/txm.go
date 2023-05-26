@@ -28,7 +28,7 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(caigotypes.Hash, caigotypes.Hash, caigotypes.FunctionCall) error
+	Enqueue(senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, txFn caigotypes.FunctionCall) error
 	InflightCount() (int, int)
 }
 
@@ -115,7 +115,7 @@ func (txm *starktxm) broadcastLoop() {
 			tx := <-txm.queue
 
 			// broadcast tx serially - wait until accepted by mempool before processing next
-			hash, err := txm.broadcast(ctx, tx.senderAddress.String(), tx.accountAddress, tx.call)
+			hash, err := txm.broadcast(ctx, tx.senderAddress, tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
 			} else {
@@ -127,7 +127,7 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, senderAddress string, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
 	txs := []caigotypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
@@ -135,7 +135,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress string, accoun
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewGatewayAccount(senderAddress, accountAddress.String(), txm.ks, client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewGatewayAccount(senderAddress.String(), accountAddress.String(), txm.ks, client.Gw, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
@@ -162,7 +162,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress string, accoun
 	}
 
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {
@@ -232,8 +232,8 @@ func (txm *starktxm) confirmLoop() {
 			txm.lggr.Debugw("confirmLoop: stopped")
 			return
 		}
-
-		tick = time.After(utils.WithJitter(txm.cfg.ConfirmationPoll() - time.Since(start)))
+		t := txm.cfg.ConfirmationPoll() - time.Since(start)
+		tick = time.After(utils.WithJitter(t.Abs()))
 	}
 }
 

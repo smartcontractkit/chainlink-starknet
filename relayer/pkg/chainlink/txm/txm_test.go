@@ -4,10 +4,11 @@ package txm
 
 import (
 	"context"
+	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	caigogw "github.com/smartcontractkit/caigo/gateway"
 	"github.com/smartcontractkit/caigo/test"
 	caigotypes "github.com/smartcontractkit/caigo/types"
@@ -32,37 +33,35 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, err)
 
 	// parse keys into expected format
-	localKeys := map[string]keys.Key{}
+	localKeys := map[string]*big.Int{}
 	localAccounts := map[string]string{}
 	for i := range accounts {
 		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
 		require.NoError(t, err)
-
-		key := keys.Raw(privKey).Key()
-		assert.Equal(t, caigotypes.HexToHash(accounts[i].PublicKey), caigotypes.HexToHash(key.ID()))
-		localKeys[key.ID()] = key
-		localAccounts[key.ID()] = accounts[i].Address
+		senderAddress := caigotypes.HexToHash(accounts[i].PublicKey).String()
+		localKeys[senderAddress] = caigotypes.BytesToBig(privKey)
+		localAccounts[senderAddress] = accounts[i].Address
 	}
 
 	// mock keystore
 	keyGetter := new(mocks.KeyGetter)
 
 	keyGetter.On("Get", mock.AnythingOfType("string")).Return(
-		func(id string) keys.Key {
+		func(id string) *big.Int {
 			return localKeys[id]
 		},
 		func(id string) error {
 
 			_, ok := localKeys[id]
 			if !ok {
-				return errors.New("key does not exist")
+				return fmt.Errorf("key does not exist id=%s", id)
 			}
 			return nil
 		},
 	)
 
 	looppKs := keys.NewLooppKeystore(keyGetter)
-	ks := keys.NewKeystoreAdapter(looppKs)
+	ksAdapter := keys.NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
@@ -74,10 +73,10 @@ func TestIntegration_Txm(t *testing.T) {
 
 	// mock config to prevent import cycle
 	cfg := txmmock.NewConfig(t)
-	cfg.On("TxTimeout").Return(10 * time.Second) // I'm guessing this should actually just be 10?
+	cfg.On("TxTimeout").Return(20 * time.Second)
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 
-	txm, err := New(lggr, ks, cfg, getClient)
+	txm, err := New(lggr, ksAdapter.Loopp(), cfg, getClient)
 	require.NoError(t, err)
 
 	// ready fail if start not called
@@ -87,10 +86,10 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, txm.Start(context.Background()))
 	require.NoError(t, txm.Ready())
 
-	for k := range localKeys {
-		key := caigotypes.HexToHash(k)
+	for senderAddressStr := range localKeys {
+		senderAddress := caigotypes.HexToHash(senderAddressStr)
 		for i := 0; i < n; i++ {
-			require.NoError(t, txm.Enqueue(key, caigotypes.HexToHash(localAccounts[k]), caigotypes.FunctionCall{
+			require.NoError(t, txm.Enqueue(senderAddress, caigotypes.HexToHash(localAccounts[senderAddressStr]), caigotypes.FunctionCall{
 				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
 				EntryPointSelector: "totalSupply",
 			}))
