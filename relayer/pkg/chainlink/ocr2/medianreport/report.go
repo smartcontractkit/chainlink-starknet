@@ -8,8 +8,8 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	junotypes "github.com/NethermindEth/juno/pkg/types"
-	"github.com/pkg/errors"
 	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -133,8 +133,8 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	return oo[n/2], nil
 }
 
-func (c ReportCodec) MaxReportLength(n int) (int, error) {
-	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes + gasPriceSizeBytes, nil
+func (c ReportCodec) MaxReportLength(n int) int {
+	return prefixSizeBytes + (n * observationSizeBytes) + juelsPerFeeCoinSizeBytes + gasPriceSizeBytes
 }
 
 func SplitReport(report types.Report) ([][]byte, error) {
