@@ -69,6 +69,8 @@ mod Aggregator {
     use array::SpanTrait;
     use box::BoxTrait;
     use hash::LegacyHash;
+    use integer::U8IntoFelt252;
+    use integer::U32IntoFelt252;
     use integer::U128IntoFelt252;
     use integer::u128s_from_felt252;
     use integer::U128sFromFelt252Result;
@@ -412,7 +414,7 @@ mod Aggregator {
     ) -> felt252 { // digest
         Ownable::assert_only_owner();
         assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
-        assert((3_u8 * f).into() < oracles.len(), 'faulty-oracle f too high');
+        assert(U8IntoFelt252::into(3_u8 * f).try_into().unwrap() < oracles.len(), 'faulty-oracle f too high');
         assert(f > 0_u8, 'f must be positive');
 
         assert(onchain_config.len() == 0_u32, 'onchain_config must be empty');
@@ -643,7 +645,7 @@ mod Aggregator {
         assert(report_context.config_digest == config_digest, 'config digest mismatch');
 
         let f = _f::read();
-        assert(signatures_len == (f + 1_u8).into(), 'wrong number of signatures');
+        assert(signatures_len.into() == U8IntoFelt252::into(f + 1_u8), 'wrong number of signatures');
 
         let msg = hash_report(
             @report_context,
@@ -668,7 +670,7 @@ mod Aggregator {
 
         let observations_len = observations.len();
         assert(observations_len <= MAX_ORACLES, '');
-        assert(f.into() < observations_len, '');
+        assert(U8IntoFelt252::into(f).try_into().unwrap() < observations_len, '');
 
         _latest_epoch_and_round::write(report_context.epoch_and_round);
 
@@ -720,7 +722,8 @@ mod Aggregator {
         );
 
         // pay transmitter
-        let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
+        let payment = reimbursement_juels
+            + (U32IntoFelt252::into(billing.transmission_payment_gjuels).try_into().unwrap() * GIGA);
         // TODO: check overflow
 
         oracle.payment_juels += payment;
@@ -762,7 +765,7 @@ mod Aggregator {
         let index = _signers::read(signature.public_key);
         assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
 
-        let indexed_bit = pow(2_u128, index.into() - 1_u128);
+        let indexed_bit = pow(2_u128, U32IntoFelt252::into(index).try_into().unwrap() - 1_u128);
         let prev_signed_count = signed_count;
         signed_count = signed_count | indexed_bit;
         assert(prev_signed_count != signed_count, 'duplicate signer');
@@ -991,7 +994,8 @@ mod Aggregator {
         let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
         let rounds = latest_round_id - from_round_id;
 
-        (rounds * billing.observation_payment_gjuels.into() * GIGA) + *oracle.payment_juels
+        (rounds * U32IntoFelt252::into(billing.observation_payment_gjuels).try_into().unwrap() * GIGA)
+            + *oracle.payment_juels
     }
 
     #[view]
@@ -1085,7 +1089,9 @@ mod Aggregator {
     ) -> u128 {
         if index == 0_usize {
             let billing = _billing::read();
-            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA)
+            return (total_rounds
+                * U32IntoFelt252::into(billing.observation_payment_gjuels).try_into().unwrap()
+                * GIGA)
                 + payments_juels;
         }
 
@@ -1134,9 +1140,9 @@ mod Aggregator {
         // TODO: determine new values for these constants
         // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
         // gas_base = 14951, gas_per_signature = 13
-        let signature_count_u128: u128 = signature_count.into();
-        let gas_base_u128: u128 = config.gas_base.into();
-        let gas_per_signature_u128: u128 = config.gas_per_signature.into();
+        let signature_count_u128: u128 = U32IntoFelt252::into(signature_count).try_into().unwrap();
+        let gas_base_u128: u128 = U32IntoFelt252::into(config.gas_base).try_into().unwrap();
+        let gas_per_signature_u128: u128 = U32IntoFelt252::into(config.gas_per_signature).try_into().unwrap();
 
         let exact_gas = gas_base_u128 + (signature_count_u128 * gas_per_signature_u128);
         let gas = exact_gas * MARGIN / 100_u128; // scale to 115% for some margin
