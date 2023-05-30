@@ -76,44 +76,68 @@ func (s *TxStore) InflightCount() int {
 	return len(s.nonceToHash)
 }
 
-type ChainTxStore map[caigotypes.Hash]*TxStore
-
-func (c ChainTxStore) Save(from caigotypes.Hash, nonce *big.Int, hash string) error {
-	if err := c.validate(from); err != nil {
-		// if does not exist, create a new store for the address
-		c[from] = NewTxStore(nonce)
-	}
-	return c[from].Save(nonce, hash)
+type ChainTxStore struct {
+	store map[caigotypes.Hash]*TxStore
+	lock  sync.RWMutex
 }
 
-func (c ChainTxStore) Confirm(from caigotypes.Hash, hash string) error {
+func NewChainTxStore() *ChainTxStore {
+	return &ChainTxStore{
+		store: map[caigotypes.Hash]*TxStore{},
+	}
+}
+
+func (c *ChainTxStore) Save(from caigotypes.Hash, nonce *big.Int, hash string) error {
+	// use write lock for methods that modify underlying data
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	if err := c.validate(from); err != nil {
+		// if does not exist, create a new store for the address
+		c.store[from] = NewTxStore(nonce)
+	}
+	return c.store[from].Save(nonce, hash)
+}
+
+func (c *ChainTxStore) Confirm(from caigotypes.Hash, hash string) error {
+	// use write lock for methods that modify underlying data
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	if err := c.validate(from); err != nil {
 		return err
 	}
-	return c[from].Confirm(hash)
+	return c.store[from].Confirm(hash)
 }
 
-func (c ChainTxStore) GetAllInflightCount() map[caigotypes.Hash]int {
+func (c *ChainTxStore) GetAllInflightCount() map[caigotypes.Hash]int {
+	// use read lock for methods that read underlying data
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	list := map[caigotypes.Hash]int{}
 
-	for i := range c {
-		list[i] = c[i].InflightCount()
+	for i := range c.store {
+		list[i] = c.store[i].InflightCount()
 	}
 
 	return list
 }
 
-func (c ChainTxStore) GetAllUnconfirmed() map[caigotypes.Hash][]string {
+func (c *ChainTxStore) GetAllUnconfirmed() map[caigotypes.Hash][]string {
+	// use read lock for methods that read underlying data
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	list := map[caigotypes.Hash][]string{}
 
-	for i := range c {
-		list[i] = c[i].GetUnconfirmed()
+	for i := range c.store {
+		list[i] = c.store[i].GetUnconfirmed()
 	}
 	return list
 }
 
-func (c ChainTxStore) validate(from caigotypes.Hash) error {
-	if _, exists := c[from]; !exists {
+func (c *ChainTxStore) validate(from caigotypes.Hash) error {
+	if _, exists := c.store[from]; !exists {
 		return fmt.Errorf("from address does not exist: %s", from)
 	}
 	return nil

@@ -129,7 +129,7 @@ func TestTxStore(t *testing.T) {
 func TestChainTxStore(t *testing.T) {
 	t.Parallel()
 
-	c := ChainTxStore{}
+	c := NewChainTxStore()
 
 	// automatically save the from address
 	require.NoError(t, c.Save(caigotypes.Hash{}, big.NewInt(0), "0x0"))
