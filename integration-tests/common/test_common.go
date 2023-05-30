@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	caigo "github.com/smartcontractkit/caigo"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,32 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	defaultWalletAddress = "0x" + hex.EncodeToString(starkkey.PubKeyToAccount(starkkey.Raw(keyBytes).Key().PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+	accountBytes, err := pubKeyToDevnetAccount(starkkey.Raw(keyBytes).Key().PublicKey())
+	if err != nil {
+		panic(err)
+	}
+	defaultWalletAddress = "0x" + hex.EncodeToString(accountBytes)
+}
+
+func pubKeyToDevnetAccount(pubkey starkkey.PublicKey) ([]byte, error) {
+	xHash, err := caigo.Curve.ComputeHashOnElements([]*big.Int{pubkey.X})
+	if err != nil {
+		return nil, err
+	}
+	elements := []*big.Int{
+		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
+		big.NewInt(0),
+		ops.DevnetSalt,
+		ops.DevnetClassHash,
+		xHash,
+	}
+	hash, err := caigo.Curve.ComputeHashOnElements(elements)
+	if err != nil {
+		return nil, err
+	}
+
+	// pad big.Int to 32 bytes if needed
+	return starknet.PadBytes(hash.Bytes(), 32), nil
 }
 
 type Test struct {
