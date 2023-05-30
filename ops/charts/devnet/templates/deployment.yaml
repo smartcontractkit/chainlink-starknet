@@ -31,7 +31,7 @@ spec:
             - "-c"
             - |
               mkdir -p cairo-build
-              curl -L --output release.tgz https://github.com/starkware-libs/cairo/releases/download/v1.0.0-rc0/release-x86_64-unknown-linux-musl.tar.gz
+              curl -L --output release.tgz https://github.com/starkware-libs/cairo/releases/download/v1.1.0/release-x86_64-unknown-linux-musl.tar.gz
               tar xzf release.tgz
               mv cairo/* cairo-build/
           volumeMounts:
