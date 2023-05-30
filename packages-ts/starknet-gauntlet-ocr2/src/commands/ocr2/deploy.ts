@@ -30,8 +30,8 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
       minAnswer: aggregator.minSubmissionValue,
       decimals: aggregator.decimals,
       description: aggregator.name,
-      billingAccessController: aggregator.billingAccessController,
-      linkToken: aggregator.linkToken,
+      billingAccessController: aggregator.billingAccessController || flags.billingAccessController || env.billingAccessController || '',
+      linkToken: aggregator.linkToken || flags.linkToken || env.linkToken || '',
       owner: aggregator.owner || env.account,
     }
   }
