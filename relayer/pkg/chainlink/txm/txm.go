@@ -17,7 +17,6 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -47,7 +46,7 @@ type starktxm struct {
 	done    sync.WaitGroup
 	stop    chan struct{}
 	queue   chan Tx
-	ks      keys.KeystoreAdapter
+	ks      KeystoreAdapter
 	cfg     Config
 	nonce   NonceManager
 

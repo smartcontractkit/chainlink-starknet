@@ -79,5 +79,4 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
-	github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys => ../relayer/pkg/chainlink/keys
 )
