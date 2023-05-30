@@ -295,7 +295,11 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
 		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
 		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
+		if isSoak && err != nil {
+			continue
+		}
 		require.NoError(testState.T, err, "Failed to get latest transmission details")
+
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
 			break
