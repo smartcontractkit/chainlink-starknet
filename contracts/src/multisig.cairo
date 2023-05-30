@@ -299,6 +299,7 @@ mod Multisig {
 
     #[external]
     fn execute_transaction(nonce: u128) -> Array<felt252> {
+        _require_signer();
         _require_tx_exists(nonce);
         _require_tx_valid(nonce);
         _require_not_executed(nonce);
