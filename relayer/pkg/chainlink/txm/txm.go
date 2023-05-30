@@ -172,7 +172,7 @@ func (txm *starktxm) broadcast(ctx context.Context, privKey string, accountAddre
 	}
 
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {
