@@ -1,4 +1,4 @@
-import { ExecuteCommandConfig, makeExecuteCommand, ExecutionContext } from '@chainlink/starknet-gauntlet'
+import { CONTRACT_TYPES, ExecuteCommandConfig, makeExecuteCommand, ExecutionContext, getRDD } from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { shortString } from 'starknet'
@@ -20,6 +20,22 @@ type ContractInput = [
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
+
+  if (flags.rdd) {
+    const rdd = getRDD(flags.rdd)
+    const contractAddr = args[0]
+    const aggregator = rdd[CONTRACT_TYPES.AGGREGATOR][contractAddr]
+    return {
+      maxAnswer: aggregator.maxSubmissionValue,
+      minAnswer: aggregator.minSubmissionValue,
+      decimals: aggregator.decimals,
+      description: aggregator.name,
+      billingAccessController: aggregator.billingAccessController,
+      linkToken: aggregator.linkToken,
+      owner: aggregator.owner || env.account,
+    }
+  }
+
   return {
     ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
