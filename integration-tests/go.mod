@@ -9,6 +9,7 @@ require (
 	github.com/smartcontractkit/chainlink-env v0.3.29
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
+	github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys v0.0.0-00010101000000-000000000000
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230420131147-ce3c53a39d07
 	github.com/smartcontractkit/chainlink/v2 v2.1.0-beta0.0.20230427051455-edb338fd2536
@@ -378,6 +379,7 @@ replace (
 	// Make sure we're working with the latest ops
 	github.com/smartcontractkit/chainlink-starknet/ops => ../ops
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
+	github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys => ../relayer/pkg/chainlink/keys
 
 	// K8s imports are weird
 	k8s.io/api => k8s.io/api v0.25.4

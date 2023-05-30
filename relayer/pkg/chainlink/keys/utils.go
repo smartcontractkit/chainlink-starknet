@@ -8,8 +8,6 @@ import (
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
 	"github.com/smartcontractkit/caigo"
-
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 // constants
@@ -28,12 +26,12 @@ func PubKeyToAccount(pubkey PublicKey, classHash, salt *big.Int) []byte {
 	)
 
 	// pad big.Int to 32 bytes if needed
-	return starknet.PadBytes(hash.Bytes(), byteLen)
+	return padBytes(hash.Bytes(), byteLen)
 }
 
 // PubToStarkKey implements the pubkey to starkkey functionality: https://github.com/0xs34n/starknet.js/blob/cd61356974d355aa42f07a3d63f7ccefecbd913c/src/utils/ellipticCurve.ts#L49
 func PubKeyToStarkKey(pubkey PublicKey) []byte {
-	return starknet.PadBytes(pubkey.X.Bytes(), byteLen)
+	return padBytes(pubkey.X.Bytes(), byteLen)
 }
 
 // reimplements parts of https://github.com/smartcontractkit/caigo/blob/main/utils.go#L85

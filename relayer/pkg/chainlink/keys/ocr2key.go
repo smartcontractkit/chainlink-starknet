@@ -2,20 +2,19 @@ package keys
 
 import (
 	"bytes"
+	"encoding/binary"
 	"io"
 	"math/big"
 
 	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
-	"github.com/smartcontractkit/caigo"
+	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
-	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2/types"
+	"github.com/smartcontractkit/caigo"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
-var _ ocrtypes.OnchainKeyring = &OCR2Key{}
+var _ types.OnchainKeyring = &OCR2Key{}
 
 type OCR2Key struct {
 	Key
@@ -27,20 +26,20 @@ func NewOCR2Key(material io.Reader) (*OCR2Key, error) {
 	return &OCR2Key{k}, err
 }
 
-func (sk *OCR2Key) PublicKey() ocrtypes.OnchainPublicKey {
+func (sk *OCR2Key) PublicKey() types.OnchainPublicKey {
 	return PubKeyToStarkKey(sk.pub)
 }
 
-func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) (*big.Int, error) {
+func ReportToSigData(reportCtx types.ReportContext, report types.Report) (*big.Int, error) {
 	var dataArray []*big.Int
 
-	rawReportContext := medianreport.RawReportContext(reportCtx)
+	rawReportContext := rawReportContext(reportCtx)
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[0][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[1][:]))
 	dataArray = append(dataArray, new(big.Int).SetBytes(rawReportContext[2][:]))
 
 	// split report into separate felts for hashing
-	splitReport, err := medianreport.SplitReport(report)
+	splitReport, err := splitReport(report)
 	if err != nil {
 		return &big.Int{}, err
 	}
@@ -52,7 +51,7 @@ func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) (
 	return hash, nil
 }
 
-func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
+func (sk *OCR2Key) Sign(reportCtx types.ReportContext, report types.Report) ([]byte, error) {
 	hash, err := ReportToSigData(reportCtx, report)
 	if err != nil {
 		return []byte{}, err
@@ -70,10 +69,10 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 
 	// encoding: public key (32 bytes) + r (32 bytes) + s (32 bytes)
 	buff := bytes.NewBuffer([]byte(sk.PublicKey()))
-	if _, err := buff.Write(starknet.PadBytes(r.Bytes(), byteLen)); err != nil {
+	if _, err := buff.Write(padBytes(r.Bytes(), byteLen)); err != nil {
 		return []byte{}, err
 	}
-	if _, err := buff.Write(starknet.PadBytes(s.Bytes(), byteLen)); err != nil {
+	if _, err := buff.Write(padBytes(s.Bytes(), byteLen)); err != nil {
 		return []byte{}, err
 	}
 
@@ -84,7 +83,7 @@ func (sk *OCR2Key) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report
 	return out, nil
 }
 
-func (sk *OCR2Key) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
+func (sk *OCR2Key) Verify(publicKey types.OnchainPublicKey, reportCtx types.ReportContext, report types.Report, signature []byte) bool {
 	// check valid signature length
 	if len(signature) != sk.MaxSignatureLength() {
 		return false
@@ -124,7 +123,7 @@ func (sk *OCR2Key) MaxSignatureLength() int {
 }
 
 func (sk *OCR2Key) Marshal() ([]byte, error) {
-	return starknet.PadBytes(sk.priv.Bytes(), sk.privateKeyLen()), nil
+	return padBytes(sk.priv.Bytes(), sk.privateKeyLen()), nil
 }
 
 func (sk *OCR2Key) privateKeyLen() int {
@@ -140,4 +139,44 @@ func (sk *OCR2Key) Unmarshal(in []byte) error {
 
 	sk.Key = Raw(in).Key()
 	return nil
+}
+
+func splitReport(report types.Report) ([][]byte, error) {
+	chunkSize := junotypes.FeltLength
+	if len(report)%chunkSize != 0 {
+		return [][]byte{}, errors.New("invalid report length")
+	}
+
+	// order is guaranteed by buildReport:
+	//   observation_timestamp
+	//   observers
+	//   observations_len
+	//   observations
+	//   juels_per_fee_coin
+	//   gas_price
+	slices := [][]byte{}
+	for i := 0; i < len(report)/chunkSize; i++ {
+		idx := i * chunkSize
+		slices = append(slices, report[idx:(idx+chunkSize)])
+	}
+
+	return slices, nil
+}
+
+// NOTE: this should sit in the ocr2 package but that causes import cycles
+func rawReportContext(repctx types.ReportContext) [3][32]byte {
+	rawReportContext := evmutilRawReportContext(repctx)
+	// NOTE: Ensure extra_hash is 31 bytes with first byte blanked out
+	// libocr generates a 32 byte extraHash but we need to fit it into a felt
+	rawReportContext[2][0] = 0
+	return rawReportContext
+}
+
+func evmutilRawReportContext(repctx types.ReportContext) [3][32]byte {
+	rawRepctx := [3][32]byte{}
+	copy(rawRepctx[0][:], repctx.ConfigDigest[:])
+	binary.BigEndian.PutUint32(rawRepctx[1][32-5:32-1], repctx.Epoch)
+	rawRepctx[1][31] = repctx.Round
+	rawRepctx[2] = repctx.ExtraHash
+	return rawRepctx
 }

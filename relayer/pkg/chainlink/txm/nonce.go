@@ -1,4 +1,4 @@
-package keys
+package txm
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 )
 
@@ -16,6 +17,15 @@ import (
 
 type NonceManagerClient interface {
 	AccountNonce(context.Context, caigotypes.Hash) (*big.Int, error)
+}
+
+type NonceManager interface {
+	types.Service
+
+	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
+
+	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
+	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
 }
 
 var _ NonceManager = (*nonceManager)(nil)

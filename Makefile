@@ -133,6 +133,7 @@ format-go-fmt:
 .PHONY: format-go-mod-tidy
 format-go-mod-tidy:
 	cd ./relayer && go mod tidy
+	cd ./relayer/pkg/chainlink/keys && go mod tidy
 	cd ./monitoring && go mod tidy
 	cd ./ops && go mod tidy
 	cd ./integration-tests && go mod tidy

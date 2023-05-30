@@ -7,7 +7,8 @@ require (
 	github.com/rs/zerolog v1.29.1
 	github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a
 	github.com/smartcontractkit/chainlink-env v0.3.29
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-00010101000000-000000000000
+	github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys v0.0.0-00010101000000-000000000000
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
 )
 
@@ -153,4 +154,5 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
+	github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys => ../relayer/pkg/chainlink/keys
 )
