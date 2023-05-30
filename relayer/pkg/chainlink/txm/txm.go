@@ -49,7 +49,7 @@ type starktxm struct {
 	done    sync.WaitGroup
 	stop    chan struct{}
 	queue   chan Tx
-	ks      keys.KeystoreAdapter //caigo.Keystore //*keys.CaigoAdapter //loop.Keystore
+	ks      keys.KeystoreAdapter
 	cfg     Config
 	nonce   keys.NonceManager
 
