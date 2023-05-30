@@ -17,11 +17,11 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink/v2/core/services/keystore/keys/starkkey"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 
@@ -44,7 +44,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	defaultWalletAddress = "0x" + hex.EncodeToString(keys.PubKeyToAccount(keys.Raw(keyBytes).Key().PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+	defaultWalletAddress = "0x" + hex.EncodeToString(starkkey.PubKeyToAccount(starkkey.Raw(keyBytes).Key().PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
 }
 
 type Test struct {
