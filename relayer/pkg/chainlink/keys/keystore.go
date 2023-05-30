@@ -1,16 +1,16 @@
 package keys
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/big"
 
 	"github.com/smartcontractkit/caigo"
 	caigotypes "github.com/smartcontractkit/caigo/types"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
+	starknetadapter "github.com/smartcontractkit/chainlink-relay/pkg/loop/adapters/starknet"
 	"github.com/smartcontractkit/chainlink-relay/pkg/types"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 // KeystoreAdapter is a starknet-specific adaption layer to translate between the generic Loop Keystore (bytes) and
@@ -55,11 +55,11 @@ func (ca *keystoreAdapter) Decode(ctx context.Context, rawSignature []byte) (x *
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()
 	default:
-		starknetSig, serr := signatureFromBytes(rawSignature)
+		starknetSig, serr := starknetadapter.SignatureFromBytes(rawSignature)
 		if serr != nil {
 			return nil, nil, fmt.Errorf("error creating starknet signature from raw signature: %w", serr)
 		}
-		x, y = starknetSig.x, starknetSig.y
+		x, y, err = starknetSig.Ints()
 	}
 	return x, y, err
 }
@@ -107,11 +107,11 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 		return nil, fmt.Errorf("error signing data with curve: %w", err)
 	}
 
-	s := &signature{
-		x: x,
-		y: y,
+	s, err := starknetadapter.SignatureFromBigInts(x, y)
+	if err != nil {
+		return nil, fmt.Errorf("error creating signature from big ints: %w", err)
 	}
-	return s.bytes()
+	return s.Bytes()
 }
 
 // TODO what is this supposed to return for starknet?
@@ -126,57 +126,4 @@ type NonceManager interface {
 
 	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
 	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
-}
-
-const (
-	maxPointByteLen = 32 // stark curve max is 252 bits
-	signatureLen    = 2 * maxPointByteLen
-)
-
-// signature is an intermediate representation for translating between a raw-bytes signature and a caigo
-// signature comprised of big.Ints
-type signature struct {
-	x, y *big.Int
-}
-
-// encodes x,y into []byte slice
-// the first [maxPointByteLen] are the padded bytes of x
-// the second [maxPointByteLen] are the padded bytes of y
-func (s *signature) bytes() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	n, err := buf.Write(starknet.PadBytes(s.x.Bytes(), maxPointByteLen))
-	if err != nil {
-		return nil, fmt.Errorf("error writing 'x' component of signature: %w", err)
-	}
-	if n != maxPointByteLen {
-		return nil, fmt.Errorf("unexpected write length of 'x' component of signature: wrote %d expected %d", n, maxPointByteLen)
-	}
-
-	n, err = buf.Write(starknet.PadBytes(s.y.Bytes(), maxPointByteLen))
-	if err != nil {
-		return nil, fmt.Errorf("error writing 'y' component of signature: %w", err)
-	}
-	if n != maxPointByteLen {
-		return nil, fmt.Errorf("unexpected write length of 'y' component of signature: wrote %d expected %d", n, maxPointByteLen)
-	}
-
-	if buf.Len() != signatureLen {
-		return nil, fmt.Errorf("error in signature length")
-	}
-	return buf.Bytes(), nil
-}
-
-// b is expected to encode x,y components in accordance with [signature.bytes]
-func signatureFromBytes(b []byte) (*signature, error) {
-	if len(b) != signatureLen {
-		return nil, fmt.Errorf("expected signature length %d got %d", signatureLen, len(b))
-	}
-
-	x := b[:maxPointByteLen]
-	y := b[maxPointByteLen:]
-
-	return &signature{
-		x: new(big.Int).SetBytes(x),
-		y: new(big.Int).SetBytes(y),
-	}, nil
 }
