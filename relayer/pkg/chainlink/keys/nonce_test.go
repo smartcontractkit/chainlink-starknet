@@ -19,10 +19,9 @@ import (
 
 func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (keys.NonceManager, caigotypes.Hash, func()) {
 	// setup
-	ks := mocks.NewKeystore(t)
 	c := mocks.NewNonceManagerClient(t)
 	lggr := logger.Test(t)
-	nm := keys.NewNonceManager(lggr, ks)
+	nm := keys.NewNonceManager(lggr)
 
 	// mock returns
 	key := keys.MustNewInsecure(rand.Reader)
