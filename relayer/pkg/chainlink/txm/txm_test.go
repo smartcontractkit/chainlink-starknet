@@ -13,15 +13,11 @@ import (
 	"github.com/smartcontractkit/caigo/test"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
-	txmmock "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -44,24 +40,14 @@ func TestIntegration_Txm(t *testing.T) {
 	}
 
 	// mock keystore
-	keyGetter := new(mocks.KeyGetter)
-
-	keyGetter.On("Get", mock.AnythingOfType("string")).Return(
-		func(id string) *big.Int {
-			return localKeys[id]
-		},
-		func(id string) error {
-
-			_, ok := localKeys[id]
-			if !ok {
-				return fmt.Errorf("key does not exist id=%s", id)
-			}
-			return nil
-		},
-	)
-
-	looppKs := keys.NewLooppKeystore(keyGetter)
-	ksAdapter := keys.NewKeystoreAdapter(looppKs)
+	looppKs := NewLooppKeystore(func(id string) (*big.Int, error) {
+		_, ok := localKeys[id]
+		if !ok {
+			return nil, fmt.Errorf("key does not exist id=%s", id)
+		}
+		return localKeys[id], nil
+	})
+	ksAdapter := NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
@@ -72,7 +58,7 @@ func TestIntegration_Txm(t *testing.T) {
 	}
 
 	// mock config to prevent import cycle
-	cfg := txmmock.NewConfig(t)
+	cfg := mocks.NewConfig(t)
 	cfg.On("TxTimeout").Return(20 * time.Second)
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 

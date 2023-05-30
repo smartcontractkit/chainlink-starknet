@@ -9,9 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/caigo"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/caigo"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 )
 
 func TestKeyStoreAdapter(t *testing.T) {

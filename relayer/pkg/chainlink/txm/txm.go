@@ -17,10 +17,8 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
-
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 const (
@@ -51,7 +49,7 @@ type starktxm struct {
 	queue   chan Tx
 	ks      keys.KeystoreAdapter
 	cfg     Config
-	nonce   keys.NonceManager
+	nonce   NonceManager
 
 	client  *utils.LazyLoad[*starknet.Client]
 	txStore ChainTxStore
@@ -63,11 +61,11 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		queue:   make(chan Tx, MaxQueueLen),
 		stop:    make(chan struct{}),
 		client:  utils.NewLazyLoad(getClient),
-		ks:      keys.NewKeystoreAdapter(keystore),
+		ks:      NewKeystoreAdapter(keystore),
 		cfg:     cfg,
 		txStore: ChainTxStore{},
 	}
-	txm.nonce = keys.NewNonceManager(txm.lggr)
+	txm.nonce = NewNonceManager(txm.lggr)
 
 	return txm, nil
 }

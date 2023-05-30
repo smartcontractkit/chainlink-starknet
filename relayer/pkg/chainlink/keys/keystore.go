@@ -6,11 +6,9 @@ import (
 	"math/big"
 
 	"github.com/smartcontractkit/caigo"
-	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
 	starknetadapter "github.com/smartcontractkit/chainlink-relay/pkg/loop/adapters/starknet"
-	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 )
 
 // KeystoreAdapter is a starknet-specific adaption layer to translate between the generic Loop Keystore (bytes) and
@@ -68,7 +66,6 @@ func (ca *keystoreAdapter) Loopp() loop.Keystore {
 	return ca.looppKs
 }
 
-//go:generate mockery --name KeyGetter --output ./mocks/ --case=underscore --filename keystore.go
 type KeyGetter interface {
 	Get(id string) (*big.Int, error)
 }
@@ -117,13 +114,4 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 // TODO what is this supposed to return for starknet?
 func (lk *LooppKeystore) Accounts(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("unimplemented")
-}
-
-type NonceManager interface {
-	types.Service
-
-	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
-
-	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
-	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
 }

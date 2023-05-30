@@ -1,31 +1,31 @@
-package keys_test
+package txm_test
 
 import (
-	"crypto/rand"
 	"fmt"
 	"math/big"
 	"testing"
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
+
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys/mocks"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 )
 
-func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (keys.NonceManager, caigotypes.Hash, func()) {
+func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.NonceManager, caigotypes.Hash, func()) {
 	// setup
 	c := mocks.NewNonceManagerClient(t)
 	lggr := logger.Test(t)
-	nm := keys.NewNonceManager(lggr)
+	nm := txm.NewNonceManager(lggr)
 
 	// mock returns
-	key := keys.MustNewInsecure(rand.Reader)
-	keyHash := caigotypes.HexToHash(key.ID()) // using key id directly rather than deriving random account address
+	keyHash := caigotypes.HexToHash("test-key-id")
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(utils.Context(t)))
