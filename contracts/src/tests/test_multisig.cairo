@@ -2,6 +2,7 @@ use starknet::class_hash_const;
 use starknet::contract_address_const;
 use starknet::syscalls::deploy_syscall;
 use starknet::testing::set_caller_address;
+use starknet::testing::set_contract_address;
 use starknet::Felt252TryIntoClassHash;
 
 use array::ArrayTrait;
@@ -361,5 +362,100 @@ fn test_execute_not_signer() {
     Multisig::confirm_transaction(nonce: 0);
 
     set_caller_address(contract_address_const::<3>());
+    Multisig::execute_transaction(nonce: 0);
+}
+
+#[test]
+#[available_gas(8000000)]
+#[should_panic(expected: ('transaction invalid', ))]
+fn test_execute_after_set_signers() {
+    let contract_address = contract_address_const::<100>();
+    set_contract_address(contract_address);
+    let signer1 = contract_address_const::<1>();
+    let signer2 = contract_address_const::<2>();
+    let signer3 = contract_address_const::<3>();
+    let mut signers = ArrayTrait::new();
+    signers.append(signer1);
+    signers.append(signer2);
+    Multisig::constructor(:signers, threshold: 2);
+    set_caller_address(signer1);
+    Multisig::submit_transaction(
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
+        nonce: 0
+    );
+    Multisig::confirm_transaction(nonce: 0);
+    set_caller_address(signer2);
+    Multisig::confirm_transaction(nonce: 0);
+    set_caller_address(contract_address);
+    let mut new_signers = ArrayTrait::new();
+    new_signers.append(signer2);
+    new_signers.append(signer3);
+    Multisig::set_signers(new_signers);
+
+    set_caller_address(signer2);
+    Multisig::execute_transaction(nonce: 0);
+}
+
+#[test]
+#[available_gas(8000000)]
+#[should_panic(expected: ('transaction invalid', ))]
+fn test_execute_after_set_signers_and_threshold() {
+    let contract_address = contract_address_const::<100>();
+    set_contract_address(contract_address);
+    let signer1 = contract_address_const::<1>();
+    let signer2 = contract_address_const::<2>();
+    let signer3 = contract_address_const::<3>();
+    let mut signers = ArrayTrait::new();
+    signers.append(signer1);
+    signers.append(signer2);
+    Multisig::constructor(:signers, threshold: 2);
+    set_caller_address(signer1);
+    Multisig::submit_transaction(
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
+        nonce: 0
+    );
+    Multisig::confirm_transaction(nonce: 0);
+    set_caller_address(signer2);
+    Multisig::confirm_transaction(nonce: 0);
+    set_caller_address(contract_address);
+    let mut new_signers = ArrayTrait::new();
+    new_signers.append(signer2);
+    new_signers.append(signer3);
+    Multisig::set_signers_and_threshold(new_signers, 1);
+
+    set_caller_address(signer2);
+    Multisig::execute_transaction(nonce: 0);
+}
+
+#[test]
+#[available_gas(8000000)]
+#[should_panic(expected: ('transaction invalid', ))]
+fn test_execute_after_set_threshold() {
+    let contract_address = contract_address_const::<100>();
+    set_contract_address(contract_address);
+    let signer1 = contract_address_const::<1>();
+    let signer2 = contract_address_const::<2>();
+    let mut signers = ArrayTrait::new();
+    signers.append(signer1);
+    signers.append(signer2);
+    Multisig::constructor(:signers, threshold: 2);
+    set_caller_address(signer1);
+    Multisig::submit_transaction(
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
+        nonce: 0
+    );
+    Multisig::confirm_transaction(nonce: 0);
+    set_caller_address(signer2);
+    Multisig::confirm_transaction(nonce: 0);
+    set_caller_address(contract_address);
+    Multisig::set_threshold(1);
+
+    set_caller_address(signer1);
     Multisig::execute_transaction(nonce: 0);
 }
