@@ -1,4 +1,10 @@
-import { CONTRACT_TYPES, ExecuteCommandConfig, makeExecuteCommand, ExecutionContext, getRDD } from '@chainlink/starknet-gauntlet'
+import {
+  CONTRACT_TYPES,
+  ExecuteCommandConfig,
+  makeExecuteCommand,
+  ExecutionContext,
+  getRDD,
+} from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { shortString } from 'starknet'
@@ -30,7 +36,11 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
       minAnswer: aggregator.minSubmissionValue,
       decimals: aggregator.decimals,
       description: aggregator.name,
-      billingAccessController: aggregator.billingAccessController || flags.billingAccessController || env.billingAccessController || '',
+      billingAccessController:
+        aggregator.billingAccessController ||
+        flags.billingAccessController ||
+        env.billingAccessController ||
+        '',
       linkToken: aggregator.linkToken || flags.linkToken || env.linkToken || '',
       owner: aggregator.owner || env.account,
     }
@@ -42,7 +52,10 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   } as UserInput
 }
 
-const makeContractInput = async (input: UserInput, ctx: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: UserInput,
+  ctx: ExecutionContext,
+): Promise<ContractInput> => {
   return [
     input.owner,
     input.linkToken,
