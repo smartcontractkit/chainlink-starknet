@@ -51,7 +51,7 @@ type starktxm struct {
 	nonce   NonceManager
 
 	client  *utils.LazyLoad[*starknet.Client]
-	txStore ChainTxStore
+	txStore *ChainTxStore
 }
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
@@ -62,7 +62,7 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		client:  utils.NewLazyLoad(getClient),
 		ks:      NewKeystoreAdapter(keystore),
 		cfg:     cfg,
-		txStore: ChainTxStore{},
+		txStore: NewChainTxStore(),
 	}
 	txm.nonce = NewNonceManager(txm.lggr)
 
