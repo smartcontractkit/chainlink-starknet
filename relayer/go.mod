@@ -7,8 +7,8 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230530222821-30d787a10087
-	github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086
+	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
