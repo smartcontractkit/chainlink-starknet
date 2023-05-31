@@ -281,7 +281,8 @@ fn test_execute() {
     Multisig::constructor(:signers, threshold: 2);
     let (test_address, _) = deploy_syscall(
         MultisigTest::TEST_CLASS_HASH.try_into().unwrap(), 0, ArrayTrait::new().span(), false
-    ).unwrap();
+    )
+        .unwrap();
     set_caller_address(signer1);
     let mut increment_calldata = ArrayTrait::new();
     increment_calldata.append(42);
