@@ -18,8 +18,6 @@ export const getRDD = (path: string): any => {
   try {
     return JSON.parse(readFileSync(path, 'utf8'))
   } catch (e) {
-    throw new Error(
-      `An error ocurred while parsing the RDD. Make sure you provided a valid path`,
-    )
+    throw new Error(`An error ocurred while parsing the RDD. Make sure you provided a valid path`)
   }
 }

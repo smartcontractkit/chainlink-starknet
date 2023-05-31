@@ -6,5 +6,12 @@ import SetPayees from './setPayees'
 import AddAccess from './addAccess'
 import DisableAccessCheck from './disableAccessCheck'
 
-export const executeCommands = [Deploy, AddAccess, DisableAccessCheck, SetBilling, SetConfig, SetPayees]
+export const executeCommands = [
+  Deploy,
+  AddAccess,
+  DisableAccessCheck,
+  SetBilling,
+  SetConfig,
+  SetPayees,
+]
 export const inspectionCommands = [inspect]

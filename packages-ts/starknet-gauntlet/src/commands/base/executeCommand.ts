@@ -113,7 +113,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         contract: new Contract(c.contract.abi, c.contractAddress ?? '', c.provider.provider),
       }
 
-      const rdd = flags.rdd || process.env.RDD;
+      const rdd = flags.rdd || process.env.RDD
       if (rdd) {
         deps.logger.info(`Using RDD from ${rdd}`)
         c.executionContext.rdd = getRDD(rdd)
@@ -123,16 +123,16 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, {
-          logger: deps.logger,
-          prompt: deps.prompt,
-        })
+            logger: deps.logger,
+            prompt: deps.prompt,
+          })
         : c.defaultBeforeExecute(c.executionContext, c.input)
 
       c.afterExecute = config.hooks?.afterExecute
         ? config.hooks.afterExecute(c.executionContext, c.input, {
-          logger: deps.logger,
-          prompt: deps.prompt,
-        })
+            logger: deps.logger,
+            prompt: deps.prompt,
+          })
         : c.defaultAfterExecute()
 
       return c
@@ -210,7 +210,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         return tx
       }
       deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
-      deps.logger.info(`If using RDD, change the RDD ID with the new contract address: ${tx.address}`)
+      deps.logger.info(
+        `If using RDD, change the RDD ID with the new contract address: ${tx.address}`,
+      )
       return tx
     }
 

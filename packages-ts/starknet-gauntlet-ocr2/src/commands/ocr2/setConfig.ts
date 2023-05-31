@@ -26,13 +26,18 @@ type ContractInput = [
   offchain_config: string[],
 ]
 
-const makeContractInput = async (input: SetConfigInput, ctx: ExecutionContext): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: SetConfigInput,
+  ctx: ExecutionContext,
+): Promise<ContractInput> => {
   if (ctx.rdd) {
-    const contract = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress];
-    const config = contract.config;
+    const contract = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress]
+    const config = contract.config
     const operators = contract.oracles.map((oracle) => ctx.rdd.operators[oracle])
 
-    const publicKeys = operators.map((o) => o.ocr2OffchainPublicKey[0].replace('ocr2off_starknet_', ''))
+    const publicKeys = operators.map((o) =>
+      o.ocr2OffchainPublicKey[0].replace('ocr2off_starknet_', ''),
+    )
     const peerIds = operators.map((o) => o.peerId[0])
     const operatorConfigPublicKeys = operators.map((o) =>
       o.ocr2ConfigPublicKey[0].replace('ocr2cfg_starknet_', ''),
@@ -53,10 +58,14 @@ const makeContractInput = async (input: SetConfigInput, ctx: ExecutionContext): 
         alphaReportPpb: Number(config.reportingPluginConfig.alphaReportPpb),
         alphaAcceptInfinite: config.reportingPluginConfig.alphaAcceptInfinite,
         alphaAcceptPpb: Number(config.reportingPluginConfig.alphaAcceptPpb),
-        deltaCNanoseconds: time.durationToNanoseconds(config.reportingPluginConfig.deltaC).toNumber(),
+        deltaCNanoseconds: time
+          .durationToNanoseconds(config.reportingPluginConfig.deltaC)
+          .toNumber(),
       },
       maxDurationQueryNanoseconds: time.durationToNanoseconds(config.maxDurationQuery).toNumber(),
-      maxDurationObservationNanoseconds: time.durationToNanoseconds(config.maxDurationObservation).toNumber(),
+      maxDurationObservationNanoseconds: time
+        .durationToNanoseconds(config.maxDurationObservation)
+        .toNumber(),
       maxDurationReportNanoseconds: time.durationToNanoseconds(config.maxDurationReport).toNumber(),
       maxDurationShouldAcceptFinalizedReportNanoseconds: time
         .durationToNanoseconds(config.maxDurationShouldAcceptFinalizedReport)
@@ -65,7 +74,7 @@ const makeContractInput = async (input: SetConfigInput, ctx: ExecutionContext): 
         .durationToNanoseconds(config.maxDurationShouldTransmitAcceptedReport)
         .toNumber(),
       configPublicKeys: operatorConfigPublicKeys,
-    };
+    }
 
     input = {
       f: config.f,
@@ -74,8 +83,8 @@ const makeContractInput = async (input: SetConfigInput, ctx: ExecutionContext): 
       onchainConfig: [],
       offchainConfig,
       offchainConfigVersion: 2,
-      ...input
-    };
+      ...input,
+    }
   }
 
   const oracles: Oracle[] = input.signers.map((o, i) => {
