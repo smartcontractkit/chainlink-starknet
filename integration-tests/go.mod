@@ -7,7 +7,7 @@ require (
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a
 	github.com/smartcontractkit/chainlink-env v0.3.29
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230530222821-30d787a10087
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230530233948-90c8af98011e
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5
@@ -272,7 +272,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20230503222226-29f534b2de1a // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3 // indirect
 	github.com/smartcontractkit/ocr2keepers v0.6.15 // indirect
 	github.com/smartcontractkit/ocr2vrf v0.0.0-20230510102715-c58be582bf19 // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
