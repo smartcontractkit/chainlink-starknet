@@ -10,6 +10,7 @@ linters:
     - misspell
     # - rowserrcheck
     - errorlint
+    - durationcheck
 linters-settings:
   exhaustive:
     default-signifies-exhaustive: true
