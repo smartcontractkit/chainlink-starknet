@@ -70,6 +70,8 @@ mod Aggregator {
     use box::BoxTrait;
     use hash::LegacyHash;
     use integer::U128IntoFelt252;
+    use integer::U128TryIntoU32;
+    use integer::U128TryIntoU64;
     use integer::u128s_from_felt252;
     use integer::U128sFromFelt252Result;
     use zeroable::Zeroable;
@@ -143,7 +145,7 @@ mod Aggregator {
                 address_domain, storage_address_from_base_and_offset(base, 0_u8)
             )?;
             let (index, payment_juels) = split_felt(value);
-            Result::Ok(Oracle { index: index.into().try_into().unwrap(), payment_juels,  })
+            Result::Ok(Oracle { index: index.try_into().unwrap(), payment_juels,  })
         }
 
         fn write(
@@ -178,9 +180,9 @@ mod Aggregator {
             Result::Ok(
                 Transmission {
                     answer,
-                    block_num: block_num.into().try_into().unwrap(),
-                    observation_timestamp: observation_timestamp.into().try_into().unwrap(),
-                    transmission_timestamp: transmission_timestamp.into().try_into().unwrap(),
+                    block_num: block_num.try_into().unwrap(),
+                    observation_timestamp: observation_timestamp.try_into().unwrap(),
+                    transmission_timestamp: transmission_timestamp.try_into().unwrap(),
                 }
             )
         }

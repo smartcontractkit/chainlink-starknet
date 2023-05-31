@@ -62,7 +62,7 @@ fn test_access_control() {
 #[should_panic()]
 fn test_set_l1_sender_not_owner() {
     let (_, _, sequencerUptimeFeed) = setup();
-    sequencerUptimeFeed.set_l1_sender(contract_address_const::<789>().into().try_into().unwrap());
+    sequencerUptimeFeed.set_l1_sender(EthAddress { address: 789 });
 }
 
 #[test]
@@ -70,11 +70,8 @@ fn test_set_l1_sender_not_owner() {
 fn test_set_l1_sender() {
     let (owner, _, sequencerUptimeFeed) = setup();
     set_contract_address(owner);
-    sequencerUptimeFeed.set_l1_sender(contract_address_const::<789>().into().try_into().unwrap());
-    assert(
-        sequencerUptimeFeed.l1_sender() == contract_address_const::<789>().into().try_into().unwrap(),
-        'l1_sender should be set to 789'
-    );
+    sequencerUptimeFeed.set_l1_sender(EthAddress { address: 789 });
+    assert(sequencerUptimeFeed.l1_sender().address == 789, 'l1_sender should be set to 789');
 }
 
 #[test]
