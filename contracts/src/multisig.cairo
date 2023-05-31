@@ -236,11 +236,11 @@ mod Multisig {
 
     #[external]
     fn submit_transaction(
-        to: ContractAddress, function_selector: felt252, calldata: Array<felt252>, nonce: u128
+        to: ContractAddress, function_selector: felt252, calldata: Array<felt252>, 
     ) {
         _require_signer();
-        _require_valid_nonce(nonce);
 
+        let nonce = _next_nonce::read();
         let calldata_len = calldata.len();
 
         let transaction = Transaction {
@@ -516,10 +516,5 @@ mod Multisig {
 
         assert(threshold >= 1_usize, 'invalid threshold, too small');
         assert(threshold <= signers_len, 'invalid threshold, too large');
-    }
-
-    fn _require_valid_nonce(nonce: u128) {
-        let next_nonce = _next_nonce::read();
-        assert(nonce == next_nonce, 'invalid nonce');
     }
 }
