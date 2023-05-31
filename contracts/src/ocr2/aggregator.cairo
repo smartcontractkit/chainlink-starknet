@@ -886,16 +886,24 @@ mod Aggregator {
                 Billing {
                     observation_payment_gjuels: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                     transmission_payment_gjuels: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                     gas_base: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 2_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                     gas_per_signature: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 3_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                 }
             )
         }
