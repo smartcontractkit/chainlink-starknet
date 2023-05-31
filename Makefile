@@ -264,11 +264,11 @@ test-ts-contracts: build-ts env-devnet-hardhat
 
 .PHONY: build-cairo-contracts
 build-cairo-contracts:
-	cd contracts && scarb --profile release build
+	cd contracts && ./build-contracts.sh
 
 .PHONY: test-cairo-contracts
 test-cairo-contracts:
-	cd contracts && scarb run test
+	cd contracts && ./test-contracts.sh
 
 # TODO: this script needs to be replaced with a predefined K8s enviroment
 .PHONY: env-devnet-hardhat
