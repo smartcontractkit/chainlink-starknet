@@ -316,17 +316,12 @@ github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e h1:XY8DncHI
 github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-env v0.3.29 h1:hcIw/BeuB0wKiiE3umAUNBZzWkHO24XF3OW9xSrlMbI=
 github.com/smartcontractkit/chainlink-env v0.3.29/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
-github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086 h1:d2WiCTnsCtA16KVabnX3E9SZH1irp2/d0MLT0/UI3XY=
-github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086/go.mod h1:zfUba6Okm7zTBxap24I78Vq9z+twHmjXSMBAl2C2Qgc=
+github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531175356-03a8f54e3528 h1:8OexIpU6tU7kbqPPYX2jhhd36p+sTvZtob4l0IRF5lg=
+github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531175356-03a8f54e3528/go.mod h1:K3HLVL2TLNmk1ZOkMBbagA7UhsPGpuvaHY1c2nQabC4=
 github.com/smartcontractkit/chainlink-testing-framework v1.11.5 h1:gYSnOQhLxgE0mxwnv015nNnPgH9kcosx+AzPboEFo38=
 github.com/smartcontractkit/chainlink-testing-framework v1.11.5/go.mod h1:0ktPcDE5fFSvNewsaHuC4tGVaiCMQsl5RN/cWO5k0rg=
-<<<<<<< HEAD
-github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3 h1:/Gel/U5eIZ/BGGr25OrHaXiVDTAJ5DYX5+UlXp3q7Gg=
-github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3/go.mod h1:5JnCHuYgmIP9ZyXzgAfI5Iwu0WxBtBKp+ApeT5o1Cjw=
-=======
-github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc h1:aSCDAai0Dmbhp/KHTtJnC/EJcaEz4CAO80SKRzRZiQA=
-github.com/smartcontractkit/libocr v0.0.0-20230413082317-9561d14087cc/go.mod h1:7Pd28puvezPJXB+xRJlcsx5CfzzkFJbMXydaAEsL4E8=
->>>>>>> d025cc08 (Update to libocr/offchainreporting2)
+github.com/smartcontractkit/libocr v0.0.0-20230531174957-6e75d6e613d1 h1:hA4XBYJSIWr8naw4aen1iDeN24fx9Hxt92g33N91ouo=
+github.com/smartcontractkit/libocr v0.0.0-20230531174957-6e75d6e613d1/go.mod h1:7Pd28puvezPJXB+xRJlcsx5CfzzkFJbMXydaAEsL4E8=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/cobra v1.6.0 h1:42a0n6jwCot1pUmomAp4T7DeMD+20LFv4Q54pxLf2LI=
 github.com/spf13/cobra v1.6.0/go.mod h1:IOw/AERYS7UzyrGinqmz6HLUo219MORXGxhbaJUqzrY=
