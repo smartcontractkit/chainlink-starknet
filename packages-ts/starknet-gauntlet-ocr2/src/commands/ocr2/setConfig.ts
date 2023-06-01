@@ -80,8 +80,7 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
   ...SetConfig,
   makeUserInput: (flags, args, env) => {
-    if (flags.input)
-      return flags.input;
+    if (flags.input) return flags.input
     return {
       f: parseInt(flags.f),
       signers: flags.signers,
@@ -91,7 +90,7 @@ const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
       offchainConfigVersion: parseInt(flags.offchainConfigVersion),
       secret: flags.secret || env.secret,
       randomSecret: flags.randomSecret || undefined,
-    };
+    }
   },
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,

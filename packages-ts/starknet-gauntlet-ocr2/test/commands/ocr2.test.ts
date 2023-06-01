@@ -188,7 +188,8 @@ describe('OCR2 Contract', () => {
       }
 
       expect(eventSigners).toEqual(
-        signers.map((s) => BigInt(s.replace('ocr2on_starknet_', ''))),
+        // eaiser to remove prefix and 0x and then add 0x back
+        signers.map((s) => BigInt(`0x${s.replace('ocr2on_starknet_', '').replace('0x', '')}`)),
       ) // remove all prefixes
       expect(resultTransmitters).toEqual(transmitters.map((transmitter) => BigInt(transmitter)))
     },
