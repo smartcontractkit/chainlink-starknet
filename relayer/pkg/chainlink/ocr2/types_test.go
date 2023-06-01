@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/require"
 )
 
-func StringsToJunoFelts(in []string) []junotypes.Felt {
-	out := make([]junotypes.Felt, len(in))
+func StringsToCaigoFelts(in []string) []*caigotypes.Felt {
+	out := make([]*caigotypes.Felt, len(in))
 	for i := 0; i < len(in); i++ {
-		out[i] = junotypes.HexToFelt(in[i])
+		out[i] = caigotypes.StrToFelt(in[i])
 	}
 	return out
 }
@@ -26,7 +26,7 @@ func TestNewRoundData(t *testing.T) {
 		"0x633344a5",
 	}
 
-	felts := StringsToJunoFelts(raw)
+	felts := StringsToCaigoFelts(raw)
 	actualRound, err := NewRoundData(felts)
 	require.NoError(t, err)
 	expectedRound := RoundData{

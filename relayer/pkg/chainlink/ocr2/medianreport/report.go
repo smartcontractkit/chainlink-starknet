@@ -7,7 +7,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/pkg/errors"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
@@ -17,14 +16,14 @@ import (
 
 var _ median.ReportCodec = (*ReportCodec)(nil)
 
-const (
-	timestampSizeBytes       = junotypes.FeltLength
-	observersSizeBytes       = junotypes.FeltLength
-	observationsLenBytes     = junotypes.FeltLength
+var (
+	timestampSizeBytes       = starknet.FeltLength
+	observersSizeBytes       = starknet.FeltLength
+	observationsLenBytes     = starknet.FeltLength
 	prefixSizeBytes          = timestampSizeBytes + observersSizeBytes + observationsLenBytes
-	juelsPerFeeCoinSizeBytes = junotypes.FeltLength
-	gasPriceSizeBytes        = junotypes.FeltLength
-	observationSizeBytes     = junotypes.FeltLength
+	juelsPerFeeCoinSizeBytes = starknet.FeltLength
+	gasPriceSizeBytes        = starknet.FeltLength
+	observationSizeBytes     = starknet.FeltLength
 )
 
 type ReportCodec struct{}
@@ -37,14 +36,14 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 
 	// preserve original array
 	oo = append([]median.ParsedAttributedObservation{}, oo...)
-	numFelt := junotypes.BigToFelt(big.NewInt(int64(num)))
+	numFelt := caigotypes.BigToFelt(big.NewInt(int64(num)))
 
 	// median timestamp
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].Timestamp < oo[j].Timestamp
 	})
 	timestamp := oo[num/2].Timestamp
-	timestampFelt := junotypes.BigToFelt(big.NewInt(int64(timestamp)))
+	timestampFelt := caigotypes.BigToFelt(big.NewInt(int64(timestamp)))
 
 	// median juelsPerFeeCoin
 	sort.Slice(oo, func(i, j int) bool {
@@ -52,28 +51,28 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	})
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
 	juelsPerFeeCoin = starknet.SignedBigToFelt(juelsPerFeeCoin) // converts negative bigInts to corresponding felt in bigInt form
-	juelsPerFeeCoinFelt := junotypes.BigToFelt(juelsPerFeeCoin)
+	juelsPerFeeCoinFelt := caigotypes.BigToFelt(juelsPerFeeCoin)
 
 	// TODO: source from observations
 	gasPrice := big.NewInt(1) // := oo[num/2].GasPrice
-	gasPriceFelt := junotypes.BigToFelt(gasPrice)
+	gasPriceFelt := caigotypes.BigToFelt(gasPrice)
 
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].Value.Cmp(oo[j].Value) < 0
 	})
 
-	var observers junotypes.Felt
-	var observations []junotypes.Felt
+	var observers = make([]byte, starknet.FeltLength)
+	var observations []*caigotypes.Felt
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
 		obs := starknet.SignedBigToFelt(o.Value) // converts negative bigInts to corresponding felt in bigInt form
-		observations = append(observations, junotypes.BigToFelt(obs))
+		observations = append(observations, caigotypes.BigToFelt(obs))
 	}
 
 	var report []byte
 	report = append(report, timestampFelt.Bytes()...)
-	report = append(report, observers.Bytes()...)
+	report = append(report, observers...)
 	report = append(report, numFelt.Bytes()...)
 	for _, o := range observations {
 		report = append(report, o.Bytes()...)
@@ -91,7 +90,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	}
 
 	// Decode the number of observations
-	numBig := junotypes.BytesToFelt(report[(timestampSizeBytes + observersSizeBytes):prefixSizeBytes]).Big()
+	numBig := caigotypes.BytesToFelt(report[(timestampSizeBytes + observersSizeBytes):prefixSizeBytes]).Big()
 	if !numBig.IsUint64() {
 		return nil, errors.New("length of observations is invalid")
 	}
@@ -115,9 +114,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	for i := 0; i < n; i++ {
 		start := prefixSizeBytes + observationSizeBytes*i
 		end := start + observationSizeBytes
-		o := starknet.FeltToSignedBig(&caigotypes.Felt{
-			Int: junotypes.BytesToFelt(report[start:end]).Big(),
-		})
+		o := starknet.FeltToSignedBig(caigotypes.BytesToFelt(report[start:end]))
 		oo = append(oo, o)
 	}
 
@@ -138,7 +135,7 @@ func (c ReportCodec) MaxReportLength(n int) (int, error) {
 }
 
 func SplitReport(report types.Report) ([][]byte, error) {
-	chunkSize := junotypes.FeltLength
+	chunkSize := starknet.FeltLength
 	if len(report)%chunkSize != 0 {
 		return [][]byte{}, errors.New("invalid report length")
 	}
