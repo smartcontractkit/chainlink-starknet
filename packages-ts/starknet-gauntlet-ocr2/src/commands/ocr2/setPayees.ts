@@ -18,9 +18,10 @@ type ContractInput = [payees: PayeeConfig[]]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
-  if (args.length % 2 != 0) throw new Error('Invalid number of arguments for payee config')
+  if ((args.length - 1) % 2 != 0) throw new Error('Invalid number of arguments for payee config')
   let userInput: UserInput = []
-  for (let i = 0; i < args.length; i += 2) {
+  for (let i = 1; i < args.length; i += 2) {
+    // note: skip first arg which is contract address
     userInput.push({
       transmitter: args[i],
       payee: args[i + 1],
