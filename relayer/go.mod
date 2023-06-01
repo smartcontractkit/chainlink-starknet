@@ -3,10 +3,9 @@ module github.com/smartcontractkit/chainlink-starknet/relayer
 go 1.20
 
 require (
-	github.com/NethermindEth/juno v0.0.0-20220630151419-cbd368b222ac
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/caigo v0.0.0-20230526231506-786d4587099a
+	github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086
 	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3
 	github.com/stretchr/testify v1.8.2
