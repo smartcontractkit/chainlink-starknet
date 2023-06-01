@@ -183,12 +183,12 @@ describe('OCR2 Contract', () => {
       // reconstruct signers array from event
       let eventSigners: bigint[] = []
       for (let i = 0; i < signers.length; i++) {
-        const signer = BigInt(eventData[4 + 2 * i].replace('0x', '')) // split according to event structure
+        const signer = BigInt(eventData[4 + 2 * i]) // split according to event structure
         eventSigners.push(signer)
       }
 
       expect(eventSigners).toEqual(
-        signers.map((s) => BigInt(s.replace('ocr2on_starknet_', '').replace('0x', ''))),
+        signers.map((s) => BigInt(s.replace('ocr2on_starknet_', ''))),
       ) // remove all prefixes
       expect(resultTransmitters).toEqual(transmitters.map((transmitter) => BigInt(transmitter)))
     },
