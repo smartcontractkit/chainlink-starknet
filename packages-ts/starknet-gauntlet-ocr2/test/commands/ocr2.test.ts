@@ -14,7 +14,6 @@ import {
 import { loadContract } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 let account = devnetAccount0Address
 
@@ -182,14 +181,14 @@ describe('OCR2 Contract', () => {
       // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
       const eventData = receipt.events[0].data
       // reconstruct signers array from event
-      let eventSigners = []
+      let eventSigners: bigint[] = []
       for (let i = 0; i < signers.length; i++) {
-        const signer = new BN(eventData[4 + 2 * i].replace('0x', ''), 16) // split according to event structure
+        const signer = BigInt(eventData[4 + 2 * i].replace('0x', '')) // split according to event structure
         eventSigners.push(signer)
       }
 
       expect(eventSigners).toEqual(
-        signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16)),
+        signers.map((s) => BigInt(s.replace('ocr2on_starknet_', '').replace('0x', ''))),
       ) // remove all prefixes
       expect(resultTransmitters).toEqual(transmitters.map((transmitter) => BigInt(transmitter)))
     },

@@ -1,4 +1,3 @@
-import BN from 'bn.js'
 import { num } from 'starknet'
 import { bytesToFelts, feltsToBytes } from '../../src/encoding'
 
@@ -12,8 +11,8 @@ export function bytesToFeltsDeprecated(data: Uint8Array): string[] {
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     const chunk = data.slice(i, i + CHUNK_SIZE)
-    // cast to int
-    felts.push(new BN(chunk, 'be').toString())
+    const feltHex = `0x${Array.from(chunk, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
+    felts.push(BigInt(feltHex).toString())
   }
   return felts
 }
