@@ -20,17 +20,17 @@ type QueryResult = {
   }
   transmitterInfo: {
     transmitter: string
-    owedPayment: BN
+    owedPayment: string
   }[]
   billing: {
-    observationPaymentGjuels: BN
-    transmissionPaymentGjuels: BN
-    gasBase: BN
-    gasPerSignature: BN
+    observationPaymentGjuels: string
+    transmissionPaymentGjuels: string
+    gasBase: string
+    gasPerSignature: string
   }
   linkAvailableForPayment: {
     isNegative: boolean
-    absoluteDifference: BN
+    absoluteDifference: string
   }
 }
 
@@ -61,18 +61,18 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
     })
     transmitterInfo.push({
       transmitter,
-      owedPayment: new BN(owedPayment.result[0].slice(2), 'hex'),
+      owedPayment: new BN(owedPayment.result[0].slice(2), 'hex').toString(),
     })
   }
   const billing = {
-    observationPaymentGjuels: new BN(results[6].observation_payment_gjuels),
-    transmissionPaymentGjuels: new BN(results[6].transmission_payment_gjuels),
-    gasBase: new BN(results[6].gas_base),
-    gasPerSignature: new BN(results[6].gas_per_signature),
+    observationPaymentGjuels: new BN(results[6].observation_payment_gjuels).toString(),
+    transmissionPaymentGjuels: new BN(results[6].transmission_payment_gjuels).toString(),
+    gasBase: new BN(results[6].gas_base).toString(),
+    gasPerSignature: new BN(results[6].gas_per_signature).toString(),
   }
   const linkAvailableForPayment = {
     isNegative: results[7][0],
-    absoluteDifference: new BN(results[7][1]),
+    absoluteDifference: new BN(results[7][1]).toString(),
   }
   return {
     toCompare: null,
