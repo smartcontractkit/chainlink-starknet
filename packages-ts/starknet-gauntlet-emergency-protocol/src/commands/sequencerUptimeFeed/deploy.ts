@@ -45,7 +45,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   return {
     owner: flags.owner || env.account,
     initialStatus: flags.initialStatus,
-    classHash: flags.classHash
+    classHash: flags.classHash,
   }
 }
 

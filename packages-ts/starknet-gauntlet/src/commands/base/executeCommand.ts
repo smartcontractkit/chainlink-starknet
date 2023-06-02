@@ -1,5 +1,12 @@
 import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
-import { CompiledContract, CompiledSierraCasm, Contract, Call, hash, DeclareContractResponse } from 'starknet'
+import {
+  CompiledContract,
+  CompiledSierraCasm,
+  Contract,
+  Call,
+  hash,
+  DeclareContractResponse,
+} from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies, Env } from '../../dependencies'
 import { IStarknetProvider, wrapResponse } from '../../provider'
@@ -115,16 +122,16 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, {
-          logger: deps.logger,
-          prompt: deps.prompt,
-        })
+            logger: deps.logger,
+            prompt: deps.prompt,
+          })
         : c.defaultBeforeExecute(c.executionContext, c.input)
 
       c.afterExecute = config.hooks?.afterExecute
         ? config.hooks.afterExecute(c.executionContext, c.input, {
-          logger: deps.logger,
-          prompt: deps.prompt,
-        })
+            logger: deps.logger,
+            prompt: deps.prompt,
+          })
         : c.defaultAfterExecute()
 
       return c
@@ -201,10 +208,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
           classHash,
           this.input.contract,
           false,
-          this.input?.user?.['salt']
+          this.input?.user?.['salt'],
         )
       }
-
 
       if (tx.hash === undefined) {
         deps.logger.error(`No tx hash found:\n${JSON.stringify(tx, null, 2)}`)

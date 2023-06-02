@@ -34,7 +34,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> { }
+export interface IStarknetProvider extends IProvider<StarknetProvider> {}
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -115,15 +115,11 @@ class Provider implements IStarknetProvider {
     return response
   }
 
-  declareContract = async (
-    contract: CompiledContract,
-    compiledClassHash?: string,
-    wait = true,
-  ) => {
+  declareContract = async (contract: CompiledContract, compiledClassHash?: string, wait = true) => {
     const tx = await this.account.declare({
       contract,
-      compiledClassHash
-    });
+      compiledClassHash,
+    })
 
     const response = wrapResponse(this, tx, 'not applicable for declares')
 

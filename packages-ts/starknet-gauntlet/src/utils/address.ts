@@ -5,6 +5,6 @@ export const isValidAddress = (address: string): boolean => {
   try {
     validateAndParseAddress(address)
     return !!address // check value is not falsy (undefined, "", etc)
-  } catch (e) { }
+  } catch (e) {}
   return false
 }
