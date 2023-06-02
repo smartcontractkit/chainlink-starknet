@@ -102,7 +102,6 @@ const makeContractInput = async (
   input: SetConfigInput,
   ctx: ExecutionContext,
 ): Promise<ContractInput> => {
-  console.log('making contract input')
   const oracles: Oracle[] = input.signers.map((o, i) => {
     // standard format from chainlink node ocr2on_starknet_<key> (no 0x prefix)
     let signer = input.signers[i].replace('ocr2on_starknet_', '') // replace prefix if present
