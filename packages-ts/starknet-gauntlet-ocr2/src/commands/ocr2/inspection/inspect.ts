@@ -3,11 +3,36 @@ import {
   IStarknetProvider,
   makeInspectionCommand,
 } from '@chainlink/starknet-gauntlet'
-import { InvokeTransactionReceiptResponse } from 'starknet'
+import { shortString, validateAndParseAddress } from 'starknet'
 import { CATEGORIES } from '../../../lib/categories'
 import { ocr2ContractLoader } from '../../../lib/contracts'
+import BN from 'bn.js'
 
-type QueryResult = {}
+type QueryResult = {
+  typeAndVersion: string
+  description: string
+  owner: string
+  decimals: number
+  latestConfigDetails: {
+    configCount: number
+    blockNumber: number
+    configDigest: string
+  }
+  transmitterInfo: {
+    transmitter: string
+    owedPayment: BN
+  }[]
+  billing: {
+    observationPaymentGjuels: BN
+    transmissionPaymentGjuels: BN
+    gasBase: BN
+    gasPerSignature: BN
+  }
+  linkAvailableForPayment: {
+    isNegative: boolean
+    absoluteDifference: BN
+  }
+}
 
 const makeComparisionData = (provider: IStarknetProvider) => async (
   results: any[],
@@ -17,13 +42,50 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   toCompare: null
   result: QueryResult
 }> => {
-  const tx = (await provider.provider.getTransactionReceipt(
-    '0x475c15d6836972234c0542044fce7784cc61e8c5654d050aacadb918d8f3021',
-  )) as InvokeTransactionReceiptResponse
-  console.log(tx.events)
+  const typeAndVersion = shortString.decodeShortString(results[0])
+  const description = shortString.decodeShortString(results[1])
+  const owner = validateAndParseAddress(results[2])
+  const decimals = new BN(results[3]).toNumber()
+  const latestConfigDetails = {
+    configCount: new BN(results[4][0]).toNumber(),
+    blockNumber: new BN(results[4][1]).toNumber(),
+    configDigest: '0x' + results[4][2].toString(16),
+  }
+  const transmitters = results[5].map((address) => validateAndParseAddress(address))
+  let transmitterInfo = []
+  for (const transmitter of transmitters) {
+    const owedPayment = await provider.provider.callContract({
+      contractAddress,
+      entrypoint: 'owed_payment',
+      calldata: [transmitter],
+    })
+    transmitterInfo.push({
+      transmitter,
+      owedPayment: new BN(owedPayment.result[0].slice(2), 'hex'),
+    })
+  }
+  const billing = {
+    observationPaymentGjuels: new BN(results[6].observation_payment_gjuels),
+    transmissionPaymentGjuels: new BN(results[6].transmission_payment_gjuels),
+    gasBase: new BN(results[6].gas_base),
+    gasPerSignature: new BN(results[6].gas_per_signature),
+  }
+  const linkAvailableForPayment = {
+    isNegative: results[7][0],
+    absoluteDifference: new BN(results[7][1]),
+  }
   return {
     toCompare: null,
-    result: {},
+    result: {
+      typeAndVersion,
+      description,
+      owner,
+      decimals,
+      latestConfigDetails,
+      transmitterInfo,
+      billing,
+      linkAvailableForPayment,
+    },
   }
 }
 
@@ -31,9 +93,18 @@ const commandConfig: InspectCommandConfig<null, null, null, QueryResult> = {
   ux: {
     category: CATEGORIES.OCR2,
     function: 'inspect',
-    examples: ['yarn gauntlet ocr2:inspect --network=<NETWORK>'],
+    examples: ['yarn gauntlet ocr2:inspect --network=<NETWORK> <CONTRACT_ADDRESS>'],
   },
-  queries: [],
+  queries: [
+    'type_and_version',
+    'description',
+    'owner',
+    'decimals',
+    'latest_config_details',
+    'transmitters',
+    'billing',
+    'link_available_for_payment',
+  ],
   makeComparisionData,
   loadContract: ocr2ContractLoader,
 }
