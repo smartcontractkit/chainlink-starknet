@@ -9,6 +9,7 @@ import { CATEGORIES } from '../../lib/categories'
 type ContractInput = [initial_status: number, owner_address: string]
 
 export interface UserInput {
+  classHash?: string
   initialStatus: number
   owner?: string
 }
@@ -24,6 +25,13 @@ const validateOwner = async (input) => {
   return true
 }
 
+const validateClassHash = async (input) => {
+  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+    return true
+  }
+  throw new Error(`Invalid Owner Address: ${input.owner}`)
+}
+
 const validateInitialStatus = async (input) => {
   const status = Number(input.initialStatus)
   if (status !== 1 && status !== 0) {
@@ -37,6 +45,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   return {
     owner: flags.owner || env.account,
     initialStatus: flags.initialStatus,
+    classHash: flags.classHash
   }
 }
 
@@ -53,7 +62,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateOwner, validateInitialStatus],
+  validations: [validateOwner, validateInitialStatus, validateClassHash],
   loadContract: uptimeFeedContractLoader,
 }
 

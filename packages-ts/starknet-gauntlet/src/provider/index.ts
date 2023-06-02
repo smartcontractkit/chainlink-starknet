@@ -20,10 +20,21 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
+  onlyDeployContract: (
+    classHash: string,
+    input: any,
+    wait?: boolean,
+    salt?: number,
+  ) => Promise<TransactionResponse>
+  declareContract: (
+    contract: CompiledContract,
+    compiledClassHash?: string,
+    wait?: boolean,
+  ) => Promise<TransactionResponse>
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> {}
+export interface IStarknetProvider extends IProvider<StarknetProvider> { }
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -98,6 +109,41 @@ class Provider implements IStarknetProvider {
     })
 
     const response = wrapResponse(this, tx.deploy)
+
+    if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  declareContract = async (
+    contract: CompiledContract,
+    compiledClassHash?: string,
+    wait = true,
+  ) => {
+    const tx = await this.account.declare({
+      contract,
+      compiledClassHash
+    });
+
+    const response = wrapResponse(this, tx, 'not applicable for declares')
+
+    if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  onlyDeployContract = async (
+    classHash: string,
+    input: any = [],
+    wait = true,
+    salt = undefined,
+  ) => {
+    const tx = await this.account.deployContract({
+      classHash: classHash,
+      salt: salt ? '0x' + salt.toString(16) : salt,
+      ...(!!input && input.length > 0 && { constructorCalldata: input }),
+    })
+    const response = wrapResponse(this, tx)
 
     if (!wait) return response
     await response.wait()

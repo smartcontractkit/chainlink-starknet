@@ -1,5 +1,5 @@
 import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
-import { CompiledContract, CompiledSierraCasm, Contract, Call, hash } from 'starknet'
+import { CompiledContract, CompiledSierraCasm, Contract, Call, hash, DeclareContractResponse } from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies, Env } from '../../dependencies'
 import { IStarknetProvider, wrapResponse } from '../../provider'
@@ -115,16 +115,16 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, {
-            logger: deps.logger,
-            prompt: deps.prompt,
-          })
+          logger: deps.logger,
+          prompt: deps.prompt,
+        })
         : c.defaultBeforeExecute(c.executionContext, c.input)
 
       c.afterExecute = config.hooks?.afterExecute
         ? config.hooks.afterExecute(c.executionContext, c.input, {
-            logger: deps.logger,
-            prompt: deps.prompt,
-          })
+          logger: deps.logger,
+          prompt: deps.prompt,
+        })
         : c.defaultAfterExecute()
 
       return c
@@ -183,13 +183,29 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      const tx = await this.provider.deployContract(
-        this.contract,
-        this.compiledContractHash,
-        this.input.contract,
-        false,
-        this.input?.user?.['salt'],
-      )
+      // if --classHash is included, do not re-declare contract
+      const classHash: string | undefined = this.input?.user?.['classHash']
+
+      let tx: TransactionResponse
+
+      if (classHash === undefined) {
+        tx = await this.provider.deployContract(
+          this.contract,
+          this.compiledContractHash,
+          this.input.contract,
+          false,
+          this.input?.user?.['salt'],
+        )
+      } else {
+        tx = await this.provider.onlyDeployContract(
+          classHash,
+          this.input.contract,
+          false,
+          this.input?.user?.['salt']
+        )
+      }
+
+
       if (tx.hash === undefined) {
         deps.logger.error(`No tx hash found:\n${JSON.stringify(tx, null, 2)}`)
         return tx
@@ -202,6 +218,29 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         return tx
       }
       deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
+      return tx
+    }
+
+    declareContract = async (): Promise<TransactionResponse> => {
+      deps.logger.info(`Declaring contract ${config.category}`)
+      await deps.prompt('Continue?')
+      deps.logger.loading(`Sending transaction...`)
+
+      const tx = await this.provider.declareContract(
+        this.contract,
+        this.compiledContractHash,
+        false,
+      )
+
+      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+      const response = await tx.wait()
+
+      if (!response.success) {
+        deps.logger.error(`Contract was not declared: ${tx.errorMessage}`)
+        return tx
+      }
+
+      deps.logger.success(`Contract declared at ${tx.tx.class_hash}`)
       return tx
     }
 
@@ -229,6 +268,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       if (config.action === 'deploy') {
         tx = await this.deployContract()
+      } else if (config.action === 'declare') {
+        tx = await this.declareContract()
       } else {
         tx = await this.executeWithSigner()
       }
