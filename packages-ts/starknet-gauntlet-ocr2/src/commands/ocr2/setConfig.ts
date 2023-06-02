@@ -8,7 +8,7 @@ import {
 import { time, BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
-import { bytesToFelts } from '@chainlink/starknet-gauntlet'
+import { bytesToFelts, getRDD } from '@chainlink/starknet-gauntlet'
 import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { InvokeTransactionReceiptResponse } from 'starknet'
@@ -26,15 +26,14 @@ type ContractInput = [
   offchain_config: string[],
 ]
 
-const makeContractInput = async (
-  input: SetConfigInput,
-  ctx: ExecutionContext,
-): Promise<ContractInput> => {
-  if (ctx.rdd) {
-    const contract = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress]
+const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
+  if (flags.input) return flags.input as SetConfigInput
+  if (flags.rdd) {
+    const rdd = getRDD(flags.rdd)
+    const contractAddr = args[0]
+    const contract = rdd[CONTRACT_TYPES.AGGREGATOR][contractAddr]
     const config = contract.config
-    const operators = contract.oracles.map((oracle) => ctx.rdd.operators[oracle])
-
+    const operators = contract.oracles.map((oracle) => rdd.operators[oracle.operator])
     const publicKeys = operators.map((o) =>
       o.ocr2OffchainPublicKey[0].replace('ocr2off_starknet_', ''),
     )
@@ -42,7 +41,6 @@ const makeContractInput = async (
     const operatorConfigPublicKeys = operators.map((o) =>
       o.ocr2ConfigPublicKey[0].replace('ocr2cfg_starknet_', ''),
     )
-
     const offchainConfig: encoding.OffchainConfig = {
       deltaProgressNanoseconds: time.durationToNanoseconds(config.deltaProgress).toNumber(),
       deltaResendNanoseconds: time.durationToNanoseconds(config.deltaResend).toNumber(),
@@ -76,17 +74,35 @@ const makeContractInput = async (
       configPublicKeys: operatorConfigPublicKeys,
     }
 
-    input = {
+    return {
       f: config.f,
       signers: operators.map((o) => o.ocr2OnchainPublicKey[0]),
       transmitters: operators.map((o) => o.ocrNodeAddress[0]),
       onchainConfig: [],
       offchainConfig,
       offchainConfigVersion: 2,
-      ...input,
+      secret: flags.secret || env.secret,
+      randomSecret: flags.randomSecret || undefined,
     }
   }
 
+  return {
+    f: flags.f,
+    signers: flags.signers,
+    transmitters: flags.transmitters,
+    onchainConfig: flags.onchainConfig,
+    offchainConfig: flags.offchainConfig,
+    offchainConfigVersion: flags.offchainConfigVersion,
+    secret: flags.secret || env.secret,
+    randomSecret: flags.randomSecret || undefined,
+  }
+}
+
+const makeContractInput = async (
+  input: SetConfigInput,
+  ctx: ExecutionContext,
+): Promise<ContractInput> => {
+  console.log('making contract input')
   const oracles: Oracle[] = input.signers.map((o, i) => {
     // standard format from chainlink node ocr2on_starknet_<key> (no 0x prefix)
     let signer = input.signers[i].replace('ocr2on_starknet_', '') // replace prefix if present
@@ -145,6 +161,7 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 
 const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
   ...SetConfig,
+  makeUserInput: makeUserInput,
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
   hooks: {
