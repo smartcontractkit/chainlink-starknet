@@ -5,6 +5,7 @@ import {
   makeExecuteCommand,
   getRDD,
 } from '@chainlink/starknet-gauntlet'
+import { CATEGORY } from '../../lib/constants'
 import { ocr2ContractLoader } from '../../lib/contracts'
 
 type PayeeConfig = {
@@ -18,27 +19,27 @@ type ContractInput = [payees: PayeeConfig[]]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
-  if ((args.length - 1) % 2 != 0) throw new Error('Invalid number of arguments for payee config')
-  let userInput: UserInput = []
-  for (let i = 1; i < args.length; i += 2) {
-    // note: skip first arg which is contract address
-    userInput.push({
-      transmitter: args[i],
-      payee: args[i + 1],
-    })
+  if (flags.rdd) {
+    const rdd = await getRDD(flags.rdd)
+    const contractAddress = args[0]
+    return rdd[CONTRACT_TYPES.AGGREGATOR][contractAddress].payees
   }
-  return userInput
+
+  const transmitters = flags.transmitters.split(',')
+  const payees = flags.payees.split(',')
+  if (transmitters.length != payees.length)
+    throw new Error('Invalid input for payee config: number of transmitters and payees must match')
+
+  return transmitters.map((transmitter, i) => ({
+    transmitter,
+    payee: payees[i],
+  })) as UserInput
 }
 
 const makeContractInput = async (
   input: UserInput,
   ctx: ExecutionContext,
 ): Promise<ContractInput> => {
-  if (ctx.rdd) {
-    const aggregator = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress]
-    input = aggregator.payees
-  }
-
   return input.map((payeeConfig) => [
     {
       transmitter: payeeConfig.transmitter,
@@ -50,11 +51,12 @@ const makeContractInput = async (
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: 'ocr2',
   action: 'set_payees',
-  category: 'ocr2',
+  category: CATEGORY,
   ux: {
     description: 'Set payees of OCR2 contract',
     examples: [
-      `yarn gauntlet ocr2:set_payees --network=<NETWORK> --rdd=<RDD_PATH> <CONTRACT_ADDRESS> <TRANSMITTER_1> <PAYEE_1> <TRANSMITTER_2> <PAYEE_2> ...`,
+      `yarn gauntlet ocr2:set_payees --network=<NETWORK> --transmitters=[<ACCOUNTS>] --payees=[<ACCOUNTS>] <CONTRACT_ADDRESS>`,
+      `yarn gauntlet ocr2:set_payees --network=<NETWORK> --rdd=<RDD_PATH> <CONTRACT_ADDRESS>`,
     ],
   },
   validations: [],

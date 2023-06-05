@@ -34,13 +34,7 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
     const contract = rdd[CONTRACT_TYPES.AGGREGATOR][contractAddr]
     const config = contract.config
     const operators = contract.oracles.map((oracle) => rdd.operators[oracle.operator])
-    const publicKeys = operators.map((o) =>
-      o.ocr2OffchainPublicKey[0].replace('ocr2off_starknet_', ''),
-    )
     const peerIds = operators.map((o) => o.peerId[0])
-    const operatorConfigPublicKeys = operators.map((o) =>
-      o.ocr2ConfigPublicKey[0].replace('ocr2cfg_starknet_', ''),
-    )
     const offchainConfig: encoding.OffchainConfig = {
       deltaProgressNanoseconds: time.durationToNanoseconds(config.deltaProgress).toNumber(),
       deltaResendNanoseconds: time.durationToNanoseconds(config.deltaResend).toNumber(),
@@ -49,7 +43,7 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
       deltaStageNanoseconds: time.durationToNanoseconds(config.deltaStage).toNumber(),
       rMax: config.rMax,
       s: config.s,
-      offchainPublicKeys: publicKeys,
+      offchainPublicKeys: operators.map((o) => o.ocr2OffchainPublicKey[0]),
       peerIds: peerIds,
       reportingPluginConfig: {
         alphaReportInfinite: config.reportingPluginConfig.alphaReportInfinite,
@@ -71,7 +65,7 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
       maxDurationShouldTransmitAcceptedReportNanoseconds: time
         .durationToNanoseconds(config.maxDurationShouldTransmitAcceptedReport)
         .toNumber(),
-      configPublicKeys: operatorConfigPublicKeys,
+      configPublicKeys: operators.map((o) => o.ocr2ConfigPublicKey[0]),
     }
 
     return {

@@ -39,10 +39,10 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
       billingAccessController:
         aggregator.billingAccessController ||
         flags.billingAccessController ||
-        env.billingAccessController ||
+        env.BILLING_ACCESS_CONTROLLER ||
         '',
-      linkToken: aggregator.linkToken || flags.linkToken || env.linkToken || '',
-      owner: aggregator.owner || env.account,
+      linkToken: aggregator.linkToken || flags.linkToken || env.LINK || '',
+      owner: aggregator.owner || flags.owner || env.ACCOUNT,
     }
   }
 
@@ -69,6 +69,13 @@ const makeContractInput = async (
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ...DeployOCR2,
+  ux: {
+    description: 'Deploys OCR2 contract',
+    examples: [
+      `yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT> --owner=<OWNER>`,
+      `yarn gauntlet ocr2:deploy --network=<NETWORK> --rdd=<RDD_PATH> <CONTRACT_ADDRESS>`,
+    ],
+  },
   makeUserInput: makeUserInput,
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
