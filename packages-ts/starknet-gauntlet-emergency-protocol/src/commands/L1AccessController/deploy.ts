@@ -17,7 +17,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   category: CATEGORIES.L1_ACCESS_CONTROLLER,
   action: 'deploy',
   ux: {
-    description: 'Deploys an Access Controller Contract',
+    description: 'Deploy an AccessController',
     examples: [`${CATEGORIES.L1_ACCESS_CONTROLLER}:deploy --network=<NETWORK>`],
   },
   makeUserInput,
