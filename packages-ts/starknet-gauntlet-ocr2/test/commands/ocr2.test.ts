@@ -59,7 +59,7 @@ const validInput = {
       alphaAcceptPpb: 0,
       deltaCNanoseconds: 0,
     },
-    maxDurationQueryNanoseconds: 0,
+    maxDurationQueryNanoseconds: 2000000000,
     maxDurationObservationNanoseconds: 1000000000,
     maxDurationReportNanoseconds: 200000000,
     maxDurationShouldAcceptFinalizedReportNanoseconds: 200000000,

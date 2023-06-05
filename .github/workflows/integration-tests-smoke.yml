@@ -53,7 +53,8 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@2c9f401149f6c25fb632067b7e6626aebeee5d69
         with:
           cl_repo: smartcontractkit/chainlink
-          cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          #cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          cl_ref: 8316a9132265e3cc8a2255ef2e5102f2bedc551b
           cl_dockerfile: plugins/chainlink.Dockerfile
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
