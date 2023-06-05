@@ -9,6 +9,7 @@ type UserInput = {
 type ContractInput = [number]
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
+  if (flags.input) return flags.input as UserInput
   return {
     answer: flags.answer,
   }
