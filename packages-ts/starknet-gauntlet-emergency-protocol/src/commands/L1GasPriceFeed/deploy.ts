@@ -17,7 +17,7 @@ const commandConfig: EVMExecuteCommandConfig<UserInput, ContractInput> = {
   category: CATEGORIES.L1_MOCK_AGGREGATOR,
   action: 'deploy',
   ux: {
-    description: 'Deploys an Mock Aggregator as an L1GasPriceFeed',
+    description: 'Deploy an MockAggregator',
     examples: [`${CATEGORIES.L1_MOCK_AGGREGATOR}:deploy --network=<NETWORK>`],
   },
   makeUserInput,
