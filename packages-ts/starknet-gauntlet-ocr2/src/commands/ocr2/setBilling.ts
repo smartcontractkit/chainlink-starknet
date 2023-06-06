@@ -31,8 +31,8 @@ const commandConfig: ExecuteCommandConfig<StarknetSetBillingInput, ContractInput
     return {
       observationPaymentGjuels: parseInt(flags.observationPaymentGjuels),
       transmissionPaymentGjuels: parseInt(flags.transmissionPaymentGjuels),
-      gasBase: parseInt(flags.gasBase),
-      gasPerSignature: parseInt(flags.gasPerSignature),
+      gasBase: parseInt(flags.gasBase || "0"),  // optional
+      gasPerSignature: parseInt(flags.gasPerSignature || "0"), //optional
     }
   },
   makeContractInput: makeContractInput,
