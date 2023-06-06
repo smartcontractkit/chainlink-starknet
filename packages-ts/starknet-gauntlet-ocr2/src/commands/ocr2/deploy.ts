@@ -36,13 +36,9 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
       minAnswer: aggregator.minSubmissionValue,
       decimals: aggregator.decimals,
       description: aggregator.name,
-      billingAccessController:
-        aggregator.billingAccessController ||
-        flags.billingAccessController ||
-        env.BILLING_ACCESS_CONTROLLER ||
-        '',
-      linkToken: aggregator.linkToken || flags.linkToken || env.LINK || '',
-      owner: aggregator.owner || flags.owner || env.ACCOUNT,
+      billingAccessController: flags.billingAccessController || env.BILLING_ACCESS_CONTROLLER || '',
+      linkToken: flags.linkToken || env.LINK || '',
+      owner: flags.owner || env.ACCOUNT,
     }
   }
 
@@ -73,7 +69,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
     description: 'Deploys OCR2 contract',
     examples: [
       `yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT> --owner=<OWNER>`,
-      `yarn gauntlet ocr2:deploy --network=<NETWORK> --rdd=<RDD_PATH> <CONTRACT_ADDRESS>`,
+      `yarn gauntlet ocr2:deploy --network=<NETWORK> --rdd=<RDD_PATH> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --link=<TOKEN_CONTRACT> --owner=<OWNER> <CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput: makeUserInput,
