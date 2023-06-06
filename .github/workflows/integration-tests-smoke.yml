@@ -54,7 +54,7 @@ jobs:
         with:
           cl_repo: smartcontractkit/chainlink
           #cl_ref: ${{ github.event.inputs.cl_branch_ref }}
-          cl_ref: 4814df6540c27e6c1e0ffd0c97a33577f674e58d
+          cl_ref: d77e53f75ae75346de0231840958a87fba358713
           cl_dockerfile: plugins/chainlink.Dockerfile
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
