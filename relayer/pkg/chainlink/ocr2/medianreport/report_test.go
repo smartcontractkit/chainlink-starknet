@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/commontypes"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
@@ -71,7 +71,7 @@ func TestBuildReport(t *testing.T) {
 	assert.Equal(t, totalLen, len(report), "validate length")
 
 	// validate timestamp
-	timestamp := junotypes.BytesToFelt(report[0:timestampSizeBytes]).Big()
+	timestamp := caigotypes.BytesToFelt(report[0:timestampSizeBytes]).Big()
 	assert.Equal(t, uint64(oo[0].Timestamp), timestamp.Uint64(), "validate timestamp")
 
 	// validate observers
@@ -80,7 +80,7 @@ func TestBuildReport(t *testing.T) {
 
 	// validate observer count
 	index += observersSizeBytes
-	count := junotypes.BytesToFelt(report[index : index+observationsLenBytes]).Big()
+	count := caigotypes.BytesToFelt(report[index : index+observationsLenBytes]).Big()
 	assert.Equal(t, uint8(n), uint8(count.Uint64()), "validate observer count")
 
 	// validate observations
@@ -154,7 +154,9 @@ func TestMedianFromReport(t *testing.T) {
 			}
 			report, err := cdc.BuildReport(pos)
 			require.NoError(t, err)
-			assert.Equal(t, len(report), cdc.MaxReportLength(len(tc.obs)))
+			max, err := cdc.MaxReportLength(len(tc.obs))
+			require.NoError(t, err)
+			assert.Equal(t, len(report), max)
 			med, err := cdc.MedianFromReport(report)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedMedian.String(), med.String())

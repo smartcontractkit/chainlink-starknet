@@ -8,8 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
-
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -63,7 +62,7 @@ type RoundData struct {
 	UpdatedAt   time.Time
 }
 
-func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
+func NewRoundData(felts []*caigotypes.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}

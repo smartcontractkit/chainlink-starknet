@@ -402,13 +402,6 @@ mod Aggregator {
         }
     }
 
-    #[derive(Copy, Drop, Serde)]
-    struct OnchainConfig {
-        version: u8,
-        min_answer: u128,
-        max_answer: u128,
-    }
-
     #[external]
     fn set_config(
         oracles: Array<OracleConfig>,
@@ -427,7 +420,10 @@ mod Aggregator {
         let min_answer = _min_answer::read();
         let max_answer = _max_answer::read();
 
-        let computed_onchain_config = OnchainConfig { version: 1_u8, min_answer, max_answer };
+        let mut computed_onchain_config = ArrayTrait::new();
+        computed_onchain_config.append(1); // version
+        computed_onchain_config.append(min_answer.into());
+        computed_onchain_config.append(max_answer.into());
 
         pay_oracles();
 
@@ -473,7 +469,7 @@ mod Aggregator {
             config_count,
             oracles,
             f,
-            onchain_config,
+            computed_onchain_config,
             offchain_config_version,
             offchain_config
         );
@@ -541,7 +537,7 @@ mod Aggregator {
         config_count: u64,
         oracles: @Array<OracleConfig>,
         f: u8,
-        onchain_config: @OnchainConfig,
+        onchain_config: @Array<felt252>,
         offchain_config_version: u64,
         offchain_config: @Array<felt252>,
     ) -> felt252 {
@@ -552,14 +548,20 @@ mod Aggregator {
         state = LegacyHash::hash(state, oracles.len());
         state = LegacyHash::hash(state, oracles.span()); // for oracle in oracles, hash each
         state = LegacyHash::hash(state, f);
-        state = LegacyHash::hash(state, 3); // onchain_config.len() = 3
-        state = LegacyHash::hash(state, *onchain_config.version);
-        state = LegacyHash::hash(state, *onchain_config.min_answer);
-        state = LegacyHash::hash(state, *onchain_config.max_answer);
+        state = LegacyHash::hash(state, onchain_config.len());
+        state = LegacyHash::hash(state, onchain_config.span());
         state = LegacyHash::hash(state, offchain_config_version);
         state = LegacyHash::hash(state, offchain_config.len());
         state = LegacyHash::hash(state, offchain_config.span());
-        let len: usize = 3 + 1 + oracles.len() + 6 + 1 + offchain_config.len();
+        let len: usize = 3
+            + 1
+            + (oracles.len() * 2)
+            + 1
+            + 1
+            + onchain_config.len()
+            + 1
+            + 1
+            + offchain_config.len();
         state = LegacyHash::hash(state, len);
 
         // since there's no bitwise ops on felt252, we split into two u128s and recombine.
@@ -776,7 +778,13 @@ mod Aggregator {
     }
 
     #[view]
-    fn latest_transmission_details() {}
+    fn latest_transmission_details() -> (felt252, u64, u128, u64) {
+        let config_digest = _latest_config_digest::read();
+        let latest_round_id = _latest_aggregator_round_id::read();
+        let epoch_and_round = _latest_epoch_and_round::read();
+        let transmission = _transmissions::read(latest_round_id);
+        (config_digest, epoch_and_round, transmission.answer, transmission.transmission_timestamp)
+    }
 
     // --- RequestNewRound
 
@@ -830,9 +838,10 @@ mod Aggregator {
 
         pay_oracles();
 
-        // transfer remaining balance to recipient
-        let amount = token.balance_of(account: contract_address);
-        token.transfer(recipient, amount);
+        // transfer remaining balance of old token to recipient
+        let old_token_dispatcher = IERC20Dispatcher { contract_address: old_token };
+        let amount = old_token_dispatcher.balance_of(account: contract_address);
+        old_token_dispatcher.transfer(recipient, amount);
 
         _link_token::write(link_token);
 

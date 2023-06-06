@@ -38,7 +38,9 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
   input,
   deps,
 ) => async () => {
-  deps.logger.info(`About to deploy an Account Contract with public key ${input.contract[0]}`)
+  deps.logger.info(
+    `About to deploy an Argent Account Contract with public key ${input.contract[0]}`,
+  )
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
     deps.logger.line()

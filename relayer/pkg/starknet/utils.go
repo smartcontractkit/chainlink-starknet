@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"math/big"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
 )
 
-const chunkSize = 31
+const (
+	FeltLength = 32
+	chunkSize  = 31
+)
 
 // padd bytes to specific length
 func PadBytes(a []byte, length int) []byte {
