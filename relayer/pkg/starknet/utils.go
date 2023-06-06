@@ -95,8 +95,8 @@ func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int) {
 }
 
 func HexToUnsignedBig(str string) (num *big.Int) {
-	felt := junotypes.HexToFelt(str)
-	return FeltToUnsignedBig(&caigotypes.Felt{Int: felt.Big()})
+	felt := caigotypes.StrToFelt(str)
+	return FeltToUnsignedBig(felt)
 }
 
 func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
