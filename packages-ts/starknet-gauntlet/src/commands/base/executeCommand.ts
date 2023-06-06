@@ -190,13 +190,13 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      // if --classHash is included, do not re-declare contract
+      // if "--classHash" is not included, declare before deploying
       const classHash: string | undefined = this.input?.user?.['classHash']
 
       let tx: TransactionResponse
 
       if (classHash === undefined) {
-        tx = await this.provider.deployContract(
+        tx = await this.provider.declareAndDeployContract(
           this.contract,
           this.compiledContractHash,
           this.input.contract,
@@ -204,7 +204,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
           this.input?.user?.['salt'],
         )
       } else {
-        tx = await this.provider.onlyDeployContract(
+        tx = await this.provider.deployContract(
           classHash,
           this.input.contract,
           false,

@@ -13,14 +13,14 @@ import { IStarknetWallet } from '../wallet'
 interface IProvider<P> {
   provider: P
   send: () => Promise<TransactionResponse>
-  deployContract: (
+  declareAndDeployContract: (
     contract: CompiledContract,
     compiledClassHash: string,
     input: any,
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
-  onlyDeployContract: (
+  deployContract: (
     classHash: string,
     input: any,
     wait?: boolean,
@@ -93,7 +93,12 @@ class Provider implements IStarknetProvider {
     return {} as TransactionResponse
   }
 
-  deployContract = async (
+  /**
+   * Compiles the contract and declares it using the generated ABI.
+   * Then deploys an instance of the declared contract.
+   * If contract has already been declared it will only be deployed.
+   */
+  declareAndDeployContract = async (
     contract: CompiledContract,
     compiledClassHash?: string,
     input: any = [],
@@ -115,6 +120,9 @@ class Provider implements IStarknetProvider {
     return response
   }
 
+  /**
+   * Compiles the contract and declares it using the generated ABI.
+   */
   declareContract = async (contract: CompiledContract, compiledClassHash?: string, wait = true) => {
     const tx = await this.account.declare({
       contract,
@@ -128,12 +136,10 @@ class Provider implements IStarknetProvider {
     return response
   }
 
-  onlyDeployContract = async (
-    classHash: string,
-    input: any = [],
-    wait = true,
-    salt = undefined,
-  ) => {
+  /**
+   * Deploys a contract given a class hash
+   */
+  deployContract = async (classHash: string, input: any = [], wait = true, salt = undefined) => {
     const tx = await this.account.deployContract({
       classHash: classHash,
       salt: salt ? '0x' + salt.toString(16) : salt,
