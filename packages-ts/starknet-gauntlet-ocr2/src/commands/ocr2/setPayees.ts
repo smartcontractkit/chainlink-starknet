@@ -5,8 +5,8 @@ import {
   makeExecuteCommand,
   getRDD,
 } from '@chainlink/starknet-gauntlet'
-import { CATEGORY } from '../../lib/constants'
-import { ocr2ContractLoader } from '../../lib/contracts'
+import { CATEGORIES } from '../../lib/categories'
+import { CONTRACT_LIST, ocr2ContractLoader } from '../../lib/contracts'
 
 type PayeeConfig = {
   transmitter: string
@@ -49,9 +49,9 @@ const makeContractInput = async (
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  contractId: 'ocr2',
+  contractId: CONTRACT_LIST.OCR2,
   action: 'set_payees',
-  category: CATEGORY,
+  category: CATEGORIES.OCR2,
   ux: {
     description: 'Set payees of OCR2 contract',
     examples: [
