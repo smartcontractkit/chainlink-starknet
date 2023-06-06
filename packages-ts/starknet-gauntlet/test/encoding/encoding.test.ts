@@ -11,10 +11,17 @@ export function bytesToFeltsDeprecated(data: Uint8Array): string[] {
   // chunk every 31 bytes
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     const chunk = data.slice(i, i + CHUNK_SIZE)
-    const feltHex = `0x${Array.from(chunk, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
-    felts.push(BigInt(feltHex).toString())
+    // convert big int to int (decimal) string
+    felts.push(bytesToBigInt(chunk).toString())
   }
   return felts
+}
+
+function bytesToBigInt(data: Uint8Array): bigint {
+  // convert byte array to hexadecimal string (pad by 2 so each byte is represented by 2 hex characters)
+  const feltHex = `0x${Array.from(data, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
+  // convert hexadecimal string to bigint
+  return BigInt(feltHex)
 }
 
 function createUint8Array(len: number): Uint8Array {
