@@ -119,7 +119,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	for i := 0; i < n; i++ {
 		start := prefixSizeBytes + observationSizeBytes*i
 		end := start + observationSizeBytes
-		o := starknet.FeltToUnSignedBig(&caigotypes.BytesToFelt(report[start:end]))
+		o := starknet.FeltToUnsignedBig(caigotypes.BytesToFelt(report[start:end]))
 		oo = append(oo, o)
 	}
 
