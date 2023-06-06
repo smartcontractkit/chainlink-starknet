@@ -23,6 +23,9 @@ jobs:
       - name: Install Cairo
         uses: ./.github/actions/install-cairo
 
+      - name: Install starknet-devnet (via venv+pip)
+        run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt
+
       - name: Test
         run: nix develop -c make test-ts-contracts
 
@@ -32,8 +35,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-        with:
-          submodules: 'recursive'
 
       - name: Install Nix
         uses: cachix/install-nix-action@5c11eae19dba042788936d4f1c9685fdd814ac49 # v19

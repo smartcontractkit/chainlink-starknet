@@ -1,5 +1,10 @@
 #[contract]
 mod SequencerUptimeFeed {
+    use starknet::EthAddress;
+    use starknet::EthAddressSerde;
+    use starknet::EthAddressIntoFelt252;
+    use starknet::Felt252TryIntoEthAddress;
+    use starknet::EthAddressZeroable;
     use starknet::ContractAddress;
     use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
@@ -13,6 +18,7 @@ mod SequencerUptimeFeed {
     use traits::Into;
     use traits::TryInto;
     use option::OptionTrait;
+    use zeroable::Zeroable;
 
     use chainlink::libraries::ownable::Ownable;
     use chainlink::libraries::access_control::AccessControl;
@@ -22,10 +28,8 @@ mod SequencerUptimeFeed {
     use chainlink::ocr2::aggregator::Aggregator::TransmissionStorageAccess;
     use chainlink::libraries::upgradeable::Upgradeable;
 
-    const ETH_ADDRESS_BOUND: felt252 = 0x10000000000000000000000000000000000000000; // 2**160
-
     struct Storage {
-        // l1 sender is an ethereum address
+        // l1 sender is an starknet validator ethereum address
         _l1_sender: felt252,
         // maps round id to round transmission
         _round_transmissions: LegacyMap<u128, Transmission>,
@@ -47,7 +51,7 @@ mod SequencerUptimeFeed {
     ) {}
 
     #[event]
-    fn L1SenderTransferred(from_address: felt252, to_address: felt252) {}
+    fn L1SenderTransferred(from_address: EthAddress, to_address: EthAddress) {}
 
     impl Aggregator of IAggregator {
         fn latest_round_data() -> Round {
@@ -118,25 +122,22 @@ mod SequencerUptimeFeed {
     }
 
     #[external]
-    fn set_l1_sender(address: felt252) {
+    fn set_l1_sender(address: EthAddress) {
         Ownable::assert_only_owner();
 
-        // convert both to u256 (felts don't implement PartialOrd)
-        assert(address.into() < ETH_ADDRESS_BOUND.into(), 'invalid eth address');
-
-        assert(address != 0, '0 address not allowed');
+        assert(!address.is_zero(), '0 address not allowed');
 
         let old_address = _l1_sender::read();
 
-        if old_address != address {
-            _l1_sender::write(address);
-            L1SenderTransferred(old_address, address);
+        if old_address != address.into() {
+            _l1_sender::write(address.into());
+            L1SenderTransferred(old_address.try_into().unwrap(), address);
         }
     }
 
     #[view]
-    fn l1_sender() -> felt252 {
-        _l1_sender::read()
+    fn l1_sender() -> EthAddress {
+        _l1_sender::read().try_into().unwrap()
     }
 
     ///
@@ -214,11 +215,6 @@ mod SequencerUptimeFeed {
     #[view]
     fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
         AccessControl::has_access(user, data)
-    }
-
-    #[view]
-    fn check_access(user: ContractAddress) {
-        AccessControl::check_access(user)
     }
 
     #[external]

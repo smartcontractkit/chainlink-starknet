@@ -27,7 +27,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   toCompare: null
   result: QueryResult
 }> => {
-  let [{ round: latest_round_data }]: { round: Round }[] = results
+  let [latest_round_data] = results
 
   for (var key in latest_round_data) {
     if (latest_round_data.hasOwnProperty(key)) {

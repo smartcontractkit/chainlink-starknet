@@ -7,8 +7,7 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract } from '@chainlink/starknet-gauntlet'
-import { CONTRACT_LIST, equalAddress } from '../../src/lib/contracts'
+import { accountContractLoader, CONTRACT_LIST, equalAddress } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('OZ Account Contract', () => {
@@ -18,7 +17,7 @@ describe('OZ Account Contract', () => {
 
   beforeAll(async () => {
     network = await startNetwork()
-  }, 15000)
+  }, TIMEOUT)
 
   it(
     'Deployment',
@@ -31,9 +30,9 @@ describe('OZ Account Contract', () => {
       contractAddress = report.responses[0].contract
       publicKey = report.data.publicKey
 
-      const { contract: oz } = loadContract(CONTRACT_LIST.ACCOUNT)
+      const { contract: oz } = accountContractLoader()
       const ozContract = new Contract(oz.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const onChainPubKey = await ozContract.get_public_key()
+      const { publicKey: onChainPubKey } = await ozContract.getPublicKey()
       expect(onChainPubKey).toEqual(BigInt(publicKey))
     },
     TIMEOUT,

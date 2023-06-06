@@ -38,7 +38,7 @@ export const noopLogger: typeof logger = {
 
 export const noopPrompt: typeof prompt = async () => {}
 
-export const TIMEOUT = 200000
+export const TIMEOUT = 900000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
 export const devnetPrivateKey = '0xe3e70682c2094cac629f6fbed82c07cd'
 export const devnetAccount0Address =

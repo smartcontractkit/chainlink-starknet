@@ -16,6 +16,7 @@ use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
 use chainlink::tests::test_ownable::should_implement_ownable;
+use chainlink::tests::test_access_controller::should_implement_access_control;
 
 #[abi]
 trait IMockAggregator {
@@ -68,6 +69,21 @@ fn test_ownable() {
     ).unwrap();
 
     should_implement_ownable(aggregatorProxyAddr, account);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_access_control() {
+    let (account, mockAggregatorAddr, _, _, _) = setup();
+    // Deploy aggregator proxy
+    let mut calldata = ArrayTrait::new();
+    calldata.append(account.into()); // owner = account
+    calldata.append(mockAggregatorAddr.into());
+    let (aggregatorProxyAddr, _) = deploy_syscall(
+        AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+
+    should_implement_access_control(aggregatorProxyAddr, account);
 }
 
 #[test]

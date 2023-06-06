@@ -2,7 +2,7 @@ import { loadContract } from '@chainlink/starknet-gauntlet'
 
 export enum CONTRACT_LIST {
   OCR2 = 'Aggregator',
-  ACCESS_CONTROLLER = 'SimpleWriteAccessController',
+  ACCESS_CONTROLLER = 'AccessController',
   PROXY = 'AggregatorProxy',
   AGGREGATOR_CONSUMER = 'AggregatorConsumer',
 }

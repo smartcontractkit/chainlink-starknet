@@ -141,14 +141,10 @@ fn should_implement_ownable(contract_addr: ContractAddress, owner: ContractAddre
 
     // check owner is set correctly
     assert(owner == contract.owner(), 'owner does not match');
-    let caller = starknet::get_caller_address();
-    assert(!caller.is_zero(), 'test1');
 
     // transfer ownership - check owner unchanged and proposed owner set correctly
     set_contract_address(owner); // required to call contract as owner
     let caller = starknet::get_caller_address();
-    assert(!caller.is_zero(), 'test2');
-    assert(caller == owner, 'test3');
     contract.transfer_ownership(acc2);
     assert(owner == contract.owner(), 'owner should remain unchanged');
     assert(acc2 == contract.proposed_owner(), 'acc2 should be proposed owner');

@@ -206,18 +206,18 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
+		go test --timeout=2h -v -count=1 -json ./smoke
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
 	cd integration-tests/ && \
-		go test --timeout=1h -v ./soak
+		go test --timeout=1h -v -json./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
 test-integration-soak-ci:
 	cd integration-tests/ && \
-		go test --timeout=1h -v -count=1 -json ./soak 2>&1 | tee /tmp/gotest.log | gotestfmt
+		go test --timeout=1h -v -count=1 -json ./soak
 
 .PHONY: test-integration-contracts
 # TODO: better network lifecycle setup - requires external network (L1 + L2)
@@ -257,7 +257,7 @@ test-integration-gauntlet: build-ts env-devnet-hardhat-down
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
 
 .PHONY: test-ts-contracts
-test-ts-contracts: build-sol-contracts build-ts-workspace env-devnet-hardhat
+test-ts-contracts: build-ts env-devnet-hardhat
 	cd contracts/ && \
 		yarn test
 
