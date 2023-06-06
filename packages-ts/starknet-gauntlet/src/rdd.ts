@@ -7,8 +7,6 @@ export enum CONTRACT_TYPES {
   VALIDATOR = 'validators',
 }
 
-// throw new Error(`No reference data directory specified!  Must pass in the '--rdd' flag or set the 'RDD' env var`)
-
 export const getRDD = (path: string): any => {
   // test whether the file exists as a relative path or an absolute path
   if (!existsSync(path)) {
