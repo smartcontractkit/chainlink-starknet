@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu20.04-16cores-64GB
     needs: [ build_custom_chainlink_image, build_test_image ]
     environment: integration
-    # these values need to match those used when building the chainlink image
+    # these values need to match those used to build the chainlink image
     strategy:
       matrix:
         image:
