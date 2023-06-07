@@ -36,7 +36,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
       decimals: aggregator.decimals,
       description: aggregator.name,
       billingAccessController: flags.billingAccessController || env.BILLING_ACCESS_CONTROLLER || '',
-      linkToken: flags.linkToken || env.LINK || '',
+      linkToken: flags.link || env.LINK || '',
       owner: flags.owner || env.ACCOUNT,
     }
   }

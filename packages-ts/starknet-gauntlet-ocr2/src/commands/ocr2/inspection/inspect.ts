@@ -6,7 +6,6 @@ import {
 import { shortString, validateAndParseAddress } from 'starknet'
 import { CATEGORIES } from '../../../lib/categories'
 import { ocr2ContractLoader } from '../../../lib/contracts'
-import BN from 'bn.js'
 
 type QueryResult = {
   typeAndVersion: string
@@ -45,10 +44,10 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   const typeAndVersion = shortString.decodeShortString(results[0])
   const description = shortString.decodeShortString(results[1])
   const owner = validateAndParseAddress(results[2])
-  const decimals = new BN(results[3]).toNumber()
+  const decimals = parseInt(results[3])
   const latestConfigDetails = {
-    configCount: new BN(results[4][0]).toNumber(),
-    blockNumber: new BN(results[4][1]).toNumber(),
+    configCount: parseInt(results[4][0]),
+    blockNumber: parseInt(results[4][1]),
     configDigest: '0x' + results[4][2].toString(16),
   }
   const transmitters = results[5].map((address) => validateAndParseAddress(address))
@@ -61,18 +60,18 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
     })
     transmitterInfo.push({
       transmitter,
-      owedPayment: new BN(owedPayment.result[0].slice(2), 'hex').toString(),
+      owedPayment: parseInt(owedPayment.result[0]).toString(),
     })
   }
   const billing = {
-    observationPaymentGjuels: new BN(results[6].observation_payment_gjuels).toString(),
-    transmissionPaymentGjuels: new BN(results[6].transmission_payment_gjuels).toString(),
-    gasBase: new BN(results[6].gas_base).toString(),
-    gasPerSignature: new BN(results[6].gas_per_signature).toString(),
+    observationPaymentGjuels: parseInt(results[6].observation_payment_gjuels).toString(),
+    transmissionPaymentGjuels: parseInt(results[6].transmission_payment_gjuels).toString(),
+    gasBase: parseInt(results[6].gas_base).toString(),
+    gasPerSignature: parseInt(results[6].gas_per_signature).toString(),
   }
   const linkAvailableForPayment = {
     isNegative: results[7][0],
-    absoluteDifference: new BN(results[7][1]).toString(),
+    absoluteDifference: parseInt(results[7][1]).toString(),
   }
   return {
     toCompare: null,
