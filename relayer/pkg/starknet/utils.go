@@ -89,12 +89,15 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int) {
+func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int, err error) {
+	if caigotypes.MaxFelt.Cmp(felt.Big()) == -1 {
+		return nil, fmt.Errorf("felt value is too large: %s", felt.Big())
+	}
 	// will always return a non-negative value because it uses Bytes() behind the scenes
-	return felt.Big()
+	return felt.Big(), nil
 }
 
-func HexToUnsignedBig(str string) (num *big.Int) {
+func HexToUnsignedBig(str string) (num *big.Int, err error) {
 	felt := caigotypes.StrToFelt(str)
 	return FeltToUnsignedBig(felt)
 }

@@ -126,7 +126,10 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotyp
 
 	epoch, round := parseEpochAndRound(caigotypes.StrToFelt(res[1]).Big())
 
-	latestAnswer := starknet.HexToUnsignedBig(res[2])
+	latestAnswer, err := starknet.HexToUnsignedBig(res[2])
+	if err != nil {
+		return td, errors.Wrap(err, "latestAnswer invalid")
+	}
 
 	timestampFelt := caigotypes.StrToFelt(res[3])
 	// TODO: Int64() can return invalid data if int is too big
