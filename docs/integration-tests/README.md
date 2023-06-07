@@ -218,7 +218,7 @@ yarn gauntlet ocr2:set_billing --observationPaymentGjuels=<value> --transmission
                "alphaAcceptPpb": 0,
                "deltaCNanoseconds": 1000000000
            },
-           "maxDurationQueryNanoseconds": 0,
+           "maxDurationQueryNanoseconds": 2000000000,
            "maxDurationObservationNanoseconds": 1000000000,
            "maxDurationReportNanoseconds": 2000000000,
            "maxDurationShouldAcceptFinalizedReportNanoseconds": 2000000000,

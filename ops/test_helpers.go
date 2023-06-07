@@ -76,7 +76,7 @@ var TestOCR2Config = OCR2Config{
 			AlphaAcceptPpb:      0,
 			DeltaCNanoseconds:   1000000000,
 		},
-		MaxDurationQueryNanoseconds:                        0,
+		MaxDurationQueryNanoseconds:                        2000000000,
 		MaxDurationObservationNanoseconds:                  1000000000,
 		MaxDurationReportNanoseconds:                       2000000000,
 		MaxDurationShouldAcceptFinalizedReportNanoseconds:  2000000000,
