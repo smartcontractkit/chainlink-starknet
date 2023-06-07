@@ -6,7 +6,7 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader, CONTRACT_LIST, equalAddress } from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string

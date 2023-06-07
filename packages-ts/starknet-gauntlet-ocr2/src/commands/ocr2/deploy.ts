@@ -1,7 +1,6 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
-import { shortString, number } from 'starknet'
+import { shortString } from 'starknet'
 import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
 
 export interface UserInput extends DeployOCR2Input {
@@ -20,6 +19,11 @@ type ContractInput = [
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
+
+  flags.min_answer = parseInt(flags.min_answer)
+  flags.max_answer = parseInt(flags.max_answer)
+  flags.decimals = parseInt(flags.decimals)
+
   return {
     ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
@@ -33,7 +37,7 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
     input.minAnswer,
     input.maxAnswer,
     input.billingAccessController,
-    new BN(input.decimals).toNumber(),
+    input.decimals,
     shortString.encodeShortString(input.description),
   ]
 }

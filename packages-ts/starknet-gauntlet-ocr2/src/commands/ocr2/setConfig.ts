@@ -3,7 +3,6 @@ import {
   ExecuteCommandConfig,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
 import { bytesToFelts } from '@chainlink/starknet-gauntlet'
@@ -49,7 +48,7 @@ const makeContractInput = async (input: SetConfigInput): Promise<ContractInput> 
     input.secret,
   )
   let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
-  return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
+  return [oracles, input.f, onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
 const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (
@@ -80,6 +79,19 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 
 const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
   ...SetConfig,
+  makeUserInput: (flags, args, env) => {
+    if (flags.input) return flags.input
+    return {
+      f: parseInt(flags.f),
+      signers: flags.signers,
+      transmitters: flags.transmitters,
+      onchainConfig: flags.onchainConfig,
+      offchainConfig: flags.offchainConfig,
+      offchainConfigVersion: parseInt(flags.offchainConfigVersion),
+      secret: flags.secret || env.secret,
+      randomSecret: flags.randomSecret || undefined,
+    }
+  },
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
   hooks: {

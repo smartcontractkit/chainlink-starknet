@@ -7,7 +7,7 @@ import {
   startNetwork,
   IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { accountContractLoader, CONTRACT_LIST, equalAddress } from '../../src/lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('OZ Account Contract', () => {
