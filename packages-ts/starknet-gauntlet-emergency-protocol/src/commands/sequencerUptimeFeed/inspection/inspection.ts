@@ -3,16 +3,15 @@ import {
   IStarknetProvider,
   makeInspectionCommand,
 } from '@chainlink/starknet-gauntlet'
-import { BN } from 'bn.js'
 import { CATEGORIES } from '../../../lib/categories'
 import { uptimeFeedContractLoader } from '../../../lib/contracts'
 
 type Round = {
-  round_id: number
-  answer: number
-  block_num: number
-  started_at: number
-  updated_at: number
+  round_id: string
+  answer: string
+  block_num: string
+  started_at: string
+  updated_at: string
 }
 
 type QueryResult = {
@@ -31,7 +30,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
 
   for (var key in latest_round_data) {
     if (latest_round_data.hasOwnProperty(key)) {
-      latest_round_data[key] = new BN(latest_round_data[key]).toString()
+      latest_round_data[key] = BigInt(latest_round_data[key]).toString()
     }
   }
 

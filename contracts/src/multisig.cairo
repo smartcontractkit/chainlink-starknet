@@ -236,11 +236,11 @@ mod Multisig {
 
     #[external]
     fn submit_transaction(
-        to: ContractAddress, function_selector: felt252, calldata: Array<felt252>, nonce: u128
+        to: ContractAddress, function_selector: felt252, calldata: Array<felt252>, 
     ) {
         _require_signer();
-        _require_valid_nonce(nonce);
 
+        let nonce = _next_nonce::read();
         let calldata_len = calldata.len();
 
         let transaction = Transaction {
@@ -299,6 +299,7 @@ mod Multisig {
 
     #[external]
     fn execute_transaction(nonce: u128) -> Array<felt252> {
+        _require_signer();
         _require_tx_exists(nonce);
         _require_tx_valid(nonce);
         _require_not_executed(nonce);
@@ -339,12 +340,16 @@ mod Multisig {
         let signers_len = _signers_len::read();
         _require_valid_threshold(threshold, signers_len);
 
+        _update_tx_valid_since();
+
         _set_threshold(threshold);
     }
 
     #[external]
     fn set_signers(signers: Array<ContractAddress>) {
         _require_multisig();
+
+        _update_tx_valid_since();
 
         let signers_len = signers.len();
         _set_signers(signers, signers_len);
@@ -364,6 +369,8 @@ mod Multisig {
         let signers_len = signers.len();
         _require_valid_threshold(threshold, signers_len);
 
+        _update_tx_valid_since();
+
         _set_signers(signers, signers_len);
         _set_threshold(threshold);
     }
@@ -374,9 +381,6 @@ mod Multisig {
 
         let old_signers_len = _signers_len::read();
         _clean_signers_range(0_usize, old_signers_len);
-
-        let tx_valid_since = _next_nonce::read();
-        _tx_valid_since::write(tx_valid_since);
 
         _signers_len::write(signers_len);
         _set_signers_range(0_usize, signers_len, @signers);
@@ -455,6 +459,11 @@ mod Multisig {
         ThresholdSet(threshold);
     }
 
+    fn _update_tx_valid_since() {
+        let tx_valid_since = _next_nonce::read();
+        _tx_valid_since::write(tx_valid_since);
+    }
+
     fn _require_signer() {
         let caller = get_caller_address();
         let is_signer = _is_signer::read(caller);
@@ -507,10 +516,5 @@ mod Multisig {
 
         assert(threshold >= 1_usize, 'invalid threshold, too small');
         assert(threshold <= signers_len, 'invalid threshold, too large');
-    }
-
-    fn _require_valid_nonce(nonce: u128) {
-        let next_nonce = _next_nonce::read();
-        assert(nonce == next_nonce, 'invalid nonce');
     }
 }

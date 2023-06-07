@@ -31,8 +31,8 @@ const makeContractInput = async (
     {
       observation_payment_gjuels: input.observationPaymentGjuels,
       transmission_payment_gjuels: input.transmissionPaymentGjuels,
-      gas_base: input.gasBase,
-      gas_per_signature: input.gasPerSignature,
+      gas_base: input.gasBase || 0,
+      gas_per_signature: input.gasPerSignature || 0,
     },
   ]
 }
@@ -44,8 +44,8 @@ const commandConfig: ExecuteCommandConfig<StarknetSetBillingInput, ContractInput
     return {
       observationPaymentGjuels: parseInt(flags.observationPaymentGjuels),
       transmissionPaymentGjuels: parseInt(flags.transmissionPaymentGjuels),
-      gasBase: parseInt(flags.gasBase),
-      gasPerSignature: parseInt(flags.gasPerSignature),
+      gasBase: parseInt(flags.gasBase || '0'), // optional
+      gasPerSignature: parseInt(flags.gasPerSignature || '0'), //optional
     }
   },
   makeContractInput: makeContractInput,

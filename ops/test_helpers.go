@@ -1,7 +1,8 @@
 package ops
 
 import (
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
+	"math/big"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
 
@@ -9,8 +10,10 @@ var (
 	// seed = 0 keys for starknet-devnet
 	PrivateKeys0Seed = txm.PrivateKeys0Seed
 
-	DevnetClassHash = keys.DevnetClassHash
-	DevnetSalt      = keys.DevnetSalt
+	// devnet key derivation
+	// https://github.com/Shard-Labs/starknet-devnet/blob/master/starknet_devnet/account.py
+	DevnetClassHash, _ = new(big.Int).SetString("1803505466663265559571280894381905521939782500874858933595227108099796801620", 10)
+	DevnetSalt         = big.NewInt(20)
 )
 
 // OCR2Config Default config for OCR2 for starknet
@@ -60,7 +63,7 @@ var TestOCR2Config = OCR2Config{
 		DeltaProgressNanoseconds: 8000000000,
 		DeltaResendNanoseconds:   30000000000,
 		DeltaRoundNanoseconds:    3000000000,
-		DeltaGraceNanoseconds:    500000000,
+		DeltaGraceNanoseconds:    1000000000,
 		DeltaStageNanoseconds:    20000000000,
 		RMax:                     5,
 		S:                        []int{1, 2},
@@ -71,13 +74,13 @@ var TestOCR2Config = OCR2Config{
 			AlphaReportPpb:      0,
 			AlphaAcceptInfinite: false,
 			AlphaAcceptPpb:      0,
-			DeltaCNanoseconds:   0,
+			DeltaCNanoseconds:   1000000000,
 		},
 		MaxDurationQueryNanoseconds:                        0,
 		MaxDurationObservationNanoseconds:                  1000000000,
-		MaxDurationReportNanoseconds:                       200000000,
-		MaxDurationShouldAcceptFinalizedReportNanoseconds:  200000000,
-		MaxDurationShouldTransmitAcceptedReportNanoseconds: 200000000,
+		MaxDurationReportNanoseconds:                       2000000000,
+		MaxDurationShouldAcceptFinalizedReportNanoseconds:  2000000000,
+		MaxDurationShouldTransmitAcceptedReportNanoseconds: 2000000000,
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 	},
 	OffchainConfigVersion: 2,

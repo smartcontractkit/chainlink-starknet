@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	caigo "github.com/smartcontractkit/caigo"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,11 +18,11 @@ import (
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink/v2/core/services/keystore/keys/starkkey"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 
@@ -44,7 +45,32 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	defaultWalletAddress = "0x" + hex.EncodeToString(keys.PubKeyToAccount(keys.Raw(keyBytes).Key().PublicKey(), ops.DevnetClassHash, ops.DevnetSalt))
+	accountBytes, err := pubKeyToDevnetAccount(starkkey.Raw(keyBytes).Key().PublicKey())
+	if err != nil {
+		panic(err)
+	}
+	defaultWalletAddress = "0x" + hex.EncodeToString(accountBytes)
+}
+
+func pubKeyToDevnetAccount(pubkey starkkey.PublicKey) ([]byte, error) {
+	xHash, err := caigo.Curve.ComputeHashOnElements([]*big.Int{pubkey.X})
+	if err != nil {
+		return nil, err
+	}
+	elements := []*big.Int{
+		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
+		big.NewInt(0),
+		ops.DevnetSalt,
+		ops.DevnetClassHash,
+		xHash,
+	}
+	hash, err := caigo.Curve.ComputeHashOnElements(elements)
+	if err != nil {
+		return nil, err
+	}
+
+	// pad big.Int to 32 bytes if needed
+	return starknet.PadBytes(hash.Bytes(), 32), nil
 }
 
 type Test struct {
@@ -266,8 +292,8 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	assert.Equal(testState.T, balLINK.Cmp(big.NewInt(0)), 1, "Aggregator should have non-zero balance")
 	assert.GreaterOrEqual(testState.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
 
-	for start := time.Now(); time.Since(start) < testState.Common.TTL; {
-		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TTL))
+	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
+		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
 		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
 		require.NoError(testState.T, err, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred

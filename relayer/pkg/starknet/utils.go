@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"math/big"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
 )
 
-const chunkSize = 31
+const (
+	FeltLength = 32
+	chunkSize  = 31
+)
 
 // padd bytes to specific length
 func PadBytes(a []byte, length int) []byte {
@@ -105,8 +107,8 @@ func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
 }
 
 func HexToSignedBig(str string) (num *big.Int) {
-	felt := junotypes.HexToFelt(str)
-	return FeltToSignedBig(&caigotypes.Felt{Int: felt.Big()})
+	felt := caigotypes.StrToFelt(str)
+	return FeltToSignedBig(felt)
 }
 
 func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {

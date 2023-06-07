@@ -5,7 +5,6 @@ import {
   ExecutionContext,
   getRDD,
 } from '@chainlink/starknet-gauntlet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { shortString } from 'starknet'
 import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
@@ -42,6 +41,10 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
     }
   }
 
+  flags.min_answer = parseInt(flags.min_answer)
+  flags.max_answer = parseInt(flags.max_answer)
+  flags.decimals = parseInt(flags.decimals)
+
   return {
     ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
@@ -58,7 +61,7 @@ const makeContractInput = async (
     input.minAnswer,
     input.maxAnswer,
     input.billingAccessController,
-    new BN(input.decimals).toNumber(),
+    input.decimals,
     shortString.encodeShortString(input.description),
   ]
 }

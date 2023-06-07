@@ -5,7 +5,7 @@ import {
   ExecutionContext,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { time, BN } from '@chainlink/gauntlet-core/dist/utils'
+import { time } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
 import { bytesToFelts, getRDD } from '@chainlink/starknet-gauntlet'
@@ -120,7 +120,7 @@ const makeContractInput = async (
     input.secret,
   )
   let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
-  return [oracles, new BN(input.f).toNumber(), onchainConfig, 2, bytesToFelts(offchainConfig)]
+  return [oracles, input.f, onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
 // TODO: beforeExecute attempt to deserialize offchainConfig to check for validity

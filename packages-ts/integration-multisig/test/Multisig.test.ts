@@ -56,7 +56,6 @@ describe('Multisig integration tests', function () {
       to: multisig.address,
       function_selector: selector,
       calldata: [newThreshold],
-      nonce,
     }
 
     {

@@ -1,4 +1,4 @@
-package keys
+package txm
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 )
 
@@ -18,21 +19,28 @@ type NonceManagerClient interface {
 	AccountNonce(context.Context, caigotypes.Hash) (*big.Int, error)
 }
 
+type NonceManager interface {
+	types.Service
+
+	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
+
+	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
+	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
+}
+
 var _ NonceManager = (*nonceManager)(nil)
 
 type nonceManager struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
-	ks      Keystore
 
 	n    map[string]map[string]*big.Int // map address + chain ID to nonce
 	lock sync.RWMutex
 }
 
-func NewNonceManager(lggr logger.Logger, ks Keystore) *nonceManager {
+func NewNonceManager(lggr logger.Logger) *nonceManager {
 	return &nonceManager{
 		lggr: logger.Named(lggr, "NonceManager"),
-		ks:   ks,
 		n:    map[string]map[string]*big.Int{},
 	}
 }
