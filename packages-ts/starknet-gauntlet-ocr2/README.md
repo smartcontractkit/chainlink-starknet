@@ -41,7 +41,7 @@ This command will generate a new OCR2 address and will give the details during t
 Run the following command substituting <OCR_CONTRACT_ADDRESS> with the OCR2 contract address you received in the deploy step:
 
 ```
-yarn gauntlet ocr2:set_billing --observationPaymentGjuels=<AMOUNT> --transmissionPaymentGjuels=<AMOUNT> <CONTRACT_ADDRESS>
+yarn gauntlet ocr2:set_billing --observationPaymentGjuels=<AMOUNT> --transmissionPaymentGjuels=<AMOUNT> --gasBase=<AMOUNT> --gasPerSignature=<AMOUNT> <CONTRACT_ADDRESS>
 ```
 
 This Should set the billing details for this feed on contract address
