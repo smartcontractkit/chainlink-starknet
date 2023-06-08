@@ -43,13 +43,15 @@ fn setup() -> (
     calldata.append(8); // decimals = 8
     let (mockAggregatorAddr1, _) = deploy_syscall(
         MockAggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
     let mockAggregator1 = IMockAggregatorDispatcher { contract_address: mockAggregatorAddr1 };
 
     // Deploy mock aggregator 2
     let (mockAggregatorAddr2, _) = deploy_syscall(
         MockAggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
     let mockAggregator2 = IMockAggregatorDispatcher { contract_address: mockAggregatorAddr2 };
 
     // Return account, mock aggregator address and mock aggregator contract
@@ -66,7 +68,8 @@ fn test_ownable() {
     calldata.append(mockAggregatorAddr.into());
     let (aggregatorProxyAddr, _) = deploy_syscall(
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     should_implement_ownable(aggregatorProxyAddr, account);
 }
@@ -81,7 +84,8 @@ fn test_access_control() {
     calldata.append(mockAggregatorAddr.into());
     let (aggregatorProxyAddr, _) = deploy_syscall(
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     should_implement_access_control(aggregatorProxyAddr, account);
 }
