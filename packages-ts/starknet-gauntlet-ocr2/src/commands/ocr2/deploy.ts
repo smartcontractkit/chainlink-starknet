@@ -22,11 +22,16 @@ type ContractInput = [
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
-  return {
+  const classHash = flags.classHash
+  const input = {
     ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
-    classHash: flags.classHash,
   } as UserInput
+  // DeployOCR2.validations does not allow input keys to be "false-y" so we only add classHash key if it is !== undefined
+  if (classHash !== undefined) {
+    input['classHash'] = classHash
+  }
+  return input
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {

@@ -122,16 +122,16 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       c.beforeExecute = config.hooks?.beforeExecute
         ? config.hooks.beforeExecute(c.executionContext, c.input, {
-            logger: deps.logger,
-            prompt: deps.prompt,
-          })
+          logger: deps.logger,
+          prompt: deps.prompt,
+        })
         : c.defaultBeforeExecute(c.executionContext, c.input)
 
       c.afterExecute = config.hooks?.afterExecute
         ? config.hooks.afterExecute(c.executionContext, c.input, {
-            logger: deps.logger,
-            prompt: deps.prompt,
-          })
+          logger: deps.logger,
+          prompt: deps.prompt,
+        })
         : c.defaultAfterExecute()
 
       return c
