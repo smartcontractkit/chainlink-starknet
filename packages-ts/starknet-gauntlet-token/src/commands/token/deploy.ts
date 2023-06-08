@@ -22,7 +22,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   return {
     minter: flags.minter,
     owner: flags.owner,
-    classHash: flags.classHash
+    classHash: flags.classHash,
   }
 }
 
