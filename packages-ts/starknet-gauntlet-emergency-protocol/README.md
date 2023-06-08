@@ -74,9 +74,18 @@ This deploys a new `sequencer_uptime_feed` contract to L2.
 
 `--owner` flag can be omitted. In such a case, it will default to the account specified in .env
 
+`--classHash` flag can be omitted. If used, the deployment will be based off an already declared class on starknet rather than the local contract source code.
+
 ```bash
 yarn gauntlet sequencer_uptime_feed:deploy --initialStatus=<INITIAL_STATUS> --owner=<OWNER> --network=<NETWORK>
 ```
+
+Optionally, you can deploy by referencing a previously deployed class hash
+
+```bash
+yarn gauntlet sequencer_uptime_feed:deploy --initialStatus=<INITIAL_STATUS> --owner=<OWNER> --classHash=<CLASS_HASH> --network=<NETWORK>
+```
+
 
 - setL1Sender
 
