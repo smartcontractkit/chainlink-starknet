@@ -1,11 +1,13 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
-import { shortString, number } from 'starknet'
+import { shortString } from 'starknet'
 import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
+import { validateClassHash } from '../../lib/utils'
 
 export interface UserInput extends DeployOCR2Input {
   owner: string
+  classHash?: string
 }
 
 type ContractInput = [
@@ -23,6 +25,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   return {
     ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
+    classHash: flags.classHash,
   } as UserInput
 }
 
@@ -40,6 +43,7 @@ const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ...DeployOCR2,
+  validations: [...DeployOCR2.validations, validateClassHash],
   makeUserInput: makeUserInput,
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
