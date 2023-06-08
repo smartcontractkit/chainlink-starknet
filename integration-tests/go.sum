@@ -1321,8 +1321,8 @@ github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e/go.mod h1:2
 github.com/smartcontractkit/chainlink-cosmos v0.4.0 h1:xYLAcJJIm0cyMtYtMaosO45bykEwcwQOmZz3mz46Y2A=
 github.com/smartcontractkit/chainlink-env v0.3.29 h1:hcIw/BeuB0wKiiE3umAUNBZzWkHO24XF3OW9xSrlMbI=
 github.com/smartcontractkit/chainlink-env v0.3.29/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
-github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086 h1:d2WiCTnsCtA16KVabnX3E9SZH1irp2/d0MLT0/UI3XY=
-github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230531014621-9c303da4c086/go.mod h1:zfUba6Okm7zTBxap24I78Vq9z+twHmjXSMBAl2C2Qgc=
+github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230605232729-e0a00f8c6545 h1:RrapLM49rs6WThQre+AfvpO9qFQZA2jaq0l9KImxT8c=
+github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230605232729-e0a00f8c6545/go.mod h1:zfUba6Okm7zTBxap24I78Vq9z+twHmjXSMBAl2C2Qgc=
 github.com/smartcontractkit/chainlink-solana v1.0.3-0.20230518143827-0b7a6e43719c h1:pM7FH+S92F7Xa/VSfbIs941FDKqSmo9pYeUBWHl1Pq0=
 github.com/smartcontractkit/chainlink-testing-framework v1.11.5 h1:gYSnOQhLxgE0mxwnv015nNnPgH9kcosx+AzPboEFo38=
 github.com/smartcontractkit/chainlink-testing-framework v1.11.5/go.mod h1:0ktPcDE5fFSvNewsaHuC4tGVaiCMQsl5RN/cWO5k0rg=

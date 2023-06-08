@@ -38,7 +38,8 @@ fn test_access_control() {
     calldata.append(owner.into()); // owner
     let (accessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     should_implement_access_control(accessControllerAddr, owner);
 }

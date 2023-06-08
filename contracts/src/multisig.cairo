@@ -1,10 +1,8 @@
 use array::ArrayTrait;
 use option::OptionTrait;
 
-fn assert_unique_values<T,
-impl TCopy: Copy<T>,
-impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>,
+fn assert_unique_values<
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
 >(
     a: @Array::<T>
 ) {
@@ -12,10 +10,8 @@ impl TPartialEq: PartialEq<T>,
     _assert_unique_values_loop(a, len, 0_usize, 1_usize);
 }
 
-fn _assert_unique_values_loop<T,
-impl TCopy: Copy<T>,
-impl TDrop: Drop<T>,
-impl TPartialEq: PartialEq<T>,
+fn _assert_unique_values_loop<
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
@@ -95,13 +91,17 @@ mod Multisig {
                 Transaction {
                     to: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                     function_selector: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 1_u8)
                     )?,
                     calldata_len: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 2_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                     executed: if storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 3_u8)
                     )? == 1 {
@@ -111,7 +111,9 @@ mod Multisig {
                     },
                     confirmations: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 4_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                 }
             )
         }
@@ -321,7 +323,8 @@ mod Multisig {
 
         let response = call_contract_syscall(
             transaction.to, transaction.function_selector, calldata.span()
-        ).unwrap_syscall();
+        )
+            .unwrap_syscall();
 
         // TODO: this shouldn't be necessary. call_contract_syscall returns a Span<felt252>, which
         // is a serialized result, but returning a Span<felt252> results in an error:
