@@ -78,7 +78,8 @@ fn setup() -> (ContractAddress, ContractAddress, ContractAddress, IAccessControl
     calldata.append(acc1.into()); // owner = acc1;
     let (billingAccessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
     let billingAccessController = IAccessControllerDispatcher {
         contract_address: billingAccessControllerAddr
     };
@@ -102,7 +103,8 @@ fn test_ownable() {
     calldata.append(123); // description
     let (aggregatorAddr, _) = deploy_syscall(
         Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     should_implement_ownable(aggregatorAddr, account);
 }
@@ -122,7 +124,8 @@ fn test_access_control() {
     calldata.append(123); // description
     let (aggregatorAddr, _) = deploy_syscall(
         Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     should_implement_access_control(aggregatorAddr, account);
 }

@@ -165,9 +165,10 @@ mod Account {
     fn _is_valid_signature(message: felt252, signature: Span<felt252>) -> bool {
         let valid_length = signature.len() == 2_u32;
 
-        valid_length & check_ecdsa_signature(
-            message, public_key::read(), *signature.at(0_u32), *signature.at(1_u32)
-        )
+        valid_length
+            & check_ecdsa_signature(
+                message, public_key::read(), *signature.at(0_u32), *signature.at(1_u32)
+            )
     }
 
     #[internal]

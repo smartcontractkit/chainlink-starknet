@@ -66,10 +66,14 @@ mod AggregatorProxy {
                 Phase {
                     id: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                     aggregator: storage_read_syscall(
                         address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?.try_into().unwrap(),
+                    )?
+                        .try_into()
+                        .unwrap(),
                 }
             )
         }
