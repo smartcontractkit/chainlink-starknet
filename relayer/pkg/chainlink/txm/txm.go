@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/caigo"
-	"github.com/smartcontractkit/caigo/gateway"
+	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"golang.org/x/exp/maps"
 
@@ -137,7 +137,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Has
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
+	nonce, err := txm.nonce.NextSequence(accountAddress, client.ChainID)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
@@ -174,7 +174,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Has
 
 	// update nonce if transaction is successful
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
+		txm.nonce.IncrementNextSequence(accountAddress, client.ChainID, nonce),
 		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
 	)
 	return res.TransactionHash, err
@@ -204,21 +204,20 @@ func (txm *starktxm) confirmLoop() {
 			for addr := range hashes {
 				for i := range hashes[addr] {
 					hash := hashes[addr][i]
-					status, err := client.Gw.TransactionStatus(ctx, gateway.TransactionStatusOptions{
-						TransactionHash: hashes[addr][i],
-					})
+					response, err := client.Provider.TransactionReceipt(ctx, caigotypes.HexToHash(hashes[addr][i]))
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
-
-					if status == nil {
-						txm.lggr.Errorw("status was nil", "hash", hash)
-						continue
+					receipt, ok := response.(*caigorpc.InvokeTransactionReceipt)
+					if !ok {
+						panic("")
 					}
 
-					if status.TxStatus == "ACCEPTED_ON_L1" || status.TxStatus == "ACCEPTED_ON_L2" || status.TxStatus == "REJECTED" {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status.TxStatus), "hash", hash, "status", status)
+					status := receipt.Status
+
+					if status == caigotypes.TransactionAcceptedOnL1 || status == caigotypes.TransactionAcceptedOnL2 || status == caigotypes.TransactionRejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
 						if err := txm.txStore.Confirm(addr, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 						}
@@ -270,7 +269,7 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 	}
 
 	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, client.Gw.ChainId, client); err != nil {
+	if err := txm.nonce.Register(context.TODO(), accountAddress, client.ChainID, client); err != nil {
 		return err
 	}
 

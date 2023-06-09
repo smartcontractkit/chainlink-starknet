@@ -4,7 +4,6 @@ package mocks
 
 import (
 	context "context"
-	big "math/big"
 
 	rpcv02 "github.com/smartcontractkit/caigo/rpcv02"
 	mock "github.com/stretchr/testify/mock"

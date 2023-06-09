@@ -59,8 +59,7 @@ func TestRPCClient(t *testing.T) {
 
 	t.Run("get chain id", func(t *testing.T) {
 		// TODO: mock the chainID query
-		id, err := client.ChainID(context.Background())
-		assert.NoError(t, err)
+		id := client.ChainID
 		assert.Equal(t, chainID, id)
 	})
 
