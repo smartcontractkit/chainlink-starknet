@@ -35,7 +35,8 @@ fn test_ownable() {
     calldata.append(account.into()); // owner
     let (linkAddr, _) = deploy_syscall(
         LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
 
     should_implement_ownable(linkAddr, account);
 }

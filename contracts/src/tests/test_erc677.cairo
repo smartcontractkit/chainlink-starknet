@@ -42,7 +42,8 @@ fn setup_valid_receiver() -> (ContractAddress, MockValidReceiverDispatcher) {
     let calldata = ArrayTrait::new();
     let (address, _) = deploy_syscall(
         ValidReceiver::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
     let contract = MockValidReceiverDispatcher { contract_address: address };
     (address, contract)
 }
@@ -52,7 +53,8 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
     let calldata = ArrayTrait::new();
     let (address, _) = deploy_syscall(
         InvalidReceiver::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    ).unwrap();
+    )
+        .unwrap();
     let contract = MockInvalidReceiverDispatcher { contract_address: address };
     (address, contract)
 }

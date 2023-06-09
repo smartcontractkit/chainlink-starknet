@@ -55,3 +55,20 @@ yarn gauntlet ocr2:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBE
 ```
 
 This Should set the config for this feed on contract address.
+
+
+## Upgrading
+
+All of the contracts (besides example) can be upgraded by supplying a classHash flag
+
+e.g.
+
+```bash
+yarn gautnlet access_controller:upgrade --network=<NETWORK> --classHash=<CLASS_HASH> <CONTRACT_ADDRESS>`,
+```
+
+or
+
+```bash
+yarn gautnlet ocr2:upgrade --network=<NETWORK> --classHash=<CLASS_HASH> <CONTRACT_ADDRESS>`,
+```
