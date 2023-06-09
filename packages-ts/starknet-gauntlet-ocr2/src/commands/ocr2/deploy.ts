@@ -21,7 +21,7 @@ type ContractInput = [
 
 const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
-  
+
   flags.min_answer = parseInt(flags.min_answer)
   flags.max_answer = parseInt(flags.max_answer)
   flags.decimals = parseInt(flags.decimals)
