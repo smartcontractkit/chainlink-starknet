@@ -29,3 +29,10 @@ yarn gauntlet token:transfer --network=<NETWORK> --recipient=<RECPIENT_ACCOUNT> 
 ```bash
 yarn gauntlet token:balance_of --network=<NETWORK> --address=<ACCOUNT_ADDRESS> <TOKEN_CONTRACT_ADDRESS>
 ```
+
+### Upgrade
+
+```bash
+yarn gauntlet token:upgrade --network=<NETWORK> --classHash=<CLASS_HASH> <TOKEN_CONTRACT_ADDRESS>
+```
+
