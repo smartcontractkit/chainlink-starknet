@@ -14,6 +14,33 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
 
+func TestBuildReportWithNegativeValues(t *testing.T) {
+	c := ReportCodec{}
+	oo := []median.ParsedAttributedObservation{}
+
+	oo = append(oo, median.ParsedAttributedObservation{
+		Timestamp:       uint32(time.Now().Unix()),
+		Value:           big.NewInt(-10),
+		JuelsPerFeeCoin: big.NewInt(10),
+		Observer:        commontypes.OracleID(1),
+	})
+
+	_, err := c.BuildReport(oo)
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (-10), fee = (10)")
+
+	oo = []median.ParsedAttributedObservation{}
+	oo = append(oo, median.ParsedAttributedObservation{
+		Timestamp:       uint32(time.Now().Unix()),
+		Value:           big.NewInt(10),
+		JuelsPerFeeCoin: big.NewInt(-10),
+		Observer:        commontypes.OracleID(1),
+	})
+
+	_, err = c.BuildReport(oo)
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (-10)")
+
+}
+
 func TestBuildReport(t *testing.T) {
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
@@ -98,24 +125,6 @@ func TestMedianFromReport(t *testing.T) {
 			name:           "two equal",
 			obs:            []*big.Int{big.NewInt(1), big.NewInt(1)},
 			expectedMedian: big.NewInt(1),
-		},
-		{
-			name: "one negative one positive",
-			obs:  []*big.Int{big.NewInt(-1), big.NewInt(1)},
-			// sorts to -1, 1
-			expectedMedian: big.NewInt(1),
-		},
-		{
-			name: "two negative",
-			obs:  []*big.Int{big.NewInt(-2), big.NewInt(-1)},
-			// will sort to -2, -1
-			expectedMedian: big.NewInt(-1),
-		},
-		{
-			name: "three negative",
-			obs:  []*big.Int{big.NewInt(-5), big.NewInt(-3), big.NewInt(-1)},
-			// will sort to -5, -3, -1
-			expectedMedian: big.NewInt(-3),
 		},
 	}
 

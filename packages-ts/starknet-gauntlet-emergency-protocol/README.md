@@ -108,6 +108,14 @@ This sets the L1 sender address. This is to control, which L1 address can write 
 yarn gauntlet sequencer_uptime_feed:set_l1_sender --network=<NETWORK> --address=<ADDRESS>  <L2_FEED>
 ```
 
+- upgrade
+
+This upgrades the contract to point to a new class hash. 
+
+```bash
+yarn gauntlet SequencerUptimeFeed:upgrade --network=testnet --classHash=<CLASS_HASH>
+```
+
 - Inspect
 
 Inspect the latest round data

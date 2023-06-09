@@ -1,30 +1,11 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
-import { CONTRACT_LIST, aggregatorConsumerLoader } from '../../lib/contracts'
+import { makeExecuteCommand, declareCommandConfig } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
+import { CONTRACT_LIST, aggregatorConsumerLoader } from '../../lib/contracts'
 
-type UserInput = {}
-
-type ContractInput = []
-
-const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
-  return []
-}
-
-const makeUserInput = async (flags, args): Promise<UserInput> => ({})
-
-const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
-  contractId: CONTRACT_LIST.AGGREGATOR_CONSUMER,
-  category: CATEGORIES.OCR2,
-  action: 'declare',
-  suffixes: ['consumer'],
-  ux: {
-    description: `Declares an example Aggregator consumer`,
-    examples: [`${CATEGORIES.OCR2}:consumer:declare --network=<NETWORK>`],
-  },
-  makeUserInput,
-  makeContractInput,
-  validations: [],
-  loadContract: aggregatorConsumerLoader,
-}
-
-export default makeExecuteCommand(commandConfig)
+export default makeExecuteCommand(
+  declareCommandConfig(
+    CONTRACT_LIST.AGGREGATOR_CONSUMER,
+    CATEGORIES.OCR2,
+    aggregatorConsumerLoader,
+  ),
+)
