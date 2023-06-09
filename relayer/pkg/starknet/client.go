@@ -2,13 +2,15 @@ package starknet
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
 
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	caigo "github.com/smartcontractkit/caigo"
 	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
 	caigotypes "github.com/smartcontractkit/caigo/types"
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 )
@@ -22,15 +24,13 @@ type Reader interface {
 	// provider interface
 	BlockWithTxHashes(ctx context.Context, blockID caigorpc.BlockID) (*caigorpc.Block, error)
 	Call(context.Context, caigotypes.FunctionCall, caigorpc.BlockID) ([]string, error)
-	ChainID(context.Context) (string, error)
 	Events(ctx context.Context, filter caigorpc.EventFilter) (*caigorpc.EventsOutput, error)
+	TransactionByHash(context.Context, caigotypes.Hash) (caigorpc.Transaction, error)
+	TransactionReceipt(context.Context, caigotypes.Hash) (caigorpc.TransactionReceipt, error)
+	AccountNonce(context.Context, caigotypes.Hash) (*big.Int, error)
 }
 
 type Writer interface {
-	// Invoke(context.Context, caigotypes.FunctionInvoke) (*caigotypes.AddInvokeTransactionOutput, error)
-	TransactionByHash(context.Context, caigotypes.Hash) (caigorpc.Transaction, error)
-	TransactionReceipt(context.Context, caigotypes.Hash) (caigorpc.TransactionReceipt, error)
-	EstimateFee(context.Context, caigotypes.FunctionInvoke, caigorpc.BlockID) (*caigotypes.FeeEstimate, error)
 }
 
 type ReaderWriter interface {
@@ -46,6 +46,7 @@ type Client struct {
 	Provider       *caigorpc.Provider
 	lggr           logger.Logger
 	defaultTimeout time.Duration
+	ChainID        string
 }
 
 // pass nil or 0 to timeout to not use built in default timeout
@@ -68,6 +69,13 @@ func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time
 	} else {
 		client.defaultTimeout = *timeout
 	}
+
+	// cache chainID on the provider to avoid repeated calls
+	chainID, err = client.Provider.ChainID(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	client.ChainID = chainID
 
 	return client, nil
 }
@@ -138,21 +146,6 @@ func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockH
 
 }
 
-func (c *Client) ChainID(ctx context.Context) (string, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
-
-	out, err := c.Provider.ChainID(ctx)
-	if err != nil {
-		return out, errors.Wrap(err, "error in client.ChainID")
-	}
-	return out, nil
-
-}
-
 func (c *Client) TransactionByHash(ctx context.Context, hash caigotypes.Hash) (caigorpc.Transaction, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
@@ -189,24 +182,6 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash caigotypes.Hash) (
 
 }
 
-func (c *Client) EstimateFee(ctx context.Context, call caigotypes.FunctionInvoke, blockID caigorpc.BlockID) (*caigotypes.FeeEstimate, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
-
-	out, err := c.Provider.EstimateFee(ctx, call, blockID)
-	if err != nil {
-		return out, errors.Wrap(err, "error in client.EstimateFee")
-	}
-	if out == nil {
-		return out, NilResultError("client.EstimateFee")
-	}
-	return out, nil
-
-}
-
 func (c *Client) Events(ctx context.Context, filter caigorpc.EventFilter) (*caigorpc.EventsOutput, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
@@ -226,4 +201,18 @@ func (c *Client) Events(ctx context.Context, filter caigorpc.EventFilter) (*caig
 	}
 	return out, nil
 
+}
+func (c *Client) AccountNonce(ctx context.Context, accountAddress caigotypes.Hash) (*big.Int, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	sender := "placeholder" // not actually used in account.Nonce()
+	account, err := caigo.NewRPCAccount(sender, accountAddress.String(), nil, c.Provider, caigo.AccountVersion1)
+	if err != nil {
+		return nil, errors.Wrap(err, "error in client.AccountNonce")
+	}
+	return account.Nonce(ctx)
 }
