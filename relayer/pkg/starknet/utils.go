@@ -89,26 +89,17 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-// SignedBigToFelt wraps negative values correctly into felt
-func SignedBigToFelt(num *big.Int) *big.Int {
-	return new(big.Int).Mod(num, caigotypes.MaxFelt.Big())
-}
-
-// FeltToSigned unwraps felt into negative values
-func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
-	num = felt.Big()
-	prime := caigotypes.MaxFelt.Big()
-	half := new(big.Int).Div(prime, big.NewInt(2))
-	// if num > PRIME/2, then -PRIME to convert to negative value
-	if num.Cmp(half) > 0 {
-		return new(big.Int).Sub(num, prime)
+func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int, err error) {
+	if caigotypes.MaxFelt.Cmp(felt.Big()) == -1 {
+		return nil, fmt.Errorf("felt value is too large: %s", felt.Big())
 	}
-	return num
+	// will always return a non-negative value because it uses Bytes() behind the scenes
+	return felt.Big(), nil
 }
 
-func HexToSignedBig(str string) (num *big.Int) {
+func HexToUnsignedBig(str string) (num *big.Int, err error) {
 	felt := caigotypes.StrToFelt(str)
-	return FeltToSignedBig(felt)
+	return FeltToUnsignedBig(felt)
 }
 
 func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {

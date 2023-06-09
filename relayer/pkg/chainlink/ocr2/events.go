@@ -62,7 +62,10 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// answer
 	index++
-	latestAnswer := starknet.HexToSignedBig(eventData[index].String())
+	latestAnswer, err := starknet.HexToUnsignedBig(eventData[index].String())
+	if err != nil {
+		return NewTransmissionEvent{}, errors.Wrap(err, "latestAnswer invalid")
+	}
 
 	// transmitter
 	index++
