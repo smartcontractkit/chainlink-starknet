@@ -46,13 +46,16 @@ func TestOCR2Client(t *testing.T) {
 
 			call := Call{}
 			require.NoError(t, json.Unmarshal(req, &call))
-			raw := call.Params[0]
-			reqdata := Request{}
-			err := json.Unmarshal([]byte(raw), &reqdata)
-			require.NoError(t, err)
 
 			switch call.Method {
+			case "starknet_chainId":
+				out = []byte(`{"result":"0x534e5f4d41494e"}`)
 			case "starknet_call":
+				raw := call.Params[0]
+				reqdata := Request{}
+				err := json.Unmarshal([]byte(raw), &reqdata)
+				require.NoError(t, err)
+
 				switch {
 				case caigotypes.BigToHex(caigotypes.GetSelectorFromName("billing")) == reqdata.Selector:
 					// billing response
