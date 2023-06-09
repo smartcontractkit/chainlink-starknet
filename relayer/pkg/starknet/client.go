@@ -50,7 +50,7 @@ type Client struct {
 }
 
 // pass nil or 0 to timeout to not use built in default timeout
-func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
+func NewClient(_chainID string, baseURL string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	// TODO: chainID now unused
 	c, err := ethrpc.DialContext(context.Background(), baseURL)
 	if err != nil {
@@ -71,7 +71,7 @@ func NewClient(chainID string, baseURL string, lggr logger.Logger, timeout *time
 	}
 
 	// cache chainID on the provider to avoid repeated calls
-	chainID, err = client.Provider.ChainID(context.TODO())
+	chainID, err := client.Provider.ChainID(context.TODO())
 	if err != nil {
 		return nil, err
 	}
