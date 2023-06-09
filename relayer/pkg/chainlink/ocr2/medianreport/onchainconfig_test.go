@@ -21,28 +21,18 @@ func TestOnchainConfigCodec(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:      "negative min < positive max",
-			val:       []*big.Int{big.NewInt(-1000), big.NewInt(1000)},
+			name:      "0 < positive max",
+			val:       []*big.Int{big.NewInt(0), big.NewInt(1000)},
 			expectErr: false,
 		},
 		{
-			name:      "negative min < negative max",
-			val:       []*big.Int{big.NewInt(-1000), big.NewInt(-1)},
-			expectErr: false,
+			name:      "positive max < 0",
+			val:       []*big.Int{big.NewInt(1000), big.NewInt(0)},
+			expectErr: true,
 		},
 		{
 			name:      "positive min > positive max",
 			val:       []*big.Int{big.NewInt(1000), big.NewInt(1)},
-			expectErr: true,
-		},
-		{
-			name:      "negative min > negative max",
-			val:       []*big.Int{big.NewInt(-1), big.NewInt(-1000)},
-			expectErr: true,
-		},
-		{
-			name:      "positive min > negative max",
-			val:       []*big.Int{big.NewInt(1), big.NewInt(-1000)},
 			expectErr: true,
 		},
 		{

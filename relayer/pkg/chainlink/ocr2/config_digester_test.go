@@ -29,7 +29,7 @@ var testConfig = types.ContractConfig{
 	F: 1,
 	OnchainConfig: []byte{
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // version
-		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 246, // min (-1)
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // min (1)
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59, 154, 202, 0, // max (1000000000)
 	},
 	OffchainConfigVersion: 2,
@@ -44,7 +44,7 @@ func TestConfigDigester(t *testing.T) {
 
 	digest, err := d.ConfigDigest(testConfig)
 	assert.NoError(t, err)
-	assert.Equal(t, "0004d46ed94aa1a4bfa938170a3df74f5b286498a411f59fe5be4d00b6eef12d", digest.Hex())
+	assert.Equal(t, "00047843e1622a4462e1209c9f8559ba43cbf43bf238da490f3b9c8e33f3419e", digest.Hex())
 }
 
 func TestConfigDigester_InvalidChainID(t *testing.T) {
