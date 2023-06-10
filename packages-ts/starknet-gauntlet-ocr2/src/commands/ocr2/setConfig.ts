@@ -4,14 +4,17 @@ import {
   ExecuteCommandConfig,
   ExecutionContext,
   makeExecuteCommand,
+  bytesToFelts,
+  BeforeExecute,
+  getRDD,
 } from '@chainlink/starknet-gauntlet'
-import { time } from '@chainlink/gauntlet-core/dist/utils'
+import { time, diff } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contracts-ocr2'
-import { bytesToFelts, getRDD } from '@chainlink/starknet-gauntlet'
 import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { InvokeTransactionReceiptResponse } from 'starknet'
+import { getLatestOCRConfigEvent } from './inspection/configEvent'
 
 type Oracle = {
   signer: string
@@ -81,12 +84,12 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
   }
 
   return {
-    f: flags.f,
+    f: parseInt(flags.f),
     signers: flags.signers,
     transmitters: flags.transmitters,
     onchainConfig: flags.onchainConfig,
     offchainConfig: flags.offchainConfig,
-    offchainConfigVersion: flags.offchainConfigVersion,
+    offchainConfigVersion: parseInt(flags.offchainConfigVersion),
     secret: flags.secret || env.secret,
     randomSecret: flags.randomSecret || undefined,
   }
@@ -123,8 +126,32 @@ const makeContractInput = async (
   return [oracles, input.f, onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
-// TODO: beforeExecute attempt to deserialize offchainConfig to check for validity
-// TODO: diff onchain config vs proposed config
+const beforeExecute: BeforeExecute<SetConfigInput, ContractInput> = (
+  context,
+  input,
+  deps,
+) => async () => {
+  deps.logger.loading(`Executing ${context.id} from contract ${context.contractAddress}`)
+
+  const { offchainConfig } = await encoding.serializeOffchainConfig(
+    input.user.offchainConfig,
+    input.user.secret,
+  )
+  const newOffchainConfig = encoding.deserializeConfig(offchainConfig)
+
+  const eventData = await getLatestOCRConfigEvent(context.provider, context.contractAddress)
+  if (eventData.length === 0) {
+    deps.logger.info('No previous config found, review the offchain config below:')
+    console.log(newOffchainConfig)
+    return
+  }
+  const currOffchainConfig = decodeOffchainConfigFromEventData(eventData)
+
+  deps.logger.info(
+    'Review the proposed offchain config changes below: green - added, red - deleted.',
+  )
+  diff.printDiff(currOffchainConfig, newOffchainConfig)
+}
 
 const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, input, deps) => async (
   result,
@@ -158,6 +185,7 @@ const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
   hooks: {
+    beforeExecute,
     afterExecute,
   },
 }
