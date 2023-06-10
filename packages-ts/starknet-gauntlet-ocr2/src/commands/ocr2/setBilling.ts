@@ -1,4 +1,9 @@
-import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
+import {
+  CONTRACT_TYPES,
+  ExecuteCommandConfig,
+  ExecutionContext,
+  makeExecuteCommand,
+} from '@chainlink/starknet-gauntlet'
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { SetBilling, SetBillingInput } from '@chainlink/gauntlet-contracts-ocr2'
 
@@ -13,13 +18,21 @@ type ContractInput = [
   },
 ]
 
-const makeContractInput = async (input: StarknetSetBillingInput): Promise<ContractInput> => {
+const makeContractInput = async (
+  input: StarknetSetBillingInput,
+  ctx: ExecutionContext,
+): Promise<ContractInput> => {
+  if (ctx.rdd) {
+    const contract = ctx.rdd[CONTRACT_TYPES.AGGREGATOR][ctx.contractAddress]
+    input = contract.billing
+  }
+
   return [
     {
       observation_payment_gjuels: input.observationPaymentGjuels,
       transmission_payment_gjuels: input.transmissionPaymentGjuels,
-      gas_base: input.gasBase,
-      gas_per_signature: input.gasPerSignature,
+      gas_base: input.gasBase || 0,
+      gas_per_signature: input.gasPerSignature || 0,
     },
   ]
 }
