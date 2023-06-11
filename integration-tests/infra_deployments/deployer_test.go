@@ -5,11 +5,12 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -40,10 +41,10 @@ func createKeys(testState *testing.T) ([]*client.Chainlink, error) {
 	for _, nodeUrl := range urls {
 		u, _ := url.Parse(nodeUrl[0])
 		c, err := client.NewChainlink(&client.ChainlinkConfig{
-			URL:      nodeUrl[0],
-			Email:    nodeUrl[1],
-			Password: nodeUrl[2],
-			RemoteIP: u.Host,
+			URL:        nodeUrl[0],
+			Email:      nodeUrl[1],
+			Password:   nodeUrl[2],
+			InternalIP: u.Host,
 		})
 		if err != nil {
 			return nil, err
