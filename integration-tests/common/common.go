@@ -11,8 +11,9 @@ import (
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
-	"github.com/smartcontractkit/caigo/gateway"
 	"gopkg.in/guregu/null.v4"
+
+	"github.com/smartcontractkit/caigo/gateway"
 
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/alias"
@@ -154,9 +155,9 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
-			RemoteIP:   cc.ChainlinkNodes[0].RemoteIP(),
-			RemotePort: c.P2PPort,
-			PeerID:     cc.NKeys[0].PeerID,
+			InternalIP:   cc.ChainlinkNodes[0].InternalIP(),
+			InternalPort: c.P2PPort,
+			PeerID:       cc.NKeys[0].PeerID,
 		},
 	}
 
