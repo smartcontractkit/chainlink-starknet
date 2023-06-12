@@ -26,7 +26,7 @@ import (
 
 func TestIntegration_Txm(t *testing.T) {
 	n := 2 // number of txs per key
-	url := SetupLocalStarknetNode(t) + "/rpc"
+	url := SetupLocalStarknetNode(t)
 	devnet := test.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestIntegration_Txm(t *testing.T) {
 	ksAdapter := NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
+	client, err := starknet.NewClient(caigogw.GOERLI_ID, url+"/rpc", lggr, &timeout)
 	require.NoError(t, err)
 
 	getClient := func() (*starknet.Client, error) {
