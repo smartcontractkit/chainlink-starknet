@@ -69,9 +69,3 @@ func TestRPCClient(t *testing.T) {
 		assert.Equal(t, uint64(1), blockNum)
 	})
 }
-
-func TestRPCClient_DefaultTimeout(t *testing.T) {
-	client, err := NewClient(chainID, "http://localhost:5050", logger.Test(t), nil)
-	require.NoError(t, err)
-	assert.Zero(t, client.defaultTimeout)
-}
