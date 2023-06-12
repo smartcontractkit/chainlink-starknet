@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.29.1
-	github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e
+	github.com/smartcontractkit/caigo v0.0.0-20230612084522-56b86bbbc0c4
 	github.com/smartcontractkit/chainlink-env v0.3.29
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230530233948-90c8af98011e
 	github.com/smartcontractkit/chainlink-testing-framework v1.11.5

@@ -37,21 +37,21 @@ func (_m *OCR2Reader) BaseReader() starknet.Reader {
 }
 
 // BillingDetails provides a mock function with given fields: _a0, _a1
-func (_m *OCR2Reader) BillingDetails(_a0 context.Context, _a1 types.Hash) (ocr2.BillingDetails, error) {
+func (_m *OCR2Reader) BillingDetails(_a0 context.Context, _a1 types.Felt) (ocr2.BillingDetails, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 ocr2.BillingDetails
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (ocr2.BillingDetails, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (ocr2.BillingDetails, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) ocr2.BillingDetails); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) ocr2.BillingDetails); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(ocr2.BillingDetails)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -61,21 +61,21 @@ func (_m *OCR2Reader) BillingDetails(_a0 context.Context, _a1 types.Hash) (ocr2.
 }
 
 // ConfigFromEventAt provides a mock function with given fields: _a0, _a1, _a2
-func (_m *OCR2Reader) ConfigFromEventAt(_a0 context.Context, _a1 types.Hash, _a2 uint64) (ocr2.ContractConfig, error) {
+func (_m *OCR2Reader) ConfigFromEventAt(_a0 context.Context, _a1 types.Felt, _a2 uint64) (ocr2.ContractConfig, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 ocr2.ContractConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash, uint64) (ocr2.ContractConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt, uint64) (ocr2.ContractConfig, error)); ok {
 		return rf(_a0, _a1, _a2)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash, uint64) ocr2.ContractConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt, uint64) ocr2.ContractConfig); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Get(0).(ocr2.ContractConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash, uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt, uint64) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
@@ -85,21 +85,21 @@ func (_m *OCR2Reader) ConfigFromEventAt(_a0 context.Context, _a1 types.Hash, _a2
 }
 
 // LatestConfigDetails provides a mock function with given fields: _a0, _a1
-func (_m *OCR2Reader) LatestConfigDetails(_a0 context.Context, _a1 types.Hash) (ocr2.ContractConfigDetails, error) {
+func (_m *OCR2Reader) LatestConfigDetails(_a0 context.Context, _a1 types.Felt) (ocr2.ContractConfigDetails, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 ocr2.ContractConfigDetails
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (ocr2.ContractConfigDetails, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (ocr2.ContractConfigDetails, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) ocr2.ContractConfigDetails); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) ocr2.ContractConfigDetails); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(ocr2.ContractConfigDetails)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -109,21 +109,21 @@ func (_m *OCR2Reader) LatestConfigDetails(_a0 context.Context, _a1 types.Hash) (
 }
 
 // LatestRoundData provides a mock function with given fields: _a0, _a1
-func (_m *OCR2Reader) LatestRoundData(_a0 context.Context, _a1 types.Hash) (ocr2.RoundData, error) {
+func (_m *OCR2Reader) LatestRoundData(_a0 context.Context, _a1 types.Felt) (ocr2.RoundData, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 ocr2.RoundData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (ocr2.RoundData, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (ocr2.RoundData, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) ocr2.RoundData); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) ocr2.RoundData); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(ocr2.RoundData)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -133,21 +133,21 @@ func (_m *OCR2Reader) LatestRoundData(_a0 context.Context, _a1 types.Hash) (ocr2
 }
 
 // LatestTransmissionDetails provides a mock function with given fields: _a0, _a1
-func (_m *OCR2Reader) LatestTransmissionDetails(_a0 context.Context, _a1 types.Hash) (ocr2.TransmissionDetails, error) {
+func (_m *OCR2Reader) LatestTransmissionDetails(_a0 context.Context, _a1 types.Felt) (ocr2.TransmissionDetails, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 ocr2.TransmissionDetails
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (ocr2.TransmissionDetails, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (ocr2.TransmissionDetails, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) ocr2.TransmissionDetails); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) ocr2.TransmissionDetails); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(ocr2.TransmissionDetails)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -157,15 +157,15 @@ func (_m *OCR2Reader) LatestTransmissionDetails(_a0 context.Context, _a1 types.H
 }
 
 // LinkAvailableForPayment provides a mock function with given fields: _a0, _a1
-func (_m *OCR2Reader) LinkAvailableForPayment(_a0 context.Context, _a1 types.Hash) (*big.Int, error) {
+func (_m *OCR2Reader) LinkAvailableForPayment(_a0 context.Context, _a1 types.Felt) (*big.Int, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *big.Int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (*big.Int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (*big.Int, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) *big.Int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) *big.Int); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -173,7 +173,7 @@ func (_m *OCR2Reader) LinkAvailableForPayment(_a0 context.Context, _a1 types.Has
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -183,15 +183,15 @@ func (_m *OCR2Reader) LinkAvailableForPayment(_a0 context.Context, _a1 types.Has
 }
 
 // NewTransmissionsFromEventsAt provides a mock function with given fields: _a0, _a1, _a2
-func (_m *OCR2Reader) NewTransmissionsFromEventsAt(_a0 context.Context, _a1 types.Hash, _a2 uint64) ([]ocr2.NewTransmissionEvent, error) {
+func (_m *OCR2Reader) NewTransmissionsFromEventsAt(_a0 context.Context, _a1 types.Felt, _a2 uint64) ([]ocr2.NewTransmissionEvent, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 []ocr2.NewTransmissionEvent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash, uint64) ([]ocr2.NewTransmissionEvent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt, uint64) ([]ocr2.NewTransmissionEvent, error)); ok {
 		return rf(_a0, _a1, _a2)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash, uint64) []ocr2.NewTransmissionEvent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt, uint64) []ocr2.NewTransmissionEvent); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
@@ -199,7 +199,7 @@ func (_m *OCR2Reader) NewTransmissionsFromEventsAt(_a0 context.Context, _a1 type
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash, uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt, uint64) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)

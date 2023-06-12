@@ -12,7 +12,8 @@ import (
 func StringsToCaigoFelts(in []string) []*caigotypes.Felt {
 	out := make([]*caigotypes.Felt, len(in))
 	for i := 0; i < len(in); i++ {
-		out[i] = caigotypes.StrToFelt(in[i])
+		felt := caigotypes.StrToFelt(in[i])
+		out[i] = &felt
 	}
 	return out
 }

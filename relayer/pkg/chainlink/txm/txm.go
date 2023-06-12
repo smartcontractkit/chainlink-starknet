@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"sync"
 	"time"
 
@@ -25,13 +26,13 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, txFn caigotypes.FunctionCall) error
+	Enqueue(senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, txFn caigotypes.FunctionCall) error
 	InflightCount() (int, int)
 }
 
 type Tx struct {
-	senderAddress  caigotypes.Hash
-	accountAddress caigotypes.Hash
+	senderAddress  caigotypes.Felt
+	accountAddress caigotypes.Felt
 	call           caigotypes.FunctionCall
 }
 
@@ -124,7 +125,7 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) (txhash string, err error) {
 	txs := []caigotypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
@@ -132,7 +133,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Has
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewRPCAccount(senderAddress.String(), accountAddress.String(), txm.ks, client.Provider, caigo.AccountVersion1)
+	account, err := caigo.NewRPCAccount(senderAddress, accountAddress, txm.ks, client.Provider, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
@@ -204,14 +205,14 @@ func (txm *starktxm) confirmLoop() {
 			for addr := range hashes {
 				for i := range hashes[addr] {
 					hash := hashes[addr][i]
-					response, err := client.Provider.TransactionReceipt(ctx, caigotypes.HexToHash(hashes[addr][i]))
+					response, err := client.Provider.TransactionReceipt(ctx, caigotypes.StrToFelt(hashes[addr][i]))
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
-					receipt, ok := response.(*caigorpc.InvokeTransactionReceipt)
+					receipt, ok := response.(caigorpc.InvokeTransactionReceipt)
 					if !ok {
-						panic("")
+						panic(fmt.Sprintf("wrong receipt type: %v", reflect.TypeOf(response)))
 					}
 
 					status := receipt.Status
@@ -253,7 +254,7 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test

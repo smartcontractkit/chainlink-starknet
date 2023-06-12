@@ -25,9 +25,9 @@ type Reader interface {
 	BlockWithTxHashes(ctx context.Context, blockID caigorpc.BlockID) (*caigorpc.Block, error)
 	Call(context.Context, caigotypes.FunctionCall, caigorpc.BlockID) ([]string, error)
 	Events(ctx context.Context, filter caigorpc.EventFilter) (*caigorpc.EventsOutput, error)
-	TransactionByHash(context.Context, caigotypes.Hash) (caigorpc.Transaction, error)
-	TransactionReceipt(context.Context, caigotypes.Hash) (caigorpc.TransactionReceipt, error)
-	AccountNonce(context.Context, caigotypes.Hash) (*big.Int, error)
+	TransactionByHash(context.Context, caigotypes.Felt) (caigorpc.Transaction, error)
+	TransactionReceipt(context.Context, caigotypes.Felt) (caigorpc.TransactionReceipt, error)
+	AccountNonce(context.Context, caigotypes.Felt) (*big.Int, error)
 }
 
 type Writer interface {
@@ -146,7 +146,7 @@ func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockH
 
 }
 
-func (c *Client) TransactionByHash(ctx context.Context, hash caigotypes.Hash) (caigorpc.Transaction, error) {
+func (c *Client) TransactionByHash(ctx context.Context, hash caigotypes.Felt) (caigorpc.Transaction, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -164,7 +164,7 @@ func (c *Client) TransactionByHash(ctx context.Context, hash caigotypes.Hash) (c
 
 }
 
-func (c *Client) TransactionReceipt(ctx context.Context, hash caigotypes.Hash) (caigorpc.TransactionReceipt, error) {
+func (c *Client) TransactionReceipt(ctx context.Context, hash caigotypes.Felt) (caigorpc.TransactionReceipt, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -202,15 +202,15 @@ func (c *Client) Events(ctx context.Context, filter caigorpc.EventFilter) (*caig
 	return out, nil
 
 }
-func (c *Client) AccountNonce(ctx context.Context, accountAddress caigotypes.Hash) (*big.Int, error) {
+func (c *Client) AccountNonce(ctx context.Context, accountAddress caigotypes.Felt) (*big.Int, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
-	sender := "placeholder" // not actually used in account.Nonce()
-	account, err := caigo.NewRPCAccount(sender, accountAddress.String(), nil, c.Provider, caigo.AccountVersion1)
+	sender := caigotypes.BigToFelt(big.NewInt((0))) // not actually used in account.Nonce()
+	account, err := caigo.NewRPCAccount(sender, accountAddress, nil, c.Provider, caigo.AccountVersion1)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in client.AccountNonce")
 	}

@@ -90,7 +90,7 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 }
 
 func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int, err error) {
-	if caigotypes.MaxFelt.Cmp(felt.Big()) == -1 {
+	if caigotypes.MaxFelt.Big().Cmp(felt.Big()) == -1 {
 		return nil, fmt.Errorf("felt value is too large: %s", felt.Big())
 	}
 	// will always return a non-negative value because it uses Bytes() behind the scenes
@@ -99,12 +99,12 @@ func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int, err error) {
 
 func HexToUnsignedBig(str string) (num *big.Int, err error) {
 	felt := caigotypes.StrToFelt(str)
-	return FeltToUnsignedBig(felt)
+	return FeltToUnsignedBig(&felt)
 }
 
 func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
 	for _, f := range in {
-		out = append(out, f.Int)
+		out = append(out, f.Big())
 	}
 
 	return out
@@ -118,11 +118,7 @@ func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
 
 	for _, f := range in {
 		felt := caigotypes.StrToFelt(f)
-		if felt == nil {
-			return nil, errors.New("invalid: string value")
-		}
-
-		out = append(out, felt)
+		out = append(out, &felt)
 	}
 
 	return out, nil

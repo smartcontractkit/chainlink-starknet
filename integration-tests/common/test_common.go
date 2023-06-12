@@ -272,13 +272,13 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	// validate balance in aggregator
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.LinkTokenAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.LinkTokenAddr),
 		Selector:        "balance_of",
 		Calldata:        []string{caigotypes.HexToBN(testState.OCRAddr).String()},
 	})
 	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail")
 	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.OCRAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.OCRAddr),
 		Selector:        "link_available_for_payment",
 	})
 	require.NoError(testState.T, errAgg, "Reader balance from LINK contract should not fail")
@@ -294,7 +294,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
 		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
-		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
+		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.StrToFelt(testState.OCRAddr))
 		require.NoError(testState.T, err, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
@@ -372,7 +372,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	// Test proxy reading
 	// TODO: would be good to test proxy switching underlying feeds
 	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.ProxyAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.ProxyAddr),
 		Selector:        "latest_round_data",
 	})
 	if !isSoak {

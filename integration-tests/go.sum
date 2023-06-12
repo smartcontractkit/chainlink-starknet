@@ -1327,8 +1327,8 @@ github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/slack-go/slack v0.12.2 h1:x3OppyMyGIbbiyFhsBmpf9pwkUzMhthJMRNmNlA4LaQ=
 github.com/slack-go/slack v0.12.2/go.mod h1:hlGi5oXA+Gt+yWTPP0plCdRKmjsDxecdHxYQdlMQKOw=
-github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e h1:XY8DncHICYQ1WDVpoXM7Tv3tztNHa1/DctDlSmqgU10=
-github.com/smartcontractkit/caigo v0.0.0-20230530082629-53a5a4bdb25e/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
+github.com/smartcontractkit/caigo v0.0.0-20230612084522-56b86bbbc0c4 h1:8eqK8LgSpP2B8F3ULkthXrxXAWhlVvBiCnc37+g8tis=
+github.com/smartcontractkit/caigo v0.0.0-20230612084522-56b86bbbc0c4/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20230525203711-20bed74ac906 h1:u7Lw7oqLEjADlJPJQnzlCLNSbj038QttaKY0lCa3V78=
 github.com/smartcontractkit/chainlink-env v0.32.8 h1:0YCtqgo91m2Iu9QeoSIwPYRY0y+KPmPMP5V0OYiEXAU=
 github.com/smartcontractkit/chainlink-env v0.32.8/go.mod h1:9c0Czq4a6wZKY20BcoAlK29DnejQIiLo/MwKYtSFnHk=
