@@ -21,15 +21,15 @@ type Reader struct {
 }
 
 // AccountNonce provides a mock function with given fields: _a0, _a1
-func (_m *Reader) AccountNonce(_a0 context.Context, _a1 types.Hash) (*big.Int, error) {
+func (_m *Reader) AccountNonce(_a0 context.Context, _a1 types.Felt) (*big.Int, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *big.Int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (*big.Int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (*big.Int, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) *big.Int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) *big.Int); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -37,7 +37,7 @@ func (_m *Reader) AccountNonce(_a0 context.Context, _a1 types.Hash) (*big.Int, e
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -175,15 +175,15 @@ func (_m *Reader) LatestBlockHeight(_a0 context.Context) (uint64, error) {
 }
 
 // TransactionByHash provides a mock function with given fields: _a0, _a1
-func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 types.Hash) (rpcv02.Transaction, error) {
+func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 types.Felt) (rpcv02.Transaction, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 rpcv02.Transaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (rpcv02.Transaction, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (rpcv02.Transaction, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) rpcv02.Transaction); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) rpcv02.Transaction); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -191,7 +191,7 @@ func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 types.Hash) (rpcv02
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -201,15 +201,15 @@ func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 types.Hash) (rpcv02
 }
 
 // TransactionReceipt provides a mock function with given fields: _a0, _a1
-func (_m *Reader) TransactionReceipt(_a0 context.Context, _a1 types.Hash) (rpcv02.TransactionReceipt, error) {
+func (_m *Reader) TransactionReceipt(_a0 context.Context, _a1 types.Felt) (rpcv02.TransactionReceipt, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 rpcv02.TransactionReceipt
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) (rpcv02.TransactionReceipt, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) (rpcv02.TransactionReceipt, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.Hash) rpcv02.TransactionReceipt); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Felt) rpcv02.TransactionReceipt); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -217,7 +217,7 @@ func (_m *Reader) TransactionReceipt(_a0 context.Context, _a1 types.Hash) (rpcv0
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Felt) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

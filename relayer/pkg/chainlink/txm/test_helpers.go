@@ -77,7 +77,7 @@ func TestKeys(t *testing.T, count int) (rawkeys [][]byte) {
 			break
 		}
 
-		keyBytes := caigotypes.HexToHash(k).Bytes()
+		keyBytes := caigotypes.StrToFelt(k).Bytes()
 		rawkeys = append(rawkeys, keyBytes)
 	}
 	return rawkeys

@@ -21,14 +21,14 @@ type Reader interface {
 var _ Reader = (*contractReader)(nil)
 
 type contractReader struct {
-	address caigotypes.Hash
+	address caigotypes.Felt
 	reader  OCR2Reader
 	lggr    logger.Logger
 }
 
 func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) Reader {
 	return &contractReader{
-		address: caigotypes.HexToHash(address), // TODO: propagate type everywhere
+		address: caigotypes.StrToFelt(address), // TODO: propagate type everywhere
 		reader:  reader,
 		lggr:    lggr,
 	}

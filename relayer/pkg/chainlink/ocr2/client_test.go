@@ -98,7 +98,7 @@ func TestOCR2Client(t *testing.T) {
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
 
-	contractAddress := caigotypes.HexToHash(ocr2ContractAddress)
+	contractAddress := caigotypes.StrToFelt(ocr2ContractAddress)
 
 	t.Run("get billing details", func(t *testing.T) {
 		billing, err := client.BillingDetails(context.Background(), contractAddress)

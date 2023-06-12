@@ -132,35 +132,35 @@ func TestChainTxStore(t *testing.T) {
 	c := NewChainTxStore()
 
 	// automatically save the from address
-	require.NoError(t, c.Save(caigotypes.Hash{}, big.NewInt(0), "0x0"))
+	require.NoError(t, c.Save(caigotypes.Felt{}, big.NewInt(0), "0x0"))
 
 	// reject saving for existing address and reused hash & nonce
 	// error messages are tested within TestTxStore
-	assert.Error(t, c.Save(caigotypes.Hash{}, big.NewInt(0), "0x1"))
-	assert.Error(t, c.Save(caigotypes.Hash{}, big.NewInt(1), "0x0"))
+	assert.Error(t, c.Save(caigotypes.Felt{}, big.NewInt(0), "0x1"))
+	assert.Error(t, c.Save(caigotypes.Felt{}, big.NewInt(1), "0x0"))
 
 	// inflight count
-	count, exists := c.GetAllInflightCount()[caigotypes.Hash{}]
+	count, exists := c.GetAllInflightCount()[caigotypes.Felt{}]
 	require.True(t, exists)
 	assert.Equal(t, 1, count)
-	_, exists = c.GetAllInflightCount()[caigotypes.Hash{1}]
+	_, exists = c.GetAllInflightCount()[caigotypes.BigToFelt(big.NewInt(1))]
 	require.False(t, exists)
 
 	// get unconfirmed
 	list := c.GetAllUnconfirmed()
 	assert.Equal(t, 1, len(list))
-	hashes, ok := list[caigotypes.Hash{}]
+	hashes, ok := list[caigotypes.Felt{}]
 	assert.True(t, ok)
 	assert.Equal(t, []string{"0x0"}, hashes)
 
 	// confirm
-	assert.NoError(t, c.Confirm(caigotypes.Hash{}, "0x0"))
-	assert.ErrorContains(t, c.Confirm(caigotypes.Hash{1}, "0x0"), "from address does not exist")
-	assert.Error(t, c.Confirm(caigotypes.Hash{}, "0x1"))
+	assert.NoError(t, c.Confirm(caigotypes.Felt{}, "0x0"))
+	assert.ErrorContains(t, c.Confirm(caigotypes.BigToFelt(big.NewInt(1)), "0x0"), "from address does not exist")
+	assert.Error(t, c.Confirm(caigotypes.Felt{}, "0x1"))
 	list = c.GetAllUnconfirmed()
 	assert.Equal(t, 1, len(list))
-	assert.Equal(t, 0, len(list[caigotypes.Hash{}]))
-	count, exists = c.GetAllInflightCount()[caigotypes.Hash{}]
+	assert.Equal(t, 0, len(list[caigotypes.Felt{}]))
+	count, exists = c.GetAllInflightCount()[caigotypes.Felt{}]
 	assert.True(t, exists)
 	assert.Equal(t, 0, count)
 }
