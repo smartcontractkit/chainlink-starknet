@@ -14,6 +14,12 @@ This command will generate a new Keypair and will give the details during the ex
 yarn gauntlet account:deploy --network=<NETWORK> --publicKey=<PUBLIC_KEY>
 ```
 
+Additionally, if the contract has already been declared, you can deploy by just referencing the class hash.
+
+```bash
+yarn gauntlet account:deploy --classHash=<CLASS_HASH> --network=<NETWORK> --publicKey=<PUBLIC_KEY>
+```
+
 After the execution is finished, you will want to include the account contract and the private key to your `.env` configuration file.
 
 ```bash

@@ -8,9 +8,11 @@ import {
 import { ocr2ContractLoader } from '../../lib/contracts'
 import { shortString } from 'starknet'
 import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
+import { validateClassHash } from '../../lib/utils'
 
 export interface UserInput extends DeployOCR2Input {
   owner: string
+  classHash?: string
 }
 
 type ContractInput = [
@@ -45,10 +47,16 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   flags.max_answer = parseInt(flags.max_answer)
   flags.decimals = parseInt(flags.decimals)
 
-  return {
+  const classHash = flags.classHash
+  const input = {
     ...DeployOCR2.makeUserInput(flags, args, env),
     owner: flags.owner || env.account,
   } as UserInput
+  // DeployOCR2.validations does not allow input keys to be "false-y" so we only add classHash key if it is !== undefined
+  if (classHash !== undefined) {
+    input['classHash'] = classHash
+  }
+  return input
 }
 
 const makeContractInput = async (
@@ -68,6 +76,7 @@ const makeContractInput = async (
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ...DeployOCR2,
+  validations: [...DeployOCR2.validations, validateClassHash],
   ux: {
     description: 'Deploys OCR2 contract',
     examples: [

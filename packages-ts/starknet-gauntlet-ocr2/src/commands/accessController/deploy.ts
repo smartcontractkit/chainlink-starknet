@@ -1,9 +1,11 @@
 import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { accessControllerContractLoader, CONTRACT_LIST } from '../../lib/contracts'
+import { validateClassHash } from '../../lib/utils'
 
 type UserInput = {
   owner: string
+  classHash?: string
 }
 
 type ContractInput = [owner: string]
@@ -12,6 +14,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
   return {
     owner: flags.owner || env.account,
+    classHash: flags.classHash,
   }
 }
 
@@ -25,11 +28,13 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys an Access Controller Contract',
-    examples: [`${CATEGORIES.ACCESS_CONTROLLER}:deploy --network=<NETWORK>`],
+    examples: [
+      `${CATEGORIES.ACCESS_CONTROLLER}:deploy --network=<NETWORK> --classHash=<CLASS_HASH>`,
+    ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateClassHash],
   loadContract: accessControllerContractLoader,
 }
 
