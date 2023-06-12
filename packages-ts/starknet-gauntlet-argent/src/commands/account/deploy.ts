@@ -4,15 +4,30 @@ import {
   ExecutionContext,
   makeExecuteCommand,
   Validation,
+  isValidAddress,
 } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
-type UserInput = {}
+type UserInput = {
+  classHash?: string
+}
 
 type ContractInput = []
 
-const makeUserInput = async (flags, args): Promise<UserInput> => ({})
+const makeUserInput = async (flags, args): Promise<UserInput> => {
+  if (flags.input) return flags.input as UserInput
+  return {
+    classHash: flags.classHash,
+  }
+}
+
+const validateClassHash = async (input) => {
+  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+    return true
+  }
+  throw new Error(`Invalid Class Hash: ${input.classHash}`)
+}
 
 const makeContractInput = async (
   input: UserInput,
@@ -35,11 +50,11 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys an Argent Labs Account contract',
-    examples: [`${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK>`],
+    examples: [`${CATEGORIES.ACCOUNT}:deploy --classHash=<CLASS_HASH> --network=<NETWORK>`],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateClassHash],
   loadContract: accountContractLoader,
   hooks: {
     beforeExecute,

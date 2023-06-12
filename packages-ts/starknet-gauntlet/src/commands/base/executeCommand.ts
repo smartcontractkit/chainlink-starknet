@@ -1,5 +1,12 @@
 import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
-import { CompiledContract, CompiledSierraCasm, Contract, Call, hash } from 'starknet'
+import {
+  CompiledContract,
+  CompiledSierraCasm,
+  Contract,
+  Call,
+  hash,
+  DeclareContractResponse,
+} from 'starknet'
 import { CommandCtor } from '.'
 import { Dependencies } from '../../dependencies'
 import { IStarknetProvider } from '../../provider'
@@ -191,13 +198,28 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      const tx = await this.provider.deployContract(
-        this.contract,
-        this.compiledContractHash,
-        this.input.contract,
-        false,
-        this.input?.user?.['salt'],
-      )
+      // if "--classHash" is not included, declare before deploying
+      const classHash: string | undefined = this.input?.user?.['classHash']
+
+      let tx: TransactionResponse
+
+      if (classHash === undefined) {
+        tx = await this.provider.declareAndDeployContract(
+          this.contract,
+          this.compiledContractHash,
+          this.input.contract,
+          false,
+          this.input?.user?.['salt'],
+        )
+      } else {
+        tx = await this.provider.deployContract(
+          classHash,
+          this.input.contract,
+          false,
+          this.input?.user?.['salt'],
+        )
+      }
+
       if (tx.hash === undefined) {
         deps.logger.error(`No tx hash found:\n${JSON.stringify(tx, null, 2)}`)
         return tx
@@ -213,6 +235,29 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       deps.logger.info(
         `If using RDD, change the RDD ID with the new contract address: ${tx.address}`,
       )
+      return tx
+    }
+
+    declareContract = async (): Promise<TransactionResponse> => {
+      deps.logger.info(`Declaring contract ${config.category}`)
+      await deps.prompt('Continue?')
+      deps.logger.loading(`Sending transaction...`)
+
+      const tx = await this.provider.declareContract(
+        this.contract,
+        this.compiledContractHash,
+        false,
+      )
+
+      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+      const response = await tx.wait()
+
+      if (!response.success) {
+        deps.logger.error(`Contract was not declared: ${tx.errorMessage}`)
+        return tx
+      }
+
+      deps.logger.success(`Contract declared at ${tx.tx.class_hash}`)
       return tx
     }
 
@@ -240,6 +285,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       if (config.action === 'deploy') {
         tx = await this.deployContract()
+      } else if (config.action === 'declare') {
+        tx = await this.declareContract()
       } else {
         tx = await this.executeWithSigner()
       }

@@ -13,6 +13,21 @@ LINK=0x...
 
 Note: The [token contract](https://github.com/smartcontractkit/chainlink-starknet/tree/develop/packages-ts/starknet-gauntlet-token) should only be deployed once and the same contract should be used for very aggregator
 
+
+## Deploying Contracts via Class Hash
+
+If you already know the class hash for a declared contract, all of the deploy commands in this module (ocr2, access_controller, proxy, Example) all have an optional --classHash flag which can be passed in to deploy a contract via the class hash rather than the local contract source code.
+
+e.g
+```bash
+yarn gauntlet access_controller:deploy --classHash=<CLASS_HASH> --network=<NETWORK>
+```
+
+```bash
+yarn gauntlet ocr2:deploy --network=<NETWORK> --billingAccessController=<ACCESS_CONTROLLER_CONTRACT> --minSubmissionValue=<MIN_VALUE> --maxSubmissionValue=<MAX_VALUE> --decimals=<DECIMALS> --name=<FEED_NAME> --link=<TOKEN_CONTRACT> --classHash=<CLASS_HASH>
+```
+
+
 ## Deploy an Access Controller Contract
 
 Run the following command:

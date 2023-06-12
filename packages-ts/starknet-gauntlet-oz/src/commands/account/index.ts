@@ -1,2 +1,3 @@
 import Deploy from './deploy'
-export default [Deploy]
+import Declare from './declare'
+export default [Deploy, Declare]

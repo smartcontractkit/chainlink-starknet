@@ -66,6 +66,17 @@ yarn gauntlet starknet_validator:validate --previousRoundId=<PREV_ROUND_ID> --pr
 
 ### Sequencer Uptime Feed
 
+- Declare
+
+This declare a new `sequencer_uptime_feed` class hash onto the L2 layer.
+
+```bash
+yarn gauntlet SequencerUptimeFeed:declare --network=testnet
+```
+
+Once it has been declared, you can use the class hash for a deployment (see Deploy command below)
+
+
 - Deploy
 
 This deploys a new `sequencer_uptime_feed` contract to L2.
@@ -74,9 +85,18 @@ This deploys a new `sequencer_uptime_feed` contract to L2.
 
 `--owner` flag can be omitted. In such a case, it will default to the account specified in .env
 
+`--classHash` flag can be omitted. If used, the deployment will be based off an already declared class on starknet rather than the local contract source code.
+
 ```bash
 yarn gauntlet sequencer_uptime_feed:deploy --initialStatus=<INITIAL_STATUS> --owner=<OWNER> --network=<NETWORK>
 ```
+
+Optionally, you can deploy by referencing a previously deployed class hash
+
+```bash
+yarn gauntlet sequencer_uptime_feed:deploy --initialStatus=<INITIAL_STATUS> --owner=<OWNER> --classHash=<CLASS_HASH> --network=<NETWORK>
+```
+
 
 - setL1Sender
 

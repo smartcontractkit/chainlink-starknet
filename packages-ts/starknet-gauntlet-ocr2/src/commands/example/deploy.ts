@@ -2,9 +2,11 @@ import { ExecuteCommandConfig, makeExecuteCommand } from '@chainlink/starknet-ga
 import { isValidAddress } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { CONTRACT_LIST, aggregatorConsumerLoader } from '../../lib/contracts'
+import { validateClassHash } from '../../lib/utils'
 
 export interface UserInput {
   address: string
+  classHash?: string
 }
 
 type ContractInput = [address: string]
@@ -14,6 +16,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
 
   return {
     address: flags.address,
+    classHash: flags.classHash,
   }
 }
 
@@ -37,12 +40,12 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Deploys an example Aggregator consumer',
     examples: [
-      `${CATEGORIES.OCR2}:consumer:deploy --network=<NETWORK> --address=[AGGREGATOR_ADDRESS]`,
+      `${CATEGORIES.OCR2}:consumer:deploy --network=<NETWORK> --address=<AGGREGATOR_ADDRESS> --classHash=<CLASS_HASH>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateInput],
+  validations: [validateInput, validateClassHash],
   loadContract: aggregatorConsumerLoader,
 }
 

@@ -5,13 +5,13 @@ import {
   isValidAddress,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { num } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
 
 type UserInput = {
   signers: string[]
   threshold: string
+  classHash?: string
 }
 
 type ContractInput = [signersLen: number, ...signers: string[], threshold: number]
@@ -22,6 +22,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   return {
     signers: flags.signers,
     threshold: flags.threshold,
+    classHash: flags.classHash,
   }
 }
 
@@ -33,6 +34,13 @@ export const validateThreshold = async (input: UserInput) => {
       `Threshold is higher than signers length: ${threshold} > ${input.signers.length}`,
     )
   return true
+}
+
+const validateClassHash = async (input) => {
+  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+    return true
+  }
+  throw new Error(`Invalid Class Hash: ${input.classHash}`)
 }
 
 export const validateSigners = async (input) => {
@@ -73,7 +81,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateSigners, validateThreshold],
+  validations: [validateSigners, validateThreshold, validateClassHash],
   loadContract: contractLoader,
   hooks: {
     beforeExecute,
