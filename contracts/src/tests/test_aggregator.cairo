@@ -7,6 +7,7 @@ use starknet::class_hash::Felt252TryIntoClassHash;
 use starknet::syscalls::deploy_syscall;
 
 use array::ArrayTrait;
+use clone::Clone;
 use traits::Into;
 use traits::TryInto;
 use option::OptionTrait;
@@ -15,11 +16,11 @@ use core::result::ResultTrait;
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
 use chainlink::ocr2::aggregator::Aggregator::Billing;
+use chainlink::ocr2::aggregator::Aggregator::PayeeConfig;
 use chainlink::access_control::access_controller::AccessController;
+use chainlink::token::link_token::LinkToken;
 use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
-
-// TODO: aggregator tests
 
 #[test]
 #[available_gas(10000000)]
@@ -67,7 +68,18 @@ trait IAccessController { // importing from access_controller.cairo doesnt work
     fn disable_access_check();
 }
 
-fn setup() -> (ContractAddress, ContractAddress, ContractAddress, IAccessControllerDispatcher) {
+#[abi]
+trait ILinkToken {
+    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
+    fn add_access(user: ContractAddress);
+    fn remove_access(user: ContractAddress);
+    fn enable_access_check();
+    fn disable_access_check();
+}
+
+fn setup() -> (
+    ContractAddress, ContractAddress, IAccessControllerDispatcher, ILinkTokenDispatcher
+) {
     let acc1: ContractAddress = contract_address_const::<777>();
     let acc2: ContractAddress = contract_address_const::<888>();
     // set acc1 as default caller
@@ -78,14 +90,22 @@ fn setup() -> (ContractAddress, ContractAddress, ContractAddress, IAccessControl
     calldata.append(acc1.into()); // owner = acc1;
     let (billingAccessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
-        .unwrap();
+    ).unwrap();
     let billingAccessController = IAccessControllerDispatcher {
         contract_address: billingAccessControllerAddr
     };
 
-    // return accounts and billing access controller
-    (acc1, acc2, billingAccessControllerAddr, billingAccessController)
+    // deploy link token contract
+    let mut calldata = ArrayTrait::new();
+    calldata.append(acc1.into()); // minter = acc1;
+    calldata.append(acc1.into()); // owner = acc1;
+    let (linkTokenAddr, _) = deploy_syscall(
+        LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+    ).unwrap();
+    let linkToken = ILinkTokenDispatcher { contract_address: linkTokenAddr };
+
+    // return accounts, billing access controller, link token
+    (acc1, acc2, billingAccessController, linkToken)
 }
 
 #[test]
@@ -103,8 +123,7 @@ fn test_ownable() {
     calldata.append(123); // description
     let (aggregatorAddr, _) = deploy_syscall(
         Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
-        .unwrap();
+    ).unwrap();
 
     should_implement_ownable(aggregatorAddr, account);
 }
@@ -124,8 +143,7 @@ fn test_access_control() {
     calldata.append(123); // description
     let (aggregatorAddr, _) = deploy_syscall(
         Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
-        .unwrap();
+    ).unwrap();
 
     should_implement_access_control(aggregatorAddr, account);
 }
@@ -145,23 +163,27 @@ fn test_upgrade_non_owner() {
 #[available_gas(2000000)]
 #[should_panic(expected: ('Ownable: caller is not owner', ))]
 fn test_set_billing_access_controller_not_owner() {
-    let (owner, acc2, billingAccessControllerAddr, _) = setup();
-    // Aggregator initialization
+    let (owner, acc2, billingAccessController, _) = setup();
     Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
 
     // set billing access controller should revert if caller is not owner
     set_caller_address(acc2);
-    Aggregator::set_billing_access_controller(billingAccessControllerAddr);
+    Aggregator::set_billing_access_controller(billingAccessController.contract_address);
 }
 
 #[test]
 #[available_gas(2000000)]
 #[should_panic(expected: ('caller does not have access', ))]
 fn test_set_billing_config_no_access() {
-    let (owner, acc2, billingAccessControllerAddr, _) = setup();
-    // Aggregator initialization
+    let (owner, acc2, billingAccessController, _) = setup();
     Aggregator::constructor(
-        owner, contract_address_const::<777>(), 0, 100, billingAccessControllerAddr, 8, 123
+        owner,
+        contract_address_const::<777>(),
+        0,
+        100,
+        billingAccessController.contract_address,
+        8,
+        123
     );
 
     // set billing config as acc2 with no access
@@ -178,10 +200,15 @@ fn test_set_billing_config_no_access() {
 #[test]
 #[available_gas(2000000)]
 fn test_set_billing_config_as_owner() {
-    let (owner, _, billingAccessControllerAddr, _) = setup();
-    // Aggregator initialization
+    let (owner, _, billingAccessController, _) = setup();
     Aggregator::constructor(
-        owner, contract_address_const::<777>(), 0, 100, billingAccessControllerAddr, 8, 123
+        owner,
+        contract_address_const::<777>(),
+        0,
+        100,
+        billingAccessController.contract_address,
+        8,
+        123
     );
 
     // set billing config as owner
@@ -204,14 +231,19 @@ fn test_set_billing_config_as_owner() {
 #[test]
 #[available_gas(2000000)]
 fn test_set_billing_config_as_acc_with_access() {
-    let (owner, acc2, billingAccessControllerAddr, billingAccessController) = setup();
+    let (owner, acc2, billingAccessController, _) = setup();
     // grant acc2 access on access controller
     set_contract_address(owner);
     billingAccessController.add_access(acc2);
 
-    // Aggregator initialization
     Aggregator::constructor(
-        owner, contract_address_const::<777>(), 0, 100, billingAccessControllerAddr, 8, 123
+        owner,
+        contract_address_const::<777>(),
+        0,
+        100,
+        billingAccessController.contract_address,
+        8,
+        123
     );
 
     // set billing config as acc2 with access
@@ -230,4 +262,151 @@ fn test_set_billing_config_as_acc_with_access() {
     assert(billing.transmission_payment_gjuels == 5, 'should be 5');
     assert(billing.gas_base == 1, 'should be 1');
     assert(billing.gas_per_signature == 1, 'should be 1');
+}
+
+// --- Payee Management Tests ---
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('Ownable: caller is not owner', ))]
+fn test_set_payees_caller_not_owner() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: acc2, payee: acc2,  });
+
+    // set payee should revert if caller is not owner
+    set_caller_address(acc2);
+    Aggregator::set_payees(payees);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_set_single_payee() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: acc2, payee: acc2,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_set_multiple_payees() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: acc2, payee: acc2,  });
+    payees.append(PayeeConfig { transmitter: owner, payee: owner,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('only current payee can update', ))]
+fn test_transfer_payeeship_caller_not_payee() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let transmitter = contract_address_const::<123>();
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: transmitter, payee: acc2,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+    Aggregator::transfer_payeeship(transmitter, owner);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('cannot transfer to self', ))]
+fn test_transfer_payeeship_to_self() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let transmitter = contract_address_const::<123>();
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: transmitter, payee: acc2,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+    set_caller_address(acc2);
+    Aggregator::transfer_payeeship(transmitter, acc2);
+}
+
+#[test]
+#[available_gas(2000000)]
+#[should_panic(expected: ('only proposed payee can accept', ))]
+fn test_accept_payeeship_caller_not_proposed_payee() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let transmitter = contract_address_const::<123>();
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: transmitter, payee: acc2,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+    set_caller_address(acc2);
+    Aggregator::transfer_payeeship(transmitter, owner);
+    Aggregator::accept_payeeship(transmitter);
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_transfer_and_accept_payeeship() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let transmitter = contract_address_const::<123>();
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: transmitter, payee: acc2,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+    set_caller_address(acc2);
+    Aggregator::transfer_payeeship(transmitter, owner);
+    set_caller_address(owner);
+    Aggregator::accept_payeeship(transmitter);
+}
+// --- Payments and Withdrawals Tests ---
+//
+// NOTE: this test suite largely incomplete as we cannot generate or mock
+// off-chain signatures in cairo-test, and thus cannot generate aggregator rounds.
+// We could explore testing against a mock aggregator contract with the signature
+// verification logic removed in the future.
+
+#[test]
+#[available_gas(2000000)]
+fn test_owed_payment_no_rounds() {
+    let (owner, acc2, _, _) = setup();
+    Aggregator::constructor(owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123);
+
+    let transmitter = contract_address_const::<123>();
+    let mut payees = ArrayTrait::new();
+    payees.append(PayeeConfig { transmitter: transmitter, payee: acc2,  });
+
+    set_caller_address(owner);
+    Aggregator::set_payees(payees);
+
+    let owed = Aggregator::owed_payment(transmitter);
+    assert(owed == 0, 'owed payment should be 0');
+}
+
+#[test]
+#[available_gas(2000000)]
+fn test_link_available_for_payment_no_rounds_or_funds() {
+    let (owner, acc2, _, linkToken) = setup();
+    Aggregator::constructor(owner, linkToken.contract_address, 0, 100, acc2, 8, 123);
+
+    let (is_negative, diff) = Aggregator::link_available_for_payment();
+    assert(is_negative == true, 'is_negative should be true');
+    assert(diff == 0, 'absolute_diff should be 0');
 }
