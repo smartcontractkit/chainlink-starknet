@@ -21,18 +21,17 @@ export const getLatestOCRConfigEvent = async (
   // if no config has been set yet, return empty config
   if (latestConfigDetails.configCount === 0) return []
 
-  // retrieve block traces
+  // retrieve all block traces in the block in which the latest config was set
   const blockTraces = await provider.provider.getBlockTraces(latestConfigDetails.blockNumber)
-  // get list of all events across all internal calls in the block for which the key matches 'ConfigSet'
-  const configSetEvents = blockTraces.traces
-    .map((trace) => {
-      return trace.function_invocation.internal_calls
-        .filter((call) => call.contract_address === contractAddress)
-        .map((call) => call.events)
-        .flat()
-        .filter((event) => event.keys[0] === hash.getSelectorFromName('ConfigSet'))
-    })
-    .flat()
+  // retrieve array of all events across all internal calls for each tx in the
+  // block, for which the contract address = aggregator contract and the first
+  // event key matches 'ConfigSet'
+  const configSetEvents = blockTraces.traces.flatMap((trace) => {
+    return trace.function_invocation.internal_calls
+      .filter((call) => call.contract_address === contractAddress)
+      .flatMap((call) => call.events)
+      .filter((event) => event.keys[0] === hash.getSelectorFromName('ConfigSet'))
+  })
 
   // assume last event found is the latest config set event
   return configSetEvents[configSetEvents.length - 1].data

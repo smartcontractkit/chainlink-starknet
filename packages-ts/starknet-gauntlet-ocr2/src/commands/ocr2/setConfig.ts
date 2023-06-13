@@ -142,7 +142,7 @@ const beforeExecute: BeforeExecute<SetConfigInput, ContractInput> = (
   const eventData = await getLatestOCRConfigEvent(context.provider, context.contractAddress)
   if (eventData.length === 0) {
     deps.logger.info('No previous config found, review the offchain config below:')
-    console.log(newOffchainConfig)
+    deps.logger.log(newOffchainConfig)
     return
   }
   const currOffchainConfig = decodeOffchainConfigFromEventData(eventData)
@@ -188,6 +188,7 @@ const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
     beforeExecute,
     afterExecute,
   },
+  validations: [],
 }
 
 export default makeExecuteCommand(commandConfig)
