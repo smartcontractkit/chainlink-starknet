@@ -188,7 +188,6 @@ const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
     beforeExecute,
     afterExecute,
   },
-  validations: [],
 }
 
 export default makeExecuteCommand(commandConfig)
