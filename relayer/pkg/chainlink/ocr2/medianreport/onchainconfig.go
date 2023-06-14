@@ -54,14 +54,12 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 
 	// convert felts to big.Ints
 
-	minFelt := caigotypes.BigToFelt(felts[1])
-	min, err := starknet.FeltToUnsignedBig(&minFelt)
+	min, err := starknet.FeltToUnsignedBig(caigotypes.BigToFelt(felts[1]))
 	if err != nil {
 		return median.OnchainConfig{}, errors.Wrap(err, "min invalid")
 	}
 
-	maxFelt := caigotypes.BigToFelt(felts[2])
-	max, err := starknet.FeltToUnsignedBig(&maxFelt)
+	max, err := starknet.FeltToUnsignedBig(caigotypes.BigToFelt(felts[2]))
 	if err != nil {
 		return median.OnchainConfig{}, errors.Wrap(err, "max invalid")
 	}

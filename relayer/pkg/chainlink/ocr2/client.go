@@ -156,10 +156,9 @@ func (c *Client) LatestRoundData(ctx context.Context, address caigotypes.Felt) (
 	if err != nil {
 		return round, errors.Wrap(err, "couldn't call the contract with selector latest_round_data")
 	}
-	felts := []*caigotypes.Felt{}
+	felts := []caigotypes.Felt{}
 	for _, result := range results {
-		felt := caigotypes.StrToFelt(result)
-		felts = append(felts, &felt)
+		felts = append(felts, caigotypes.StrToFelt(result))
 	}
 
 	round, err = NewRoundData(felts)
@@ -183,7 +182,7 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address caigotypes
 	return caigotypes.HexToBN(results[0]), nil
 }
 
-func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*caigotypes.Felt, err error) {
+func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]caigotypes.Felt, err error) {
 	block := caigorpc.WithBlockNumber(blockNum)
 
 	eventKey := caigotypes.BigToHex(caigotypes.GetSelectorFromName(eventType))
@@ -205,10 +204,9 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Fe
 
 	for _, event := range events.Events {
 		// convert to felts
-		felts := []*caigotypes.Felt{}
+		felts := []caigotypes.Felt{}
 		for _, felt := range event.Data {
-			felt := caigotypes.StrToFelt(felt)
-			felts = append(felts, &felt)
+			felts = append(felts, caigotypes.StrToFelt(felt))
 		}
 		eventsAsFeltArrs = append(eventsAsFeltArrs, felts)
 	}

@@ -27,7 +27,7 @@ var (
 type NewTransmissionEvent struct {
 	RoundId         uint32
 	LatestAnswer    *big.Int
-	Transmitter     *caigotypes.Felt
+	Transmitter     caigotypes.Felt
 	LatestTimestamp time.Time
 	Observers       []uint8
 	ObservationsLen uint32
@@ -41,7 +41,7 @@ type NewTransmissionEvent struct {
 }
 
 // ParseNewTransmissionEvent is decoding binary felt data as the NewTransmissionEvent type
-func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEvent, error) {
+func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEvent, error) {
 	{
 		const observationsLenIndex = 5
 		const constNumOfElements = 11
@@ -137,7 +137,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 }
 
 // ParseConfigSetEvent is decoding binary felt data as the libocr ContractConfig type
-func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, error) {
+func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, error) {
 	{
 		const oraclesLenIdx = 3
 		if len(eventData) < oraclesLenIdx {
@@ -226,7 +226,6 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 	// offchain_config
 	index++
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
-	// todo: get rid of caigoToJuno workaround
 	offchainConfig, err := starknet.DecodeFelts(starknet.FeltsToBig(offchainConfigFelts))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")

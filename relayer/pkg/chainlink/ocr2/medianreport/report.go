@@ -69,12 +69,10 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	})
 
 	var observers = make([]byte, starknet.FeltLength)
-	var observations []*caigotypes.Felt
+	var observations []caigotypes.Felt
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
-
-		val := caigotypes.BigToFelt(o.Value)
-		observations = append(observations, &val)
+		observations = append(observations, caigotypes.BigToFelt(o.Value))
 	}
 
 	var report []byte
@@ -122,7 +120,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 		start := prefixSizeBytes + observationSizeBytes*i
 		end := start + observationSizeBytes
 		obv := caigotypes.BytesToFelt(report[start:end])
-		o, err := starknet.FeltToUnsignedBig(&obv)
+		o, err := starknet.FeltToUnsignedBig(obv)
 		if err != nil {
 			return nil, errors.Wrap(err, "observation invalid")
 		}
