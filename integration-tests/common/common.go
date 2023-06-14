@@ -237,7 +237,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 func (c *Common) Default(t *testing.T) {
 	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-	starknetUrl := fmt.Sprintf("http://%s:%d", serviceKeyL2, 5000)
+	starknetUrl := fmt.Sprintf("http://%s:%d/rpc", serviceKeyL2, 5000)
 	if c.Testnet {
 		starknetUrl = c.L2RPCUrl
 	}

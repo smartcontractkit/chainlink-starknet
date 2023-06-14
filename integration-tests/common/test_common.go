@@ -116,7 +116,12 @@ func (testState *Test) DeployCluster() {
 	var err error
 	testState.Cc.NKeys, testState.Cc.ChainlinkNodes, err = testState.Common.CreateKeys(testState.Common.Env)
 	require.NoError(testState.T, err, "Creating chains and keys should not fail")
-	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, testState.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
+	baseURL := testState.Common.L2RPCUrl
+	if !testState.Common.Testnet { // devnet!
+		// chainlink starknet client needs the RPC API url which is at /rpc on devnet
+		baseURL += "/rpc"
+	}
+	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, baseURL, lggr, &rpcRequestTimeout)
 	require.NoError(testState.T, err, "Creating starknet client should not fail")
 	testState.OCR2Client, err = ocr2.NewClient(testState.Starknet, lggr)
 	require.NoError(testState.T, err, "Creating ocr2 client should not fail")
