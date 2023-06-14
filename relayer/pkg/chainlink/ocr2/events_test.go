@@ -82,7 +82,7 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 	require.Equal(t, len(transmitterHex), int(2+31.5*2)) // len('0x') + len(max_felt_len)
 
 	expectedTransmitter := caigotypes.StrToFelt(transmitterHex)
-	require.Equal(t, e.Transmitter, &expectedTransmitter)
+	require.Equal(t, e.Transmitter, expectedTransmitter)
 
 	require.Equal(t, e.Observers, []uint8{0, 1, 2, 3})
 	require.Equal(t, e.ObservationsLen, uint32(4))

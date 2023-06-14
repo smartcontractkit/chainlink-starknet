@@ -62,7 +62,7 @@ type RoundData struct {
 	UpdatedAt   time.Time
 }
 
-func NewRoundData(felts []*caigotypes.Felt) (data RoundData, err error) {
+func NewRoundData(felts []caigotypes.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}

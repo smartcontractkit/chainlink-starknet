@@ -44,12 +44,12 @@ func TestFeltToUnsignedBig(t *testing.T) {
 
 	negativeBig := caigotypes.BigToFelt(big.NewInt(-100))
 	// negative felts are not supported
-	num, err := FeltToUnsignedBig(&negativeBig)
+	num, err := FeltToUnsignedBig(negativeBig)
 	assert.NoError(t, err)
 	assert.Equal(t, num, big.NewInt(100))
 
 	positiveBig := caigotypes.BigToFelt(big.NewInt(100))
-	num, err = FeltToUnsignedBig(&positiveBig)
+	num, err = FeltToUnsignedBig(positiveBig)
 	assert.NoError(t, err)
 	assert.Equal(t, num, big.NewInt(100))
 
