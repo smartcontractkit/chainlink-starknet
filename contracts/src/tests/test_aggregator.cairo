@@ -69,13 +69,7 @@ trait IAccessController { // importing from access_controller.cairo doesnt work
 }
 
 #[abi]
-trait ILinkToken {
-    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
-    fn add_access(user: ContractAddress);
-    fn remove_access(user: ContractAddress);
-    fn enable_access_check();
-    fn disable_access_check();
-}
+trait ILinkToken {}
 
 fn setup() -> (
     ContractAddress, ContractAddress, IAccessControllerDispatcher, ILinkTokenDispatcher
