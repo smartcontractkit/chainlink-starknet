@@ -281,9 +281,15 @@ describe('Aggregator', function () {
     })
 
     it('payments and withdrawals', async () => {
+      // set up payees
+      let payees = oracles.map((oracle) => ({
+        transmitter: oracle.transmitter.starknetContract.address,
+        payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
+      }))
+      await owner.invoke(aggregator, 'set_payees', { payees })
+
       let oracle = oracles[0]
       let payee = oracle.transmitter
-      aggregator.call
       let { response: owed } = await aggregator.call('owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })
