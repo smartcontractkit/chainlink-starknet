@@ -23,6 +23,7 @@ export const getLatestOCRConfigEvent = async (
 
   // retrieve all block traces in the block in which the latest config was set
   const blockTraces = await provider.provider.getBlockTraces(latestConfigDetails.blockNumber)
+
   // retrieve array of all events across all internal calls for each tx in the
   // block, for which the contract address = aggregator contract and the first
   // event key matches 'ConfigSet'
@@ -33,6 +34,12 @@ export const getLatestOCRConfigEvent = async (
       .filter((event) => event.keys[0] === hash.getSelectorFromName('ConfigSet'))
   })
 
-  // assume last event found is the latest config set event
+  // if no config set events found in the given block, throw error
+  // this should not happen if block number in latestConfigDetails is set correctly
+  if (configSetEvents.length === 0)
+    throw new Error(`No ConfigSet events found in block number ${latestConfigDetails.blockNumber}`)
+
+  // assume last event found is the latest config, in the event that multiple
+  // set_config transactions ended up in the same block
   return configSetEvents[configSetEvents.length - 1].data
 }
