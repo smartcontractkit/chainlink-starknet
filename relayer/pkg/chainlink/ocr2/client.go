@@ -187,14 +187,21 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Fe
 
 	eventKey := caigotypes.BigToHex(caigotypes.GetSelectorFromName(eventType))
 
-	events, err := c.r.Events(ctx, caigorpc.EventFilter{
-		FromBlock: block,
-		ToBlock:   block,
-		Address:   address,
-		Keys:      []string{eventKey}, // skip other event types
-		// PageSize:   0,
-		// PageNumber: 0,
-	})
+	input := caigorpc.EventsInput{
+		EventFilter: caigorpc.EventFilter{
+			FromBlock: block,
+			ToBlock:   block,
+			Address:   address,
+			Keys:      []string{eventKey}, // skip other event types
+			// PageSize:   0,
+			// PageNumber: 0,
+		},
+		ResultPageRequest: caigorpc.ResultPageRequest{
+			// ContinuationToken: ,
+			ChunkSize: 10,
+		},
+	}
+	events, err := c.r.Events(ctx, input)
 
 	// TODO: check events.isLastPage, query more if needed
 

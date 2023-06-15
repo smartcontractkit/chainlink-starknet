@@ -124,25 +124,25 @@ func (_m *Reader) CallContract(_a0 context.Context, _a1 starknet.CallOps) ([]str
 	return r0, r1
 }
 
-// Events provides a mock function with given fields: ctx, filter
-func (_m *Reader) Events(ctx context.Context, filter rpcv02.EventFilter) (*rpcv02.EventsOutput, error) {
-	ret := _m.Called(ctx, filter)
+// Events provides a mock function with given fields: ctx, input
+func (_m *Reader) Events(ctx context.Context, input rpcv02.EventsInput) (*rpcv02.EventsOutput, error) {
+	ret := _m.Called(ctx, input)
 
 	var r0 *rpcv02.EventsOutput
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, rpcv02.EventFilter) (*rpcv02.EventsOutput, error)); ok {
-		return rf(ctx, filter)
+	if rf, ok := ret.Get(0).(func(context.Context, rpcv02.EventsInput) (*rpcv02.EventsOutput, error)); ok {
+		return rf(ctx, input)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, rpcv02.EventFilter) *rpcv02.EventsOutput); ok {
-		r0 = rf(ctx, filter)
+	if rf, ok := ret.Get(0).(func(context.Context, rpcv02.EventsInput) *rpcv02.EventsOutput); ok {
+		r0 = rf(ctx, input)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*rpcv02.EventsOutput)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, rpcv02.EventFilter) error); ok {
-		r1 = rf(ctx, filter)
+	if rf, ok := ret.Get(1).(func(context.Context, rpcv02.EventsInput) error); ok {
+		r1 = rf(ctx, input)
 	} else {
 		r1 = ret.Error(1)
 	}

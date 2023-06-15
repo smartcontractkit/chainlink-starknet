@@ -24,7 +24,7 @@ type Reader interface {
 	// provider interface
 	BlockWithTxHashes(ctx context.Context, blockID caigorpc.BlockID) (*caigorpc.Block, error)
 	Call(context.Context, caigotypes.FunctionCall, caigorpc.BlockID) ([]string, error)
-	Events(ctx context.Context, filter caigorpc.EventFilter) (*caigorpc.EventsOutput, error)
+	Events(ctx context.Context, input caigorpc.EventsInput) (*caigorpc.EventsOutput, error)
 	TransactionByHash(context.Context, caigotypes.Felt) (caigorpc.Transaction, error)
 	TransactionReceipt(context.Context, caigotypes.Felt) (caigorpc.TransactionReceipt, error)
 	AccountNonce(context.Context, caigotypes.Felt) (*big.Int, error)
@@ -182,17 +182,14 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash caigotypes.Felt) (
 
 }
 
-func (c *Client) Events(ctx context.Context, filter caigorpc.EventFilter) (*caigorpc.EventsOutput, error) {
+func (c *Client) Events(ctx context.Context, input caigorpc.EventsInput) (*caigorpc.EventsOutput, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
-	out, err := c.Provider.Events(ctx, caigorpc.EventsInput{
-		EventFilter: filter,
-		// TODO: ResultPageRequest: ResultPageRequest { ContinuationToken: , ChunkSize: }
-	})
+	out, err := c.Provider.Events(ctx, input)
 	if err != nil {
 		return out, errors.Wrap(err, "error in client.Events")
 	}
