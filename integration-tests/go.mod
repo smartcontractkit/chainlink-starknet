@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/rs/zerolog v1.29.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/caigo v0.0.0-20230615082343-14efb794650f
+	github.com/smartcontractkit/caigo v0.0.0-20230615144539-1b8103d9440d
 	github.com/smartcontractkit/chainlink-env v0.32.8
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230606234201-cca3103bf8a6
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
