@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/prometheus/client_golang v1.15.0
-	github.com/smartcontractkit/caigo v0.0.0-20230612084522-56b86bbbc0c4
+	github.com/smartcontractkit/caigo v0.0.0-20230615082343-14efb794650f
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230606234201-cca3103bf8a6
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/libocr v0.0.0-20230606215712-82b910bef5c1

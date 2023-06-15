@@ -6,7 +6,7 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/caigo v0.0.0-20230612084522-56b86bbbc0c4
+	github.com/smartcontractkit/caigo v0.0.0-20230615082343-14efb794650f
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230605232729-e0a00f8c6545
 	github.com/smartcontractkit/libocr v0.0.0-20230525150148-a75f6e244bb3
 	github.com/stretchr/testify v1.8.3
