@@ -37,8 +37,8 @@ func (s *envelopeSourceFactory) NewSource(
 		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", feedConfig)
 	}
 	return &envelopeSource{
-		caigotypes.HexToHash(feedConfig.GetContractAddress()),
-		caigotypes.HexToHash(starknetChainConfig.GetLinkTokenAddress()),
+		caigotypes.StrToFelt(feedConfig.GetContractAddress()),
+		caigotypes.StrToFelt(starknetChainConfig.GetLinkTokenAddress()),
 		s.ocr2Reader,
 	}, nil
 }
@@ -48,8 +48,8 @@ func (s *envelopeSourceFactory) GetType() string {
 }
 
 type envelopeSource struct {
-	contractAddress  caigotypes.Hash
-	linkTokenAddress caigotypes.Hash
+	contractAddress  caigotypes.Felt
+	linkTokenAddress caigotypes.Felt
 	ocr2Reader       ocr2.OCR2Reader
 }
 
@@ -68,9 +68,7 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 			return
 		}
 		envelope.BlockNumber = latestRoundData.BlockNumber
-		if newTransmissionEvent.Transmitter != nil {
-			envelope.Transmitter = types.Account(newTransmissionEvent.Transmitter.String())
-		}
+		envelope.Transmitter = types.Account(newTransmissionEvent.Transmitter.String())
 		envelope.AggregatorRoundID = latestRoundData.RoundID
 		envelope.ConfigDigest = newTransmissionEvent.ConfigDigest
 		envelope.Epoch = newTransmissionEvent.Epoch
@@ -117,7 +115,7 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 	return envelope, envelopeErr
 }
 
-func (s *envelopeSource) fetchLatestNewTransmissionEvent(ctx context.Context, contractAddress caigotypes.Hash) (
+func (s *envelopeSource) fetchLatestNewTransmissionEvent(ctx context.Context, contractAddress caigotypes.Felt) (
 	latestRound ocr2.RoundData,
 	transmission ocr2.NewTransmissionEvent,
 	err error,
@@ -143,7 +141,7 @@ func (s *envelopeSource) fetchLatestNewTransmissionEvent(ctx context.Context, co
 	return latestRound, transmission, fmt.Errorf("no new_trasmission event found to correspond with the round id %d in block %d", latestRound.RoundID, latestRound.BlockNumber)
 }
 
-func (s *envelopeSource) fetchContractConfig(ctx context.Context, contractAddress caigotypes.Hash) (config ocr2.ContractConfig, err error) {
+func (s *envelopeSource) fetchContractConfig(ctx context.Context, contractAddress caigotypes.Felt) (config ocr2.ContractConfig, err error) {
 	configDetails, err := s.ocr2Reader.LatestConfigDetails(ctx, contractAddress)
 	if err != nil {
 		return config, fmt.Errorf("couldn't fetch latest config details for contract '%s': %w", contractAddress, err)
@@ -157,7 +155,7 @@ func (s *envelopeSource) fetchContractConfig(ctx context.Context, contractAddres
 
 var zeroBigInt = big.NewInt(0)
 
-func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress caigotypes.Hash) (*big.Int, error) {
+func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress caigotypes.Felt) (*big.Int, error) {
 	results, err := s.ocr2Reader.BaseReader().CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkTokenAddress,
 		Selector:        "balanceOf",
