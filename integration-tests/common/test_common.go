@@ -279,7 +279,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
 		ContractAddress: caigotypes.StrToFelt(testState.LinkTokenAddr),
 		Selector:        "balance_of",
-		Calldata:        []string{caigotypes.HexToBN(testState.OCRAddr).String()},
+		Calldata:        []string{testState.OCRAddr},
 	})
 	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail")
 	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
