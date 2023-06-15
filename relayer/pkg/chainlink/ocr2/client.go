@@ -192,7 +192,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Fe
 			FromBlock: block,
 			ToBlock:   block,
 			Address:   address,
-			Keys:      []string{eventKey}, // skip other event types
+			Keys:      [][]string{{eventKey}}, // skip other event types
 			// PageSize:   0,
 			// PageNumber: 0,
 		},
