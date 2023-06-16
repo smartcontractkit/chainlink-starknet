@@ -1,7 +1,6 @@
 package ocr2
 
 import (
-	"encoding/hex"
 	"math/big"
 	"time"
 
@@ -191,7 +190,7 @@ func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, err
 		if i%2 == 0 {
 			signers = append(signers, starknet.PadBytes(member.Bytes(), 32)) // pad to 32 bytes
 		} else {
-			transmitters = append(transmitters, types.Account("0x"+hex.EncodeToString(starknet.PadBytes(member.Bytes(), 32)))) // pad to 32 byte length then re-encode
+			transmitters = append(transmitters, types.Account(member.String()))
 		}
 	}
 

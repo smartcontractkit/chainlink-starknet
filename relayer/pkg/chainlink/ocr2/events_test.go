@@ -117,10 +117,10 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 	require.Equal(t, e.Signers, signersExpected)
 
 	transmittersExpected := []types.Account{
-		"0x02c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
-		"0x02de61335d8f1caa7e9df54486f016ded83d0e02fde4c12280f4b898720b0e2b",
-		"0x02f14e18cc198dd5133c8a9aa92992fc1a462f703401716f402d0ee383b54faa",
-		"0x05c35686f78db31d9d896bb425b3fd99be19019f8aeaf0f7a8767867903341d4",
+		"0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
+		"0x2de61335d8f1caa7e9df54486f016ded83d0e02fde4c12280f4b898720b0e2b",
+		"0x2f14e18cc198dd5133c8a9aa92992fc1a462f703401716f402d0ee383b54faa",
+		"0x5c35686f78db31d9d896bb425b3fd99be19019f8aeaf0f7a8767867903341d4",
 	}
 	require.Equal(t, e.Transmitters, transmittersExpected)
 	require.Equal(t, len(e.Transmitters), oraclesLen)
