@@ -1,7 +1,6 @@
 package starknet
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -122,21 +121,6 @@ func StringsToFelt(in []string) (out []caigotypes.Felt, _ error) {
 	}
 
 	return out, nil
-}
-
-// CompareAddress compares different hex starknet addresses with potentially different 0 padding
-func CompareAddress(a, b string) bool {
-	aBytes, err := caigotypes.HexToBytes(a)
-	if err != nil {
-		return false
-	}
-
-	bBytes, err := caigotypes.HexToBytes(b)
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(PadBytes(aBytes, 32), PadBytes(bBytes, 32))
 }
 
 /* Testing utils - do not use (XXX) outside testing context */
