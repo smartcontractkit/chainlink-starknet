@@ -21,3 +21,10 @@ casm = true
 # pythonic hints are necessary for cairo-lang to parse the casm file:
 # Unsupported compiled class format. Cairo 1.0 compiled class must contain the attribute `pythonic_hints`.
 casm-add-pythonic-hints = true
+
+# this elevants the severity of disallowed libfuncs to compilation errors
+# https://docs.swmansion.com/scarb/docs/starknet/contract-target#allowed-libfuncs-validation
+allowed-libfuncs-deny = true
+
+# TODO: change the allowlist to 'audited' when cairo v2 is released
+allowed-libfuncs-list.name = "experimental_v0.1.0"
