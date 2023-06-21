@@ -46,7 +46,6 @@ type Client struct {
 	Provider       *caigorpc.Provider
 	lggr           logger.Logger
 	defaultTimeout time.Duration
-	ChainID        string
 }
 
 // pass nil or 0 to timeout to not use built in default timeout
@@ -69,13 +68,6 @@ func NewClient(_chainID string, baseURL string, lggr logger.Logger, timeout *tim
 	} else {
 		client.defaultTimeout = *timeout
 	}
-
-	// cache chainID on the provider to avoid repeated calls
-	chainID, err := client.Provider.ChainID(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	client.ChainID = chainID
 
 	return client, nil
 }
