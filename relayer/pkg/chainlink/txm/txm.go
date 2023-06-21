@@ -138,7 +138,12 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Fel
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(accountAddress, client.ChainID)
+	chainID, err := client.Provider.ChainID(ctx)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get chainID: %+w", err)
+	}
+
+	nonce, err := txm.nonce.NextSequence(accountAddress, chainID)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
@@ -175,7 +180,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Fel
 
 	// update nonce if transaction is successful
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(accountAddress, client.ChainID, nonce),
+		txm.nonce.IncrementNextSequence(accountAddress, chainID, nonce),
 		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
 	)
 	return res.TransactionHash, err
@@ -269,8 +274,13 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Felt, tx c
 		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 
+	chainID, err := client.Provider.ChainID(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get chainID: %+w", err)
+	}
+
 	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, client.ChainID, client); err != nil {
+	if err := txm.nonce.Register(context.TODO(), accountAddress, chainID, client); err != nil {
 		return err
 	}
 
