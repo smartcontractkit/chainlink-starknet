@@ -37,7 +37,7 @@ func TestIntegration_Txm(t *testing.T) {
 	for i := range accounts {
 		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
 		require.NoError(t, err)
-		senderAddress := caigotypes.HexToHash(accounts[i].PublicKey).String()
+		senderAddress := caigotypes.StrToFelt(accounts[i].PublicKey).String()
 		localKeys[senderAddress] = caigotypes.BytesToBig(privKey)
 		localAccounts[senderAddress] = accounts[i].Address
 	}
@@ -53,7 +53,7 @@ func TestIntegration_Txm(t *testing.T) {
 	ksAdapter := NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient(caigogw.GOERLI_ID, url, lggr, &timeout)
+	client, err := starknet.NewClient(caigogw.GOERLI_ID, url+"/rpc", lggr, &timeout)
 	require.NoError(t, err)
 
 	getClient := func() (*starknet.Client, error) {
@@ -76,10 +76,10 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, txm.Ready())
 
 	for senderAddressStr := range localKeys {
-		senderAddress := caigotypes.HexToHash(senderAddressStr)
+		senderAddress := caigotypes.StrToFelt(senderAddressStr)
 		for i := 0; i < n; i++ {
-			require.NoError(t, txm.Enqueue(senderAddress, caigotypes.HexToHash(localAccounts[senderAddressStr]), caigotypes.FunctionCall{
-				ContractAddress:    caigotypes.HexToHash("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
+			require.NoError(t, txm.Enqueue(senderAddress, caigotypes.StrToFelt(localAccounts[senderAddressStr]), caigotypes.FunctionCall{
+				ContractAddress:    caigotypes.StrToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
 				EntryPointSelector: "totalSupply",
 			}))
 		}

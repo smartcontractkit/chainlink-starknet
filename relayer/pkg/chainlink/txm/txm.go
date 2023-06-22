@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"sync"
 	"time"
 
 	"github.com/smartcontractkit/caigo"
-	"github.com/smartcontractkit/caigo/gateway"
+	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"golang.org/x/exp/maps"
 
@@ -25,13 +26,13 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, txFn caigotypes.FunctionCall) error
+	Enqueue(senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, txFn caigotypes.FunctionCall) error
 	InflightCount() (int, int)
 }
 
 type Tx struct {
-	senderAddress  caigotypes.Hash
-	accountAddress caigotypes.Hash
+	senderAddress  caigotypes.Felt
+	accountAddress caigotypes.Felt
 	call           caigotypes.FunctionCall
 }
 
@@ -124,7 +125,7 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Hash, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) (txhash string, err error) {
 	txs := []caigotypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
@@ -132,12 +133,17 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Has
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewGatewayAccount(senderAddress.String(), accountAddress.String(), txm.ks, client.Gw, caigo.AccountVersion1)
+	account, err := caigo.NewRPCAccount(senderAddress, accountAddress, txm.ks, client.Provider, caigo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(accountAddress, client.Gw.ChainId)
+	chainID, err := client.Provider.ChainID(ctx)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get chainID: %+w", err)
+	}
+
+	nonce, err := txm.nonce.NextSequence(accountAddress, chainID)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
@@ -174,7 +180,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Has
 
 	// update nonce if transaction is successful
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(accountAddress, client.Gw.ChainId, nonce),
+		txm.nonce.IncrementNextSequence(accountAddress, chainID, nonce),
 		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
 	)
 	return res.TransactionHash, err
@@ -204,21 +210,21 @@ func (txm *starktxm) confirmLoop() {
 			for addr := range hashes {
 				for i := range hashes[addr] {
 					hash := hashes[addr][i]
-					status, err := client.Gw.TransactionStatus(ctx, gateway.TransactionStatusOptions{
-						TransactionHash: hashes[addr][i],
-					})
+					response, err := client.Provider.TransactionReceipt(ctx, caigotypes.StrToFelt(hashes[addr][i]))
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
-
-					if status == nil {
-						txm.lggr.Errorw("status was nil", "hash", hash)
+					receipt, ok := response.(caigorpc.InvokeTransactionReceipt)
+					if !ok {
+						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
 						continue
 					}
 
-					if status.TxStatus == "ACCEPTED_ON_L1" || status.TxStatus == "ACCEPTED_ON_L2" || status.TxStatus == "REJECTED" {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status.TxStatus), "hash", hash, "status", status)
+					status := receipt.Status
+
+					if status == caigotypes.TransactionAcceptedOnL1 || status == caigotypes.TransactionAcceptedOnL2 || status == caigotypes.TransactionRejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
 						if err := txm.txStore.Confirm(addr, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 						}
@@ -254,7 +260,7 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx caigotypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test
@@ -269,8 +275,13 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Hash, tx c
 		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 
+	chainID, err := client.Provider.ChainID(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get chainID: %+w", err)
+	}
+
 	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, client.Gw.ChainId, client); err != nil {
+	if err := txm.nonce.Register(context.TODO(), accountAddress, chainID, client); err != nil {
 		return err
 	}
 

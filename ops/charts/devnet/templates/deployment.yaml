@@ -47,7 +47,7 @@ spec:
 {{- else }}
           - name: cairo-build
             mountPath: /cairo-build
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.5.2"}}"
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.5.3"}}"
         args: ["--sierra-compiler-path", "/cairo-build/bin/starknet-sierra-compile", "--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
 {{- end }}
         imagePullPolicy: IfNotPresent

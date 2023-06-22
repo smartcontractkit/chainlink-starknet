@@ -16,16 +16,16 @@ import (
 //go:generate mockery --name NonceManagerClient --output ./mocks/ --case=underscore --filename nonce_manager_client.go
 
 type NonceManagerClient interface {
-	AccountNonce(context.Context, caigotypes.Hash) (*big.Int, error)
+	AccountNonce(context.Context, caigotypes.Felt) (*big.Int, error)
 }
 
 type NonceManager interface {
 	types.Service
 
-	Register(ctx context.Context, address caigotypes.Hash, chainId string, client NonceManagerClient) error
+	Register(ctx context.Context, address caigotypes.Felt, chainId string, client NonceManagerClient) error
 
-	NextSequence(address caigotypes.Hash, chainID string) (*big.Int, error)
-	IncrementNextSequence(address caigotypes.Hash, chainID string, currentNonce *big.Int) error
+	NextSequence(address caigotypes.Felt, chainID string) (*big.Int, error)
+	IncrementNextSequence(address caigotypes.Felt, chainID string, currentNonce *big.Int) error
 }
 
 var _ NonceManager = (*nonceManager)(nil)
@@ -66,7 +66,7 @@ func (nm *nonceManager) HealthReport() map[string]error {
 }
 
 // Register is used because we cannot pre-fetch nonces. the pubkey is known before hand, but the account address is not known until a job is started and sends a tx
-func (nm *nonceManager) Register(ctx context.Context, addr caigotypes.Hash, chainId string, client NonceManagerClient) error {
+func (nm *nonceManager) Register(ctx context.Context, addr caigotypes.Felt, chainId string, client NonceManagerClient) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 	addressNonces, exists := nm.n[addr.String()]
@@ -85,7 +85,7 @@ func (nm *nonceManager) Register(ctx context.Context, addr caigotypes.Hash, chai
 	return nil
 }
 
-func (nm *nonceManager) NextSequence(addr caigotypes.Hash, chainId string) (*big.Int, error) {
+func (nm *nonceManager) NextSequence(addr caigotypes.Felt, chainId string) (*big.Int, error) {
 	if err := nm.validate(addr, chainId); err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (nm *nonceManager) NextSequence(addr caigotypes.Hash, chainId string) (*big
 	return nm.n[addr.String()][chainId], nil
 }
 
-func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Hash, chainId string, currentNonce *big.Int) error {
+func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Felt, chainId string, currentNonce *big.Int) error {
 	if err := nm.validate(addr, chainId); err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Hash, chainId stri
 	return nil
 }
 
-func (nm *nonceManager) validate(addr caigotypes.Hash, id string) error {
+func (nm *nonceManager) validate(addr caigotypes.Felt, id string) error {
 	nm.lock.RLock()
 	defer nm.lock.RUnlock()
 	if _, exists := nm.n[addr.String()]; !exists {
