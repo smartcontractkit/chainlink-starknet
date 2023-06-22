@@ -217,7 +217,8 @@ func (txm *starktxm) confirmLoop() {
 					}
 					receipt, ok := response.(caigorpc.InvokeTransactionReceipt)
 					if !ok {
-						panic(fmt.Sprintf("wrong receipt type: %v", reflect.TypeOf(response)))
+						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
+						continue
 					}
 
 					status := receipt.Status
