@@ -116,7 +116,12 @@ func (testState *Test) DeployCluster() {
 	var err error
 	testState.Cc.NKeys, testState.Cc.ChainlinkNodes, err = testState.Common.CreateKeys(testState.Common.Env)
 	require.NoError(testState.T, err, "Creating chains and keys should not fail")
-	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, testState.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
+	baseURL := testState.Common.L2RPCUrl
+	if !testState.Common.Testnet { // devnet!
+		// chainlink starknet client needs the RPC API url which is at /rpc on devnet
+		baseURL += "/rpc"
+	}
+	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, baseURL, lggr, &rpcRequestTimeout)
 	require.NoError(testState.T, err, "Creating starknet client should not fail")
 	testState.OCR2Client, err = ocr2.NewClient(testState.Starknet, lggr)
 	require.NoError(testState.T, err, "Creating ocr2 client should not fail")
@@ -272,13 +277,13 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	// validate balance in aggregator
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.LinkTokenAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.LinkTokenAddr),
 		Selector:        "balance_of",
-		Calldata:        []string{caigotypes.HexToBN(testState.OCRAddr).String()},
+		Calldata:        []string{testState.OCRAddr},
 	})
 	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail")
 	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.OCRAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.OCRAddr),
 		Selector:        "link_available_for_payment",
 	})
 	require.NoError(testState.T, errAgg, "Reader balance from LINK contract should not fail")
@@ -294,7 +299,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
 		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
-		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
+		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.StrToFelt(testState.OCRAddr))
 		require.NoError(testState.T, err, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
@@ -372,7 +377,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	// Test proxy reading
 	// TODO: would be good to test proxy switching underlying feeds
 	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.ProxyAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.ProxyAddr),
 		Selector:        "latest_round_data",
 	})
 	if !isSoak {

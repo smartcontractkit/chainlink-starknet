@@ -1,7 +1,6 @@
 package ocr2
 
 import (
-	"encoding/hex"
 	"math/big"
 	"time"
 
@@ -27,7 +26,7 @@ var (
 type NewTransmissionEvent struct {
 	RoundId         uint32
 	LatestAnswer    *big.Int
-	Transmitter     *caigotypes.Felt
+	Transmitter     caigotypes.Felt
 	LatestTimestamp time.Time
 	Observers       []uint8
 	ObservationsLen uint32
@@ -41,7 +40,7 @@ type NewTransmissionEvent struct {
 }
 
 // ParseNewTransmissionEvent is decoding binary felt data as the NewTransmissionEvent type
-func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEvent, error) {
+func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEvent, error) {
 	{
 		const observationsLenIndex = 5
 		const constNumOfElements = 11
@@ -50,7 +49,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
 
-		observationsLen := eventData[observationsLenIndex].Uint64()
+		observationsLen := eventData[observationsLenIndex].Big().Uint64()
 		if len(eventData) != constNumOfElements+int(observationsLen) {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
@@ -58,7 +57,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// round_id
 	index := 0
-	roundId := uint32(eventData[index].Uint64())
+	roundId := uint32(eventData[index].Big().Uint64())
 
 	// answer
 	index++
@@ -73,7 +72,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// observation_timestamp
 	index++
-	unixTime := eventData[index].Int64()
+	unixTime := eventData[index].Big().Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
 	// observers (raw) max 31
@@ -82,7 +81,7 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 
 	// observation_len
 	index++
-	observationsLen := uint32(eventData[index].Uint64())
+	observationsLen := uint32(eventData[index].Big().Uint64())
 
 	// observers (based on observationsLen)
 	var observers []uint8
@@ -137,28 +136,28 @@ func ParseNewTransmissionEvent(eventData []*caigotypes.Felt) (NewTransmissionEve
 }
 
 // ParseConfigSetEvent is decoding binary felt data as the libocr ContractConfig type
-func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, error) {
+func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, error) {
 	{
 		const oraclesLenIdx = 3
 		if len(eventData) < oraclesLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
-		oraclesLen := eventData[oraclesLenIdx].Uint64()
+		oraclesLen := eventData[oraclesLenIdx].Big().Uint64()
 		onchainConfigLenIdx := oraclesLenIdx + 2*oraclesLen + 2
 
 		if uint64(len(eventData)) < onchainConfigLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
-		onchainConfigLen := eventData[onchainConfigLenIdx].Uint64()
+		onchainConfigLen := eventData[onchainConfigLenIdx].Big().Uint64()
 		offchainConfigLenIdx := onchainConfigLenIdx + onchainConfigLen + 2
 
 		if uint64(len(eventData)) < offchainConfigLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
-		offchainConfigLen := eventData[offchainConfigLenIdx].Uint64()
+		offchainConfigLen := eventData[offchainConfigLenIdx].Big().Uint64()
 		if uint64(len(eventData)) != offchainConfigLenIdx+offchainConfigLen+1 {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
@@ -176,11 +175,11 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 	// config_count
 	index++
-	configCount := eventData[index].Uint64()
+	configCount := eventData[index].Big().Uint64()
 
 	// oracles_len
 	index++
-	oraclesLen := eventData[index].Uint64()
+	oraclesLen := eventData[index].Big().Uint64()
 
 	// oracles
 	index++
@@ -191,17 +190,17 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 		if i%2 == 0 {
 			signers = append(signers, starknet.PadBytes(member.Bytes(), 32)) // pad to 32 bytes
 		} else {
-			transmitters = append(transmitters, types.Account("0x"+hex.EncodeToString(starknet.PadBytes(member.Bytes(), 32)))) // pad to 32 byte length then re-encode
+			transmitters = append(transmitters, types.Account(member.String()))
 		}
 	}
 
 	// f
 	index = index + int(oraclesLen)*2
-	f := eventData[index].Uint64()
+	f := eventData[index].Big().Uint64()
 
 	// onchain_config length
 	index++
-	onchainConfigLen := eventData[index].Uint64()
+	onchainConfigLen := eventData[index].Big().Uint64()
 
 	// onchain_config (version=1, min, max)
 	index++
@@ -217,16 +216,15 @@ func ParseConfigSetEvent(eventData []*caigotypes.Felt) (types.ContractConfig, er
 
 	// offchain_config_version
 	index += int(onchainConfigLen)
-	offchainConfigVersion := eventData[index].Uint64()
+	offchainConfigVersion := eventData[index].Big().Uint64()
 
 	// offchain_config_len
 	index++
-	offchainConfigLen := eventData[index].Uint64()
+	offchainConfigLen := eventData[index].Big().Uint64()
 
 	// offchain_config
 	index++
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
-	// todo: get rid of caigoToJuno workaround
 	offchainConfig, err := starknet.DecodeFelts(starknet.FeltsToBig(offchainConfigFelts))
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")

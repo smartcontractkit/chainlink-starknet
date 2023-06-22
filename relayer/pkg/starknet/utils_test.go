@@ -43,9 +43,7 @@ func TestPadBytes(t *testing.T) {
 func TestFeltToUnsignedBig(t *testing.T) {
 
 	negativeBig := caigotypes.BigToFelt(big.NewInt(-100))
-	assert.False(t, negativeBig.IsUint64())
-
-	// negative felts are not supported, so it'll be interpreted as non-negative
+	// negative felts are not supported
 	num, err := FeltToUnsignedBig(negativeBig)
 	assert.NoError(t, err)
 	assert.Equal(t, num, big.NewInt(100))

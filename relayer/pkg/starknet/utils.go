@@ -1,7 +1,6 @@
 package starknet
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -89,12 +88,13 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-func FeltToUnsignedBig(felt *caigotypes.Felt) (num *big.Int, err error) {
-	if caigotypes.MaxFelt.Cmp(felt.Big()) == -1 {
-		return nil, fmt.Errorf("felt value is too large: %s", felt.Big())
+func FeltToUnsignedBig(felt caigotypes.Felt) (num *big.Int, err error) {
+	num = felt.Big()
+	if caigotypes.MaxFelt.Big().Cmp(num) == -1 {
+		return nil, fmt.Errorf("felt value is too large: %s", num)
 	}
 	// will always return a non-negative value because it uses Bytes() behind the scenes
-	return felt.Big(), nil
+	return num, nil
 }
 
 func HexToUnsignedBig(str string) (num *big.Int, err error) {
@@ -102,45 +102,25 @@ func HexToUnsignedBig(str string) (num *big.Int, err error) {
 	return FeltToUnsignedBig(felt)
 }
 
-func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
+func FeltsToBig(in []caigotypes.Felt) (out []*big.Int) {
 	for _, f := range in {
-		out = append(out, f.Int)
+		out = append(out, f.Big())
 	}
 
 	return out
 }
 
 // StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
-func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
+func StringsToFelt(in []string) (out []caigotypes.Felt, _ error) {
 	if in == nil {
 		return nil, errors.New("invalid: input value")
 	}
 
 	for _, f := range in {
-		felt := caigotypes.StrToFelt(f)
-		if felt == nil {
-			return nil, errors.New("invalid: string value")
-		}
-
-		out = append(out, felt)
+		out = append(out, caigotypes.StrToFelt(f))
 	}
 
 	return out, nil
-}
-
-// CompareAddress compares different hex starknet addresses with potentially different 0 padding
-func CompareAddress(a, b string) bool {
-	aBytes, err := caigotypes.HexToBytes(a)
-	if err != nil {
-		return false
-	}
-
-	bBytes, err := caigotypes.HexToBytes(b)
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(PadBytes(aBytes, 32), PadBytes(bBytes, 32))
 }
 
 /* Testing utils - do not use (XXX) outside testing context */
