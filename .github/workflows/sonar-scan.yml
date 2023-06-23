@@ -23,7 +23,7 @@ jobs:
         with:
           max-timeout: "1200"
           polling-interval: "30"
-          exclude-workflow-names: "Amarna Analysis,Changesets,Integration Contracts (Vendor, Examples),Integration Gauntlet,Integration Tests Publish,Integration Tests - Soak,Build and push on-chain monitor image to ECR"
+          exclude-workflow-names: "Amarna Analysis,Changesets,Integration Contracts (Vendor, Examples),Integration Gauntlet,Integration Tests Publish,Integration Tests - Smoke,Integration Tests - Soak,Build and push on-chain monitor image to ECR,Contracts,Lint"
           exclude-workflow-ids: ""
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
