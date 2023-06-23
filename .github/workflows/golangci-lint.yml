@@ -38,6 +38,12 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint relayer
         run: nix develop -c make lint-go-relayer
+      - name: Store go lint relayer report artifact
+        if: always()
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: golangci-lint-relayer-report
+          path: golangci-lint-relayer-report.xml
 
   golang_lint_ops:
     name: Golang Lint Ops
@@ -52,6 +58,12 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint ops
         run: nix develop -c make lint-go-ops
+      - name: Store go lint ops report artifact
+        if: always()
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: golangci-lint-ops-report
+          path: golangci-lint-ops-report.xml
 
   golang_lint_integration_tests:
     name: Golang Lint Integration Tests

@@ -24,6 +24,16 @@ jobs:
 
       - name: Unit Test
         run: nix develop -c make test-unit-go
+      
+      - name: Upload Go test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-unit-tests-results
+          path: |
+            ./output.txt
+            ./coverage.txt
+            ./race_coverage.out
 
       - name: Install starknet-devnet (via venv+pip)
         run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt

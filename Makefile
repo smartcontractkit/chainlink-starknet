@@ -157,11 +157,11 @@ format-ts-check:
 
 .PHONY: lint-go-ops
 lint-go-ops:
-	cd ./ops && golangci-lint --color=always run
+	cd ./ops && golangci-lint --color=always --out-format checkstyle:golangci-lint-go-lint-ops-report.xml run
 
 .PHONY: lint-go-relayer
 lint-go-relayer:
-	cd ./relayer && golangci-lint --color=always run
+	cd ./relayer && golangci-lint --color=always --out-format checkstyle:golangci-lint-go-relayer-report.xml run
 
 .PHONY: lint-go-test
 lint-go-test:
@@ -175,8 +175,8 @@ test-unit: test-unit-go
 
 .PHONY: test-unit-go
 test-unit-go:
-	cd ./relayer && go test -v ./...
-	cd ./relayer && go test -v ./... -race -count=10
+	cd ./relayer && go test -v ./... -covermode=atomic -coverpkg=./... -coverprofile=coverage.txt
+	cd ./relayer && go test -v ./... -race -count=10 -coverpkg=./... -coverprofile=race_coverage.txt $1 | tee $OUTPUT_FILE
 
 .PHONY: test-integration-go
 # only runs tests with TestIntegration_* + //go:build integration
