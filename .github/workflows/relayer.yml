@@ -25,7 +25,7 @@ jobs:
       - name: Unit Test
         run: nix develop -c make test-unit-go
       
-      - name: Upload Go test results
+      - name: Upload Golangci relayer results
         if: always()
         uses: actions/upload-artifact@v3
         with:
