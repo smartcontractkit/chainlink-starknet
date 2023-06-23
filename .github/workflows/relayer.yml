@@ -31,9 +31,9 @@ jobs:
         with:
           name: go-unit-tests-results
           path: |
-            ./output.txt
-            ./coverage.txt
-            ./race_coverage.out
+            ./relayer/output.txt
+            ./relayer/coverage.txt
+            ./relayer/race_coverage.out
 
       - name: Install starknet-devnet (via venv+pip)
         run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt
