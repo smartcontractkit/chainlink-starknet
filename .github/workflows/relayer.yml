@@ -33,7 +33,7 @@ jobs:
           path: |
             ./relayer/output.txt
             ./relayer/coverage.txt
-            ./relayer/race_coverage.out
+            ./relayer/race_coverage.txt
 
       - name: Install starknet-devnet (via venv+pip)
         run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt
