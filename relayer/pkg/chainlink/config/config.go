@@ -1,13 +1,10 @@
 package config
 
 import (
-	"net/url"
 	"time"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
@@ -16,9 +13,8 @@ var DefaultConfigSet = ConfigSet{
 	OCR2CachePollPeriod: 5 * time.Second,
 	OCR2CacheTTL:        time.Minute,
 	RequestTimeout:      10 * time.Second,
-	TxTimeout:           time.Minute,
-	TxSendFrequency:     5 * time.Second,
-	TxMaxBatchSize:      100,
+	TxTimeout:           10 * time.Second,
+	ConfirmationPoll:    5 * time.Second,
 }
 
 type ConfigSet struct {
@@ -29,9 +25,8 @@ type ConfigSet struct {
 	RequestTimeout time.Duration
 
 	// txm config
-	TxTimeout       time.Duration
-	TxSendFrequency time.Duration
-	TxMaxBatchSize  int
+	TxTimeout        time.Duration
+	ConfirmationPoll time.Duration
 }
 
 type Config interface {
@@ -44,104 +39,12 @@ type Config interface {
 	RequestTimeout() time.Duration
 }
 
-var _ Config = (*config)(nil)
-
-type config struct {
-	defaults ConfigSet
-	dbCfg    db.ChainCfg
-	lggr     logger.Logger
-}
-
-func NewConfig(dbCfg db.ChainCfg, lggr logger.Logger) *config {
-	return &config{
-		defaults: DefaultConfigSet,
-		dbCfg:    dbCfg,
-		lggr:     lggr,
-	}
-}
-
-func (c *config) OCR2CachePollPeriod() time.Duration {
-	ch := c.dbCfg.OCR2CachePollPeriod
-	if ch != nil {
-		return ch.Duration()
-	}
-	return c.defaults.OCR2CachePollPeriod
-}
-
-func (c *config) OCR2CacheTTL() time.Duration {
-	ch := c.dbCfg.OCR2CacheTTL
-	if ch != nil {
-		return ch.Duration()
-	}
-	return c.defaults.OCR2CacheTTL
-}
-
-func (c *config) RequestTimeout() time.Duration {
-	ch := c.dbCfg.RequestTimeout
-	if ch != nil {
-		return ch.Duration()
-	}
-	return c.defaults.RequestTimeout
-}
-
-func (c *config) TxTimeout() time.Duration {
-	ch := c.dbCfg.TxTimeout
-	if ch != nil {
-		return ch.Duration()
-	}
-	return c.defaults.TxTimeout
-}
-
-func (c *config) TxSendFrequency() time.Duration {
-	ch := c.dbCfg.TxSendFrequency
-	if ch != nil {
-		return ch.Duration()
-	}
-	return c.defaults.TxSendFrequency
-}
-
-func (c *config) TxMaxBatchSize() int {
-	ch := c.dbCfg.TxMaxBatchSize
-	if ch.Valid {
-		return int(ch.Int64)
-	}
-	return c.defaults.TxMaxBatchSize
-}
-
 type Chain struct {
 	OCR2CachePollPeriod *utils.Duration
 	OCR2CacheTTL        *utils.Duration
 	RequestTimeout      *utils.Duration
 	TxTimeout           *utils.Duration
-	TxSendFrequency     *utils.Duration
-	TxMaxBatchSize      *int64
-}
-
-func (c *Chain) SetFromDB(cfg *db.ChainCfg) error {
-	if cfg == nil {
-		return nil
-	}
-
-	if cfg.OCR2CachePollPeriod != nil {
-		c.OCR2CachePollPeriod = utils.MustNewDuration(cfg.OCR2CachePollPeriod.Duration())
-	}
-	if cfg.OCR2CacheTTL != nil {
-		c.OCR2CacheTTL = utils.MustNewDuration(cfg.OCR2CacheTTL.Duration())
-	}
-	if cfg.RequestTimeout != nil {
-		c.RequestTimeout = utils.MustNewDuration(cfg.RequestTimeout.Duration())
-	}
-	if cfg.TxTimeout != nil {
-		c.TxTimeout = utils.MustNewDuration(cfg.TxTimeout.Duration())
-	}
-	if cfg.TxSendFrequency != nil {
-		c.TxSendFrequency = utils.MustNewDuration(cfg.TxSendFrequency.Duration())
-	}
-	if cfg.TxMaxBatchSize.Valid {
-		c.TxMaxBatchSize = &cfg.TxMaxBatchSize.Int64
-	}
-
-	return nil
+	ConfirmationPoll    *utils.Duration
 }
 
 func (c *Chain) SetDefaults() {
@@ -157,30 +60,12 @@ func (c *Chain) SetDefaults() {
 	if c.TxTimeout == nil {
 		c.TxTimeout = utils.MustNewDuration(DefaultConfigSet.TxTimeout)
 	}
-	if c.TxSendFrequency == nil {
-		c.TxSendFrequency = utils.MustNewDuration(DefaultConfigSet.TxSendFrequency)
-	}
-	if c.TxMaxBatchSize == nil {
-		i := int64(DefaultConfigSet.TxMaxBatchSize)
-		c.TxMaxBatchSize = &i
+	if c.ConfirmationPoll == nil {
+		c.ConfirmationPoll = utils.MustNewDuration(DefaultConfigSet.ConfirmationPoll)
 	}
 }
 
 type Node struct {
 	Name *string
 	URL  *utils.URL
-}
-
-func (n *Node) SetFromDB(db db.Node) error {
-	if db.Name != "" {
-		n.Name = &db.Name
-	}
-	if db.URL != "" {
-		u, err := url.Parse(db.URL)
-		if err != nil {
-			return err
-		}
-		n.URL = (*utils.URL)(u)
-	}
-	return nil
 }

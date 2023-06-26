@@ -2,21 +2,23 @@ package txm
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math/big"
+	"reflect"
 	"sync"
 	"time"
 
-	"github.com/dontpanicdao/caigo"
-	caigotypes "github.com/dontpanicdao/caigo/types"
-	"github.com/pkg/errors"
+	"github.com/smartcontractkit/caigo"
+	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
+	caigotypes "github.com/smartcontractkit/caigo/types"
+	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
-
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/keys"
 )
 
 const (
@@ -24,12 +26,14 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(caigotypes.Hash, caigotypes.FunctionCall) error
+	Enqueue(senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, txFn caigotypes.FunctionCall) error
+	InflightCount() (int, int)
 }
 
 type Tx struct {
-	sender caigotypes.Hash
-	call   caigotypes.FunctionCall
+	senderAddress  caigotypes.Felt
+	accountAddress caigotypes.Felt
+	call           caigotypes.FunctionCall
 }
 
 type StarkTXM interface {
@@ -43,23 +47,27 @@ type starktxm struct {
 	done    sync.WaitGroup
 	stop    chan struct{}
 	queue   chan Tx
-	ks      keys.Keystore
+	ks      KeystoreAdapter
 	cfg     Config
+	nonce   NonceManager
 
-	// TODO: use lazy loaded client
-	client    *starknet.Client
-	getClient func() (*starknet.Client, error)
+	client  *utils.LazyLoad[*starknet.Client]
+	txStore *ChainTxStore
 }
 
-func New(lggr logger.Logger, keystore keys.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
-	return &starktxm{
-		lggr:      logger.Named(lggr, "StarkNetTxm"),
-		queue:     make(chan Tx, MaxQueueLen),
-		stop:      make(chan struct{}),
-		getClient: getClient,
-		ks:        keystore,
-		cfg:       cfg,
-	}, nil
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
+	txm := &starktxm{
+		lggr:    logger.Named(lggr, "StarknetTxm"),
+		queue:   make(chan Tx, MaxQueueLen),
+		stop:    make(chan struct{}),
+		client:  utils.NewLazyLoad(getClient),
+		ks:      NewKeystoreAdapter(keystore),
+		cfg:     cfg,
+		txStore: NewChainTxStore(),
+	}
+	txm.nonce = NewNonceManager(txm.lggr)
+
+	return txm, nil
 }
 
 func (txm *starktxm) Name() string {
@@ -68,101 +76,84 @@ func (txm *starktxm) Name() string {
 
 func (txm *starktxm) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("starktxm", func() error {
-		txm.done.Add(1) // waitgroup: tx sender
-		go txm.run()
+		if err := txm.nonce.Start(ctx); err != nil {
+			return err
+		}
+
+		txm.done.Add(2) // waitgroup: tx sender + confirmer
+		go txm.broadcastLoop()
+		go txm.confirmLoop()
 		return nil
 	})
 }
 
-func (txm *starktxm) run() {
+func (txm *starktxm) broadcastLoop() {
 	defer txm.done.Done()
 
-	// TODO: func not available without importing core
-	// ctx, cancel := utils.ContextFromChan(txm.stop)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := utils.ContextFromChan(txm.stop)
 	defer cancel()
 
-	tick := time.After(0)
-
+	txm.lggr.Debugw("broadcastLoop: started")
 	for {
 		select {
-		case <-tick:
-			start := time.Now()
-
-			// fetch client if needed (before processing txs to preserve queue)
-			if txm.client == nil {
-				var err error
-				txm.client, err = txm.getClient()
-				if err != nil {
-					txm.lggr.Errorw("unable to fetch client", "error", err)
-					tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start)) // reset tick
-					txm.client = nil                                                                   // reset
-					continue
-				}
-			}
-
-			// calculate total txs to process
-			txLen := len(txm.queue)
-			if txLen > txm.cfg.TxMaxBatchSize() {
-				txLen = txm.cfg.TxMaxBatchSize()
-			}
-
-			// fetch batch and split by sender
-			txsBySender := map[caigotypes.Hash][]caigotypes.FunctionCall{}
-			for i := 0; i < txLen; i++ {
-				tx := <-txm.queue
-				txsBySender[tx.sender] = append(txsBySender[tx.sender], tx.call)
-			}
-			txm.lggr.Infow("creating batch", "totalTxCount", txLen, "batchCount", len(txsBySender))
-			txm.lggr.Debugw("batch details", "batches", txsBySender)
-
-			// async process of tx batches
-			var wg sync.WaitGroup
-			wg.Add(len(txsBySender))
-			for sender, txs := range txsBySender {
-				go func(sender caigotypes.Hash, txs []caigotypes.FunctionCall) {
-
-					// fetch key matching sender address
-					key, err := txm.ks.Get(sender.String())
-					if err != nil {
-						txm.lggr.Errorw("failed to retrieve key", "id", sender, "error", err)
-					} else {
-						// parse key to expected format
-						privKeyBytes := key.Raw()
-						privKey := caigotypes.BigToHex(caigotypes.BytesToBig(privKeyBytes))
-
-						// broadcast batch based on sender
-						hash, err := txm.broadcastBatch(ctx, privKey, sender, txs)
-						if err != nil {
-							txm.lggr.Errorw("transaction failed to broadcast", "error", err, "batchTx", txs)
-						} else {
-							txm.lggr.Infow("transaction broadcast", "txhash", hash)
-						}
-					}
-					wg.Done()
-				}(sender, txs)
-			}
-			wg.Wait()
-			tick = time.After(utils.WithJitter(txm.cfg.TxSendFrequency()) - time.Since(start))
 		case <-txm.stop:
+			txm.lggr.Debugw("broadcastLoop: stopped")
 			return
+		default:
+			// skip processing if queue is empty
+			if len(txm.queue) == 0 {
+				continue
+			}
+
+			// preserve tx queue: don't pull tx from queue until client is known to work
+			if _, err := txm.client.Get(); err != nil {
+				txm.lggr.Errorw("failed to fetch client: skipping processing tx", "error", err)
+				continue
+			}
+			tx := <-txm.queue
+
+			// broadcast tx serially - wait until accepted by mempool before processing next
+			hash, err := txm.broadcast(ctx, tx.senderAddress, tx.accountAddress, tx.call)
+			if err != nil {
+				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
+			} else {
+				txm.lggr.Infow("transaction broadcast", "txhash", hash)
+			}
 		}
 	}
 }
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender caigotypes.Hash, txs []caigotypes.FunctionCall) (txhash string, err error) {
-	// create new account
-	account, err := caigo.NewGatewayAccount(privKey, sender.String(), txm.client.Gw, caigo.AccountVersion1)
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) (txhash string, err error) {
+	txs := []caigotypes.FunctionCall{tx}
+	client, err := txm.client.Get()
 	if err != nil {
-		return txhash, errors.Errorf("failed to create new account: %s", err)
+		txm.client.Reset()
+		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
+	}
+	// create new account
+	account, err := caigo.NewRPCAccount(senderAddress, accountAddress, txm.ks, client.Provider, caigo.AccountVersion1)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to create new account: %+w", err)
+	}
+
+	chainID, err := client.Provider.ChainID(ctx)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get chainID: %+w", err)
+	}
+
+	nonce, err := txm.nonce.NextSequence(accountAddress, chainID)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
 
 	// get fee for txm
+	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
+	// can we estimate fee without calling estimate - tbd with 1.0
 	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
 	if err != nil {
-		return txhash, errors.Errorf("failed to estimate fee: %s", err)
+		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
 	}
 
 	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
@@ -170,15 +161,16 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
 	details := caigotypes.ExecuteDetails{
 		MaxFee: max,
+		Nonce:  nonce,
 	}
 
-	// TODO: investigate if nonce management is needed (nonce is requested queried by the sdk for now)
 	// transmit txs
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout()*time.Second)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 	res, err := account.Execute(execCtx, txs, details)
 	if err != nil {
-		return txhash, errors.Errorf("failed to invoke tx: %s", err)
+		// TODO: handle initial broadcast errors - what kind of errors occur?
+		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 
 	// handle nil pointer
@@ -186,7 +178,66 @@ func (txm *starktxm) broadcastBatch(ctx context.Context, privKey string, sender 
 		return txhash, errors.New("execute response and error are nil")
 	}
 
-	return res.TransactionHash, nil
+	// update nonce if transaction is successful
+	err = errors.Join(
+		txm.nonce.IncrementNextSequence(accountAddress, chainID, nonce),
+		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
+	)
+	return res.TransactionHash, err
+}
+
+func (txm *starktxm) confirmLoop() {
+	defer txm.done.Done()
+
+	ctx, cancel := utils.ContextFromChan(txm.stop)
+	defer cancel()
+
+	tick := time.After(txm.cfg.ConfirmationPoll())
+
+	txm.lggr.Debugw("confirmLoop: started")
+	for {
+		var start time.Time
+		select {
+		case <-tick:
+			start = time.Now()
+			client, err := txm.client.Get()
+			if err != nil {
+				txm.lggr.Errorw("failed to load client", "error", err)
+				break
+			}
+
+			hashes := txm.txStore.GetAllUnconfirmed()
+			for addr := range hashes {
+				for i := range hashes[addr] {
+					hash := hashes[addr][i]
+					response, err := client.Provider.TransactionReceipt(ctx, caigotypes.StrToFelt(hashes[addr][i]))
+					if err != nil {
+						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
+						continue
+					}
+					receipt, ok := response.(caigorpc.InvokeTransactionReceipt)
+					if !ok {
+						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
+						continue
+					}
+
+					status := receipt.Status
+
+					if status == caigotypes.TransactionAcceptedOnL1 || status == caigotypes.TransactionAcceptedOnL2 || status == caigotypes.TransactionRejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
+						if err := txm.txStore.Confirm(addr, hash); err != nil {
+							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+						}
+					}
+				}
+			}
+		case <-txm.stop:
+			txm.lggr.Debugw("confirmLoop: stopped")
+			return
+		}
+		t := txm.cfg.ConfirmationPoll() - time.Since(start)
+		tick = time.After(utils.WithJitter(t.Abs()))
+	}
 }
 
 func (txm *starktxm) Close() error {
@@ -209,12 +260,44 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(sender caigotypes.Hash, tx caigotypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) error {
+	// validate key exists for sender
+	// use the embedded Loopp Keystore to do this; the spec and design
+	// encourage passing nil data to the loop.Keystore.Sign as way to test
+	// existence of a key
+	if _, err := txm.ks.Loopp().Sign(context.Background(), senderAddress.String(), nil); err != nil {
+		return err
+	}
+
+	client, err := txm.client.Get()
+	if err != nil {
+		txm.client.Reset()
+		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
+	}
+
+	chainID, err := client.Provider.ChainID(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get chainID: %+w", err)
+	}
+
+	// register account for nonce manager
+	if err := txm.nonce.Register(context.TODO(), accountAddress, chainID, client); err != nil {
+		return err
+	}
+
 	select {
-	case txm.queue <- Tx{sender: sender, call: tx}:
+	case txm.queue <- Tx{senderAddress: senderAddress, accountAddress: accountAddress, call: tx}:
 	default:
-		return errors.Errorf("failed to enqueue transaction: %+v", tx)
+		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 
 	return nil
+}
+
+func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
+	list := maps.Values(txm.txStore.GetAllInflightCount())
+	for _, count := range list {
+		unconfirmed += count
+	}
+	return len(txm.queue), unconfirmed
 }

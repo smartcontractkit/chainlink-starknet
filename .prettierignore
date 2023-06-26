@@ -6,6 +6,9 @@ target
 *.json
 dist
 *.yml
+typechain-types
+*.html
+*.md
 
 # Vendor files (contracts)
 vendor

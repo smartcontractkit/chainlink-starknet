@@ -10,7 +10,7 @@ Chainlink-Starknet contains a number of projects, all individually versioned and
 - [@chainlink/starknet-gauntlet-ocr2](/packages-ts/starknet-gauntlet-ocr2/)
 - [@chainlink/starknet-gauntlet-oz](/packages-ts/starknet-gauntlet-oz/)
 - [@chainlink/starknet-gauntlet-argent](/packages-ts/starknet-gauntlet-argent/)
-- [@chainlink/starknet-gauntlet-starkgate](/packages-ts/starknet-gauntlet-starkgate/)
+- [@chainlink/starknet-gauntlet-token](/packages-ts/starknet-gauntlet-token/)
 - [@chainlink/starknet-contracts](/contracts/)
 - [@chainlink/starknet-integration-tests](/integration-tests/)
 

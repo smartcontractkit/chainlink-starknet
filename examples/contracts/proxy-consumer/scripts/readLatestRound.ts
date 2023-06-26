@@ -1,16 +1,7 @@
 import fs from 'fs'
-import {
-  Account,
-  Provider,
-  Contract,
-  CallContractResponse,
-  json,
-  ec,
-  transaction,
-  Status,
-} from 'starknet'
+import { Account, Provider, Contract, CallContractResponse, json, ec } from 'starknet'
 
-// StarkNet network: Either goerli-alpha or mainnet-alpha
+// Starknet network: Either goerli-alpha or mainnet-alpha
 const network = 'goerli-alpha'
 
 /** Environment variables for a deployed and funded account to use for deploying contracts

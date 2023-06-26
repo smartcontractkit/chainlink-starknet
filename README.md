@@ -1,3 +1,3 @@
-# Chainlink StarkNet
+# Chainlink Starknet
 
-For more information, see the [Chainlink StarkNet Documentation](./docs).
+For more information, see the [Chainlink Starknet Documentation](./docs).

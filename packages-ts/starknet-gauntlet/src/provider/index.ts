@@ -6,20 +6,30 @@ import {
   CompiledContract,
   Account,
   Call,
-  number,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
-import { starknetClassHash } from './classHashCommand'
 
 // TODO: Move to gauntlet-core
 interface IProvider<P> {
   provider: P
   send: () => Promise<TransactionResponse>
-  deployContract: (
+  declareAndDeployContract: (
     contract: CompiledContract,
+    compiledClassHash: string,
     input: any,
     wait?: boolean,
     salt?: number,
+  ) => Promise<TransactionResponse>
+  deployContract: (
+    classHash: string,
+    input: any,
+    wait?: boolean,
+    salt?: number,
+  ) => Promise<TransactionResponse>
+  declareContract: (
+    contract: CompiledContract,
+    compiledClassHash?: string,
+    wait?: boolean,
   ) => Promise<TransactionResponse>
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
@@ -83,23 +93,59 @@ class Provider implements IStarknetProvider {
     return {} as TransactionResponse
   }
 
-  deployContract = async (
+  /**
+   * Compiles the contract and declares it using the generated ABI.
+   * Then deploys an instance of the declared contract.
+   * If contract has already been declared it will only be deployed.
+   */
+  declareAndDeployContract = async (
     contract: CompiledContract,
+    compiledClassHash?: string,
     input: any = [],
     wait = true,
     salt = undefined,
   ) => {
-    const classHash = await starknetClassHash(contract)
-
-    const tx = await this.account.declareDeploy({
-      classHash,
+    const tx = await this.account.declareAndDeploy({
       contract,
+      compiledClassHash,
       salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
-      unique: false,
+      // unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
 
     const response = wrapResponse(this, tx.deploy)
+
+    if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  /**
+   * Compiles the contract and declares it using the generated ABI.
+   */
+  declareContract = async (contract: CompiledContract, compiledClassHash?: string, wait = true) => {
+    const tx = await this.account.declare({
+      contract,
+      compiledClassHash,
+    })
+
+    const response = wrapResponse(this, tx, 'not applicable for declares')
+
+    if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  /**
+   * Deploys a contract given a class hash
+   */
+  deployContract = async (classHash: string, input: any = [], wait = true, salt = undefined) => {
+    const tx = await this.account.deployContract({
+      classHash: classHash,
+      salt: salt ? '0x' + salt.toString(16) : salt,
+      ...(!!input && input.length > 0 && { constructorCalldata: input }),
+    })
+    const response = wrapResponse(this, tx)
 
     if (!wait) return response
     await response.wait()

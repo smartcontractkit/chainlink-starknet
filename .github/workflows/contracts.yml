@@ -8,8 +8,29 @@ on:
   pull_request:
 
 jobs:
-  contracts_run_tests:
-    name: Run Tests
+  contracts_run_ts_tests:
+    name: Run Typescript Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
+
+      - name: Install starknet-devnet (via venv+pip)
+        run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt
+
+      - name: Test
+        run: nix develop -c make test-ts-contracts
+
+  contracts_run_cairo_tests:
+    name: Run Cairo Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -20,5 +41,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
+
       - name: Test
-        run: nix develop -c make test-ts-contracts
+        run: nix develop -c make test-cairo-contracts

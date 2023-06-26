@@ -1,0 +1,34 @@
+{
+  "name": "@chainlink/starknet-gauntlet-token",
+  "version": "0.0.1",
+  "description": "Gauntlet Starknet Starkgate contracts",
+  "keywords": [
+    "typescript",
+    "cli"
+  ],
+  "main": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "!dist/**/*.test.js"
+  ],
+  "scripts": {
+    "gauntlet": "ts-node ./src/index.ts",
+    "lint": "tsc",
+    "test": "SKIP_PROMPTS=true jest --runInBand --config ../../jest.config.ts --selectProjects starknet-gauntlet-token --passWithNoTests",
+    "test:coverage": "yarn test --collectCoverage",
+    "test:ci": "yarn test --ci",
+    "format": "yarn prettier --write ./src",
+    "format:check": "yarn prettier --check ./src",
+    "clean": "rm -rf ./dist/ ./bin/",
+    "build": "yarn clean && tsc -b",
+    "bundle": "yarn build && pkg ."
+  },
+  "dependencies": {
+    "@chainlink/evm-gauntlet": "^0.4.0",
+    "@chainlink/gauntlet-core": "0.3.1",
+    "@chainlink/starknet-gauntlet": "*",
+    "@chainlink/starknet-gauntlet-oz": "*",
+    "ethers": "^5.6.9"
+  }
+}

@@ -5,16 +5,16 @@ import {
   isValidAddress,
   makeExecuteCommand,
 } from '@chainlink/starknet-gauntlet'
-import { number } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
 import { contractLoader } from '../../lib/contracts'
 
 type UserInput = {
   signers: string[]
   threshold: string
+  classHash?: string
 }
 
-type ContractInput = [signersLen: string, ...signers: string[], threshold: string]
+type ContractInput = [signersLen: number, ...signers: string[], threshold: number]
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -22,6 +22,7 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   return {
     signers: flags.signers,
     threshold: flags.threshold,
+    classHash: flags.classHash,
   }
 }
 
@@ -33,6 +34,13 @@ export const validateThreshold = async (input: UserInput) => {
       `Threshold is higher than signers length: ${threshold} > ${input.signers.length}`,
     )
   return true
+}
+
+const validateClassHash = async (input) => {
+  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+    return true
+  }
+  throw new Error(`Invalid Class Hash: ${input.classHash}`)
 }
 
 export const validateSigners = async (input) => {
@@ -47,11 +55,7 @@ const makeContractInput = async (
   input: UserInput,
   context: ExecutionContext,
 ): Promise<ContractInput> => {
-  return [
-    number.toFelt(input.signers.length),
-    ...input.signers.map((addr) => number.toFelt(number.toBN(addr))),
-    number.toFelt(input.threshold),
-  ]
+  return [input.signers.length, ...input.signers, parseInt(input.threshold)]
 }
 
 const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
@@ -77,7 +81,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateSigners, validateThreshold],
+  validations: [validateSigners, validateThreshold, validateClassHash],
   loadContract: contractLoader,
   hooks: {
     beforeExecute,

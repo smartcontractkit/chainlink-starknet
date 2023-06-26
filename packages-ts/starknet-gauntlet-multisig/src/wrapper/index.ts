@@ -13,9 +13,10 @@ import { TransactionResponse } from '@chainlink/starknet-gauntlet/dist/transacti
 import {
   Call,
   CompiledContract,
+  CompiledSierraCasm,
   Contract,
   addAddressPadding,
-  number,
+  num,
   encode,
   hash,
   validateAndParseAddress,
@@ -55,6 +56,7 @@ export const wrapCommand = <UI, CI>(
     account: string
     executionContext: ExecutionContext
     contract: CompiledContract
+    compiledContractHash?: string
 
     input: Input<UserInput, ContractInput>
 
@@ -80,7 +82,11 @@ export const wrapCommand = <UI, CI>(
       c.contractAddress = args[0]
       c.account = env.account
       c.multisigAddress = env.multisig
-      c.contract = contractLoader()
+      const loadResult = contractLoader()
+      c.contract = loadResult.contract
+      if (loadResult.casm) {
+        c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
+      }
 
       c.executionContext = {
         provider: c.provider,
@@ -113,28 +119,28 @@ export const wrapCommand = <UI, CI>(
       )
       const multisig = {
         address,
-        threshold: number.toBN(threshold.threshold).toNumber(),
-        signers: signers.signers.map((o) => number.toHex(o)),
+        threshold,
+        signers: signers.map((o) => num.toHex(o)),
       }
 
       if (isNaN(proposalId)) return { multisig }
-      const proposal = await this.executionContext.contract.get_transaction(proposalId)
+      const { 0: tx, 1: calldata } = await this.executionContext.contract.get_transaction(
+        proposalId,
+      )
       return {
         multisig,
         proposal: {
           id: proposalId,
-          confirmations: proposal.tx.confirmations,
+          confirmations: tx.confirmations,
           data: {
-            contractAddress: addAddressPadding(proposal.tx.to),
-            entrypoint: encode.addHexPrefix(
-              number.toBN(proposal.tx.function_selector).toString('hex'),
-            ),
-            calldata: proposal.tx_calldata.map((v) => number.toBN(v).toString()),
+            contractAddress: addAddressPadding(tx.to),
+            entrypoint: encode.addHexPrefix(num.toHex(num.toBigInt(tx.function_selector))),
+            calldata: calldata.map((v) => num.toBigInt(v).toString()),
           },
           nextAction:
-            number.toBN(proposal.tx.executed).toNumber() !== 0
+            Number(num.toBigInt(tx.executed)) !== 0
               ? Action.NONE
-              : proposal.tx.confirmations >= multisig.threshold
+              : tx.confirmations >= multisig.threshold
               ? Action.EXECUTE
               : Action.APPROVE,
         },
@@ -153,7 +159,7 @@ export const wrapCommand = <UI, CI>(
     makeProposeMessage: ProposalAction = (message, proposalId) => {
       const invocation = this.executionContext.contract.populate('submit_transaction', [
         this.contractAddress,
-        number.toBN(hash.getSelectorFromName(message.entrypoint)),
+        hash.getSelectorFromName(message.entrypoint),
         message.calldata,
         proposalId,
       ])
@@ -277,7 +283,7 @@ export const wrapCommand = <UI, CI>(
         const txInfo = (await this.provider.provider.getTransactionReceipt(
           tx.hash,
         )) as InvokeTransactionReceiptResponse
-        proposalId = Number(number.hexToDecimalString((txInfo.events[0] as any).data[1]))
+        proposalId = Number(num.hexToDecimalString((txInfo.events[0] as any).data[1]))
       }
 
       const data = await this.afterExecute(result, proposalId)

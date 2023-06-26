@@ -3,13 +3,17 @@
 # juno requires building with clang, not gcc
 (pkgs.mkShell.override { stdenv = pkgs.clangStdenv; }) {
   buildInputs = with pkgs; [
+    stdenv.cc.cc.lib
+    (rust-bin.stable.latest.default.override { extensions = ["rust-src"]; })
     python39
     python39Packages.pip
     python39Packages.venvShellHook
     python39Packages.fastecdsa # so libgmp is correctly sourced
+    zlib # for numpy
     gmp
-    nodejs-18_x
-    (yarn.override { nodejs = nodejs-18_x; })
+    # use nodejs 16.x due to https://github.com/NomicFoundation/hardhat/issues/3877
+    nodejs-16_x
+    (yarn.override { nodejs = nodejs-16_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
@@ -31,13 +35,12 @@
     libusb1
   ];
 
-  LD_LIBRARY_PATH="${stdenv.cc.cc.lib}/lib64:$LD_LIBRARY_PATH";
+  LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.zlib stdenv.cc.cc.lib]; # lib64
   HELM_REPOSITORY_CONFIG=./.helm-repositories.yaml;
 
   venvDir = "./.venv";
 
   postShellHook = ''
-    pip install -r ${./contracts/requirements.txt} -c ${./contracts/constraints.txt}
     helm repo update
   '';
 }

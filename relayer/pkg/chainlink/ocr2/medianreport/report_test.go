@@ -6,13 +6,40 @@ import (
 	"testing"
 	"time"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/commontypes"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
+
+func TestBuildReportWithNegativeValues(t *testing.T) {
+	c := ReportCodec{}
+	oo := []median.ParsedAttributedObservation{}
+
+	oo = append(oo, median.ParsedAttributedObservation{
+		Timestamp:       uint32(time.Now().Unix()),
+		Value:           big.NewInt(-10),
+		JuelsPerFeeCoin: big.NewInt(10),
+		Observer:        commontypes.OracleID(1),
+	})
+
+	_, err := c.BuildReport(oo)
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (-10), fee = (10)")
+
+	oo = []median.ParsedAttributedObservation{}
+	oo = append(oo, median.ParsedAttributedObservation{
+		Timestamp:       uint32(time.Now().Unix()),
+		Value:           big.NewInt(10),
+		JuelsPerFeeCoin: big.NewInt(-10),
+		Observer:        commontypes.OracleID(1),
+	})
+
+	_, err = c.BuildReport(oo)
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (-10)")
+
+}
 
 func TestBuildReport(t *testing.T) {
 	c := ReportCodec{}
@@ -44,7 +71,7 @@ func TestBuildReport(t *testing.T) {
 	assert.Equal(t, totalLen, len(report), "validate length")
 
 	// validate timestamp
-	timestamp := junotypes.BytesToFelt(report[0:timestampSizeBytes]).Big()
+	timestamp := caigotypes.BytesToFelt(report[0:timestampSizeBytes]).Big()
 	assert.Equal(t, uint64(oo[0].Timestamp), timestamp.Uint64(), "validate timestamp")
 
 	// validate observers
@@ -53,7 +80,7 @@ func TestBuildReport(t *testing.T) {
 
 	// validate observer count
 	index += observersSizeBytes
-	count := junotypes.BytesToFelt(report[index : index+observationsLenBytes]).Big()
+	count := caigotypes.BytesToFelt(report[index : index+observationsLenBytes]).Big()
 	assert.Equal(t, uint8(n), uint8(count.Uint64()), "validate observer count")
 
 	// validate observations
@@ -99,24 +126,6 @@ func TestMedianFromReport(t *testing.T) {
 			obs:            []*big.Int{big.NewInt(1), big.NewInt(1)},
 			expectedMedian: big.NewInt(1),
 		},
-		{
-			name: "one negative one positive",
-			obs:  []*big.Int{big.NewInt(-1), big.NewInt(1)},
-			// sorts to -1, 1
-			expectedMedian: big.NewInt(1),
-		},
-		{
-			name: "two negative",
-			obs:  []*big.Int{big.NewInt(-2), big.NewInt(-1)},
-			// will sort to -2, -1
-			expectedMedian: big.NewInt(-1),
-		},
-		{
-			name: "three negative",
-			obs:  []*big.Int{big.NewInt(-5), big.NewInt(-3), big.NewInt(-1)},
-			// will sort to -5, -3, -1
-			expectedMedian: big.NewInt(-3),
-		},
 	}
 
 	// add cases for observation number from [1..31]
@@ -145,7 +154,9 @@ func TestMedianFromReport(t *testing.T) {
 			}
 			report, err := cdc.BuildReport(pos)
 			require.NoError(t, err)
-			assert.Equal(t, len(report), cdc.MaxReportLength(len(tc.obs)))
+			max, err := cdc.MaxReportLength(len(tc.obs))
+			require.NoError(t, err)
+			assert.Equal(t, len(report), max)
 			med, err := cdc.MedianFromReport(report)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedMedian.String(), med.String())

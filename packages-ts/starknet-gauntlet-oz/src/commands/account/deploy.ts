@@ -3,20 +3,17 @@ import {
   BeforeExecute,
   ExecuteCommandConfig,
   makeExecuteCommand,
+  isValidAddress,
 } from '@chainlink/starknet-gauntlet'
-import { ec, hash } from 'starknet'
+import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import {
-  accountContractLoader,
-  CONTRACT_LIST,
-  calculateAddress,
-  equalAddress,
-} from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
   privateKey?: string
   salt?: number
+  classHash?: string
 }
 
 type ContractInput = [publicKey: string]
@@ -25,15 +22,23 @@ const makeUserInput = async (flags, _, env): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   // If public key is not provided, generate a new address
-  const keypair = ec.genKeyPair()
-  const generatedPK = '0x' + keypair.getPrivate('hex')
-  const pubkey = flags.publicKey || env.publicKey || ec.getStarkKey(ec.getKeyPair(generatedPK))
+  const keypair = ec.starkCurve.utils.randomPrivateKey()
+  const generatedPK = '0x' + Buffer.from(keypair).toString('hex')
+  const pubkey = flags.publicKey || env.publicKey || ec.starkCurve.getStarkKey(keypair)
   const salt: number = flags.salt ? +flags.salt : undefined
   return {
     publicKey: pubkey,
     privateKey: (!flags.publicKey || !env.account) && generatedPK,
     salt,
+    classHash: flags.classHash,
   }
+}
+
+const validateClassHash = async (input) => {
+  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+    return true
+  }
+  throw new Error(`Invalid Class Hash: ${input.classHash}`)
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
@@ -45,7 +50,7 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
   input,
   deps,
 ) => async () => {
-  deps.logger.info(`About to deploy an Account Contract with:
+  deps.logger.info(`About to deploy an OZ 0.x Account Contract with:
     public key: ${input.contract[0]}
     salt: ${input.user.salt || 'randomly generated'}`)
   if (input.user.privateKey) {
@@ -67,22 +72,6 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
     ? deps.logger.success(`Account contract located at ${contract}`)
     : deps.logger.error('Account contract deployment failed')
 
-  if (input.user.salt != undefined) {
-    const calcAddr = calculateAddress(input.user.salt, input.user.publicKey)
-
-    // log error if address mismatch
-    if (!equalAddress(contract, calcAddr)) {
-      deps.logger
-        .error(`Deployed account contract address (${contract}) does not match calculated account contract address (${calcAddr}).
-        There is likely a difference in hash of the deployed contract and the CONTRACT_HASH constant`)
-      deps.logger.warn(
-        `Account addresses must match otherwise this could cause mismatched keys with chainlink node.`,
-      )
-    } else {
-      deps.logger.success(`Deployed account matches expected contract address`)
-    }
-  }
-
   return {
     publicKey: input.user.publicKey,
     privateKey: input.user.privateKey,
@@ -96,12 +85,12 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Deploys an OpenZeppelin Account contract',
     examples: [
-      `${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`,
+      `${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> --classHash=<CLASS_HASH> <CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateClassHash],
   loadContract: accountContractLoader,
   hooks: {
     beforeExecute,

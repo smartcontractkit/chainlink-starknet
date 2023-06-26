@@ -16,11 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REF_NAME: ${{ github.head_ref || github.ref_name }}
   CHAINLINK_ENV_USER: ${{ github.actor }}
   TEST_LOG_LEVEL: debug
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-  ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:ci.${{ github.sha }}
+  ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
 
 jobs:
   build_custom_chainlink_image:
@@ -30,31 +29,51 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    strategy:
+      matrix:
+        image:
+          - name: ""
+            dockerfile: core/chainlink.Dockerfile
+            tag-suffix: ""
+          - name: (plugins)
+            dockerfile: plugins/chainlink.Dockerfile
+            tag-suffix: -plugins
     steps:
       - name: Collect Metrics
         if: always()
         id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@808c183d1f5c26a4f3fd50b75d3cf7b58d9aa293
+        uses: smartcontractkit/push-gha-metrics-action@90fcbaac8ebf86da9c4d55dba24f6fe3029f0e0b
         with:
           basic-auth: ${{ secrets.GRAFANA_CLOUD_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_CLOUD_HOST }}
           this-job-name: Build Custom CL Image
         continue-on-error: true
-      - name: Build Image
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@ce87f8986ca18336cc5015df75916c2ec0a7c4b3 # v2.1.2
+      - name: Check if image exists
+        id: check-image
+        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@2c9f401149f6c25fb632067b7e6626aebeee5d69 # v2.1.6
+        with:
+          repository: chainlink
+          tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          AWS_REGION: ${{ secrets.QA_AWS_REGION }}
+          AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+      - name: Build Image ${{ matrix.image.name }}
+        if: steps.check-image.outputs.exists == 'false'
+        # note using a temporary commit for build-image that works around the go get issues, replace when go get issues are fixed please
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@2c9f401149f6c25fb632067b7e6626aebeee5d69
         with:
           cl_repo: smartcontractkit/chainlink
           cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          cl_dockerfile: ${{ matrix.image.dockerfile }}
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          push_tag: ${{ env.CL_ECR }}:ci.${{ github.sha }}
+          push_tag: ${{ env.CL_ECR }}:starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
       - name: Print Chainlink Image Built
         run: |
-          echo "### chainlink image tag used for this test run :link:" >>$GITHUB_STEP_SUMMARY
-          echo "\`ci.${{ github.sha }}\`" >>$GITHUB_STEP_SUMMARY
+          echo "### chainlink image tag used for this test run :link:" >> $GITHUB_STEP_SUMMARY
+          echo "\`starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}\`" >> $GITHUB_STEP_SUMMARY
 
   build_test_image:
     environment: integration
@@ -73,39 +92,36 @@ jobs:
           this-job-name: Build Test Image
         continue-on-error: true
       - name: Checkout the repo
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - name: build test runner
-        if: ${{ env.REF_NAME != 'develop' }}
-        uses: smartcontractkit/chainlink-github-actions/docker/build-push@ce87f8986ca18336cc5015df75916c2ec0a7c4b3 # v2.1.2
+          ref: ${{ github.sha }}
+      - name: Build Image
+        uses: ./.github/actions/build-test-image
         with:
-          tags: ${{ env.ENV_JOB_IMAGE }}
-          file: ./integration-tests/test.Dockerfile
-          build-args: |
-            SUITES="smoke"
-          AWS_REGION: ${{ secrets.QA_AWS_REGION }}
-          AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
-      - name: Print Image Built
-        run: |
-          echo "### chainlink-starknet-tests image tag for this test run :ship:" >>$GITHUB_STEP_SUMMARY
-          if [ "${{ env.REF_NAME }}" != "develop" ]; then
-            echo "\`ci.${{ github.sha }}\`" >>$GITHUB_STEP_SUMMARY
-          else
-            echo "\`${{ env.REF_NAME }}\`" >>$GITHUB_STEP_SUMMARY
-          fi
+          QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+          QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
+          QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
 
   run_tests:
     name: Run Smoke Tests
     runs-on: ubuntu20.04-16cores-64GB
     needs: [ build_custom_chainlink_image, build_test_image ]
     environment: integration
+    # these values need to match those used to build the chainlink image
+    strategy:
+      matrix:
+        image:
+          - name: ""
+            tag-suffix: ""
+          - name: (plugins)
+            tag-suffix: -plugins
     env:
       TEST_SUITE: smoke
       TEST_ARGS: -test.timeout 1h
       PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
       ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
-      TTL: 1h
+      TTL: 3h
+      TEST_DURATION: 15m
       NODE_COUNT: 5
     permissions:
       checks: write
@@ -116,25 +132,25 @@ jobs:
       - name: Collect Metrics
         if: always()
         id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@808c183d1f5c26a4f3fd50b75d3cf7b58d9aa293
+        uses: smartcontractkit/push-gha-metrics-action@8163dcea2f01a0a8fec84b284406ff7af1d2e1c0
         with:
           basic-auth: ${{ secrets.GRAFANA_CLOUD_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_CLOUD_HOST }}
-          this-job-name: Run Smoke Tests
+          this-job-name: Run Smoke Tests ${{ matrix.image.name }}
         continue-on-error: true
       - name: Checkout the repo
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - name: Install Nix
-        uses: cachix/install-nix-action@5c11eae19dba042788936d4f1c9685fdd814ac49 # v19
+        uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ce87f8986ca18336cc5015df75916c2ec0a7c4b3 # v2.1.2
+      - name: Run Tests ${{ matrix.image.name }}
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@2c9f401149f6c25fb632067b7e6626aebeee5d69
         with:
           test_command_to_run: nix develop -c make test-integration-smoke-ci
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
-          cl_image_tag: ci.${{ github.sha }}
+          cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           token: ${{ secrets.GITHUB_TOKEN }}
           go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}

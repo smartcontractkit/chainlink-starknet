@@ -8,20 +8,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
+	"gopkg.in/guregu/null.v4"
+
+	"github.com/smartcontractkit/caigo/gateway"
+
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/alias"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
 	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink/core/services/job"
-	"github.com/smartcontractkit/chainlink/core/services/relay"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"gopkg.in/guregu/null.v4"
+	"github.com/smartcontractkit/chainlink/v2/core/services/job"
+	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 )
 
 var (
@@ -41,6 +43,7 @@ type Common struct {
 	ChainId             string
 	NodeCount           int
 	TTL                 time.Duration
+	TestDuration        time.Duration
 	Testnet             bool
 	L2RPCUrl            string
 	PrivateKey          string
@@ -75,17 +78,30 @@ func New() *Common {
 	if ttlValue != "" {
 		duration, err := time.ParseDuration(ttlValue)
 		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+			panic(fmt.Sprintf("Please define a proper duration for the namespace: %v", err))
 		}
 		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
 		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+			panic(fmt.Sprintf("Please define a proper duration for the namespace: %v", err))
 		}
 	} else {
 		panic("Please define TTL of env")
 	}
 
 	// Setting optional parameters
+	testDurationValue := getEnv("TEST_DURATION")
+	if testDurationValue != "" {
+		duration, err := time.ParseDuration(ttlValue)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+		c.TestDuration, err = time.ParseDuration(*alias.ShortDur(duration))
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+	} else {
+		c.TestDuration = time.Duration(time.Minute * 15)
+	}
 	c.L2RPCUrl = getEnv("L2_RPC_URL") // Fetch L2 RPC url if defined
 	c.Testnet = c.L2RPCUrl != ""
 	c.PrivateKey = getEnv("PRIVATE_KEY")
@@ -135,26 +151,27 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBund
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
-func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string) error {
+func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
-			RemoteIP:   cc.ChainlinkNodes[0].RemoteIP(),
-			RemotePort: c.P2PPort,
-			PeerID:     cc.NKeys[0].PeerID,
+			InternalIP:   cc.ChainlinkNodes[0].InternalIP(),
+			InternalPort: c.P2PPort,
+			PeerID:       cc.NKeys[0].PeerID,
 		},
 	}
 
 	// Defining relay config
-	relayConfig := job.JSONConfig{
-		"nodeName": fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuid.NewV4().String()),
-		"chainID":  fmt.Sprintf("\"%s\"", c.ChainId),
+	bootstrapRelayConfig := job.JSONConfig{
+		"nodeName":       fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuid.NewV4().String()),
+		"accountAddress": fmt.Sprintf("\"%s\"", accountAddresses[0]),
+		"chainID":        fmt.Sprintf("\"%s\"", c.ChainId),
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
 		ContractID:                  ocrControllerAddress,
 		Relay:                       relay.StarkNet,
-		RelayConfig:                 relayConfig,
+		RelayConfig:                 bootstrapRelayConfig,
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	// Setting up bootstrap node
@@ -183,6 +200,11 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		_, err := n.CreateBridge(cc.bTypeAttr)
 		if err != nil {
 			return err
+		}
+		relayConfig := job.JSONConfig{
+			"nodeName":       bootstrapRelayConfig["nodeName"],
+			"accountAddress": fmt.Sprintf("\"%s\"", accountAddresses[nIdx]),
+			"chainID":        bootstrapRelayConfig["chainID"],
 		}
 
 		oracleSpec = job.OCR2OracleSpec{
@@ -215,7 +237,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 func (c *Common) Default(t *testing.T) {
 	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-	starknetUrl := fmt.Sprintf("http://%s:%d", serviceKeyL2, 5000)
+	starknetUrl := fmt.Sprintf("http://%s:%d/rpc", serviceKeyL2, 5000)
 	if c.Testnet {
 		starknetUrl = c.L2RPCUrl
 	}
@@ -240,6 +262,9 @@ ListenAddresses = ['0.0.0.0:6690']
 	c.ClConfig = map[string]interface{}{
 		"replicas": c.NodeCount,
 		"toml":     baseTOML,
+		"db": map[string]any{
+			"stateful": true,
+		},
 	}
 	c.Env = environment.New(c.K8Config).
 		AddHelm(devnet.New(nil)).

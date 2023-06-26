@@ -5,11 +5,12 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -40,10 +41,10 @@ func createKeys(testState *testing.T) ([]*client.Chainlink, error) {
 	for _, nodeUrl := range urls {
 		u, _ := url.Parse(nodeUrl[0])
 		c, err := client.NewChainlink(&client.ChainlinkConfig{
-			URL:      nodeUrl[0],
-			Email:    nodeUrl[1],
-			Password: nodeUrl[2],
-			RemoteIP: u.Host,
+			URL:        nodeUrl[0],
+			Email:      nodeUrl[1],
+			Password:   nodeUrl[2],
+			InternalIP: u.Host,
 		})
 		if err != nil {
 			return nil, err
@@ -88,13 +89,13 @@ func TestOCRBasic(testState *testing.T) {
 	require.NoError(testState, err, "Could not get a new gauntlet struct")
 	err = t.Sg.SetupNetwork(t.Common.L2RPCUrl)
 	require.NoError(testState, err, "Setting up gauntlet network should not fail")
-	err = t.DeployGauntlet(-100000000000, 100000000000, 9, "auto", 1, 1)
+	err = t.DeployGauntlet(0, 100000000000, 9, "auto", 1, 1)
 	require.NoError(testState, err, "Deploying contracts should not fail")
 	t.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 		Name: "bridge-coinmetrics",
 		URL:  "ADAPTER_URL", // ADAPTER_URL e.g https://adapters.main.sand.cldev.sh/coinmetrics
 	})
 
-	err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr)
+	err = t.Common.CreateJobsForContract(t.Cc, observationSource, juelsPerFeeCoinSource, t.OCRAddr, t.AccountAddresses)
 	require.NoError(testState, err)
 }

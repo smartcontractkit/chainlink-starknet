@@ -4,26 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile:cairo": "hardhat starknet-compile",
     "compile:solidity": "hardhat compile",
-    "compile": "yarn compile:cairo && yarn compile:solidity",
     "test": "hardhat --network localhost test"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@ethereum-waffle/mock-contract": "^4.0.4",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "@shardlabs/starknet-hardhat-plugin": "^0.7.1",
+    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.2",
     "@types/chai": "^4.3.3",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",
-    "cairo-ls": "^0.0.4",
     "chai": "^4.3.6",
-    "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.8",
-    "hardhat": "^2.10.2"
+    "hardhat": "^2.10.2",
+    "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.2",

@@ -16,8 +16,8 @@ describe('fundAccount', function () {
     const gateway_url = process.env.NODE_URL || DEVNET_URL
     provider = new SequencerProvider({ baseUrl: gateway_url })
 
-    const aliceStarkKeyPair = ec.genKeyPair()
-    const bobStarkKeyPair = ec.genKeyPair()
+    const aliceStarkKeyPair = ec.starkCurve.utils.randomPrivateKey()
+    const bobStarkKeyPair = ec.starkCurve.utils.randomPrivateKey()
 
     const default_alice_address = stark.randomAddress()
     const default_bob_address = stark.randomAddress()
