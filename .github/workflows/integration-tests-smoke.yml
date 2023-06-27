@@ -104,8 +104,7 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
 
-  setup_job_name:
-    name: Setup job name
+  setup:
     runs-on: ubuntu-latest
     outputs:
       job_name: ${{ steps.set_job_name.outputs.job_name }}
@@ -120,9 +119,9 @@ jobs:
           fi
 
   run_tests:
-    name: ${{ needs.setup_job_name.outputs.job_name }}
+    name: ${{ needs.setup.outputs.job_name }}
     runs-on: ubuntu20.04-16cores-64GB
-    needs: [setup_job_name, build_custom_chainlink_image, build_test_image]
+    needs: [setup, build_custom_chainlink_image, build_test_image]
     environment: integration
     # these values need to match those used to build the chainlink image
     strategy:
