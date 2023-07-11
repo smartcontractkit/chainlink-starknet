@@ -8,8 +8,9 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/pkg/errors"
-	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -43,25 +44,25 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 
 	// preserve original array
 	oo = append([]median.ParsedAttributedObservation{}, oo...)
-	numFelt := caigotypes.BigToFelt(big.NewInt(int64(num)))
+	numFelt := starknetutils.BigIntToFelt(big.NewInt(int64(num)))
 
 	// median timestamp
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].Timestamp < oo[j].Timestamp
 	})
 	timestamp := oo[num/2].Timestamp
-	timestampFelt := caigotypes.BigToFelt(big.NewInt(int64(timestamp)))
+	timestampFelt := starknetutils.BigIntToFelt(big.NewInt(int64(timestamp)))
 
 	// median juelsPerFeeCoin
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].JuelsPerFeeCoin.Cmp(oo[j].JuelsPerFeeCoin) < 0
 	})
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
-	juelsPerFeeCoinFelt := caigotypes.BigToFelt(juelsPerFeeCoin)
+	juelsPerFeeCoinFelt := starknetutils.BigIntToFelt(juelsPerFeeCoin)
 
 	// TODO: source from observations
 	gasPrice := big.NewInt(1) // := oo[num/2].GasPrice
-	gasPriceFelt := caigotypes.BigToFelt(gasPrice)
+	gasPriceFelt := starknetutils.BigIntToFelt(gasPrice)
 
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
@@ -69,21 +70,29 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	})
 
 	var observers = make([]byte, starknet.FeltLength)
-	var observations []caigotypes.Felt
+	var observations []*felt.Felt
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
-		observations = append(observations, caigotypes.BigToFelt(o.Value))
+
+		f := starknetutils.BigIntToFelt(o.Value)
+		observations = append(observations, f)
 	}
 
 	var report []byte
-	report = append(report, timestampFelt.Bytes()...)
+
+	buf := timestampFelt.Bytes()
+	report = append(report, buf[:]...)
 	report = append(report, observers...)
-	report = append(report, numFelt.Bytes()...)
+	buf = numFelt.Bytes()
+	report = append(report, buf[:]...)
 	for _, o := range observations {
-		report = append(report, o.Bytes()...)
+		buf = o.Bytes()
+		report = append(report, buf[:]...)
 	}
-	report = append(report, juelsPerFeeCoinFelt.Bytes()...)
-	report = append(report, gasPriceFelt.Bytes()...)
+	buf = juelsPerFeeCoinFelt.Bytes()
+	report = append(report, buf[:]...)
+	buf = gasPriceFelt.Bytes()
+	report = append(report, buf[:]...)
 
 	return report, nil
 }
@@ -95,7 +104,7 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	}
 
 	// Decode the number of observations
-	numBig := caigotypes.BytesToFelt(report[(timestampSizeBytes + observersSizeBytes):prefixSizeBytes]).Big()
+	numBig := new(felt.Felt).SetBytes(report[(timestampSizeBytes + observersSizeBytes):prefixSizeBytes]).BigInt(big.NewInt(0))
 	if !numBig.IsUint64() {
 		return nil, errors.New("length of observations is invalid")
 	}
@@ -119,11 +128,8 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	for i := 0; i < n; i++ {
 		start := prefixSizeBytes + observationSizeBytes*i
 		end := start + observationSizeBytes
-		obv := caigotypes.BytesToFelt(report[start:end])
-		o, err := starknet.FeltToUnsignedBig(obv)
-		if err != nil {
-			return nil, errors.Wrap(err, "observation invalid")
-		}
+		obv := new(felt.Felt).SetBytes(report[start:end])
+		o := obv.BigInt(big.NewInt(0))
 		oo = append(oo, o)
 	}
 

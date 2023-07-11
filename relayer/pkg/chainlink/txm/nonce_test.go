@@ -5,7 +5,8 @@ import (
 	"math/big"
 	"testing"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
@@ -18,14 +19,15 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 )
 
-func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.NonceManager, caigotypes.Felt, func()) {
+func newTestNonceManager(t *testing.T, chainID string, initNonce *felt.Felt) (txm.NonceManager, *felt.Felt, func()) {
 	// setup
 	c := mocks.NewNonceManagerClient(t)
 	lggr := logger.Test(t)
 	nm := txm.NewNonceManager(lggr)
 
 	// mock returns
-	keyHash := caigotypes.StrToFelt("test-key-id")
+	keyHash, err := starknetutils.HexToFelt("0x0")
+	require.NoError(t, err)
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(tests.Context(t)))
@@ -38,7 +40,7 @@ func TestNonceManager_NextSequence(t *testing.T) {
 	t.Parallel()
 
 	chainId := "test_nextSequence"
-	initNonce := big.NewInt(10)
+	initNonce := new(felt.Felt).SetUint64(10)
 	nm, k, stop := newTestNonceManager(t, chainId, initNonce)
 	defer stop()
 
@@ -53,7 +55,8 @@ func TestNonceManager_NextSequence(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
-	randAddr1 := caigotypes.BigToFelt(big.NewInt(1))
+	randAddr1 := starknetutils.BigIntToFelt(big.NewInt(1))
+	require.NoError(t, err)
 	_, err = nm.NextSequence(randAddr1, chainId)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
@@ -63,12 +66,13 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	t.Parallel()
 
 	chainId := "test_nextSequence"
-	initNonce := big.NewInt(10)
+	initNonce := new(felt.Felt).SetUint64(10)
 	nm, k, stop := newTestNonceManager(t, chainId, initNonce)
 	defer stop()
 
-	initMinusOne := big.NewInt(initNonce.Int64() - 1)
-	initPlusOne := big.NewInt(initNonce.Int64() + 1)
+	one := new(felt.Felt).SetUint64(1)
+	initMinusOne := new(felt.Felt).Sub(initNonce, one)
+	initPlusOne := new(felt.Felt).Add(initNonce, one)
 
 	// should fail if nonce is lower then expected
 	err := nm.IncrementNextSequence(k, chainId, initMinusOne)
@@ -88,7 +92,8 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
-	randAddr1 := caigotypes.BigToFelt(big.NewInt(1))
+	randAddr1 := starknetutils.BigIntToFelt(big.NewInt(1))
+	require.NoError(t, err)
 	err = nm.IncrementNextSequence(randAddr1, chainId, initPlusOne)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
