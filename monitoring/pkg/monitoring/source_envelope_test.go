@@ -6,8 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/caigo"
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -66,7 +65,7 @@ func TestEnvelopeSource(t *testing.T) {
 			ContractAddress: chainConfig.GetLinkTokenAddress(),
 			Selector:        "balanceOf",
 			Calldata: []string{
-				caigo.HexToBN(feedConfig.ContractAddress).String(),
+				starknetutils.HexToBN(feedConfig.ContractAddress).String(),
 			},
 		},
 	).Return(starknetReaderCallContractBalanceOfResponse, nil)
@@ -94,7 +93,7 @@ var (
 		{
 			RoundId:         0xf5b,
 			LatestAnswer:    bigIntFromString("-900000000"),
-			Transmitter:     caigotypes.StrToFelt("634447934223750826572902672583054702307815157196919304685470566142330202833"),
+			Transmitter:     starknetutils.StrToFelt("634447934223750826572902672583054702307815157196919304685470566142330202833"),
 			LatestTimestamp: time.Date(2022, time.September, 27, 18, 51, 0, 0, time.Local),
 			Observers:       []uint8{0x1, 0x2, 0x3, 0x4},
 			ObservationsLen: 0x4,

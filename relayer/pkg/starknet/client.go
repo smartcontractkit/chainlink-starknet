@@ -7,10 +7,11 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/NethermindEth/juno/core/felt"
+	starknetaccount "github.com/NethermindEth/starknet.go/account"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/smartcontractkit/caigo"
-	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
-	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
@@ -18,16 +19,16 @@ import (
 //go:generate mockery --name Reader --output ./mocks/
 
 type Reader interface {
-	CallContract(context.Context, CallOps) ([]string, error)
+	CallContract(context.Context, CallOps) ([]*felt.Felt, error)
 	LatestBlockHeight(context.Context) (uint64, error)
 
 	// provider interface
-	BlockWithTxHashes(ctx context.Context, blockID caigorpc.BlockID) (*caigorpc.Block, error)
-	Call(context.Context, caigotypes.FunctionCall, caigorpc.BlockID) ([]string, error)
-	Events(ctx context.Context, input caigorpc.EventsInput) (*caigorpc.EventsOutput, error)
-	TransactionByHash(context.Context, caigotypes.Felt) (caigorpc.Transaction, error)
-	TransactionReceipt(context.Context, caigotypes.Felt) (caigorpc.TransactionReceipt, error)
-	AccountNonce(context.Context, caigotypes.Felt) (*big.Int, error)
+	BlockWithTxHashes(ctx context.Context, blockID starknetrpc.BlockID) (*starknetrpc.Block, error)
+	Call(context.Context, starknetrpc.FunctionCall, starknetrpc.BlockID) ([]*felt.Felt, error)
+	Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error)
+	TransactionByHash(context.Context, *felt.Felt) (starknetrpc.Transaction, error)
+	TransactionReceipt(context.Context, *felt.Felt) (starknetrpc.TransactionReceipt, error)
+	AccountNonce(context.Context, *felt.Felt) (*felt.Felt, error)
 }
 
 type Writer interface {
@@ -40,10 +41,10 @@ type ReaderWriter interface {
 
 var _ ReaderWriter = (*Client)(nil)
 
-// var _ caigotypes.Provider = (*Client)(nil)
+// var _ starknettypes.Provider = (*Client)(nil)
 
 type Client struct {
-	Provider       *caigorpc.Provider
+	Provider       starknetrpc.RpcProvider
 	lggr           logger.Logger
 	defaultTimeout time.Duration
 }
@@ -57,7 +58,7 @@ func NewClient(_chainID string, baseURL string, lggr logger.Logger, timeout *tim
 	}
 
 	client := &Client{
-		Provider: caigorpc.NewProvider(c),
+		Provider: starknetrpc.NewProvider(c),
 		lggr:     lggr,
 	}
 
@@ -74,19 +75,19 @@ func NewClient(_chainID string, baseURL string, lggr logger.Logger, timeout *tim
 
 // -- Custom Wrapped Func --
 
-func (c *Client) CallContract(ctx context.Context, ops CallOps) (res []string, err error) {
-	tx := caigotypes.FunctionCall{
+func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Felt, err error) {
+	tx := starknetrpc.FunctionCall{
 		ContractAddress:    ops.ContractAddress,
 		EntryPointSelector: ops.Selector,
 		Calldata:           ops.Calldata,
 	}
 
-	res, err = c.Call(ctx, tx, caigorpc.WithBlockTag("pending"))
+	res, err := c.Call(ctx, tx, starknetrpc.WithBlockTag("pending"))
 	if err != nil {
-		return res, errors.Wrap(err, "error in client.CallContract")
+		return nil, errors.Wrap(err, "error in client.CallContract")
 	}
 
-	return
+	return res, nil
 }
 
 func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err error) {
@@ -106,7 +107,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 
 // -- caigo.Provider interface --
 
-func (c *Client) BlockWithTxHashes(ctx context.Context, blockID caigorpc.BlockID) (*caigorpc.Block, error) {
+func (c *Client) BlockWithTxHashes(ctx context.Context, blockID starknetrpc.BlockID) (*starknetrpc.Block, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -115,12 +116,12 @@ func (c *Client) BlockWithTxHashes(ctx context.Context, blockID caigorpc.BlockID
 
 	out, err := c.Provider.BlockWithTxHashes(ctx, blockID)
 	if err != nil {
-		return out.(*caigorpc.Block), errors.Wrap(err, "error in client.BlockWithTxHashes")
+		return out.(*starknetrpc.Block), errors.Wrap(err, "error in client.BlockWithTxHashes")
 	}
-	return out.(*caigorpc.Block), nil
+	return out.(*starknetrpc.Block), nil
 }
 
-func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockHashOrTag caigorpc.BlockID) ([]string, error) {
+func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, blockHashOrTag starknetrpc.BlockID) ([]*felt.Felt, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -138,7 +139,7 @@ func (c *Client) Call(ctx context.Context, calls caigotypes.FunctionCall, blockH
 
 }
 
-func (c *Client) TransactionByHash(ctx context.Context, hash caigotypes.Felt) (caigorpc.Transaction, error) {
+func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starknetrpc.Transaction, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -156,7 +157,7 @@ func (c *Client) TransactionByHash(ctx context.Context, hash caigotypes.Felt) (c
 
 }
 
-func (c *Client) TransactionReceipt(ctx context.Context, hash caigotypes.Felt) (caigorpc.TransactionReceipt, error) {
+func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (starknetrpc.TransactionReceipt, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -174,7 +175,7 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash caigotypes.Felt) (
 
 }
 
-func (c *Client) Events(ctx context.Context, input caigorpc.EventsInput) (*caigorpc.EventsOutput, error) {
+func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -191,17 +192,18 @@ func (c *Client) Events(ctx context.Context, input caigorpc.EventsInput) (*caigo
 	return out, nil
 
 }
-func (c *Client) AccountNonce(ctx context.Context, accountAddress caigotypes.Felt) (*big.Int, error) {
+func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
-	sender := caigotypes.BigToFelt(big.NewInt((0))) // not actually used in account.Nonce()
-	account, err := caigo.NewRPCAccount(sender, accountAddress, nil, c.Provider, caigo.AccountVersion1)
+	sender := starknetutils.BigIntToFelt(big.NewInt((0))) // not actually used in account.Nonce()
+	accountVersion := 0
+	account, err := starknetaccount.NewAccount(c.Provider, sender, accountAddress.String(), nil, accountVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in client.AccountNonce")
 	}
-	return account.Nonce(ctx)
+	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, account.AccountAddress)
 }
