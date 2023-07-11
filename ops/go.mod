@@ -5,9 +5,9 @@ go 1.21
 toolchain go1.21.1
 
 require (
+	github.com/NethermindEth/starknet.go v0.4.2-0.20230830055456-308b763a11d3
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/rs/zerolog v1.30.0
-	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
 	github.com/smartcontractkit/chainlink-env v0.3.29
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230530233948-90c8af98011e
 	github.com/smartcontractkit/chainlink-testing-framework v1.19.1
@@ -20,11 +20,13 @@ require (
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/NethermindEth/juno v0.3.1 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/aws/constructs-go/constructs/v10 v10.1.255 // indirect
 	github.com/aws/jsii-runtime-go v1.75.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bits-and-blooms/bitset v1.7.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.3 // indirect
 	github.com/cdk8s-team/cdk8s-core-go/cdk8s/v2 v2.7.5 // indirect

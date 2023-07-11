@@ -9,9 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/smartcontractkit/caigo"
-	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
+	"github.com/NethermindEth/starknet.go"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -27,14 +29,14 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, txFn caigotypes.FunctionCall) error
+	Enqueue(senderAddress *felt.Felt, accountAddress *felt.Felt, txFn starknettypes.FunctionCall) error
 	InflightCount() (int, int)
 }
 
 type Tx struct {
-	senderAddress  caigotypes.Felt
-	accountAddress caigotypes.Felt
-	call           caigotypes.FunctionCall
+	senderAddress  *felt.Felt
+	accountAddress *felt.Felt
+	call           starknettypes.FunctionCall
 }
 
 type StarkTXM interface {
@@ -126,15 +128,15 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Felt, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) (txhash string, err error) {
-	txs := []caigotypes.FunctionCall{tx}
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, accountAddress *felt.Felt, tx starknettypes.FunctionCall) (txhash string, err error) {
+	txs := []starknettypes.FunctionCall{tx}
 	client, err := txm.client.Get()
 	if err != nil {
 		txm.client.Reset()
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := caigo.NewRPCAccount(senderAddress, accountAddress, txm.ks, client.Provider, caigo.AccountVersion1)
+	account, err := starknetgo.NewRPCAccount(senderAddress, accountAddress, txm.ks, client.Provider, starknetgo.AccountVersion1)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
@@ -152,7 +154,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Fel
 	// get fee for txm
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
-	feeEstimate, err := account.EstimateFee(ctx, txs, caigotypes.ExecuteDetails{})
+	feeEstimate, err := account.EstimateFee(ctx, txs, starknettypes.ExecuteDetails{})
 	if err != nil {
 		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
 	}
@@ -160,7 +162,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Fel
 	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
 	expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
 	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
-	details := caigotypes.ExecuteDetails{
+	details := starknettypes.ExecuteDetails{
 		MaxFee: max,
 		Nonce:  nonce,
 	}
@@ -180,11 +182,12 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress caigotypes.Fel
 	}
 
 	// update nonce if transaction is successful
+	hash := res.TransactionHash.String()
 	err = errors.Join(
 		txm.nonce.IncrementNextSequence(accountAddress, chainID, nonce),
-		txm.txStore.Save(accountAddress, nonce, res.TransactionHash),
+		txm.txStore.Save(accountAddress, nonce, hash),
 	)
-	return res.TransactionHash, err
+	return hash, err
 }
 
 func (txm *starktxm) confirmLoop() {
@@ -211,12 +214,17 @@ func (txm *starktxm) confirmLoop() {
 			for addr := range hashes {
 				for i := range hashes[addr] {
 					hash := hashes[addr][i]
-					response, err := client.Provider.TransactionReceipt(ctx, caigotypes.StrToFelt(hashes[addr][i]))
+					f, err := starknetutils.HexToFelt(hash)
+					if err != nil {
+						txm.lggr.Errorw("invalid felt value", "hash", hash)
+						continue
+					}
+					response, err := client.Provider.TransactionReceipt(ctx, f)
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
-					receipt, ok := response.(caigorpc.InvokeTransactionReceipt)
+					receipt, ok := response.(starknetrpc.InvokeTransactionReceipt)
 					if !ok {
 						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
 						continue
@@ -224,7 +232,7 @@ func (txm *starktxm) confirmLoop() {
 
 					status := receipt.Status
 
-					if status == caigotypes.TransactionAcceptedOnL1 || status == caigotypes.TransactionAcceptedOnL2 || status == caigotypes.TransactionRejected {
+					if status == starknetrpc.TransactionAcceptedOnL1 || status == starknetrpc.TransactionAcceptedOnL2 || status == starknetrpc.TransactionRejected {
 						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
 						if err := txm.txStore.Confirm(addr, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
@@ -261,7 +269,7 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(senderAddress, accountAddress caigotypes.Felt, tx caigotypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress, accountAddress *felt.Felt, tx starknettypes.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test

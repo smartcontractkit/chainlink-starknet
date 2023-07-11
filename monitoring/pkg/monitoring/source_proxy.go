@@ -5,9 +5,18 @@ import (
 	"fmt"
 	"math/big"
 
+<<<<<<< HEAD
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
+||||||| parent of 5c692ac2 (Use latest upstream sdk: starknet.go)
+	caigotypes "github.com/smartcontractkit/caigo/types"
+	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+=======
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/NethermindEth/juno/core/felt"
+	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+>>>>>>> 5c692ac2 (Use latest upstream sdk: starknet.go)
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 )
@@ -32,8 +41,12 @@ func (s *proxySourceFactory) NewSource(
 	_ relayMonitoring.ChainConfig,
 	feedConfig relayMonitoring.FeedConfig,
 ) (relayMonitoring.Source, error) {
+	contractAddress, err := starknetutils.HexToFelt(feedConfig.GetContractAddress())
+	if err != nil {
+		return nil, err
+	}
 	return &proxySource{
-		caigotypes.HexToHash(feedConfig.GetContractAddress()),
+		contractAddress,
 		s.ocr2Reader,
 	}, nil
 }
@@ -43,7 +56,7 @@ func (s *proxySourceFactory) GetType() string {
 }
 
 type proxySource struct {
-	contractAddress caigotypes.Hash
+	contractAddress *felt.Felt
 	ocr2Reader      ocr2.OCR2Reader
 }
 

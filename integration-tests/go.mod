@@ -5,6 +5,8 @@ go 1.21.4
 require (
 	github.com/google/uuid v1.4.0
 	github.com/lib/pq v1.10.9
+	github.com/NethermindEth/juno v0.3.1
+	github.com/NethermindEth/starknet.go v0.4.2-0.20230830055456-308b763a11d3
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231218150613-43bf581ae327
@@ -16,6 +18,13 @@ require (
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 	gopkg.in/guregu/null.v4 v4.0.0
+)
+
+require (
+	github.com/bits-and-blooms/bitset v1.7.0 // indirect
+	github.com/consensys/gnark-crypto v0.11.0 // indirect
+	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704 // indirect
+	github.com/test-go/testify v1.1.4 // indirect
 )
 
 require (

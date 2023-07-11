@@ -11,8 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/caigo/gateway"
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/starknet.go/gateway"
+	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -56,24 +57,25 @@ func TestOCR2Client(t *testing.T) {
 				err := json.Unmarshal([]byte(raw), &reqdata)
 				require.NoError(t, err)
 
-				switch {
-				case caigotypes.BigToHex(caigotypes.GetSelectorFromName("billing")) == reqdata.Selector:
+				fmt.Printf("%v %v\n", reqdata.Selector, starknettypes.GetSelectorFromNameFelt("latest_transmission_details").String())
+				switch reqdata.Selector {
+				case starknettypes.GetSelectorFromNameFelt("billing").String():
 					// billing response
 					out = []byte(`{"result":["0x0","0x0","0x0","0x0"]}`)
-				case caigotypes.BigToHex(caigotypes.GetSelectorFromName("latest_config_details")) == reqdata.Selector:
+				case starknettypes.GetSelectorFromNameFelt("latest_config_details").String():
 					// latest config details response
 					out = []byte(`{"result":["0x1","0x2","0x4b791b801cf0d7b6a2f9e59daf15ec2dd7d9cdc3bc5e037bada9c86e4821c"]}`)
-				case caigotypes.BigToHex(caigotypes.GetSelectorFromName("latest_transmission_details")) == reqdata.Selector:
+				case starknettypes.GetSelectorFromNameFelt("latest_transmission_details").String():
 					// latest transmission details response
 					out = []byte(`{"result":["0x4cfc96325fa7d72e4854420e2d7b0abda72de17d45e4c3c0d9f626016d669","0x0","0x0","0x0"]}`)
-				case caigotypes.BigToHex(caigotypes.GetSelectorFromName("latest_round_data")) == reqdata.Selector:
+				case starknettypes.GetSelectorFromNameFelt("latest_round_data").String():
 					// latest transmission details response
 					out = []byte(`{"result":["0x0","0x0","0x0","0x0","0x0"]}`)
-				case caigotypes.BigToHex(caigotypes.GetSelectorFromName("link_available_for_payment")) == reqdata.Selector:
+				case starknettypes.GetSelectorFromNameFelt("link_available_for_payment").String():
 					// latest transmission details response
 					out = []byte(`{"result":["0x0"]}`)
 				default:
-					require.False(t, true, "unsupported contract method")
+					require.False(t, true, "unsupported contract method %s", reqdata.Selector)
 				}
 			case "starknet_getEvents":
 				out = []byte(BLOCK_OUTPUT)
@@ -98,7 +100,8 @@ func TestOCR2Client(t *testing.T) {
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
 
-	contractAddress := caigotypes.StrToFelt(ocr2ContractAddress)
+	contractAddress, err := starknetutils.HexToFelt(ocr2ContractAddress)
+	require.NoError(t, err)
 
 	t.Run("get billing details", func(t *testing.T) {
 		billing, err := client.BillingDetails(context.Background(), contractAddress)

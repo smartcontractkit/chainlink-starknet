@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,36 +131,41 @@ func TestChainTxStore(t *testing.T) {
 
 	c := NewChainTxStore()
 
+	felt, err := starknetutils.BigIntToFelt(big.NewInt(0))
+	require.NoError(t, err)
+	felt1, err := starknetutils.BigIntToFelt(big.NewInt(1))
+	require.NoError(t, err)
+
 	// automatically save the from address
-	require.NoError(t, c.Save(caigotypes.Felt{}, big.NewInt(0), "0x0"))
+	require.NoError(t, c.Save(felt, big.NewInt(0), "0x0"))
 
 	// reject saving for existing address and reused hash & nonce
 	// error messages are tested within TestTxStore
-	assert.Error(t, c.Save(caigotypes.Felt{}, big.NewInt(0), "0x1"))
-	assert.Error(t, c.Save(caigotypes.Felt{}, big.NewInt(1), "0x0"))
+	assert.Error(t, c.Save(felt, big.NewInt(0), "0x1"))
+	assert.Error(t, c.Save(felt, big.NewInt(1), "0x0"))
 
 	// inflight count
-	count, exists := c.GetAllInflightCount()[caigotypes.Felt{}]
+	count, exists := c.GetAllInflightCount()[felt]
 	require.True(t, exists)
 	assert.Equal(t, 1, count)
-	_, exists = c.GetAllInflightCount()[caigotypes.BigToFelt(big.NewInt(1))]
+	_, exists = c.GetAllInflightCount()[felt1]
 	require.False(t, exists)
 
 	// get unconfirmed
 	list := c.GetAllUnconfirmed()
 	assert.Equal(t, 1, len(list))
-	hashes, ok := list[caigotypes.Felt{}]
+	hashes, ok := list[felt]
 	assert.True(t, ok)
 	assert.Equal(t, []string{"0x0"}, hashes)
 
 	// confirm
-	assert.NoError(t, c.Confirm(caigotypes.Felt{}, "0x0"))
-	assert.ErrorContains(t, c.Confirm(caigotypes.BigToFelt(big.NewInt(1)), "0x0"), "from address does not exist")
-	assert.Error(t, c.Confirm(caigotypes.Felt{}, "0x1"))
+	assert.NoError(t, c.Confirm(felt, "0x0"))
+	assert.ErrorContains(t, c.Confirm(felt1, "0x0"), "from address does not exist")
+	assert.Error(t, c.Confirm(felt, "0x1"))
 	list = c.GetAllUnconfirmed()
 	assert.Equal(t, 1, len(list))
-	assert.Equal(t, 0, len(list[caigotypes.Felt{}]))
-	count, exists = c.GetAllInflightCount()[caigotypes.Felt{}]
+	assert.Equal(t, 0, len(list[felt]))
+	count, exists = c.GetAllInflightCount()[felt]
 	assert.True(t, exists)
 	assert.Equal(t, 0, count)
 }

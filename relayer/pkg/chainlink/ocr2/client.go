@@ -8,8 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+	starknettypes "github.com/NethermindEth/starknet.go/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -20,13 +21,13 @@ import (
 //go:generate mockery --name OCR2Reader --output ./mocks/
 
 type OCR2Reader interface {
-	LatestConfigDetails(context.Context, caigotypes.Felt) (ContractConfigDetails, error)
-	LatestTransmissionDetails(context.Context, caigotypes.Felt) (TransmissionDetails, error)
-	LatestRoundData(context.Context, caigotypes.Felt) (RoundData, error)
-	LinkAvailableForPayment(context.Context, caigotypes.Felt) (*big.Int, error)
-	ConfigFromEventAt(context.Context, caigotypes.Felt, uint64) (ContractConfig, error)
-	NewTransmissionsFromEventsAt(context.Context, caigotypes.Felt, uint64) ([]NewTransmissionEvent, error)
-	BillingDetails(context.Context, caigotypes.Felt) (BillingDetails, error)
+	LatestConfigDetails(context.Context, *felt.Felt) (ContractConfigDetails, error)
+	LatestTransmissionDetails(context.Context, *felt.Felt) (TransmissionDetails, error)
+	LatestRoundData(context.Context, *felt.Felt) (RoundData, error)
+	LinkAvailableForPayment(context.Context, *felt.Felt) (*big.Int, error)
+	ConfigFromEventAt(context.Context, *felt.Felt, uint64) (ContractConfig, error)
+	NewTransmissionsFromEventsAt(context.Context, *felt.Felt, uint64) ([]NewTransmissionEvent, error)
+	BillingDetails(context.Context, *felt.Felt) (BillingDetails, error)
 
 	BaseReader() starknet.Reader
 }
@@ -49,10 +50,10 @@ func (c *Client) BaseReader() starknet.Reader {
 	return c.r
 }
 
-func (c *Client) BillingDetails(ctx context.Context, address caigotypes.Felt) (bd BillingDetails, err error) {
+func (c *Client) BillingDetails(ctx context.Context, address *felt.Felt) (bd BillingDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "billing",
+		Selector:        starknettypes.GetSelectorFromNameFelt("billing"),
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -65,8 +66,8 @@ func (c *Client) BillingDetails(ctx context.Context, address caigotypes.Felt) (b
 		return bd, errors.New("unexpected result length")
 	}
 
-	observationPayment := caigotypes.StrToFelt(res[0]).Big()
-	transmissionPayment := caigotypes.StrToFelt(res[1]).Big()
+	observationPayment := res[0].BigInt(big.NewInt(0))
+	transmissionPayment := res[1].BigInt(big.NewInt(0))
 
 	bd, err = NewBillingDetails(observationPayment, transmissionPayment)
 	if err != nil {
@@ -76,10 +77,10 @@ func (c *Client) BillingDetails(ctx context.Context, address caigotypes.Felt) (b
 	return
 }
 
-func (c *Client) LatestConfigDetails(ctx context.Context, address caigotypes.Felt) (ccd ContractConfigDetails, err error) {
+func (c *Client) LatestConfigDetails(ctx context.Context, address *felt.Felt) (ccd ContractConfigDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "latest_config_details",
+		Selector:        starknettypes.GetSelectorFromNameFelt("latest_config_details"),
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -92,10 +93,10 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address caigotypes.Fel
 		return ccd, errors.New("unexpected result length")
 	}
 
-	blockNum := caigotypes.StrToFelt(res[1])
-	configDigest := caigotypes.StrToFelt(res[2])
+	blockNum := res[1]
+	configDigest := res[2]
 
-	ccd, err = NewContractConfigDetails(blockNum.Big(), configDigest.Bytes())
+	ccd, err = NewContractConfigDetails(blockNum.BigInt(big.NewInt((0))), configDigest.Bytes())
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't initialize config details")
 	}
@@ -103,10 +104,10 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address caigotypes.Fel
 	return
 }
 
-func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotypes.Felt) (td TransmissionDetails, err error) {
+func (c *Client) LatestTransmissionDetails(ctx context.Context, address *felt.Felt) (td TransmissionDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "latest_transmission_details",
+		Selector:        starknettypes.GetSelectorFromNameFelt("latest_transmission_details"),
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -119,20 +120,20 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotyp
 		return td, errors.New("unexpected result length")
 	}
 
-	digest := caigotypes.StrToFelt(res[0])
+	digest := res[0]
 	configDigest := types.ConfigDigest{}
-	digest.Big().FillBytes(configDigest[:])
+	digest.BigInt(big.NewInt(0)).FillBytes(configDigest[:])
 
-	epoch, round := parseEpochAndRound(caigotypes.StrToFelt(res[1]).Big())
+	epoch, round := parseEpochAndRound(res[1].BigInt(big.NewInt(0)))
 
-	latestAnswer, err := starknet.HexToUnsignedBig(res[2])
+	latestAnswer := res[2].BigInt(big.NewInt(0))
 	if err != nil {
 		return td, errors.Wrap(err, "latestAnswer invalid")
 	}
 
-	timestampFelt := caigotypes.StrToFelt(res[3])
+	timestampFelt := res[3]
 	// TODO: Int64() can return invalid data if int is too big
-	unixTime := timestampFelt.Big().Int64()
+	unixTime := timestampFelt.BigInt(big.NewInt(0)).Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
 	td = TransmissionDetails{
@@ -146,19 +147,15 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address caigotyp
 	return td, nil
 }
 
-func (c *Client) LatestRoundData(ctx context.Context, address caigotypes.Felt) (round RoundData, err error) {
+func (c *Client) LatestRoundData(ctx context.Context, address *felt.Felt) (round RoundData, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "latest_round_data",
+		Selector:        starknettypes.GetSelectorFromNameFelt("latest_round_data"),
 	}
 
-	results, err := c.r.CallContract(ctx, ops)
+	felts, err := c.r.CallContract(ctx, ops)
 	if err != nil {
 		return round, errors.Wrap(err, "couldn't call the contract with selector latest_round_data")
-	}
-	felts := []caigotypes.Felt{}
-	for _, result := range results {
-		felts = append(felts, caigotypes.StrToFelt(result))
 	}
 
 	round, err = NewRoundData(felts)
@@ -168,10 +165,10 @@ func (c *Client) LatestRoundData(ctx context.Context, address caigotypes.Felt) (
 	return round, nil
 }
 
-func (c *Client) LinkAvailableForPayment(ctx context.Context, address caigotypes.Felt) (*big.Int, error) {
+func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt) (*big.Int, error) {
 	results, err := c.r.CallContract(ctx, starknet.CallOps{
 		ContractAddress: address,
-		Selector:        "link_available_for_payment",
+		Selector:        starknettypes.GetSelectorFromNameFelt("link_available_for_payment"),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payment'")
@@ -179,24 +176,24 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address caigotypes
 	if len(results) != 1 {
 		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
 	}
-	return caigotypes.HexToBN(results[0]), nil
+	return results[0].BigInt(big.NewInt(0)), nil
 }
 
-func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]caigotypes.Felt, err error) {
-	block := caigorpc.WithBlockNumber(blockNum)
+func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*felt.Felt, err error) {
+	block := starknetrpc.WithBlockNumber(blockNum)
 
-	eventKey := caigotypes.BigToHex(caigotypes.GetSelectorFromName(eventType))
+	eventKey := starknettypes.GetSelectorFromNameFelt(eventType)
 
-	input := caigorpc.EventsInput{
-		EventFilter: caigorpc.EventFilter{
+	input := starknetrpc.EventsInput{
+		EventFilter: starknetrpc.EventFilter{
 			FromBlock: block,
 			ToBlock:   block,
 			Address:   address,
-			Keys:      [][]string{{eventKey}}, // skip other event types
+			Keys:      [][]*felt.Felt{{eventKey}}, // skip other event types
 			// PageSize:   0,
 			// PageNumber: 0,
 		},
-		ResultPageRequest: caigorpc.ResultPageRequest{
+		ResultPageRequest: starknetrpc.ResultPageRequest{
 			// ContinuationToken: ,
 			ChunkSize: 10,
 		},
@@ -210,12 +207,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Fe
 	}
 
 	for _, event := range events.Events {
-		// convert to felts
-		felts := []caigotypes.Felt{}
-		for _, felt := range event.Data {
-			felts = append(felts, caigotypes.StrToFelt(felt))
-		}
-		eventsAsFeltArrs = append(eventsAsFeltArrs, felts)
+		eventsAsFeltArrs = append(eventsAsFeltArrs, event.Data)
 	}
 	if len(eventsAsFeltArrs) == 0 {
 		return nil, errors.New("events not found in the block")
@@ -223,7 +215,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address caigotypes.Fe
 	return eventsAsFeltArrs, nil
 }
 
-func (c *Client) ConfigFromEventAt(ctx context.Context, address caigotypes.Felt, blockNum uint64) (cc ContractConfig, err error) {
+func (c *Client) ConfigFromEventAt(ctx context.Context, address *felt.Felt, blockNum uint64) (cc ContractConfig, err error) {
 	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "failed to fetch config_set events")
@@ -243,7 +235,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address caigotypes.Felt,
 }
 
 // NewTransmissionsFromEventsAt finds events of type new_transmission emitted by the contract address in a given block number.
-func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address caigotypes.Felt, blockNum uint64) (events []NewTransmissionEvent, err error) {
+func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address *felt.Felt, blockNum uint64) (events []NewTransmissionEvent, err error) {
 	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch new_transmission events")

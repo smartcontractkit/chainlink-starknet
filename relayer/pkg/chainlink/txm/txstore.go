@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"sync"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
 	"golang.org/x/exp/maps"
 )
 
@@ -77,17 +77,17 @@ func (s *TxStore) InflightCount() int {
 }
 
 type ChainTxStore struct {
-	store map[caigotypes.Felt]*TxStore
+	store map[*felt.Felt]*TxStore
 	lock  sync.RWMutex
 }
 
 func NewChainTxStore() *ChainTxStore {
 	return &ChainTxStore{
-		store: map[caigotypes.Felt]*TxStore{},
+		store: map[*felt.Felt]*TxStore{},
 	}
 }
 
-func (c *ChainTxStore) Save(from caigotypes.Felt, nonce *big.Int, hash string) error {
+func (c *ChainTxStore) Save(from *felt.Felt, nonce *big.Int, hash string) error {
 	// use write lock for methods that modify underlying data
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -98,7 +98,7 @@ func (c *ChainTxStore) Save(from caigotypes.Felt, nonce *big.Int, hash string) e
 	return c.store[from].Save(nonce, hash)
 }
 
-func (c *ChainTxStore) Confirm(from caigotypes.Felt, hash string) error {
+func (c *ChainTxStore) Confirm(from *felt.Felt, hash string) error {
 	// use write lock for methods that modify underlying data
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -109,12 +109,12 @@ func (c *ChainTxStore) Confirm(from caigotypes.Felt, hash string) error {
 	return c.store[from].Confirm(hash)
 }
 
-func (c *ChainTxStore) GetAllInflightCount() map[caigotypes.Felt]int {
+func (c *ChainTxStore) GetAllInflightCount() map[*felt.Felt]int {
 	// use read lock for methods that read underlying data
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	list := map[caigotypes.Felt]int{}
+	list := map[*felt.Felt]int{}
 
 	for i := range c.store {
 		list[i] = c.store[i].InflightCount()
@@ -123,12 +123,12 @@ func (c *ChainTxStore) GetAllInflightCount() map[caigotypes.Felt]int {
 	return list
 }
 
-func (c *ChainTxStore) GetAllUnconfirmed() map[caigotypes.Felt][]string {
+func (c *ChainTxStore) GetAllUnconfirmed() map[*felt.Felt][]string {
 	// use read lock for methods that read underlying data
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	list := map[caigotypes.Felt][]string{}
+	list := map[*felt.Felt][]string{}
 
 	for i := range c.store {
 		list[i] = c.store[i].GetUnconfirmed()
@@ -136,7 +136,7 @@ func (c *ChainTxStore) GetAllUnconfirmed() map[caigotypes.Felt][]string {
 	return list
 }
 
-func (c *ChainTxStore) validate(from caigotypes.Felt) error {
+func (c *ChainTxStore) validate(from *felt.Felt) error {
 	if _, exists := c.store[from]; !exists {
 		return fmt.Errorf("from address does not exist: %s", from)
 	}

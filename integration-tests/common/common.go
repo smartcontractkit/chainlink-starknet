@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
 
-	"github.com/smartcontractkit/caigo/gateway"
+	"github.com/NethermindEth/starknet.go/gateway"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
