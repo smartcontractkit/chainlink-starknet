@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -26,7 +26,7 @@ var (
 type NewTransmissionEvent struct {
 	RoundId         uint32
 	LatestAnswer    *big.Int
-	Transmitter     caigotypes.Felt
+	Transmitter     *felt.Felt
 	LatestTimestamp time.Time
 	Observers       []uint8
 	ObservationsLen uint32
@@ -40,7 +40,7 @@ type NewTransmissionEvent struct {
 }
 
 // ParseNewTransmissionEvent is decoding binary felt data as the NewTransmissionEvent type
-func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEvent, error) {
+func ParseNewTransmissionEvent(eventData []*felt.Felt) (NewTransmissionEvent, error) {
 	{
 		const observationsLenIndex = 5
 		const constNumOfElements = 11
@@ -49,7 +49,7 @@ func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEven
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
 
-		observationsLen := eventData[observationsLenIndex].Big().Uint64()
+		observationsLen := eventData[observationsLenIndex].BigInt(big.NewInt(0)).Uint64()
 		if len(eventData) != constNumOfElements+int(observationsLen) {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
@@ -57,14 +57,11 @@ func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEven
 
 	// round_id
 	index := 0
-	roundId := uint32(eventData[index].Big().Uint64())
+	roundId := uint32(eventData[index].BigInt(big.NewInt(0)).Uint64())
 
 	// answer
 	index++
-	latestAnswer, err := starknet.HexToUnsignedBig(eventData[index].String())
-	if err != nil {
-		return NewTransmissionEvent{}, errors.Wrap(err, "latestAnswer invalid")
-	}
+	latestAnswer := eventData[index].BigInt(big.NewInt(0))
 
 	// transmitter
 	index++
@@ -72,16 +69,16 @@ func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEven
 
 	// observation_timestamp
 	index++
-	unixTime := eventData[index].Big().Int64()
+	unixTime := eventData[index].BigInt(big.NewInt(0)).Int64()
 	latestTimestamp := time.Unix(unixTime, 0)
 
 	// observers (raw) max 31
 	index++
-	observersRaw := starknet.PadBytes(eventData[index].Big().Bytes(), MaxObservers)
+	observersRaw := starknet.PadBytes(eventData[index].BigInt(big.NewInt(0)).Bytes(), MaxObservers)
 
 	// observation_len
 	index++
-	observationsLen := uint32(eventData[index].Big().Uint64())
+	observationsLen := uint32(eventData[index].BigInt(big.NewInt(0)).Uint64())
 
 	// observers (based on observationsLen)
 	var observers []uint8
@@ -92,31 +89,28 @@ func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEven
 	// observations (based on observationsLen)
 	var observations []*big.Int
 	for i := 0; i < int(observationsLen); i++ {
-		observations = append(observations, eventData[index+i+1].Big())
+		observations = append(observations, eventData[index+i+1].BigInt(big.NewInt(0)))
 	}
 
 	// juels_per_fee_coin
 	index += int(observationsLen) + 1
-	juelsPerFeeCoin := eventData[index].Big()
+	juelsPerFeeCoin := eventData[index].BigInt(big.NewInt(0))
 
 	// juels_per_fee_coin
 	index++
-	gasPrice := eventData[index].Big()
+	gasPrice := eventData[index].BigInt(big.NewInt(0))
 
 	// config digest
 	index++
-	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
-	if err != nil {
-		return NewTransmissionEvent{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
-	}
+	digest := eventData[index].Bytes()
 
 	// epoch_and_round
 	index++
-	epoch, round := parseEpochAndRound(eventData[index].Big())
+	epoch, round := parseEpochAndRound(eventData[index].BigInt(big.NewInt(0)))
 
 	// reimbursement
 	index++
-	reimbursement := eventData[index].Big()
+	reimbursement := eventData[index].BigInt(big.NewInt(0))
 
 	return NewTransmissionEvent{
 		RoundId:         roundId,
@@ -136,28 +130,28 @@ func ParseNewTransmissionEvent(eventData []caigotypes.Felt) (NewTransmissionEven
 }
 
 // ParseConfigSetEvent is decoding binary felt data as the libocr ContractConfig type
-func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, error) {
+func ParseConfigSetEvent(eventData []*felt.Felt) (types.ContractConfig, error) {
 	{
 		const oraclesLenIdx = 3
 		if len(eventData) < oraclesLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
-		oraclesLen := eventData[oraclesLenIdx].Big().Uint64()
+		oraclesLen := eventData[oraclesLenIdx].BigInt(big.NewInt(0)).Uint64()
 		onchainConfigLenIdx := oraclesLenIdx + 2*oraclesLen + 2
 
 		if uint64(len(eventData)) < onchainConfigLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
-		onchainConfigLen := eventData[onchainConfigLenIdx].Big().Uint64()
+		onchainConfigLen := eventData[onchainConfigLenIdx].BigInt(big.NewInt(0)).Uint64()
 		offchainConfigLenIdx := onchainConfigLenIdx + onchainConfigLen + 2
 
 		if uint64(len(eventData)) < offchainConfigLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
 
-		offchainConfigLen := eventData[offchainConfigLenIdx].Big().Uint64()
+		offchainConfigLen := eventData[offchainConfigLenIdx].BigInt(big.NewInt(0)).Uint64()
 		if uint64(len(eventData)) != offchainConfigLenIdx+offchainConfigLen+1 {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
@@ -168,18 +162,15 @@ func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, err
 
 	// latest_config_digest
 	index++
-	digest, err := types.BytesToConfigDigest(starknet.PadBytes(eventData[index].Bytes(), len(types.ConfigDigest{})))
-	if err != nil {
-		return types.ContractConfig{}, errors.Wrap(err, "couldn't convert bytes to ConfigDigest")
-	}
+	digest := eventData[index].Bytes()
 
 	// config_count
 	index++
-	configCount := eventData[index].Big().Uint64()
+	configCount := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// oracles_len
 	index++
-	oraclesLen := eventData[index].Big().Uint64()
+	oraclesLen := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// oracles
 	index++
@@ -188,7 +179,8 @@ func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, err
 	var transmitters []types.Account
 	for i, member := range oracleMembers {
 		if i%2 == 0 {
-			signers = append(signers, starknet.PadBytes(member.Bytes(), 32)) // pad to 32 bytes
+			b := member.Bytes()
+			signers = append(signers, b[:]) // pad to 32 bytes
 		} else {
 			transmitters = append(transmitters, types.Account(member.String()))
 		}
@@ -196,19 +188,19 @@ func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, err
 
 	// f
 	index = index + int(oraclesLen)*2
-	f := eventData[index].Big().Uint64()
+	f := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// onchain_config length
 	index++
-	onchainConfigLen := eventData[index].Big().Uint64()
+	onchainConfigLen := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// onchain_config (version=1, min, max)
 	index++
 	onchainConfigFelts := eventData[index:(index + int(onchainConfigLen))]
 	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
-		onchainConfigFelts[0].Big(),
-		onchainConfigFelts[1].Big(),
-		onchainConfigFelts[2].Big(),
+		onchainConfigFelts[0].BigInt(big.NewInt(0)),
+		onchainConfigFelts[1].BigInt(big.NewInt(0)),
+		onchainConfigFelts[2].BigInt(big.NewInt(0)),
 	)
 	if err != nil {
 		return types.ContractConfig{}, errors.Wrap(err, "err in encoding onchain config from felts")
@@ -216,11 +208,11 @@ func ParseConfigSetEvent(eventData []caigotypes.Felt) (types.ContractConfig, err
 
 	// offchain_config_version
 	index += int(onchainConfigLen)
-	offchainConfigVersion := eventData[index].Big().Uint64()
+	offchainConfigVersion := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// offchain_config_len
 	index++
-	offchainConfigLen := eventData[index].Big().Uint64()
+	offchainConfigLen := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// offchain_config
 	index++

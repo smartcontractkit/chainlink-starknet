@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
-	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
 
@@ -52,17 +48,8 @@ func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
 		return median.OnchainConfig{}, err
 	}
 
-	// convert felts to big.Ints
-
-	min, err := starknet.FeltToUnsignedBig(caigotypes.BigToFelt(felts[1]))
-	if err != nil {
-		return median.OnchainConfig{}, errors.Wrap(err, "min invalid")
-	}
-
-	max, err := starknet.FeltToUnsignedBig(caigotypes.BigToFelt(felts[2]))
-	if err != nil {
-		return median.OnchainConfig{}, errors.Wrap(err, "max invalid")
-	}
+	min := felts[1]
+	max := felts[2]
 
 	if !(min.Cmp(max) <= 0) {
 		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)

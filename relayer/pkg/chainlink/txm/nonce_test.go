@@ -5,7 +5,8 @@ import (
 	"math/big"
 	"testing"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
@@ -18,14 +19,15 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 )
 
-func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.NonceManager, caigotypes.Felt, func()) {
+func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.NonceManager, *felt.Felt, func()) {
 	// setup
 	c := mocks.NewNonceManagerClient(t)
 	lggr := logger.Test(t)
 	nm := txm.NewNonceManager(lggr)
 
 	// mock returns
-	keyHash := caigotypes.StrToFelt("test-key-id")
+	keyHash, err := starknetutils.HexToFelt("0x0")
+	require.NoError(t, err)
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(utils.Context(t)))
@@ -53,7 +55,8 @@ func TestNonceManager_NextSequence(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
-	randAddr1 := caigotypes.BigToFelt(big.NewInt(1))
+	randAddr1, err := starknetutils.BigIntToFelt(big.NewInt(1))
+	require.NoError(t, err)
 	_, err = nm.NextSequence(randAddr1, chainId)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
@@ -88,7 +91,8 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
-	randAddr1 := caigotypes.BigToFelt(big.NewInt(1))
+	randAddr1, err := starknetutils.BigIntToFelt(big.NewInt(1))
+	require.NoError(t, err)
 	err = nm.IncrementNextSequence(randAddr1, chainId, initPlusOne)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))

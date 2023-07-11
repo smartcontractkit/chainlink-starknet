@@ -10,8 +10,10 @@ import (
 	"testing"
 	"time"
 
-	caigo "github.com/smartcontractkit/caigo"
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
+	caigo "github.com/NethermindEth/starknet.go"
+	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -266,20 +268,28 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	var positive bool
 
 	// validate balance in aggregator
+	linkContractAddress, err := starknetutils.HexToFelt(testState.LinkTokenAddr)
+	if err != nil {
+		return err
+	}
+	contractAddress, err := starknetutils.HexToFelt(testState.OCRAddr)
+	if err != nil {
+		return err
+	}
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.StrToFelt(testState.LinkTokenAddr),
-		Selector:        "balance_of",
-		Calldata:        []string{testState.OCRAddr},
+		ContractAddress: linkContractAddress,
+		Selector:        starknettypes.GetSelectorFromNameFelt("balance_of"),
+		Calldata:        []*felt.Felt{contractAddress},
 	})
-	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail")
+	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail", "err", errLINK)
 	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.StrToFelt(testState.OCRAddr),
-		Selector:        "link_available_for_payment",
+		ContractAddress: contractAddress,
+		Selector:        starknettypes.GetSelectorFromNameFelt("link_available_for_payment"),
 	})
-	require.NoError(testState.T, errAgg, "Reader balance from LINK contract should not fail")
-	balLINK, _ := new(big.Int).SetString(resLINK[0], 0)
-	balAgg, _ := new(big.Int).SetString(resAgg[1], 0)
-	isNegative, _ := new(big.Int).SetString(resAgg[0], 0)
+	require.NoError(testState.T, errAgg, "link_available_for_payment should not fail", "err", errAgg)
+	balLINK := resLINK[0].BigInt(big.NewInt(0))
+	balAgg := resAgg[1].BigInt(big.NewInt(0))
+	isNegative := resAgg[0].BigInt(big.NewInt(0))
 	if isNegative.Sign() > 0 {
 		balAgg = new(big.Int).Neg(balAgg)
 	}
@@ -289,8 +299,8 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
 		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
-		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.StrToFelt(testState.OCRAddr))
-		require.NoError(testState.T, err, "Failed to get latest transmission details")
+		res, err2 := testState.OCR2Client.LatestTransmissionDetails(ctx, contractAddress)
+		require.NoError(testState.T, err2, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
 			break
@@ -361,15 +371,20 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	// Test proxy reading
 	// TODO: would be good to test proxy switching underlying feeds
+
+	proxyAddress, err := starknetutils.HexToFelt(testState.ProxyAddr)
+	if err != nil {
+		return err
+	}
 	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.StrToFelt(testState.ProxyAddr),
-		Selector:        "latest_round_data",
+		ContractAddress: proxyAddress,
+		Selector:        starknettypes.GetSelectorFromNameFelt("latest_round_data"),
 	})
 	if !isSoak {
 		require.NoError(testState.T, err, "Reading round data from proxy should not fail")
 		assert.Equal(testState.T, len(roundDataRaw), 5, "Round data from proxy should match expected size")
 	}
-	valueBig, err := starknet.HexToUnsignedBig(roundDataRaw[1])
+	valueBig := roundDataRaw[1].BigInt(big.NewInt(0))
 	require.NoError(testState.T, err)
 	value := valueBig.Int64()
 	if value < 0 {

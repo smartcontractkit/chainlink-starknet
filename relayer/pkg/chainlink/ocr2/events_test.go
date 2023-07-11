@@ -9,7 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -61,7 +62,7 @@ var (
 )
 
 func TestNewTransmissionEvent_Parse(t *testing.T) {
-	eventData, err := starknet.StringsToFelt(newTransmissionEventRaw)
+	eventData, err := starknetutils.HexArrToFelt(newTransmissionEventRaw)
 	assert.NoError(t, err)
 	require.Equal(t, len(newTransmissionEventRaw), len(eventData))
 
@@ -81,7 +82,8 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 	transmitterHex := "0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d"
 	require.Equal(t, len(transmitterHex), int(2+31.5*2)) // len('0x') + len(max_felt_len)
 
-	expectedTransmitter := caigotypes.StrToFelt(transmitterHex)
+	expectedTransmitter, err := starknetutils.HexToFelt(transmitterHex)
+	require.NoError(t, err)
 	require.Equal(t, e.Transmitter, expectedTransmitter)
 
 	require.Equal(t, e.Observers, []uint8{0, 1, 2, 3})
@@ -94,7 +96,7 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 }
 
 func TestConfigSetEvent_Parse(t *testing.T) {
-	eventData, err := starknet.StringsToFelt(configSetEventRaw)
+	eventData, err := starknetutils.HexArrToFelt(configSetEventRaw)
 	assert.NoError(t, err)
 	require.Equal(t, len(configSetEventRaw), len(eventData))
 
@@ -144,7 +146,7 @@ func TestNewTransmissionEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigotypes.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
+	assert.Equal(t, starknettypes.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
 }
 
 func TestConfigSetEventSelector(t *testing.T) {
@@ -152,5 +154,5 @@ func TestConfigSetEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, caigotypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
+	assert.Equal(t, starknettypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }

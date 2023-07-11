@@ -3,15 +3,23 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.20
 
 require (
+	github.com/NethermindEth/juno v0.3.1
+	github.com/NethermindEth/starknet.go v0.4.2-0.20230830055456-308b763a11d3
 	github.com/rs/zerolog v1.29.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
 	github.com/smartcontractkit/chainlink-env v0.36.1-0.20230802063028-a432269a7384
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230808141159-4e20b0757f3a
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20230802150127-d2c95679d61a
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230809180636-8e89b62488d7
 	github.com/smartcontractkit/chainlink/v2 v2.2.1-0.20230809180636-8e89b62488d7
+)
+
+require (
+	github.com/bits-and-blooms/bitset v1.7.0 // indirect
+	github.com/consensys/gnark-crypto v0.11.0 // indirect
+	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704 // indirect
+	github.com/test-go/testify v1.1.4 // indirect
 )
 
 require (
@@ -48,7 +56,7 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
-	github.com/cockroachdb/pebble v0.0.0-20230209160836-829675f94811 // indirect
+	github.com/cockroachdb/pebble v0.0.0-20230209222158-0568b5fd3d14 // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/cometbft/cometbft v0.37.2 // indirect
 	github.com/cometbft/cometbft-db v0.7.0 // indirect
