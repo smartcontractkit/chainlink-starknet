@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/caigo"
-	caigogw "github.com/smartcontractkit/caigo/gateway"
-	"github.com/smartcontractkit/caigo/test"
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/starknet.go/curve"
+	"github.com/NethermindEth/starknet.go/devnet"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
@@ -27,7 +27,7 @@ import (
 func TestIntegration_Txm(t *testing.T) {
 	n := 2 // number of txs per key
 	url := SetupLocalStarknetNode(t)
-	devnet := test.NewDevNet(url)
+	devnet := devnet.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
 
@@ -35,25 +35,26 @@ func TestIntegration_Txm(t *testing.T) {
 	localKeys := map[string]*big.Int{}
 	localAccounts := map[string]string{}
 	for i := range accounts {
-		privKey, err := caigotypes.HexToBytes(accounts[i].PrivateKey)
+		privKey, err := utils.HexToBytes(accounts[i].PrivateKey)
 		require.NoError(t, err)
-		senderAddress := caigotypes.StrToFelt(accounts[i].PublicKey).String()
-		localKeys[senderAddress] = caigotypes.BytesToBig(privKey)
-		localAccounts[senderAddress] = accounts[i].Address
+		senderAddress, err := starknetutils.HexToFelt(accounts[i].PublicKey)
+		require.NoError(t, err)
+		localKeys[senderAddress.String()] = utils.BytesToBig(privKey)
+		localAccounts[senderAddress.String()] = accounts[i].Address
 	}
 
 	// mock keystore
 	looppKs := NewLooppKeystore(func(id string) (*big.Int, error) {
-		_, ok := localKeys[id]
+		key, ok := localKeys[id]
 		if !ok {
 			return nil, fmt.Errorf("key does not exist id=%s", id)
 		}
-		return localKeys[id], nil
+		return key, nil
 	})
 	ksAdapter := NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient(caigogw.GOERLI_ID, url+"/rpc", lggr, &timeout)
+	client, err := starknet.NewClient("SN_GOERLI", url+"/rpc", lggr, &timeout)
 	require.NoError(t, err)
 
 	getClient := func() (*starknet.Client, error) {
@@ -76,11 +77,21 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, txm.Ready())
 
 	for senderAddressStr := range localKeys {
-		senderAddress := caigotypes.StrToFelt(senderAddressStr)
+		senderAddress, err := starknetutils.HexToFelt(senderAddressStr)
+		require.NoError(t, err)
+
+		account, err := starknetutils.HexToFelt(localAccounts[senderAddressStr])
+		require.NoError(t, err)
+
+		contractAddress, err := starknetutils.HexToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7")
+		require.NoError(t, err)
+
+		selector := utils.GetSelectorFromNameFelt("totalSupply")
+
 		for i := 0; i < n; i++ {
-			require.NoError(t, txm.Enqueue(senderAddress, caigotypes.StrToFelt(localAccounts[senderAddressStr]), caigotypes.FunctionCall{
-				ContractAddress:    caigotypes.StrToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"), // send to ETH token contract
-				EntryPointSelector: "totalSupply",
+			require.NoError(t, txm.Enqueue(senderAddress, account, starknetrpc.FunctionCall{
+				ContractAddress:    contractAddress, // send to ETH token contract
+				EntryPointSelector: selector,
 			}))
 		}
 	}
@@ -135,7 +146,7 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 	}
 
 	starkHash := new(big.Int).SetBytes(hash)
-	x, y, err := caigo.Curve.Sign(starkHash, k)
+	x, y, err := curve.Curve.Sign(starkHash, k)
 	if err != nil {
 		return nil, fmt.Errorf("error signing data with curve: %w", err)
 	}

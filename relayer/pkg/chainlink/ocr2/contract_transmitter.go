@@ -7,7 +7,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
@@ -20,9 +22,9 @@ var _ types.ContractTransmitter = (*contractTransmitter)(nil)
 type contractTransmitter struct {
 	reader *transmissionsCache
 
-	contractAddress caigotypes.Felt
-	senderAddress   caigotypes.Felt
-	accountAddress  caigotypes.Felt
+	contractAddress *felt.Felt
+	senderAddress   *felt.Felt
+	accountAddress  *felt.Felt
 
 	txm txm.TxManager
 }
@@ -34,11 +36,15 @@ func NewContractTransmitter(
 	accountAddress string,
 	txm txm.TxManager,
 ) *contractTransmitter {
+	contractAddr, _ := starknetutils.HexToFelt(contractAddress)
+	senderAddr, _ := starknetutils.HexToFelt(senderAddress)
+	accountAddr, _ := starknetutils.HexToFelt(accountAddress)
+
 	return &contractTransmitter{
 		reader:          reader,
-		contractAddress: caigotypes.StrToFelt(contractAddress),
-		senderAddress:   caigotypes.StrToFelt(senderAddress),
-		accountAddress:  caigotypes.StrToFelt(accountAddress),
+		contractAddress: contractAddr,
+		senderAddress:   senderAddr,
+		accountAddress:  accountAddr,
 		txm:             txm,
 	}
 }
@@ -84,10 +90,16 @@ func (c *contractTransmitter) Transmit(
 		transmitPayload = append(transmitPayload, "0x"+hex.EncodeToString(signature[:32]))   // public key
 	}
 
-	err = c.txm.Enqueue(c.senderAddress, c.accountAddress, caigotypes.FunctionCall{
+	// TODO: build felts directly rather than afterwards
+	calldata, err := starknetutils.HexArrToFelt(transmitPayload)
+	if err != nil {
+		return err
+	}
+
+	err = c.txm.Enqueue(c.senderAddress, c.accountAddress, starknetrpc.FunctionCall{
 		ContractAddress:    c.contractAddress,
-		EntryPointSelector: "transmit",
-		Calldata:           transmitPayload,
+		EntryPointSelector: starknetutils.GetSelectorFromNameFelt("transmit"),
+		Calldata:           calldata,
 	})
 
 	return err

@@ -6,9 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/pkg/errors"
-
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -17,12 +15,7 @@ type ContractConfigDetails struct {
 	Digest types.ConfigDigest
 }
 
-func NewContractConfigDetails(blockNum *big.Int, digestBytes []byte) (ccd ContractConfigDetails, err error) {
-	digest, err := types.BytesToConfigDigest(digestBytes)
-	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't decode config digest")
-	}
-
+func NewContractConfigDetails(blockNum *big.Int, digest [32]byte) (ccd ContractConfigDetails, err error) {
 	return ContractConfigDetails{
 		Block:  blockNum.Uint64(),
 		Digest: digest,
@@ -62,26 +55,27 @@ type RoundData struct {
 	UpdatedAt   time.Time
 }
 
-func NewRoundData(felts []caigotypes.Felt) (data RoundData, err error) {
+func NewRoundData(felts []*felt.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}
-	if !felts[0].Big().IsUint64() && felts[0].Big().Uint64() > math.MaxUint32 {
-		return data, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", felts[0].Big())
+	roundId := felts[0].BigInt(big.NewInt(0))
+	if !roundId.IsUint64() && roundId.Uint64() > math.MaxUint32 {
+		return data, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", felts[0].String())
 	}
-	data.RoundID = uint32(felts[0].Big().Uint64())
-	data.Answer = felts[1].Big()
-	blockNumber := felts[2].Big()
+	data.RoundID = uint32(roundId.Uint64())
+	data.Answer = felts[1].BigInt(big.NewInt(0))
+	blockNumber := felts[2].BigInt(big.NewInt(0))
 	if !blockNumber.IsUint64() {
 		return data, fmt.Errorf("block number '%s' does not fit into uint64", blockNumber.String())
 	}
 	data.BlockNumber = blockNumber.Uint64()
-	startedAt := felts[3].Big()
+	startedAt := felts[3].BigInt(big.NewInt(0))
 	if !startedAt.IsInt64() {
 		return data, fmt.Errorf("startedAt '%s' does not fit into int64", startedAt.String())
 	}
 	data.StartedAt = time.Unix(startedAt.Int64(), 0)
-	updatedAt := felts[4].Big()
+	updatedAt := felts[4].BigInt(big.NewInt(0))
 	if !updatedAt.IsInt64() {
 		return data, fmt.Errorf("updatedAt '%s' does not fit into int64", startedAt.String())
 	}
