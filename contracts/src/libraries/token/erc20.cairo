@@ -14,13 +14,14 @@ trait IERC20 {
     fn approve(spender: ContractAddress, amount: u256) -> bool;
 }
 
-#[contract]
+#[starknet::contract]
 mod ERC20 {
     use super::IERC20;
     use starknet::get_caller_address;
     use starknet::ContractAddress;
     use zeroable::Zeroable;
 
+    #[storage]
     struct Storage {
         _name: felt252,
         _symbol: felt252,
@@ -120,27 +121,27 @@ mod ERC20 {
         ERC20::allowance(owner, spender)
     }
 
-    #[external]
+    #[external(v0)]
     fn transfer(recipient: ContractAddress, amount: u256) -> bool {
         ERC20::transfer(recipient, amount)
     }
 
-    #[external]
+    #[external(v0)]
     fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool {
         ERC20::transfer_from(sender, recipient, amount)
     }
 
-    #[external]
+    #[external(v0)]
     fn approve(spender: ContractAddress, amount: u256) -> bool {
         ERC20::approve(spender, amount)
     }
 
-    #[external]
+    #[external(v0)]
     fn increase_allowance(spender: ContractAddress, added_value: u256) -> bool {
         _increase_allowance(spender, added_value)
     }
 
-    #[external]
+    #[external(v0)]
     fn decrease_allowance(spender: ContractAddress, subtracted_value: u256) -> bool {
         _decrease_allowance(spender, subtracted_value)
     }

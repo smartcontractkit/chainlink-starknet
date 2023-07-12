@@ -1,25 +1,22 @@
-#[contract]
+#[starknet::contract]
 mod InvalidReceiver {
-    use starknet::ContractAddress;
-    use array::ArrayTrait;
-
-
+    #[storage]
     struct Storage {
         _supports: bool
     }
 
     #[constructor]
-    fn constructor() {}
+    fn constructor(ref self: ContractState) {}
 
     // toggle whether or not receiver says it supports the interface id
-    #[external]
-    fn set_supports(support: bool) {
-        _supports::write(support);
+    #[external(v0)]
+    fn set_supports(ref self: ContractState, support: bool) {
+        self._supports.write(support);
     }
 
 
-    #[external]
-    fn supports_interface(interface_id: u32) -> bool {
-        _supports::read()
+    #[external(v0)]
+    fn supports_interface(self: @ContractState, interface_id: u32) -> bool {
+        self._supports.read()
     }
 }

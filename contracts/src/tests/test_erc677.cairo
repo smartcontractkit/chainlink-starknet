@@ -15,14 +15,14 @@ use chainlink::token::mock::valid_erc667_receiver::ValidReceiver;
 use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
 use chainlink::libraries::token::erc677::ERC677;
 
-#[abi]
+#[starknet::interface]
 trait MockValidReceiver {
     fn on_token_transfer(sender: ContractAddress, value: u256, data: Array<felt252>);
     fn supports_interface(interface_id: u32) -> bool;
     fn verify() -> ContractAddress;
 }
 
-#[abi]
+#[starknet::interface]
 trait MockInvalidReceiver {
     fn supports_interface(interface_id: u32) -> bool;
     fn set_supports(value: bool);
