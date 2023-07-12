@@ -1,3 +1,15 @@
+use starknet::class_hash::ClassHash;
+
+#[starknet::interface]
+trait IUpgradeable<TContractState> {
+    fn upgrade(ref self: TContractState, new_impl: ClassHash);
+}
+
+#[derive(Drop, starknet::Event)]
+struct Upgraded {
+    new_impl: ClassHash
+}
+
 mod Upgradeable {
     use zeroable::Zeroable;
 
@@ -7,9 +19,6 @@ mod Upgradeable {
     use starknet::class_hash::ClassHash;
     use starknet::class_hash::ClassHashZeroable;
 
-    #[event]
-    fn Upgraded(new_impl: ClassHash) {}
-
     // this method assumes replace_class_syscall has a very low possibility of being deprecated
     // but if it does, we will either have upgraded the contract to be non-upgradeable by then
     // because the starknet ecosystem has stabilized or we will be able to upgrade the contract to the proxy pattern
@@ -17,6 +26,6 @@ mod Upgradeable {
     fn upgrade(new_impl: ClassHash) {
         assert(!new_impl.is_zero(), 'Class hash cannot be zero');
         replace_class_syscall(new_impl).unwrap_syscall();
-        Upgraded(new_impl);
+        // TODO: Upgraded(new_impl);
     }
 }

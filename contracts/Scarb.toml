@@ -27,4 +27,4 @@ casm-add-pythonic-hints = true
 allowed-libfuncs-deny = true
 
 # TODO: change the allowlist to 'audited' when cairo v2 is released
-allowed-libfuncs-list.name = "experimental_v0.1.0"
+allowed-libfuncs-list.name = "audited"

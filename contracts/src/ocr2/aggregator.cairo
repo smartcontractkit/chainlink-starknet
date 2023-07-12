@@ -1,3 +1,5 @@
+use starknet::ContractAddress;
+
 #[derive(Copy, Drop, Serde, PartialEq)]
 struct Round {
     // used as u128 internally, but necessary for phase-prefixed round ids as returned by proxy
@@ -8,12 +10,115 @@ struct Round {
     updated_at: u64,
 }
 
-trait IAggregator {
-    fn latest_round_data() -> Round;
-    fn round_data(round_id: u128) -> Round;
-    fn description() -> felt252;
-    fn decimals() -> u8;
-    fn type_and_version() -> felt252;
+#[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+struct Transmission {
+    answer: u128,
+    block_num: u64,
+    observation_timestamp: u64,
+    transmission_timestamp: u64,
+}
+
+// TODO: reintroduce custom storage to save on space
+// impl TransmissionStorageAccess of StorageAccess<Transmission> {
+//     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
+//         let block_num_and_answer = storage_read_syscall(
+//             address_domain, storage_address_from_base_and_offset(base, 0_u8)
+//         )?;
+//         let (block_num, answer) = split_felt(block_num_and_answer);
+//         let timestamps = storage_read_syscall(
+//             address_domain, storage_address_from_base_and_offset(base, 1_u8)
+//         )?;
+//         let (observation_timestamp, transmission_timestamp) = split_felt(timestamps);
+
+//         Result::Ok(
+//             Transmission {
+//                 answer,
+//                 block_num: block_num.try_into().unwrap(),
+//                 observation_timestamp: observation_timestamp.try_into().unwrap(),
+//                 transmission_timestamp: transmission_timestamp.try_into().unwrap(),
+//             }
+//         )
+//     }
+//
+//     fn write(
+//         address_domain: u32, base: StorageBaseAddress, value: Transmission
+//     ) -> SyscallResult::<()> {
+//         let block_num_and_answer = value.block_num.into() * SHIFT_128 + value.answer.into();
+//         let timestamps = value.observation_timestamp.into() * SHIFT_128
+//             + value.transmission_timestamp.into();
+//         storage_write_syscall(
+//             address_domain,
+//             storage_address_from_base_and_offset(base, 0_u8),
+//             block_num_and_answer
+//         )?;
+//         storage_write_syscall(
+//             address_domain, storage_address_from_base_and_offset(base, 1_u8), timestamps
+//         )
+//     }
+// }
+
+#[starknet::interface]
+trait IAggregator<TContractState> {
+    fn latest_round_data(self: @TContractState) -> Round;
+    fn round_data(self: @TContractState, round_id: u128) -> Round;
+    fn description(self: @TContractState) -> felt252;
+    fn decimals(self: @TContractState) -> u8;
+    fn type_and_version(self: @TContractState) -> felt252;
+}
+
+#[derive(Copy, Drop, Serde)]
+struct OracleConfig {
+    signer: felt252,
+    transmitter: ContractAddress,
+}
+
+impl OracleConfigLegacyHash of LegacyHash<OracleConfig> {
+    fn hash(mut state: felt252, value: OracleConfig) -> felt252 {
+        state = LegacyHash::hash(state, value.signer);
+        state = LegacyHash::hash(state, value.transmitter);
+        state
+    }
+}
+
+#[starknet::interface]
+trait Configuration<TContractState> {
+    fn set_config(
+        ref self: TContractState,
+        oracles: Array<OracleConfig>,
+        f: u8,
+        onchain_config: Array<felt252>,
+        offchain_config_version: u64,
+        offchain_config: Array<felt252>,
+    ) -> felt252; // digest
+    fn latest_config_details(self: @TContractState) -> (u64, u64, felt252);
+    fn transmitters(self: @TContractState) -> Array<ContractAddress>;
+}
+
+use Aggregator::{BillingConfig, BillingConfigSerde};
+
+#[starknet::interface]
+trait Billing<TContractState> {
+    fn set_billing_access_controller(ref self: TContractState, access_controller: ContractAddress);
+    fn set_billing(ref self: TContractState, config: Aggregator::BillingConfig);
+    fn billing(self: @TContractState) -> Aggregator::BillingConfig;
+    //
+    fn withdraw_payment(ref self: TContractState, transmitter: ContractAddress);
+    fn owed_payment(self: @TContractState, transmitter: ContractAddress) -> u128;
+    fn withdraw_funds(ref self: TContractState, recipient: ContractAddress, amount: u256);
+    fn link_available_for_payment(self: @TContractState) -> (bool, u128); // (is negative, absolute difference)
+}
+
+#[derive(Copy, Drop, Serde)]
+struct PayeeConfig {
+    transmitter: ContractAddress,
+    payee: ContractAddress,
+}
+
+#[starknet::interface]
+trait PayeeManagement<TContractState> {
+    fn set_payees(ref self: TContractState, payees: Array<PayeeConfig>);
+    fn transfer_payeeship(ref self: TContractState, transmitter: ContractAddress, proposed: ContractAddress);
+    fn accept_payeeship(ref self: TContractState, transmitter: ContractAddress);
 }
 
 use array::ArrayTrait;
@@ -28,7 +133,6 @@ fn hash_span<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>>(
     match item {
         Option::Some(x) => {
             let s = LegacyHash::hash(state, *x);
-            gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
             hash_span(s, value)
         },
         Option::None(_) => state,
@@ -40,7 +144,6 @@ fn pow(n: u128, m: u128) -> u128 {
     if m == 0_u128 {
         return 1_u128;
     }
-    gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
     let half = pow(n, m / 2_u128);
     let total = half * half;
     // TODO: check if (& 1) is cheaper
@@ -58,10 +161,10 @@ impl SpanLegacyHash<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>> of Legacy
     }
 }
 
-#[contract]
+#[starknet::contract]
 mod Aggregator {
-    use super::IAggregator;
     use super::Round;
+    use super::{Transmission};
     use super::SpanLegacyHash;
     use super::pow;
 
@@ -70,8 +173,6 @@ mod Aggregator {
     use box::BoxTrait;
     use hash::LegacyHash;
     use integer::U128IntoFelt252;
-    use integer::U128TryIntoU32;
-    use integer::U128TryIntoU64;
     use integer::u128s_from_felt252;
     use integer::U128sFromFelt252Result;
     use zeroable::Zeroable;
@@ -82,7 +183,6 @@ mod Aggregator {
     use starknet::ContractAddress;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
-    use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
     use starknet::storage_read_syscall;
@@ -91,34 +191,39 @@ mod Aggregator {
     use starknet::class_hash::ClassHash;
 
     use chainlink::utils::split_felt;
-    use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::ownable::{Ownable, IOwnable};
     use chainlink::libraries::access_control::AccessControl;
     use chainlink::libraries::upgradeable::Upgradeable;
 
     // NOTE: remove duplication once we can directly use the trait
-    #[abi]
-    trait IERC20 {
-        fn balance_of(account: ContractAddress) -> u256;
-        fn transfer(recipient: ContractAddress, amount: u256) -> bool;
+    #[starknet::interface]
+    trait IERC20<TContractState> {
+        fn balance_of(ref self: TContractState, account: ContractAddress) -> u256;
+        fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     // fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
     }
 
-    // NOTE: remove duplication once we can directly use the trait
-    #[abi]
-    trait IAccessController {
-        fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
-        fn add_access(user: ContractAddress);
-        fn remove_access(user: ContractAddress);
-        fn enable_access_check();
-        fn disable_access_check();
-    }
+    use chainlink::libraries::access_control::{IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait};
 
     const GIGA: u128 = 1000000000_u128;
 
     const MAX_ORACLES: u32 = 31_u32;
 
     #[event]
-    fn NewTransmission(
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        NewTransmission: NewTransmission,     
+        ConfigSet: ConfigSet,
+        LinkTokenSet: LinkTokenSet,
+        BillingAccessControllerSet: BillingAccessControllerSet,
+        BillingSet: BillingSet,
+        OraclePaid: OraclePaid,
+        PayeeshipTransferRequested: PayeeshipTransferRequested,
+        PayeeshipTransferred: PayeeshipTransferred, 
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct NewTransmission {
         round_id: u128,
         answer: u128,
         transmitter: ContractAddress,
@@ -130,80 +235,36 @@ mod Aggregator {
         config_digest: felt252,
         epoch_and_round: u64,
         reimbursement: u128
-    ) {}
+    }
 
-    #[derive(Copy, Drop, Serde)]
+    #[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
     struct Oracle {
         index: usize,
         // entire supply of LINK always fits into u96, so u128 is safe to use
         payment_juels: u128,
     }
 
-    impl OracleStorageAccess of StorageAccess<Oracle> {
-        fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Oracle> {
-            let value = storage_read_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8)
-            )?;
-            let (index, payment_juels) = split_felt(value);
-            Result::Ok(Oracle { index: index.try_into().unwrap(), payment_juels,  })
-        }
+    // TODO: reintroduce custom storage to save on space
+    // impl OracleStorageAccess of StorageAccess<Oracle> {
+    //     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Oracle> {
+    //         let value = storage_read_syscall(
+    //             address_domain, storage_address_from_base_and_offset(base, 0_u8)
+    //         )?;
+    //         let (index, payment_juels) = split_felt(value);
+    //         Result::Ok(Oracle { index: index.try_into().unwrap(), payment_juels,  })
+    //     }
+    //
+    //     fn write(
+    //         address_domain: u32, base: StorageBaseAddress, value: Oracle
+    //     ) -> SyscallResult::<()> {
+    //         let value = value.index.into() * SHIFT_128 + value.payment_juels.into();
+    //         storage_write_syscall(
+    //             address_domain, storage_address_from_base_and_offset(base, 0_u8), value
+    //         )
+    //     }
+    // }
 
-        fn write(
-            address_domain: u32, base: StorageBaseAddress, value: Oracle
-        ) -> SyscallResult::<()> {
-            let value = value.index.into() * SHIFT_128 + value.payment_juels.into();
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value
-            )
-        }
-    }
-
-    #[derive(Copy, Drop, Serde)]
-    struct Transmission {
-        answer: u128,
-        block_num: u64,
-        observation_timestamp: u64,
-        transmission_timestamp: u64,
-    }
-
-    impl TransmissionStorageAccess of StorageAccess<Transmission> {
-        fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Transmission> {
-            let block_num_and_answer = storage_read_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8)
-            )?;
-            let (block_num, answer) = split_felt(block_num_and_answer);
-            let timestamps = storage_read_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8)
-            )?;
-            let (observation_timestamp, transmission_timestamp) = split_felt(timestamps);
-
-            Result::Ok(
-                Transmission {
-                    answer,
-                    block_num: block_num.try_into().unwrap(),
-                    observation_timestamp: observation_timestamp.try_into().unwrap(),
-                    transmission_timestamp: transmission_timestamp.try_into().unwrap(),
-                }
-            )
-        }
-
-        fn write(
-            address_domain: u32, base: StorageBaseAddress, value: Transmission
-        ) -> SyscallResult::<()> {
-            let block_num_and_answer = value.block_num.into() * SHIFT_128 + value.answer.into();
-            let timestamps = value.observation_timestamp.into() * SHIFT_128
-                + value.transmission_timestamp.into();
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 0_u8),
-                block_num_and_answer
-            )?;
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), timestamps
-            )
-        }
-    }
-
+    #[storage]
     struct Storage {
         /// Maximum number of faulty oracles
         _f: u8,
@@ -228,7 +289,7 @@ mod Aggregator {
         _link_token: ContractAddress,
         // billing
         _billing_access_controller: ContractAddress,
-        _billing: Billing,
+        _billing: BillingConfig,
         // payee management
         _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
         _proposed_payees: LegacyMap<ContractAddress,
@@ -237,14 +298,16 @@ mod Aggregator {
 
     fn _require_read_access() {
         let caller = starknet::info::get_caller_address();
-        AccessControl::check_read_access(caller);
+        let state = AccessControl::unsafe_new_contract_state();
+        AccessControl::check_read_access(@state, caller);
     }
 
-    impl Aggregator of IAggregator {
-        fn latest_round_data() -> Round {
+    #[external(v0)]
+    impl AggregatorImpl of super::IAggregator<ContractState> {
+        fn latest_round_data(self: @ContractState) -> Round {
             _require_read_access();
-            let latest_round_id = _latest_aggregator_round_id::read();
-            let transmission = _transmissions::read(latest_round_id);
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let transmission = self._transmissions.read(latest_round_id);
             Round {
                 round_id: latest_round_id.into(),
                 answer: transmission.answer,
@@ -254,9 +317,9 @@ mod Aggregator {
             }
         }
 
-        fn round_data(round_id: u128) -> Round {
+        fn round_data(self: @ContractState, round_id: u128) -> Round {
             _require_read_access();
-            let transmission = _transmissions::read(round_id);
+            let transmission = self._transmissions.read(round_id);
             Round {
                 round_id: round_id.into(),
                 answer: transmission.answer,
@@ -266,17 +329,17 @@ mod Aggregator {
             }
         }
 
-        fn description() -> felt252 {
+        fn description(self: @ContractState) -> felt252 {
             _require_read_access();
-            _description::read()
+            self._description.read()
         }
 
-        fn decimals() -> u8 {
+        fn decimals(self: @ContractState) -> u8 {
             _require_read_access();
-            _decimals::read()
+            self._decimals.read()
         }
 
-        fn type_and_version() -> felt252 {
+        fn type_and_version(self: @ContractState) -> felt252 {
             'ocr2/aggregator.cairo 1.0.0'
         }
     }
@@ -285,6 +348,7 @@ mod Aggregator {
 
     #[constructor]
     fn constructor(
+        ref self: ContractState,
         owner: ContractAddress,
         link: ContractAddress,
         min_answer: u128,
@@ -293,83 +357,96 @@ mod Aggregator {
         decimals: u8,
         description: felt252
     ) {
-        Ownable::initializer(owner);
-        AccessControl::initializer();
-        _link_token::write(link);
-        _billing_access_controller::write(billing_access_controller);
+        let mut ownable = Ownable::unsafe_new_contract_state();
+        Ownable::constructor(ref ownable, owner); // Ownable::initializer(owner);
+        let mut access_control = AccessControl::unsafe_new_contract_state();
+        AccessControl::constructor(ref access_control);
+        self._link_token.write(link);
+        self._billing_access_controller.write(billing_access_controller);
 
         assert(min_answer < max_answer, 'min >= max');
-        _min_answer::write(min_answer);
-        _max_answer::write(max_answer);
+        self._min_answer.write(min_answer);
+        self._max_answer.write(max_answer);
 
-        _decimals::write(decimals);
-        _description::write(description);
+        self._decimals.write(decimals);
+        self._description.write(description);
     }
 
     // --- Upgradeable ---
 
-    #[external]
-    fn upgrade(new_impl: ClassHash) {
-        Ownable::assert_only_owner();
+    #[external(v0)]
+    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+        let ownable = Ownable::unsafe_new_contract_state();
+        Ownable::assert_only_owner(@ownable);
         Upgradeable::upgrade(new_impl)
     }
 
     // --- Ownership ---
 
-    #[view]
-    fn owner() -> ContractAddress {
-        Ownable::owner()
-    }
+    #[external(v0)]
+    impl OwnableImpl of IOwnable<ContractState> {
+        fn owner(self: @ContractState) -> ContractAddress {
+            let state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::owner(@state)
+        }
 
-    #[view]
-    fn proposed_owner() -> ContractAddress {
-        Ownable::proposed_owner()
-    }
+        fn proposed_owner(self: @ContractState) -> ContractAddress {
+            let state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::proposed_owner(@state)
+        }
 
-    #[external]
-    fn transfer_ownership(new_owner: ContractAddress) {
-        Ownable::transfer_ownership(new_owner)
-    }
+        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
+        }
 
-    #[external]
-    fn accept_ownership() {
-        Ownable::accept_ownership()
-    }
+        fn accept_ownership(ref self: ContractState) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::accept_ownership(ref state)
+        }
 
-    #[external]
-    fn renounce_ownership() {
-        Ownable::renounce_ownership()
+        fn renounce_ownership(ref self: ContractState) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::renounce_ownership(ref state)
+        }
     }
 
     // -- Access Control --
 
-    #[view]
-    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        AccessControl::has_access(user, data)
-    }
+    #[external(v0)]
+    impl AccessControllerImpl of IAccessController<ContractState> {
+        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
+            let state = AccessControl::unsafe_new_contract_state();
+            AccessControl::has_access(@state, user, data)
+        }
 
-    #[external]
-    fn add_access(user: ContractAddress) {
-        Ownable::assert_only_owner();
-        AccessControl::add_access(user);
-    }
+        fn add_access(ref self: ContractState, user: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::add_access(ref state, user)
+        }
 
-    #[external]
-    fn remove_access(user: ContractAddress) {
-        Ownable::assert_only_owner();
-        AccessControl::remove_access(user);
-    }
+        fn remove_access(ref self: ContractState, user: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::remove_access(ref state, user)
+        }
 
-    #[external]
-    fn enable_access_check() {
-        Ownable::assert_only_owner();
-        AccessControl::enable_access_check();
-    }
+        fn enable_access_check(ref self: ContractState) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::enable_access_check(ref state)
+        }
 
-    #[external]
-    fn disable_access_check() {
-        Ownable::assert_only_owner();
-        AccessControl::disable_access_check();
+        fn disable_access_check(ref self: ContractState) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::disable_access_check(ref state)
+        }
     }
 
     // --- Validation ---
@@ -378,8 +455,8 @@ mod Aggregator {
 
     // --- Configuration
 
-    #[event]
-    fn ConfigSet(
+    #[derive(Drop, starknet::Event)]
+    struct ConfigSet {
         previous_config_block_number: u64,
         latest_config_digest: felt252,
         config_count: u64,
@@ -388,144 +465,9 @@ mod Aggregator {
         onchain_config: Array<felt252>,
         offchain_config_version: u64,
         offchain_config: Array<felt252>,
-    ) {}
-
-    #[derive(Copy, Drop, Serde)]
-    struct OracleConfig {
-        signer: felt252,
-        transmitter: ContractAddress,
     }
 
-    impl OracleConfigLegacyHash of LegacyHash<OracleConfig> {
-        fn hash(mut state: felt252, value: OracleConfig) -> felt252 {
-            state = LegacyHash::hash(state, value.signer);
-            state = LegacyHash::hash(state, value.transmitter);
-            state
-        }
-    }
-
-    #[external]
-    fn set_config(
-        oracles: Array<OracleConfig>,
-        f: u8,
-        onchain_config: Array<felt252>,
-        offchain_config_version: u64,
-        offchain_config: Array<felt252>,
-    ) -> felt252 { // digest
-        Ownable::assert_only_owner();
-        assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
-        assert((3_u8 * f).into() < oracles.len(), 'faulty-oracle f too high');
-        assert(f > 0_u8, 'f must be positive');
-
-        assert(onchain_config.len() == 0_u32, 'onchain_config must be empty');
-
-        let min_answer = _min_answer::read();
-        let max_answer = _max_answer::read();
-
-        let mut computed_onchain_config = ArrayTrait::new();
-        computed_onchain_config.append(1); // version
-        computed_onchain_config.append(min_answer.into());
-        computed_onchain_config.append(max_answer.into());
-
-        pay_oracles();
-
-        // remove old signers & transmitters
-        let len = _oracles_len::read();
-        remove_oracles(len);
-
-        let latest_round_id = _latest_aggregator_round_id::read();
-
-        let oracles_len = oracles.len(); // work around variable move issue
-        add_oracles(@oracles, 0_usize, oracles_len, latest_round_id);
-
-        _f::write(f);
-        let block_num = starknet::info::get_block_info().unbox().block_number;
-        let prev_block_num = _latest_config_block_number::read();
-        _latest_config_block_number::write(block_num);
-        // update config count
-        let mut config_count = _config_count::read();
-        config_count += 1_u64;
-        _config_count::write(config_count);
-        let contract_address = starknet::info::get_contract_address();
-        let chain_id = starknet::info::get_tx_info().unbox().chain_id;
-
-        let digest = config_digest_from_data(
-            chain_id,
-            contract_address,
-            config_count,
-            @oracles,
-            f,
-            @computed_onchain_config,
-            offchain_config_version,
-            @offchain_config,
-        );
-
-        _latest_config_digest::write(digest);
-
-        // reset epoch & round
-        _latest_epoch_and_round::write(0_u64);
-
-        ConfigSet(
-            prev_block_num,
-            digest,
-            config_count,
-            oracles,
-            f,
-            computed_onchain_config,
-            offchain_config_version,
-            offchain_config
-        );
-
-        digest
-    }
-
-    fn remove_oracles(n: usize) {
-        if n == 0_usize {
-            _oracles_len::write(0_usize);
-            return ();
-        }
-
-        let signer = _signers_list::read(n);
-        _signers::write(signer, 0_usize);
-
-        let transmitter = _transmitters_list::read(n);
-        _transmitters::write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
-
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        remove_oracles(n - 1_usize)
-    }
-
-    // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
-    fn add_oracles(oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
-        if len == 0_usize {
-            _oracles_len::write(index);
-            return ();
-        }
-
-        let oracle = oracles.at(index);
-
-        // NOTE: index should start with 1 here because storage is 0-initialized.
-        // That way signers(pkey) => 0 indicates "not present"
-        let index = index + 1_usize;
-
-        // check for duplicates
-        let existing_signer = _signers::read(*oracle.signer);
-        assert(existing_signer == 0_usize, 'repeated signer');
-
-        let existing_transmitter = _transmitters::read(*oracle.transmitter);
-        assert(existing_transmitter.index == 0_usize, 'repeated transmitter');
-
-        _signers::write(*oracle.signer, index);
-        _signers_list::write(index, *oracle.signer);
-
-        _transmitters::write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
-        _transmitters_list::write(index, *oracle.transmitter);
-
-        _reward_from_aggregator_round_id::write(index, latest_round_id);
-
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        add_oracles(oracles, index, len - 1_usize, latest_round_id)
-    }
+    use super::OracleConfig;
 
     const SHIFT_128: felt252 = 0x100000000000000000000000000000000;
     // 4 * 2 ** (124 - 12)
@@ -575,33 +517,159 @@ mod Aggregator {
         masked
     }
 
-    #[view]
-    fn latest_config_details() -> (u64, u64, felt252) {
-        let config_count = _config_count::read();
-        let block_number = _latest_config_block_number::read();
-        let config_digest = _latest_config_digest::read();
+    #[external(v0)]
+    impl ConfigurationImpl of super::Configuration<ContractState> {
+        fn set_config(
+            ref self: ContractState,
+            oracles: Array<OracleConfig>,
+            f: u8,
+            onchain_config: Array<felt252>,
+            offchain_config_version: u64,
+            offchain_config: Array<felt252>,
+        ) -> felt252 { // digest
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
+            assert((3_u8 * f).into() < oracles.len(), 'faulty-oracle f too high');
+            assert(f > 0_u8, 'f must be positive');
 
-        (config_count, block_number, config_digest)
-    }
+            assert(onchain_config.len() == 0_u32, 'onchain_config must be empty');
 
-    #[view]
-    fn transmitters() -> Array<ContractAddress> {
-        let len = _oracles_len::read();
-        let result = ArrayTrait::new();
-        transmitters_(len, 0_usize, result)
-    }
+            let min_answer = self._min_answer.read();
+            let max_answer = self._max_answer.read();
 
-    fn transmitters_(
-        len: usize, index: usize, mut result: Array<ContractAddress>
-    ) -> Array<ContractAddress> {
-        if len == 0_usize {
+            let computed_onchain_config = array![
+                1, // version
+                min_answer.into(),
+                max_answer.into(),
+            ];
+
+            self.pay_oracles();
+
+            // remove old signers & transmitters
+            let len = self._oracles_len.read();
+            self.remove_oracles(len);
+
+            let latest_round_id = self._latest_aggregator_round_id.read();
+
+            let oracles_len = oracles.len(); // work around variable move issue
+            self.add_oracles(@oracles, 0_usize, oracles_len, latest_round_id);
+
+            self._f.write(f);
+            let block_num = starknet::info::get_block_info().unbox().block_number;
+            let prev_block_num = self._latest_config_block_number.read();
+            self._latest_config_block_number.write(block_num);
+            // update config count
+            let mut config_count = self._config_count.read();
+            config_count += 1_u64;
+            self._config_count.write(config_count);
+            let contract_address = starknet::info::get_contract_address();
+            let chain_id = starknet::info::get_tx_info().unbox().chain_id;
+
+            let digest = config_digest_from_data(
+                chain_id,
+                contract_address,
+                config_count,
+                @oracles,
+                f,
+                @computed_onchain_config,
+                offchain_config_version,
+                @offchain_config,
+            );
+
+            self._latest_config_digest.write(digest);
+
+            // reset epoch & round
+            self._latest_epoch_and_round.write(0_u64);
+
+            self.emit(Event::ConfigSet(ConfigSet{
+                previous_config_block_number: prev_block_num,
+                latest_config_digest: digest,
+                config_count: config_count,
+                oracles: oracles,
+                f: f,
+                onchain_config: computed_onchain_config,
+                offchain_config_version: offchain_config_version,
+                offchain_config: offchain_config
+            }));
+
+            digest
+        }
+
+        fn latest_config_details(self: @ContractState) -> (u64, u64, felt252) {
+            let config_count = self._config_count.read();
+            let block_number = self._latest_config_block_number.read();
+            let config_digest = self._latest_config_digest.read();
+
+            (config_count, block_number, config_digest)
+        }
+
+        fn transmitters(self: @ContractState) -> Array<ContractAddress> {
+            let mut index = 0;
+            let mut len = self._oracles_len.read();
+            let mut result = ArrayTrait::new();
+            loop {
+                if len == 0_usize {
+                    break ();
+                }
+                let transmitter = self._transmitters_list.read(index);
+                result.append(transmitter);
+                len -= 1;
+                index += 1;
+            };
             return result;
         }
-        let index = index + 1_usize;
-        let transmitter = _transmitters_list::read(index);
-        result.append(transmitter);
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        transmitters_(len - 1_usize, index, result)
+    }
+
+    #[generate_trait]
+    impl ConfigurationHelperImpl of ConfigurationHelperTrait {
+        // TODO: use loops here
+        fn remove_oracles(ref self: ContractState, n: usize) {
+            if n == 0_usize {
+                self._oracles_len.write(0_usize);
+                return ();
+            }
+
+            let signer = self._signers_list.read(n);
+            self._signers.write(signer, 0_usize);
+
+            let transmitter = self._transmitters_list.read(n);
+            self._transmitters.write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
+
+            self.remove_oracles(n - 1_usize)
+        }
+
+        // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
+        fn add_oracles(ref self: ContractState, oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
+            if len == 0_usize {
+                self._oracles_len.write(index);
+                return ();
+            }
+
+            let oracle = oracles.at(index);
+
+            // NOTE: index should start with 1 here because storage is 0-initialized.
+            // That way signers(pkey) => 0 indicates "not present"
+            let index = index + 1_usize;
+
+            // check for duplicates
+            let existing_signer = self._signers.read(*oracle.signer);
+            assert(existing_signer == 0_usize, 'repeated signer');
+
+            let existing_transmitter = self._transmitters.read(*oracle.transmitter);
+            assert(existing_transmitter.index == 0_usize, 'repeated transmitter');
+
+            self._signers.write(*oracle.signer, index);
+            self._signers_list.write(index, *oracle.signer);
+
+            self._transmitters.write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
+            self._transmitters_list.write(index, *oracle.transmitter);
+
+            self._reward_from_aggregator_round_id.write(index, latest_round_id);
+
+            self.add_oracles(oracles, index, len - 1_usize, latest_round_id)
+        }
+
     }
 
     // --- Transmission ---
@@ -620,8 +688,9 @@ mod Aggregator {
         extra_hash: felt252,
     }
 
-    #[external]
+    #[external(v0)]
     fn transmit(
+        ref self: ContractState,
         report_context: ReportContext,
         observation_timestamp: u64,
         observers: felt252,
@@ -632,19 +701,19 @@ mod Aggregator {
     ) {
         let signatures_len = signatures.len();
 
-        let epoch_and_round = _latest_epoch_and_round::read();
+        let epoch_and_round = self._latest_epoch_and_round.read();
         assert(epoch_and_round < report_context.epoch_and_round, 'stale report');
 
         // validate transmitter
         let caller = starknet::info::get_caller_address();
-        let mut oracle = _transmitters::read(caller);
+        let mut oracle = self._transmitters.read(caller);
         assert(oracle.index != 0_usize, 'unknown sender'); // 0 index = uninitialized
 
         // Validate config digest matches latest_config_digest
-        let config_digest = _latest_config_digest::read();
+        let config_digest = self._latest_config_digest.read();
         assert(report_context.config_digest == config_digest, 'config digest mismatch');
 
-        let f = _f::read();
+        let f = self._f.read();
         assert(signatures_len == (f + 1_u8).into(), 'wrong number of signatures');
 
         let msg = hash_report(
@@ -664,7 +733,7 @@ mod Aggregator {
         // Although 31 bits is enough, we use a u128 here for simplicity because BitAnd and BitOr
         // operators are defined only for u128 and u256.
         assert(MAX_ORACLES == 31_u32, '');
-        verify_signatures(msg, ref signatures, 0_u128);
+        self.verify_signatures(msg, ref signatures, 0_u128);
 
         // report():
 
@@ -672,23 +741,23 @@ mod Aggregator {
         assert(observations_len <= MAX_ORACLES, '');
         assert(f.into() < observations_len, '');
 
-        _latest_epoch_and_round::write(report_context.epoch_and_round);
+        self._latest_epoch_and_round.write(report_context.epoch_and_round);
 
         let median_idx = observations_len / 2_usize;
         let median = *observations[median_idx];
 
         // Validate median in min-max range
-        let min_answer = _min_answer::read();
-        let max_answer = _max_answer::read();
-        assert(min_answer <= median & median <= max_answer, 'median is out of min-max range');
+        let min_answer = self._min_answer.read();
+        let max_answer = self._max_answer.read();
+        assert((min_answer <= median) & (median <= max_answer), 'median is out of min-max range');
 
-        let prev_round_id = _latest_aggregator_round_id::read();
+        let prev_round_id = self._latest_aggregator_round_id.read();
         let round_id = prev_round_id + 1_u128;
-        _latest_aggregator_round_id::write(round_id);
+        self._latest_aggregator_round_id.write(round_id);
 
         let block_info = starknet::info::get_block_info().unbox();
 
-        _transmissions::write(
+        self._transmissions.write(
             round_id,
             Transmission {
                 answer: median,
@@ -700,33 +769,42 @@ mod Aggregator {
 
         // NOTE: Usually validating via validator would happen here, currently disabled
 
-        let billing = _billing::read();
+        let billing = self._billing.read();
         let reimbursement_juels = calculate_reimbursement(
             juels_per_fee_coin, signatures_len, gas_price, billing
         );
 
         // end report()
 
-        NewTransmission(
-            round_id,
-            median,
-            caller,
-            observation_timestamp,
-            observers,
-            observations,
-            juels_per_fee_coin,
-            gas_price,
-            report_context.config_digest,
-            report_context.epoch_and_round,
-            reimbursement_juels,
-        );
+        self.emit(Event::NewTransmission(NewTransmission{
+            round_id: round_id,
+            answer: median,
+            transmitter: caller,
+            observation_timestamp: observation_timestamp,
+            observers: observers,
+            observations: observations,
+            juels_per_fee_coin: juels_per_fee_coin,
+            gas_price: gas_price,
+            config_digest: report_context.config_digest,
+            epoch_and_round: report_context.epoch_and_round,
+            reimbursement: reimbursement_juels,
+        }));
 
         // pay transmitter
         let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
         // TODO: check overflow
 
         oracle.payment_juels += payment;
-        _transmitters::write(caller, oracle);
+        self._transmitters.write(caller, oracle);
+    }
+
+    #[view]
+    fn latest_transmission_details(self: ContractState) -> (felt252, u64, u128, u64) {
+        let config_digest = self._latest_config_digest.read();
+        let latest_round_id = self._latest_aggregator_round_id.read();
+        let epoch_and_round = self._latest_epoch_and_round.read();
+        let transmission = self._transmissions.read(latest_round_id);
+        (config_digest, epoch_and_round, transmission.answer, transmission.transmission_timestamp)
     }
 
     fn hash_report(
@@ -752,81 +830,53 @@ mod Aggregator {
         state
     }
 
-    fn verify_signatures(msg: felt252, ref signatures: Array<Signature>, mut signed_count: u128) {
-        let signature = match signatures.pop_front() {
-            Option::Some(signature) => signature,
-            Option::None(_) => {
-                // No more signatures left!
-                return ();
-            }
-        };
+    #[generate_trait]
+    impl TransmissionHelperImpl of TransmissionHelperTrait {
+        fn verify_signatures(self: @ContractState, msg: felt252, ref signatures: Array<Signature>, mut signed_count: u128) {
+            let mut span = signatures.span();
+            loop {
+                match span.pop_front() {
+                    Option::Some(signature) => {
+                        let index = self._signers.read(*signature.public_key);
+                        assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
 
-        let index = _signers::read(signature.public_key);
-        assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
+                        let indexed_bit = pow(2_u128, index.into() - 1_u128);
+                        let prev_signed_count = signed_count;
+                        signed_count = signed_count | indexed_bit;
+                        assert(prev_signed_count != signed_count, 'duplicate signer');
 
-        let indexed_bit = pow(2_u128, index.into() - 1_u128);
-        let prev_signed_count = signed_count;
-        signed_count = signed_count | indexed_bit;
-        assert(prev_signed_count != signed_count, 'duplicate signer');
+                        let is_valid = ecdsa::check_ecdsa_signature(
+                            msg, *signature.public_key, *signature.r, *signature.s
+                        );
 
-        let is_valid = ecdsa::check_ecdsa_signature(
-            msg, signature.public_key, signature.r, signature.s
-        );
-
-        assert(is_valid, '');
-
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        verify_signatures(msg, ref signatures, signed_count)
-    }
-
-    #[view]
-    fn latest_transmission_details() -> (felt252, u64, u128, u64) {
-        let config_digest = _latest_config_digest::read();
-        let latest_round_id = _latest_aggregator_round_id::read();
-        let epoch_and_round = _latest_epoch_and_round::read();
-        let transmission = _transmissions::read(latest_round_id);
-        (config_digest, epoch_and_round, transmission.answer, transmission.transmission_timestamp)
+                        assert(is_valid, '');
+                    },
+                    Option::None(_) => {
+                        // No more signatures left!
+                        break ();
+                    }
+                };
+            
+            };
+        }
     }
 
     // --- RequestNewRound
 
-    // --- Queries
-
-    #[view]
-    fn description() -> felt252 {
-        Aggregator::description()
-    }
-
-    #[view]
-    fn decimals() -> u8 {
-        Aggregator::decimals()
-    }
-
-    #[view]
-    fn latest_round_data() -> Round {
-        Aggregator::latest_round_data()
-    }
-
-    #[view]
-    fn round_data(round_id: u128) -> Round {
-        Aggregator::round_data(round_id)
-    }
-
-    #[view]
-    fn type_and_version() -> felt252 {
-        Aggregator::type_and_version()
-    }
-
     // --- Set LINK Token
 
-    #[event]
-    fn LinkTokenSet(old_link_token: ContractAddress, new_link_token: ContractAddress, ) {}
+    #[derive(Drop, starknet::Event)]
+    struct LinkTokenSet {
+        old_link_token: ContractAddress,
+        new_link_token: ContractAddress
+    }
 
-    #[external]
-    fn set_link_token(link_token: ContractAddress, recipient: ContractAddress) {
-        Ownable::assert_only_owner();
+    #[external(v0)]
+    fn set_link_token(ref self: ContractState, link_token: ContractAddress, recipient: ContractAddress) {
+        let ownable = Ownable::unsafe_new_contract_state();
+        Ownable::assert_only_owner(@ownable);
 
-        let old_token = _link_token::read();
+        let old_token = self._link_token.read();
 
         if link_token == old_token {
             return ();
@@ -838,299 +888,250 @@ mod Aggregator {
         let token = IERC20Dispatcher { contract_address: link_token };
         token.balance_of(account: contract_address);
 
-        pay_oracles();
+        self.pay_oracles();
 
         // transfer remaining balance of old token to recipient
         let old_token_dispatcher = IERC20Dispatcher { contract_address: old_token };
         let amount = old_token_dispatcher.balance_of(account: contract_address);
         old_token_dispatcher.transfer(recipient, amount);
 
-        _link_token::write(link_token);
+        self._link_token.write(link_token);
 
-        LinkTokenSet(old_token, link_token);
-    }
-
-    // --- Billing Access Controller
-
-    #[event]
-    fn BillingAccessControllerSet(
-        old_controller: ContractAddress, new_controller: ContractAddress, 
-    ) {}
-
-    #[external]
-    fn set_billing_access_controller(access_controller: ContractAddress) {
-        Ownable::assert_only_owner();
-
-        let old_controller = _billing_access_controller::read();
-        if access_controller == old_controller {
-            return ();
-        }
-
-        _billing_access_controller::write(access_controller);
-        BillingAccessControllerSet(old_controller, access_controller);
+        self.emit(Event::LinkTokenSet(LinkTokenSet{
+            old_link_token: old_token,
+            new_link_token: link_token
+        }));
     }
 
     // --- Billing Config
 
-    #[derive(Copy, Drop, Serde)]
-    struct Billing {
+    #[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+    struct BillingConfig {
         observation_payment_gjuels: u32,
         transmission_payment_gjuels: u32,
         gas_base: u32,
         gas_per_signature: u32,
     }
 
-    impl BillingStorageAccess of StorageAccess<Billing> {
-        fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Billing> {
-            Result::Ok(
-                Billing {
-                    observation_payment_gjuels: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?
-                        .try_into()
-                        .unwrap(),
-                    transmission_payment_gjuels: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?
-                        .try_into()
-                        .unwrap(),
-                    gas_base: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 2_u8)
-                    )?
-                        .try_into()
-                        .unwrap(),
-                    gas_per_signature: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 3_u8)
-                    )?
-                        .try_into()
-                        .unwrap(),
-                }
-            )
-        }
+    // --- Billing Access Controller
 
-        fn write(
-            address_domain: u32, base: StorageBaseAddress, value: Billing
-        ) -> SyscallResult::<()> {
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 0_u8),
-                value.observation_payment_gjuels.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 1_u8),
-                value.transmission_payment_gjuels.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 2_u8),
-                value.gas_base.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 3_u8),
-                value.gas_per_signature.into()
-            )
-        }
+    #[derive(Drop, starknet::Event)]
+    struct BillingAccessControllerSet {
+        old_controller: ContractAddress,
+        new_controller: ContractAddress,
     }
 
-    #[event]
-    fn BillingSet(config: Billing) {}
-
-    #[external]
-    fn set_billing(config: Billing) {
-        has_billing_access();
-
-        pay_oracles();
-
-        _billing::write(config);
-
-        BillingSet(config);
+    #[derive(Drop, starknet::Event)]
+    struct BillingSet {
+        config: BillingConfig
     }
 
-    #[view]
-    fn billing() -> Billing {
-        _billing::read()
-    }
-
-    fn has_billing_access() {
-        let caller = starknet::info::get_caller_address();
-        let owner = Ownable::owner();
-
-        // owner always has access
-        if caller == owner {
-            return ();
-        }
-
-        let access_controller = _billing_access_controller::read();
-        let access_controller = IAccessControllerDispatcher { contract_address: access_controller };
-        assert(
-            access_controller.has_access(caller, ArrayTrait::new()), 'caller does not have access'
-        );
-    }
-
-    // --- Payments and Withdrawals
-
-    #[event]
-    fn OraclePaid(
+    #[derive(Drop, starknet::Event)]
+    struct OraclePaid {
         transmitter: ContractAddress,
         payee: ContractAddress,
         amount: u256,
         link_token: ContractAddress,
-    ) {}
-
-    #[external]
-    fn withdraw_payment(transmitter: ContractAddress) {
-        let caller = starknet::info::get_caller_address();
-        let payee = _payees::read(transmitter);
-        assert(caller == payee, 'only payee can withdraw');
-
-        let latest_round_id = _latest_aggregator_round_id::read();
-        let link_token = _link_token::read();
-        pay_oracle(transmitter, latest_round_id, link_token)
     }
 
-    fn _owed_payment(oracle: @Oracle) -> u128 {
-        if *oracle.index == 0_usize {
-            return 0_u128;
+    #[external(v0)]
+    impl BillingImpl of super::Billing<ContractState> {
+        fn set_billing_access_controller(ref self: ContractState, access_controller: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+
+            let old_controller = self._billing_access_controller.read();
+            if access_controller == old_controller {
+                return ();
+            }
+
+            self._billing_access_controller.write(access_controller);
+            self.emit(Event::BillingAccessControllerSet(BillingAccessControllerSet {
+                old_controller: old_controller,
+                new_controller: access_controller
+            }));
         }
 
-        let billing = _billing::read();
+        fn set_billing(ref self: ContractState, config: BillingConfig) {
+            self.has_billing_access();
 
-        let latest_round_id = _latest_aggregator_round_id::read();
-        let from_round_id = _reward_from_aggregator_round_id::read(*oracle.index);
-        let rounds = latest_round_id - from_round_id;
+            self.pay_oracles();
 
-        (rounds * billing.observation_payment_gjuels.into() * GIGA) + *oracle.payment_juels
-    }
+            self._billing.write(config);
 
-    #[view]
-    fn owed_payment(transmitter: ContractAddress) -> u128 {
-        let oracle = _transmitters::read(transmitter);
-        _owed_payment(@oracle)
-    }
-
-    fn pay_oracle(
-        transmitter: ContractAddress, latest_round_id: u128, link_token: ContractAddress
-    ) {
-        let oracle = _transmitters::read(transmitter);
-        if oracle.index == 0_usize {
-            return ();
+            self.emit(Event::BillingSet(BillingSet{config: config}));
         }
 
-        let amount = _owed_payment(@oracle);
-        // if zero, fastpath return to avoid empty transfers
-        if amount == 0_u128 {
-            return ();
+        fn billing(self: @ContractState) -> BillingConfig {
+            self._billing.read()
         }
 
-        let payee = _payees::read(transmitter);
+        // Payments and Withdrawals
+        
+        fn withdraw_payment(ref self: ContractState, transmitter: ContractAddress) {
+            let caller = starknet::info::get_caller_address();
+            let payee = self._payees.read(transmitter);
+            assert(caller == payee, 'only payee can withdraw');
 
-        // NOTE: equivalent to converting u128 to u256
-        let amount = u256 { high: 0_u128, low: amount };
-
-        let token = IERC20Dispatcher { contract_address: link_token };
-        token.transfer(recipient: payee, amount: amount);
-
-        // Reset payment
-        _reward_from_aggregator_round_id::write(oracle.index, latest_round_id);
-        _transmitters::write(transmitter, Oracle { index: oracle.index, payment_juels: 0_u128 });
-
-        OraclePaid(transmitter, payee, amount, link_token);
-    }
-
-    fn pay_oracles() {
-        let len = _oracles_len::read();
-        let latest_round_id = _latest_aggregator_round_id::read();
-        let link_token = _link_token::read();
-        pay_oracles_(len, latest_round_id, link_token)
-    }
-
-    fn pay_oracles_(index: usize, latest_round_id: u128, link_token: ContractAddress) {
-        if index == 0_usize {
-            return ();
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let link_token = self._link_token.read();
+            self.pay_oracle(transmitter, latest_round_id, link_token)
         }
 
-        let transmitter = _transmitters_list::read(index);
-        pay_oracle(transmitter, latest_round_id, link_token);
-
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        pay_oracles_(index - 1_usize, latest_round_id, link_token)
-    }
-
-    #[external]
-    fn withdraw_funds(recipient: ContractAddress, amount: u256) {
-        has_billing_access();
-
-        let link_token = _link_token::read();
-        let contract_address = starknet::info::get_contract_address();
-
-        let due = total_link_due();
-        // NOTE: equivalent to converting u128 to u256
-        let due = u256 { high: 0_u128, low: due };
-
-        let token = IERC20Dispatcher { contract_address: link_token };
-        let balance = token.balance_of(account: contract_address);
-
-        assert(due <= balance, 'amount due exceeds balance');
-        let available = balance - due;
-
-        // Transfer as much as there is available
-        let amount = if available < amount {
-            available
-        } else {
-            amount
-        };
-        token.transfer(recipient, amount);
-    }
-
-    fn total_link_due() -> u128 {
-        let len = _oracles_len::read();
-        let latest_round_id = _latest_aggregator_round_id::read();
-
-        total_link_due_(len, latest_round_id, 0_u128, 0_u128)
-    }
-    fn total_link_due_(
-        index: usize, latest_round_id: u128, total_rounds: u128, payments_juels: u128
-    ) -> u128 {
-        if index == 0_usize {
-            let billing = _billing::read();
-            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA)
-                + payments_juels;
+        fn owed_payment(self: @ContractState, transmitter: ContractAddress) -> u128 {
+            let oracle = self._transmitters.read(transmitter);
+            self._owed_payment(@oracle)
         }
 
-        let transmitter = _transmitters_list::read(index);
-        let oracle = _transmitters::read(transmitter);
-        assert(oracle.index != 0_usize, ''); // 0 == undefined
+        fn withdraw_funds(ref self: ContractState, recipient: ContractAddress, amount: u256) {
+            self.has_billing_access();
 
-        let from_round_id = _reward_from_aggregator_round_id::read(oracle.index);
-        let rounds = latest_round_id - from_round_id;
+            let link_token = self._link_token.read();
+            let contract_address = starknet::info::get_contract_address();
 
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        total_link_due_(
-            index - 1_usize,
-            latest_round_id,
-            total_rounds + rounds,
-            payments_juels + oracle.payment_juels
-        )
+            let due = self.total_link_due();
+            // NOTE: equivalent to converting u128 to u256
+            let due = u256 { high: 0_u128, low: due };
+
+            let token = IERC20Dispatcher { contract_address: link_token };
+            let balance = token.balance_of(account: contract_address);
+
+            assert(due <= balance, 'amount due exceeds balance');
+            let available = balance - due;
+
+            // Transfer as much as there is available
+            let amount = if available < amount {
+                available
+            } else {
+                amount
+            };
+            token.transfer(recipient, amount);
+        }
+
+        fn link_available_for_payment(self: @ContractState) -> (bool, u128) { // (is negative, absolute difference)
+            let link_token = self._link_token.read();
+            let contract_address = starknet::info::get_contract_address();
+
+            let token = IERC20Dispatcher { contract_address: link_token };
+            let balance = token.balance_of(account: contract_address);
+            // entire link supply fits into u96 so this should not fail
+            assert(balance.high == 0_u128, 'balance too high');
+            let balance: u128 = balance.low;
+
+            let due = self.total_link_due();
+            if balance > due {
+                (false, balance - due)
+            } else {
+                (true, due - balance)
+            }
+        }
     }
 
-    #[view]
-    fn link_available_for_payment() -> (bool, u128) { // (is negative, absolute difference)
-        let link_token = _link_token::read();
-        let contract_address = starknet::info::get_contract_address();
+    #[generate_trait]
+    impl BillingHelperImpl of BillingHelperTrait {
+        fn has_billing_access(self: @ContractState) {
+            let caller = starknet::info::get_caller_address();
+            let ownable = Ownable::unsafe_new_contract_state();
+            let owner = Ownable::OwnableImpl::owner(@ownable);
 
-        let token = IERC20Dispatcher { contract_address: link_token };
-        let balance = token.balance_of(account: contract_address);
-        // entire link supply fits into u96 so this should not fail
-        assert(balance.high == 0_u128, 'balance too high');
-        let balance: u128 = balance.low;
+            // owner always has access
+            if caller == owner {
+                return ();
+            }
 
-        let due = total_link_due();
-        if balance > due {
-            (false, balance - due)
-        } else {
-            (true, due - balance)
+            let access_controller = self._billing_access_controller.read();
+            let access_controller = IAccessControllerDispatcher { contract_address: access_controller };
+            assert(
+                access_controller.has_access(caller, ArrayTrait::new()), 'caller does not have access'
+            );
+        }
+
+        // --- Payments and Withdrawals
+
+        fn _owed_payment(self: @ContractState, oracle: @Oracle) -> u128 {
+            if *oracle.index == 0_usize {
+                return 0_u128;
+            }
+
+            let billing = self._billing.read();
+
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let from_round_id = self._reward_from_aggregator_round_id.read(*oracle.index);
+            let rounds = latest_round_id - from_round_id;
+
+            (rounds * billing.observation_payment_gjuels.into() * GIGA) + *oracle.payment_juels
+        }
+
+        fn pay_oracle(
+            ref self: ContractState, transmitter: ContractAddress, latest_round_id: u128, link_token: ContractAddress
+        ) {
+            let oracle = self._transmitters.read(transmitter);
+            if oracle.index == 0_usize {
+                return ();
+            }
+
+            let amount = self._owed_payment(@oracle);
+            // if zero, fastpath return to avoid empty transfers
+            if amount == 0_u128 {
+                return ();
+            }
+
+            let payee = self._payees.read(transmitter);
+
+            // NOTE: equivalent to converting u128 to u256
+            let amount = u256 { high: 0_u128, low: amount };
+
+            let token = IERC20Dispatcher { contract_address: link_token };
+            token.transfer(recipient: payee, amount: amount);
+
+            // Reset payment
+            self._reward_from_aggregator_round_id.write(oracle.index, latest_round_id);
+            self._transmitters.write(transmitter, Oracle { index: oracle.index, payment_juels: 0_u128 });
+
+            self.emit(Event::OraclePaid(OraclePaid{
+                transmitter: transmitter,
+                payee: payee,
+                amount: amount,
+                link_token: link_token
+            }));
+        }
+
+        fn pay_oracles(ref self: ContractState) {
+            let mut index = self._oracles_len.read();
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let link_token = self._link_token.read();
+            loop {
+                if index == 0_usize {
+                    break ();
+                }
+                let transmitter = self._transmitters_list.read(index);
+                self.pay_oracle(transmitter, latest_round_id, link_token);
+                index -= 1;
+            }
+        }
+
+        fn total_link_due(self: @ContractState) -> u128 {
+            let mut index = self._oracles_len.read();
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let mut total_rounds = 0;
+            let mut payments_juels = 0;
+
+            loop {
+                if index == 0_usize {
+                    break ();
+                }
+                let transmitter = self._transmitters_list.read(index);
+                let oracle = self._transmitters.read(transmitter);
+                assert(oracle.index != 0_usize, ''); // 0 == undefined
+
+                let from_round_id = self._reward_from_aggregator_round_id.read(oracle.index);
+                let rounds = latest_round_id - from_round_id;
+                total_rounds += rounds;
+                payments_juels += oracle.payment_juels;
+            };
+
+            let billing = self._billing.read();
+            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA) + payments_juels;
         }
     }
 
@@ -1139,7 +1140,7 @@ mod Aggregator {
     const MARGIN: u128 = 115_u128;
 
     fn calculate_reimbursement(
-        juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: Billing
+        juels_per_fee_coin: u128, signature_count: usize, gas_price: u128, config: BillingConfig
     ) -> u128 {
         // TODO: determine new values for these constants
         // Based on estimateFee (f=1 14977, f=2 14989, f=3 15002 f=4 15014 f=5 15027, count = f+1)
@@ -1156,71 +1157,79 @@ mod Aggregator {
 
     // --- Payee Management
 
-    #[event]
-    fn PayeeshipTransferRequested(
-        transmitter: ContractAddress, current: ContractAddress, proposed: ContractAddress, 
-    ) {}
+    use super::PayeeConfig;
 
-    #[event]
-    fn PayeeshipTransferred(
-        transmitter: ContractAddress, previous: ContractAddress, current: ContractAddress, 
-    ) {}
-
-    #[derive(Copy, Drop, Serde)]
-    struct PayeeConfig {
+    #[derive(Drop, starknet::Event)]
+    struct PayeeshipTransferRequested {
         transmitter: ContractAddress,
-        payee: ContractAddress,
+        current: ContractAddress,
+        proposed: ContractAddress,
     }
 
-    #[external]
-    fn set_payees(payees: Array<PayeeConfig>) {
-        Ownable::assert_only_owner();
-        set_payee(payees)
+    #[derive(Drop, starknet::Event)]
+    struct PayeeshipTransferred {
+        transmitter: ContractAddress,
+        previous: ContractAddress,
+        current: ContractAddress,
     }
 
-    fn set_payee(mut payees: Array<PayeeConfig>) {
-        let payee = match payees.pop_front() {
-            Option::Some(payee) => payee,
-            Option::None(_) => {
-                // No more payees left!
-                return ();
+    #[external(v0)]
+    impl PayeeManagementImpl of super::PayeeManagement<ContractState> {
+        fn set_payees(ref self: ContractState, mut payees: Array<PayeeConfig>) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            loop {
+                match payees.pop_front() {
+                    Option::Some(payee) => {
+                        let current_payee = self._payees.read(payee.transmitter);
+                        let is_unset = current_payee.is_zero();
+                        let is_same = current_payee == payee.payee;
+                        assert(is_unset | is_same, 'payee already set');
+
+                        self._payees.write(payee.transmitter, payee.payee);
+
+                        self.emit(Event::PayeeshipTransferred(PayeeshipTransferred{
+                            transmitter: payee.transmitter,
+                            previous: current_payee,
+                            current: payee.payee
+                        }));
+                    },
+                    Option::None(_) => {
+                        // No more payees left!
+                        break ();
+                    }
+                };
             }
-        };
+        }
 
-        let current_payee = _payees::read(payee.transmitter);
-        let is_unset = current_payee.is_zero();
-        let is_same = current_payee == payee.payee;
-        assert(is_unset | is_same, 'payee already set');
+        fn transfer_payeeship(ref self: ContractState, transmitter: ContractAddress, proposed: ContractAddress) {
+            assert(!proposed.is_zero(), 'cannot transfer to zero address');
+            let caller = starknet::info::get_caller_address();
+            let payee = self._payees.read(transmitter);
+            assert(caller == payee, 'only current payee can update');
+            assert(caller != proposed, 'cannot transfer to self');
 
-        _payees::write(payee.transmitter, payee.payee);
+            self._proposed_payees.write(transmitter, proposed);
+            self.emit(Event::PayeeshipTransferRequested(PayeeshipTransferRequested{
+                transmitter: transmitter,
+                current: payee,
+                proposed: proposed
+            }));
+        }
 
-        PayeeshipTransferred(payee.transmitter, current_payee, payee.payee);
+        fn accept_payeeship(ref self: ContractState, transmitter: ContractAddress) {
+            let proposed = self._proposed_payees.read(transmitter);
+            let caller = starknet::info::get_caller_address();
+            assert(caller == proposed, 'only proposed payee can accept');
+            let previous = self._payees.read(transmitter);
 
-        gas::withdraw_gas_all(get_builtin_costs()).expect('Out of gas');
-        set_payee(payees)
-    }
-
-    #[external]
-    fn transfer_payeeship(transmitter: ContractAddress, proposed: ContractAddress) {
-        assert(!proposed.is_zero(), 'cannot transfer to zero address');
-        let caller = starknet::info::get_caller_address();
-        let payee = _payees::read(transmitter);
-        assert(caller == payee, 'only current payee can update');
-        assert(caller != proposed, 'cannot transfer to self');
-
-        _proposed_payees::write(transmitter, proposed);
-        PayeeshipTransferRequested(transmitter, payee, proposed)
-    }
-
-    #[external]
-    fn accept_payeeship(transmitter: ContractAddress) {
-        let proposed = _proposed_payees::read(transmitter);
-        let caller = starknet::info::get_caller_address();
-        assert(caller == proposed, 'only proposed payee can accept');
-        let previous = _payees::read(transmitter);
-
-        _payees::write(transmitter, proposed);
-        _proposed_payees::write(transmitter, Zeroable::zero());
-        PayeeshipTransferred(transmitter, previous, caller)
+            self._payees.write(transmitter, proposed);
+            self._proposed_payees.write(transmitter, Zeroable::zero());
+            self.emit(Event::PayeeshipTransferred(PayeeshipTransferred{
+                transmitter: transmitter,
+                previous: previous,
+                current: caller
+            }));
+        }
     }
 }

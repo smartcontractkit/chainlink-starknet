@@ -3,6 +3,7 @@
 use serde::Serde;
 use array::ArrayTrait;
 use starknet::ContractAddress;
+use starknet::SyscallResultTrait;
 
 const ERC165_ACCOUNT_ID: u32 = 0xa66bd575_u32;
 const ERC1271_VALIDATED: u32 = 0x1626ba7e_u32;
@@ -30,7 +31,7 @@ struct Call {
     calldata: Array<felt252>
 }
 
-#[abi]
+#[starknet::interface]
 trait IAccount {
     fn __validate__(calls: Array<Call>) -> felt252;
     fn __validate_declare__(class_hash: felt252) -> felt252;
@@ -44,7 +45,6 @@ mod Account {
     use option::OptionTrait;
     use zeroable::Zeroable;
     use ecdsa::check_ecdsa_signature;
-    use serde::ArraySerde;
     use starknet::get_tx_info;
     use starknet::get_caller_address;
     use starknet::get_contract_address;
@@ -62,14 +62,15 @@ mod Account {
     // Storage and Constructor
     //
 
+    #[storage]
     struct Storage {
         public_key: felt252, 
     }
 
     #[constructor]
-    fn constructor(_public_key: felt252) {
+    fn constructor(ref self: ContractState, _public_key: felt252) {
         ERC165::register_interface(ERC165_ACCOUNT_ID);
-        public_key::write(_public_key);
+        self.public_key.write(_public_key);
     }
 
     //
@@ -77,7 +78,7 @@ mod Account {
     //
 
     // todo: fix Span serde
-    // #[external]
+    // #[external(v0)]
     fn __execute__(mut calls: Array<Call>) -> Array<Span<felt252>> {
         // avoid calls from other contracts
         // https://github.com/OpenZeppelin/cairo-contracts/issues/344
@@ -94,24 +95,24 @@ mod Account {
         _execute_calls(calls, ArrayTrait::new())
     }
 
-    #[external]
+    #[external(v0)]
     fn __validate__(mut calls: Array<Call>) -> felt252 {
         _validate_transaction()
     }
 
-    #[external]
+    #[external(v0)]
     fn __validate_declare__(class_hash: felt252) -> felt252 {
         _validate_transaction()
     }
 
-    #[external]
+    #[external(v0)]
     fn __validate_deploy__(
         class_hash: felt252, contract_address_salt: felt252, _public_key: felt252
     ) -> felt252 {
         _validate_transaction()
     }
 
-    #[external]
+    #[external(v0)]
     fn set_public_key(new_public_key: felt252) {
         _assert_only_self();
         public_key::write(new_public_key);

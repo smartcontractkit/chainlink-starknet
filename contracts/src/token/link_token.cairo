@@ -1,14 +1,14 @@
 use starknet::ContractAddress;
 
-#[abi]
-trait IMintableToken {
-    #[external]
-    fn permissionedMint(account: ContractAddress, amount: u256);
-    #[external]
-    fn permissionedBurn(account: ContractAddress, amount: u256);
+#[starknet::interface]
+trait IMintableToken<TContractState> {
+    #[external(v0)]
+    fn permissionedMint(ref self: TContractState, account: ContractAddress, amount: u256);
+    #[external(v0)]
+    fn permissionedBurn(ref self: TContractState, account: ContractAddress, amount: u256);
 }
 
-#[contract]
+#[starknet::contract]
 mod LinkToken {
     use super::IMintableToken;
 
@@ -25,34 +25,39 @@ mod LinkToken {
     const NAME: felt252 = 'ChainLink Token';
     const SYMBOL: felt252 = 'LINK';
 
+    #[storage]
     struct Storage {
         _minter: ContractAddress, 
     }
 
-    impl MintableToken of IMintableToken {
-        fn permissionedMint(account: ContractAddress, amount: u256) {
-            only_minter();
+    //
+    // IMintableToken (StarkGate)
+    //
+    #[external(v0)]
+    impl MintableToken of IMintableToken<ContractState> {
+        fn permissionedMint(ref self: ContractState, account: ContractAddress, amount: u256) {
+            only_minter(@self);
             ERC20::_mint(account, amount);
         }
 
-        fn permissionedBurn(account: ContractAddress, amount: u256) {
-            only_minter();
+        fn permissionedBurn(ref self: ContractState, account: ContractAddress, amount: u256) {
+            only_minter(@self);
             ERC20::_burn(account, amount);
         }
     }
 
 
     #[constructor]
-    fn constructor(minter: ContractAddress, owner: ContractAddress) {
+    fn constructor(ref self: ContractState, minter: ContractAddress, owner: ContractAddress) {
         ERC20::initializer(NAME, SYMBOL);
         assert(!minter.is_zero(), 'minter is 0');
-        _minter::write(minter);
+        self._minter.write(minter);
         Ownable::initializer(owner);
     }
 
     #[view]
     fn minter() -> ContractAddress {
-        _minter::read()
+        self._minter.read()
     }
 
     #[view]
@@ -64,31 +69,18 @@ mod LinkToken {
     // ERC677
     //
 
-    #[external]
+    #[external(v0)]
     fn transfer_and_call(to: ContractAddress, value: u256, data: Array<felt252>) -> bool {
         ERC677::transfer_and_call(to, value, data)
     }
 
     //
-    // IMintableToken (StarkGate)
-    //
-
-    #[external]
-    fn permissionedMint(account: ContractAddress, amount: u256) {
-        MintableToken::permissionedMint(account, amount)
-    }
-
-    #[external]
-    fn permissionedBurn(account: ContractAddress, amount: u256) {
-        MintableToken::permissionedBurn(account, amount)
-    }
-
-    //
     //  Upgradeable
     //
-    #[external]
-    fn upgrade(new_impl: ClassHash) {
-        Ownable::assert_only_owner();
+    #[external(v0)]
+    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+        let ownable = Ownable::unsafe_new_contract_state();
+        Ownable::assert_only_owner(@ownable);
         Upgradeable::upgrade(new_impl)
     }
 
@@ -96,31 +88,33 @@ mod LinkToken {
     // Ownership
     //
 
-    #[view]
-    fn owner() -> ContractAddress {
-        Ownable::owner()
-    }
+    #[external(v0)]
+    impl OwnableImpl of IOwnable<ContractState> {
+        fn owner(self: @ContractState) -> ContractAddress {
+            let state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::owner(@state)
+        }
 
-    #[view]
-    fn proposed_owner() -> ContractAddress {
-        Ownable::proposed_owner()
-    }
+        fn proposed_owner(self: @ContractState) -> ContractAddress {
+            let state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::proposed_owner(@state)
+        }
 
-    #[external]
-    fn transfer_ownership(new_owner: ContractAddress) {
-        Ownable::transfer_ownership(new_owner)
-    }
+        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
+        }
 
-    #[external]
-    fn accept_ownership() {
-        Ownable::accept_ownership()
-    }
+        fn accept_ownership(ref self: ContractState) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::accept_ownership(ref state)
+        }
 
-    #[external]
-    fn renounce_ownership() {
-        Ownable::renounce_ownership()
+        fn renounce_ownership(ref self: ContractState) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::renounce_ownership(ref state)
+        }
     }
-
 
     //
     // ERC20
@@ -156,27 +150,27 @@ mod LinkToken {
         ERC20::allowance(owner, spender)
     }
 
-    #[external]
+    #[external(v0)]
     fn transfer(recipient: ContractAddress, amount: u256) -> bool {
         ERC20::transfer(recipient, amount)
     }
 
-    #[external]
+    #[external(v0)]
     fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool {
         ERC20::transfer_from(sender, recipient, amount)
     }
 
-    #[external]
+    #[external(v0)]
     fn approve(spender: ContractAddress, amount: u256) -> bool {
         ERC20::approve(spender, amount)
     }
 
-    #[external]
+    #[external(v0)]
     fn increase_allowance(spender: ContractAddress, added_value: u256) -> bool {
         ERC20::increase_allowance(spender, added_value)
     }
 
-    #[external]
+    #[external(v0)]
     fn decrease_allowance(spender: ContractAddress, subtracted_value: u256) -> bool {
         ERC20::decrease_allowance(spender, subtracted_value)
     }
@@ -186,9 +180,9 @@ mod LinkToken {
     // Internal
     //
 
-    fn only_minter() {
+    fn only_minter(self: @ContractState) {
         let caller = starknet::get_caller_address();
-        let minter = minter();
+        let minter = self._minter.read();
         assert(caller == minter, 'only minter');
     }
 }

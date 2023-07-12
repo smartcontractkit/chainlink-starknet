@@ -1,12 +1,11 @@
 use starknet::ContractAddress;
 
-#[abi]
-trait IERC677Receiver {
-    fn on_token_transfer(sender: ContractAddress, value: u256, data: Array<felt252>);
+#[starknet::interface]
+trait IERC677Receiver<TContractState> {
+    fn on_token_transfer(ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>);
     // implements EIP-165, where function selectors are defined by Ethereum ABI using the ethereum function signatures
-    fn supports_interface(interface_id: u32) -> bool;
+    fn supports_interface(ref self: TContractState, interface_id: u32) -> bool;
 }
-
 
 mod ERC677 {
     use starknet::ContractAddress;
