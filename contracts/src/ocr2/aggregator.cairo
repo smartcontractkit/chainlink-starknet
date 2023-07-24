@@ -538,11 +538,10 @@ mod Aggregator {
             let min_answer = self._min_answer.read();
             let max_answer = self._max_answer.read();
 
-            let computed_onchain_config = array![
-                1, // version
-                min_answer.into(),
-                max_answer.into(),
-            ];
+            let mut computed_onchain_config = ArrayTrait::new();
+            computed_onchain_config.append(1); // version
+            computed_onchain_config.append(min_answer.into());
+            computed_onchain_config.append(max_answer.into());
 
             self.pay_oracles();
 
