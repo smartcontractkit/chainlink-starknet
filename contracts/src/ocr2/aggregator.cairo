@@ -195,13 +195,7 @@ mod Aggregator {
     use chainlink::libraries::access_control::AccessControl;
     use chainlink::libraries::upgradeable::Upgradeable;
 
-    // NOTE: remove duplication once we can directly use the trait
-    #[starknet::interface]
-    trait IERC20<TContractState> {
-        fn balance_of(ref self: TContractState, account: ContractAddress) -> u256;
-        fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
-    // fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
-    }
+    use chainlink::libraries::token::erc20::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
     use chainlink::libraries::access_control::{IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait};
 

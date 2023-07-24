@@ -17,9 +17,9 @@ mod LinkToken {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
-    use chainlink::libraries::token::erc20::ERC20;
+    use chainlink::libraries::token::erc20::{ERC20, IERC20};
     use chainlink::libraries::token::erc677::ERC677;
-    use chainlink::libraries::ownable::Ownable;
+    use chainlink::libraries::ownable::{Ownable, IOwnable};
     use chainlink::libraries::upgradeable::Upgradeable;
 
     const NAME: felt252 = 'ChainLink Token';
@@ -37,31 +37,35 @@ mod LinkToken {
     impl MintableToken of IMintableToken<ContractState> {
         fn permissionedMint(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
-            ERC20::_mint(account, amount);
+            let mut state = ERC20::unsafe_new_contract_state();
+            ERC20::InternalImpl::_mint(ref state, account, amount);
         }
 
         fn permissionedBurn(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
-            ERC20::_burn(account, amount);
+            let mut state = ERC20::unsafe_new_contract_state();
+            ERC20::InternalImpl::_burn(ref state, account, amount);
         }
     }
 
 
     #[constructor]
     fn constructor(ref self: ContractState, minter: ContractAddress, owner: ContractAddress) {
-        ERC20::initializer(NAME, SYMBOL);
+        let mut state = ERC20::unsafe_new_contract_state();
+        ERC20::InternalImpl::initializer(ref state, NAME, SYMBOL);
         assert(!minter.is_zero(), 'minter is 0');
         self._minter.write(minter);
-        Ownable::initializer(owner);
+        let mut ownable = Ownable::unsafe_new_contract_state();
+        Ownable::constructor(ref ownable, owner); // Ownable::initializer(owner);
     }
 
     #[view]
-    fn minter() -> ContractAddress {
+    fn minter(self: @ContractState) -> ContractAddress {
         self._minter.read()
     }
 
     #[view]
-    fn type_and_version() -> felt252 {
+    fn type_and_version(self: @ContractState) -> felt252 {
         'LinkToken 1.0.0'
     }
 
@@ -70,8 +74,9 @@ mod LinkToken {
     //
 
     #[external(v0)]
-    fn transfer_and_call(to: ContractAddress, value: u256, data: Array<felt252>) -> bool {
-        ERC677::transfer_and_call(to, value, data)
+    fn transfer_and_call(ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>) -> bool {
+        let mut erc677 = ERC677::unsafe_new_contract_state();
+        ERC677::transfer_and_call(ref erc677, to, value, data)
     }
 
     //
@@ -120,61 +125,64 @@ mod LinkToken {
     // ERC20
     //
 
-    #[view]
-    fn name() -> felt252 {
-        ERC20::name()
-    }
-
-    #[view]
-    fn symbol() -> felt252 {
-        ERC20::symbol()
-    }
-
-    #[view]
-    fn decimals() -> u8 {
-        ERC20::decimals()
-    }
-
-    #[view]
-    fn total_supply() -> u256 {
-        ERC20::total_supply()
-    }
-
-    #[view]
-    fn balance_of(account: ContractAddress) -> u256 {
-        ERC20::balance_of(account)
-    }
-
-    #[view]
-    fn allowance(owner: ContractAddress, spender: ContractAddress) -> u256 {
-        ERC20::allowance(owner, spender)
-    }
-
     #[external(v0)]
-    fn transfer(recipient: ContractAddress, amount: u256) -> bool {
-        ERC20::transfer(recipient, amount)
+    impl ERC20Impl of IERC20<ContractState> {
+        fn name(self: @ContractState) -> felt252 {
+            let state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::name(@state)
+        }
+
+        fn symbol(self: @ContractState) -> felt252 {
+            let state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::symbol(@state)
+        }
+
+        fn decimals(self: @ContractState) -> u8 {
+            let state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::decimals(@state)
+        }
+
+        fn total_supply(self: @ContractState) -> u256 {
+            let state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::total_supply(@state)
+        }
+
+        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
+            let state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::balance_of(@state, account)
+        }
+
+        fn allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
+            let state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::allowance(@state, owner, spender)
+        }
+
+        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
+            let mut state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::transfer(ref state, recipient, amount)
+        }
+
+        fn transfer_from(ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool {
+            let mut state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::transfer_from(ref state, sender, recipient, amount)
+        }
+
+        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
+            let mut state = ERC20::unsafe_new_contract_state();
+            ERC20::ERC20Impl::approve(ref state, spender, amount)
+        }
+
     }
 
-    #[external(v0)]
-    fn transfer_from(sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool {
-        ERC20::transfer_from(sender, recipient, amount)
-    }
+    // fn increase_allowance(ref self: ContractState, spender: ContractAddress, added_value: u256) -> bool {
+    //     let mut state = ERC20::unsafe_new_contract_state();
+    //     ERC20::ERC20Impl::increase_allowance(ref state, spender, added_value)
+    // }
 
-    #[external(v0)]
-    fn approve(spender: ContractAddress, amount: u256) -> bool {
-        ERC20::approve(spender, amount)
-    }
-
-    #[external(v0)]
-    fn increase_allowance(spender: ContractAddress, added_value: u256) -> bool {
-        ERC20::increase_allowance(spender, added_value)
-    }
-
-    #[external(v0)]
-    fn decrease_allowance(spender: ContractAddress, subtracted_value: u256) -> bool {
-        ERC20::decrease_allowance(spender, subtracted_value)
-    }
-
+    // fn decrease_allowance(ref self: ContractState, spender: ContractAddress, subtracted_value: u256) -> bool {
+    //     let mut state = ERC20::unsafe_new_contract_state();
+    //     ERC20::ERC20Impl::decrease_allowance(ref state, spender, subtracted_value)
+    // }
 
     //
     // Internal
