@@ -1,3 +1,9 @@
+use starknet::ContractAddress;
+#[starknet::interface]
+trait MockValidReceiver<TContractState> {
+    fn verify(self: @TContractState) -> ContractAddress;
+}
+
 #[starknet::contract]
 mod ValidReceiver {
     use starknet::ContractAddress;
@@ -23,8 +29,10 @@ mod ValidReceiver {
         }
     }
 
-    #[view]
-    fn verify(self: @ContractState) -> ContractAddress {
-        self._sender.read()
+    #[external(v0)]
+    impl ValidReceiver of super::MockValidReceiver<ContractState> {
+        fn verify(self: @ContractState) -> ContractAddress {
+            self._sender.read()
+        }
     }
 }
