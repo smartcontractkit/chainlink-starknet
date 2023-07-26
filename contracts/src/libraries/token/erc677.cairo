@@ -2,7 +2,9 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IERC677Receiver<TContractState> {
-    fn on_token_transfer(ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>);
+    fn on_token_transfer(
+        ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>
+    );
     // implements EIP-165, where function selectors are defined by Ethereum ABI using the ethereum function signatures
     fn supports_interface(ref self: TContractState, interface_id: u32) -> bool;
 }
@@ -28,7 +30,7 @@ mod ERC677 {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        Transfer: Transfer,
+        Transfer: Transfer, 
     }
 
     #[derive(Drop, starknet::Event)]
@@ -39,17 +41,19 @@ mod ERC677 {
         data: Array<felt252>
     }
 
-    fn transfer_and_call(ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>) -> bool {
+    fn transfer_and_call(
+        ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>
+    ) -> bool {
         let sender = starknet::info::get_caller_address();
 
         let mut state = ERC20::unsafe_new_contract_state();
         ERC20::ERC20Impl::transfer(ref state, to, value);
-        self.emit(Event::Transfer(Transfer{
-            from: sender,
-            to: to,
-            value: value,
-            data: data.clone(),
-        }));
+        self
+            .emit(
+                Event::Transfer(
+                    Transfer { from: sender, to: to, value: value, data: data.clone(),  }
+                )
+            );
 
         let receiver = IERC677ReceiverDispatcher { contract_address: to };
 

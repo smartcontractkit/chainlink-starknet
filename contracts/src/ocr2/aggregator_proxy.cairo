@@ -79,7 +79,7 @@ mod AggregatorProxy {
     #[external(v0)]
     impl AggregatorProxyImpl of IAggregatorProxy<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
-           self._require_read_access();
+            self._require_read_access();
             let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             let round = aggregator.latest_round_data();

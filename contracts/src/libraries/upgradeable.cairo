@@ -26,6 +26,6 @@ mod Upgradeable {
     fn upgrade(new_impl: ClassHash) {
         assert(!new_impl.is_zero(), 'Class hash cannot be zero');
         replace_class_syscall(new_impl).unwrap_syscall();
-        // TODO: Upgraded(new_impl);
+    // TODO: Upgraded(new_impl);
     }
 }

@@ -51,13 +51,20 @@ trait IMultisig<TContractState> {
     fn get_transaction(self: @TContractState, nonce: u128) -> (Transaction, Array::<felt252>);
     fn type_and_version(self: @TContractState) -> felt252;
     fn upgrade(ref self: TContractState, new_impl: ClassHash);
-    fn submit_transaction(ref self: TContractState, to: ContractAddress, function_selector: felt252, calldata: Array<felt252>);
+    fn submit_transaction(
+        ref self: TContractState,
+        to: ContractAddress,
+        function_selector: felt252,
+        calldata: Array<felt252>
+    );
     fn confirm_transaction(ref self: TContractState, nonce: u128);
     fn revoke_confirmation(ref self: TContractState, nonce: u128);
     fn execute_transaction(ref self: TContractState, nonce: u128) -> Array<felt252>;
     fn set_threshold(ref self: TContractState, threshold: usize);
     fn set_signers(ref self: TContractState, signers: Array<ContractAddress>);
-    fn set_signers_and_threshold(ref self: TContractState, signers: Array<ContractAddress>, threshold: usize);
+    fn set_signers_and_threshold(
+        ref self: TContractState, signers: Array<ContractAddress>, threshold: usize
+    );
 }
 
 #[starknet::contract]
@@ -107,25 +114,25 @@ mod Multisig {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct TransactionConfirmed{
+    struct TransactionConfirmed {
         signer: ContractAddress,
         nonce: u128
     }
 
     #[derive(Drop, starknet::Event)]
-    struct ConfirmationRevoked{
+    struct ConfirmationRevoked {
         signer: ContractAddress,
         nonce: u128
     }
 
     #[derive(Drop, starknet::Event)]
-    struct TransactionExecuted{
+    struct TransactionExecuted {
         executor: ContractAddress,
         nonce: u128
     }
 
     #[derive(Drop, starknet::Event)]
-    struct SignersSet{
+    struct SignersSet {
         signers: Array<ContractAddress>
     }
 
@@ -213,7 +220,10 @@ mod Multisig {
         }
 
         fn submit_transaction(
-            ref self: ContractState, to: ContractAddress, function_selector: felt252, calldata: Array<felt252>, 
+            ref self: ContractState,
+            to: ContractAddress,
+            function_selector: felt252,
+            calldata: Array<felt252>,
         ) {
             self._require_signer();
 
@@ -232,11 +242,12 @@ mod Multisig {
             self._set_transaction_calldata_range(nonce, 0_usize, calldata_len, @calldata);
 
             let caller = get_caller_address();
-            self.emit(Event::TransactionSubmitted(TransactionSubmitted{
-                signer: caller,
-                nonce: nonce,
-                to: to
-            }));
+            self
+                .emit(
+                    Event::TransactionSubmitted(
+                        TransactionSubmitted { signer: caller, nonce: nonce, to: to }
+                    )
+                );
             self._next_nonce.write(nonce + 1_u128);
         }
 
@@ -255,7 +266,12 @@ mod Multisig {
             let caller = get_caller_address();
             self._is_confirmed.write((nonce, caller), true);
 
-            self.emit(Event::TransactionConfirmed(TransactionConfirmed{signer: caller, nonce: nonce}));
+            self
+                .emit(
+                    Event::TransactionConfirmed(
+                        TransactionConfirmed { signer: caller, nonce: nonce }
+                    )
+                );
         }
 
         fn revoke_confirmation(ref self: ContractState, nonce: u128) {
@@ -273,7 +289,10 @@ mod Multisig {
             let caller = get_caller_address();
             self._is_confirmed.write((nonce, caller), false);
 
-            self.emit(Event::ConfirmationRevoked(ConfirmationRevoked{signer: caller, nonce: nonce}));
+            self
+                .emit(
+                    Event::ConfirmationRevoked(ConfirmationRevoked { signer: caller, nonce: nonce })
+                );
         }
 
         fn execute_transaction(ref self: ContractState, nonce: u128) -> Array<felt252> {
@@ -295,7 +314,12 @@ mod Multisig {
             self._transactions.write(nonce, transaction);
 
             let caller = get_caller_address();
-            self.emit(Event::TransactionExecuted(TransactionExecuted{executor: caller, nonce: nonce}));
+            self
+                .emit(
+                    Event::TransactionExecuted(
+                        TransactionExecuted { executor: caller, nonce: nonce }
+                    )
+                );
 
             let response = call_contract_syscall(
                 transaction.to, transaction.function_selector, calldata.span()
@@ -339,7 +363,9 @@ mod Multisig {
             }
         }
 
-        fn set_signers_and_threshold(ref self: ContractState, signers: Array<ContractAddress>, threshold: usize) {
+        fn set_signers_and_threshold(
+            ref self: ContractState, signers: Array<ContractAddress>, threshold: usize
+        ) {
             self._require_multisig();
 
             let signers_len = signers.len();
@@ -355,7 +381,9 @@ mod Multisig {
     /// Internals
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn _set_signers(ref self: ContractState, signers: Array<ContractAddress>, signers_len: usize) {
+        fn _set_signers(
+            ref self: ContractState, signers: Array<ContractAddress>, signers_len: usize
+        ) {
             self._require_unique_signers(@signers);
 
             let old_signers_len = self._signers_len.read();
@@ -364,7 +392,7 @@ mod Multisig {
             self._signers_len.write(signers_len);
             self._set_signers_range(0_usize, signers_len, @signers);
 
-            self.emit(Event::SignersSet(SignersSet{signers: signers}));
+            self.emit(Event::SignersSet(SignersSet { signers: signers }));
         }
 
         fn _clean_signers_range(ref self: ContractState, index: usize, len: usize) {
@@ -379,7 +407,9 @@ mod Multisig {
             self._clean_signers_range(index + 1_usize, len);
         }
 
-        fn _set_signers_range(ref self: ContractState, index: usize, len: usize, signers: @Array<ContractAddress>) {
+        fn _set_signers_range(
+            ref self: ContractState, index: usize, len: usize, signers: @Array<ContractAddress>
+        ) {
             if index >= len {
                 return ();
             }
@@ -391,7 +421,9 @@ mod Multisig {
             self._set_signers_range(index + 1_usize, len, signers);
         }
 
-        fn _get_signers_range(self: @ContractState, index: usize, len: usize, ref signers: Array<ContractAddress>) {
+        fn _get_signers_range(
+            self: @ContractState, index: usize, len: usize, ref signers: Array<ContractAddress>
+        ) {
             if index >= len {
                 return ();
             }
@@ -403,7 +435,11 @@ mod Multisig {
         }
 
         fn _set_transaction_calldata_range(
-            ref self: ContractState, nonce: u128, index: usize, len: usize, calldata: @Array<felt252>
+            ref self: ContractState,
+            nonce: u128,
+            index: usize,
+            len: usize,
+            calldata: @Array<felt252>
         ) {
             if index >= len {
                 return ();
@@ -416,7 +452,11 @@ mod Multisig {
         }
 
         fn _get_transaction_calldata_range(
-            self: @ContractState, nonce: u128, index: usize, len: usize, ref calldata: Array<felt252>
+            self: @ContractState,
+            nonce: u128,
+            index: usize,
+            len: usize,
+            ref calldata: Array<felt252>
         ) {
             if index >= len {
                 return ();
@@ -430,7 +470,7 @@ mod Multisig {
 
         fn _set_threshold(ref self: ContractState, threshold: usize) {
             self._threshold.write(threshold);
-            self.emit(Event::ThresholdSet(ThresholdSet{threshold: threshold}));
+            self.emit(Event::ThresholdSet(ThresholdSet { threshold: threshold }));
         }
 
         fn _update_tx_valid_since(ref self: ContractState) {

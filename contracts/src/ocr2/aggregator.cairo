@@ -105,7 +105,9 @@ trait Billing<TContractState> {
     fn withdraw_payment(ref self: TContractState, transmitter: ContractAddress);
     fn owed_payment(self: @TContractState, transmitter: ContractAddress) -> u128;
     fn withdraw_funds(ref self: TContractState, recipient: ContractAddress, amount: u256);
-    fn link_available_for_payment(self: @TContractState) -> (bool, u128); // (is negative, absolute difference)
+    fn link_available_for_payment(
+        self: @TContractState
+    ) -> (bool, u128); // (is negative, absolute difference)
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -117,7 +119,9 @@ struct PayeeConfig {
 #[starknet::interface]
 trait PayeeManagement<TContractState> {
     fn set_payees(ref self: TContractState, payees: Array<PayeeConfig>);
-    fn transfer_payeeship(ref self: TContractState, transmitter: ContractAddress, proposed: ContractAddress);
+    fn transfer_payeeship(
+        ref self: TContractState, transmitter: ContractAddress, proposed: ContractAddress
+    );
     fn accept_payeeship(ref self: TContractState, transmitter: ContractAddress);
 }
 
@@ -197,7 +201,9 @@ mod Aggregator {
 
     use chainlink::libraries::token::erc20::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
-    use chainlink::libraries::access_control::{IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait};
+    use chainlink::libraries::access_control::{
+        IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+    };
 
     const GIGA: u128 = 1000000000_u128;
 
@@ -206,14 +212,14 @@ mod Aggregator {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        NewTransmission: NewTransmission,     
+        NewTransmission: NewTransmission,
         ConfigSet: ConfigSet,
         LinkTokenSet: LinkTokenSet,
         BillingAccessControllerSet: BillingAccessControllerSet,
         BillingSet: BillingSet,
         OraclePaid: OraclePaid,
         PayeeshipTransferRequested: PayeeshipTransferRequested,
-        PayeeshipTransferred: PayeeshipTransferred, 
+        PayeeshipTransferred: PayeeshipTransferred,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -575,16 +581,21 @@ mod Aggregator {
             // reset epoch & round
             self._latest_epoch_and_round.write(0_u64);
 
-            self.emit(Event::ConfigSet(ConfigSet{
-                previous_config_block_number: prev_block_num,
-                latest_config_digest: digest,
-                config_count: config_count,
-                oracles: oracles,
-                f: f,
-                onchain_config: computed_onchain_config,
-                offchain_config_version: offchain_config_version,
-                offchain_config: offchain_config
-            }));
+            self
+                .emit(
+                    Event::ConfigSet(
+                        ConfigSet {
+                            previous_config_block_number: prev_block_num,
+                            latest_config_digest: digest,
+                            config_count: config_count,
+                            oracles: oracles,
+                            f: f,
+                            onchain_config: computed_onchain_config,
+                            offchain_config_version: offchain_config_version,
+                            offchain_config: offchain_config
+                        }
+                    )
+                );
 
             digest
         }
@@ -633,7 +644,13 @@ mod Aggregator {
         }
 
         // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
-        fn add_oracles(ref self: ContractState, oracles: @Array<OracleConfig>, index: usize, len: usize, latest_round_id: u128) {
+        fn add_oracles(
+            ref self: ContractState,
+            oracles: @Array<OracleConfig>,
+            index: usize,
+            len: usize,
+            latest_round_id: u128
+        ) {
             if len == 0_usize {
                 self._oracles_len.write(index);
                 return ();
@@ -662,7 +679,6 @@ mod Aggregator {
 
             self.add_oracles(oracles, index, len - 1_usize, latest_round_id)
         }
-
     }
 
     // --- Transmission ---
@@ -750,15 +766,17 @@ mod Aggregator {
 
         let block_info = starknet::info::get_block_info().unbox();
 
-        self._transmissions.write(
-            round_id,
-            Transmission {
-                answer: median,
-                block_num: block_info.block_number,
-                observation_timestamp,
-                transmission_timestamp: block_info.block_timestamp,
-            }
-        );
+        self
+            ._transmissions
+            .write(
+                round_id,
+                Transmission {
+                    answer: median,
+                    block_num: block_info.block_number,
+                    observation_timestamp,
+                    transmission_timestamp: block_info.block_timestamp,
+                }
+            );
 
         // NOTE: Usually validating via validator would happen here, currently disabled
 
@@ -769,19 +787,24 @@ mod Aggregator {
 
         // end report()
 
-        self.emit(Event::NewTransmission(NewTransmission{
-            round_id: round_id,
-            answer: median,
-            transmitter: caller,
-            observation_timestamp: observation_timestamp,
-            observers: observers,
-            observations: observations,
-            juels_per_fee_coin: juels_per_fee_coin,
-            gas_price: gas_price,
-            config_digest: report_context.config_digest,
-            epoch_and_round: report_context.epoch_and_round,
-            reimbursement: reimbursement_juels,
-        }));
+        self
+            .emit(
+                Event::NewTransmission(
+                    NewTransmission {
+                        round_id: round_id,
+                        answer: median,
+                        transmitter: caller,
+                        observation_timestamp: observation_timestamp,
+                        observers: observers,
+                        observations: observations,
+                        juels_per_fee_coin: juels_per_fee_coin,
+                        gas_price: gas_price,
+                        config_digest: report_context.config_digest,
+                        epoch_and_round: report_context.epoch_and_round,
+                        reimbursement: reimbursement_juels,
+                    }
+                )
+            );
 
         // pay transmitter
         let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
@@ -825,7 +848,12 @@ mod Aggregator {
 
     #[generate_trait]
     impl TransmissionHelperImpl of TransmissionHelperTrait {
-        fn verify_signatures(self: @ContractState, msg: felt252, ref signatures: Array<Signature>, mut signed_count: u128) {
+        fn verify_signatures(
+            self: @ContractState,
+            msg: felt252,
+            ref signatures: Array<Signature>,
+            mut signed_count: u128
+        ) {
             let mut span = signatures.span();
             loop {
                 match span.pop_front() {
@@ -849,7 +877,6 @@ mod Aggregator {
                         break ();
                     }
                 };
-            
             };
         }
     }
@@ -865,7 +892,9 @@ mod Aggregator {
     }
 
     #[external(v0)]
-    fn set_link_token(ref self: ContractState, link_token: ContractAddress, recipient: ContractAddress) {
+    fn set_link_token(
+        ref self: ContractState, link_token: ContractAddress, recipient: ContractAddress
+    ) {
         let ownable = Ownable::unsafe_new_contract_state();
         Ownable::assert_only_owner(@ownable);
 
@@ -890,10 +919,12 @@ mod Aggregator {
 
         self._link_token.write(link_token);
 
-        self.emit(Event::LinkTokenSet(LinkTokenSet{
-            old_link_token: old_token,
-            new_link_token: link_token
-        }));
+        self
+            .emit(
+                Event::LinkTokenSet(
+                    LinkTokenSet { old_link_token: old_token, new_link_token: link_token }
+                )
+            );
     }
 
     // --- Billing Config
@@ -929,7 +960,9 @@ mod Aggregator {
 
     #[external(v0)]
     impl BillingImpl of super::Billing<ContractState> {
-        fn set_billing_access_controller(ref self: ContractState, access_controller: ContractAddress) {
+        fn set_billing_access_controller(
+            ref self: ContractState, access_controller: ContractAddress
+        ) {
             let ownable = Ownable::unsafe_new_contract_state();
             Ownable::assert_only_owner(@ownable);
 
@@ -939,10 +972,14 @@ mod Aggregator {
             }
 
             self._billing_access_controller.write(access_controller);
-            self.emit(Event::BillingAccessControllerSet(BillingAccessControllerSet {
-                old_controller: old_controller,
-                new_controller: access_controller
-            }));
+            self
+                .emit(
+                    Event::BillingAccessControllerSet(
+                        BillingAccessControllerSet {
+                            old_controller: old_controller, new_controller: access_controller
+                        }
+                    )
+                );
         }
 
         fn set_billing(ref self: ContractState, config: BillingConfig) {
@@ -952,7 +989,7 @@ mod Aggregator {
 
             self._billing.write(config);
 
-            self.emit(Event::BillingSet(BillingSet{config: config}));
+            self.emit(Event::BillingSet(BillingSet { config: config }));
         }
 
         fn billing(self: @ContractState) -> BillingConfig {
@@ -960,7 +997,7 @@ mod Aggregator {
         }
 
         // Payments and Withdrawals
-        
+
         fn withdraw_payment(ref self: ContractState, transmitter: ContractAddress) {
             let caller = starknet::info::get_caller_address();
             let payee = self._payees.read(transmitter);
@@ -1001,7 +1038,9 @@ mod Aggregator {
             token.transfer(recipient, amount);
         }
 
-        fn link_available_for_payment(self: @ContractState) -> (bool, u128) { // (is negative, absolute difference)
+        fn link_available_for_payment(
+            self: @ContractState
+        ) -> (bool, u128) { // (is negative, absolute difference)
             let link_token = self._link_token.read();
             let contract_address = starknet::info::get_contract_address();
 
@@ -1033,9 +1072,12 @@ mod Aggregator {
             }
 
             let access_controller = self._billing_access_controller.read();
-            let access_controller = IAccessControllerDispatcher { contract_address: access_controller };
+            let access_controller = IAccessControllerDispatcher {
+                contract_address: access_controller
+            };
             assert(
-                access_controller.has_access(caller, ArrayTrait::new()), 'caller does not have access'
+                access_controller.has_access(caller, ArrayTrait::new()),
+                'caller does not have access'
             );
         }
 
@@ -1056,7 +1098,10 @@ mod Aggregator {
         }
 
         fn pay_oracle(
-            ref self: ContractState, transmitter: ContractAddress, latest_round_id: u128, link_token: ContractAddress
+            ref self: ContractState,
+            transmitter: ContractAddress,
+            latest_round_id: u128,
+            link_token: ContractAddress
         ) {
             let oracle = self._transmitters.read(transmitter);
             if oracle.index == 0_usize {
@@ -1079,14 +1124,21 @@ mod Aggregator {
 
             // Reset payment
             self._reward_from_aggregator_round_id.write(oracle.index, latest_round_id);
-            self._transmitters.write(transmitter, Oracle { index: oracle.index, payment_juels: 0_u128 });
+            self
+                ._transmitters
+                .write(transmitter, Oracle { index: oracle.index, payment_juels: 0_u128 });
 
-            self.emit(Event::OraclePaid(OraclePaid{
-                transmitter: transmitter,
-                payee: payee,
-                amount: amount,
-                link_token: link_token
-            }));
+            self
+                .emit(
+                    Event::OraclePaid(
+                        OraclePaid {
+                            transmitter: transmitter,
+                            payee: payee,
+                            amount: amount,
+                            link_token: link_token
+                        }
+                    )
+                );
         }
 
         fn pay_oracles(ref self: ContractState) {
@@ -1124,7 +1176,8 @@ mod Aggregator {
             };
 
             let billing = self._billing.read();
-            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA) + payments_juels;
+            return (total_rounds * billing.observation_payment_gjuels.into() * GIGA)
+                + payments_juels;
         }
     }
 
@@ -1181,11 +1234,16 @@ mod Aggregator {
 
                         self._payees.write(payee.transmitter, payee.payee);
 
-                        self.emit(Event::PayeeshipTransferred(PayeeshipTransferred{
-                            transmitter: payee.transmitter,
-                            previous: current_payee,
-                            current: payee.payee
-                        }));
+                        self
+                            .emit(
+                                Event::PayeeshipTransferred(
+                                    PayeeshipTransferred {
+                                        transmitter: payee.transmitter,
+                                        previous: current_payee,
+                                        current: payee.payee
+                                    }
+                                )
+                            );
                     },
                     Option::None(_) => {
                         // No more payees left!
@@ -1195,7 +1253,9 @@ mod Aggregator {
             }
         }
 
-        fn transfer_payeeship(ref self: ContractState, transmitter: ContractAddress, proposed: ContractAddress) {
+        fn transfer_payeeship(
+            ref self: ContractState, transmitter: ContractAddress, proposed: ContractAddress
+        ) {
             assert(!proposed.is_zero(), 'cannot transfer to zero address');
             let caller = starknet::info::get_caller_address();
             let payee = self._payees.read(transmitter);
@@ -1203,11 +1263,14 @@ mod Aggregator {
             assert(caller != proposed, 'cannot transfer to self');
 
             self._proposed_payees.write(transmitter, proposed);
-            self.emit(Event::PayeeshipTransferRequested(PayeeshipTransferRequested{
-                transmitter: transmitter,
-                current: payee,
-                proposed: proposed
-            }));
+            self
+                .emit(
+                    Event::PayeeshipTransferRequested(
+                        PayeeshipTransferRequested {
+                            transmitter: transmitter, current: payee, proposed: proposed
+                        }
+                    )
+                );
         }
 
         fn accept_payeeship(ref self: ContractState, transmitter: ContractAddress) {
@@ -1218,11 +1281,14 @@ mod Aggregator {
 
             self._payees.write(transmitter, proposed);
             self._proposed_payees.write(transmitter, Zeroable::zero());
-            self.emit(Event::PayeeshipTransferred(PayeeshipTransferred{
-                transmitter: transmitter,
-                previous: previous,
-                current: caller
-            }));
+            self
+                .emit(
+                    Event::PayeeshipTransferred(
+                        PayeeshipTransferred {
+                            transmitter: transmitter, previous: previous, current: caller
+                        }
+                    )
+                );
         }
     }
 }

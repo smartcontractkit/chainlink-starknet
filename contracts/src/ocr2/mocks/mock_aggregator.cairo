@@ -1,7 +1,11 @@
 #[starknet::interface]
 trait IMockAggregator<TContractState> {
     fn set_latest_round_data(
-        ref self: TContractState, answer: u128, block_num: u64, observation_timestamp: u64, transmission_timestamp: u64
+        ref self: TContractState,
+        answer: u128,
+        block_num: u64,
+        observation_timestamp: u64,
+        transmission_timestamp: u64
     );
 }
 
@@ -30,18 +34,24 @@ mod MockAggregator {
     #[external(v0)]
     impl MockImpl of super::IMockAggregator<ContractState> {
         fn set_latest_round_data(
-            ref self: ContractState, answer: u128, block_num: u64, observation_timestamp: u64, transmission_timestamp: u64
+            ref self: ContractState,
+            answer: u128,
+            block_num: u64,
+            observation_timestamp: u64,
+            transmission_timestamp: u64
         ) {
             let new_round_id = self._latest_aggregator_round_id.read() + 1_u128;
-            self._transmissions.write(
-                new_round_id,
-                Transmission {
-                    answer: answer,
-                    block_num: block_num,
-                    observation_timestamp: observation_timestamp,
-                    transmission_timestamp: transmission_timestamp
-                }
-            );
+            self
+                ._transmissions
+                .write(
+                    new_round_id,
+                    Transmission {
+                        answer: answer,
+                        block_num: block_num,
+                        observation_timestamp: observation_timestamp,
+                        transmission_timestamp: transmission_timestamp
+                    }
+                );
 
             let mut observations = ArrayTrait::new();
             observations.append(2_u128);
@@ -49,19 +59,24 @@ mod MockAggregator {
 
             self._latest_aggregator_round_id.write(new_round_id);
 
-            self.emit(Event::NewTransmission(NewTransmission {
-                round_id: new_round_id,
-                answer: answer,
-                transmitter: contract_address_const::<42>(),
-                observation_timestamp: observation_timestamp,
-                observers: 3,
-                observations: observations,
-                juels_per_fee_coin: 18_u128,
-                gas_price: 1_u128,
-                config_digest: 777,
-                epoch_and_round: 20_u64,
-                reimbursement: 100_u128
-            }));
+            self
+                .emit(
+                    Event::NewTransmission(
+                        NewTransmission {
+                            round_id: new_round_id,
+                            answer: answer,
+                            transmitter: contract_address_const::<42>(),
+                            observation_timestamp: observation_timestamp,
+                            observers: 3,
+                            observations: observations,
+                            juels_per_fee_coin: 18_u128,
+                            gas_price: 1_u128,
+                            config_digest: 777,
+                            epoch_and_round: 20_u64,
+                            reimbursement: 100_u128
+                        }
+                    )
+                );
         }
     }
 
@@ -95,6 +110,5 @@ mod MockAggregator {
         fn type_and_version(self: @ContractState) -> felt252 {
             'mock_aggregator.cairo 1.0.0'
         }
-
     }
 }

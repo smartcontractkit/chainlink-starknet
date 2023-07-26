@@ -13,7 +13,9 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::access_control::access_controller::AccessController;
-use chainlink::libraries::access_control::{IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait};
+use chainlink::libraries::access_control::{
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+};
 
 fn STATE() -> AccessController::ContractState {
     AccessController::contract_state_for_testing()
@@ -40,9 +42,8 @@ fn test_upgrade_not_owner() {
 fn test_access_control() {
     let owner = setup();
     // Deploy access controller
-    let calldata = array![
-        owner.into(), // owner
-    ];
+    let calldata = array![owner.into(), // owner
+     ];
     let (accessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )

@@ -20,7 +20,9 @@ mod ValidReceiver {
 
     #[external(v0)]
     impl ERC677Receiver of IERC677Receiver<ContractState> {
-        fn on_token_transfer(ref self: ContractState, sender: ContractAddress, value: u256, data: Array<felt252>) {
+        fn on_token_transfer(
+            ref self: ContractState, sender: ContractAddress, value: u256, data: Array<felt252>
+        ) {
             self._sender.write(sender);
         }
 
