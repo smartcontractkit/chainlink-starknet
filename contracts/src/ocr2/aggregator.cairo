@@ -609,7 +609,7 @@ mod Aggregator {
         }
 
         fn transmitters(self: @ContractState) -> Array<ContractAddress> {
-            let mut index = 0;
+            let mut index = 1;
             let mut len = self._oracles_len.read();
             let mut result = ArrayTrait::new();
             loop {
