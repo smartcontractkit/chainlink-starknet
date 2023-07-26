@@ -88,6 +88,7 @@ mod SequencerUptimeFeed {
         to_address: EthAddress
     }
 
+    #[external(v0)]
     impl AggregatorImpl of IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
             self._require_read_access();
