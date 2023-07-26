@@ -74,7 +74,9 @@ mod LinkToken {
     //
 
     #[external(v0)]
-    fn transfer_and_call(ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>) -> bool {
+    fn transfer_and_call(
+        ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>
+    ) -> bool {
         let mut erc677 = ERC677::unsafe_new_contract_state();
         ERC677::transfer_and_call(ref erc677, to, value, data)
     }
@@ -152,7 +154,9 @@ mod LinkToken {
             ERC20::ERC20Impl::balance_of(@state, account)
         }
 
-        fn allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
+        fn allowance(
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress
+        ) -> u256 {
             let state = ERC20::unsafe_new_contract_state();
             ERC20::ERC20Impl::allowance(@state, owner, spender)
         }
@@ -162,7 +166,12 @@ mod LinkToken {
             ERC20::ERC20Impl::transfer(ref state, recipient, amount)
         }
 
-        fn transfer_from(ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool {
+        fn transfer_from(
+            ref self: ContractState,
+            sender: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) -> bool {
             let mut state = ERC20::unsafe_new_contract_state();
             ERC20::ERC20Impl::transfer_from(ref state, sender, recipient, amount)
         }
@@ -171,7 +180,6 @@ mod LinkToken {
             let mut state = ERC20::unsafe_new_contract_state();
             ERC20::ERC20Impl::approve(ref state, spender, amount)
         }
-
     }
 
     // fn increase_allowance(ref self: ContractState, spender: ContractAddress, added_value: u256) -> bool {

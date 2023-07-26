@@ -11,10 +11,14 @@ use traits::TryInto;
 use option::OptionTrait;
 use core::result::ResultTrait;
 
-use chainlink::ocr2::mocks::mock_aggregator::{MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait};
+use chainlink::ocr2::mocks::mock_aggregator::{
+    MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait
+};
 // use chainlink::ocr2::aggregator::{IAggregator, IAggregatorDispatcher, IAggregatorDispatcherTrait};
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
-use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{AggregatorProxyImpl, AggregatorProxyInternal, AccessControllerImpl};
+use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
+    AggregatorProxyImpl, AggregatorProxyInternal, AccessControllerImpl
+};
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
 use chainlink::tests::test_ownable::should_implement_ownable;
@@ -60,10 +64,8 @@ fn setup() -> (
 fn test_ownable() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
-    let calldata = array![
-        account.into(), // owner = account
-        mockAggregatorAddr.into(),
-    ];
+    let calldata = array![account.into(), // owner = account
+     mockAggregatorAddr.into(), ];
     let (aggregatorProxyAddr, _) = deploy_syscall(
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )
@@ -77,10 +79,8 @@ fn test_ownable() {
 fn test_access_control() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
-    let calldata = array![
-        account.into(), // owner = account
-        mockAggregatorAddr.into(),
-    ];
+    let calldata = array![account.into(), // owner = account
+     mockAggregatorAddr.into(), ];
     let (aggregatorProxyAddr, _) = deploy_syscall(
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )

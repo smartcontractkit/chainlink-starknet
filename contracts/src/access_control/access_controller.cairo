@@ -10,9 +10,7 @@ mod AccessController {
     use chainlink::libraries::upgradeable::Upgradeable;
 
     #[storage]
-    struct Storage {
-        
-    }
+    struct Storage {}
 
     #[constructor]
     fn constructor(ref self: ContractState, owner_address: ContractAddress) {

@@ -31,7 +31,7 @@ mod Ownable {
     #[event]
     fn OwnershipTransferRequested(from: starknet::ContractAddress, to: starknet::ContractAddress) {}
 
-   //
+    //
     // Constructor
     //
 
@@ -98,7 +98,9 @@ mod Ownable {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn _accept_ownership_transfer(ref self: ContractState, new_owner: starknet::ContractAddress) {
+        fn _accept_ownership_transfer(
+            ref self: ContractState, new_owner: starknet::ContractAddress
+        ) {
             let previous_owner = self._owner.read();
             self._owner.write(new_owner);
             self._proposed_owner.write(starknet::contract_address_const::<0>());

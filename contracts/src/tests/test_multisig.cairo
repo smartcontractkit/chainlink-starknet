@@ -131,7 +131,9 @@ fn test_submit_transaction() {
     set_caller_address(signer);
     let to = contract_address_const::<42>();
     let function_selector = 10;
-    MultisigImpl::submit_transaction(ref state, :to, :function_selector, calldata: sample_calldata());
+    MultisigImpl::submit_transaction(
+        ref state, :to, :function_selector, calldata: sample_calldata()
+    );
 
     let (transaction, calldata) = MultisigImpl::get_transaction(@state, 0);
     assert(transaction.to == to, 'should match target address');
@@ -153,7 +155,10 @@ fn test_submit_transaction_not_signer() {
 
     set_caller_address(contract_address_const::<3>());
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
 }
 
@@ -168,12 +173,17 @@ fn test_confirm_transaction() {
 
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
 
     assert(MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer1), 'should be confirmed');
-    assert(!MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed');
+    assert(
+        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed'
+    );
     let (transaction, _) = MultisigImpl::get_transaction(@state, 0);
     assert(transaction.confirmations == 1, 'should have confirmation');
 }
@@ -189,7 +199,10 @@ fn test_confirm_transaction_not_signer() {
     Multisig::constructor(ref state, :signers, threshold: 1);
     set_caller_address(signer);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
 
     set_caller_address(not_signer);
@@ -206,14 +219,21 @@ fn test_revoke_confirmation() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
 
     MultisigImpl::revoke_confirmation(ref state, nonce: 0);
 
-    assert(!MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer1), 'should not be confirmed');
-    assert(!MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed');
+    assert(
+        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer1), 'should not be confirmed'
+    );
+    assert(
+        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed'
+    );
     let (transaction, _) = MultisigImpl::get_transaction(@state, 0);
     assert(transaction.confirmations == 0, 'should not have confirmation');
 }
@@ -229,7 +249,10 @@ fn test_revoke_confirmation_not_signer() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
 
@@ -248,7 +271,10 @@ fn test_execute_confirmation_below_threshold() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
     MultisigImpl::execute_transaction(ref state, nonce: 0);
@@ -308,7 +334,10 @@ fn test_execute_not_signer() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
     set_caller_address(signer2);
@@ -332,7 +361,10 @@ fn test_execute_after_set_signers() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
     set_caller_address(signer2);
@@ -359,7 +391,10 @@ fn test_execute_after_set_signers_and_threshold() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
     set_caller_address(signer2);
@@ -385,7 +420,10 @@ fn test_execute_after_set_threshold() {
     Multisig::constructor(ref state, :signers, threshold: 2);
     set_caller_address(signer1);
     MultisigImpl::submit_transaction(
-        ref state, to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(), 
+        ref state,
+        to: contract_address_const::<42>(),
+        function_selector: 10,
+        calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
     set_caller_address(signer2);

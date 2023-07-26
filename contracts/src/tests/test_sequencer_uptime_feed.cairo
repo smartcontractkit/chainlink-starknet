@@ -19,7 +19,9 @@ use chainlink::ocr2::aggregator_proxy::AggregatorProxy::AggregatorProxyImpl;
 use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
-use chainlink::emergency::sequencer_uptime_feed::{ISequencerUptimeFeed, ISequencerUptimeFeedDispatcher, ISequencerUptimeFeedDispatcherTrait};
+use chainlink::emergency::sequencer_uptime_feed::{
+    ISequencerUptimeFeed, ISequencerUptimeFeedDispatcher, ISequencerUptimeFeedDispatcherTrait
+};
 
 fn PROXY() -> AggregatorProxy::ContractState {
     AggregatorProxy::contract_state_for_testing()
@@ -34,9 +36,8 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
     set_caller_address(account);
 
     // Deploy seqeuencer uptime feed
-    let calldata = array![
-        0, // initial status
-        account.into() // owner
+    let calldata = array![0, // initial status
+     account.into() // owner
     ];
     let (sequencerFeedAddr, _) = deploy_syscall(
         SequencerUptimeFeed::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false

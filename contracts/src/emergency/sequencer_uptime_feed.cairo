@@ -55,20 +55,20 @@ mod SequencerUptimeFeed {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct RoundUpdated{
+    struct RoundUpdated {
         status: u128,
         updated_at: u64
     }
 
     #[derive(Drop, starknet::Event)]
-    struct NewRound{
+    struct NewRound {
         round_id: u128,
         started_by: ContractAddress,
         started_at: u64
     }
 
     #[derive(Drop, starknet::Event)]
-    struct AnswerUpdated{
+    struct AnswerUpdated {
         current: u128,
         round_id: u128,
         timestamp: u64
@@ -83,7 +83,7 @@ mod SequencerUptimeFeed {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct L1SenderTransferred{
+    struct L1SenderTransferred {
         from_address: EthAddress,
         to_address: EthAddress
     }
@@ -141,12 +141,17 @@ mod SequencerUptimeFeed {
         let latest_round = self._round_transmissions.read(latest_round_id);
 
         if timestamp <= latest_round.observation_timestamp {
-            self.emit(Event::UpdateIgnored(UpdateIgnored{
-                latest_status: latest_round.answer,
-                latest_timestamp: latest_round.transmission_timestamp,
-                incoming_status: status,
-                incoming_timestamp: timestamp
-            }));
+            self
+                .emit(
+                    Event::UpdateIgnored(
+                        UpdateIgnored {
+                            latest_status: latest_round.answer,
+                            latest_timestamp: latest_round.transmission_timestamp,
+                            incoming_status: status,
+                            incoming_timestamp: timestamp
+                        }
+                    )
+                );
             return ();
         }
 
@@ -171,10 +176,14 @@ mod SequencerUptimeFeed {
 
             if old_address != address.into() {
                 self._l1_sender.write(address.into());
-                self.emit(Event::L1SenderTransferred(L1SenderTransferred {
-                    from_address: old_address.try_into().unwrap(),
-                    to_address: address
-                }));
+                self
+                    .emit(
+                        Event::L1SenderTransferred(
+                            L1SenderTransferred {
+                                from_address: old_address.try_into().unwrap(), to_address: address
+                            }
+                        )
+                    );
             }
         }
 
@@ -280,7 +289,9 @@ mod SequencerUptimeFeed {
             AccessControl::check_read_access(@access_control, sender);
         }
 
-        fn _initializer(ref self: ContractState, initial_status: u128, owner_address: ContractAddress) {
+        fn _initializer(
+            ref self: ContractState, initial_status: u128, owner_address: ContractAddress
+        ) {
             let mut ownable = Ownable::unsafe_new_contract_state();
             Ownable::constructor(ref ownable, owner_address);
             let mut access_control = AccessControl::unsafe_new_contract_state();
@@ -306,26 +317,32 @@ mod SequencerUptimeFeed {
 
             let sender = starknet::info::get_caller_address();
 
-            self.emit(Event::NewRound(NewRound{
-                round_id: round_id,
-                started_by: sender,
-                started_at: timestamp
-            }));
-            self.emit(Event::AnswerUpdated(AnswerUpdated{
-                current: status,
-                round_id: round_id,
-                timestamp: timestamp
-            }));
+            self
+                .emit(
+                    Event::NewRound(
+                        NewRound { round_id: round_id, started_by: sender, started_at: timestamp }
+                    )
+                );
+            self
+                .emit(
+                    Event::AnswerUpdated(
+                        AnswerUpdated { current: status, round_id: round_id, timestamp: timestamp }
+                    )
+                );
         }
 
         fn _update_round(ref self: ContractState, round_id: u128, mut round: Transmission) {
             round.transmission_timestamp = starknet::info::get_block_timestamp();
             self._round_transmissions.write(round_id, round);
 
-            self.emit(Event::RoundUpdated(RoundUpdated {
-                status: round.answer,
-                updated_at: round.transmission_timestamp
-            }));
+            self
+                .emit(
+                    Event::RoundUpdated(
+                        RoundUpdated {
+                            status: round.answer, updated_at: round.transmission_timestamp
+                        }
+                    )
+                );
         }
     }
 }

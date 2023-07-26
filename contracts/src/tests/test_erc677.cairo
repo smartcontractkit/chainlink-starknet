@@ -20,7 +20,9 @@ trait MockInvalidReceiver<TContractState> {
     fn set_supports(ref self: TContractState, value: bool);
 }
 
-use chainlink::token::mock::valid_erc667_receiver::{MockValidReceiver, MockValidReceiverDispatcher, MockValidReceiverDispatcherTrait};
+use chainlink::token::mock::valid_erc667_receiver::{
+    MockValidReceiver, MockValidReceiverDispatcher, MockValidReceiverDispatcherTrait
+};
 
 // Ignored tests are dependent on upgrading our version of cairo to include this PR https://github.com/starkware-libs/cairo/pull/2912/files
 
