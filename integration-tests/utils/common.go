@@ -19,6 +19,8 @@ func GetTestLogger(t *testing.T) zerolog.Logger {
 	}
 	lvl, err := zerolog.ParseLevel(lvlStr)
 	require.NoError(t, err, "error parsing log level")
-	l := zerolog.New(zerolog.NewTestWriter(t)).Output(zerolog.ConsoleWriter{Out: os.Stderr}).Level(lvl).With().Timestamp().Logger()
+	l := zerolog.New(zerolog.NewTestWriter(t)).
+		Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: true}).
+		Level(lvl).With().Timestamp().Logger()
 	return l
 }
