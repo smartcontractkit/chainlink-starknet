@@ -15,7 +15,7 @@
   "main": "packages-ts/starknet-gauntlet-cli/dist/index.js",
   "bin": "packages-ts/starknet-gauntlet-cli/dist/index.js",
   "scripts": {
-    "gauntlet": "yarn build && node ./packages-ts/starknet-gauntlet-cli/dist/index.js",
+    "gauntlet": "node ./packages-ts/starknet-gauntlet-cli/dist/index.js",
     "test": "yarn build && yarn workspaces run test",
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
