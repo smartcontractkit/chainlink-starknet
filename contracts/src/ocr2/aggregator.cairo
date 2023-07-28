@@ -1173,6 +1173,7 @@ mod Aggregator {
                 let rounds = latest_round_id - from_round_id;
                 total_rounds += rounds;
                 payments_juels += oracle.payment_juels;
+                index -= 1;
             };
 
             let billing = self._billing.read();
