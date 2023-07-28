@@ -546,8 +546,7 @@ mod Aggregator {
             self.pay_oracles();
 
             // remove old signers & transmitters
-            let len = self._oracles_len.read();
-            self.remove_oracles(len);
+            self.remove_oracles();
 
             let latest_round_id = self._latest_aggregator_round_id.read();
 
@@ -627,23 +626,24 @@ mod Aggregator {
 
     #[generate_trait]
     impl ConfigurationHelperImpl of ConfigurationHelperTrait {
-        // TODO: use loops here
-        fn remove_oracles(ref self: ContractState, n: usize) {
-            if n == 0_usize {
-                self._oracles_len.write(0_usize);
-                return ();
+        fn remove_oracles(ref self: ContractState) {
+            let mut index = self._oracles_len.read();
+            loop {
+                if index == 0_usize {
+                    self._oracles_len.write(0_usize);
+                    break ();
+                }
+
+                let signer = self._signers_list.read(index);
+                self._signers.write(signer, 0_usize);
+
+                let transmitter = self._transmitters_list.read(index);
+                self._transmitters.write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
+                
+                index -= 1;
             }
-
-            let signer = self._signers_list.read(n);
-            self._signers.write(signer, 0_usize);
-
-            let transmitter = self._transmitters_list.read(n);
-            self._transmitters.write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
-
-            self.remove_oracles(n - 1_usize)
         }
 
-        // TODO: measure gas, then rewrite (add_oracles and remove_oracles) using pop_front to see gas costs
         fn add_oracles(
             ref self: ContractState,
             oracles: @Array<OracleConfig>,
@@ -651,33 +651,36 @@ mod Aggregator {
             len: usize,
             latest_round_id: u128
         ) {
-            if len == 0_usize {
-                self._oracles_len.write(index);
-                return ();
-            }
-
-            let oracle = oracles.at(index);
-
             // NOTE: index should start with 1 here because storage is 0-initialized.
             // That way signers(pkey) => 0 indicates "not present"
-            let index = index + 1_usize;
+            let mut index = 1;
+            let mut span = oracles.span();
+            loop {
+                match span.pop_front() {
+                    Option::Some(oracle) => {
+                        // check for duplicates
+                        let existing_signer = self._signers.read(*oracle.signer);
+                        assert(existing_signer == 0_usize, 'repeated signer');
 
-            // check for duplicates
-            let existing_signer = self._signers.read(*oracle.signer);
-            assert(existing_signer == 0_usize, 'repeated signer');
+                        let existing_transmitter = self._transmitters.read(*oracle.transmitter);
+                        assert(existing_transmitter.index == 0_usize, 'repeated transmitter');
 
-            let existing_transmitter = self._transmitters.read(*oracle.transmitter);
-            assert(existing_transmitter.index == 0_usize, 'repeated transmitter');
+                        self._signers.write(*oracle.signer, index);
+                        self._signers_list.write(index, *oracle.signer);
 
-            self._signers.write(*oracle.signer, index);
-            self._signers_list.write(index, *oracle.signer);
+                        self._transmitters.write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
+                        self._transmitters_list.write(index, *oracle.transmitter);
 
-            self._transmitters.write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
-            self._transmitters_list.write(index, *oracle.transmitter);
-
-            self._reward_from_aggregator_round_id.write(index, latest_round_id);
-
-            self.add_oracles(oracles, index, len - 1_usize, latest_round_id)
+                        self._reward_from_aggregator_round_id.write(index, latest_round_id);
+                        
+                        index += 1;
+                    },
+                    Option::None(_) => {
+                        self._oracles_len.write(index);
+                        break ();
+                    }
+                };
+            }
         }
     }
 
