@@ -648,13 +648,16 @@ mod Aggregator {
             oracles: @Array<OracleConfig>,
             latest_round_id: u128
         ) {
-            // NOTE: index should start with 1 here because storage is 0-initialized.
-            // That way signers(pkey) => 0 indicates "not present"
-            let mut index = 1;
+            let mut index = 0;
             let mut span = oracles.span();
             loop {
                 match span.pop_front() {
                     Option::Some(oracle) => {
+                        // NOTE: index should start with 1 here because storage is 0-initialized.
+                        // That way signers(pkey) => 0 indicates "not present"
+                        // This is why we increment first, before using the index
+                        index += 1;
+
                         // check for duplicates
                         let existing_signer = self._signers.read(*oracle.signer);
                         assert(existing_signer == 0_usize, 'repeated signer');
@@ -669,8 +672,6 @@ mod Aggregator {
                         self._transmitters_list.write(index, *oracle.transmitter);
 
                         self._reward_from_aggregator_round_id.write(index, latest_round_id);
-                        
-                        index += 1;
                     },
                     Option::None(_) => {
                         self._oracles_len.write(index);
