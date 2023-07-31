@@ -1170,7 +1170,7 @@ mod Aggregator {
                 }
                 let transmitter = self._transmitters_list.read(index);
                 let oracle = self._transmitters.read(transmitter);
-                assert(oracle.index != 0_usize, 'undefined oracle'); // 0 == undefined
+                assert(oracle.index != 0_usize, index.into()); // 0 == undefined
 
                 let from_round_id = self._reward_from_aggregator_round_id.read(oracle.index);
                 let rounds = latest_round_id - from_round_id;
