@@ -815,8 +815,8 @@ mod Aggregator {
         self._transmitters.write(caller, oracle);
     }
 
-    #[view]
-    fn latest_transmission_details(self: ContractState) -> (felt252, u64, u128, u64) {
+    #[external(v0)]
+    fn latest_transmission_details(self: @ContractState) -> (felt252, u64, u128, u64) {
         let config_digest = self._latest_config_digest.read();
         let latest_round_id = self._latest_aggregator_round_id.read();
         let epoch_and_round = self._latest_epoch_and_round.read();
