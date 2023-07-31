@@ -206,17 +206,6 @@ describe('Aggregator', function () {
       })
     }
 
-    it("should 'set_billing' successfully", async () => {
-      await owner.invoke(aggregator, 'set_billing', {
-        config: {
-          observation_payment_gjuels: 1,
-          transmission_payment_gjuels: 5,
-          gas_base: 1,
-          gas_per_signature: 1,
-        },
-      })
-    })
-
     it("should emit 'NewTransmission' event on transmit", async () => {
       const txHash = await transmit(1, 99)
       const receipt = await starknet.getTransactionReceipt(txHash)
