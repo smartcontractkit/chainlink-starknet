@@ -550,8 +550,7 @@ mod Aggregator {
 
             let latest_round_id = self._latest_aggregator_round_id.read();
 
-            let oracles_len = oracles.len(); // work around variable move issue
-            self.add_oracles(@oracles, 0_usize, oracles_len, latest_round_id);
+            self.add_oracles(@oracles, latest_round_id);
 
             self._f.write(f);
             let block_num = starknet::info::get_block_info().unbox().block_number;
@@ -647,8 +646,6 @@ mod Aggregator {
         fn add_oracles(
             ref self: ContractState,
             oracles: @Array<OracleConfig>,
-            index: usize,
-            len: usize,
             latest_round_id: u128
         ) {
             // NOTE: index should start with 1 here because storage is 0-initialized.
