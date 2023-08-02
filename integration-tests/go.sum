@@ -1330,13 +1330,13 @@ github.com/slack-go/slack v0.12.2/go.mod h1:hlGi5oXA+Gt+yWTPP0plCdRKmjsDxecdHxYQ
 github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704 h1:T3lFWumvbfM1u/etVq42Afwq/jtNSBSOA8n5jntnNPo=
 github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
 github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20230525203711-20bed74ac906 h1:u7Lw7oqLEjADlJPJQnzlCLNSbj038QttaKY0lCa3V78=
-github.com/smartcontractkit/chainlink-env v0.35.0 h1:bjF+OOqWJUEIGmoiOZ6k1D4q6J6S/MqD269m37u0Ub8=
-github.com/smartcontractkit/chainlink-env v0.35.0/go.mod h1:hMOkTDW5k0C5B5lup1+xpPiZQPkq84YGLuFDVdTKU7A=
+github.com/smartcontractkit/chainlink-env v0.36.1-0.20230802063028-a432269a7384 h1:AGEK80chNqkA9VouRtxkHZPG/WDrNGfpR/P7NyhRyYA=
+github.com/smartcontractkit/chainlink-env v0.36.1-0.20230802063028-a432269a7384/go.mod h1:NbRExHmJGnKSYXmvNuJx5VErSx26GtE1AEN/CRzYOg8=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815 h1:X8RMerGDjQKoEv7/jfh27egjye6yKmXBIf3iqwBLxsI=
 github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815/go.mod h1:MfZBUifutkv3aK7abyw5YmTJbqt8iFwcQDFikrxC/uI=
 github.com/smartcontractkit/chainlink-solana v1.0.3-0.20230612131011-369bfb503592 h1:3Ul/LkULxrolCVguHUFnWJamgUDsSGISlm/DzclstmE=
-github.com/smartcontractkit/chainlink-testing-framework v1.14.0 h1:XJSE2xnXCij1Pdnykg1YUeFwfuaDQmpiMHQmygf2xYk=
-github.com/smartcontractkit/chainlink-testing-framework v1.14.0/go.mod h1:Wio/JS9GuEAWOI0k46sUs4+/wLMZnZKz9IwCpdV/miY=
+github.com/smartcontractkit/chainlink-testing-framework v1.11.8 h1:OIENwV//X8+IMUxWVDDoTxqrVjtutHX1uv7gq7kJsNQ=
+github.com/smartcontractkit/chainlink-testing-framework v1.11.8/go.mod h1:yPCQgZEkKK56mOAnsvSsnMnnT+3I6sAWJVxG9t3iRgQ=
 github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230713025544-29b418df4ded h1:ByQpagkr0ne7Zy6ruoZcmtTqBopAsInk1BJwaT3eQrE=
 github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230713025544-29b418df4ded/go.mod h1:KCQ3I8BDGMMsJWACIYpqEANG1ExCQ3mgxthqmZePMoc=
 github.com/smartcontractkit/chainlink/v2 v2.2.1-0.20230713025544-29b418df4ded h1:ohu+8roGude0mrwE+hAa45hSx8PD9YWrn2f95aDV2I8=

@@ -6,16 +6,16 @@ require (
 	github.com/rs/zerolog v1.29.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-env v0.35.0
+	github.com/smartcontractkit/chainlink-env v0.36.1-0.20230802063028-a432269a7384
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20230622060316-7ce48476dd7d
-	github.com/smartcontractkit/chainlink-testing-framework v1.14.0
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20230727062727-a4de5195c8f9
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230713025544-29b418df4ded
 	github.com/smartcontractkit/chainlink/v2 v2.2.1-0.20230713025544-29b418df4ded
 )
 
 require (
+	github.com/smartcontractkit/chainlink-testing-framework v1.11.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 )
