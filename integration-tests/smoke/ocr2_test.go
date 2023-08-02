@@ -23,10 +23,9 @@ func init() {
 }
 
 var (
-	err           error
-	testState     *common.Test
-	decimals      = 9
-	mockServerVal = 900000000
+	err       error
+	testState *common.Test
+	decimals  = 9
 )
 
 func TestOCRBasic(t *testing.T) {
@@ -51,7 +50,7 @@ func TestOCRBasic(t *testing.T) {
 	if !testState.Common.Testnet {
 		testState.Devnet.AutoLoadState(testState.OCR2Client, testState.OCRAddr)
 	}
-	testState.SetUpNodes(mockServerVal)
+	testState.SetUpNodes()
 
 	err = testState.ValidateRounds(10, false)
 	require.NoError(t, err, "Validating round should not fail")
