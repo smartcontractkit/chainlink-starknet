@@ -102,7 +102,7 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230606234201-cca3103bf8a6 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20230606215712-82b910bef5c1 // indirect
 	github.com/spf13/cobra v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
