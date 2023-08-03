@@ -5,9 +5,9 @@ go 1.20
 require (
 	github.com/prometheus/client_golang v1.15.0
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230803135212-d96fd6cc63ea
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
-	github.com/smartcontractkit/libocr v0.0.0-20230606215712-82b910bef5c1
+	github.com/smartcontractkit/libocr v0.0.0-20230802221916-2271752fa829
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/multierr v1.11.0
 )
