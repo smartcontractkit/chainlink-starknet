@@ -264,7 +264,7 @@ build-cairo-contracts:
 
 .PHONY: test-cairo-contracts
 test-cairo-contracts:
-	cd contracts && scarb run test
+	cd contracts && scarb test
 
 # TODO: this script needs to be replaced with a predefined K8s enviroment
 .PHONY: env-devnet-hardhat
