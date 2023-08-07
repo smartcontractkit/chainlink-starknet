@@ -637,16 +637,16 @@ mod Aggregator {
                 self._signers.write(signer, 0_usize);
 
                 let transmitter = self._transmitters_list.read(index);
-                self._transmitters.write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
-                
+                self
+                    ._transmitters
+                    .write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
+
                 index -= 1;
             }
         }
 
         fn add_oracles(
-            ref self: ContractState,
-            oracles: @Array<OracleConfig>,
-            latest_round_id: u128
+            ref self: ContractState, oracles: @Array<OracleConfig>, latest_round_id: u128
         ) {
             let mut index = 0;
             let mut span = oracles.span();
@@ -668,7 +668,9 @@ mod Aggregator {
                         self._signers.write(*oracle.signer, index);
                         self._signers_list.write(index, *oracle.signer);
 
-                        self._transmitters.write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
+                        self
+                            ._transmitters
+                            .write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
                         self._transmitters_list.write(index, *oracle.transmitter);
 
                         self._reward_from_aggregator_round_id.write(index, latest_round_id);
