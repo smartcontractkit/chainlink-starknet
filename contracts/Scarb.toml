@@ -13,7 +13,7 @@ test = "cairo-test --starknet ."
 # Note: currently testing doesn't work with dependencies
 [dependencies]
 starknet = ">=1.0.0"
-# quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "495ed8a" } # latest cairo-2 branch
 
 [[target.starknet-contract]]
 sierra = true

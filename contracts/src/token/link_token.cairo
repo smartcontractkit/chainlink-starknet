@@ -17,7 +17,8 @@ mod LinkToken {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
-    use chainlink::libraries::token::erc20::{ERC20, IERC20};
+    use openzeppelin::token::erc20::ERC20;
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::erc677::ERC677;
     use chainlink::libraries::ownable::{Ownable, IOwnable};
     use chainlink::libraries::upgradeable::Upgradeable;
