@@ -75,7 +75,7 @@ fn test_ownable() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn test_access_control() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
@@ -135,7 +135,7 @@ fn test_query_latest_round_data_without_access() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn test_propose_new_aggregator() {
     let (owner, mockAggregatorAddr1, mockAggregator1, mockAggregatorAddr2, mockAggregator2) =
         setup();
@@ -164,7 +164,7 @@ fn test_propose_new_aggregator() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn test_confirm_new_aggregator() {
     let (owner, mockAggregatorAddr1, mockAggregator1, mockAggregatorAddr2, mockAggregator2) =
         setup();
