@@ -12,7 +12,7 @@ trait IERC677Receiver<TContractState> {
 #[starknet::contract]
 mod ERC677 {
     use starknet::ContractAddress;
-    use chainlink::libraries::token::erc20::ERC20;
+    use openzeppelin::token::erc20::ERC20;
     use array::ArrayTrait;
     use array::SpanTrait;
     use clone::Clone;

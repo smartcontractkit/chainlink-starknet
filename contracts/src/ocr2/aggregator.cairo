@@ -199,7 +199,7 @@ mod Aggregator {
     use chainlink::libraries::access_control::AccessControl;
     use chainlink::libraries::upgradeable::Upgradeable;
 
-    use chainlink::libraries::token::erc20::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
     use chainlink::libraries::access_control::{
         IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
