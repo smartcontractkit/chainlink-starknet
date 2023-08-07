@@ -127,7 +127,7 @@ fn test_ownable() {
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn test_access_control() {
     let (account, _, _, _) = setup();
     // Deploy aggregator
