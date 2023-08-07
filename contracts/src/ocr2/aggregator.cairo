@@ -10,7 +10,7 @@ struct Round {
     updated_at: u64,
 }
 
-#[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+#[derive(Copy, Drop, Serde, starknet::Store)]
 struct Transmission {
     answer: u128,
     block_num: u64,
@@ -237,7 +237,7 @@ mod Aggregator {
         reimbursement: u128
     }
 
-    #[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Oracle {
         index: usize,
         // entire supply of LINK always fits into u96, so u128 is safe to use
@@ -932,7 +932,7 @@ mod Aggregator {
 
     // --- Billing Config
 
-    #[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     struct BillingConfig {
         observation_payment_gjuels: u32,
         transmission_payment_gjuels: u32,

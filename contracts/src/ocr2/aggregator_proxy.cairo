@@ -57,7 +57,7 @@ mod AggregatorProxy {
     const SHIFT: felt252 = 0x100000000000000000000000000000000;
     const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff;
 
-    #[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Phase {
         id: u128,
         aggregator: ContractAddress
