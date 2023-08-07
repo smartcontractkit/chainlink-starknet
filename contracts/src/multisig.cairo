@@ -30,7 +30,7 @@ fn _assert_unique_values_loop<
     _assert_unique_values_loop(a, len, j, k + 1_usize);
 }
 
-#[derive(Copy, Drop, Serde, storage_access::StorageAccess)]
+#[derive(Copy, Drop, Serde, starknet::Store)]
 struct Transaction {
     to: ContractAddress,
     function_selector: felt252,
@@ -82,7 +82,6 @@ mod Multisig {
     use starknet::ContractAddress;
     use starknet::ContractAddressIntoFelt252;
     use starknet::Felt252TryIntoContractAddress;
-    use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
     use starknet::call_contract_syscall;

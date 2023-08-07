@@ -14,7 +14,6 @@ mod SequencerUptimeFeed {
     use starknet::Felt252TryIntoEthAddress;
     use starknet::EthAddressZeroable;
     use starknet::ContractAddress;
-    use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
     use starknet::storage_read_syscall;
