@@ -99,6 +99,7 @@ jobs:
       TEST_SUITE: soak
       TEST_ARGS: -test.timeout ${{ github.event.inputs.ttl }}
       TEST_LOG_LEVEL: debug
+      INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
     permissions:
       checks: write
       pull-requests: write
