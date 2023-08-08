@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/smartcontractkit/chainlink-testing-framework v1.11.8 // indirect
+	github.com/smartcontractkit/chainlink-testing-framework v1.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 )
