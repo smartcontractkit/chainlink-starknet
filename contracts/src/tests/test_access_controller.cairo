@@ -13,6 +13,13 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::access_control::access_controller::AccessController;
+use chainlink::libraries::access_control::{
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+};
+
+fn STATE() -> AccessController::ContractState {
+    AccessController::contract_state_for_testing()
+}
 
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
@@ -25,8 +32,9 @@ fn setup() -> ContractAddress {
 #[should_panic(expected: ('Ownable: caller is not owner', ))]
 fn test_upgrade_not_owner() {
     let sender = setup();
+    let mut state = STATE();
 
-    AccessController::upgrade(class_hash_const::<2>());
+    AccessController::upgrade(ref state, class_hash_const::<2>());
 }
 
 #[test]
@@ -34,8 +42,8 @@ fn test_upgrade_not_owner() {
 fn test_access_control() {
     let owner = setup();
     // Deploy access controller
-    let mut calldata = ArrayTrait::new();
-    calldata.append(owner.into()); // owner
+    let calldata = array![owner.into(), // owner
+     ];
     let (accessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )
@@ -50,15 +58,6 @@ fn test_access_control() {
 // but this test does not check for that.
 //
 
-#[abi]
-trait IAccessController {
-    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool;
-    fn add_access(user: ContractAddress);
-    fn remove_access(user: ContractAddress);
-    fn enable_access_check();
-    fn disable_access_check();
-}
-
 fn should_implement_access_control(contract_addr: ContractAddress, owner: ContractAddress) {
     let contract = IAccessControllerDispatcher { contract_address: contract_addr };
     let acc2: ContractAddress = contract_address_const::<2222987765>();
@@ -66,21 +65,21 @@ fn should_implement_access_control(contract_addr: ContractAddress, owner: Contra
     set_contract_address(owner); // required to call contract as owner
 
     // access check is enabled by default
-    assert(!contract.has_access(acc2, ArrayTrait::new()), 'should not have access');
+    assert(!contract.has_access(acc2, array![]), 'should not have access');
 
     // disable access check
     contract.disable_access_check();
-    assert(contract.has_access(acc2, ArrayTrait::new()), 'should have access');
+    assert(contract.has_access(acc2, array![]), 'should have access');
 
     // enable access check
     contract.enable_access_check();
-    assert(!contract.has_access(acc2, ArrayTrait::new()), 'should not have access');
+    assert(!contract.has_access(acc2, array![]), 'should not have access');
 
     // add_access for acc2
     contract.add_access(acc2);
-    assert(contract.has_access(acc2, ArrayTrait::new()), 'should have access');
+    assert(contract.has_access(acc2, array![]), 'should have access');
 
     // remove_access for acc2
     contract.remove_access(acc2);
-    assert(!contract.has_access(acc2, ArrayTrait::new()), 'should not have access');
+    assert(!contract.has_access(acc2, array![]), 'should not have access');
 }

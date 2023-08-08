@@ -1,4 +1,3 @@
-import { constants, encode, num } from 'starknet'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
 

@@ -139,18 +139,14 @@ format-go-mod-tidy:
 
 .PHONY: format-cairo
 format-cairo:
-	find ./contracts/src -name "*.cairo" -type f \
-		-exec cairo-format -i {} +
-	find ./examples -name "*.cairo" -type f \
-		-exec cairo-format -i {} +
+	cairo-format -i ./contracts/src/**/*.cairo
+	cairo-format -i ./examples/**/*.cairo
 
 .PHONY: format-cairo-check
 format-cairo-check:
-	find ./contracts/src -name "*.cairo" -type f \
-		-exec cairo-format -c {} +
+	cairo-format -c ./contracts/src/**/*.cairo
 	# TODO: re-enable once examples are rewritten
-	# find ./examples -name "*.cairo" -type f \
-	# 	-exec cairo-format -c {} +
+	# cairo-format -c ./examples/**/*.cairo
 
 .PHONY: format-ts
 format-ts:
@@ -268,7 +264,7 @@ build-cairo-contracts:
 
 .PHONY: test-cairo-contracts
 test-cairo-contracts:
-	cd contracts && scarb run test
+	cd contracts && scarb test
 
 # TODO: this script needs to be replaced with a predefined K8s enviroment
 .PHONY: env-devnet-hardhat

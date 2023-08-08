@@ -1,28 +1,40 @@
-#[contract]
+use starknet::ContractAddress;
+#[starknet::interface]
+trait MockValidReceiver<TContractState> {
+    fn verify(self: @TContractState) -> ContractAddress;
+}
+
+#[starknet::contract]
 mod ValidReceiver {
     use starknet::ContractAddress;
     use array::ArrayTrait;
+    use chainlink::libraries::token::erc677::IERC677Receiver;
 
-
+    #[storage]
     struct Storage {
         _sender: ContractAddress, 
     }
 
     #[constructor]
-    fn constructor() {}
+    fn constructor(ref self: ContractState) {}
 
-    #[external]
-    fn on_token_transfer(sender: ContractAddress, value: u256, data: Array<felt252>) {
-        _sender::write(sender);
+    #[external(v0)]
+    impl ERC677Receiver of IERC677Receiver<ContractState> {
+        fn on_token_transfer(
+            ref self: ContractState, sender: ContractAddress, value: u256, data: Array<felt252>
+        ) {
+            self._sender.write(sender);
+        }
+
+        fn supports_interface(ref self: ContractState, interface_id: u32) -> bool {
+            true
+        }
     }
 
-    #[external]
-    fn supports_interface(interface_id: u32) -> bool {
-        true
-    }
-
-    #[view]
-    fn verify() -> ContractAddress {
-        _sender::read()
+    #[external(v0)]
+    impl ValidReceiver of super::MockValidReceiver<ContractState> {
+        fn verify(self: @ContractState) -> ContractAddress {
+            self._sender.read()
+        }
     }
 }

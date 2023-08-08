@@ -1,24 +1,28 @@
 use chainlink::ocr2::aggregator::Round;
+use chainlink::ocr2::aggregator::{IAggregator, IAggregatorDispatcher, IAggregatorDispatcherTrait};
+use starknet::ContractAddress;
 
-trait IAggregatorProxy {
-    fn latest_round_data() -> Round;
-    fn round_data(round_id: felt252) -> Round;
-    fn description() -> felt252;
-    fn decimals() -> u8;
-    fn type_and_version() -> felt252;
+// TODO: use a generic param for the round_id?
+#[starknet::interface]
+trait IAggregatorProxy<TContractState> {
+    fn latest_round_data(self: @TContractState) -> Round;
+    fn round_data(self: @TContractState, round_id: felt252) -> Round;
+    fn description(self: @TContractState) -> felt252;
+    fn decimals(self: @TContractState) -> u8;
+    fn type_and_version(self: @TContractState) -> felt252;
 }
 
-// TODO: is it possible not to duplicate this trait when we require the abi attribute?
-#[abi]
-trait IAggregator {
-    fn latest_round_data() -> Round;
-    fn round_data(round_id: u128) -> Round;
-    fn description() -> felt252;
-    fn decimals() -> u8;
-    fn type_and_version() -> felt252;
+#[starknet::interface]
+trait IAggregatorProxyInternal<TContractState> {
+    fn propose_aggregator(ref self: TContractState, address: ContractAddress);
+    fn confirm_aggregator(ref self: TContractState, address: ContractAddress);
+    fn proposed_latest_round_data(self: @TContractState) -> Round;
+    fn proposed_round_data(self: @TContractState, round_id: felt252) -> Round;
+    fn aggregator(self: @TContractState) -> ContractAddress;
+    fn phase_id(self: @TContractState) -> u128;
 }
 
-#[contract]
+#[starknet::contract]
 mod AggregatorProxy {
     use super::IAggregatorProxy;
     use super::IAggregatorDispatcher;
@@ -34,7 +38,6 @@ mod AggregatorProxy {
     use starknet::ContractAddressIntoFelt252;
     use starknet::Felt252TryIntoContractAddress;
     use integer::Felt252TryIntoU128;
-    use starknet::StorageAccess;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
     use integer::U128IntoFelt252;
@@ -46,52 +49,21 @@ mod AggregatorProxy {
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
-    use chainlink::libraries::ownable::Ownable;
-    use chainlink::libraries::access_control::AccessControl;
+    use chainlink::libraries::ownable::{Ownable, IOwnable};
+    use chainlink::libraries::access_control::{AccessControl, IAccessController};
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::Upgradeable;
 
-    const SHIFT: felt252 = 0x100000000000000000000000000000000_felt252;
-    const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff_felt252;
+    const SHIFT: felt252 = 0x100000000000000000000000000000000;
+    const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff;
 
-    #[derive(Copy, Drop, Serde)]
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Phase {
         id: u128,
         aggregator: ContractAddress
     }
 
-    impl PhaseStorageAccess of StorageAccess<Phase> {
-        fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult::<Phase> {
-            Result::Ok(
-                Phase {
-                    id: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 0_u8)
-                    )?
-                        .try_into()
-                        .unwrap(),
-                    aggregator: storage_read_syscall(
-                        address_domain, storage_address_from_base_and_offset(base, 1_u8)
-                    )?
-                        .try_into()
-                        .unwrap(),
-                }
-            )
-        }
-
-        fn write(
-            address_domain: u32, base: StorageBaseAddress, value: Phase
-        ) -> SyscallResult::<()> {
-            storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 0_u8), value.id.into()
-            )?;
-            storage_write_syscall(
-                address_domain,
-                storage_address_from_base_and_offset(base, 1_u8),
-                value.aggregator.into()
-            )
-        }
-    }
-
+    #[storage]
     struct Storage {
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
@@ -104,10 +76,11 @@ mod AggregatorProxy {
     #[event]
     fn AggregatorConfirmed(previous: ContractAddress, latest: ContractAddress) {}
 
-    impl AggregatorProxy of IAggregatorProxy {
-        fn latest_round_data() -> Round {
-            _require_read_access();
-            let phase = _current_phase::read();
+    #[external(v0)]
+    impl AggregatorProxyImpl of IAggregatorProxy<ContractState> {
+        fn latest_round_data(self: @ContractState) -> Round {
+            self._require_read_access();
+            let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             let round = aggregator.latest_round_data();
             Round {
@@ -118,10 +91,10 @@ mod AggregatorProxy {
                 updated_at: round.updated_at,
             }
         }
-        fn round_data(round_id: felt252) -> Round {
-            _require_read_access();
+        fn round_data(self: @ContractState, round_id: felt252) -> Round {
+            self._require_read_access();
             let (phase_id, round_id) = split_felt(round_id);
-            let address = _phases::read(phase_id);
+            let address = self._phases.read(phase_id);
             assert(!address.is_zero(), 'aggregator address is 0');
 
             let aggregator = IAggregatorDispatcher { contract_address: address };
@@ -135,194 +108,186 @@ mod AggregatorProxy {
                 updated_at: round.updated_at,
             }
         }
-        fn description() -> felt252 {
-            _require_read_access();
-            let phase = _current_phase::read();
+        fn description(self: @ContractState) -> felt252 {
+            self._require_read_access();
+            let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.description()
         }
 
-        fn decimals() -> u8 {
-            _require_read_access();
-            let phase = _current_phase::read();
+        fn decimals(self: @ContractState) -> u8 {
+            self._require_read_access();
+            let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.decimals()
         }
 
-        fn type_and_version() -> felt252 {
-            let phase = _current_phase::read();
+        fn type_and_version(self: @ContractState) -> felt252 {
+            let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.type_and_version()
         }
     }
 
     #[constructor]
-    fn constructor(owner: ContractAddress, address: ContractAddress) {
-        Ownable::initializer(owner);
-        AccessControl::initializer();
-        _set_aggregator(address);
+    fn constructor(ref self: ContractState, owner: ContractAddress, address: ContractAddress) {
+        // TODO: ownable and access control need to share owners and update when needed
+        let mut ownable = Ownable::unsafe_new_contract_state();
+        Ownable::constructor(ref ownable, owner);
+        let mut access_control = AccessControl::unsafe_new_contract_state();
+        AccessControl::constructor(ref access_control);
+        self._set_aggregator(address);
     }
 
     // --- Ownership ---
 
-    #[view]
-    fn owner() -> ContractAddress {
-        Ownable::owner()
-    }
+    #[external(v0)]
+    impl OwnableImpl of IOwnable<ContractState> {
+        fn owner(self: @ContractState) -> ContractAddress {
+            let state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::owner(@state)
+        }
 
-    #[view]
-    fn proposed_owner() -> ContractAddress {
-        Ownable::proposed_owner()
-    }
+        fn proposed_owner(self: @ContractState) -> ContractAddress {
+            let state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::proposed_owner(@state)
+        }
 
-    #[external]
-    fn transfer_ownership(new_owner: ContractAddress) {
-        Ownable::transfer_ownership(new_owner)
-    }
+        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
+        }
 
-    #[external]
-    fn accept_ownership() {
-        Ownable::accept_ownership()
-    }
+        fn accept_ownership(ref self: ContractState) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::accept_ownership(ref state)
+        }
 
-    #[external]
-    fn renounce_ownership() {
-        Ownable::renounce_ownership()
+        fn renounce_ownership(ref self: ContractState) {
+            let mut state = Ownable::unsafe_new_contract_state();
+            Ownable::OwnableImpl::renounce_ownership(ref state)
+        }
     }
 
     // -- Upgradeable -- 
 
-    #[external]
-    fn upgrade(new_impl: ClassHash) {
-        Ownable::assert_only_owner();
+    #[external(v0)]
+    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+        let ownable = Ownable::unsafe_new_contract_state();
+        Ownable::assert_only_owner(@ownable);
         Upgradeable::upgrade(new_impl)
     }
 
     // -- Access Control --
 
-    #[view]
-    fn has_access(user: ContractAddress, data: Array<felt252>) -> bool {
-        AccessControl::has_access(user, data)
-    }
+    #[external(v0)]
+    impl AccessControllerImpl of IAccessController<ContractState> {
+        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
+            let state = AccessControl::unsafe_new_contract_state();
+            AccessControl::has_access(@state, user, data)
+        }
 
-    #[external]
-    fn add_access(user: ContractAddress) {
-        Ownable::assert_only_owner();
-        AccessControl::add_access(user)
-    }
+        fn add_access(ref self: ContractState, user: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::add_access(ref state, user)
+        }
 
-    #[external]
-    fn remove_access(user: ContractAddress) {
-        Ownable::assert_only_owner();
-        AccessControl::remove_access(user)
-    }
+        fn remove_access(ref self: ContractState, user: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::remove_access(ref state, user)
+        }
 
-    #[external]
-    fn enable_access_check() {
-        Ownable::assert_only_owner();
-        AccessControl::enable_access_check()
-    }
+        fn enable_access_check(ref self: ContractState) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::enable_access_check(ref state)
+        }
 
-    #[external]
-    fn disable_access_check() {
-        Ownable::assert_only_owner();
-        AccessControl::disable_access_check()
+        fn disable_access_check(ref self: ContractState) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            let mut state = AccessControl::unsafe_new_contract_state();
+            AccessControl::disable_access_check(ref state)
+        }
     }
 
     //
 
-    #[external]
-    fn propose_aggregator(address: ContractAddress) {
-        Ownable::assert_only_owner();
-        assert(!address.is_zero(), 'proposed address is 0');
-        _proposed_aggregator::write(address);
+    #[external(v0)]
+    impl AggregatorProxyInternal of super::IAggregatorProxyInternal<ContractState> {
+        fn propose_aggregator(ref self: ContractState, address: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            assert(!address.is_zero(), 'proposed address is 0');
+            self._proposed_aggregator.write(address);
 
-        let phase = _current_phase::read();
-        AggregatorProposed(phase.aggregator, address);
-    }
+            let phase = self._current_phase.read();
+            AggregatorProposed(phase.aggregator, address);
+        }
 
-    #[external]
-    fn confirm_aggregator(address: ContractAddress) {
-        Ownable::assert_only_owner();
-        assert(!address.is_zero(), 'confirm address is 0');
-        let phase = _current_phase::read();
-        let previous = phase.aggregator;
+        fn confirm_aggregator(ref self: ContractState, address: ContractAddress) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            assert(!address.is_zero(), 'confirm address is 0');
+            let phase = self._current_phase.read();
+            let previous = phase.aggregator;
 
-        let proposed_aggregator = _proposed_aggregator::read();
-        assert(address == proposed_aggregator, 'does not match proposed address');
-        _proposed_aggregator::write(starknet::contract_address_const::<0>());
-        _set_aggregator(proposed_aggregator);
+            let proposed_aggregator = self._proposed_aggregator.read();
+            assert(address == proposed_aggregator, 'does not match proposed address');
+            self._proposed_aggregator.write(starknet::contract_address_const::<0>());
+            self._set_aggregator(proposed_aggregator);
 
-        AggregatorConfirmed(previous, address);
-    }
+            AggregatorConfirmed(previous, address);
+        }
 
-    #[view]
-    fn proposed_latest_round_data() -> Round {
-        _require_read_access();
-        let address = _proposed_aggregator::read();
-        let aggregator = IAggregatorDispatcher { contract_address: address };
-        aggregator.latest_round_data()
-    }
+        fn proposed_latest_round_data(self: @ContractState) -> Round {
+            self._require_read_access();
+            let address = self._proposed_aggregator.read();
+            let aggregator = IAggregatorDispatcher { contract_address: address };
+            aggregator.latest_round_data()
+        }
 
-    #[view]
-    fn proposed_round_data(round_id: felt252) -> Round {
-        _require_read_access();
-        let address = _proposed_aggregator::read();
-        let round_id128: u128 = round_id.try_into().unwrap();
-        let aggregator = IAggregatorDispatcher { contract_address: address };
-        aggregator.round_data(round_id128)
-    }
+        fn proposed_round_data(self: @ContractState, round_id: felt252) -> Round {
+            self._require_read_access();
+            let address = self._proposed_aggregator.read();
+            let round_id128: u128 = round_id.try_into().unwrap();
+            let aggregator = IAggregatorDispatcher { contract_address: address };
+            aggregator.round_data(round_id128)
+        }
 
-    #[view]
-    fn aggregator() -> ContractAddress {
-        _require_read_access();
-        let phase = _current_phase::read();
-        phase.aggregator
-    }
+        fn aggregator(self: @ContractState) -> ContractAddress {
+            self._require_read_access();
+            let phase = self._current_phase.read();
+            phase.aggregator
+        }
 
-    #[view]
-    fn phase_id() -> u128 {
-        _require_read_access();
-        let phase = _current_phase::read();
-        phase.id
-    }
-
-    #[view]
-    fn latest_round_data() -> Round {
-        AggregatorProxy::latest_round_data()
-    }
-
-    #[view]
-    fn round_data(round_id: felt252) -> Round {
-        AggregatorProxy::round_data(round_id)
-    }
-
-    #[view]
-    fn description() -> felt252 {
-        AggregatorProxy::description()
-    }
-
-    #[view]
-    fn decimals() -> u8 {
-        AggregatorProxy::decimals()
-    }
-
-    #[view]
-    fn type_and_version() -> felt252 {
-        AggregatorProxy::type_and_version()
+        fn phase_id(self: @ContractState) -> u128 {
+            self._require_read_access();
+            let phase = self._current_phase.read();
+            phase.id
+        }
     }
 
     /// Internals
 
-    fn _set_aggregator(address: ContractAddress) {
-        let phase = _current_phase::read();
-        let new_phase_id = phase.id + 1_u128;
-        _current_phase::write(Phase { id: new_phase_id, aggregator: address });
-        _phases::write(new_phase_id, address);
-    }
+    #[generate_trait]
+    impl StorageImpl of StorageTrait {
+        fn _set_aggregator(ref self: ContractState, address: ContractAddress) {
+            let phase = self._current_phase.read();
+            let new_phase_id = phase.id + 1_u128;
+            self._current_phase.write(Phase { id: new_phase_id, aggregator: address });
+            self._phases.write(new_phase_id, address);
+        }
 
-    fn _require_read_access() {
-        let caller = starknet::info::get_caller_address();
-        AccessControl::check_read_access(caller);
+        fn _require_read_access(self: @ContractState) {
+            let caller = starknet::info::get_caller_address();
+            let state = AccessControl::unsafe_new_contract_state();
+            AccessControl::check_read_access(@state, caller);
+        }
     }
 }

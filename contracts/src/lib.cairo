@@ -6,7 +6,6 @@ mod utils;
 mod emergency;
 mod multisig;
 mod token;
-mod account;
 mod access_control;
 
 #[cfg(test)]

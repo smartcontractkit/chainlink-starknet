@@ -122,6 +122,15 @@ ListenAddresses = ['0.0.0.0:6690']
 NODE_URL=<rpc_url>
 ACCOUNT=<account>
 PRIVATE_KEY=<private_key>
+CHAINLINK_ENV_USER=John;
+CHAINLINK_IMAGE={AWS_OIDC}.dkr.ecr.{AWS_REGION}.amazonaws.com/chainlink;
+CHAINLINK_VERSION=develop;
+INTERNAL_DOCKER_REPO={AWS_OIDC}.dkr.ecr.{AWS_REGION}.amazonaws.com; # required for mock adapter
+L2_RPC_URL=https://alpha4.starknet.io; # testnet only
+NODE_COUNT=5;
+TEST_DURATION=70h; # for soak
+TEST_USE_ENV_VAR_CONFIG=true; # for soak
+TTL=72h # for soak
 ```
 
 1. Deploy link
