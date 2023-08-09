@@ -91,7 +91,7 @@ type Test struct {
 
 type ChainlinkClient struct {
 	NKeys          []client.NodeKeysBundle
-	ChainlinkNodes []*client.Chainlink
+	ChainlinkNodes []*client.ChainlinkK8sClient
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
 }
@@ -204,8 +204,13 @@ func (testState *Test) GetNodeKeys() []client.NodeKeysBundle {
 	return testState.Cc.NKeys
 }
 
-func (testState *Test) GetChainlinkNodes() []*client.Chainlink {
-	return testState.Cc.ChainlinkNodes
+func (testState *Test) GetChainlinkNodes() []*client.ChainlinkClient {
+	// retrieve client from K8s client
+	chainlinkNodes := []*client.ChainlinkClient{}
+	for i := range testState.Cc.ChainlinkNodes {
+		chainlinkNodes = append(chainlinkNodes, testState.Cc.ChainlinkNodes[i].ChainlinkClient)
+	}
+	return chainlinkNodes
 }
 
 func (testState *Test) GetDefaultPrivateKey() string {
