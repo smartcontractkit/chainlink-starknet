@@ -7,7 +7,7 @@ require (
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
 	github.com/smartcontractkit/chainlink-env v0.36.1-0.20230802063028-a432269a7384
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230808141159-4e20b0757f3a
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20230329050701-40e3b18bb026
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20230727062727-a4de5195c8f9
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20230713025544-29b418df4ded
@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/mwitkow/grpc-proxy v0.0.0-20230212185441-f345521cb9c9 // indirect
 	github.com/smartcontractkit/chainlink-testing-framework v1.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
@@ -279,7 +280,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20230606215712-82b910bef5c1 // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20230802221916-2271752fa829 // indirect
 	github.com/smartcontractkit/ocr2keepers v0.7.0 // indirect
 	github.com/smartcontractkit/ocr2vrf v0.0.0-20230616201444-d8b4222aff3c // indirect
 	github.com/smartcontractkit/sqlx v1.3.5-0.20210805004948-4be295aacbeb // indirect
@@ -387,6 +388,9 @@ replace (
 
 	// until merged upstream: https://github.com/hashicorp/go-plugin/pull/257
 	github.com/hashicorp/go-plugin => github.com/jmank88/go-plugin v0.0.0-20230604120638-7bb12ec27e75
+
+	// until merged upstream: https://github.com/mwitkow/grpc-proxy/pull/69
+	github.com/mwitkow/grpc-proxy => github.com/jmank88/grpc-proxy v0.0.0-20230731114312-86ed94c93231
 
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.14.0
 
