@@ -119,11 +119,18 @@ func getEnv(v string) string {
 }
 
 // CreateKeys Creates node keys and defines chain and nodes for each node
-func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBundle, []*client.Chainlink, error) {
-	ChainlinkNodes, err := client.ConnectChainlinkNodes(env)
+func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBundle, []*client.ChainlinkK8sClient, error) {
+	chainlinkK8Nodes, err := client.ConnectChainlinkNodes(env)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// extract client from k8s client
+	ChainlinkNodes := []*client.ChainlinkClient{}
+	for i := range chainlinkK8Nodes {
+		ChainlinkNodes = append(ChainlinkNodes, chainlinkK8Nodes[i].ChainlinkClient)
+	}
+
 	NKeys, _, err := client.CreateNodeKeysBundle(ChainlinkNodes, c.ChainName, c.ChainId)
 	if err != nil {
 		return nil, nil, err
@@ -146,7 +153,7 @@ func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBund
 			return nil, nil, err
 		}
 	}
-	return NKeys, ChainlinkNodes, nil
+	return NKeys, chainlinkK8Nodes, nil
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
