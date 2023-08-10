@@ -90,7 +90,7 @@ func New() *Common {
 	// Setting optional parameters
 	testDurationValue := getEnv("TEST_DURATION")
 	if testDurationValue != "" {
-		duration, err := time.ParseDuration(ttlValue)
+		duration, err := time.ParseDuration(testDurationValue)
 		if err != nil {
 			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
 		}
