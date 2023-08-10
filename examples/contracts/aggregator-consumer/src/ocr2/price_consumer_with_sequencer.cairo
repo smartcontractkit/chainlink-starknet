@@ -1,4 +1,3 @@
-
 #[contract]
 mod AggregatorPriceConsumerWithSequencer {
     use box::BoxTrait;
@@ -31,7 +30,7 @@ mod AggregatorPriceConsumerWithSequencer {
     #[view]
     fn get_latest_price() -> u128 {
         assert_sequencer_healthy();
-        let round = IAggregatorDispatcher{
+        let round = IAggregatorDispatcher {
             contract_address: _aggregator_address::read()
         }.latest_round_data();
         round.answer
@@ -39,7 +38,7 @@ mod AggregatorPriceConsumerWithSequencer {
 
     #[external]
     fn assert_sequencer_healthy() {
-        let round = IAggregatorDispatcher{
+        let round = IAggregatorDispatcher {
             contract_address: _uptime_feed_address::read()
         }.latest_round_data();
         let timestamp = starknet::info::get_block_info().unbox().block_timestamp;
@@ -58,8 +57,5 @@ mod AggregatorPriceConsumerWithSequencer {
             }
         }
     }
-
-
-
 }
 

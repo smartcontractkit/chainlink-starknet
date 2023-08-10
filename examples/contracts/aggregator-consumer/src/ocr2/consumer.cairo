@@ -1,4 +1,3 @@
-
 #[contract]
 mod AggregatorConsumer {
     use starknet::ContractAddress;
@@ -10,7 +9,7 @@ mod AggregatorConsumer {
     use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcherTrait;
 
     struct Storage {
-        _ocr_address: ContractAddress,
+        _ocr_address: ContractAddress, 
     }
 
     #[constructor]
@@ -20,16 +19,11 @@ mod AggregatorConsumer {
 
     #[view]
     fn read_latest_round() -> Round {
-        IAggregatorDispatcher { 
-            contract_address: _ocr_address::read() 
-        }.latest_round_data()
+        IAggregatorDispatcher { contract_address: _ocr_address::read() }.latest_round_data()
     }
 
     #[view]
     fn read_decimals() -> u8 {
-           IAggregatorDispatcher { 
-            contract_address: _ocr_address::read() 
-        }.decimals()
+        IAggregatorDispatcher { contract_address: _ocr_address::read() }.decimals()
     }
-
 }

@@ -1,4 +1,3 @@
-
 #[contract]
 mod ProxyConsumer {
     use zeroable::Zeroable;
@@ -28,25 +27,34 @@ mod ProxyConsumer {
             )?;
             let answer = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 1_u8)
-            )?.try_into().unwrap();
+            )?
+                .try_into()
+                .unwrap();
             let block_num = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 2_u8)
-            )?.try_into().unwrap();
+            )?
+                .try_into()
+                .unwrap();
             let started_at = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 3_u8)
-            )?.try_into().unwrap();
+            )?
+                .try_into()
+                .unwrap();
             let updated_at = storage_read_syscall(
                 address_domain, storage_address_from_base_and_offset(base, 4_u8)
-            )?.try_into().unwrap();
-            
+            )?
+                .try_into()
+                .unwrap();
 
-            Result::Ok(Round { 
-                round_id: round_id, 
-                answer: answer, 
-                block_num: block_num, 
-                started_at: started_at, 
-                updated_at: updated_at  
-            })
+            Result::Ok(
+                Round {
+                    round_id: round_id,
+                    answer: answer,
+                    block_num: block_num,
+                    started_at: started_at,
+                    updated_at: updated_at
+                }
+            )
         }
 
         fn write(
@@ -56,16 +64,24 @@ mod ProxyConsumer {
                 address_domain, storage_address_from_base_and_offset(base, 0_u8), value.round_id
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 1_u8), value.answer.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 1_u8),
+                value.answer.into()
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 2_u8), value.block_num.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 2_u8),
+                value.block_num.into()
             )?;
             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 3_u8), value.started_at.into()
+                address_domain,
+                storage_address_from_base_and_offset(base, 3_u8),
+                value.started_at.into()
             )?;
-             storage_write_syscall(
-                address_domain, storage_address_from_base_and_offset(base, 4_u8), value.updated_at.into()
+            storage_write_syscall(
+                address_domain,
+                storage_address_from_base_and_offset(base, 4_u8),
+                value.updated_at.into()
             )
         }
     }
@@ -80,11 +96,11 @@ mod ProxyConsumer {
         assert(!proxy_address.is_zero(), 'proxy address 0');
         _proxy_address::write(proxy_address);
         get_latest_round_data();
-    } 
+    }
 
     #[external]
     fn get_latest_round_data() -> Round {
-        let round = IAggregatorDispatcher{
+        let round = IAggregatorDispatcher {
             contract_address: _proxy_address::read()
         }.latest_round_data();
         _feed_data::write(round);
