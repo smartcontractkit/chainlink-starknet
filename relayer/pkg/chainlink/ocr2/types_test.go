@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func StringsToCaigoFelts(in []string) []*caigotypes.Felt {
-	out := make([]*caigotypes.Felt, len(in))
+func StringsToCaigoFelts(in []string) []caigotypes.Felt {
+	out := make([]caigotypes.Felt, len(in))
 	for i := 0; i < len(in); i++ {
 		out[i] = caigotypes.StrToFelt(in[i])
 	}

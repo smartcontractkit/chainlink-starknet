@@ -33,7 +33,7 @@ var (
 		"0x1",
 		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453",
 		"0x1",
-		"0x0",
+		"0x1",
 	}
 	configSetEventRaw = []string{
 		"0x0",
@@ -51,7 +51,7 @@ var (
 		"0x1",
 		"0x3",
 		"0x1",
-		"0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7",
+		"0xa",
 		"0x3b9aca00",
 		"0x2",
 		"0x2",
@@ -73,14 +73,16 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 	require.Equal(t, e.LatestTimestamp, time.Unix(1, 0))
 	require.Equal(t, e.Epoch, uint32(0))
 	require.Equal(t, e.Round, uint8(1))
-	require.Equal(t, e.Reimbursement, big.NewInt(0))
+	require.Equal(t, e.Reimbursement, big.NewInt(1))
 
 	require.Equal(t, e.JuelsPerFeeCoin, big.NewInt(1))
 	require.Equal(t, e.GasPrice, big.NewInt(1))
 
 	transmitterHex := "0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d"
 	require.Equal(t, len(transmitterHex), int(2+31.5*2)) // len('0x') + len(max_felt_len)
-	require.Equal(t, e.Transmitter, caigotypes.StrToFelt(transmitterHex))
+
+	expectedTransmitter := caigotypes.StrToFelt(transmitterHex)
+	require.Equal(t, e.Transmitter, expectedTransmitter)
 
 	require.Equal(t, e.Observers, []uint8{0, 1, 2, 3})
 	require.Equal(t, e.ObservationsLen, uint32(4))
@@ -115,19 +117,19 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 	require.Equal(t, e.Signers, signersExpected)
 
 	transmittersExpected := []types.Account{
-		"0x02c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
-		"0x02de61335d8f1caa7e9df54486f016ded83d0e02fde4c12280f4b898720b0e2b",
-		"0x02f14e18cc198dd5133c8a9aa92992fc1a462f703401716f402d0ee383b54faa",
-		"0x05c35686f78db31d9d896bb425b3fd99be19019f8aeaf0f7a8767867903341d4",
+		"0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
+		"0x2de61335d8f1caa7e9df54486f016ded83d0e02fde4c12280f4b898720b0e2b",
+		"0x2f14e18cc198dd5133c8a9aa92992fc1a462f703401716f402d0ee383b54faa",
+		"0x5c35686f78db31d9d896bb425b3fd99be19019f8aeaf0f7a8767867903341d4",
 	}
 	require.Equal(t, e.Transmitters, transmittersExpected)
 	require.Equal(t, len(e.Transmitters), oraclesLen)
 
 	require.Equal(t, e.F, uint8(1))
 
-	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromBigInt(
+	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
 		big.NewInt(medianreport.OnchainConfigVersion), // version
-		big.NewInt(-10),        // min
+		big.NewInt(10),         // min
 		big.NewInt(1000000000), // max
 	)
 	assert.NoError(t, err)

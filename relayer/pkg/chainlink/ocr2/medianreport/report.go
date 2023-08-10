@@ -1,6 +1,7 @@
 package medianreport
 
 import (
+	"fmt"
 	"math"
 	"math/big"
 	"sort"
@@ -34,6 +35,12 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 		return nil, errors.New("couldn't build report from empty attributed observations")
 	}
 
+	for _, o := range oo {
+		if o.Value.Sign() == -1 || o.JuelsPerFeeCoin.Sign() == -1 {
+			return nil, fmt.Errorf("starknet does not support negative values: value = (%v), fee = (%v)", o.Value, o.JuelsPerFeeCoin)
+		}
+	}
+
 	// preserve original array
 	oo = append([]median.ParsedAttributedObservation{}, oo...)
 	numFelt := caigotypes.BigToFelt(big.NewInt(int64(num)))
@@ -50,7 +57,6 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 		return oo[i].JuelsPerFeeCoin.Cmp(oo[j].JuelsPerFeeCoin) < 0
 	})
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
-	juelsPerFeeCoin = starknet.SignedBigToFelt(juelsPerFeeCoin) // converts negative bigInts to corresponding felt in bigInt form
 	juelsPerFeeCoinFelt := caigotypes.BigToFelt(juelsPerFeeCoin)
 
 	// TODO: source from observations
@@ -63,11 +69,10 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	})
 
 	var observers = make([]byte, starknet.FeltLength)
-	var observations []*caigotypes.Felt
+	var observations []caigotypes.Felt
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
-		obs := starknet.SignedBigToFelt(o.Value) // converts negative bigInts to corresponding felt in bigInt form
-		observations = append(observations, caigotypes.BigToFelt(obs))
+		observations = append(observations, caigotypes.BigToFelt(o.Value))
 	}
 
 	var report []byte
@@ -114,7 +119,11 @@ func (c ReportCodec) MedianFromReport(report types.Report) (*big.Int, error) {
 	for i := 0; i < n; i++ {
 		start := prefixSizeBytes + observationSizeBytes*i
 		end := start + observationSizeBytes
-		o := starknet.FeltToSignedBig(caigotypes.BytesToFelt(report[start:end]))
+		obv := caigotypes.BytesToFelt(report[start:end])
+		o, err := starknet.FeltToUnsignedBig(obv)
+		if err != nil {
+			return nil, errors.Wrap(err, "observation invalid")
+		}
 		oo = append(oo, o)
 	}
 

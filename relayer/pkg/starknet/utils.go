@@ -1,7 +1,6 @@
 package starknet
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -89,67 +88,39 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-// SignedBigToFelt wraps negative values correctly into felt
-func SignedBigToFelt(num *big.Int) *big.Int {
-	return new(big.Int).Mod(num, caigotypes.MaxFelt.Big())
-}
-
-// FeltToSigned unwraps felt into negative values
-func FeltToSignedBig(felt *caigotypes.Felt) (num *big.Int) {
+func FeltToUnsignedBig(felt caigotypes.Felt) (num *big.Int, err error) {
 	num = felt.Big()
-	prime := caigotypes.MaxFelt.Big()
-	half := new(big.Int).Div(prime, big.NewInt(2))
-	// if num > PRIME/2, then -PRIME to convert to negative value
-	if num.Cmp(half) > 0 {
-		return new(big.Int).Sub(num, prime)
+	if caigotypes.MaxFelt.Big().Cmp(num) == -1 {
+		return nil, fmt.Errorf("felt value is too large: %s", num)
 	}
-	return num
+	// will always return a non-negative value because it uses Bytes() behind the scenes
+	return num, nil
 }
 
-func HexToSignedBig(str string) (num *big.Int) {
+func HexToUnsignedBig(str string) (num *big.Int, err error) {
 	felt := caigotypes.StrToFelt(str)
-	return FeltToSignedBig(felt)
+	return FeltToUnsignedBig(felt)
 }
 
-func FeltsToBig(in []*caigotypes.Felt) (out []*big.Int) {
+func FeltsToBig(in []caigotypes.Felt) (out []*big.Int) {
 	for _, f := range in {
-		out = append(out, f.Int)
+		out = append(out, f.Big())
 	}
 
 	return out
 }
 
 // StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
-func StringsToFelt(in []string) (out []*caigotypes.Felt, _ error) {
+func StringsToFelt(in []string) (out []caigotypes.Felt, _ error) {
 	if in == nil {
 		return nil, errors.New("invalid: input value")
 	}
 
 	for _, f := range in {
-		felt := caigotypes.StrToFelt(f)
-		if felt == nil {
-			return nil, errors.New("invalid: string value")
-		}
-
-		out = append(out, felt)
+		out = append(out, caigotypes.StrToFelt(f))
 	}
 
 	return out, nil
-}
-
-// CompareAddress compares different hex starknet addresses with potentially different 0 padding
-func CompareAddress(a, b string) bool {
-	aBytes, err := caigotypes.HexToBytes(a)
-	if err != nil {
-		return false
-	}
-
-	bBytes, err := caigotypes.HexToBytes(b)
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(PadBytes(aBytes, 32), PadBytes(bBytes, 32))
 }
 
 /* Testing utils - do not use (XXX) outside testing context */

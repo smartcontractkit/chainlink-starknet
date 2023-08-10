@@ -11,14 +11,14 @@ import (
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
-	"github.com/smartcontractkit/caigo/gateway"
 	"gopkg.in/guregu/null.v4"
+
+	"github.com/smartcontractkit/caigo/gateway"
 
 	"github.com/smartcontractkit/chainlink-env/environment"
 	"github.com/smartcontractkit/chainlink-env/pkg/alias"
 	"github.com/smartcontractkit/chainlink-env/pkg/helm/chainlink"
-	"github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver"
-	mockservercfg "github.com/smartcontractkit/chainlink-env/pkg/helm/mockserver-cfg"
+	"github.com/smartcontractkit/chainlink-env/pkg/helm/mock-adapter"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
@@ -154,9 +154,9 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
-			RemoteIP:   cc.ChainlinkNodes[0].RemoteIP(),
-			RemotePort: c.P2PPort,
-			PeerID:     cc.NKeys[0].PeerID,
+			InternalIP:   cc.ChainlinkNodes[0].InternalIP(),
+			InternalPort: c.P2PPort,
+			PeerID:       cc.NKeys[0].PeerID,
 		},
 	}
 
@@ -236,7 +236,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 func (c *Common) Default(t *testing.T) {
 	c.K8Config = &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-	starknetUrl := fmt.Sprintf("http://%s:%d", serviceKeyL2, 5000)
+	starknetUrl := fmt.Sprintf("http://%s:%d/rpc", serviceKeyL2, 5000)
 	if c.Testnet {
 		starknetUrl = c.L2RPCUrl
 	}
@@ -267,7 +267,6 @@ ListenAddresses = ['0.0.0.0:6690']
 	}
 	c.Env = environment.New(c.K8Config).
 		AddHelm(devnet.New(nil)).
-		AddHelm(mockservercfg.New(nil)).
-		AddHelm(mockserver.New(nil)).
+		AddHelm(mock_adapter.New(nil)).
 		AddHelm(chainlink.New(0, c.ClConfig))
 }

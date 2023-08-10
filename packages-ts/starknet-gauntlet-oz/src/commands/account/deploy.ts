@@ -3,15 +3,17 @@ import {
   BeforeExecute,
   ExecuteCommandConfig,
   makeExecuteCommand,
+  isValidAddress,
 } from '@chainlink/starknet-gauntlet'
 import { ec } from 'starknet'
 import { CATEGORIES } from '../../lib/categories'
-import { accountContractLoader, CONTRACT_LIST, equalAddress } from '../../lib/contracts'
+import { accountContractLoader, CONTRACT_LIST } from '../../lib/contracts'
 
 type UserInput = {
   publicKey: string
   privateKey?: string
   salt?: number
+  classHash?: string
 }
 
 type ContractInput = [publicKey: string]
@@ -28,7 +30,15 @@ const makeUserInput = async (flags, _, env): Promise<UserInput> => {
     publicKey: pubkey,
     privateKey: (!flags.publicKey || !env.account) && generatedPK,
     salt,
+    classHash: flags.classHash,
   }
+}
+
+const validateClassHash = async (input) => {
+  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+    return true
+  }
+  throw new Error(`Invalid Class Hash: ${input.classHash}`)
 }
 
 const makeContractInput = async (input: UserInput): Promise<ContractInput> => {
@@ -75,12 +85,12 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   ux: {
     description: 'Deploys an OpenZeppelin Account contract',
     examples: [
-      `${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> <CONTRACT_ADDRESS>`,
+      `${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> --classHash=<CLASS_HASH> <CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [],
+  validations: [validateClassHash],
   loadContract: accountContractLoader,
   hooks: {
     beforeExecute,

@@ -1,4 +1,3 @@
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 import {
   InspectCommandConfig,
   IStarknetProvider,
@@ -23,7 +22,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   return {
     toCompare: null,
     result: {
-      balance: new BN(balance.res).toString(),
+      balance: BigInt(balance.res).toString(),
     },
   }
 }

@@ -2,13 +2,31 @@
 
 ## Account
 
+### Declare
+
+This declare a new account class hash onto the L2 layer.
+
+```bash
+yarn gauntlet argent_account:declare --network=testnet
+```
+
+Once it has been declared, you can use the class hash for a deployment (see Deploy command below)
+
 ### Deploy
 
-```
+```bash
 yarn gauntlet argent_account:deploy --network=<NETWORK>
 ```
 
+Optionally, you can deploy by referencing a previously deployed class hash
+
+```bash
+yarn gauntlet argent_account:deploy --classHash=<CLASS_HASH> --network=<NETWORK>
+```
+
 Note the contract address. The contract is not configured yet. A signer needs to be specified in it:
+
+
 
 ### Initialize
 

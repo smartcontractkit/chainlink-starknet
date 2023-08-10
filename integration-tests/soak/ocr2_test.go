@@ -15,11 +15,10 @@ import (
 )
 
 var (
-	keepAlive     bool
-	err           error
-	testState     *common.Test
-	decimals      = 9
-	mockServerVal = 900000000
+	keepAlive bool
+	err       error
+	testState *common.Test
+	decimals  = 9
 )
 
 func init() {
@@ -46,7 +45,6 @@ func TestOCRSoak(t *testing.T) {
 	if !testState.Common.Testnet {
 		testState.Devnet.AutoLoadState(testState.OCR2Client, testState.OCRAddr)
 	}
-	testState.SetUpNodes(mockServerVal)
 	err = testState.ValidateRounds(99999999, true)
 	require.NoError(t, err, "Validating round should not fail")
 	t.Cleanup(func() {

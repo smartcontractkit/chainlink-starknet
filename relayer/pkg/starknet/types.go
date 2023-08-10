@@ -5,7 +5,7 @@ import (
 )
 
 type CallOps struct {
-	ContractAddress caigotypes.Hash
+	ContractAddress caigotypes.Felt
 	Selector        string
 	Calldata        []string
 }

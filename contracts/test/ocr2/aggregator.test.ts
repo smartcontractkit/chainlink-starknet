@@ -206,17 +206,6 @@ describe('Aggregator', function () {
       })
     }
 
-    it("should 'set_billing' successfully", async () => {
-      await owner.invoke(aggregator, 'set_billing', {
-        config: {
-          observation_payment_gjuels: 1,
-          transmission_payment_gjuels: 5,
-          gas_base: 1,
-          gas_per_signature: 1,
-        },
-      })
-    })
-
     it("should emit 'NewTransmission' event on transmit", async () => {
       const txHash = await transmit(1, 99)
       const receipt = await starknet.getTransactionReceipt(txHash)
@@ -280,67 +269,16 @@ describe('Aggregator', function () {
       await expectInvokeError(transmit(4, UINT128_MAX), 'median is out of min-max range')
     })
 
-    it('payee management', async () => {
+    it('payments and withdrawals', async () => {
+      // set up payees
       let payees = oracles.map((oracle) => ({
         transmitter: oracle.transmitter.starknetContract.address,
         payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
       }))
-      // call set_payees, should succeed because all payees are zero
-      await owner.invoke(aggregator, 'set_payees', { payees })
-      // call set_payees, should succeed because values are unchanged
       await owner.invoke(aggregator, 'set_payees', { payees })
 
-      let oracle = oracles[0].transmitter
-      let transmitter = oracle.starknetContract.address
-      let payee = transmitter
-
-      let proposed_oracle = oracles[1].transmitter
-      let proposed_transmitter = proposed_oracle.starknetContract.address
-      let proposed_payee = proposed_transmitter
-
-      // can't transfer to self
-      try {
-        await oracle.invoke(aggregator, 'transfer_payeeship', {
-          transmitter,
-          proposed: payee,
-        })
-        expect.fail()
-      } catch (err: any) {
-        // TODO: expect(err.message).to.contain("");
-      }
-
-      // only payee can transfer
-      try {
-        await proposed_oracle.invoke(aggregator, 'transfer_payeeship', {
-          transmitter,
-          proposed: proposed_payee,
-        })
-        expect.fail()
-      } catch (err: any) { }
-
-      // successful transfer
-      await oracle.invoke(aggregator, 'transfer_payeeship', {
-        transmitter,
-        proposed: proposed_payee,
-      })
-
-      // only proposed payee can accept
-      try {
-        await oracle.invoke(aggregator, 'accept_payeeship', { transmitter })
-        expect.fail()
-      } catch (err: any) { }
-
-      // successful accept
-      await proposed_oracle.invoke(aggregator, 'accept_payeeship', {
-        transmitter,
-      })
-    })
-
-    it('payments and withdrawals', async () => {
       let oracle = oracles[0]
-      // NOTE: previous test changed oracle0's payee to oracle1
-      let payee = oracles[1].transmitter
-      aggregator.call
+      let payee = oracle.transmitter
       let { response: owed } = await aggregator.call('owed_payment', {
         transmitter: oracle.transmitter.starknetContract.address,
       })

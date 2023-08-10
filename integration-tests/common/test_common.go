@@ -23,7 +23,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
-	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
@@ -35,7 +34,6 @@ var (
 	defaultWalletAddress string // derived in init()
 	rpcRequestTimeout    = time.Second * 300
 	dumpPath             = "/dumps/dump.pkl"
-	mockServerValue      = 900000
 )
 
 func init() {
@@ -79,7 +77,6 @@ type Test struct {
 	Starknet              *starknet.Client
 	OCR2Client            *ocr2.Client
 	Sg                    *gauntlet.StarknetGauntlet
-	mockServer            *ctfClient.MockserverClient
 	L1RPCUrl              string
 	Common                *Common
 	AccountAddresses      []string
@@ -116,7 +113,12 @@ func (testState *Test) DeployCluster() {
 	var err error
 	testState.Cc.NKeys, testState.Cc.ChainlinkNodes, err = testState.Common.CreateKeys(testState.Common.Env)
 	require.NoError(testState.T, err, "Creating chains and keys should not fail")
-	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, testState.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
+	baseURL := testState.Common.L2RPCUrl
+	if !testState.Common.Testnet { // devnet!
+		// chainlink starknet client needs the RPC API url which is at /rpc on devnet
+		baseURL += "/rpc"
+	}
+	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, baseURL, lggr, &rpcRequestTimeout)
 	require.NoError(testState.T, err, "Creating starknet client should not fail")
 	testState.OCR2Client, err = ocr2.NewClient(testState.Starknet, lggr)
 	require.NoError(testState.T, err, "Creating ocr2 client should not fail")
@@ -136,8 +138,6 @@ func (testState *Test) DeployEnv() {
 	if testState.Common.Env.WillUseRemoteRunner() {
 		return // short circuit here if using a remote runner
 	}
-	testState.mockServer, err = ctfClient.ConnectMockServer(testState.Common.Env)
-	require.NoError(testState.T, err, "Creating mockserver clients shouldn't fail")
 }
 
 // SetupClients Sets up the starknet client
@@ -180,14 +180,12 @@ func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 	return &payload, nil
 }
 
-func (testState *Test) SetUpNodes(mockServerVal int) {
+func (testState *Test) SetUpNodes() {
 	testState.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 		Name: "bridge-mockserver",
-		URL:  testState.GetMockServerURL(),
+		URL:  fmt.Sprintf("%s/%s", testState.Common.Env.URLs["qa_mock_adapter_internal"][0], "five"),
 	})
-	err := testState.SetMockServerValue("", mockServerVal)
-	require.NoError(testState.T, err, "Setting mock server value should not fail")
-	err = testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
+	err := testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
 	require.NoError(testState.T, err, "Creating jobs should not fail")
 }
 
@@ -230,14 +228,6 @@ func (testState *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
 	testState.Cc.bTypeAttr = attr
 }
 
-func (testState *Test) GetMockServerURL() string {
-	return testState.mockServer.Config.ClusterURL
-}
-
-func (testState *Test) SetMockServerValue(path string, val int) error {
-	return testState.mockServer.SetValuePath(path, val)
-}
-
 // ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
 func (testState *Test) ConfigureL1Messaging() {
 	err := testState.Devnet.LoadL1MessagingContract(testState.L1RPCUrl)
@@ -272,13 +262,13 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	// validate balance in aggregator
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.LinkTokenAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.LinkTokenAddr),
 		Selector:        "balance_of",
-		Calldata:        []string{caigotypes.HexToBN(testState.OCRAddr).String()},
+		Calldata:        []string{testState.OCRAddr},
 	})
 	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail")
 	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.OCRAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.OCRAddr),
 		Selector:        "link_available_for_payment",
 	})
 	require.NoError(testState.T, errAgg, "Reader balance from LINK contract should not fail")
@@ -294,7 +284,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
 		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
-		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.HexToHash(testState.OCRAddr))
+		res, err := testState.OCR2Client.LatestTransmissionDetails(ctx, caigotypes.StrToFelt(testState.OCRAddr))
 		require.NoError(testState.T, err, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
@@ -307,11 +297,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			break
 		}
 
-		l.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
-		err = testState.SetMockServerValue("", mockServerValue)
-		if err != nil {
-			l.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
-		}
 		// try to fetch rounds
 		time.Sleep(5 * time.Second)
 
@@ -372,16 +357,18 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	// Test proxy reading
 	// TODO: would be good to test proxy switching underlying feeds
 	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
-		ContractAddress: caigotypes.HexToHash(testState.ProxyAddr),
+		ContractAddress: caigotypes.StrToFelt(testState.ProxyAddr),
 		Selector:        "latest_round_data",
 	})
 	if !isSoak {
 		require.NoError(testState.T, err, "Reading round data from proxy should not fail")
 		assert.Equal(testState.T, len(roundDataRaw), 5, "Round data from proxy should match expected size")
 	}
-	value := starknet.HexToSignedBig(roundDataRaw[1]).Int64()
+	valueBig, err := starknet.HexToUnsignedBig(roundDataRaw[1])
+	require.NoError(testState.T, err)
+	value := valueBig.Int64()
 	if value < 0 {
-		assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
+		assert.Equal(testState.T, value, int64(5), "Reading from proxy should return correct value")
 	}
 
 	return nil

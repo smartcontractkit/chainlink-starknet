@@ -18,14 +18,14 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 )
 
-func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.NonceManager, caigotypes.Hash, func()) {
+func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.NonceManager, caigotypes.Felt, func()) {
 	// setup
 	c := mocks.NewNonceManagerClient(t)
 	lggr := logger.Test(t)
 	nm := txm.NewNonceManager(lggr)
 
 	// mock returns
-	keyHash := caigotypes.HexToHash("test-key-id")
+	keyHash := caigotypes.StrToFelt("test-key-id")
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(utils.Context(t)))
@@ -53,7 +53,7 @@ func TestNonceManager_NextSequence(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
-	randAddr1 := caigotypes.Hash{1}
+	randAddr1 := caigotypes.BigToFelt(big.NewInt(1))
 	_, err = nm.NextSequence(randAddr1, chainId)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
@@ -88,7 +88,7 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
 
 	// should fail with invalid address
-	randAddr1 := caigotypes.Hash{1}
+	randAddr1 := caigotypes.BigToFelt(big.NewInt(1))
 	err = nm.IncrementNextSequence(randAddr1, chainId, initPlusOne)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))

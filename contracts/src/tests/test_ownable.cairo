@@ -3,7 +3,12 @@ use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::testing::set_contract_address;
 use zeroable::Zeroable;
-use chainlink::libraries::ownable::Ownable;
+use chainlink::libraries::ownable::{Ownable, IOwnable, IOwnableDispatcher, IOwnableDispatcherTrait};
+use chainlink::libraries::ownable::Ownable::OwnableImpl;
+
+fn STATE() -> Ownable::ContractState {
+    Ownable::contract_state_for_testing()
+}
 
 fn setup() -> (ContractAddress, ContractAddress) {
     let owner: ContractAddress = contract_address_const::<1>();
@@ -17,8 +22,9 @@ fn setup() -> (ContractAddress, ContractAddress) {
 fn test_assert_only_owner() {
     let (owner, _) = setup();
 
-    Ownable::constructor(owner);
-    Ownable::assert_only_owner();
+    let mut state = STATE();
+    Ownable::constructor(ref state, owner);
+    Ownable::assert_only_owner(@state);
 }
 
 #[test]
@@ -26,31 +32,34 @@ fn test_assert_only_owner() {
 #[should_panic]
 fn test_assert_only_owner_panics_if_not_owner() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
+    Ownable::constructor(ref state, owner);
     set_caller_address(other_user);
-    Ownable::assert_only_owner();
+    Ownable::assert_only_owner(@state);
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_owner() {
     let (owner, _) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
+    Ownable::constructor(ref state, owner);
 
-    assert(owner == Ownable::owner(), 'should equal owner');
+    assert(owner == OwnableImpl::owner(@state), 'should equal owner');
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_transfer_ownership() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
-    Ownable::transfer_ownership(other_user);
+    Ownable::constructor(ref state, owner);
+    OwnableImpl::transfer_ownership(ref state, other_user);
 
-    assert(other_user == Ownable::proposed_owner(), 'should equal proposed owner');
+    assert(other_user == OwnableImpl::proposed_owner(@state), 'should equal proposed owner');
 }
 
 #[test]
@@ -58,9 +67,10 @@ fn test_transfer_ownership() {
 #[should_panic]
 fn test_transfer_ownership_panics_if_zero_address() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
-    Ownable::transfer_ownership(Zeroable::zero());
+    Ownable::constructor(ref state, owner);
+    OwnableImpl::transfer_ownership(ref state, Zeroable::zero());
 }
 
 #[test]
@@ -68,23 +78,25 @@ fn test_transfer_ownership_panics_if_zero_address() {
 #[should_panic]
 fn test_transfer_ownership_panics_if_not_owner() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
+    Ownable::constructor(ref state, owner);
     set_caller_address(other_user);
-    Ownable::transfer_ownership(other_user);
+    OwnableImpl::transfer_ownership(ref state, other_user);
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_accept_ownership() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
-    Ownable::transfer_ownership(other_user);
+    Ownable::constructor(ref state, owner);
+    OwnableImpl::transfer_ownership(ref state, other_user);
     set_caller_address(other_user);
-    Ownable::accept_ownership();
+    OwnableImpl::accept_ownership(ref state);
 
-    assert(Ownable::owner() == other_user, 'failed to accept ownership');
+    assert(OwnableImpl::owner(@state) == other_user, 'failed to accept ownership');
 }
 
 #[test]
@@ -92,24 +104,26 @@ fn test_accept_ownership() {
 #[should_panic]
 fn test_accept_ownership_panics_if_not_proposed_owner() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
-    Ownable::transfer_ownership(other_user);
+    Ownable::constructor(ref state, owner);
+    OwnableImpl::transfer_ownership(ref state, other_user);
 
     set_caller_address(contract_address_const::<3>());
-    Ownable::accept_ownership();
+    OwnableImpl::accept_ownership(ref state);
 }
 
 #[test]
 #[available_gas(2000000)]
 fn test_renounce_ownership() {
     let (owner, _) = setup();
+    let mut state = STATE();
 
     set_caller_address(owner);
-    Ownable::constructor(owner);
-    Ownable::renounce_ownership();
+    Ownable::constructor(ref state, owner);
+    OwnableImpl::renounce_ownership(ref state);
 
-    assert(Ownable::owner().is_zero(), 'owner not 0 after renounce');
+    assert(OwnableImpl::owner(@state).is_zero(), 'owner not 0 after renounce');
 }
 
 #[test]
@@ -117,23 +131,15 @@ fn test_renounce_ownership() {
 #[should_panic]
 fn test_renounce_ownership_panics_if_not_owner() {
     let (owner, other_user) = setup();
+    let mut state = STATE();
 
-    Ownable::constructor(owner);
+    Ownable::constructor(ref state, owner);
     set_caller_address(other_user);
-    Ownable::renounce_ownership();
+    OwnableImpl::renounce_ownership(ref state);
 }
 //
 // General ownable contract tests
 //
-
-#[abi]
-trait IOwnable {
-    fn owner() -> ContractAddress;
-    fn proposed_owner() -> ContractAddress;
-    fn transfer_ownership(new_owner: ContractAddress);
-    fn accept_ownership();
-    fn renounce_ownership();
-}
 
 fn should_implement_ownable(contract_addr: ContractAddress, owner: ContractAddress) {
     let contract = IOwnableDispatcher { contract_address: contract_addr };
