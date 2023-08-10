@@ -31,21 +31,21 @@ var (
 			`
 )
 
-func createKeys(testState *testing.T) ([]*client.Chainlink, error) {
+func createKeys(testState *testing.T) ([]*client.ChainlinkK8sClient, error) {
 	urls := [][]string{
 		// Node access params
 		{"NODE_URL", "NODE_USER", "NODE_PASS"},
 	}
-	var clients []*client.Chainlink
+	var clients []*client.ChainlinkK8sClient
 
 	for _, nodeUrl := range urls {
 		u, _ := url.Parse(nodeUrl[0])
-		c, err := client.NewChainlink(&client.ChainlinkConfig{
+		c, err := client.NewChainlinkK8sClient(&client.ChainlinkConfig{
 			URL:        nodeUrl[0],
 			Email:      nodeUrl[1],
 			Password:   nodeUrl[2],
 			InternalIP: u.Host,
-		})
+		}, "", "")
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func TestOCRBasic(testState *testing.T) {
 	t.Common.P2PPort = P2pPort
 	t.Cc.ChainlinkNodes, err = createKeys(testState)
 	require.NoError(testState, err)
-	t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.Cc.ChainlinkNodes, t.Common.ChainName, t.Common.ChainId)
+	t.Cc.NKeys, _, err = client.CreateNodeKeysBundle(t.GetChainlinkNodes(), t.Common.ChainName, t.Common.ChainId)
 	require.NoError(testState, err)
 	for _, n := range t.Cc.ChainlinkNodes {
 		_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{

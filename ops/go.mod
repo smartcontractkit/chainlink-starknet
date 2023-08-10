@@ -87,6 +87,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/mwitkow/grpc-proxy v0.0.0-20230212185441-f345521cb9c9 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.5.0 // indirect
 	github.com/onsi/gomega v1.24.1 // indirect
@@ -102,8 +103,8 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230801204930-f46c3ccc7815 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20230606215712-82b910bef5c1 // indirect
+	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230808141159-4e20b0757f3a // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20230802221916-2271752fa829 // indirect
 	github.com/spf13/cobra v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
@@ -169,6 +170,9 @@ replace (
 
 	// until merged upstream: https://github.com/hashicorp/go-plugin/pull/257
 	github.com/hashicorp/go-plugin => github.com/jmank88/go-plugin v0.0.0-20230604120638-7bb12ec27e75
+
+	// until merged upstream: https://github.com/mwitkow/grpc-proxy/pull/69
+	github.com/mwitkow/grpc-proxy => github.com/jmank88/grpc-proxy v0.0.0-20230731114312-86ed94c93231
 
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
 )
