@@ -22,15 +22,16 @@ fn test_deploy() {
 
     let latest_round = MockAggregator::latest_round_data();
 
-    let zeroed_round = Round{
-        round_id: 0,
-        answer: 0_u128,
-        block_num: 0_u64, 
-        started_at: 0_u64, 
-        updated_at: 0_u64
+    let zeroed_round = Round {
+        round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64
     };
 
-    assert(latest_round == Round{round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64}, 'rounds');
+    assert(
+        latest_round == Round {
+            round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64
+        },
+        'rounds'
+    );
 }
 
 #[test]
@@ -42,18 +43,10 @@ fn test_set_latest_round() {
 
     MockAggregator::set_latest_round_data(777_u128, 777_u64, 777_u64, 777_u64);
 
-    let expected_round = Round{
-        round_id: 1,
-        answer: 777_u128,
-        block_num: 777_u64, 
-        started_at: 777_u64, 
-        updated_at: 777_u64
+    let expected_round = Round {
+        round_id: 1, answer: 777_u128, block_num: 777_u64, started_at: 777_u64, updated_at: 777_u64
     };
 
     assert(MockAggregator::latest_round_data() == expected_round, 'round not equal');
 }
-
-
-
-
 
