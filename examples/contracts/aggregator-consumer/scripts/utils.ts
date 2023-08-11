@@ -30,11 +30,8 @@ export const loadCasmContract = (name: string): CairoAssembly => {
   )
 }
 
-
 export const loadContractPath = (path: string): CompiledContract | CairoAssembly => {
-  return json.parse(
-    fs.readFileSync(`${__dirname}/${path}.json`).toString('ascii'),
-  )
+  return json.parse(fs.readFileSync(`${__dirname}/${path}.json`).toString('ascii'))
 }
 
 export const loadContract_Solidity = (path: string, name: string): any => {

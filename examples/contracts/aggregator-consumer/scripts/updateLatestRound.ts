@@ -55,15 +55,12 @@ async function updateLatestRound() {
 }
 
 async function callFunction(transmission: Transmission) {
-  const tx = await mock.invoke(
-    'set_latest_round_data',
-    [
-      transmission.answer,
-      transmission.block_num,
-      transmission.observation_timestamp,
-      transmission.transmission_timestamp,
-    ]
-  )
+  const tx = await mock.invoke('set_latest_round_data', [
+    transmission.answer,
+    transmission.block_num,
+    transmission.observation_timestamp,
+    transmission.transmission_timestamp,
+  ])
 
   console.log('Waiting for Tx to be Accepted on Starknet: Updating Latest Round')
   await provider.waitForTransaction(tx.transaction_hash)

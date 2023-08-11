@@ -19,7 +19,6 @@ function revertMessageHex(msg: string): string {
   return Buffer.from(msg, 'utf8').toString('hex')
 }
 
-
 export async function getLatestPrice() {
   const provider = makeProvider()
 
@@ -52,7 +51,7 @@ export async function getLatestPrice() {
     console.log('answer= ', latestPrice)
   } catch (e) {
     // transaction reverted because sequencer is down or report is stale
-    console.log("Getting latest price not possible (reason below)")
+    console.log('Getting latest price not possible (reason below)')
     if (e instanceof GatewayError) {
       switch (true) {
         case e.message.includes(HEX_SEQ_UP_REPORT_STALE): {

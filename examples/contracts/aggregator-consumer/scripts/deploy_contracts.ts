@@ -1,5 +1,11 @@
 import { CairoAssembly, CallData, CompiledContract, Contract } from 'starknet'
-import { loadContract, createDeployerAccount, loadContractPath, makeProvider, loadCasmContract } from './utils'
+import {
+  loadContract,
+  createDeployerAccount,
+  loadContractPath,
+  makeProvider,
+  loadCasmContract,
+} from './utils'
 import * as fs from 'fs'
 import * as dotenv from 'dotenv'
 
@@ -26,7 +32,7 @@ export async function deployContract() {
 
   const account = createDeployerAccount(provider)
 
-  console.log("Deploying Contracts...(this may take 3-5 minutes)")
+  console.log('Deploying Contracts...(this may take 3-5 minutes)')
 
   const declareDeployAggregator = await account.declareAndDeploy({
     casm: loadContractPath(`${AGGREGATOR_PATH}.casm`) as CairoAssembly,

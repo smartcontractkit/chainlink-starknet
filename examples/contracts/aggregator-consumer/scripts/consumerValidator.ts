@@ -106,7 +106,6 @@ export async function consumerValidator() {
 
   const tx = await mockUptimeFeedDeploy.invoke('set_l1_sender', [validator.address])
 
-
   await provider.waitForTransaction(tx.transaction_hash)
 
   await validator.addAccess(eoaValidator.address)

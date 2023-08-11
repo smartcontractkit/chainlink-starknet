@@ -1,7 +1,6 @@
 import fs from 'fs'
 import { Account, Provider, Contract, json, ec, constants } from 'starknet'
 
-
 // The Cairo contract that is compiled and ready to declare and deploy
 const consumerContractName = 'ProxyConsumer'
 
