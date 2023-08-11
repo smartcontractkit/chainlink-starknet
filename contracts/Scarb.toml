@@ -14,6 +14,8 @@ sierra = "cairo-compile . -r"
 starknet = ">=1.0.0"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "495ed8a" } # latest cairo-2 branch
 
+[lib]
+
 [[target.starknet-contract]]
 sierra = true
 casm = true
@@ -21,9 +23,7 @@ casm = true
 # Unsupported compiled class format. Cairo 1.0 compiled class must contain the attribute `pythonic_hints`.
 casm-add-pythonic-hints = true
 
-# this elevants the severity of disallowed libfuncs to compilation errors
+# this elevates the severity of disallowed libfuncs to compilation errors
 # https://docs.swmansion.com/scarb/docs/starknet/contract-target#allowed-libfuncs-validation
 allowed-libfuncs-deny = true
-
-# TODO: change the allowlist to 'audited' when cairo v2 is released
 allowed-libfuncs-list.name = "audited"
