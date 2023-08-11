@@ -4,12 +4,14 @@
     "outDir": "dist",
   },
   "include": [
-    "./hardhat.config.ts",
     "scripts/**/*"
   ],
   "exclude": [
     "dist",
     "**/*.spec.ts",
     "**/*.test.ts"
+  ],
+  "files": [
+    "./hardhat.config.ts"
   ]
 }

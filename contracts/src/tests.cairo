@@ -8,4 +8,5 @@ mod test_erc677;
 mod test_link_token;
 mod test_upgradeable;
 mod test_access_controller;
+mod test_mock_aggregator;
 mod test_sequencer_uptime_feed;

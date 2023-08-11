@@ -1,9 +1,9 @@
-import { Account, Contract, CallContractResponse } from 'starknet'
+import { Account, Contract, Result } from 'starknet'
 
 import { createDeployerAccount, loadContract, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
-const CONSUMER_NAME = 'Aggregator_consumer'
+const CONSUMER_NAME = 'AggregatorConsumer'
 let account: Account
 let consumer: Contract
 
@@ -16,21 +16,20 @@ export async function readLatestRound() {
   const AggregatorArtifact = loadContract(CONSUMER_NAME)
   consumer = new Contract(AggregatorArtifact.abi, process.env.CONSUMER as string)
 
-  const latestRound = await account.callContract({
-    contractAddress: consumer.address,
-    entrypoint: 'readLatestRound',
-    calldata: [],
-  })
+  consumer.connect(account)
+
+  const latestRound = await consumer.call('read_latest_round')
+
   printResult(latestRound)
   return latestRound
 }
 
-function printResult(latestRound: CallContractResponse) {
-  console.log('\nround_id= ', parseInt(latestRound.result[0], 16))
-  console.log('answer= ', parseInt(latestRound.result[1], 16))
-  console.log('block_num= ', parseInt(latestRound.result[2], 16))
-  console.log('observation_timestamp= ', parseInt(latestRound.result[3], 16))
-  console.log('transmission_timestamp= ', parseInt(latestRound.result[4], 16))
+function printResult(latestRound: Result) {
+  console.log('round_id= ', latestRound['round_id'])
+  console.log('answer= ', latestRound['answer'])
+  console.log('block_num= ', latestRound['block_num'])
+  console.log('started_at= ', latestRound['started_at'])
+  console.log('updated_at= ', latestRound['updated_at'])
 }
 
 readLatestRound()

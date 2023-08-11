@@ -2,7 +2,7 @@ import { Account, Contract } from 'starknet'
 import { createDeployerAccount, loadContract, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
-const CONSUMER_NAME = 'Aggregator_consumer'
+const CONSUMER_NAME = 'AggregatorConsumer'
 let account: Account
 let consumer: Contract
 
@@ -15,14 +15,12 @@ export async function readDecimals() {
   const AggregatorArtifact = loadContract(CONSUMER_NAME)
   consumer = new Contract(AggregatorArtifact.abi, process.env.CONSUMER as string)
 
-  const decimals = await account.callContract({
-    contractAddress: consumer.address,
-    entrypoint: 'readDecimals',
-    calldata: [],
-  })
+  consumer.connect(account)
 
-  console.log('decimals= ', parseInt(decimals.result[0], 16))
-  return parseInt(decimals.result[0], 16)
+  const decimals = await consumer.call('read_decimals')
+
+  console.log('decimals= ', decimals.toString())
+  return decimals
 }
 
 readDecimals()

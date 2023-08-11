@@ -9,10 +9,7 @@
     "readLatestRoundOffChain": "yarn ts-node ./scripts/readLatestRoundOffChain.ts"
   },
   "license": "MIT",
-  "devDependencies": {
-    "@shardlabs/starknet-hardhat-plugin": "^0.8.0-alpha.2"
-  },
   "dependencies": {
-    "starknet": "^4.17.1"
+    "starknet": "^5.2.0"
   }
 }

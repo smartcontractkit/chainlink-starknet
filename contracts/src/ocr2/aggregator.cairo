@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 
-#[derive(Copy, Drop, Serde, PartialEq)]
+#[derive(Copy, Drop, Serde, PartialEq, starknet::Store)]
 struct Round {
     // used as u128 internally, but necessary for phase-prefixed round ids as returned by proxy
     round_id: felt252,

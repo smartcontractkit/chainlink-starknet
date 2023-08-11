@@ -145,8 +145,7 @@ format-cairo:
 .PHONY: format-cairo-check
 format-cairo-check:
 	cairo-format -c ./contracts/src/**/*.cairo
-	# TODO: re-enable once examples are rewritten
-	# cairo-format -c ./examples/**/*.cairo
+	cairo-format -c ./examples/**/*.cairo
 
 .PHONY: format-ts
 format-ts:
