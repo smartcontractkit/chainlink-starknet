@@ -387,9 +387,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	valueBig, err := starknet.HexToUnsignedBig(roundDataRaw[1])
 	require.NoError(testState.T, err)
 	value := valueBig.Int64()
-	if value < 0 {
-		assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
-	}
+	assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
 
 	return nil
 }
