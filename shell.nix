@@ -11,9 +11,8 @@
     python39Packages.fastecdsa # so libgmp is correctly sourced
     zlib # for numpy
     gmp
-    # use nodejs 16.x due to https://github.com/NomicFoundation/hardhat/issues/3877
-    nodejs-16_x
-    (yarn.override { nodejs = nodejs-16_x; })
+    nodejs-18_x
+    (yarn.override { nodejs = nodejs-18_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
@@ -41,6 +40,6 @@
   venvDir = "./.venv";
 
   postShellHook = ''
-    helm repo update
+    # helm repo update
   '';
 }
