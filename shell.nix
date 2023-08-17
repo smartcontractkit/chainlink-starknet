@@ -38,8 +38,4 @@
   HELM_REPOSITORY_CONFIG=./.helm-repositories.yaml;
 
   venvDir = "./.venv";
-
-  postShellHook = ''
-    # helm repo update
-  '';
 }
