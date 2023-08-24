@@ -16,6 +16,7 @@ type ChainSet = types.ChainSet[string, Chain]
 type Chain interface {
 	types.ChainService
 
+	ID() string
 	Config() config.Config
 
 	TxManager() txm.TxManager
