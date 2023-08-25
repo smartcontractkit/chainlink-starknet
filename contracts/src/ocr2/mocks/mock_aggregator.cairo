@@ -16,8 +16,11 @@ mod MockAggregator {
     use traits::Into;
 
     use chainlink::ocr2::aggregator::IAggregator;
-    use chainlink::ocr2::aggregator::Aggregator::{Transmission, NewTransmission, Event};
+    use chainlink::ocr2::aggregator::Aggregator::{Transmission, NewTransmission};
     use chainlink::ocr2::aggregator::Round;
+
+    #[event]
+    use chainlink::ocr2::aggregator::Aggregator::Event;
 
     #[storage]
     struct Storage {

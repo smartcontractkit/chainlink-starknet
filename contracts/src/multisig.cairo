@@ -84,6 +84,7 @@ mod Multisig {
     use starknet::Felt252TryIntoContractAddress;
     use starknet::StorageBaseAddress;
     use starknet::SyscallResult;
+    use starknet::SyscallResultTrait;
     use starknet::call_contract_syscall;
     use starknet::get_caller_address;
     use starknet::get_contract_address;
