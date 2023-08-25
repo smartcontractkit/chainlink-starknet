@@ -30,7 +30,7 @@ mod ERC677 {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        Transfer: Transfer, 
+        Transfer: Transfer,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -51,7 +51,7 @@ mod ERC677 {
         self
             .emit(
                 Event::Transfer(
-                    Transfer { from: sender, to: to, value: value, data: data.clone(),  }
+                    Transfer { from: sender, to: to, value: value, data: data.clone(), }
                 )
             );
 

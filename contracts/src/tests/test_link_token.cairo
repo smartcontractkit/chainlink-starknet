@@ -48,7 +48,7 @@ fn test_ownable() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('minter is 0', ))]
+#[should_panic(expected: ('minter is 0',))]
 fn test_constructor_zero_address() {
     let sender = setup();
     let mut state = STATE();
@@ -89,7 +89,7 @@ fn test_permissioned_mint_from_minter() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('only minter', ))]
+#[should_panic(expected: ('only minter',))]
 fn test_permissioned_mint_from_nonminter() {
     let sender = setup();
     let mut state = STATE();
@@ -103,7 +103,7 @@ fn test_permissioned_mint_from_nonminter() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('u256_sub Overflow', ))]
+#[should_panic(expected: ('u256_sub Overflow',))]
 fn test_permissioned_burn_from_minter() {
     let zero = 0;
     let sender = setup();
@@ -132,7 +132,7 @@ fn test_permissioned_burn_from_minter() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('only minter', ))]
+#[should_panic(expected: ('only minter',))]
 fn test_permissioned_burn_from_nonminter() {
     let sender = setup();
     let mut state = STATE();
@@ -146,7 +146,7 @@ fn test_permissioned_burn_from_nonminter() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', ))]
+#[should_panic(expected: ('Ownable: caller is not owner',))]
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();
