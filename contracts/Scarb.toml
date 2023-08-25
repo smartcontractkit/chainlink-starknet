@@ -12,7 +12,7 @@ sierra = "cairo-compile . -r"
 # Note: currently testing doesn't work with dependencies
 [dependencies]
 starknet = ">=1.0.0"
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "495ed8a" } # latest cairo-2 branch
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 
 [lib]
 
