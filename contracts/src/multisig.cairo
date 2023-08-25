@@ -4,7 +4,7 @@ use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
 fn assert_unique_values<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>,
 >(
     a: @Array::<T>
 ) {
@@ -13,7 +13,7 @@ fn assert_unique_values<
 }
 
 fn _assert_unique_values_loop<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>, 
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>,
 >(
     a: @Array::<T>, len: usize, j: usize, k: usize
 ) {
@@ -170,7 +170,7 @@ mod Multisig {
             self._is_signer.read(address)
         }
 
-        fn get_signers_len(self: @ContractState, ) -> usize {
+        fn get_signers_len(self: @ContractState,) -> usize {
             self._signers_len.read()
         }
 
@@ -181,11 +181,11 @@ mod Multisig {
             signers
         }
 
-        fn get_threshold(self: @ContractState, ) -> usize {
+        fn get_threshold(self: @ContractState,) -> usize {
             self._threshold.read()
         }
 
-        fn get_transactions_len(self: @ContractState, ) -> u128 {
+        fn get_transactions_len(self: @ContractState,) -> u128 {
             self._next_nonce.read()
         }
 
@@ -208,7 +208,7 @@ mod Multisig {
             (transaction, calldata)
         }
 
-        fn type_and_version(self: @ContractState, ) -> felt252 {
+        fn type_and_version(self: @ContractState,) -> felt252 {
             'Multisig 1.0.0'
         }
 

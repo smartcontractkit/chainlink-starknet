@@ -83,7 +83,7 @@ fn test_set_l1_sender() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('user does not have read access', ))]
+#[should_panic(expected: ('user does not have read access',))]
 fn test_latest_round_data_no_access() {
     let (owner, sequencerFeedAddr, _) = setup();
     let mut proxy = PROXY();
@@ -93,7 +93,7 @@ fn test_latest_round_data_no_access() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('user does not have read access', ))]
+#[should_panic(expected: ('user does not have read access',))]
 fn test_aggregator_proxy_response() {
     let (owner, sequencerFeedAddr, _) = setup();
     let mut proxy = PROXY();

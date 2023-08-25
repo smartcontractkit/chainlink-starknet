@@ -34,9 +34,8 @@ mod ProxyConsumer {
 
     #[external(v0)]
     fn get_latest_round_data(ref self: ContractState) -> Round {
-        let round = IAggregatorDispatcher {
-            contract_address: self._proxy_address.read()
-        }.latest_round_data();
+        let round = IAggregatorDispatcher { contract_address: self._proxy_address.read() }
+            .latest_round_data();
         self._feed_data.write(round);
         round
     }

@@ -81,7 +81,7 @@ fn setup() -> (
 
     // deploy billing access controller
     let calldata = array![acc1.into(), // owner = acc1;
-     ];
+    ];
     let (billingAccessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )
@@ -93,7 +93,7 @@ fn setup() -> (
     // deploy link token contract
     let calldata = array![acc1.into(), // minter = acc1;
      acc1.into(), // owner = acc1;
-     ];
+    ];
     let (linkTokenAddr, _) = deploy_syscall(
         LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )
@@ -151,7 +151,7 @@ fn test_access_control() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', ))]
+#[should_panic(expected: ('Ownable: caller is not owner',))]
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();
@@ -162,7 +162,7 @@ fn test_upgrade_non_owner() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', ))]
+#[should_panic(expected: ('Ownable: caller is not owner',))]
 fn test_set_billing_access_controller_not_owner() {
     let (owner, acc2, billingAccessController, _) = setup();
     let mut state = STATE();
@@ -177,7 +177,7 @@ fn test_set_billing_access_controller_not_owner() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('caller does not have access', ))]
+#[should_panic(expected: ('caller does not have access',))]
 fn test_set_billing_config_no_access() {
     let (owner, acc2, billingAccessController, _) = setup();
     let mut state = STATE();
@@ -278,7 +278,7 @@ fn test_set_billing_config_as_acc_with_access() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', ))]
+#[should_panic(expected: ('Ownable: caller is not owner',))]
 fn test_set_payees_caller_not_owner() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -286,7 +286,7 @@ fn test_set_payees_caller_not_owner() {
         ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
     );
 
-    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2,  }, ];
+    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2, },];
 
     // set payee should revert if caller is not owner
     set_caller_address(acc2);
@@ -302,7 +302,7 @@ fn test_set_single_payee() {
         ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
     );
 
-    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2,  }, ];
+    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2, },];
 
     set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -318,11 +318,8 @@ fn test_set_multiple_payees() {
     );
 
     let payees = array![
-        PayeeConfig {
-            transmitter: acc2, payee: acc2, 
-            }, PayeeConfig {
-            transmitter: owner, payee: owner, 
-        },
+        PayeeConfig { transmitter: acc2, payee: acc2, },
+        PayeeConfig { transmitter: owner, payee: owner, },
     ];
 
     set_caller_address(owner);
@@ -331,7 +328,7 @@ fn test_set_multiple_payees() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('only current payee can update', ))]
+#[should_panic(expected: ('only current payee can update',))]
 fn test_transfer_payeeship_caller_not_payee() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -340,7 +337,7 @@ fn test_transfer_payeeship_caller_not_payee() {
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2,  }, ];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -349,7 +346,7 @@ fn test_transfer_payeeship_caller_not_payee() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('cannot transfer to self', ))]
+#[should_panic(expected: ('cannot transfer to self',))]
 fn test_transfer_payeeship_to_self() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -358,7 +355,7 @@ fn test_transfer_payeeship_to_self() {
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2,  }, ];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -368,7 +365,7 @@ fn test_transfer_payeeship_to_self() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('only proposed payee can accept', ))]
+#[should_panic(expected: ('only proposed payee can accept',))]
 fn test_accept_payeeship_caller_not_proposed_payee() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -377,7 +374,7 @@ fn test_accept_payeeship_caller_not_proposed_payee() {
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2,  }, ];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -396,7 +393,7 @@ fn test_transfer_and_accept_payeeship() {
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2,  }, ];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -422,7 +419,7 @@ fn test_owed_payment_no_rounds() {
     );
 
     let transmitter = contract_address_const::<123>();
-    let mut payees = array![PayeeConfig { transmitter: transmitter, payee: acc2,  }, ];
+    let mut payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);

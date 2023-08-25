@@ -27,7 +27,7 @@ fn test_upgrade() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Class hash cannot be zero', ))]
+#[should_panic(expected: ('Class hash cannot be zero',))]
 fn test_upgrade_zero_hash() {
     let sender = setup();
 
