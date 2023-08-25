@@ -29,7 +29,7 @@ fn setup() -> ContractAddress {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', ))]
+#[should_panic(expected: ('Ownable: caller is not owner',))]
 fn test_upgrade_not_owner() {
     let sender = setup();
     let mut state = STATE();
@@ -43,7 +43,7 @@ fn test_access_control() {
     let owner = setup();
     // Deploy access controller
     let calldata = array![owner.into(), // owner
-     ];
+    ];
     let (accessControllerAddr, _) = deploy_syscall(
         AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )

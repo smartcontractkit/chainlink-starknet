@@ -282,7 +282,7 @@ fn test_execute_confirmation_below_threshold() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('only multisig allowed', ))]
+#[should_panic(expected: ('only multisig allowed',))]
 fn test_upgrade_not_multisig() {
     let mut state = STATE();
     let account = contract_address_const::<777>();
@@ -325,7 +325,7 @@ fn test_execute() {
 
 #[test]
 #[available_gas(8000000)]
-#[should_panic(expected: ('invalid signer', ))]
+#[should_panic(expected: ('invalid signer',))]
 fn test_execute_not_signer() {
     let mut state = STATE();
     let signer1 = contract_address_const::<1>();
@@ -349,7 +349,7 @@ fn test_execute_not_signer() {
 
 #[test]
 #[available_gas(8000000)]
-#[should_panic(expected: ('transaction invalid', ))]
+#[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_signers() {
     let mut state = STATE();
     let contract_address = contract_address_const::<100>();
@@ -379,7 +379,7 @@ fn test_execute_after_set_signers() {
 
 #[test]
 #[available_gas(8000000)]
-#[should_panic(expected: ('transaction invalid', ))]
+#[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_signers_and_threshold() {
     let mut state = STATE();
     let contract_address = contract_address_const::<100>();
@@ -409,7 +409,7 @@ fn test_execute_after_set_signers_and_threshold() {
 
 #[test]
 #[available_gas(8000000)]
-#[should_panic(expected: ('transaction invalid', ))]
+#[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_threshold() {
     let mut state = STATE();
     let contract_address = contract_address_const::<100>();

@@ -10,7 +10,7 @@ mod AggregatorConsumer {
 
     #[storage]
     struct Storage {
-        _ocr_address: ContractAddress, 
+        _ocr_address: ContractAddress,
     }
 
     #[constructor]

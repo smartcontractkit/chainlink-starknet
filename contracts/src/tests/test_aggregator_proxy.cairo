@@ -65,7 +65,7 @@ fn test_ownable() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
-     mockAggregatorAddr.into(), ];
+     mockAggregatorAddr.into(),];
     let (aggregatorProxyAddr, _) = deploy_syscall(
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )
@@ -80,7 +80,7 @@ fn test_access_control() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
-     mockAggregatorAddr.into(), ];
+     mockAggregatorAddr.into(),];
     let (aggregatorProxyAddr, _) = deploy_syscall(
         AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
     )
@@ -91,7 +91,7 @@ fn test_access_control() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner', ))]
+#[should_panic(expected: ('Ownable: caller is not owner',))]
 fn test_upgrade_non_owner() {
     let (_, _, _, _, _) = setup();
     let mut state = STATE();
@@ -119,7 +119,7 @@ fn test_query_latest_round_data() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('user does not have read access', ))]
+#[should_panic(expected: ('user does not have read access',))]
 fn test_query_latest_round_data_without_access() {
     let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
     let mut state = STATE();

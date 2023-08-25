@@ -28,7 +28,7 @@ mod LinkToken {
 
     #[storage]
     struct Storage {
-        _minter: ContractAddress, 
+        _minter: ContractAddress,
     }
 
     //

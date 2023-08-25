@@ -12,7 +12,7 @@ mod ValidReceiver {
 
     #[storage]
     struct Storage {
-        _sender: ContractAddress, 
+        _sender: ContractAddress,
     }
 
     #[constructor]

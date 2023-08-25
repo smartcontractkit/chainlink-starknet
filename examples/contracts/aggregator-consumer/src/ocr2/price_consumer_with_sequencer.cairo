@@ -35,16 +35,14 @@ mod AggregatorPriceConsumerWithSequencer {
     #[extrnal(v0)]
     fn get_latest_price(self: @ContractState) -> u128 {
         assert_sequencer_healthy(self);
-        let round = IAggregatorDispatcher {
-            contract_address: self._aggregator_address.read()
-        }.latest_round_data();
+        let round = IAggregatorDispatcher { contract_address: self._aggregator_address.read() }
+            .latest_round_data();
         round.answer
     }
 
     fn assert_sequencer_healthy(self: @ContractState) {
-        let round = IAggregatorDispatcher {
-            contract_address: self._uptime_feed_address.read()
-        }.latest_round_data();
+        let round = IAggregatorDispatcher { contract_address: self._uptime_feed_address.read() }
+            .latest_round_data();
         let timestamp = starknet::info::get_block_info().unbox().block_timestamp;
 
         // After 60 sec the report is considered stale
