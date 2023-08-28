@@ -1,5 +1,5 @@
-import { Account, Contract, Provider, ec, number } from 'starknet'
-import { loadContract, makeProvider } from './utils'
+import { Account, CompiledContract, Contract, Provider, ec, number } from 'starknet'
+import { loadContract, loadContractPath, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
 interface Transmission {
@@ -10,6 +10,7 @@ interface Transmission {
 }
 
 const CONTRACT_NAME = 'MockAggregator'
+const CONTRACT_PATH = '../../../../contracts/target/release/chainlink_MockAggregator'
 let account: Account
 let mock: Contract
 let transmission: Transmission
@@ -32,12 +33,14 @@ async function updateLatestRound() {
     transmission_timestamp: 0,
   }
 
-  const keyPair = ec.getKeyPair(process.env.PRIVATE_KEY as string)
-  account = new Account(provider, process.env.ACCOUNT_ADDRESS as string, keyPair)
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY as string
+  account = new Account(provider, process.env.DEPLOYER_ACCOUNT_ADDRESS as string, privateKey)
 
-  const MockArtifact = loadContract(CONTRACT_NAME)
+  const MockArtifact = loadContractPath(`${CONTRACT_PATH}.sierra`) as CompiledContract
 
   mock = new Contract(MockArtifact.abi, process.env.MOCK as string)
+  mock.connect(account)
+
   transmission.answer = Number(await input('Enter a number for new answer: '))
   transmission.block_num = Number(await input('Enter a number for new block_num: '))
   transmission.observation_timestamp = Number(
@@ -48,26 +51,19 @@ async function updateLatestRound() {
   )
   rl.close()
 
-  callFunction(transmission)
+  await callFunction(transmission)
 }
 
 async function callFunction(transmission: Transmission) {
-  const transaction = await account.execute(
-    {
-      contractAddress: mock.address,
-      entrypoint: 'set_latest_round_data',
-      calldata: [
-        transmission.answer,
-        transmission.block_num,
-        transmission.observation_timestamp,
-        transmission.transmission_timestamp,
-      ],
-    },
-    [mock.abi],
-    { maxFee: 1e18 },
-  )
-  console.log('Waiting for Tx to be Accepted on Starknet - Aggregator consumer Deployment...')
-  await provider.waitForTransaction(transaction.transaction_hash)
+  const tx = await mock.invoke('set_latest_round_data', [
+    transmission.answer,
+    transmission.block_num,
+    transmission.observation_timestamp,
+    transmission.transmission_timestamp,
+  ])
+
+  console.log('Waiting for Tx to be Accepted on Starknet: Updating Latest Round')
+  await provider.waitForTransaction(tx.transaction_hash)
 }
 
 function input(prompt: string) {

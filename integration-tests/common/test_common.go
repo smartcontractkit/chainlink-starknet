@@ -23,7 +23,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
-	ctfClient "github.com/smartcontractkit/chainlink-testing-framework/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
@@ -35,7 +34,6 @@ var (
 	defaultWalletAddress string // derived in init()
 	rpcRequestTimeout    = time.Second * 300
 	dumpPath             = "/dumps/dump.pkl"
-	mockServerValue      = 900000
 )
 
 func init() {
@@ -79,7 +77,6 @@ type Test struct {
 	Starknet              *starknet.Client
 	OCR2Client            *ocr2.Client
 	Sg                    *gauntlet.StarknetGauntlet
-	mockServer            *ctfClient.MockserverClient
 	L1RPCUrl              string
 	Common                *Common
 	AccountAddresses      []string
@@ -94,7 +91,7 @@ type Test struct {
 
 type ChainlinkClient struct {
 	NKeys          []client.NodeKeysBundle
-	ChainlinkNodes []*client.Chainlink
+	ChainlinkNodes []*client.ChainlinkK8sClient
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
 }
@@ -141,8 +138,6 @@ func (testState *Test) DeployEnv() {
 	if testState.Common.Env.WillUseRemoteRunner() {
 		return // short circuit here if using a remote runner
 	}
-	testState.mockServer, err = ctfClient.ConnectMockServer(testState.Common.Env)
-	require.NoError(testState.T, err, "Creating mockserver clients shouldn't fail")
 }
 
 // SetupClients Sets up the starknet client
@@ -185,14 +180,12 @@ func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 	return &payload, nil
 }
 
-func (testState *Test) SetUpNodes(mockServerVal int) {
+func (testState *Test) SetUpNodes() {
 	testState.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
 		Name: "bridge-mockserver",
-		URL:  testState.GetMockServerURL(),
+		URL:  fmt.Sprintf("%s/%s", testState.Common.Env.URLs["qa_mock_adapter_internal"][0], "five"),
 	})
-	err := testState.SetMockServerValue("", mockServerVal)
-	require.NoError(testState.T, err, "Setting mock server value should not fail")
-	err = testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
+	err := testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
 	require.NoError(testState.T, err, "Creating jobs should not fail")
 }
 
@@ -211,8 +204,13 @@ func (testState *Test) GetNodeKeys() []client.NodeKeysBundle {
 	return testState.Cc.NKeys
 }
 
-func (testState *Test) GetChainlinkNodes() []*client.Chainlink {
-	return testState.Cc.ChainlinkNodes
+func (testState *Test) GetChainlinkNodes() []*client.ChainlinkClient {
+	// retrieve client from K8s client
+	chainlinkNodes := []*client.ChainlinkClient{}
+	for i := range testState.Cc.ChainlinkNodes {
+		chainlinkNodes = append(chainlinkNodes, testState.Cc.ChainlinkNodes[i].ChainlinkClient)
+	}
+	return chainlinkNodes
 }
 
 func (testState *Test) GetDefaultPrivateKey() string {
@@ -233,14 +231,6 @@ func (testState *Test) GetStarknetDevnetClient() *devnet.StarknetDevnetClient {
 
 func (testState *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
 	testState.Cc.bTypeAttr = attr
-}
-
-func (testState *Test) GetMockServerURL() string {
-	return testState.mockServer.Config.ClusterURL
-}
-
-func (testState *Test) SetMockServerValue(path string, val int) error {
-	return testState.mockServer.SetValuePath(path, val)
 }
 
 // ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
@@ -312,11 +302,6 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 			break
 		}
 
-		l.Info().Msg(fmt.Sprintf("Setting adapter value to %d", mockServerValue))
-		err = testState.SetMockServerValue("", mockServerValue)
-		if err != nil {
-			l.Error().Msg(fmt.Sprintf("Setting mock server value error: %+v", err))
-		}
 		// try to fetch rounds
 		time.Sleep(5 * time.Second)
 
@@ -388,7 +373,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	require.NoError(testState.T, err)
 	value := valueBig.Int64()
 	if value < 0 {
-		assert.Equal(testState.T, value, int64(mockServerValue), "Reading from proxy should return correct value")
+		assert.Equal(testState.T, value, int64(5), "Reading from proxy should return correct value")
 	}
 
 	return nil

@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    cairoPaths: ['../../../contracts/src'],
+    cairoPaths: ['../../contracts/src'],
   },
 }
 

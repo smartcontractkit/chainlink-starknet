@@ -15,19 +15,14 @@ use chainlink::token::mock::valid_erc667_receiver::ValidReceiver;
 use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
 use chainlink::libraries::token::erc677::ERC677;
 
-#[abi]
-trait MockValidReceiver {
-    fn on_token_transfer(sender: ContractAddress, value: u256, data: Array<felt252>);
-    fn supports_interface(interface_id: u32) -> bool;
-    fn verify() -> ContractAddress;
+#[starknet::interface]
+trait MockInvalidReceiver<TContractState> {
+    fn set_supports(ref self: TContractState, value: bool);
 }
 
-#[abi]
-trait MockInvalidReceiver {
-    fn supports_interface(interface_id: u32) -> bool;
-    fn set_supports(value: bool);
-}
-
+use chainlink::token::mock::valid_erc667_receiver::{
+    MockValidReceiver, MockValidReceiverDispatcher, MockValidReceiverDispatcherTrait
+};
 
 // Ignored tests are dependent on upgrading our version of cairo to include this PR https://github.com/starkware-libs/cairo/pull/2912/files
 
@@ -62,12 +57,13 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
 fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();
     // have to send 0 because ERC20 is not initialized with starting supply when using this library by itself
-    ERC677::transfer_and_call(receiver, u256 { high: 0, low: 0 }, data);
+    let mut erc677 = ERC677::unsafe_new_contract_state();
+    ERC677::transfer_and_call(ref erc677, receiver, u256 { high: 0, low: 0 }, data);
 }
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('ERC20: transfer to 0', ))]
+#[should_panic(expected: ('ERC20: transfer to 0',))]
 fn test_to_zero_address() {
     setup();
     transfer_and_call(Zeroable::zero());
@@ -86,7 +82,7 @@ fn test_valid_transfer_and_call() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('ENTRYPOINT_NOT_FOUND', ))]
+#[should_panic(expected: ('ENTRYPOINT_NOT_FOUND',))]
 fn test_invalid_receiver_supports_interface_true() {
     setup();
     let (receiver_address, receiver) = setup_invalid_receiver();
@@ -108,7 +104,7 @@ fn test_invalid_receiver_supports_interface_false() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('CONTRACT_NOT_DEPLOYED', ))]
+#[should_panic(expected: ('CONTRACT_NOT_DEPLOYED',))]
 fn test_nonexistent_receiver() {
     setup();
 

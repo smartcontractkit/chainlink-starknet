@@ -1,9 +1,9 @@
-import { Contract, Account, CallContractResponse } from 'starknet'
+import { Contract, Account, CallContractResponse, Result } from 'starknet'
 
 import { createDeployerAccount, loadContract, makeProvider } from './utils'
 import dotenv from 'dotenv'
 
-const CONTRACT_NAME = 'Aggregator_consumer'
+const CONTRACT_NAME = 'AggregatorConsumer'
 let account: Account
 let consumer: Contract
 
@@ -17,31 +17,24 @@ async function readContinuously() {
   const AggregatorArtifact = loadContract(CONTRACT_NAME)
 
   consumer = new Contract(AggregatorArtifact.abi, process.env.CONSUMER as string)
-  setInterval(callFunction, 30000)
+  consumer.connect(account)
+  setInterval(callFunction, 3000)
 }
 
 async function callFunction() {
-  const latestRound = await account.callContract({
-    contractAddress: consumer.address,
-    entrypoint: 'readLatestRound',
-    calldata: [],
-  })
-
-  const decimals = await account.callContract({
-    contractAddress: consumer.address,
-    entrypoint: 'readDecimals',
-    calldata: [],
-  })
+  const latestRound = await consumer.call('read_latest_round')
+  const decimals = await consumer.call('read_decimals')
   printResult(latestRound, decimals)
 }
 
-function printResult(latestRound: CallContractResponse, decimals: CallContractResponse) {
-  console.log('round_id= ', parseInt(latestRound.result[0], 16))
-  console.log('answer= ', parseInt(latestRound.result[1], 16))
-  console.log('block_num= ', parseInt(latestRound.result[2], 16))
-  console.log('staerted_at= ', parseInt(latestRound.result[3], 16))
-  console.log('updated_at= ', parseInt(latestRound.result[4], 16))
-  console.log('decimals= ', parseInt(decimals.result[0], 16))
+function printResult(latestRound: Result, decimals: Result) {
+  console.log('---------------')
+  console.log('round_id= ', latestRound['round_id'])
+  console.log('answer= ', latestRound['answer'])
+  console.log('block_num= ', latestRound['block_num'])
+  console.log('started_at= ', latestRound['started_at'])
+  console.log('updated_at= ', latestRound['updated_at'])
+  console.log('decimals= ', decimals.toString())
 }
 
 readContinuously()

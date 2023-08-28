@@ -16,21 +16,21 @@ import (
 var _ relaytypes.Relayer = (*relayer)(nil)
 
 type relayer struct {
-	chainSet starkchain.ChainSet
-	ctx      context.Context
+	chain starkchain.Chain
+	ctx   context.Context
 
 	lggr logger.Logger
 
 	cancel func()
 }
 
-func NewRelayer(lggr logger.Logger, chainSet starkchain.ChainSet) *relayer {
+func NewRelayer(lggr logger.Logger, chain starkchain.Chain) *relayer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relayer{
-		chainSet: chainSet,
-		ctx:      ctx,
-		lggr:     lggr,
-		cancel:   cancel,
+		chain:  chain,
+		ctx:    ctx,
+		lggr:   lggr,
+		cancel: cancel,
 	}
 }
 
@@ -48,7 +48,7 @@ func (r *relayer) Close() error {
 }
 
 func (r *relayer) Ready() error {
-	return r.chainSet.Ready()
+	return r.chain.Ready()
 }
 
 func (r *relayer) Healthy() error { return nil }
@@ -65,16 +65,11 @@ func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.Confi
 		return nil, errors.Wrap(err, "couldn't unmarshal RelayConfig")
 	}
 
-	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't initilize Chain")
-	}
-
-	reader, err := chain.Reader()
+	reader, err := r.chain.Reader()
 	if err != nil {
 		return nil, errors.Wrap(err, "error in NewConfigProvider chain.Reader")
 	}
-	configProvider, err := ocr2.NewConfigProvider(relayConfig.ChainID, args.ContractID, reader, chain.Config(), r.lggr)
+	configProvider, err := ocr2.NewConfigProvider(r.chain.ID(), args.ContractID, reader, r.chain.Config(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "coudln't initialize ConfigProvider")
 	}
@@ -94,17 +89,12 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 		return nil, errors.New("no account address in relay config")
 	}
 
-	chain, err := r.chainSet.Chain(r.ctx, relayConfig.ChainID)
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't initilize Chain")
-	}
-
 	// todo: use pargs for median provider
-	reader, err := chain.Reader()
+	reader, err := r.chain.Reader()
 	if err != nil {
 		return nil, errors.Wrap(err, "error in NewMedianProvider chain.Reader")
 	}
-	medianProvider, err := ocr2.NewMedianProvider(relayConfig.ChainID, rargs.ContractID, pargs.TransmitterID, relayConfig.AccountAddress, reader, chain.Config(), chain.TxManager(), r.lggr)
+	medianProvider, err := ocr2.NewMedianProvider(r.chain.ID(), rargs.ContractID, pargs.TransmitterID, relayConfig.AccountAddress, reader, r.chain.Config(), r.chain.TxManager(), r.lggr)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't initilize MedianProvider")
 	}
@@ -114,4 +104,8 @@ func (r *relayer) NewMedianProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 
 func (r *relayer) NewMercuryProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.MercuryProvider, error) {
 	return nil, errors.New("mercury is not supported for starknet")
+}
+
+func (r *relayer) NewFunctionsProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.FunctionsProvider, error) {
+	return nil, errors.New("functions are not supported for solana")
 }
