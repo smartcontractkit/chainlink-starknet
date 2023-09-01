@@ -11,8 +11,6 @@ import (
 	_ "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-type ChainSet = types.ChainSet[string, Chain]
-
 type Chain interface {
 	types.ChainService
 
