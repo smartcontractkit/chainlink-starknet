@@ -38,6 +38,12 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint relayer
         run: nix develop -c make lint-go-relayer
+      - name: Store Golangci lint relayer report artifact
+        if: always()
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: golangci-lint-relayer-report
+          path: ./relayer/golangci-lint-relayer-report.xml
 
   golang_lint_ops:
     name: Golang Lint Ops
@@ -52,6 +58,12 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint ops
         run: nix develop -c make lint-go-ops
+      - name: Store Golangci lint ops report artifact
+        if: always()
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: golangci-lint-ops-report
+          path: ./ops/golangci-lint-ops-report.xml
 
   golang_lint_integration_tests:
     name: Golang Lint Integration Tests
@@ -66,6 +78,12 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint integration-tests
         run: nix develop -c make lint-go-test
+      - name: Store Golangci lint integration tests report artifact
+        if: always()
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: golangci-lint-integration-tests-report
+          path: ./integration-tests/golangci-lint-integration-tests-report.xml
       # Note: I could not figure out why the golangci-lint-action would not work even though it is technically running the same as above, error message is this:
       # Running [/home/runner/golangci-lint-1.50.1-linux-amd64/golangci-lint run --out-format=github-actions --path-prefix=integration-tests --exclude=dot-imports] in [/home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests] ...
       # level=warning msg="[runner] Can't run linter goanalysis_metalinter: inspect: failed to load package client: could not load export data: no export data for \"github.com/smartcontractkit/chainlink-testing-framework/client\""
