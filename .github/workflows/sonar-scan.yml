@@ -58,7 +58,7 @@ jobs:
           name: golangci-lint-relayer-report
           if_no_artifact_found: warn
 
-      - name: Download Golangci Ops report
+      - name: Download Golangcio Ops report
         uses: dawidd6/action-download-artifact@v2.27.0
         with:
           workflow: golangci-lint.yml
@@ -67,7 +67,7 @@ jobs:
           name: golangci-lint-ops-report
           if_no_artifact_found: warn
       
-      - name: Download Go Integration tests report
+      - name: Download Golangci-lint Integration tests report
         uses: dawidd6/action-download-artifact@v2.27.0
         with:
           workflow: golangci-lint.yml
