@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/starknet.go"
+	starknetgo "github.com/NethermindEth/starknet.go"
 	starknetgw "github.com/NethermindEth/starknet.go/gateway"
 	"github.com/NethermindEth/starknet.go/test"
 	starknettypes "github.com/NethermindEth/starknet.go/types"
@@ -163,3 +163,12 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 func (lk *LooppKeystore) Accounts(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
+
+/*
+ *
+ * Todo: once signatures are fixed on starknet.go, add a test to verify nonce behavior for following scenarios
+ *
+ * Test cases:
+ * 1. tx is accepted but it fails during run => reverted and increments nonce
+ * 2. tx is accepted and succeeds during run => succeeded and increments nonce
+ */

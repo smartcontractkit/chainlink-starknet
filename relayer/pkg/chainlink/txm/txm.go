@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	"github.com/NethermindEth/starknet.go"
+	starknetgo "github.com/NethermindEth/starknet.go"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknettypes "github.com/NethermindEth/starknet.go/types"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
@@ -218,6 +218,7 @@ func (txm *starktxm) confirmLoop() {
 						txm.lggr.Errorw("invalid felt value", "hash", hash)
 						continue
 					}
+					// according to v0.4 rpc changes, if no error, then tx is confirmed
 					response, err := client.Provider.TransactionReceipt(ctx, f)
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
@@ -229,13 +230,11 @@ func (txm *starktxm) confirmLoop() {
 						continue
 					}
 
-					status := receipt.Status
+					status := receipt.FinalityStatus
 
-					if status == starknetrpc.TransactionAcceptedOnL1 || status == starknetrpc.TransactionAcceptedOnL2 || status == starknetrpc.TransactionRejected {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
-						if err := txm.txStore.Confirm(addr, hash); err != nil {
-							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
-						}
+					txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "finality status", status)
+					if err := txm.txStore.Confirm(addr, hash); err != nil {
+						txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 					}
 				}
 			}

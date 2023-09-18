@@ -81,6 +81,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+replace github.com/NethermindEth/starknet.go => github.com/augustbleeds/starknet.go v0.4.2-0.20230912155424-048179bee72e
+
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 

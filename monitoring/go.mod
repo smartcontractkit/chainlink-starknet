@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/NethermindEth/juno v0.3.1
-	github.com/NethermindEth/starknet.go v0.4.2-0.20230804102546-d30334cf21f3
+	github.com/NethermindEth/starknet.go v0.4.2-0.20230830055456-308b763a11d3
 	github.com/prometheus/client_golang v1.15.0
 	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20230808141159-4e20b0757f3a
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
@@ -85,6 +85,8 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/NethermindEth/starknet.go => github.com/augustbleeds/starknet.go v0.4.2-0.20230912155424-048179bee72e
 
 replace (
 	// Fix go mod tidy issue for ambiguous imports from go-ethereum

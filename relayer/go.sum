@@ -39,9 +39,9 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/DataDog/zstd v1.5.2 h1:vUG4lAyuPCXO0TLbXvPv7EB7cNK1QV/luu55UHLrrn8=
 github.com/NethermindEth/juno v0.3.1 h1:AW72LiAm9gqUeCVJWvepnZcTnpU4Vkl0KzPMxS+42FA=
 github.com/NethermindEth/juno v0.3.1/go.mod h1:SGbTpgGaCsxhFsKOid7Ylnz//WZ8swtILk+NbHGsk/Q=
-github.com/NethermindEth/starknet.go v0.4.2-0.20230830055456-308b763a11d3 h1:SAE7oDXo82lT+arBtg6sozPMt9bNSkXY1A2TxlCGRw4=
-github.com/NethermindEth/starknet.go v0.4.2-0.20230830055456-308b763a11d3/go.mod h1:4fchLnLzJuwl1bnNUR+iBjKYN11afzJCdBcGZKIuFeU=
 github.com/VictoriaMetrics/fastcache v1.6.0 h1:C/3Oi3EiBCqufydp1neRZkqcwmEiuRT9c3fqvvgKm5o=
+github.com/augustbleeds/starknet.go v0.4.2-0.20230912155424-048179bee72e h1:MDgZ7KPzwKRSzwSHqiifOXdyavuapggpXfYR7bPqW7c=
+github.com/augustbleeds/starknet.go v0.4.2-0.20230912155424-048179bee72e/go.mod h1:jYturIQWt6EvmiALjvNgHNzNtACuS+Rb7MngXLaPHeI=
 github.com/benbjohnson/clock v1.3.0 h1:ip6w0uFQkncKQ979AypyG0ER7mqUSBdKLOgAle/AT8A=
 github.com/benbjohnson/clock v1.3.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

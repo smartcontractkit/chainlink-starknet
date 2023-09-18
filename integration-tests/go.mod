@@ -388,6 +388,8 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
+replace github.com/NethermindEth/starknet.go => github.com/augustbleeds/starknet.go v0.4.2-0.20230912155424-048179bee72e
+
 replace (
 	// Fix go mod tidy issue for ambiguous imports from go-ethereum
 	// See https://github.com/ugorji/go/issues/279
