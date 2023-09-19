@@ -8,6 +8,7 @@ use starknet::class_hash::class_hash_const;
 use chainlink::libraries::upgradeable::Upgradeable;
 use chainlink::libraries::ownable::Ownable;
 
+// Some tests are still written in TS due to missing features in cairo-test
 
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
@@ -15,9 +16,7 @@ fn setup() -> ContractAddress {
     account
 }
 
-// replace_class_syscall() not yet supported in tests
 #[test]
-#[ignore]
 #[available_gas(2000000)]
 fn test_upgrade() {
     let sender = setup();
