@@ -11,6 +11,7 @@ mod MockNonUpgradeable {
     #[constructor]
     fn constructor(self: @ContractState) {}
 
+    #[external(v0)]
     impl MockNonUpgradeableImpl of super::IMockNonUpgradeable<ContractState> {
         fn bar(self: @ContractState) -> bool {
             true
