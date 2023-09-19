@@ -17,12 +17,6 @@ use chainlink::libraries::mocks::mock_non_upgradeable::{
     IMockNonUpgradeableDispatcherImpl
 };
 
-fn STATE() -> MockUpgradeable::ContractState {
-    MockUpgradeable::contract_state_for_testing()
-}
-
-// Some tests are still written in TS due to missing features in cairo-test
-
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
     set_caller_address(account);
