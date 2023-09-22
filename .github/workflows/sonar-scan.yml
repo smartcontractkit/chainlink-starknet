@@ -79,7 +79,7 @@ jobs:
       - name: Download gauntlet eslint reports
         uses: dawidd6/action-download-artifact@v2.27.0
         with:
-          workflow: gauntlet.yml
+          workflow: integration_gauntlet.yml
           workflow_conclusion: ""
           name_is_regexp: true
           name: gauntlet-eslint-report
