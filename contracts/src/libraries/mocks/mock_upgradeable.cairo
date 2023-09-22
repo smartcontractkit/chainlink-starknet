@@ -16,7 +16,7 @@ mod MockUpgradeable {
     struct Storage {}
 
     #[constructor]
-    fn constructor(self: @ContractState) {}
+    fn constructor(ref self: ContractState) {}
 
     #[external(v0)]
     impl MockUpgradeableImpl of super::IMockUpgradeable<ContractState> {

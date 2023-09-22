@@ -17,7 +17,7 @@ use chainlink::ocr2::mocks::mock_aggregator::{
 // use chainlink::ocr2::aggregator::{IAggregator, IAggregatorDispatcher, IAggregatorDispatcherTrait};
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
-    AggregatorProxyImpl, AggregatorProxyInternal, AccessControllerImpl
+    AggregatorProxyImpl, AggregatorProxyInternal, AccessControllerImpl, UpgradeableImpl
 };
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
@@ -95,7 +95,7 @@ fn test_access_control() {
 fn test_upgrade_non_owner() {
     let (_, _, _, _, _) = setup();
     let mut state = STATE();
-    AggregatorProxy::upgrade(ref state, class_hash_const::<123>());
+    UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
 }
 
 fn test_query_latest_round_data() {

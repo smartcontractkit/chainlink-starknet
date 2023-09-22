@@ -7,7 +7,7 @@ mod AccessController {
 
     use chainlink::libraries::access_control::{AccessControl, IAccessController};
     use chainlink::libraries::ownable::{Ownable, IOwnable};
-    use chainlink::libraries::upgradeable::Upgradeable;
+    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     #[storage]
     struct Storage {}
@@ -98,9 +98,11 @@ mod AccessController {
     }
 
     #[external(v0)]
-    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
-        Upgradeable::upgrade(new_impl);
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            Upgradeable::upgrade(new_impl);
+        }
     }
 }
