@@ -163,3 +163,4 @@ integration-tests/smoke/logs
 integration-tests/soak/logs
 remote.test
 ztarrepo.tar.gz
+eslint-report.json
