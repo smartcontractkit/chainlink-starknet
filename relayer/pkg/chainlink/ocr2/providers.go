@@ -152,3 +152,7 @@ func (p *medianProvider) MedianContract() median.MedianContract {
 func (p *medianProvider) OnchainConfigCodec() median.OnchainConfigCodec {
 	return medianreport.OnchainConfigCodec{}
 }
+
+func (p *medianProvider) ChainReader() relaytypes.ChainReader {
+	return nil
+}
