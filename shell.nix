@@ -17,7 +17,7 @@
     nodePackages.typescript-language-server
     nodePackages.npm
 
-    go_1_20
+    go_1_21
     gopls
     delve
     golangci-lint
