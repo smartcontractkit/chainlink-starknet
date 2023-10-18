@@ -8,7 +8,7 @@ import (
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-relay/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 
 	"github.com/stretchr/testify/assert"
@@ -28,8 +28,8 @@ func newTestNonceManager(t *testing.T, chainID string, initNonce *big.Int) (txm.
 	keyHash := caigotypes.StrToFelt("test-key-id")
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
-	require.NoError(t, nm.Start(utils.Context(t)))
-	require.NoError(t, nm.Register(utils.Context(t), keyHash, chainID, c))
+	require.NoError(t, nm.Start(tests.Context(t)))
+	require.NoError(t, nm.Register(tests.Context(t), keyHash, chainID, c))
 
 	return nm, keyHash, func() { require.NoError(t, nm.Close()) }
 }
