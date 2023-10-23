@@ -1,17 +1,19 @@
 package smoke_test
 
-// revive:disable:dot-imports
 import (
 	"flag"
 	"fmt"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
-	"go.uber.org/zap/zapcore"
 	"testing"
+
+	"go.uber.org/zap/zapcore"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
-	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 )
 
 var (
