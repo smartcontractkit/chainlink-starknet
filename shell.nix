@@ -20,7 +20,7 @@
     go_1_21
     gopls
     delve
-    golangci-lint
+    (golangci-lint.override { buildGoModule = buildGo121Module; })
     gotools
 
     kube3d
