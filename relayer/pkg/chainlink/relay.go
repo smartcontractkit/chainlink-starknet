@@ -13,7 +13,7 @@ import (
 	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
 )
 
-var _ relaytypes.Relayer = (*relayer)(nil)
+var _ relaytypes.Relayer = (*relayer)(nil) //nolint:staticcheck
 
 type relayer struct {
 	chain starkchain.Chain

@@ -9,7 +9,7 @@ import (
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-relay/pkg/types"
+	"github.com/smartcontractkit/chainlink-relay/pkg/services"
 	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
 )
 
@@ -20,7 +20,7 @@ type NonceManagerClient interface {
 }
 
 type NonceManager interface {
-	types.Service
+	services.Service
 
 	Register(ctx context.Context, address caigotypes.Felt, chainId string, client NonceManagerClient) error
 
