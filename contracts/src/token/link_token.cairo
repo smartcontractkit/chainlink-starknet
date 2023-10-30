@@ -21,7 +21,7 @@ mod LinkToken {
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::erc677::ERC677;
     use chainlink::libraries::ownable::{Ownable, IOwnable};
-    use chainlink::libraries::upgradeable::Upgradeable;
+    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     const NAME: felt252 = 'ChainLink Token';
     const SYMBOL: felt252 = 'LINK';
@@ -86,10 +86,12 @@ mod LinkToken {
     //  Upgradeable
     //
     #[external(v0)]
-    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
-        Upgradeable::upgrade(new_impl)
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            Upgradeable::upgrade(new_impl)
+        }
     }
 
     //

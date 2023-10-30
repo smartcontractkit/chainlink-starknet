@@ -2,6 +2,7 @@ use starknet::class_hash::ClassHash;
 
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
+    // note: any contract that uses this module will have a mutable reference to contract state
     fn upgrade(ref self: TContractState, new_impl: ClassHash);
 }
 

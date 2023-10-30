@@ -15,7 +15,9 @@ use core::result::ResultTrait;
 
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
-use chainlink::ocr2::aggregator::Aggregator::{AggregatorImpl, BillingImpl, PayeeManagementImpl};
+use chainlink::ocr2::aggregator::Aggregator::{
+    AggregatorImpl, BillingImpl, PayeeManagementImpl, UpgradeableImpl
+};
 use chainlink::ocr2::aggregator::Aggregator::BillingConfig;
 use chainlink::ocr2::aggregator::Aggregator::PayeeConfig;
 use chainlink::access_control::access_controller::AccessController;
@@ -155,7 +157,8 @@ fn test_access_control() {
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();
-    Aggregator::upgrade(ref state, class_hash_const::<123>());
+
+    UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
 }
 
 // --- Billing tests ---
