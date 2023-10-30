@@ -197,7 +197,7 @@ mod Aggregator {
     use chainlink::utils::split_felt;
     use chainlink::libraries::ownable::{Ownable, IOwnable};
     use chainlink::libraries::access_control::AccessControl;
-    use chainlink::libraries::upgradeable::Upgradeable;
+    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
@@ -375,10 +375,12 @@ mod Aggregator {
     // --- Upgradeable ---
 
     #[external(v0)]
-    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
-        Upgradeable::upgrade(new_impl)
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            Upgradeable::upgrade(new_impl)
+        }
     }
 
     // --- Ownership ---

@@ -52,7 +52,7 @@ mod AggregatorProxy {
     use chainlink::libraries::ownable::{Ownable, IOwnable};
     use chainlink::libraries::access_control::{AccessControl, IAccessController};
     use chainlink::utils::split_felt;
-    use chainlink::libraries::upgradeable::Upgradeable;
+    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000;
     const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff;
@@ -172,11 +172,14 @@ mod AggregatorProxy {
     // -- Upgradeable -- 
 
     #[external(v0)]
-    fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
-        Upgradeable::upgrade(new_impl)
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
+            let ownable = Ownable::unsafe_new_contract_state();
+            Ownable::assert_only_owner(@ownable);
+            Upgradeable::upgrade(new_impl)
+        }
     }
+
 
     // -- Access Control --
 

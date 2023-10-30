@@ -12,7 +12,7 @@ use traits::TryInto;
 
 use chainlink::multisig::assert_unique_values;
 use chainlink::multisig::Multisig;
-use chainlink::multisig::Multisig::MultisigImpl;
+use chainlink::multisig::Multisig::{MultisigImpl, UpgradeableImpl};
 
 #[starknet::contract]
 mod MultisigTest {
@@ -288,7 +288,7 @@ fn test_upgrade_not_multisig() {
     let account = contract_address_const::<777>();
     set_caller_address(account);
 
-    MultisigImpl::upgrade(ref state, class_hash_const::<1>())
+    UpgradeableImpl::upgrade(ref state, class_hash_const::<1>())
 }
 
 #[test]
