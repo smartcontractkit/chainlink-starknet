@@ -13,6 +13,8 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::access_control::access_controller::AccessController;
+use chainlink::access_control::access_controller::AccessController::UpgradeableImpl;
+
 use chainlink::libraries::access_control::{
     IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
 };
@@ -34,7 +36,7 @@ fn test_upgrade_not_owner() {
     let sender = setup();
     let mut state = STATE();
 
-    AccessController::upgrade(ref state, class_hash_const::<2>());
+    UpgradeableImpl::upgrade(ref state, class_hash_const::<2>());
 }
 
 #[test]

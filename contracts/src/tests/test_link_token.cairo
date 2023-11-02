@@ -13,7 +13,7 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::token::link_token::LinkToken;
-use chainlink::token::link_token::LinkToken::{MintableToken, ERC20Impl};
+use chainlink::token::link_token::LinkToken::{MintableToken, ERC20Impl, UpgradeableImpl};
 use chainlink::tests::test_ownable::should_implement_ownable;
 
 // only tests link token specific functionality 
@@ -152,6 +152,6 @@ fn test_upgrade_non_owner() {
     let mut state = STATE();
     LinkToken::constructor(ref state, sender, contract_address_const::<111>());
 
-    LinkToken::upgrade(ref state, class_hash_const::<123>());
+    UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
 }
 
