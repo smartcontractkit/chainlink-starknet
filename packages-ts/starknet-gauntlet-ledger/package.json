@@ -26,6 +26,7 @@
   "dependencies": {
     "@chainlink/starknet-gauntlet": "*",
     "@ledgerhq/hw-app-starknet": "^2.0.3",
-    "@ledgerhq/hw-transport-node-hid": "^6.27.6"
+    "@ledgerhq/hw-transport-node-hid": "^6.27.6",
+    "node-gyp": "^10.0.1"
   }
 }
