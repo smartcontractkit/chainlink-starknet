@@ -14,7 +14,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 //go:generate mockery --name OCR2Reader --output ./mocks/

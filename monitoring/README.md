@@ -4,7 +4,7 @@
 
 - Starknet on-chain monitor [generated docs](https://pkg.go.dev/github.com/smartcontractkit/chainlink-starknet/monitoring/pkg/monitoring).
 - On-chain monitoring (OM) framework architecture docs in [blueprints](https://github.com/smartcontractkit/chainlink-blueprints/blob/master/monitoring/README.md).
-- OM framework [generated docs](https://pkg.go.dev/github.com/smartcontractkit/chainlink-relay/pkg/monitoring).
+- OM framework [generated docs](https://pkg.go.dev/github.com/smartcontractkit/chainlink-common/pkg/monitoring).
 
 ## Local development
 

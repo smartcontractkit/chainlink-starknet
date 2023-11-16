@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
-// TODO: consider extracting entire file to `chainlink-relay/ops` or into a separate CLI tool
+// TODO: consider extracting entire file to `chainlink-common/ops` or into a separate CLI tool
 // this simply runs underlying functions but does not import them
 
 // PODMAN:

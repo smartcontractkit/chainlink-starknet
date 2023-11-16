@@ -9,8 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"go.uber.org/multierr"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/config"
-	"github.com/smartcontractkit/chainlink-relay/pkg/utils"
+	"github.com/smartcontractkit/chainlink-common/pkg/config"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
@@ -48,34 +47,34 @@ type Config interface {
 }
 
 type Chain struct {
-	OCR2CachePollPeriod *utils.Duration
-	OCR2CacheTTL        *utils.Duration
-	RequestTimeout      *utils.Duration
-	TxTimeout           *utils.Duration
-	ConfirmationPoll    *utils.Duration
+	OCR2CachePollPeriod *config.Duration
+	OCR2CacheTTL        *config.Duration
+	RequestTimeout      *config.Duration
+	TxTimeout           *config.Duration
+	ConfirmationPoll    *config.Duration
 }
 
 func (c *Chain) SetDefaults() {
 	if c.OCR2CachePollPeriod == nil {
-		c.OCR2CachePollPeriod = utils.MustNewDuration(DefaultConfigSet.OCR2CachePollPeriod)
+		c.OCR2CachePollPeriod = config.MustNewDuration(DefaultConfigSet.OCR2CachePollPeriod)
 	}
 	if c.OCR2CacheTTL == nil {
-		c.OCR2CacheTTL = utils.MustNewDuration(DefaultConfigSet.OCR2CacheTTL)
+		c.OCR2CacheTTL = config.MustNewDuration(DefaultConfigSet.OCR2CacheTTL)
 	}
 	if c.RequestTimeout == nil {
-		c.RequestTimeout = utils.MustNewDuration(DefaultConfigSet.RequestTimeout)
+		c.RequestTimeout = config.MustNewDuration(DefaultConfigSet.RequestTimeout)
 	}
 	if c.TxTimeout == nil {
-		c.TxTimeout = utils.MustNewDuration(DefaultConfigSet.TxTimeout)
+		c.TxTimeout = config.MustNewDuration(DefaultConfigSet.TxTimeout)
 	}
 	if c.ConfirmationPoll == nil {
-		c.ConfirmationPoll = utils.MustNewDuration(DefaultConfigSet.ConfirmationPoll)
+		c.ConfirmationPoll = config.MustNewDuration(DefaultConfigSet.ConfirmationPoll)
 	}
 }
 
 type Node struct {
 	Name *string
-	URL  *utils.URL
+	URL  *config.URL
 }
 
 type TOMLConfigs []*TOMLConfig

@@ -17,9 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
-	adapters "github.com/smartcontractkit/chainlink-relay/pkg/loop/adapters/starknet"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/loop"
+	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )

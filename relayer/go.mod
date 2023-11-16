@@ -7,10 +7,11 @@ toolchain go1.21.1
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/ethereum/go-ethereum v1.11.5
+	github.com/hashicorp/go-plugin v1.5.2
 	github.com/pelletier/go-toml/v2 v2.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-relay v0.1.7-0.20231020230319-2ede955d1dc9
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231117021201-6814387d8d3e
 	github.com/smartcontractkit/libocr v0.0.0-20230925165524-ffa38fe11ef8
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/multierr v1.11.0
@@ -42,7 +43,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
-	github.com/hashicorp/go-plugin v1.5.2 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect

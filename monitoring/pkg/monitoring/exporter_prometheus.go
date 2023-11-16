@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 )
 
 // NewPrometheusExporterFactory builds an implementation of the Exporter for prometheus.
