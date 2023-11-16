@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
-	envConf "github.com/smartcontractkit/chainlink-env/config"
+	envConf "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
 )
 
 // GetTestLogger TODO: This is a duplicate of the same function in chainlink-testing-framework. We should replace this with a call to the ctf version when chainlink-starknet is updated to use the latest ctf version.
