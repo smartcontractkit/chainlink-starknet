@@ -7,10 +7,11 @@ import (
 	"sync"
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
-	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"go.uber.org/multierr"
+
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
+	relayUtils "github.com/smartcontractkit/chainlink-common/pkg/utils"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"

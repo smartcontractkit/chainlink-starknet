@@ -7,8 +7,8 @@ import (
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	"github.com/smartcontractkit/chainlink-relay/pkg/utils/tests"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 
 	"github.com/stretchr/testify/assert"

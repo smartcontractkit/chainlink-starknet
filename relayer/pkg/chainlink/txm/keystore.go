@@ -8,8 +8,8 @@ import (
 
 	"github.com/smartcontractkit/caigo"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
-	adapters "github.com/smartcontractkit/chainlink-relay/pkg/loop/adapters/starknet"
+	"github.com/smartcontractkit/chainlink-common/pkg/loop"
+	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
 )
 
 // KeystoreAdapter is a starknet-specific adaption layer to translate between the generic Loop Keystore (bytes) and

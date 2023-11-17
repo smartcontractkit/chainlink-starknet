@@ -8,9 +8,10 @@ import (
 	"github.com/pkg/errors"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 type Reader interface {

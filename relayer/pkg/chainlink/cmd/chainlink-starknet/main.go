@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/pelletier/go-toml/v2"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
+	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	pkgstarknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink"
 	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	stkcfg "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
@@ -51,7 +51,7 @@ type pluginRelayer struct {
 }
 
 // NewRelayer implements the Loopp factory method used by the Loopp server to instantiate a starknet relayer
-// [github.com/smartcontractkit/chainlink-relay/pkg/loop.PluginRelayer]
+// [github.com/smartcontractkit/chainlink-common/pkg/loop.PluginRelayer]
 // loopKs must be an implementation that can construct a starknet keystore adapter
 // [github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm.NewKeystoreAdapter]
 func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs loop.Keystore) (loop.Relayer, error) {

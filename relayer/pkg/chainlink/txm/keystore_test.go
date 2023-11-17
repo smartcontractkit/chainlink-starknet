@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/loop"
-	adapters "github.com/smartcontractkit/chainlink-relay/pkg/loop/adapters/starknet"
+	"github.com/smartcontractkit/chainlink-common/pkg/loop"
+	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
 

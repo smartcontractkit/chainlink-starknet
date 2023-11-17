@@ -9,8 +9,8 @@ import (
 	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
-	relaytypes "github.com/smartcontractkit/chainlink-relay/pkg/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 )
 
 var _ relaytypes.Relayer = (*relayer)(nil) //nolint:staticcheck

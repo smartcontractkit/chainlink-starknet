@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	caigo "github.com/smartcontractkit/caigo"
+	"github.com/smartcontractkit/caigo"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/chainlink/v2/core/services/keystore/keys/starkkey"

@@ -8,11 +8,11 @@ import (
 	"github.com/pkg/errors"
 
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
-	caigo "github.com/smartcontractkit/caigo"
+	"github.com/smartcontractkit/caigo"
 	caigorpc "github.com/smartcontractkit/caigo/rpcv02"
 	caigotypes "github.com/smartcontractkit/caigo/types"
 
-	"github.com/smartcontractkit/chainlink-relay/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 //go:generate mockery --name Reader --output ./mocks/
