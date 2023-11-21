@@ -6,7 +6,8 @@ import (
 	"sync"
 
 	caigotypes "github.com/smartcontractkit/caigo/types"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 )

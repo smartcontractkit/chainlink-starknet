@@ -6,7 +6,7 @@ import (
 	"io"
 	"math/big"
 
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 )
 
 type StarknetFeedConfig struct {

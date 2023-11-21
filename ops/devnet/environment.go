@@ -4,9 +4,11 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink-env/client"
-	"github.com/smartcontractkit/chainlink-env/config"
-	"github.com/smartcontractkit/chainlink-env/environment"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/client"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
+
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 

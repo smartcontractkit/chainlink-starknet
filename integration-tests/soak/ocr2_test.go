@@ -49,7 +49,7 @@ func TestOCRSoak(t *testing.T) {
 	err = testState.ValidateRounds(99999999, true)
 	require.NoError(t, err, "Validating round should not fail")
 	t.Cleanup(func() {
-		err = actions.TeardownSuite(t, testState.Common.Env, utils.ProjectRoot, testState.Cc.ChainlinkNodes, nil, zapcore.ErrorLevel)
+		err = actions.TeardownSuite(t, testState.Common.Env, testState.Cc.ChainlinkNodes, nil, zapcore.ErrorLevel)
 		require.NoError(t, err, "Error tearing down environment")
 	})
 }
