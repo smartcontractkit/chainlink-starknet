@@ -11,7 +11,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231205033838-dfac15e672d4
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231205184545-33c1591c8542
 	github.com/smartcontractkit/libocr v0.0.0-20230925165524-ffa38fe11ef8
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/multierr v1.11.0
@@ -49,7 +49,7 @@ require (
 	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
