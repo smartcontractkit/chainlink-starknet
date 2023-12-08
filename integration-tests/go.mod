@@ -6,7 +6,7 @@ require (
 	github.com/rs/zerolog v1.30.0
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231205033838-dfac15e672d4
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231208230026-7edd126291bf
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231117204155-b253a2f56664
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20231205042215-976232e40c59
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20231205043820-1cd875f11d60
