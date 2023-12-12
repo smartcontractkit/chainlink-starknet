@@ -21,9 +21,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
-	// unused module to keep in go.mod and prevent ambiguous import
-	_ "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 type Chain interface {
