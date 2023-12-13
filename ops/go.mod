@@ -120,7 +120,7 @@ require (
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231205033838-dfac15e672d4 // indirect
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231211141118-8632187920b3 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20230925165524-ffa38fe11ef8 // indirect
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
