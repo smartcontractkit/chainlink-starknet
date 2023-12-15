@@ -7,12 +7,12 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231213004748-634abd41e41b
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231215165506-129e8c24b425
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231117204155-b253a2f56664
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20231212224108-491f01598104
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20231215001034-e5e1d2197cd0
 	github.com/smartcontractkit/chainlink-testing-framework v1.22.0
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20231213194921-cf3ce3ccfc43
-	github.com/smartcontractkit/chainlink/v2 v2.8.0-beta0.0.20231213194921-cf3ce3ccfc43
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20231215170148-2d496290ca43
+	github.com/smartcontractkit/chainlink/v2 v2.8.0-beta0.0.20231215170148-2d496290ca43
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 	gopkg.in/guregu/null.v4 v4.0.0
@@ -321,10 +321,10 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
 	github.com/smartcontractkit/chainlink-automation v1.0.1 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20231212223951-a1b9ba2a22f8 // indirect
+	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20231215000714-b7570ed35952 // indirect
 	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20231204152908-a6e3fe8ff2a1 // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.0.0-20231127231053-2232d3a6766d // indirect
-	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20231212224020-7b95bea17078 // indirect
+	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20231215000925-4b2a37958d0b // indirect
 	github.com/smartcontractkit/chainlink-vrf v0.0.0-20231120191722-fef03814f868 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20231130143053-c5102a9c0fb7 // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
