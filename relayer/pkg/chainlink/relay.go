@@ -109,3 +109,7 @@ func (r *relayer) NewMercuryProvider(rargs relaytypes.RelayArgs, pargs relaytype
 func (r *relayer) NewFunctionsProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.FunctionsProvider, error) {
 	return nil, errors.New("functions are not supported for solana")
 }
+
+func (r *relayer) NewAutomationProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.AutomationProvider, error) {
+	return nil, errors.New("automation is not supported for starknet")
+}

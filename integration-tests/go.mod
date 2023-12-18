@@ -7,12 +7,12 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231206181640-faad3f11cfad
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231218150613-43bf581ae327
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231117204155-b253a2f56664
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-testing-framework v1.21.0
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20231212105216-0c63446ae535
-	github.com/smartcontractkit/chainlink/v2 v2.8.0-beta0.0.20231212105216-0c63446ae535
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20231215215547-68a402815b84
+	github.com/smartcontractkit/chainlink-testing-framework v1.22.0
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20231215214204-43d28a8e46e7
+	github.com/smartcontractkit/chainlink/v2 v2.8.0-beta0.0.20231215220731-a4091a3e4d3c
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 	gopkg.in/guregu/null.v4 v4.0.0
@@ -289,7 +289,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/petermattis/goid v0.0.0-20230317030725-371a4b8eda08 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
@@ -303,7 +303,7 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.10.1-0.20230714054209-2f4150c63f97 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/prometheus/prometheus v0.48.0 // indirect
+	github.com/prometheus/prometheus v0.48.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
@@ -321,10 +321,10 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
 	github.com/smartcontractkit/chainlink-automation v1.0.1 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20231206164210-03f8b219402e // indirect
+	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20231215215216-51cb121f7f33 // indirect
 	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20231204152908-a6e3fe8ff2a1 // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.0.0-20231127231053-2232d3a6766d // indirect
-	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20231206154215-ec1718b7df3e // indirect
+	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20231215215420-f0b4a00004c1 // indirect
 	github.com/smartcontractkit/chainlink-vrf v0.0.0-20231120191722-fef03814f868 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20231130143053-c5102a9c0fb7 // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
