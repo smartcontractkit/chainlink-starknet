@@ -7,7 +7,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231215165506-129e8c24b425
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20231218150613-43bf581ae327
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231117204155-b253a2f56664
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20231215171653-9b9cd71f12a5
 	github.com/smartcontractkit/chainlink-testing-framework v1.22.0
