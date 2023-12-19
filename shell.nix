@@ -35,7 +35,7 @@
   ];
 
   LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.zlib stdenv.cc.cc.lib]; # lib64
-  HELM_REPOSITORY_CONFIG=./.helm-repositories.yaml;
+  HELM_REPOSITORY_CONFIG = "./.helm-repositories.yaml";
 
   venvDir = "./.venv";
 }
