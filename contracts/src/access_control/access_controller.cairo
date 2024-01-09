@@ -6,16 +6,31 @@ mod AccessController {
     use starknet::class_hash::ClassHash;
 
     use chainlink::libraries::access_control::{AccessControl, IAccessController};
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
+    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+    }
+
     #[storage]
-    struct Storage {}
+    struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+    }
 
     #[constructor]
     fn constructor(ref self: ContractState, owner_address: ContractAddress) {
-        let mut ownable = Ownable::unsafe_new_contract_state();
-        Ownable::constructor(ref ownable, owner_address);
+        self.ownable.initializer(owner_address);
         let mut access_control = AccessControl::unsafe_new_contract_state();
         AccessControl::constructor(ref access_control);
     }
@@ -28,63 +43,27 @@ mod AccessController {
         }
 
         fn add_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::add_access(ref state, user);
         }
 
         fn remove_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::remove_access(ref state, user);
         }
 
         fn enable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::enable_access_check(ref state);
         }
 
         fn disable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::disable_access_check(ref state);
-        }
-    }
-
-    ///
-    /// Ownable
-    ///
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
         }
     }
 
@@ -100,8 +79,7 @@ mod AccessController {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl);
         }
     }

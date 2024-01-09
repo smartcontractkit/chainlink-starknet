@@ -49,7 +49,7 @@ mod AggregatorProxy {
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
+    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::access_control::{AccessControl, IAccessController};
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
@@ -63,13 +63,30 @@ mod AggregatorProxy {
         aggregator: ContractAddress
     }
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
         _phases: LegacyMap<u128, ContractAddress>
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+    }
+
+    // TODO: refactor these events
     #[event]
     fn AggregatorProposed(current: ContractAddress, proposed: ContractAddress) {}
 
@@ -132,41 +149,10 @@ mod AggregatorProxy {
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress, address: ContractAddress) {
         // TODO: ownable and access control need to share owners and update when needed
-        let mut ownable = Ownable::unsafe_new_contract_state();
-        Ownable::constructor(ref ownable, owner);
+        self.ownable.initializer(owner);
         let mut access_control = AccessControl::unsafe_new_contract_state();
         AccessControl::constructor(ref access_control);
         self._set_aggregator(address);
-    }
-
-    // --- Ownership ---
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
-        }
     }
 
     // -- Upgradeable -- 
@@ -174,8 +160,7 @@ mod AggregatorProxy {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
         }
     }
@@ -191,29 +176,25 @@ mod AggregatorProxy {
         }
 
         fn add_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::add_access(ref state, user)
         }
 
         fn remove_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::remove_access(ref state, user)
         }
 
         fn enable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::enable_access_check(ref state)
         }
 
         fn disable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::disable_access_check(ref state)
         }
@@ -224,8 +205,7 @@ mod AggregatorProxy {
     #[external(v0)]
     impl AggregatorProxyInternal of super::IAggregatorProxyInternal<ContractState> {
         fn propose_aggregator(ref self: ContractState, address: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             assert(!address.is_zero(), 'proposed address is 0');
             self._proposed_aggregator.write(address);
 
@@ -234,8 +214,7 @@ mod AggregatorProxy {
         }
 
         fn confirm_aggregator(ref self: ContractState, address: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             assert(!address.is_zero(), 'confirm address is 0');
             let phase = self._current_phase.read();
             let previous = phase.aggregator;
