@@ -1,70 +1,44 @@
-use starknet::ContractAddress;
-
 #[starknet::contract]
 mod AccessController {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
-    use chainlink::libraries::access_control::{AccessControl, IAccessController};
+    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
         OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
     }
 
     #[storage]
     struct Storage {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        access_control: AccessControlComponent::Storage,
     }
 
     #[constructor]
     fn constructor(ref self: ContractState, owner_address: ContractAddress) {
         self.ownable.initializer(owner_address);
-        let mut access_control = AccessControl::unsafe_new_contract_state();
-        AccessControl::constructor(ref access_control);
-    }
-
-    #[external(v0)]
-    impl AccessControllerImpl of IAccessController<ContractState> {
-        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
-            let state = AccessControl::unsafe_new_contract_state();
-            AccessControl::has_access(@state, user, data)
-        }
-
-        fn add_access(ref self: ContractState, user: ContractAddress) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::add_access(ref state, user);
-        }
-
-        fn remove_access(ref self: ContractState, user: ContractAddress) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::remove_access(ref state, user);
-        }
-
-        fn enable_access_check(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::enable_access_check(ref state);
-        }
-
-        fn disable_access_check(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::disable_access_check(ref state);
-        }
+        self.access_control.initializer();
     }
 
     ///

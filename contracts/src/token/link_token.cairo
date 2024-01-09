@@ -103,19 +103,6 @@ mod LinkToken {
         'LinkToken 1.0.0'
     }
 
-    // 
-    // ERC677
-    //
-
-    // TODO:
-    // #[external(v0)]
-    // fn transfer_and_call(
-    //     ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>
-    // ) -> bool {
-    //     let mut erc677 = ERC677::unsafe_new_contract_state();
-    //     ERC677::transfer_and_call(ref erc677, to, value, data)
-    // }
-
     //
     //  Upgradeable
     //

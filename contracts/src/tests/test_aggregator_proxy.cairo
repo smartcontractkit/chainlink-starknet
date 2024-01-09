@@ -17,8 +17,9 @@ use chainlink::ocr2::mocks::mock_aggregator::{
 // use chainlink::ocr2::aggregator::{IAggregator, IAggregatorDispatcher, IAggregatorDispatcherTrait};
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
-    AggregatorProxyImpl, AggregatorProxyInternal, AccessControllerImpl, UpgradeableImpl
+    AggregatorProxyImpl, AggregatorProxyInternal, UpgradeableImpl
 };
+use AggregatorProxy::AccessControlImpl;
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
 use chainlink::tests::test_ownable::should_implement_ownable;
@@ -103,7 +104,7 @@ fn test_query_latest_round_data() {
     let mut state = STATE();
     // init aggregator proxy with mock aggregator
     AggregatorProxy::constructor(ref state, owner, mockAggregatorAddr);
-    AccessControllerImpl::add_access(ref state, owner);
+    AccessControlImpl::add_access(ref state, owner);
     // insert round into mock aggregator
     mockAggregator.set_latest_round_data(10, 1, 9, 8);
     // query latest round
@@ -125,7 +126,7 @@ fn test_query_latest_round_data_without_access() {
     let mut state = STATE();
     // init aggregator proxy with mock aggregator
     AggregatorProxy::constructor(ref state, owner, mockAggregatorAddr);
-    AccessControllerImpl::add_access(ref state, owner);
+    AccessControlImpl::add_access(ref state, owner);
     // insert round into mock aggregator
     mockAggregator.set_latest_round_data(10, 1, 9, 8);
     // set caller to non-owner address with no read access
@@ -142,7 +143,7 @@ fn test_propose_new_aggregator() {
     let mut state = STATE();
     // init aggregator proxy with mock aggregator 1
     AggregatorProxy::constructor(ref state, owner, mockAggregatorAddr1);
-    AccessControllerImpl::add_access(ref state, owner);
+    AccessControlImpl::add_access(ref state, owner);
     // insert rounds into mock aggregators
     mockAggregator1.set_latest_round_data(10, 1, 9, 8);
     mockAggregator2.set_latest_round_data(12, 2, 10, 11);
@@ -171,7 +172,7 @@ fn test_confirm_new_aggregator() {
     let mut state = STATE();
     // init aggregator proxy with mock aggregator 1
     AggregatorProxy::constructor(ref state, owner, mockAggregatorAddr1);
-    AccessControllerImpl::add_access(ref state, owner);
+    AccessControlImpl::add_access(ref state, owner);
     // insert rounds into mock aggregators
     mockAggregator1.set_latest_round_data(10, 1, 9, 8);
     mockAggregator2.set_latest_round_data(12, 2, 10, 11);
