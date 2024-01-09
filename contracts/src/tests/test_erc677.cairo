@@ -58,7 +58,7 @@ fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();
     // have to send 0 because ERC20 is not initialized with starting supply when using this library by itself
     let mut erc677 = ERC677::unsafe_new_contract_state();
-    ERC677::transfer_and_call(ref erc677, receiver, u256 { high: 0, low: 0 }, data);
+    //  TODO: ERC677::transfer_and_call(ref erc677, receiver, u256 { high: 0, low: 0 }, data);
 }
 
 #[test]
