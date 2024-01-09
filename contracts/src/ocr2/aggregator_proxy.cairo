@@ -50,7 +50,8 @@ mod AggregatorProxy {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
-    use chainlink::libraries::access_control::{AccessControl, IAccessController};
+    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
+    use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use chainlink::utils::split_felt;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
@@ -64,15 +65,22 @@ mod AggregatorProxy {
     }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
-    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        access_control: AccessControlComponent::Storage,
 
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
@@ -84,6 +92,8 @@ mod AggregatorProxy {
     enum Event {
         #[flat]
         OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
     }
 
     // TODO: refactor these events
@@ -148,10 +158,8 @@ mod AggregatorProxy {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress, address: ContractAddress) {
-        // TODO: ownable and access control need to share owners and update when needed
         self.ownable.initializer(owner);
-        let mut access_control = AccessControl::unsafe_new_contract_state();
-        AccessControl::constructor(ref access_control);
+        self.access_control.initializer();
         self._set_aggregator(address);
     }
 
@@ -162,41 +170,6 @@ mod AggregatorProxy {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
             self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
-        }
-    }
-
-
-    // -- Access Control --
-
-    #[external(v0)]
-    impl AccessControllerImpl of IAccessController<ContractState> {
-        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
-            let state = AccessControl::unsafe_new_contract_state();
-            AccessControl::has_access(@state, user, data)
-        }
-
-        fn add_access(ref self: ContractState, user: ContractAddress) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::add_access(ref state, user)
-        }
-
-        fn remove_access(ref self: ContractState, user: ContractAddress) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::remove_access(ref state, user)
-        }
-
-        fn enable_access_check(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::enable_access_check(ref state)
-        }
-
-        fn disable_access_check(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::disable_access_check(ref state)
         }
     }
 
@@ -268,8 +241,7 @@ mod AggregatorProxy {
 
         fn _require_read_access(self: @ContractState) {
             let caller = starknet::info::get_caller_address();
-            let state = AccessControl::unsafe_new_contract_state();
-            AccessControl::check_read_access(@state, caller);
+            self.access_control.check_read_access(caller);
         }
     }
 }
