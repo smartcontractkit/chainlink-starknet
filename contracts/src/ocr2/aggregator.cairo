@@ -196,20 +196,24 @@ mod Aggregator {
 
     use chainlink::utils::split_felt;
     use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
-    use chainlink::libraries::access_control::AccessControl;
+    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
+    use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
-    use chainlink::libraries::access_control::{
-        IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
-    };
+    use chainlink::libraries::access_control::{ IAccessControllerDispatcher, IAccessControllerDispatcherTrait };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
-    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     const GIGA: u128 = 1000000000_u128;
 
@@ -220,6 +224,8 @@ mod Aggregator {
     enum Event {
         #[flat]
         OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
         NewTransmission: NewTransmission,
         ConfigSet: ConfigSet,
         LinkTokenSet: LinkTokenSet,
@@ -276,6 +282,8 @@ mod Aggregator {
     struct Storage {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        access_control: AccessControlComponent::Storage,
 
         /// Maximum number of faulty oracles
         _f: u8,
@@ -306,16 +314,18 @@ mod Aggregator {
         _proposed_payees: LegacyMap<ContractAddress, ContractAddress> // <transmitter, payment_address>
     }
 
-    fn _require_read_access() {
-        let caller = starknet::info::get_caller_address();
-        let state = AccessControl::unsafe_new_contract_state();
-        AccessControl::check_read_access(@state, caller);
+    #[generate_trait]
+    impl AccessHelperImpl of AccessHelperTrait {
+        fn _require_read_access(self: @ContractState) {
+            let caller = starknet::info::get_caller_address();
+            self.access_control.check_read_access(caller);
+        }
     }
 
     #[external(v0)]
     impl AggregatorImpl of super::IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
-            _require_read_access();
+            self._require_read_access();
             let latest_round_id = self._latest_aggregator_round_id.read();
             let transmission = self._transmissions.read(latest_round_id);
             Round {
@@ -328,7 +338,7 @@ mod Aggregator {
         }
 
         fn round_data(self: @ContractState, round_id: u128) -> Round {
-            _require_read_access();
+            self._require_read_access();
             let transmission = self._transmissions.read(round_id);
             Round {
                 round_id: round_id.into(),
@@ -340,12 +350,12 @@ mod Aggregator {
         }
 
         fn description(self: @ContractState) -> felt252 {
-            _require_read_access();
+            self._require_read_access();
             self._description.read()
         }
 
         fn decimals(self: @ContractState) -> u8 {
-            _require_read_access();
+            self._require_read_access();
             self._decimals.read()
         }
 
@@ -368,8 +378,7 @@ mod Aggregator {
         description: felt252
     ) {
         self.ownable.initializer(owner);
-        let mut access_control = AccessControl::unsafe_new_contract_state();
-        AccessControl::constructor(ref access_control);
+        self.access_control.initializer();
         self._link_token.write(link);
         self._billing_access_controller.write(billing_access_controller);
 
@@ -388,40 +397,6 @@ mod Aggregator {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
             self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
-        }
-    }
-
-    // -- Access Control --
-
-    #[external(v0)]
-    impl AccessControllerImpl of IAccessController<ContractState> {
-        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
-            let state = AccessControl::unsafe_new_contract_state();
-            AccessControl::has_access(@state, user, data)
-        }
-
-        fn add_access(ref self: ContractState, user: ContractAddress) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::add_access(ref state, user)
-        }
-
-        fn remove_access(ref self: ContractState, user: ContractAddress) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::remove_access(ref state, user)
-        }
-
-        fn enable_access_check(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::enable_access_check(ref state)
-        }
-
-        fn disable_access_check(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::disable_access_check(ref state)
         }
     }
 
