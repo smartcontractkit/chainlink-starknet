@@ -15,7 +15,7 @@ mod LinkToken {
     use zeroable::Zeroable;
 
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-    use chainlink::libraries::token::erc677::ERC677;
+    use chainlink::libraries::token::erc677::ERC677Component;
     use chainlink::libraries::ownable::{Ownable, IOwnable};
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
@@ -24,12 +24,16 @@ mod LinkToken {
     use starknet::class_hash::ClassHash;
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
+    component!(path: ERC677Component, storage: erc677, event: ERC677Event);
 
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
     #[abi(embed_v0)]
     impl ERC20MetadataImpl = ERC20Component::ERC20MetadataImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl ERC677Impl = ERC677Component::ERC677Impl<ContractState>;
 
     const NAME: felt252 = 'ChainLink Token';
     const SYMBOL: felt252 = 'LINK';
@@ -39,14 +43,19 @@ mod LinkToken {
         _minter: ContractAddress,
 
         #[substorage(v0)]
-        erc20: ERC20Component::Storage
+        erc20: ERC20Component::Storage,
+
+        #[substorage(v0)]
+        erc677: ERC677Component::Storage
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
-        ERC20Event: ERC20Component::Event
+        ERC20Event: ERC20Component::Event,
+        #[flat]
+        ERC677Event: ERC677Component::Event
     }
 
     //

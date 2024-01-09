@@ -1,6 +1,13 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
+trait IERC677<TContractState> {
+    fn transfer_and_call(
+        ref self: TContractState, to: ContractAddress, value: u256, data: Array<felt252>
+    ) -> bool;
+}
+
+#[starknet::interface]
 trait IERC677Receiver<TContractState> {
     fn on_token_transfer(
         ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>
@@ -9,10 +16,10 @@ trait IERC677Receiver<TContractState> {
     fn supports_interface(ref self: TContractState, interface_id: u32) -> bool;
 }
 
-#[starknet::contract]
-mod ERC677 {
+#[starknet::component]
+mod ERC677Component {
     use starknet::ContractAddress;
-    // use openzeppelin::token::erc20::ERC20Component;
+    use openzeppelin::token::erc20::interface::IERC20;
     use array::ArrayTrait;
     use array::SpanTrait;
     use clone::Clone;
@@ -30,37 +37,42 @@ mod ERC677 {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        Transfer: Transfer,
+        TransferAndCall: TransferAndCall,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct Transfer {
+    struct TransferAndCall {
         from: ContractAddress,
         to: ContractAddress,
         value: u256,
         data: Array<felt252>
     }
 
-    fn transfer_and_call(
-        ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>
-    ) -> bool {
-        let sender = starknet::info::get_caller_address();
+    #[embeddable_as(ERC677Impl)]
+    impl ERC677<
+        TContractState, +HasComponent<TContractState>, +IERC20<TContractState>, +Drop<TContractState>,
+    > of super::IERC677<ComponentState<TContractState>> {
+        fn transfer_and_call(
+            ref self: ComponentState<TContractState>, to: ContractAddress, value: u256, data: Array<felt252>
+        ) -> bool {
+            let sender = starknet::info::get_caller_address();
 
-        let mut state = ERC20::unsafe_new_contract_state();
-        ERC20::ERC20Impl::transfer(ref state, to, value);
-        self
-            .emit(
-                Event::Transfer(
-                    Transfer { from: sender, to: to, value: value, data: data.clone(), }
-                )
-            );
+            let mut contract = self.get_contract_mut();
+            contract.transfer(to, value);
+            self
+                .emit(
+                    Event::TransferAndCall(
+                        TransferAndCall { from: sender, to: to, value: value, data: data.clone(), }
+                    )
+                );
 
-        let receiver = IERC677ReceiverDispatcher { contract_address: to };
+            let receiver = IERC677ReceiverDispatcher { contract_address: to };
 
-        let supports = receiver.supports_interface(IERC677_RECEIVER_ID);
-        if supports {
-            receiver.on_token_transfer(sender, value, data);
+            let supports = receiver.supports_interface(IERC677_RECEIVER_ID);
+            if supports {
+                receiver.on_token_transfer(sender, value, data);
+            }
+            true
         }
-        true
     }
 }
