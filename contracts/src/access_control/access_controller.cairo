@@ -92,7 +92,7 @@ mod AccessController {
     /// Upgradeable
     ///
 
-    #[view]
+    // #[view]
     fn type_and_version(self: @ContractState) -> felt252 {
         'AccessController 1.0.0'
     }

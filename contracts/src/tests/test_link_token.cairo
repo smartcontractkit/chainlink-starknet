@@ -13,7 +13,8 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::token::link_token::LinkToken;
-use chainlink::token::link_token::LinkToken::{MintableToken, ERC20Impl, UpgradeableImpl};
+use chainlink::token::link_token::LinkToken::{MintableToken, UpgradeableImpl};
+use openzeppelin::token::erc20::ERC20Component::{ERC20Impl, ERC20MetadataImpl};
 use chainlink::tests::test_ownable::should_implement_ownable;
 
 // only tests link token specific functionality 
@@ -64,8 +65,8 @@ fn test_constructor() {
     LinkToken::constructor(ref state, sender, sender);
 
     assert(LinkToken::minter(@state) == sender, 'minter valid');
-    assert(ERC20Impl::name(@state) == 'ChainLink Token', 'name valid');
-    assert(ERC20Impl::symbol(@state) == 'LINK', 'symbol valid');
+    assert(state.erc20.name() == 'ChainLink Token', 'name valid');
+    assert(state.erc20.symbol() == 'LINK', 'symbol valid');
 }
 
 #[test]
