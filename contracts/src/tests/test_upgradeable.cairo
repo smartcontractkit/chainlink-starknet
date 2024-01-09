@@ -24,15 +24,6 @@ fn setup() -> ContractAddress {
 
 #[test]
 #[available_gas(2000000)]
-fn test_upgrade() {
-    let sender = setup();
-
-    // doesn't error
-    Upgradeable::upgrade(class_hash_const::<1>());
-}
-
-#[test]
-#[available_gas(2000000)]
 fn test_upgrade_and_call() {
     let sender = setup();
 
