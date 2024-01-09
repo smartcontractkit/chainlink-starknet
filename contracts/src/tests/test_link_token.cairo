@@ -147,7 +147,7 @@ fn test_permissioned_burn_from_nonminter() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();

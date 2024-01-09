@@ -107,7 +107,7 @@ fn setup() -> (
 }
 
 #[test]
-#[available_gas(2000000)]
+#[available_gas(3000000)]
 fn test_ownable() {
     let (account, _, _, _) = setup();
     // Deploy aggregator
@@ -153,7 +153,7 @@ fn test_access_control() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();
@@ -165,7 +165,7 @@ fn test_upgrade_non_owner() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_billing_access_controller_not_owner() {
     let (owner, acc2, billingAccessController, _) = setup();
     let mut state = STATE();
@@ -281,7 +281,7 @@ fn test_set_billing_config_as_acc_with_access() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_payees_caller_not_owner() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
