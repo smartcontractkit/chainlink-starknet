@@ -195,7 +195,7 @@ mod Aggregator {
     use starknet::class_hash::ClassHash;
 
     use chainlink::utils::split_felt;
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
+    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::access_control::AccessControl;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
@@ -205,6 +205,12 @@ mod Aggregator {
         IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
     };
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
     const GIGA: u128 = 1000000000_u128;
 
     const MAX_ORACLES: u32 = 31_u32;
@@ -212,6 +218,8 @@ mod Aggregator {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
         NewTransmission: NewTransmission,
         ConfigSet: ConfigSet,
         LinkTokenSet: LinkTokenSet,
@@ -266,6 +274,9 @@ mod Aggregator {
 
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+
         /// Maximum number of faulty oracles
         _f: u8,
         _latest_epoch_and_round: u64, // (u32, u32)
@@ -292,8 +303,7 @@ mod Aggregator {
         _billing: BillingConfig,
         // payee management
         _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
-        _proposed_payees: LegacyMap<ContractAddress,
-        ContractAddress> // <transmitter, payment_address>
+        _proposed_payees: LegacyMap<ContractAddress, ContractAddress> // <transmitter, payment_address>
     }
 
     fn _require_read_access() {
@@ -357,8 +367,7 @@ mod Aggregator {
         decimals: u8,
         description: felt252
     ) {
-        let mut ownable = Ownable::unsafe_new_contract_state();
-        Ownable::constructor(ref ownable, owner); // Ownable::initializer(owner);
+        self.ownable.initializer(owner);
         let mut access_control = AccessControl::unsafe_new_contract_state();
         AccessControl::constructor(ref access_control);
         self._link_token.write(link);
@@ -377,39 +386,8 @@ mod Aggregator {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
-        }
-    }
-
-    // --- Ownership ---
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
         }
     }
 
@@ -423,29 +401,25 @@ mod Aggregator {
         }
 
         fn add_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::add_access(ref state, user)
         }
 
         fn remove_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::remove_access(ref state, user)
         }
 
         fn enable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::enable_access_check(ref state)
         }
 
         fn disable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             let mut state = AccessControl::unsafe_new_contract_state();
             AccessControl::disable_access_check(ref state)
         }
@@ -529,8 +503,7 @@ mod Aggregator {
             offchain_config_version: u64,
             offchain_config: Array<felt252>,
         ) -> felt252 { // digest
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
             assert((3_u8 * f).into() < oracles.len(), 'faulty-oracle f too high');
             assert(f > 0_u8, 'f must be positive');
@@ -900,8 +873,7 @@ mod Aggregator {
     fn set_link_token(
         ref self: ContractState, link_token: ContractAddress, recipient: ContractAddress
     ) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
+        self.ownable.assert_only_owner();
 
         let old_token = self._link_token.read();
 
@@ -968,8 +940,7 @@ mod Aggregator {
         fn set_billing_access_controller(
             ref self: ContractState, access_controller: ContractAddress
         ) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
 
             let old_controller = self._billing_access_controller.read();
             if access_controller == old_controller {
@@ -1068,8 +1039,7 @@ mod Aggregator {
     impl BillingHelperImpl of BillingHelperTrait {
         fn has_billing_access(self: @ContractState) {
             let caller = starknet::info::get_caller_address();
-            let ownable = Ownable::unsafe_new_contract_state();
-            let owner = Ownable::OwnableImpl::owner(@ownable);
+            let owner = self.ownable.owner();
 
             // owner always has access
             if caller == owner {
@@ -1228,8 +1198,7 @@ mod Aggregator {
     #[external(v0)]
     impl PayeeManagementImpl of super::PayeeManagement<ContractState> {
         fn set_payees(ref self: ContractState, mut payees: Array<PayeeConfig>) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             loop {
                 match payees.pop_front() {
                     Option::Some(payee) => {

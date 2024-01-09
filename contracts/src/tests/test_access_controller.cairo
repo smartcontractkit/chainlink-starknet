@@ -31,7 +31,7 @@ fn setup() -> ContractAddress {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_not_owner() {
     let sender = setup();
     let mut state = STATE();

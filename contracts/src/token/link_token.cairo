@@ -16,15 +16,20 @@ mod LinkToken {
 
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::erc677::ERC677Component;
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
+    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     use openzeppelin::token::erc20::ERC20Component;
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: ERC677Component, storage: erc677, event: ERC677Event);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
@@ -40,6 +45,9 @@ mod LinkToken {
 
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+
         _minter: ContractAddress,
 
         #[substorage(v0)]
@@ -52,6 +60,8 @@ mod LinkToken {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
         #[flat]
         ERC20Event: ERC20Component::Event,
         #[flat]
@@ -80,8 +90,7 @@ mod LinkToken {
         self.erc20.initializer(NAME, SYMBOL);
         assert(!minter.is_zero(), 'minter is 0');
         self._minter.write(minter);
-        let mut ownable = Ownable::unsafe_new_contract_state();
-        Ownable::constructor(ref ownable, owner); // Ownable::initializer(owner);
+        self.ownable.initializer(owner);
     }
 
     // TODO #[view]
@@ -113,41 +122,8 @@ mod LinkToken {
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
-        }
-    }
-
-    //
-    // Ownership
-    //
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
         }
     }
 

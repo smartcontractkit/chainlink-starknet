@@ -1,110 +1,155 @@
 use starknet::ContractAddress;
 
+// TODO: consider replacing with OwnableTwoStep if https://github.com/OpenZeppelin/cairo-contracts/pull/809/ lands
+
 #[starknet::interface]
-trait IOwnable<TContractState> {
-    fn owner(self: @TContractState) -> ContractAddress;
-    fn proposed_owner(self: @TContractState) -> ContractAddress;
-    fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
-    fn accept_ownership(ref self: TContractState);
-    fn renounce_ownership(ref self: TContractState);
+trait IOwnable<TState> {
+    fn owner(self: @TState) -> ContractAddress;
+    fn proposed_owner(self: @TState) -> ContractAddress;
+    fn transfer_ownership(ref self: TState, new_owner: ContractAddress);
+    fn accept_ownership(ref self: TState);
+    fn renounce_ownership(ref self: TState);
 }
 
-#[starknet::contract]
-mod Ownable {
+#[starknet::component]
+mod OwnableComponent {
     use starknet::ContractAddress;
-    use starknet::contract_address_const;
-    use zeroable::Zeroable;
+    use starknet::get_caller_address;
 
     #[storage]
     struct Storage {
-        _owner: ContractAddress,
-        _proposed_owner: ContractAddress,
+        Ownable_owner: ContractAddress,
+        Ownable_proposed_owner: ContractAddress
     }
-
-    //
-    // Events
-    //
 
     #[event]
-    fn OwnershipTransferred(previous_owner: ContractAddress, newOwner: ContractAddress) {}
-
-    #[event]
-    fn OwnershipTransferRequested(from: starknet::ContractAddress, to: starknet::ContractAddress) {}
-
-    //
-    // Constructor
-    //
-
-    #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
-        assert(!owner.is_zero(), 'Ownable: transfer to 0');
-        self._accept_ownership_transfer(owner);
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        OwnershipTransferred: OwnershipTransferred,
+        OwnershipTransferRequested: OwnershipTransferRequested
     }
 
-    //
-    // Modifiers
-    //
-    fn assert_only_owner(self: @ContractState) {
-        let owner = self._owner.read();
-        let caller = starknet::get_caller_address();
-        assert(caller == owner, 'Ownable: caller is not owner');
+    #[derive(Drop, starknet::Event)]
+    struct OwnershipTransferred {
+        #[key]
+        previous_owner: ContractAddress,
+        #[key]
+        new_owner: ContractAddress,
     }
 
-    #[external(v0)]
-    impl OwnableImpl of super::IOwnable<ContractState> {
-        //
-        // Getters
-        //
-        fn owner(self: @ContractState) -> ContractAddress {
-            self._owner.read()
+    #[derive(Drop, starknet::Event)]
+    struct OwnershipTransferRequested {
+        #[key]
+        previous_owner: ContractAddress,
+        #[key]
+        new_owner: ContractAddress,
+    }
+
+    mod Errors {
+        const NOT_OWNER: felt252 = 'Caller is not the owner';
+        const NOT_PROPOSED_OWNER: felt252 = 'Caller is not proposed owner';
+        const ZERO_ADDRESS_CALLER: felt252 = 'Caller is the zero address';
+        const ZERO_ADDRESS_OWNER: felt252 = 'New owner is the zero address';
+    }
+
+    /// Adds support for two step ownership transfer.
+    #[embeddable_as(OwnableImpl)]
+    impl Ownable<
+        TContractState, +HasComponent<TContractState>
+    > of super::IOwnable<ComponentState<TContractState>> {
+        /// Returns the address of the current owner.
+        fn owner(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.Ownable_owner.read()
         }
 
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            self._proposed_owner.read()
+        /// Returns the address of the pending owner.
+        fn proposed_owner(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.Ownable_proposed_owner.read()
         }
 
-        //
-        // Setters
-        //
+        /// Finishes the two-step ownership transfer process by accepting the ownership.
+        /// Can only be called by the pending owner.
+        fn accept_ownership(ref self: ComponentState<TContractState>) {
+            let caller = get_caller_address();
+            let proposed_owner = self.Ownable_proposed_owner.read();
+            assert(caller == proposed_owner, Errors::NOT_PROPOSED_OWNER);
+            self._accept_ownership();
+        }
 
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+        /// Starts the two-step ownership transfer process by setting the pending owner.
+        fn transfer_ownership(
+            ref self: ComponentState<TContractState>, new_owner: ContractAddress
+        ) {
             assert(!new_owner.is_zero(), 'Ownable: transfer to 0');
-            assert_only_owner(@self);
-
-            self._proposed_owner.write(new_owner);
-            let previous_owner = self._owner.read();
-            OwnershipTransferRequested(previous_owner, new_owner);
+            self.assert_only_owner();
+            self._propose_owner(new_owner);
         }
 
-        fn accept_ownership(ref self: ContractState) {
-            let proposed_owner = self._proposed_owner.read();
-            let caller = starknet::get_caller_address();
-
-            assert(caller == proposed_owner, 'Ownable: not proposed_owner');
-
-            self._accept_ownership_transfer(proposed_owner);
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            assert_only_owner(@self);
-            self._accept_ownership_transfer(starknet::contract_address_const::<0>());
+        /// Leaves the contract without owner. It will not be possible to call `assert_only_owner`
+        /// functions anymore. Can only be called by the current owner.
+        fn renounce_ownership(ref self: ComponentState<TContractState>) {
+            self.assert_only_owner();
+            self._transfer_ownership(Zeroable::zero());
         }
     }
-
-
-    //
-    // Internal
-    //
 
     #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn _accept_ownership_transfer(
-            ref self: ContractState, new_owner: starknet::ContractAddress
+    impl InternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of InternalTrait<TContractState> {
+        /// Sets the contract's initial owner.
+        ///
+        /// This function should be called at construction time.
+        fn initializer(ref self: ComponentState<TContractState>, owner: ContractAddress) {
+            self._transfer_ownership(owner);
+        }
+
+        /// Panics if called by any account other than the owner. Use this
+        /// to restrict access to certain functions to the owner.
+        fn assert_only_owner(self: @ComponentState<TContractState>) {
+            let owner = self.Ownable_owner.read();
+            let caller = get_caller_address();
+            assert(!caller.is_zero(), Errors::ZERO_ADDRESS_CALLER);
+            assert(caller == owner, Errors::NOT_OWNER);
+        }
+
+        /// Transfers ownership to the pending owner.
+        ///
+        /// Internal function without access restriction.
+        fn _accept_ownership(ref self: ComponentState<TContractState>) {
+            let proposed_owner = self.Ownable_proposed_owner.read();
+            self.Ownable_proposed_owner.write(Zeroable::zero());
+            self._transfer_ownership(proposed_owner);
+        }
+
+        /// Sets a new pending owner.
+        ///
+        /// Internal function without access restriction.
+        fn _propose_owner(ref self: ComponentState<TContractState>, new_owner: ContractAddress) {
+            let previous_owner = self.Ownable_owner.read();
+            self.Ownable_proposed_owner.write(new_owner);
+            self
+                .emit(
+                    OwnershipTransferRequested {
+                        previous_owner: previous_owner, new_owner: new_owner
+                    }
+                );
+        }
+
+        /// Transfers ownership of the contract to a new address.
+        ///
+        /// Internal function without access restriction.
+        ///
+        /// Emits an `OwnershipTransferred` event.
+        fn _transfer_ownership(
+            ref self: ComponentState<TContractState>, new_owner: ContractAddress
         ) {
-            let previous_owner = self._owner.read();
-            self._owner.write(new_owner);
-            self._proposed_owner.write(starknet::contract_address_const::<0>());
-            OwnershipTransferred(previous_owner, new_owner);
+            let previous_owner: ContractAddress = self.Ownable_owner.read();
+            self.Ownable_owner.write(new_owner);
+            self
+                .emit(
+                    OwnershipTransferred { previous_owner: previous_owner, new_owner: new_owner }
+                );
         }
     }
 }

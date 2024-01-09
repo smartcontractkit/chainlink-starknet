@@ -91,7 +91,7 @@ fn test_access_control() {
 
 #[test]
 #[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_non_owner() {
     let (_, _, _, _, _) = setup();
     let mut state = STATE();
