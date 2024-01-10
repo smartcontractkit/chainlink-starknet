@@ -15,7 +15,8 @@ mod AccessController {
     impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     #[event]

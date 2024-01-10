@@ -43,7 +43,8 @@ mod SequencerUptimeFeed {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     #[storage]
@@ -52,7 +53,6 @@ mod SequencerUptimeFeed {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
-
         // l1 sender is an starknet validator ethereum address
         _l1_sender: felt252,
         // maps round id to round transmission
