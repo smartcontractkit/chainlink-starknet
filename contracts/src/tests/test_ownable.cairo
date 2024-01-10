@@ -3,7 +3,9 @@ use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::testing::set_contract_address;
 use zeroable::Zeroable;
-use chainlink::libraries::ownable::{OwnableComponent, IOwnable, IOwnableDispatcher, IOwnableDispatcherTrait};
+use chainlink::libraries::ownable::{
+    OwnableComponent, IOwnable, IOwnableDispatcher, IOwnableDispatcherTrait
+};
 use OwnableComponent::InternalTrait;
 
 #[starknet::contract]

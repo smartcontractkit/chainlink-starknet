@@ -52,9 +52,14 @@ mod AccessControlComponent {
 
     #[embeddable_as(AccessControlImpl)]
     impl AccessControl<
-        TContractState, +HasComponent<TContractState>, impl Ownable: OwnableComponent::HasComponent<TContractState>, +Drop<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        impl Ownable: OwnableComponent::HasComponent<TContractState>,
+        +Drop<TContractState>,
     > of super::IAccessController<ComponentState<TContractState>> {
-       fn has_access(self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>) -> bool {
+        fn has_access(
+            self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>
+        ) -> bool {
             let has_access = self._access_list.read(user);
             if has_access {
                 return true;
@@ -68,7 +73,9 @@ mod AccessControlComponent {
             false
         }
 
-        fn has_read_access(self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>) -> bool {
+        fn has_read_access(
+            self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>
+        ) -> bool {
             let _has_access = self.has_access(user, data);
             if _has_access {
                 return true;
@@ -121,14 +128,17 @@ mod AccessControlComponent {
 
     #[generate_trait]
     impl InternalImpl<
-        TContractState, +HasComponent<TContractState>, impl Ownable: OwnableComponent::HasComponent<TContractState>, +Drop<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        impl Ownable: OwnableComponent::HasComponent<TContractState>,
+        +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         fn initializer(ref self: ComponentState<TContractState>) {
             self._check_enabled.write(true);
             self.emit(Event::AccessControlEnabled(AccessControlEnabled {}));
         }
 
-         fn check_access(self: @ComponentState<TContractState>, user: ContractAddress) {
+        fn check_access(self: @ComponentState<TContractState>, user: ContractAddress) {
             let allowed = AccessControl::has_access(self, user, ArrayTrait::new());
             assert(allowed, 'user does not have access');
         }
@@ -138,5 +148,4 @@ mod AccessControlComponent {
             assert(allowed, 'user does not have read access');
         }
     }
-
 }

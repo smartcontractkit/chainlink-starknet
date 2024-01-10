@@ -50,10 +50,16 @@ mod ERC677Component {
 
     #[embeddable_as(ERC677Impl)]
     impl ERC677<
-        TContractState, +HasComponent<TContractState>, +IERC20<TContractState>, +Drop<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        +IERC20<TContractState>,
+        +Drop<TContractState>,
     > of super::IERC677<ComponentState<TContractState>> {
         fn transfer_and_call(
-            ref self: ComponentState<TContractState>, to: ContractAddress, value: u256, data: Array<felt252>
+            ref self: ComponentState<TContractState>,
+            to: ContractAddress,
+            value: u256,
+            data: Array<felt252>
         ) -> bool {
             let sender = starknet::info::get_caller_address();
 

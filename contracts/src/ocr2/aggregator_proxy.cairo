@@ -72,7 +72,8 @@ mod AggregatorProxy {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     #[storage]
@@ -81,7 +82,6 @@ mod AggregatorProxy {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
-
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
         _phases: LegacyMap<u128, ContractAddress>

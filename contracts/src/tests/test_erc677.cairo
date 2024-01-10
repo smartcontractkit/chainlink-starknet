@@ -55,7 +55,8 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
     (address, contract)
 }
 
-type ComponentState = ERC677Component::ComponentState<chainlink::token::link_token::LinkToken::ContractState>;
+type ComponentState =
+    ERC677Component::ComponentState<chainlink::token::link_token::LinkToken::ContractState>;
 
 fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();

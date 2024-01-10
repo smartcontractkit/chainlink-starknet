@@ -47,12 +47,9 @@ mod LinkToken {
     struct Storage {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
-
         _minter: ContractAddress,
-
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
-
         #[substorage(v0)]
         erc677: ERC677Component::Storage
     }
