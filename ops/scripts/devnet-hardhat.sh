@@ -3,26 +3,9 @@
 
 set -euo pipefail
 
-cpu_struct=`arch`;
-echo $cpu_struct;
-
-git_root="$(git rev-parse --show-toplevel)"
-cairo_build_path="${git_root}/cairo-build"
-cairo_sierra_compile_path="${cairo_build_path}/bin/starknet-sierra-compile"
-
-cairo_checkout_path="${git_root}/vendor/cairo"
-cairo_compiler_manifest="${cairo_checkout_path}/Cargo.toml"
-
-if [ -f "${cairo_sierra_compile_path}" ]; then
-  docker_volume="${cairo_build_path}:/cairo-build"
-  startup_args="starknet-devnet --lite-mode --host 0.0.0.0 --sierra-compiler-path /cairo-build/bin/starknet-sierra-compile"
-elif [ -f "${cairo_compiler_manifest}" ]; then
-  docker_volume="${cairo_checkout_path}:/cairo"
-  startup_args="(wget https://sh.rustup.rs -O - | sh -s -- -y) && apk add gmp-dev g++ gcc libffi-dev && PATH=\"/root/.cargo/bin:\${PATH}\" starknet-devnet --lite-mode --host 0.0.0.0 --cairo-compiler-manifest /cairo/Cargo.toml"
-else
-  echo "No Cargo.toml; did you checkout the cairo git submodule?"
-  exit 1
-fi
+# cpu_struct=`arch`;
+# echo $cpu_struct;
+cpu_struct="linux";
 
 # Clean up first
 bash "$(dirname -- "$0";)/devnet-hardhat-down.sh"
@@ -31,13 +14,13 @@ echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]
 then
     echo "Starting arm devnet container..."
-    container_version="0.6.0-arm"
+    container_version="5d2536a99852b1a61bbbfdcaa6755cb4275bffdd-arm"
 else
     echo "Starting i386 devnet container..."
-    container_version="0.6.0"
+    container_version="5d2536a99852b1a61bbbfdcaa6755cb4275bffdd"
 fi
 
-echo "Starting starknet-devnet: ${startup_args}"
+echo "Starting starknet-devnet"
 
 # we need to replace the entrypoint because starknet-devnet's docker builds at 0.5.1 don't include cargo or gcc.
 docker run \
@@ -45,10 +28,7 @@ docker run \
   -p 127.0.0.1:8545:8545 \
   -d \
   --name chainlink-starknet.starknet-devnet \
-  --volume "${docker_volume}" \
-  --entrypoint sh \
-  "shardlabs/starknet-devnet:${container_version}" \
-  -c "${startup_args}"
+  "shardlabs/starknet-devnet-rs:${container_version}"
 
 echo "Starting hardhat..."
 docker run --net container:chainlink-starknet.starknet-devnet -d --name chainlink-starknet.hardhat ethereumoptimism/hardhat-node:nightly
