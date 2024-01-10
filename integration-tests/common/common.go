@@ -13,8 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
 
-	"github.com/NethermindEth/starknet.go/gateway"
-
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/alias"
@@ -30,7 +28,7 @@ var (
 	serviceKeyL2        = "starknet-dev"
 	serviceKeyChainlink = "chainlink"
 	chainName           = "starknet"
-	chainId             = gateway.GOERLI_ID
+	chainId             = "SN_GOERLI"
 )
 
 type Common struct {

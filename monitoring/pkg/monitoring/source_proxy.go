@@ -5,18 +5,10 @@ import (
 	"fmt"
 	"math/big"
 
-<<<<<<< HEAD
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
-||||||| parent of 5c692ac2 (Use latest upstream sdk: starknet.go)
-	caigotypes "github.com/smartcontractkit/caigo/types"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
-=======
-	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"github.com/NethermindEth/juno/core/felt"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
->>>>>>> 5c692ac2 (Use latest upstream sdk: starknet.go)
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 )

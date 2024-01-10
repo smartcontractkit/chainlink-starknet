@@ -10,8 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/starknet.go/gateway"
-	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +18,7 @@ import (
 )
 
 var (
-	chainID = gateway.GOERLI_ID
+	chainID = "SN_GOERLI"
 	timeout = 10 * time.Second
 )
 
@@ -40,7 +39,7 @@ func TestRPCClient(t *testing.T) {
 
 		switch call.Method {
 		case "starknet_chainId":
-			id := starknettypes.BigToHex(starknettypes.UTF8StrToBig(chainID))
+			id := starknetutils.BigToHex(starknetutils.UTF8StrToBig(chainID))
 			out = []byte(fmt.Sprintf(`{"result": "%s"}`, id))
 		case "starknet_blockNumber":
 			out = []byte(`{"result": 1}`)

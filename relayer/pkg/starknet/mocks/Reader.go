@@ -4,10 +4,8 @@ package mocks
 
 import (
 	context "context"
-	big "math/big"
 
 	felt "github.com/NethermindEth/juno/core/felt"
-
 	mock "github.com/stretchr/testify/mock"
 
 	rpc "github.com/NethermindEth/starknet.go/rpc"
@@ -21,19 +19,19 @@ type Reader struct {
 }
 
 // AccountNonce provides a mock function with given fields: _a0, _a1
-func (_m *Reader) AccountNonce(_a0 context.Context, _a1 *felt.Felt) (*big.Int, error) {
+func (_m *Reader) AccountNonce(_a0 context.Context, _a1 *felt.Felt) (*felt.Felt, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *big.Int
+	var r0 *felt.Felt
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (*big.Int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (*felt.Felt, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) *big.Int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) *felt.Felt); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*big.Int)
+			r0 = ret.Get(0).(*felt.Felt)
 		}
 	}
 

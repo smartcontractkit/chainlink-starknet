@@ -2,7 +2,6 @@ package txm
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 
 	"github.com/NethermindEth/juno/core/felt"
@@ -12,27 +11,27 @@ import (
 // TxStore tracks broadcast & unconfirmed txs
 type TxStore struct {
 	lock         sync.RWMutex
-	nonceToHash  map[int64]string // map nonce to txhash
-	hashToNonce  map[string]int64 // map hash to nonce
-	currentNonce *big.Int         // minimum nonce
+	nonceToHash  map[*felt.Felt]string // map nonce to txhash
+	hashToNonce  map[string]*felt.Felt // map hash to nonce
+	currentNonce *felt.Felt            // minimum nonce
 }
 
-func NewTxStore(current *big.Int) *TxStore {
+func NewTxStore(current *felt.Felt) *TxStore {
 	return &TxStore{
-		nonceToHash:  map[int64]string{},
-		hashToNonce:  map[string]int64{},
+		nonceToHash:  map[*felt.Felt]string{},
+		hashToNonce:  map[string]*felt.Felt{},
 		currentNonce: current,
 	}
 }
 
-func (s *TxStore) Save(nonce *big.Int, hash string) error {
+func (s *TxStore) Save(nonce *felt.Felt, hash string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	if s.currentNonce.Cmp(nonce) == 1 {
 		return fmt.Errorf("nonce too low: %s < %s (lowest)", nonce, s.currentNonce)
 	}
-	if h, exists := s.nonceToHash[nonce.Int64()]; exists {
+	if h, exists := s.nonceToHash[nonce]; exists {
 		return fmt.Errorf("nonce used: tried to use nonce (%s) for tx (%s), already used by (%s)", nonce, hash, h)
 	}
 	if n, exists := s.hashToNonce[hash]; exists {
@@ -40,14 +39,14 @@ func (s *TxStore) Save(nonce *big.Int, hash string) error {
 	}
 
 	// store hash
-	s.nonceToHash[nonce.Int64()] = hash
-	s.hashToNonce[hash] = nonce.Int64()
+	s.nonceToHash[nonce] = hash
+	s.hashToNonce[hash] = nonce
 
 	// find next unused nonce
-	_, exists := s.nonceToHash[s.currentNonce.Int64()]
+	_, exists := s.nonceToHash[s.currentNonce]
 	for exists {
-		s.currentNonce.Add(s.currentNonce, big.NewInt(1))
-		_, exists = s.nonceToHash[s.currentNonce.Int64()]
+		s.currentNonce.Add(s.currentNonce, new(felt.Felt).SetUint64(1))
+		_, exists = s.nonceToHash[s.currentNonce]
 	}
 	return nil
 }
@@ -87,7 +86,7 @@ func NewChainTxStore() *ChainTxStore {
 	}
 }
 
-func (c *ChainTxStore) Save(from *felt.Felt, nonce *big.Int, hash string) error {
+func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string) error {
 	// use write lock for methods that modify underlying data
 	c.lock.Lock()
 	defer c.lock.Unlock()

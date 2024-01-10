@@ -44,37 +44,25 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 
 	// preserve original array
 	oo = append([]median.ParsedAttributedObservation{}, oo...)
-	numFelt, err := starknetutils.BigIntToFelt(big.NewInt(int64(num)))
-	if err != nil {
-		return nil, fmt.Errorf("invalid felt: %v", err)
-	}
+	numFelt := starknetutils.BigIntToFelt(big.NewInt(int64(num)))
 
 	// median timestamp
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].Timestamp < oo[j].Timestamp
 	})
 	timestamp := oo[num/2].Timestamp
-	timestampFelt, err := starknetutils.BigIntToFelt(big.NewInt(int64(timestamp)))
-	if err != nil {
-		return nil, fmt.Errorf("invalid felt: %v", err)
-	}
+	timestampFelt := starknetutils.BigIntToFelt(big.NewInt(int64(timestamp)))
 
 	// median juelsPerFeeCoin
 	sort.Slice(oo, func(i, j int) bool {
 		return oo[i].JuelsPerFeeCoin.Cmp(oo[j].JuelsPerFeeCoin) < 0
 	})
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
-	juelsPerFeeCoinFelt, err := starknetutils.BigIntToFelt(juelsPerFeeCoin)
-	if err != nil {
-		return nil, fmt.Errorf("invalid felt: %v", err)
-	}
+	juelsPerFeeCoinFelt := starknetutils.BigIntToFelt(juelsPerFeeCoin)
 
 	// TODO: source from observations
 	gasPrice := big.NewInt(1) // := oo[num/2].GasPrice
-	gasPriceFelt, err := starknetutils.BigIntToFelt(gasPrice)
-	if err != nil {
-		return nil, fmt.Errorf("invalid felt: %v", err)
-	}
+	gasPriceFelt := starknetutils.BigIntToFelt(gasPrice)
 
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
@@ -86,10 +74,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	for i, o := range oo {
 		observers[i] = byte(o.Observer)
 
-		f, err := starknetutils.BigIntToFelt(o.Value)
-		if err != nil {
-			return nil, fmt.Errorf("invalid felt: %v", err)
-		}
+		f := starknetutils.BigIntToFelt(o.Value)
 		observations = append(observations, f)
 	}
 

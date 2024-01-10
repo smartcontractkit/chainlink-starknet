@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/NethermindEth/juno/core/felt"
-	caigo "github.com/NethermindEth/starknet.go"
+	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
@@ -28,7 +28,7 @@ type Reader interface {
 	Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error)
 	TransactionByHash(context.Context, *felt.Felt) (starknetrpc.Transaction, error)
 	TransactionReceipt(context.Context, *felt.Felt) (starknetrpc.TransactionReceipt, error)
-	AccountNonce(context.Context, *felt.Felt) (*big.Int, error)
+	AccountNonce(context.Context, *felt.Felt) (*felt.Felt, error)
 }
 
 type Writer interface {
@@ -44,7 +44,7 @@ var _ ReaderWriter = (*Client)(nil)
 // var _ starknettypes.Provider = (*Client)(nil)
 
 type Client struct {
-	Provider       *starknetrpc.Provider
+	Provider       starknetrpc.RpcProvider
 	lggr           logger.Logger
 	defaultTimeout time.Duration
 }
@@ -192,20 +192,18 @@ func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*st
 	return out, nil
 
 }
-func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*big.Int, error) {
+func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
 		defer cancel()
 	}
 
-	sender, err := starknetutils.BigIntToFelt(big.NewInt((0))) // not actually used in account.Nonce()
+	sender := starknetutils.BigIntToFelt(big.NewInt((0))) // not actually used in account.Nonce()
+	accountVersion := 0
+	account, err := starknetaccount.NewAccount(c.Provider, sender, accountAddress.String(), nil, accountVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in client.AccountNonce")
 	}
-	account, err := caigo.NewRPCAccount(sender, accountAddress, nil, c.Provider, caigo.AccountVersion1)
-	if err != nil {
-		return nil, errors.Wrap(err, "error in client.AccountNonce")
-	}
-	return account.Nonce(ctx)
+	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, account.AccountAddress)
 }

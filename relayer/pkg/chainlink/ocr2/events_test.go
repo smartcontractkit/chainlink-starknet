@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	starknettypes "github.com/NethermindEth/starknet.go/types"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -146,7 +145,7 @@ func TestNewTransmissionEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, starknettypes.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
+	assert.Equal(t, starknetutils.GetSelectorFromName("NewTransmission").Cmp(eventKey), 0)
 }
 
 func TestConfigSetEventSelector(t *testing.T) {
@@ -154,5 +153,5 @@ func TestConfigSetEventSelector(t *testing.T) {
 	require.NoError(t, err)
 	eventKey := new(big.Int)
 	eventKey.SetBytes(bytes)
-	assert.Equal(t, starknettypes.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
+	assert.Equal(t, starknetutils.GetSelectorFromName("ConfigSet").Cmp(eventKey), 0)
 }

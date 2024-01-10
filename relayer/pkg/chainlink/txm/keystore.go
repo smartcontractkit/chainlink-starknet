@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/NethermindEth/starknet.go"
+	starknetaccount "github.com/NethermindEth/starknet.go/account"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
@@ -15,7 +15,7 @@ import (
 // KeystoreAdapter is a starknet-specific adaption layer to translate between the generic Loop Keystore (bytes) and
 // the type specific caigo Keystore (big.Int)
 type KeystoreAdapter interface {
-	starknetgo.Keystore
+	starknetaccount.Keystore
 	Loopp() loop.Keystore
 }
 

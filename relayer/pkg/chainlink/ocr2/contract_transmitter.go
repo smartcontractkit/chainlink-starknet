@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/NethermindEth/juno/core/felt"
 
@@ -96,9 +96,9 @@ func (c *contractTransmitter) Transmit(
 		return err
 	}
 
-	err = c.txm.Enqueue(c.senderAddress, c.accountAddress, starknettypes.FunctionCall{
+	err = c.txm.Enqueue(c.senderAddress, c.accountAddress, starknetrpc.FunctionCall{
 		ContractAddress:    c.contractAddress,
-		EntryPointSelector: starknettypes.GetSelectorFromNameFelt("transmit"),
+		EntryPointSelector: starknetutils.GetSelectorFromNameFelt("transmit"),
 		Calldata:           calldata,
 	})
 

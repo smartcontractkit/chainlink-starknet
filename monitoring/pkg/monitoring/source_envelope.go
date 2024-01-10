@@ -6,19 +6,8 @@ import (
 	"math/big"
 	"sync"
 
-<<<<<<< HEAD
-	caigotypes "github.com/smartcontractkit/caigo/types"
-||||||| parent of 5c692ac2 (Use latest upstream sdk: starknet.go)
-	caigotypes "github.com/smartcontractkit/caigo/types"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
-	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
-=======
-	starknettypes "github.com/NethermindEth/starknet.go/types"
-	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/NethermindEth/juno/core/felt"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
-	relayUtils "github.com/smartcontractkit/chainlink-relay/pkg/utils"
->>>>>>> 5c692ac2 (Use latest upstream sdk: starknet.go)
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"go.uber.org/multierr"
 
@@ -179,7 +168,7 @@ var zeroBigInt = big.NewInt(0)
 func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress *felt.Felt) (*big.Int, error) {
 	results, err := s.ocr2Reader.BaseReader().CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkTokenAddress,
-		Selector:        starknettypes.GetSelectorFromNameFelt("balanceOf"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("balanceOf"),
 		Calldata:        []*felt.Felt{contractAddress},
 	})
 	if err != nil {

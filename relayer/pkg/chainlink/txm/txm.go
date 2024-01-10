@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	"github.com/NethermindEth/starknet.go"
+	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
-	starknettypes "github.com/NethermindEth/starknet.go/types"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"golang.org/x/exp/maps"
 
@@ -29,14 +27,14 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(senderAddress *felt.Felt, accountAddress *felt.Felt, txFn starknettypes.FunctionCall) error
+	Enqueue(senderAddress *felt.Felt, accountAddress *felt.Felt, txFn starknetrpc.FunctionCall) error
 	InflightCount() (int, int)
 }
 
 type Tx struct {
 	senderAddress  *felt.Felt
 	accountAddress *felt.Felt
-	call           starknettypes.FunctionCall
+	call           starknetrpc.FunctionCall
 }
 
 type StarkTXM interface {
@@ -128,15 +126,15 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, accountAddress *felt.Felt, tx starknettypes.FunctionCall) (txhash string, err error) {
-	txs := []starknettypes.FunctionCall{tx}
+func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
 	if err != nil {
 		txm.client.Reset()
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	account, err := starknetgo.NewRPCAccount(senderAddress, accountAddress, txm.ks, client.Provider, starknetgo.AccountVersion1)
+	accountVersion := 0
+	account, err := starknetaccount.NewAccount(client.Provider, senderAddress, accountAddress.String(), txm.ks, accountVersion)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
@@ -151,31 +149,55 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, ac
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
 
-	// get fee for txm
+	// TODO: update to v3
+
+	maxfee, err := starknetutils.HexToFelt("0x95e566845d000")
+	if err != nil {
+		return txhash, err
+	}
+
+	// Building the tx struct
+	tx := starknetrpc.InvokeTxnV1{
+		MaxFee:        maxfee,
+		Version:       starknetrpc.TransactionV1,
+		Nonce:         nonce,
+		Type:          starknetrpc.TransactionType_Invoke,
+		SenderAddress: account.AccountAddress,
+	}
+
+	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
+	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
+	if err != nil {
+		return txhash, err
+	}
+
+	// Signing of the transaction that is done by the account
+	err = account.SignInvokeTransaction(context.Background(), &tx)
+	if err != nil {
+		return txhash, err
+	}
+
+	// get fee for tx
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
-	feeEstimate, err := account.EstimateFee(ctx, txs, starknettypes.ExecuteDetails{})
+	simFlags := []starknetrpc.SimulationFlag{}
+	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
 		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
 	}
+	// expandedFee := new(felt.Felt).Mul(feeEstimate[0].OverallFee, FEE_MARGIN)
+	// maxfee = new(felt.Felt).Div(expandedFee, new(felt.Felt).SetUint64(100))
+	tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
 
-	fee, _ := big.NewInt(0).SetString(string(feeEstimate.OverallFee), 0)
-	expandedFee := big.NewInt(0).Mul(fee, big.NewInt(int64(FEE_MARGIN)))
-	max := big.NewInt(0).Div(expandedFee, big.NewInt(100))
-	details := starknettypes.ExecuteDetails{
-		MaxFee: max,
-		Nonce:  nonce,
-	}
-
-	// transmit txs
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
-	res, err := account.Execute(execCtx, txs, details)
+
+	// finally, transmit the invoke
+	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
-
 	// handle nil pointer
 	if res == nil {
 		return txhash, errors.New("execute response and error are nil")
@@ -224,20 +246,21 @@ func (txm *starktxm) confirmLoop() {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
+					// TODO: there's no more pending status so a txn status is always accepted or rejected
 					receipt, ok := response.(starknetrpc.InvokeTransactionReceipt)
 					if !ok {
 						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
 						continue
 					}
 
-					status := receipt.Status
+					status := receipt.GetExecutionStatus()
 
-					if status == starknetrpc.TransactionAcceptedOnL1 || status == starknetrpc.TransactionAcceptedOnL2 || status == starknetrpc.TransactionRejected {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
-						if err := txm.txStore.Confirm(addr, hash); err != nil {
-							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
-						}
+					// if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
+					txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
+					if err := txm.txStore.Confirm(addr, hash); err != nil {
+						txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 					}
+					// }
 				}
 			}
 		case <-txm.stop:
@@ -269,7 +292,7 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(senderAddress, accountAddress *felt.Felt, tx starknettypes.FunctionCall) error {
+func (txm *starktxm) Enqueue(senderAddress, accountAddress *felt.Felt, tx starknetrpc.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test

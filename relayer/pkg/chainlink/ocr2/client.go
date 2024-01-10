@@ -10,7 +10,7 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
-	starknettypes "github.com/NethermindEth/starknet.go/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -53,7 +53,7 @@ func (c *Client) BaseReader() starknet.Reader {
 func (c *Client) BillingDetails(ctx context.Context, address *felt.Felt) (bd BillingDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        starknettypes.GetSelectorFromNameFelt("billing"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("billing"),
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -80,7 +80,7 @@ func (c *Client) BillingDetails(ctx context.Context, address *felt.Felt) (bd Bil
 func (c *Client) LatestConfigDetails(ctx context.Context, address *felt.Felt) (ccd ContractConfigDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        starknettypes.GetSelectorFromNameFelt("latest_config_details"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("latest_config_details"),
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -107,7 +107,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address *felt.Felt) (c
 func (c *Client) LatestTransmissionDetails(ctx context.Context, address *felt.Felt) (td TransmissionDetails, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        starknettypes.GetSelectorFromNameFelt("latest_transmission_details"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("latest_transmission_details"),
 	}
 
 	res, err := c.r.CallContract(ctx, ops)
@@ -150,7 +150,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address *felt.Fe
 func (c *Client) LatestRoundData(ctx context.Context, address *felt.Felt) (round RoundData, err error) {
 	ops := starknet.CallOps{
 		ContractAddress: address,
-		Selector:        starknettypes.GetSelectorFromNameFelt("latest_round_data"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("latest_round_data"),
 	}
 
 	felts, err := c.r.CallContract(ctx, ops)
@@ -168,7 +168,7 @@ func (c *Client) LatestRoundData(ctx context.Context, address *felt.Felt) (round
 func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt) (*big.Int, error) {
 	results, err := c.r.CallContract(ctx, starknet.CallOps{
 		ContractAddress: address,
-		Selector:        starknettypes.GetSelectorFromNameFelt("link_available_for_payment"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("link_available_for_payment"),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payment'")
@@ -182,7 +182,7 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt
 func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*felt.Felt, err error) {
 	block := starknetrpc.WithBlockNumber(blockNum)
 
-	eventKey := starknettypes.GetSelectorFromNameFelt(eventType)
+	eventKey := starknetutils.GetSelectorFromNameFelt(eventType)
 
 	input := starknetrpc.EventsInput{
 		EventFilter: starknetrpc.EventFilter{

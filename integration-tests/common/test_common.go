@@ -11,8 +11,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	caigo "github.com/NethermindEth/starknet.go"
-	starknettypes "github.com/NethermindEth/starknet.go/types"
+	curve "github.com/NethermindEth/starknet.go/curve"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +52,7 @@ func init() {
 }
 
 func pubKeyToDevnetAccount(pubkey starkkey.PublicKey) ([]byte, error) {
-	xHash, err := caigo.Curve.ComputeHashOnElements([]*big.Int{pubkey.X})
+	xHash, err := curve.Curve.ComputeHashOnElements([]*big.Int{pubkey.X})
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,7 @@ func pubKeyToDevnetAccount(pubkey starkkey.PublicKey) ([]byte, error) {
 		ops.DevnetClassHash,
 		xHash,
 	}
-	hash, err := caigo.Curve.ComputeHashOnElements(elements)
+	hash, err := curve.Curve.ComputeHashOnElements(elements)
 	if err != nil {
 		return nil, err
 	}
@@ -278,13 +277,13 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	}
 	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkContractAddress,
-		Selector:        starknettypes.GetSelectorFromNameFelt("balance_of"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("balance_of"),
 		Calldata:        []*felt.Felt{contractAddress},
 	})
 	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail", "err", errLINK)
 	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
 		ContractAddress: contractAddress,
-		Selector:        starknettypes.GetSelectorFromNameFelt("link_available_for_payment"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("link_available_for_payment"),
 	})
 	require.NoError(testState.T, errAgg, "link_available_for_payment should not fail", "err", errAgg)
 	balLINK := resLINK[0].BigInt(big.NewInt(0))
@@ -378,7 +377,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	}
 	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
 		ContractAddress: proxyAddress,
-		Selector:        starknettypes.GetSelectorFromNameFelt("latest_round_data"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("latest_round_data"),
 	})
 	if !isSoak {
 		require.NoError(testState.T, err, "Reading round data from proxy should not fail")

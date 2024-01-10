@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/NethermindEth/starknet.go"
+	"github.com/NethermindEth/starknet.go/curve"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -90,7 +90,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	)
 	msg = append(msg, offchainConfig...) // offchain_config
 
-	digest, err := starknetgo.Curve.ComputeHashOnElements(msg)
+	digest, err := curve.Curve.ComputeHashOnElements(msg)
 	if err != nil {
 		return configDigest, err
 	}

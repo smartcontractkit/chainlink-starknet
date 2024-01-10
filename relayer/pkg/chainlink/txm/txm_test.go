@@ -9,10 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/starknet.go"
-	starknetgw "github.com/NethermindEth/starknet.go/gateway"
-	"github.com/NethermindEth/starknet.go/test"
-	starknettypes "github.com/NethermindEth/starknet.go/types"
+	"github.com/NethermindEth/starknet.go/curve"
+	"github.com/NethermindEth/starknet.go/devnet"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +27,7 @@ import (
 func TestIntegration_Txm(t *testing.T) {
 	n := 2 // number of txs per key
 	url := SetupLocalStarknetNode(t)
-	devnet := test.NewDevNet(url)
+	devnet := devnet.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
 
@@ -36,11 +35,11 @@ func TestIntegration_Txm(t *testing.T) {
 	localKeys := map[string]*big.Int{}
 	localAccounts := map[string]string{}
 	for i := range accounts {
-		privKey, err := starknettypes.HexToBytes(accounts[i].PrivateKey)
+		privKey, err := utils.HexToBytes(accounts[i].PrivateKey)
 		require.NoError(t, err)
 		senderAddress, err := starknetutils.HexToFelt(accounts[i].PublicKey)
 		require.NoError(t, err)
-		localKeys[senderAddress.String()] = starknettypes.BytesToBig(privKey)
+		localKeys[senderAddress.String()] = utils.BytesToBig(privKey)
 		localAccounts[senderAddress.String()] = accounts[i].Address
 	}
 
@@ -55,7 +54,7 @@ func TestIntegration_Txm(t *testing.T) {
 	ksAdapter := NewKeystoreAdapter(looppKs)
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient(starknetgw.GOERLI_ID, url+"/rpc", lggr, &timeout)
+	client, err := starknet.NewClient("SN_GOERLI", url+"/rpc", lggr, &timeout)
 	require.NoError(t, err)
 
 	getClient := func() (*starknet.Client, error) {
@@ -87,10 +86,10 @@ func TestIntegration_Txm(t *testing.T) {
 		contractAddress, err := starknetutils.HexToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7")
 		require.NoError(t, err)
 
-		selector := starknettypes.GetSelectorFromNameFelt("totalSupply")
+		selector := utils.GetSelectorFromNameFelt("totalSupply")
 
 		for i := 0; i < n; i++ {
-			require.NoError(t, txm.Enqueue(senderAddress, account, starknettypes.FunctionCall{
+			require.NoError(t, txm.Enqueue(senderAddress, account, starknetrpc.FunctionCall{
 				ContractAddress:    contractAddress, // send to ETH token contract
 				EntryPointSelector: selector,
 			}))
@@ -147,7 +146,7 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 	}
 
 	starkHash := new(big.Int).SetBytes(hash)
-	x, y, err := starknetgo.Curve.Sign(starkHash, k)
+	x, y, err := curve.Curve.Sign(starkHash, k)
 	if err != nil {
 		return nil, fmt.Errorf("error signing data with curve: %w", err)
 	}
