@@ -19,7 +19,7 @@ func TestTxStore(t *testing.T) {
 
 		s := NewTxStore(&felt.Zero)
 		assert.Equal(t, 0, s.InflightCount())
-		require.NoError(t, s.Save(&felt.Zero, "0x0"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0"))
 		assert.Equal(t, 1, s.InflightCount())
 		assert.Equal(t, []string{"0x0"}, s.GetUnconfirmed())
 		require.NoError(t, s.Confirm("0x0"))
@@ -31,10 +31,10 @@ func TestTxStore(t *testing.T) {
 		t.Parallel()
 
 		// create
-		s := NewTxStore(&felt.Zero)
+		s := NewTxStore(new(felt.Felt).SetUint64(0))
 
 		// accepts tx in order
-		require.NoError(t, s.Save(&felt.Zero, "0x0"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0"))
 		assert.Equal(t, 1, s.InflightCount())
 		assert.Equal(t, new(felt.Felt).SetUint64(1), s.currentNonce)
 
@@ -54,7 +54,7 @@ func TestTxStore(t *testing.T) {
 		assert.Equal(t, new(felt.Felt).SetUint64(3), s.currentNonce)
 
 		// rejects old nonce
-		require.ErrorContains(t, s.Save(&felt.Zero, "0xold"), "nonce too low: 0 < 3 (lowest)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold"), "nonce too low: 0 < 3 (lowest)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// reject already in use nonce
@@ -86,7 +86,7 @@ func TestTxStore(t *testing.T) {
 		t.Parallel()
 
 		// init store
-		s := NewTxStore(&felt.Zero)
+		s := NewTxStore(new(felt.Felt).SetUint64(0))
 		for i := 0; i < 5; i++ {
 			require.NoError(t, s.Save(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i)))
 		}
