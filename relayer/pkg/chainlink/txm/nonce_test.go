@@ -56,7 +56,6 @@ func TestNonceManager_NextSequence(t *testing.T) {
 
 	// should fail with invalid address
 	randAddr1 := starknetutils.BigIntToFelt(big.NewInt(1))
-	require.NoError(t, err)
 	_, err = nm.NextSequence(randAddr1, chainId)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))
@@ -93,7 +92,6 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 
 	// should fail with invalid address
 	randAddr1 := starknetutils.BigIntToFelt(big.NewInt(1))
-	require.NoError(t, err)
 	err = nm.IncrementNextSequence(randAddr1, chainId, initPlusOne)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("nonce tracking does not exist for key: %s", randAddr1.String()))

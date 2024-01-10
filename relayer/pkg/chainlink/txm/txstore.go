@@ -24,6 +24,7 @@ func NewTxStore(current *felt.Felt) *TxStore {
 	}
 }
 
+// TODO: Save should make a copy otherwise wee're modiffying the same memory and could loop
 func (s *TxStore) Save(nonce *felt.Felt, hash string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -45,7 +46,7 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string) error {
 	// find next unused nonce
 	_, exists := s.nonceToHash[s.currentNonce]
 	for exists {
-		s.currentNonce.Add(s.currentNonce, new(felt.Felt).SetUint64(1))
+		s.currentNonce = new(felt.Felt).Add(s.currentNonce, new(felt.Felt).SetUint64(1))
 		_, exists = s.nonceToHash[s.currentNonce]
 	}
 	return nil
