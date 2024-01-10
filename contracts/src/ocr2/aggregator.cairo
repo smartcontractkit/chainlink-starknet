@@ -202,7 +202,9 @@ mod Aggregator {
 
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
-    use chainlink::libraries::access_control::{ IAccessControllerDispatcher, IAccessControllerDispatcherTrait };
+    use chainlink::libraries::access_control::{
+        IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+    };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
@@ -212,7 +214,8 @@ mod Aggregator {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     const GIGA: u128 = 1000000000_u128;
@@ -284,7 +287,6 @@ mod Aggregator {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
-
         /// Maximum number of faulty oracles
         _f: u8,
         _latest_epoch_and_round: u64, // (u32, u32)
@@ -311,7 +313,9 @@ mod Aggregator {
         _billing: BillingConfig,
         // payee management
         _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
-        _proposed_payees: LegacyMap<ContractAddress, ContractAddress> // <transmitter, payment_address>
+        _proposed_payees: LegacyMap<
+            ContractAddress, ContractAddress
+        > // <transmitter, payment_address>
     }
 
     #[generate_trait]
