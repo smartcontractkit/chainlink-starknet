@@ -31,7 +31,7 @@ spec:
             - "-c"
             - |
               mkdir -p cairo-build
-              curl -L --output release.tgz https://github.com/starkware-libs/cairo/releases/download/v2.0.2/release-x86_64-unknown-linux-musl.tar.gz
+              curl -L --output release.tgz https://github.com/starkware-libs/cairo/releases/download/v2.4.3/release-x86_64-unknown-linux-musl.tar.gz
               tar xzf release.tgz
               mv cairo/* cairo-build/
           volumeMounts:
@@ -47,8 +47,8 @@ spec:
 {{- else }}
           - name: cairo-build
             mountPath: /cairo-build
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.6.0"}}"
-        args: ["--sierra-compiler-path", "/cairo-build/bin/starknet-sierra-compile", "--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "latest"}}"
+        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}
