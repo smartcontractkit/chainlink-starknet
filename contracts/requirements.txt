@@ -1,5 +1,0 @@
-ecdsa
-fastecdsa
-sympy
-cairo-lang>=0.12.1
-starknet-devnet>=0.6.0
