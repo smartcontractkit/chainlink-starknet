@@ -36,33 +36,33 @@ func TestTxStore(t *testing.T) {
 		// accepts tx in order
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0"))
 		assert.Equal(t, 1, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(1), s.currentNonce)
+		assert.Equal(t, new(felt.Felt).SetUint64(1), &s.currentNonce)
 
 		// accepts tx that skips a nonce
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(2), "0x2"))
 		assert.Equal(t, 2, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(1), s.currentNonce)
+		assert.Equal(t, new(felt.Felt).SetUint64(1), &s.currentNonce)
 
 		// accepts tx that fills in the missing nonce + fast forwards currentNonce
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(1), "0x1"))
 		assert.Equal(t, 3, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(3), s.currentNonce)
+		assert.Equal(t, new(felt.Felt).SetUint64(3), &s.currentNonce)
 
 		// skip a nonce for later tests
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(4), "0x4"))
 		assert.Equal(t, 4, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(3), s.currentNonce)
+		assert.Equal(t, new(felt.Felt).SetUint64(3), &s.currentNonce)
 
 		// rejects old nonce
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold"), "nonce too low: 0 < 3 (lowest)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold"), "nonce too low: 0x0 < 0x3 (lowest)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// reject already in use nonce
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(4), "0xskip"), "nonce used: tried to use nonce (4) for tx (0xskip), already used by (0x4)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(4), "0xskip"), "nonce used: tried to use nonce (0x4) for tx (0xskip), already used by (0x4)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// reject already in use tx hash
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(5), "0x0"), "hash used: tried to use tx (0x0) for nonce (5), already used nonce (0)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(5), "0x0"), "hash used: tried to use tx (0x0) for nonce (0x5), already used nonce (0x0)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// race save
