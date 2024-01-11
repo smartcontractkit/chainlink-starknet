@@ -11,16 +11,16 @@ import (
 // TxStore tracks broadcast & unconfirmed txs
 type TxStore struct {
 	lock         sync.RWMutex
-	nonceToHash  map[*felt.Felt]string // map nonce to txhash
-	hashToNonce  map[string]*felt.Felt // map hash to nonce
-	currentNonce *felt.Felt            // minimum nonce
+	nonceToHash  map[felt.Felt]string // map nonce to txhash
+	hashToNonce  map[string]felt.Felt // map hash to nonce
+	currentNonce felt.Felt            // minimum nonce
 }
 
 func NewTxStore(current *felt.Felt) *TxStore {
 	return &TxStore{
-		nonceToHash:  map[*felt.Felt]string{},
-		hashToNonce:  map[string]*felt.Felt{},
-		currentNonce: current,
+		nonceToHash:  map[felt.Felt]string{},
+		hashToNonce:  map[string]felt.Felt{},
+		currentNonce: *current,
 	}
 }
 
@@ -30,23 +30,23 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string) error {
 	defer s.lock.Unlock()
 
 	if s.currentNonce.Cmp(nonce) == 1 {
-		return fmt.Errorf("nonce too low: %s < %s (lowest)", nonce, s.currentNonce)
+		return fmt.Errorf("nonce too low: %s < %s (lowest)", nonce, &s.currentNonce)
 	}
-	if h, exists := s.nonceToHash[nonce]; exists {
+	if h, exists := s.nonceToHash[*nonce]; exists {
 		return fmt.Errorf("nonce used: tried to use nonce (%s) for tx (%s), already used by (%s)", nonce, hash, h)
 	}
 	if n, exists := s.hashToNonce[hash]; exists {
-		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%d)", hash, nonce, n)
+		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%s)", hash, nonce, &n)
 	}
 
 	// store hash
-	s.nonceToHash[nonce] = hash
-	s.hashToNonce[hash] = nonce
+	s.nonceToHash[*nonce] = hash
+	s.hashToNonce[hash] = *nonce
 
 	// find next unused nonce
 	_, exists := s.nonceToHash[s.currentNonce]
 	for exists {
-		s.currentNonce = new(felt.Felt).Add(s.currentNonce, new(felt.Felt).SetUint64(1))
+		s.currentNonce = *new(felt.Felt).Add(&s.currentNonce, new(felt.Felt).SetUint64(1))
 		_, exists = s.nonceToHash[s.currentNonce]
 	}
 	return nil
