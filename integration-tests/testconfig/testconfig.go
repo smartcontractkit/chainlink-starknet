@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
-
 	"github.com/barkimedes/go-deepcopy"
 	"github.com/google/uuid"
 	"github.com/pelletier/go-toml/v2"
@@ -17,8 +15,11 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/smartcontractkit/seth"
+
 	ocr2_config "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig/ocr2"
 	ctf_config "github.com/smartcontractkit/chainlink-testing-framework/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
 	k8s_config "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/osutil"
@@ -32,6 +33,11 @@ type TestConfig struct {
 	Common                *Common                          `toml:"Common"`
 	OCR2                  *ocr2_config.Config              `toml:"OCR2"`
 	ConfigurationName     string                           `toml:"-"`
+	Seth                  *seth.Config                     `toml:"Seth"`
+}
+
+func (c *TestConfig) GetSethConfig() *seth.Config {
+	return c.Seth
 }
 
 func (c *TestConfig) GetLoggingConfig() *ctf_config.LoggingConfig {

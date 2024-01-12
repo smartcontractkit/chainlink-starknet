@@ -13,13 +13,12 @@ import (
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
-
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -60,7 +59,7 @@ type starktxm struct {
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
-		lggr:         logger.Named(lggr, "StarknetTxm"),
+		lggr:         logger.Named(lggr, "Txm"),
 		queue:        make(chan Tx, MaxQueueLen),
 		stop:         make(chan struct{}),
 		client:       utils.NewLazyLoad(getClient),
@@ -78,7 +77,7 @@ func (txm *starktxm) Name() string {
 }
 
 func (txm *starktxm) Start(ctx context.Context) error {
-	return txm.starter.StartOnce("starktxm", func() error {
+	return txm.starter.StartOnce("Txm", func() error {
 		txm.done.Add(2) // waitgroup: broadcast loop and confirm loop
 		go txm.broadcastLoop()
 		go txm.confirmLoop()
@@ -384,7 +383,7 @@ func (txm *starktxm) logFeederError(ctx context.Context, hash string, f *felt.Fe
 }
 
 func (txm *starktxm) Close() error {
-	return txm.starter.StopOnce("starktxm", func() error {
+	return txm.starter.StopOnce("Txm", func() error {
 		close(txm.stop)
 		txm.done.Wait()
 		return nil

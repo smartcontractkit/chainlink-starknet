@@ -5,16 +5,14 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/pkg/errors"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
-
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 var _ types.ContractTransmitter = (*contractTransmitter)(nil)
@@ -120,6 +118,6 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 	return
 }
 
-func (c *contractTransmitter) FromAccount() (types.Account, error) {
+func (c *contractTransmitter) FromAccount(ctx context.Context) (types.Account, error) {
 	return types.Account(c.accountAddress.String()), nil
 }
