@@ -48,7 +48,7 @@ spec:
           - name: cairo-build
             mountPath: /cairo-build
         image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "latest"}}"
-        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1"]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}

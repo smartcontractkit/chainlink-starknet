@@ -7,9 +7,9 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
@@ -23,7 +23,7 @@ type contractTransmitter struct {
 	reader *transmissionsCache
 
 	contractAddress *felt.Felt
-	senderAddress   *felt.Felt
+	senderAddress   *felt.Felt // account.publicKey
 	accountAddress  *felt.Felt
 
 	txm txm.TxManager
@@ -96,7 +96,7 @@ func (c *contractTransmitter) Transmit(
 		return err
 	}
 
-	err = c.txm.Enqueue(c.senderAddress, c.accountAddress, starknetrpc.FunctionCall{
+	err = c.txm.Enqueue(c.accountAddress, c.senderAddress, starknetrpc.FunctionCall{
 		ContractAddress:    c.contractAddress,
 		EntryPointSelector: starknetutils.GetSelectorFromNameFelt("transmit"),
 		Calldata:           calldata,
