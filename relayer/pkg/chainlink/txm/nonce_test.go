@@ -31,7 +31,7 @@ func newTestNonceManager(t *testing.T, chainID string, initNonce *felt.Felt) (tx
 	c.On("AccountNonce", mock.Anything, mock.Anything).Return(initNonce, nil).Once()
 
 	require.NoError(t, nm.Start(tests.Context(t)))
-	require.NoError(t, nm.Register(tests.Context(t), keyHash, chainID, c))
+	require.NoError(t, nm.Register(tests.Context(t), keyHash, keyHash, chainID, c))
 
 	return nm, keyHash, func() { require.NoError(t, nm.Close()) }
 }
