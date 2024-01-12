@@ -2,7 +2,6 @@ package starknet
 
 import (
 	"context"
-	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
@@ -10,7 +9,6 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
-	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -199,9 +197,9 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 		defer cancel()
 	}
 
-	sender := starknetutils.BigIntToFelt(big.NewInt((0))) // not actually used in account.Nonce()
-	accountVersion := 0
-	account, err := starknetaccount.NewAccount(c.Provider, sender, accountAddress.String(), nil, accountVersion)
+	sender := &felt.Zero // not actually used in account.Nonce()
+	cairoVersion := 2
+	account, err := starknetaccount.NewAccount(c.Provider, accountAddress, sender.String(), nil, cairoVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "error in client.AccountNonce")
 	}

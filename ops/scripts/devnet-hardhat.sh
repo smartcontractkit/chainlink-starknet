@@ -27,8 +27,11 @@ docker run \
   -p 127.0.0.1:5050:5050 \
   -p 127.0.0.1:8545:8545 \
   -d \
+  -e RUST_LOG=debug \
   --name chainlink-starknet.starknet-devnet \
-  "shardlabs/starknet-devnet-rs:${container_version}"
+  "shardlabs/starknet-devnet-rs:${container_version}" \
+  --seed 0 \
+  --account-class cairo1
 
 echo "Starting hardhat..."
 docker run --net container:chainlink-starknet.starknet-devnet -d --name chainlink-starknet.hardhat ethereumoptimism/hardhat-node:nightly

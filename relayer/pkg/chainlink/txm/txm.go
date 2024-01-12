@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"sync"
 	"time"
 
@@ -27,12 +26,12 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(senderAddress *felt.Felt, accountAddress *felt.Felt, txFn starknetrpc.FunctionCall) error
+	Enqueue(accountAddress *felt.Felt, publicKey *felt.Felt, txFn starknetrpc.FunctionCall) error
 	InflightCount() (int, int)
 }
 
 type Tx struct {
-	senderAddress  *felt.Felt
+	publicKey      *felt.Felt
 	accountAddress *felt.Felt
 	call           starknetrpc.FunctionCall
 }
@@ -114,7 +113,7 @@ func (txm *starktxm) broadcastLoop() {
 			tx := <-txm.queue
 
 			// broadcast tx serially - wait until accepted by mempool before processing next
-			hash, err := txm.broadcast(ctx, tx.senderAddress, tx.accountAddress, tx.call)
+			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
 			} else {
@@ -126,15 +125,15 @@ func (txm *starktxm) broadcastLoop() {
 
 const FEE_MARGIN uint64 = 115
 
-func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
 	if err != nil {
 		txm.client.Reset()
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 	// create new account
-	accountVersion := 0
-	account, err := starknetaccount.NewAccount(client.Provider, senderAddress, accountAddress.String(), txm.ks, accountVersion)
+	cairoVersion := 2
+	account, err := starknetaccount.NewAccount(client.Provider, accountAddress, publicKey.String(), txm.ks, cairoVersion)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
@@ -144,7 +143,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, ac
 		return txhash, fmt.Errorf("failed to get chainID: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(accountAddress, chainID)
+	nonce, err := txm.nonce.NextSequence(publicKey, chainID)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
@@ -160,6 +159,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, ac
 	tx := starknetrpc.InvokeTxnV1{
 		MaxFee:        maxfee,
 		Version:       starknetrpc.TransactionV1,
+		Signature:     []*felt.Felt{},
 		Nonce:         nonce,
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
@@ -171,23 +171,26 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, ac
 		return txhash, err
 	}
 
-	// Signing of the transaction that is done by the account
-	err = account.SignInvokeTransaction(context.Background(), &tx)
-	if err != nil {
-		return txhash, err
-	}
+	// TODO: if we estimate with sig then the hash changes and we have to re-sign
+	// if we don't then the signature is invalid??
 
 	// get fee for tx
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
-	simFlags := []starknetrpc.SimulationFlag{}
-	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
-	if err != nil {
-		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
-	}
+	// simFlags := []starknetrpc.SimulationFlag{}
+	// feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
+	// if err != nil {
+	// 	return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
+	// }
 	// expandedFee := new(felt.Felt).Mul(feeEstimate[0].OverallFee, FEE_MARGIN)
 	// maxfee = new(felt.Felt).Div(expandedFee, new(felt.Felt).SetUint64(100))
-	tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
+	// tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
+
+	// Signing of the transaction that is done by the account
+	err = account.SignInvokeTransaction(context.Background(), &tx)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+	}
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
@@ -206,7 +209,7 @@ func (txm *starktxm) broadcast(ctx context.Context, senderAddress *felt.Felt, ac
 	// update nonce if transaction is successful
 	hash := res.TransactionHash.String()
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(accountAddress, chainID, nonce),
+		txm.nonce.IncrementNextSequence(publicKey, chainID, nonce),
 		txm.txStore.Save(accountAddress, nonce, hash),
 	)
 	return hash, err
@@ -241,26 +244,21 @@ func (txm *starktxm) confirmLoop() {
 						txm.lggr.Errorw("invalid felt value", "hash", hash)
 						continue
 					}
-					response, err := client.Provider.TransactionReceipt(ctx, f)
+					response, err := client.Provider.GetTransactionStatus(ctx, f)
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
-					// TODO: there's no more pending status so a txn status is always accepted or rejected
-					receipt, ok := response.(starknetrpc.InvokeTransactionReceipt)
-					if !ok {
-						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
-						continue
-					}
 
-					status := receipt.GetExecutionStatus()
+					status := response.FinalityStatus
 
-					// if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
-					txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
-					if err := txm.txStore.Confirm(addr, hash); err != nil {
-						txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+					// any status other than received
+					if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
+						if err := txm.txStore.Confirm(addr, hash); err != nil {
+							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+						}
 					}
-					// }
 				}
 			}
 		case <-txm.stop:
@@ -292,13 +290,13 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(senderAddress, accountAddress *felt.Felt, tx starknetrpc.FunctionCall) error {
+func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrpc.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test
 	// existence of a key
-	if _, err := txm.ks.Loopp().Sign(context.Background(), senderAddress.String(), nil); err != nil {
-		return err
+	if _, err := txm.ks.Loopp().Sign(context.Background(), publicKey.String(), nil); err != nil {
+		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}
 
 	client, err := txm.client.Get()
@@ -313,12 +311,12 @@ func (txm *starktxm) Enqueue(senderAddress, accountAddress *felt.Felt, tx starkn
 	}
 
 	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, chainID, client); err != nil {
-		return err
+	if err := txm.nonce.Register(context.TODO(), accountAddress, publicKey, chainID, client); err != nil {
+		return fmt.Errorf("failed to register nonce: %+w", err)
 	}
 
 	select {
-	case txm.queue <- Tx{senderAddress: senderAddress, accountAddress: accountAddress, call: tx}:
+	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}

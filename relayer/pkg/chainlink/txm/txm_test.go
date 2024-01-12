@@ -26,32 +26,38 @@ import (
 
 func TestIntegration_Txm(t *testing.T) {
 	n := 2 // number of txs per key
-	url := SetupLocalStarknetNode(t)
+	// url := SetupLocalStarknetNode(t)
+	url := "http://127.0.0.1:5050"
 	devnet := devnet.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
+	fmt.Println("qqq")
 
 	// parse keys into expected format
-	localKeys := map[string]*big.Int{}
-	localAccounts := map[string]string{}
+	type Key struct {
+		PrivateKey *big.Int
+		Account    string
+	}
+	localKeys := map[string]Key{}
 	for i := range accounts {
-		privKey, err := utils.HexToBytes(accounts[i].PrivateKey)
-		require.NoError(t, err)
-		senderAddress, err := starknetutils.HexToFelt(accounts[i].PublicKey)
-		require.NoError(t, err)
-		localKeys[senderAddress.String()] = utils.BytesToBig(privKey)
-		localAccounts[senderAddress.String()] = accounts[i].Address
+		publicKey := accounts[i].PublicKey
+		fmt.Printf("account %v pubkey %v\n", accounts[i].Address, publicKey)
+		localKeys[publicKey] = Key{
+			PrivateKey: starknetutils.HexToBN(accounts[i].PrivateKey),
+			Account:    accounts[i].Address,
+		}
 	}
 
 	// mock keystore
-	looppKs := NewLooppKeystore(func(id string) (*big.Int, error) {
-		key, ok := localKeys[id]
+	looppKs := NewLooppKeystore(func(publicKey string) (*big.Int, error) {
+		key, ok := localKeys[publicKey]
 		if !ok {
-			return nil, fmt.Errorf("key does not exist id=%s", id)
+			return nil, fmt.Errorf("key does not exist id=%s", publicKey)
 		}
-		return key, nil
+		return key.PrivateKey, nil
 	})
 	ksAdapter := NewKeystoreAdapter(looppKs)
+
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient("SN_GOERLI", url+"/rpc", lggr, &timeout)
@@ -75,28 +81,29 @@ func TestIntegration_Txm(t *testing.T) {
 	// start txm + checks
 	require.NoError(t, txm.Start(context.Background()))
 	require.NoError(t, txm.Ready())
+	fmt.Println("sss")
 
-	for senderAddressStr := range localKeys {
-		senderAddress, err := starknetutils.HexToFelt(senderAddressStr)
+	for publicKeyStr := range localKeys {
+		publicKey, err := starknetutils.HexToFelt(publicKeyStr)
 		require.NoError(t, err)
 
-		account, err := starknetutils.HexToFelt(localAccounts[senderAddressStr])
+		accountAddress, err := starknetutils.HexToFelt(localKeys[publicKeyStr].Account)
 		require.NoError(t, err)
 
 		contractAddress, err := starknetutils.HexToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7")
 		require.NoError(t, err)
 
-		selector := utils.GetSelectorFromNameFelt("totalSupply")
+		selector := starknetutils.GetSelectorFromNameFelt("totalSupply")
 
 		for i := 0; i < n; i++ {
-			require.NoError(t, txm.Enqueue(senderAddress, account, starknetrpc.FunctionCall{
+			require.NoError(t, txm.Enqueue(accountAddress, publicKey, starknetrpc.FunctionCall{
 				ContractAddress:    contractAddress, // send to ETH token contract
 				EntryPointSelector: selector,
 			}))
 		}
 	}
 	var empty bool
-	for i := 0; i < 60; i++ {
+	for i := 0; i < 30; i++ {
 		time.Sleep(500 * time.Millisecond)
 		queued, unconfirmed := txm.InflightCount()
 		accepted := len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())

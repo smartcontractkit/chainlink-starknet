@@ -21,7 +21,7 @@ type NonceManagerClient interface {
 type NonceManager interface {
 	services.Service
 
-	Register(ctx context.Context, address *felt.Felt, chainId string, client NonceManagerClient) error
+	Register(ctx context.Context, address *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error
 
 	NextSequence(address *felt.Felt, chainID string) (*felt.Felt, error)
 	IncrementNextSequence(address *felt.Felt, chainID string, currentNonce *felt.Felt) error
@@ -65,12 +65,12 @@ func (nm *nonceManager) HealthReport() map[string]error {
 }
 
 // Register is used because we cannot pre-fetch nonces. the pubkey is known before hand, but the account address is not known until a job is started and sends a tx
-func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, chainId string, client NonceManagerClient) error {
+func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
-	addressNonces, exists := nm.n[addr.String()]
+	addressNonces, exists := nm.n[publicKey.String()]
 	if !exists {
-		nm.n[addr.String()] = map[string]*felt.Felt{}
+		nm.n[publicKey.String()] = map[string]*felt.Felt{}
 	}
 	_, exists = addressNonces[chainId]
 	if !exists {
@@ -78,7 +78,7 @@ func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, chainId s
 		if err != nil {
 			return err
 		}
-		nm.n[addr.String()][chainId] = n
+		nm.n[publicKey.String()][chainId] = n
 	}
 
 	return nil
