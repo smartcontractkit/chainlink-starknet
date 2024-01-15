@@ -10,6 +10,7 @@
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
+    python3
 
     go_1_21
     gopls
