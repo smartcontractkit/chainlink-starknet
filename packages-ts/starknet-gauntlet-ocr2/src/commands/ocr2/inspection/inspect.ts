@@ -60,7 +60,7 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
     })
     transmitterInfo.push({
       transmitter,
-      owedPayment: parseInt(owedPayment.result[0]).toString(),
+      owedPayment: parseInt(owedPayment[0]).toString(),
     })
   }
   const billing = {

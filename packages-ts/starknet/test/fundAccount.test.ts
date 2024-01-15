@@ -1,20 +1,20 @@
 import { assert } from 'chai'
 import { account } from '@chainlink/starknet'
-import { Account, ec, SequencerProvider, stark } from 'starknet'
+import { Account, ec, RpcProvider, stark } from 'starknet'
 import { DEVNET_URL, ERC20_ADDRESS } from '../src/account'
 
 describe('fundAccount', function () {
   this.timeout(900_000)
   let alice: Account
   let bob: Account
-  let provider: SequencerProvider
+  let provider: RpcProvider
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
   before(async function () {
     const gateway_url = process.env.NODE_URL || DEVNET_URL
-    provider = new SequencerProvider({ baseUrl: gateway_url })
+    provider = new RpcProvider({ nodeUrl: gateway_url })
 
     const aliceStarkKeyPair = ec.starkCurve.utils.randomPrivateKey()
     const bobStarkKeyPair = ec.starkCurve.utils.randomPrivateKey()
@@ -37,7 +37,7 @@ describe('fundAccount', function () {
       entrypoint: 'balanceOf',
       calldata: [BigInt(alice.address).toString(10)],
     })
-    assert.deepEqual(balance.result, ['0x1388', '0x0'])
+    assert.deepEqual(balance, ['0x1388', '0x0'])
   })
 
   it('should have fund bob', async () => {
@@ -46,7 +46,7 @@ describe('fundAccount', function () {
       entrypoint: 'balanceOf',
       calldata: [BigInt(bob.address).toString(10)],
     })
-    assert.deepEqual(balance.result, ['0x1f40', '0x0'])
+    assert.deepEqual(balance, ['0x1f40', '0x0'])
   })
 
   it("should increament alice's fees", async () => {
@@ -57,7 +57,7 @@ describe('fundAccount', function () {
       entrypoint: 'balanceOf',
       calldata: [BigInt(alice.address).toString(10)],
     })
-    assert.deepEqual(balance.result, ['0x13ec', '0x0'])
+    assert.deepEqual(balance, ['0x13ec', '0x0'])
   })
 
   it("should increament bob's fees", async () => {
@@ -68,6 +68,6 @@ describe('fundAccount', function () {
       entrypoint: 'balanceOf',
       calldata: [BigInt(bob.address).toString(10)],
     })
-    assert.deepEqual(balance.result, ['0x2328', '0x0'])
+    assert.deepEqual(balance, ['0x2328', '0x0'])
   })
 })

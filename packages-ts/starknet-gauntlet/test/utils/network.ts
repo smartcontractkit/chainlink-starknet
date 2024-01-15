@@ -53,19 +53,7 @@ class VenvDevnet extends IntegratedDevnet {
 
   protected spawnChildProcess(): Promise<ChildProcess> {
     return new Promise((resolve, reject) => {
-      const cairoSierraCompilerBuildPath = path.join(
-        __dirname,
-        '../../../../cairo-build/bin/starknet-sierra-compile',
-      )
-      const cargoManifest = path.join(__dirname, '../../../../vendor/cairo/Cargo.toml')
-      const args = ['--port', this.port, '--gas-price', '1', '--lite-mode']
-      if (fs.existsSync(cairoSierraCompilerBuildPath)) {
-        args.push('--sierra-compiler-path', cairoSierraCompilerBuildPath)
-      } else if (fs.existsSync(cargoManifest)) {
-        args.push('--cairo-compiler-manifest', cargoManifest)
-      } else {
-        return reject(new Error('Could not find cairo package'))
-      }
+      const args = ['--port', this.port, '--gas-price', '1']
       if (this.opts?.seed) {
         args.push('--seed', this.opts.seed.toString())
       } else {
@@ -82,8 +70,7 @@ class VenvDevnet extends IntegratedDevnet {
       let initialOutput = ''
       childProcess.stdout.on('data', (chunk) => {
         initialOutput += chunk
-        // Wait for the 1st account to be printed out. The 'Listening on ...' line doesn't seem to be output when started without a tty.
-        if (initialOutput.indexOf('Account #0') >= 0) {
+        if (initialOutput.indexOf('listening on') >= 0) {
           console.log('Started starknet-devnet')
           childProcess.stdout.removeAllListeners('data')
           resolve(childProcess)
