@@ -1,4 +1,4 @@
-import { Account, SequencerProvider, ec, uint256 } from 'starknet'
+import { Account, RpcProvider, ec, uint256, constants } from 'starknet'
 
 export const ERC20_ADDRESS = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
 
@@ -72,8 +72,8 @@ class DevnetFundingStrategy implements IFundingStrategy {
 // Fund the Account on Testnet
 class AllowanceFundingStrategy implements IFundingStrategy {
   public async fund(accounts: FundAccounts[], opts: FunderOptions) {
-    const provider = new SequencerProvider({
-      baseUrl: 'https://alpha4.starknet.io',
+    const provider = new RpcProvider({
+      nodeUrl: constants.NetworkName.SN_GOERLI,
     })
 
     const operator = new Account(provider, opts.accountAddr, opts.keyPair)
