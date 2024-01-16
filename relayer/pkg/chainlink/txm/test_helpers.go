@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -37,7 +37,6 @@ func SetupLocalStarknetNode(t *testing.T) string {
 	cmd := exec.Command("starknet-devnet",
 		"--seed", "0", // use same seed for testing
 		"--port", port,
-		"--lite-mode",
 	)
 	var stdErr bytes.Buffer
 	cmd.Stderr = &stdErr
@@ -76,9 +75,9 @@ func TestKeys(t *testing.T, count int) (rawkeys [][]byte) {
 		if i >= count {
 			break
 		}
-
-		keyBytes := caigotypes.StrToFelt(k).Bytes()
-		rawkeys = append(rawkeys, keyBytes)
+		f, _ := starknetutils.HexToFelt(k)
+		keyBytes := f.Bytes()
+		rawkeys = append(rawkeys, keyBytes[:])
 	}
 	return rawkeys
 }
