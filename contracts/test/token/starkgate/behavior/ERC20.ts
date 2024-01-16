@@ -42,17 +42,17 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
       t = await beforeFn()
     })
 
-    it(`should 'permissionedMint' successfully (2x)`, async () => {
+    it(`should 'permissioned_mint' successfully (2x)`, async () => {
       const { alice, bob } = addresses(t)
 
-      await t.owner.invoke(t.token, 'permissionedMint', {
+      await t.owner.invoke(t.token, 'permissioned_mint', {
         account: alice,
         amount: uint256.bnToUint256(15),
       })
 
       await expectERC20Balance(t.token, t.alice, 15)
 
-      await t.owner.invoke(t.token, 'permissionedMint', {
+      await t.owner.invoke(t.token, 'permissioned_mint', {
         account: bob,
         amount: uint256.bnToUint256(12),
       })
@@ -61,10 +61,10 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
       await expectERC20Balance(t.token, t.bob, 12)
     })
 
-    it(`should 'permissionedBurn' successfully (2x)`, async () => {
+    it(`should 'permissioned_burn' successfully (2x)`, async () => {
       const { alice, bob } = addresses(t)
 
-      await t.owner.invoke(t.token, 'permissionedBurn', {
+      await t.owner.invoke(t.token, 'permissioned_burn', {
         account: alice,
         amount: uint256.bnToUint256(3),
       })
@@ -72,7 +72,7 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
       await expectERC20TotalSupply(t.token, 24)
       await expectERC20Balance(t.token, t.alice, 12)
 
-      await t.owner.invoke(t.token, 'permissionedBurn', {
+      await t.owner.invoke(t.token, 'permissioned_burn', {
         account: bob,
         amount: uint256.bnToUint256(10),
       })
@@ -81,46 +81,46 @@ export const shouldBehaveLikeStarkGateERC20 = (beforeFn: BeforeFn) => {
       await expectERC20Balance(t.token, t.bob, 2)
     })
 
-    it(`reverts on 'permissionedBurn' (amount > balance)`, async () => {
+    it(`reverts on 'permissioned_burn' (amount > balance)`, async () => {
       const { alice, bob } = addresses(t)
 
       await expectInvokeError(
-        t.owner.invoke(t.token, 'permissionedBurn', {
+        t.owner.invoke(t.token, 'permissioned_burn', {
           account: bob,
           amount: uint256.bnToUint256(103),
         }),
       )
 
       await expectInvokeError(
-        t.owner.invoke(t.token, 'permissionedBurn', {
+        t.owner.invoke(t.token, 'permissioned_burn', {
           account: alice,
           amount: uint256.bnToUint256(189),
         }),
       )
     })
 
-    it(`reverts on 'permissionedBurn' without permission`, async () => {
+    it(`reverts on 'permissioned_burn' without permission`, async () => {
       const { alice, bob } = addresses(t)
 
       await expectInvokeError(
-        t.alice.invoke(t.token, 'permissionedBurn', {
+        t.alice.invoke(t.token, 'permissioned_burn', {
           account: bob,
           amount: uint256.bnToUint256(103),
         }),
       )
 
       await expectInvokeError(
-        t.bob.invoke(t.token, 'permissionedBurn', {
+        t.bob.invoke(t.token, 'permissioned_burn', {
           account: alice,
           amount: uint256.bnToUint256(189),
         }),
       )
     })
 
-    it(`should 'permissionedMint' and 'transfer' successfully`, async () => {
+    it(`should 'permissioned_mint' and 'transfer' successfully`, async () => {
       const { alice, bob } = addresses(t)
 
-      await t.owner.invoke(t.token, 'permissionedMint', {
+      await t.owner.invoke(t.token, 'permissioned_mint', {
         account: bob,
         amount: uint256.bnToUint256(3),
       })

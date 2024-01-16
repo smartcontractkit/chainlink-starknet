@@ -1,11 +1,10 @@
 use starknet::ContractAddress;
 
+// https://github.com/starknet-io/starkgate-contracts/blob/v2.0/src/cairo/mintable_token_interface.cairo
 #[starknet::interface]
 trait IMintableToken<TContractState> {
-    #[external(v0)]
-    fn permissionedMint(ref self: TContractState, account: ContractAddress, amount: u256);
-    #[external(v0)]
-    fn permissionedBurn(ref self: TContractState, account: ContractAddress, amount: u256);
+    fn permissioned_mint(ref self: TContractState, account: ContractAddress, amount: u256);
+    fn permissioned_burn(ref self: TContractState, account: ContractAddress, amount: u256);
 }
 
 #[starknet::contract]
@@ -70,12 +69,12 @@ mod LinkToken {
     //
     #[external(v0)]
     impl MintableToken of IMintableToken<ContractState> {
-        fn permissionedMint(ref self: ContractState, account: ContractAddress, amount: u256) {
+        fn permissioned_mint(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
             self.erc20._mint(account, amount);
         }
 
-        fn permissionedBurn(ref self: ContractState, account: ContractAddress, amount: u256) {
+        fn permissioned_burn(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
             self.erc20._burn(account, amount);
         }

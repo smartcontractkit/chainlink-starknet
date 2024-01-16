@@ -56,7 +56,7 @@ describe('Aggregator', function () {
       owner: owner.starknetContract.address,
     })
 
-    await owner.invoke(token, 'permissionedMint', {
+    await owner.invoke(token, 'permissioned_mint', {
       account: owner.starknetContract.address,
       amount: 100_000_000_000,
     })
