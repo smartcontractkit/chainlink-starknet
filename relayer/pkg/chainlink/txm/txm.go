@@ -9,6 +9,7 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
+	"github.com/NethermindEth/starknet.go/rpc"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"golang.org/x/exp/maps"
@@ -150,19 +151,33 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	// TODO: update to v3
 
-	maxfee, err := starknetutils.HexToFelt("0x95e566845d000")
-	if err != nil {
-		return txhash, err
-	}
+	// maxfee, err := starknetutils.HexToFelt("0x95e566845d000")
+	// if err != nil {
+	// 	return txhash, err
+	// }
 
 	// Building the tx struct
-	tx := starknetrpc.InvokeTxnV1{
-		MaxFee:        maxfee,
-		Version:       starknetrpc.TransactionV1,
-		Signature:     []*felt.Felt{},
-		Nonce:         nonce,
+	tx := starknetrpc.InvokeTxnV3{
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
+		Version:       starknetrpc.TransactionV3,
+		Signature:     []*felt.Felt{},
+		Nonce:         nonce,
+		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
+			L1Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x186a0",
+				MaxPricePerUnit: "0x5af3107a4000",
+			},
+			L2Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
+			},
+		},
+		Tip:                   "0x0",
+		PayMasterData:         []*felt.Felt{},
+		AccountDeploymentData: []*felt.Felt{},
+		NonceDataMode:         rpc.DAModeL1, // TODO: confirm
+		FeeMode:               rpc.DAModeL1, // TODO: confirm
 	}
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
@@ -187,10 +202,20 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
 
 	// Signing of the transaction that is done by the account
-	err = account.SignInvokeTransaction(context.Background(), &tx)
+	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
+	// err = account.SignInvokeTransaction(context.Background(), &tx)
+	// if err != nil {
+	// 	return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+	// }
+	hash, err := account.TransactionHashInvoke(tx)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+		return txhash, err
 	}
+	signature, err := account.Sign(ctx, hash)
+	if err != nil {
+		return txhash, err
+	}
+	tx.Signature = signature
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
@@ -207,12 +232,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 
 	// update nonce if transaction is successful
-	hash := res.TransactionHash.String()
+	txhash = res.TransactionHash.String()
 	err = errors.Join(
 		txm.nonce.IncrementNextSequence(publicKey, chainID, nonce),
-		txm.txStore.Save(accountAddress, nonce, hash),
+		txm.txStore.Save(accountAddress, nonce, txhash),
 	)
-	return hash, err
+	return txhash, err
 }
 
 func (txm *starktxm) confirmLoop() {
