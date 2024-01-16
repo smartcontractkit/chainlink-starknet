@@ -180,7 +180,7 @@ test-unit-go:
 
 .PHONY: test-integration-go
 # only runs tests with TestIntegration_* + //go:build integration
-test-integration-go:
+test-integration-go: env-devnet-hardhat
 	cd ./relayer && go test -v ./... -run TestIntegration -tags integration
 
 .PHONY: test-integration-prep
