@@ -5,17 +5,10 @@ import {
   registerExecuteCommand,
   registerInspectCommand,
   TIMEOUT,
-  startNetwork,
-  IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
 
 describe('Sequencer Uptime Feed Contract', () => {
-  let network: IntegratedDevnet
   let uptimeFeedAddress: string
-
-  beforeAll(async () => {
-    network = await startNetwork()
-  }, TIMEOUT)
 
   // deploy uptime feed contract
   beforeEach(async () => {
@@ -59,9 +52,5 @@ describe('Sequencer Uptime Feed Contract', () => {
       const report = await inspectCommand.execute()
       expect(report.data.data.latest_round_data.answer).toEqual('0')
     })
-  })
-
-  afterAll(() => {
-    network.stop()
   })
 })
