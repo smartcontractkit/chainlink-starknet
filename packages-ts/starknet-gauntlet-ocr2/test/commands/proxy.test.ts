@@ -6,26 +6,15 @@ import confirmAggregatorCommand from '../../src/commands/proxy/confirmAggregator
 import {
   registerExecuteCommand,
   TIMEOUT,
-  startNetwork,
-  IntegratedDevnet,
   devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
 
 let account = devnetAccount0Address
 
 describe('Proxy Contract', () => {
-  let network: IntegratedDevnet
   let contractAddress: string
   let accessController: string
   let proxy: string
-
-  beforeAll(async () => {
-    network = await startNetwork()
-  }, TIMEOUT)
-
-  afterAll(async () => {
-    network.stop()
-  })
 
   it(
     'Deploy AC',

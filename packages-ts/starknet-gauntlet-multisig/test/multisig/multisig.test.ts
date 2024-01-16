@@ -3,20 +3,13 @@ import deployCommand from '../../src/commands/multisig/deploy'
 import setSigners from '../../src/commands/multisig/setSigners'
 import setThreshold from '../../src/commands/multisig/setThreshold'
 import { wrapCommand } from '../../src/wrapper'
-import {
-  registerExecuteCommand,
-  TIMEOUT,
-  startNetwork,
-  IntegratedDevnet,
-  LOCAL_URL,
-} from '@chainlink/starknet-gauntlet/test/utils'
+import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/starknet-gauntlet/test/utils'
 import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
 import { loadContract } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('Multisig', () => {
-  let network: IntegratedDevnet
   let multisigContractAddress: string
   const SEED: number = 10
   let accounts: string[] = [
@@ -40,10 +33,6 @@ describe('Multisig', () => {
     publicKey: '0x6a5f1d67f6b59f3a2a294c3e523731b43fccbb7230985be7399c118498faf03',
     privateKey: '0x8ceac392904cdefcf84b683a749f9c5',
   }
-
-  beforeAll(async () => {
-    network = await startNetwork({ seed: SEED })
-  }, TIMEOUT)
 
   it(
     'Deployment',
@@ -217,8 +206,4 @@ describe('Multisig', () => {
     },
     TIMEOUT,
   )
-
-  afterAll(() => {
-    network.stop()
-  })
 })

@@ -10,8 +10,6 @@ import {
   makeWallet,
 } from '../../src/index'
 
-export { startNetwork, IntegratedDevnet } from './network'
-
 export const loadContract = (name: string): CompiledContract => {
   return json.parse(fs.readFileSync(`${__dirname}/../__mocks__/${name}.json`).toString('ascii'))
 }

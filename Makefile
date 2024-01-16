@@ -227,11 +227,10 @@ test-integration-contracts: build-ts env-devnet-hardhat
 		yarn test
 
 .PHONY: test-integration-gauntlet
-# TODO: better network lifecycle setup - tests setup/run their own network (L1 + conflict w/ above if not cleaned up)
 # TODO: fix example
 # cd packages-ts/starknet-gauntlet-example/ && \
 #   yarn test
-test-integration-gauntlet: build-ts env-devnet-hardhat-down
+test-integration-gauntlet: build-ts env-devnet-hardhat
 	cd packages-ts/starknet-gauntlet/ && \
 		yarn test
 	cd packages-ts/starknet-gauntlet-argent/ && \

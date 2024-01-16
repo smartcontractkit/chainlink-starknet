@@ -8,8 +8,6 @@ import {
   registerExecuteCommand,
   TIMEOUT,
   registerInspectCommand,
-  startNetwork,
-  IntegratedDevnet,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadExampleContract } from '../utils'
 
@@ -25,12 +23,7 @@ const getBalance = async (address: string) => {
 }
 
 describe('Example Contract', () => {
-  let network: IntegratedDevnet
   let contractAddress: string
-
-  beforeAll(async () => {
-    network = await startNetwork()
-  }, TIMEOUT)
 
   it(
     'Deployment with default input',
@@ -94,8 +87,4 @@ describe('Example Contract', () => {
   }, 3000)
 
   // TODO: Include tests with account contract. Pending on devnet to support predeployed accounts and fee token
-
-  afterAll(() => {
-    network.stop()
-  })
 })

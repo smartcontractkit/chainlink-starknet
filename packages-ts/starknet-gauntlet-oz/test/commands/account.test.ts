@@ -1,23 +1,12 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
 import deployCommand from '../../src/commands/account/deploy'
-import {
-  registerExecuteCommand,
-  TIMEOUT,
-  LOCAL_URL,
-  startNetwork,
-  IntegratedDevnet,
-} from '@chainlink/starknet-gauntlet/test/utils'
+import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/starknet-gauntlet/test/utils'
 import { accountContractLoader, CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('OZ Account Contract', () => {
-  let network: IntegratedDevnet
   let publicKey: string
   let contractAddress: string
-
-  beforeAll(async () => {
-    network = await startNetwork()
-  }, TIMEOUT)
 
   it(
     'Deployment',
@@ -37,8 +26,4 @@ describe('OZ Account Contract', () => {
     },
     TIMEOUT,
   )
-
-  afterAll(() => {
-    network.stop()
-  })
 })
