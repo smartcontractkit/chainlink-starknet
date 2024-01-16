@@ -38,9 +38,9 @@ export const noopPrompt: typeof prompt = async () => {}
 
 export const TIMEOUT = 900000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
-export const devnetPrivateKey = '0xe3e70682c2094cac629f6fbed82c07cd'
+export const devnetPrivateKey = '0x71d7bb07b9a64f6f78ac4c816aff4da9'
 export const devnetAccount0Address =
-  '0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a'
+  '0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691'
 // export const devnetKeyPair = ec.getKeyPair(devnetPrivateKey);
 
 export const registerExecuteCommand = <UI, CI>(
