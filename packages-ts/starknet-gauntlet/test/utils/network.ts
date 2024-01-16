@@ -87,10 +87,10 @@ class VenvDevnet extends IntegratedDevnet {
 export const startNetwork = async (opts?: {}): Promise<IntegratedDevnet> => {
   const devnet = new VenvDevnet('5050', opts)
 
-  await devnet.start()
+  // await devnet.start()
 
   // Starting to poll devnet too soon can result in ENOENT
-  await new Promise((f) => setTimeout(f, 2000))
+  // await new Promise((f) => setTimeout(f, 2000))
 
   return devnet
 }
