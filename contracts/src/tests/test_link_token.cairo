@@ -82,7 +82,7 @@ fn test_permissioned_mint_from_minter() {
     assert(ERC20Impl::balance_of(@state, to) == zero.into(), 'zero balance');
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedMint(ref state, to, amount.into());
+    MintableToken::permissioned_mint(ref state, to, amount.into());
 
     assert(ERC20Impl::balance_of(@state, sender) == zero.into(), 'zero balance');
     assert(ERC20Impl::balance_of(@state, to) == amount.into(), 'expect balance');
@@ -99,7 +99,7 @@ fn test_permissioned_mint_from_nonminter() {
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedMint(ref state, to, amount.into());
+    MintableToken::permissioned_mint(ref state, to, amount.into());
 }
 
 #[test]
@@ -113,21 +113,21 @@ fn test_permissioned_burn_from_minter() {
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedMint(ref state, to, amount.into());
+    MintableToken::permissioned_mint(ref state, to, amount.into());
     assert(ERC20Impl::balance_of(@state, to) == amount.into(), 'expect balance');
 
     // burn some
     let burn_amount: felt252 = 2000;
     let remaining_amount: felt252 = amount - burn_amount;
-    MintableToken::permissionedBurn(ref state, to, burn_amount.into());
+    MintableToken::permissioned_burn(ref state, to, burn_amount.into());
     assert(ERC20Impl::balance_of(@state, to) == remaining_amount.into(), 'remaining balance');
 
     // burn remaining
-    MintableToken::permissionedBurn(ref state, to, remaining_amount.into());
+    MintableToken::permissioned_burn(ref state, to, remaining_amount.into());
     assert(ERC20Impl::balance_of(@state, to) == zero.into(), 'no balance');
 
     // burn too much
-    MintableToken::permissionedBurn(ref state, to, amount.into());
+    MintableToken::permissioned_burn(ref state, to, amount.into());
 }
 
 
@@ -142,7 +142,7 @@ fn test_permissioned_burn_from_nonminter() {
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedBurn(ref state, to, amount.into());
+    MintableToken::permissioned_burn(ref state, to, amount.into());
 }
 
 #[test]
