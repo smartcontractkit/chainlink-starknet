@@ -185,9 +185,7 @@ test-integration-go:
 
 .PHONY: test-integration-prep
 test-integration-prep:
-	python -m venv ~/cairo_venv && \
-		. ~/cairo_venv/bin/activate
-	cd ./contracts && pip install -r requirements.txt
+	cd ./contracts
 	make build
 
 .PHONY: test-integration
