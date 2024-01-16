@@ -48,7 +48,7 @@ do
     prev_output="${output}"
   fi
 
-  if [[ $output == *"Listening"* ]]; then
+  if [[ $output == *"listening"* ]]; then
     echo ""
     echo "starknet-devnet is ready."
     exit 0
