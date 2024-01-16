@@ -48,17 +48,6 @@ func TestIntegration_Txm(t *testing.T) {
 		}
 	}
 
-	// TODO: try using official keystore & signing instead
-	// Initializing the account memkeyStore
-	// ks := account.NewMemKeystore()
-	// fakePrivKeyBI, ok := new(big.Int).SetString(privateKey, 0)
-	// if !ok {
-	// 	panic(err.Error())
-	// }
-	// ks.Put(public_key, fakePrivKeyBI)
-
-	// error computing loopp signature key does not exist
-
 	// mock keystore
 	looppKs := NewLooppKeystore(func(publicKey string) (*big.Int, error) {
 		key, ok := localKeys[publicKey]

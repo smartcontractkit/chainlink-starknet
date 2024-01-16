@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"sync"
 	"time"
 
@@ -160,6 +159,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	tx := starknetrpc.InvokeTxnV1{
 		MaxFee:        maxfee,
 		Version:       starknetrpc.TransactionV1,
+		Signature:     []*felt.Felt{},
 		Nonce:         nonce,
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
@@ -171,23 +171,26 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 
+	// TODO: if we estimate with sig then the hash changes and we have to re-sign
+	// if we don't then the signature is invalid??
+
+	// get fee for tx
+	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
+	// can we estimate fee without calling estimate - tbd with 1.0
+	// simFlags := []starknetrpc.SimulationFlag{}
+	// feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
+	// if err != nil {
+	// 	return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
+	// }
+	// expandedFee := new(felt.Felt).Mul(feeEstimate[0].OverallFee, FEE_MARGIN)
+	// maxfee = new(felt.Felt).Div(expandedFee, new(felt.Felt).SetUint64(100))
+	// tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
+
 	// Signing of the transaction that is done by the account
 	err = account.SignInvokeTransaction(context.Background(), &tx)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
 	}
-
-	// get fee for tx
-	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
-	// can we estimate fee without calling estimate - tbd with 1.0
-	simFlags := []starknetrpc.SimulationFlag{}
-	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
-	if err != nil {
-		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
-	}
-	// expandedFee := new(felt.Felt).Mul(feeEstimate[0].OverallFee, FEE_MARGIN)
-	// maxfee = new(felt.Felt).Div(expandedFee, new(felt.Felt).SetUint64(100))
-	tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
@@ -206,7 +209,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// update nonce if transaction is successful
 	hash := res.TransactionHash.String()
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(accountAddress, chainID, nonce),
+		txm.nonce.IncrementNextSequence(publicKey, chainID, nonce),
 		txm.txStore.Save(accountAddress, nonce, hash),
 	)
 	return hash, err
@@ -241,26 +244,21 @@ func (txm *starktxm) confirmLoop() {
 						txm.lggr.Errorw("invalid felt value", "hash", hash)
 						continue
 					}
-					response, err := client.Provider.TransactionReceipt(ctx, f)
+					response, err := client.Provider.GetTransactionStatus(ctx, f)
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
 					}
-					// TODO: there's no more pending status so a txn status is always accepted or rejected
-					receipt, ok := response.(starknetrpc.InvokeTransactionReceipt)
-					if !ok {
-						txm.lggr.Errorw("wrong receipt type", "type", reflect.TypeOf(response))
-						continue
-					}
 
-					status := receipt.GetExecutionStatus()
+					status := response.FinalityStatus
 
-					// if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
-					txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
-					if err := txm.txStore.Confirm(addr, hash); err != nil {
-						txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+					// any status other than received
+					if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
+						if err := txm.txStore.Confirm(addr, hash); err != nil {
+							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+						}
 					}
-					// }
 				}
 			}
 		case <-txm.stop:
