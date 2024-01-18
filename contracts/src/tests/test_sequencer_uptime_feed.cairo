@@ -35,7 +35,7 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
     let account: ContractAddress = contract_address_const::<777>();
     set_caller_address(account);
 
-    // Deploy seqeuencer uptime feed
+    // Deploy sequencer uptime feed
     let calldata = array![0, // initial status
      account.into() // owner
     ];
