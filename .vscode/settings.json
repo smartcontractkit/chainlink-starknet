@@ -2,7 +2,7 @@
   "editor.formatOnSave": true,
   "editor.formatOnSaveTimeout": 1500,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": true
   },
   "files.insertFinalNewline": true
 }
