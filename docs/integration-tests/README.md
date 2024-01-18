@@ -68,7 +68,7 @@ and [here](../../integration-tests/soak/soak_runner_test.go)
 8. Deploy L2 OCR2 contract via Gauntlet
 9. Set OCR2 billing via Gauntlet
 10. Set OCR2 config details via Gauntlet
-11. Set up boostrap and oracle nodes
+11. Set up bootstrap and oracle nodes
 
 ### Metrics and logs (K8)
 
