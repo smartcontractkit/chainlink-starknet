@@ -156,3 +156,7 @@ func (p *medianProvider) OnchainConfigCodec() median.OnchainConfigCodec {
 func (p *medianProvider) ChainReader() relaytypes.ChainReader {
 	return nil
 }
+
+func (p *medianProvider) Codec() relaytypes.Codec {
+	return nil
+}
