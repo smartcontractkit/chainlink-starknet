@@ -7,6 +7,8 @@ import balanceOfCommand from '../../src/commands/inspection/balanceOf'
 import {
   registerExecuteCommand,
   registerInspectCommand,
+  devnetAccount0Address,
+  devnetPrivateKey,
   TIMEOUT,
 } from '@chainlink/starknet-gauntlet/test/utils'
 
@@ -23,8 +25,8 @@ describe('Token Contract', () => {
 
   beforeAll(async () => {
     // account #0 with seed 0
-    defaultAccount = '0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a'
-    defaultPk = '0xe3e70682c2094cac629f6fbed82c07cd'
+    defaultAccount = devnetAccount0Address
+    defaultPk = devnetPrivateKey
     defaultBalance = 0
   }, TIMEOUT)
 
