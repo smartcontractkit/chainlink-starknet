@@ -36,8 +36,6 @@ describe('Aggregator', function () {
   let oracles: Oracle[] = []
   let config_digest: number
 
-  let answer: string
-
   before(async () => {
     aggregatorFactory = await starknet.getContractFactory('aggregator')
 
