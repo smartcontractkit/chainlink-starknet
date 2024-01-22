@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/prometheus/client_golang v1.17.0
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240119014733-5ea50bbe81be
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240122161056-177752fcd926
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/libocr v0.0.0-20240112202000-6359502d2ff1
 	github.com/stretchr/testify v1.8.4
