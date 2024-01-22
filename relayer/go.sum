@@ -323,8 +323,8 @@ github.com/shirou/gopsutil v3.21.11+incompatible h1:+1+c1VGhc88SSonWP6foOcLhvnKl
 github.com/shirou/gopsutil v3.21.11+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
 github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704 h1:T3lFWumvbfM1u/etVq42Afwq/jtNSBSOA8n5jntnNPo=
 github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704/go.mod h1:2QuJdEouTWjh5BDy5o/vgGXQtR4Gz8yH1IYB5eT7u4M=
-github.com/smartcontractkit/chainlink-common v0.1.7-0.20240122163538-e4b9c8805e2d h1:VkJY2DDSweLBkyuFtUp5TcWMdQxgcv2e9vqoHWak3mw=
-github.com/smartcontractkit/chainlink-common v0.1.7-0.20240122163538-e4b9c8805e2d/go.mod h1:NZ+p9FNx9jdPPfE7eBW2YER9IccxmFmLkxEvaVEEz+A=
+github.com/smartcontractkit/chainlink-common v0.1.7-0.20240122164210-08d9cdcc303e h1:wI6iVhzO7J9u0EKYElVCEk7xF2PCE2o4p4k7Iq2cE0w=
+github.com/smartcontractkit/chainlink-common v0.1.7-0.20240122164210-08d9cdcc303e/go.mod h1:NZ+p9FNx9jdPPfE7eBW2YER9IccxmFmLkxEvaVEEz+A=
 github.com/smartcontractkit/go-plugin v0.0.0-20231003134350-e49dad63b306 h1:ko88+ZznniNJZbZPWAvHQU8SwKAdHngdDZ+pvVgB5ss=
 github.com/smartcontractkit/go-plugin v0.0.0-20231003134350-e49dad63b306/go.mod h1:w1sAEES3g3PuV/RzUrgow20W2uErMly84hhD3um1WL4=
 github.com/smartcontractkit/grpc-proxy v0.0.0-20230731113816-f1be6620749f h1:hgJif132UCdjo8u43i7iPN1/MFnu49hv7lFGFftCHKU=
