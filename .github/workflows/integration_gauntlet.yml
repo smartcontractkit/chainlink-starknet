@@ -8,16 +8,49 @@ on:
   pull_request:
 
 jobs:
+  gauntlet_eslint:
+    name: Gauntlet ESLint
+    env:
+      CI: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - name: Install Nix
+        uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: "sandbox = false"
+      - name: Cache Nix
+        uses: cachix/cachix-action@v12
+        with:
+          name: chainlink-cosmos
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - run: nix develop -c yarn install --frozen-lockfile
+      - run: nix develop -c yarn eslint
+      - name: Upload eslint report
+        if: always()
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: gauntlet-eslint-report
+          path: ./eslint-report.json
+
   integration_gauntlet_run_tests:
     name: Run Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
       - name: Install Nix
-        uses: cachix/install-nix-action@5c11eae19dba042788936d4f1c9685fdd814ac49 # v19
+        uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
+
+      - name: Install starknet-devnet (via venv+pip)
+        run: nix develop -c pip install -r contracts/requirements.txt -c contracts/constraints.txt
 
       - name: Test
         run: nix develop -c make test-integration-gauntlet

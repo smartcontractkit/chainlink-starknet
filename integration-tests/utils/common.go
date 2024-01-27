@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
-	envConf "github.com/smartcontractkit/chainlink-env/config"
+	envConf "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
 )
 
 // GetTestLogger TODO: This is a duplicate of the same function in chainlink-testing-framework. We should replace this with a call to the ctf version when chainlink-starknet is updated to use the latest ctf version.
@@ -19,6 +19,8 @@ func GetTestLogger(t *testing.T) zerolog.Logger {
 	}
 	lvl, err := zerolog.ParseLevel(lvlStr)
 	require.NoError(t, err, "error parsing log level")
-	l := zerolog.New(zerolog.NewTestWriter(t)).Output(zerolog.ConsoleWriter{Out: os.Stderr}).Level(lvl).With().Timestamp().Logger()
+	l := zerolog.New(zerolog.NewTestWriter(t)).
+		Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: true}).
+		Level(lvl).With().Timestamp().Logger()
 	return l
 }

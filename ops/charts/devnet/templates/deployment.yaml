@@ -21,6 +21,22 @@ spec:
         - name: vol
           hostPath:
             path: /dumps
+        - name: cairo-build
+          emptyDir: {}
+      initContainers:
+        - name: cairo-download
+          image: appropriate/curl
+          command: ["/bin/sh"]
+          args:
+            - "-c"
+            - |
+              mkdir -p cairo-build
+              curl -L --output release.tgz https://github.com/starkware-libs/cairo/releases/download/v2.0.2/release-x86_64-unknown-linux-musl.tar.gz
+              tar xzf release.tgz
+              mv cairo/* cairo-build/
+          volumeMounts:
+            - name: cairo-build
+              mountPath: /cairo-build
       containers:
       - name: {{ .Chart.Name }}
         volumeMounts:
@@ -29,8 +45,10 @@ spec:
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.4.4"}}"
-        args: ["--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+          - name: cairo-build
+            mountPath: /cairo-build
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.6.0"}}"
+        args: ["--sierra-compiler-path", "/cairo-build/bin/starknet-sierra-compile", "--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}
@@ -55,14 +73,18 @@ spec:
           httpGet:
             path: /is_alive
             port: {{ .Values.service.externalPort }}
-          initialDelaySeconds: 1
+          initialDelaySeconds: 5
           periodSeconds: 30
+          timeoutSeconds: 300
+          failureThreshold: 10
         readinessProbe:
           httpGet:
             path: /is_alive
             port: {{ .Values.service.externalPort }}
-          initialDelaySeconds: 2
-          periodSeconds: 1
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          timeoutSeconds: 300
+          failureThreshold: 10
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory }}

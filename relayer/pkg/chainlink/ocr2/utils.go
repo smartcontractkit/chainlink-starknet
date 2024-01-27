@@ -4,15 +4,15 @@ import (
 	"encoding/binary"
 	"math/big"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
 func parseEpochAndRound(felt *big.Int) (epoch uint32, round uint8) {
-	var epochAndRound [junotypes.FeltLength]byte
+	var epochAndRound [starknet.FeltLength]byte
 	felt.FillBytes(epochAndRound[:])
-	epoch = binary.BigEndian.Uint32(epochAndRound[junotypes.FeltLength-5 : junotypes.FeltLength-1])
-	round = epochAndRound[junotypes.FeltLength-1]
+	epoch = binary.BigEndian.Uint32(epochAndRound[starknet.FeltLength-5 : starknet.FeltLength-1])
+	round = epochAndRound[starknet.FeltLength-1]
 	return epoch, round
 }
 

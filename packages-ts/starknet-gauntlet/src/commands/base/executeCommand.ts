@@ -1,8 +1,16 @@
 import { Result, WriteCommand, BaseConfig } from '@chainlink/gauntlet-core'
-import { CompiledContract, Contract, Call } from 'starknet'
+import {
+  CompiledContract,
+  CompiledSierraCasm,
+  Contract,
+  Call,
+  hash,
+  DeclareContractResponse,
+} from 'starknet'
 import { CommandCtor } from '.'
-import { Dependencies, Env } from '../../dependencies'
-import { IStarknetProvider, wrapResponse } from '../../provider'
+import { Dependencies } from '../../dependencies'
+import { IStarknetProvider } from '../../provider'
+import { getRDD } from '../../rdd'
 import { TransactionResponse } from '../../transaction'
 import { IStarknetWallet } from '../../wallet'
 import { makeCommandId, Validation, Input } from './command'
@@ -14,6 +22,7 @@ export interface ExecutionContext {
   provider: IStarknetProvider
   flags: any
   contract: Contract
+  rdd?: any
 }
 
 export type BeforeExecute<UI, CI> = (
@@ -28,6 +37,12 @@ export type AfterExecute<UI, CI> = (
   deps: Pick<Dependencies, 'logger' | 'prompt'>,
 ) => (result: Result<TransactionResponse>) => Promise<any>
 
+export interface LoadContractResult {
+  contract: CompiledContract
+  // for cairo 1.0, `contract` is a sierra artifact and the casm artifact needs to be provided.
+  casm?: CompiledSierraCasm
+}
+
 export interface ExecuteCommandConfig<UI, CI> extends BaseConfig<UI> {
   hooks?: {
     beforeExecute?: BeforeExecute<UI, CI>
@@ -35,7 +50,7 @@ export interface ExecuteCommandConfig<UI, CI> extends BaseConfig<UI> {
   }
   internalFunction?: string
   makeContractInput: (userInput: UI, context: ExecutionContext) => Promise<CI>
-  loadContract: () => CompiledContract
+  loadContract: () => LoadContractResult
 }
 
 export interface ExecuteCommandInstance<UI, CI> {
@@ -45,6 +60,7 @@ export interface ExecuteCommandInstance<UI, CI> {
   account: string
   executionContext: ExecutionContext
   contract: CompiledContract
+  compiledContractHash?: string
 
   input: Input<UI, CI>
 
@@ -68,6 +84,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     account: string
     executionContext: ExecutionContext
     contract: CompiledContract
+    compiledContractHash?: string
 
     input: Input<UI, CI>
 
@@ -87,7 +104,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.provider = deps.makeProvider(env.providerUrl, c.wallet)
       c.contractAddress = args[0]
       c.account = env.account
-      c.contract = config.loadContract()
+
+      const loadResult = config.loadContract()
+      c.contract = loadResult.contract
+      if (loadResult.casm) {
+        c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
+      }
 
       c.executionContext = {
         provider: c.provider,
@@ -96,6 +118,12 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         contractAddress: c.contractAddress,
         flags: flags,
         contract: new Contract(c.contract.abi, c.contractAddress ?? '', c.provider.provider),
+      }
+
+      const rdd = flags.rdd || process.env.RDD
+      if (rdd) {
+        deps.logger.info(`Using RDD from ${rdd}`)
+        c.executionContext.rdd = getRDD(rdd)
       }
 
       c.input = await c.buildCommandInput(flags, args, env)
@@ -170,12 +198,28 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      const tx = await this.provider.deployContract(
-        this.contract,
-        this.input.contract,
-        false,
-        this.input?.user?.['salt'],
-      )
+      // if "--classHash" is not included, declare before deploying
+      const classHash: string | undefined = this.input?.user?.['classHash']
+
+      let tx: TransactionResponse
+
+      if (classHash === undefined) {
+        tx = await this.provider.declareAndDeployContract(
+          this.contract,
+          this.compiledContractHash,
+          this.input.contract,
+          false,
+          this.input?.user?.['salt'],
+        )
+      } else {
+        tx = await this.provider.deployContract(
+          classHash,
+          this.input.contract,
+          false,
+          this.input?.user?.['salt'],
+        )
+      }
+
       if (tx.hash === undefined) {
         deps.logger.error(`No tx hash found:\n${JSON.stringify(tx, null, 2)}`)
         return tx
@@ -188,6 +232,32 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         return tx
       }
       deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
+      deps.logger.info(
+        `If using RDD, change the RDD ID with the new contract address: ${tx.address}`,
+      )
+      return tx
+    }
+
+    declareContract = async (): Promise<TransactionResponse> => {
+      deps.logger.info(`Declaring contract ${config.category}`)
+      await deps.prompt('Continue?')
+      deps.logger.loading(`Sending transaction...`)
+
+      const tx = await this.provider.declareContract(
+        this.contract,
+        this.compiledContractHash,
+        false,
+      )
+
+      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+      const response = await tx.wait()
+
+      if (!response.success) {
+        deps.logger.error(`Contract was not declared: ${tx.errorMessage}`)
+        return tx
+      }
+
+      deps.logger.success(`Contract declared at ${tx.tx.class_hash}`)
       return tx
     }
 
@@ -215,6 +285,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       if (config.action === 'deploy') {
         tx = await this.deployContract()
+      } else if (config.action === 'declare') {
+        tx = await this.declareContract()
       } else {
         tx = await this.executeWithSigner()
       }

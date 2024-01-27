@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	caigotypes "github.com/smartcontractkit/caigo/types"
 )
 
 var (
@@ -38,14 +40,26 @@ func TestPadBytes(t *testing.T) {
 	}
 }
 
-func TestHexToSignedBig(t *testing.T) {
-	// Positive value (99)
-	answer := HexToSignedBig("0x63")
-	assert.Equal(t, big.NewInt(99), answer)
+func TestFeltToUnsignedBig(t *testing.T) {
 
-	// Negative value (-10)
-	answer = HexToSignedBig("0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff7")
-	assert.Equal(t, big.NewInt(-10), answer)
+	negativeBig := caigotypes.BigToFelt(big.NewInt(-100))
+	// negative felts are not supported
+	num, err := FeltToUnsignedBig(negativeBig)
+	assert.NoError(t, err)
+	assert.Equal(t, num, big.NewInt(100))
+
+	positiveBig := caigotypes.BigToFelt(big.NewInt(100))
+	num, err = FeltToUnsignedBig(positiveBig)
+	assert.NoError(t, err)
+	assert.Equal(t, num, big.NewInt(100))
+
+}
+
+func TestHexToUnSignedBig(t *testing.T) {
+	// Positive value (99)
+	answer, err := HexToUnsignedBig("0x63")
+	assert.NoError(t, err)
+	assert.Equal(t, big.NewInt(99), answer)
 }
 
 func TestDecodeFeltFails(t *testing.T) {

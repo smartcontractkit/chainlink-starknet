@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
-// TODO: consider extracting entire file to `chainlink-relay/ops` or into a separate CLI tool
+// TODO: consider extracting entire file to `chainlink-common/ops` or into a separate CLI tool
 // this simply runs underlying functions but does not import them
 
 // PODMAN:
@@ -44,10 +44,11 @@ func main() {
 		if err := os.Chdir(utils.IntegrationTestsRoot); err != nil {
 			panic(err)
 		}
+		setEnvIfNotExists("CHAINLINK_ENV_USER", "localenv")
 		setEnvIfNotExists("CHAINLINK_IMAGE", "k3d-registry.localhost:12345/chainlink")
 		setEnvIfNotExists("CHAINLINK_VERSION", "local")
 		setEnvIfNotExists("KEEP_ENVIRONMENTS", "ALWAYS")
-		setEnvIfNotExists("NODE_COUNT", "1")
+		setEnvIfNotExists("NODE_COUNT", "4")
 		setEnvIfNotExists("TTL", "900h")
 		run("start environment", "go", "test", "-count", "1", "-v", "-timeout", "30m", "--run", "^TestOCRBasic$", "./smoke")
 	// stop k8s namespace from environment

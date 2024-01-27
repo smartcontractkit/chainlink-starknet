@@ -11,9 +11,9 @@ import {
   IntegratedDevnet,
   devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
-import { loadContract_Ocr2, CONTRACT_LIST } from '../../src/lib/contracts'
+import { loadContract } from '@chainlink/starknet-gauntlet'
+import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
-import { BN } from '@chainlink/gauntlet-core/dist/utils'
 
 let account = devnetAccount0Address
 
@@ -58,7 +58,7 @@ const validInput = {
       alphaAcceptPpb: 0,
       deltaCNanoseconds: 0,
     },
-    maxDurationQueryNanoseconds: 0,
+    maxDurationQueryNanoseconds: 2000000000,
     maxDurationObservationNanoseconds: 1000000000,
     maxDurationReportNanoseconds: 200000000,
     maxDurationShouldAcceptFinalizedReportNanoseconds: 200000000,
@@ -141,12 +141,15 @@ describe('OCR2 Contract', () => {
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(ocr2.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const response = await ocr2Contract.billing()
-      const billing = response[0]
-      expect(billing.observation_payment_gjuels.toNumber()).toEqual(1)
-      expect(billing.transmission_payment_gjuels.toNumber()).toEqual(1)
+      const { contract } = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2Contract = new Contract(
+        contract.abi,
+        contractAddress,
+        makeProvider(LOCAL_URL).provider,
+      )
+      const billing = await ocr2Contract.billing()
+      expect(billing.observation_payment_gjuels).toEqual(BigInt(1))
+      expect(billing.transmission_payment_gjuels).toEqual(BigInt(1))
     },
     TIMEOUT,
   )
@@ -165,10 +168,9 @@ describe('OCR2 Contract', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       const provider = makeProvider(LOCAL_URL).provider
-      const ocr2 = loadContract_Ocr2(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(ocr2.abi, contractAddress, provider)
-      const response = await ocr2Contract.transmitters()
-      const resultTrasmitters = response[0]
+      const { contract } = loadContract(CONTRACT_LIST.OCR2)
+      const ocr2Contract = new Contract(contract.abi, contractAddress, provider)
+      const resultTransmitters = await ocr2Contract.transmitters()
 
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
@@ -179,18 +181,17 @@ describe('OCR2 Contract', () => {
       // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
       const eventData = receipt.events[0].data
       // reconstruct signers array from event
-      let eventSigners = []
+      let eventSigners: bigint[] = []
       for (let i = 0; i < signers.length; i++) {
-        const signer = new BN(eventData[4 + 2 * i].replace('0x', ''), 16) // split according to event structure
+        const signer = BigInt(eventData[4 + 2 * i]) // split according to event structure
         eventSigners.push(signer)
       }
 
       expect(eventSigners).toEqual(
-        signers.map((s) => new BN(s.replace('ocr2on_starknet_', '').replace('0x', ''), 16)),
+        // eaiser to remove prefix and 0x and then add 0x back
+        signers.map((s) => BigInt(`0x${s.replace('ocr2on_starknet_', '').replace('0x', '')}`)),
       ) // remove all prefixes
-      expect(resultTrasmitters).toEqual(
-        transmitters.map((transmitter) => new BN(transmitter.split('x')[1], 16)),
-      )
+      expect(resultTransmitters).toEqual(transmitters.map((transmitter) => BigInt(transmitter)))
     },
     TIMEOUT,
   )

@@ -1,42 +1,32 @@
 import fs from 'fs'
-import {
-  Account,
-  Provider,
-  Contract,
-  CallContractResponse,
-  json,
-  ec,
-  transaction,
-  Status,
-} from 'starknet'
-
-// StarkNet network: Either goerli-alpha or mainnet-alpha
-const network = 'goerli-alpha'
+import { Account, Provider, Contract, CallContractResponse, json, ec, constants } from 'starknet'
 
 /** Environment variables for a deployed and funded account to use for deploying contracts
  * Find your OpenZeppelin account address and private key at:
  * ~/.starknet_accounts/starknet_open_zeppelin_accounts.json
  */
 const accountAddress = process.env.DEPLOYER_ACCOUNT_ADDRESS as string
-const accountKeyPair = ec.getKeyPair(process.env.DEPLOYER_PRIVATE_KEY as string)
+const privateKey = process.env.DEPLOYER_PRIVATE_KEY as string
+const starkKeyPub = ec.starkCurve.getStarkKey(privateKey)
 
-const consumerContractName = 'Proxy_consumer'
+const consumerContractName = 'ProxyConsumer'
 
 const contractAddress = process.argv.at(2) as string
 
 const provider = new Provider({
   sequencer: {
-    network: network,
+    // Starknet network: Either goerli-alpha or mainnet-alpha
+    network: constants.NetworkName.SN_GOERLI,
   },
 })
 
-const account = new Account(provider, accountAddress, accountKeyPair)
+const account = new Account(provider, accountAddress, privateKey)
 
 export async function updateStoredRound(account: Account, contractAddress: string) {
   const consumerContract = json.parse(
     fs
       .readFileSync(
-        `${__dirname}/../starknet-artifacts/contracts/${consumerContractName}.cairo/${consumerContractName}.json`,
+        `${__dirname}/../target/release/proxy_consumer_${consumerContractName}.sierra.json`,
       )
       .toString('ascii'),
   )

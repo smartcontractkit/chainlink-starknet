@@ -3,7 +3,8 @@ package monitoring
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 )
 
 // Metrics is an interface for prometheus metrics. Makes testing easier.

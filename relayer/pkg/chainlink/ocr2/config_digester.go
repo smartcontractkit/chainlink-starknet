@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/NethermindEth/juno/pkg/crypto/pedersen"
+	"github.com/smartcontractkit/caigo"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -90,15 +90,22 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	)
 	msg = append(msg, offchainConfig...) // offchain_config
 
-	digest := pedersen.ArrayDigest(msg...)
+	digest, err := caigo.Curve.ComputeHashOnElements(msg)
+	if err != nil {
+		return configDigest, err
+	}
 	digest.FillBytes(configDigest[:])
 
 	// set first two bytes to the digest prefix
-	binary.BigEndian.PutUint16(configDigest[:2], uint16(d.ConfigDigestPrefix()))
+	pre, err := d.ConfigDigestPrefix()
+	if err != nil {
+		return configDigest, err
+	}
+	binary.BigEndian.PutUint16(configDigest[:2], uint16(pre))
 
 	return configDigest, nil
 }
 
-func (offchainConfigDigester) ConfigDigestPrefix() types.ConfigDigestPrefix {
-	return ConfigDigestPrefixStarknet
+func (offchainConfigDigester) ConfigDigestPrefix() (types.ConfigDigestPrefix, error) {
+	return ConfigDigestPrefixStarknet, nil
 }

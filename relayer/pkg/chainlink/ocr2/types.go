@@ -8,8 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	junotypes "github.com/NethermindEth/juno/pkg/types"
-
+	caigotypes "github.com/smartcontractkit/caigo/types"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 )
 
@@ -18,16 +17,14 @@ type ContractConfigDetails struct {
 	Digest types.ConfigDigest
 }
 
-func NewContractConfigDetails(blockFelt junotypes.Felt, digestFelt junotypes.Felt) (ccd ContractConfigDetails, err error) {
-	block := blockFelt.Big()
-
-	digest, err := types.BytesToConfigDigest(digestFelt.Bytes())
+func NewContractConfigDetails(blockNum *big.Int, digestBytes []byte) (ccd ContractConfigDetails, err error) {
+	digest, err := types.BytesToConfigDigest(digestBytes)
 	if err != nil {
 		return ccd, errors.Wrap(err, "couldn't decode config digest")
 	}
 
 	return ContractConfigDetails{
-		Block:  block.Uint64(),
+		Block:  blockNum.Uint64(),
 		Digest: digest,
 	}, nil
 }
@@ -50,10 +47,7 @@ type BillingDetails struct {
 	TransmissionPaymentGJuels uint64
 }
 
-func NewBillingDetails(observationPaymentFelt junotypes.Felt, transmissionPaymentFelt junotypes.Felt) (bd BillingDetails, err error) {
-	observationPaymentGJuels := observationPaymentFelt.Big()
-	transmissionPaymentGJuels := transmissionPaymentFelt.Big()
-
+func NewBillingDetails(observationPaymentGJuels *big.Int, transmissionPaymentGJuels *big.Int) (bd BillingDetails, err error) {
 	return BillingDetails{
 		ObservationPaymentGJuels:  observationPaymentGJuels.Uint64(),
 		TransmissionPaymentGJuels: transmissionPaymentGJuels.Uint64(),
@@ -68,7 +62,7 @@ type RoundData struct {
 	UpdatedAt   time.Time
 }
 
-func NewRoundData(felts []junotypes.Felt) (data RoundData, err error) {
+func NewRoundData(felts []caigotypes.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}

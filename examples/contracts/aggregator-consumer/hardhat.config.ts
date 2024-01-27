@@ -18,16 +18,17 @@ const config: HardhatUserConfig = {
   networks: {
     devnet: {
       url: 'http://127.0.0.1:5050',
+      args: ['--cairo-compiler-manifest', '../../../vendor/cairo/Cargo.toml'],
     },
     integratedDevnet: {
       url: 'http://127.0.0.1:5050',
       venv: 'active',
-      args: ['--lite-mode'],
+      args: ['--cairo-compiler-manifest', '../../../vendor/cairo/Cargo.toml', '--lite-mode'],
       // dockerizedVersion: "0.2.0"
     },
   },
   paths: {
-    cairoPaths: ['../../../contracts/src'],
+    cairoPaths: ['../../contracts/src'],
   },
 }
 

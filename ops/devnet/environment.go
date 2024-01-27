@@ -4,9 +4,11 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink-env/client"
-	"github.com/smartcontractkit/chainlink-env/config"
-	"github.com/smartcontractkit/chainlink-env/environment"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/client"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
+
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
@@ -71,7 +73,7 @@ func defaultProps() map[string]any {
 		"starknet-dev": map[string]any{
 			"image": map[string]any{
 				"image":   "shardlabs/starknet-devnet",
-				"version": "v0.3.5",
+				"version": "v0.6.0",
 			},
 			"resources": map[string]any{
 				"requests": map[string]any{

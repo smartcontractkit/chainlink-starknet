@@ -6,10 +6,12 @@ import {
 } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { ocr2ProxyLoader, CONTRACT_LIST } from '../../lib/contracts'
+import { validateClassHash } from '../../lib/utils'
 
 type UserInput = {
   owner: string
   address: string
+  classHash?: string
 }
 
 type ContractInput = [owner: string, address: string]
@@ -19,6 +21,7 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
   return {
     owner: flags.owner || env.account,
     address: flags.address,
+    classHash: flags.classHash,
   }
 }
 
@@ -51,11 +54,13 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   action: 'deploy',
   ux: {
     description: 'Deploys an OCR2 aggregator proxy',
-    examples: [`${CATEGORIES.PROXY}:deploy --network=<NETWORK> --address=<AGGREGATOR_ADDRESS>`],
+    examples: [
+      `${CATEGORIES.PROXY}:deploy --network=<NETWORK> --address=<AGGREGATOR_ADDRESS> --classHash=<CLASS_HASH>`,
+    ],
   },
   makeUserInput,
   makeContractInput,
-  validations: [validateAddresses],
+  validations: [validateAddresses, validateClassHash],
   loadContract: ocr2ProxyLoader,
   hooks: {
     beforeExecute,

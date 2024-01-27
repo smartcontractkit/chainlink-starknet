@@ -5,7 +5,7 @@ import { HttpNetworkConfig } from 'hardhat/types'
 import dotenv from 'dotenv'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { Account, Contract as StarknetContract } from 'starknet'
+import { Account, CompiledContract, Contract as StarknetContract } from 'starknet'
 import {
   createDeployerAccount,
   loadContractPath,
@@ -15,13 +15,13 @@ import {
 } from './utils'
 
 dotenv.config({ path: __dirname + '/../.env' })
-const UPTIME_FEED_PATH =
-  '../../../../contracts/starknet-artifacts/src/chainlink/cairo/emergency/SequencerUptimeFeed'
-const UPTIME_FEED_NAME = 'sequencer_uptime_feed'
+const UPTIME_FEED_PATH = '../../../../contracts/target/release/chainlink_SequencerUptimeFeed'
+
+// TODO: need to modify when the cairo-1.0 branch is rebased to include StarknetValidator changes
 
 let validator: Contract
-let mockStarkNetMessengerFactory: ContractFactory
-let mockStarkNetMessenger: Contract
+let mockStarknetMessengerFactory: ContractFactory
+let mockStarknetMessenger: Contract
 let deployer: SignerWithAddress
 let eoaValidator: SignerWithAddress
 let networkUrl: string
@@ -67,22 +67,23 @@ export async function consumerValidator() {
     '73786976294838220258' /** answeredInRound */,
   )
 
-  const validatorArtifact = await loadContract_Solidity('emergency', 'StarkNetValidator')
+  const validatorArtifact = await loadContract_Solidity('emergency', 'StarknetValidator')
   const validatorFactory = await ethers.getContractFactoryFromArtifact(validatorArtifact, deployer)
 
   const mockStarknetMessagingArtifact = await loadContract_Solidity(
     'mocks',
-    'MockStarkNetMessaging',
+    'MockStarknetMessaging',
   )
-  mockStarkNetMessengerFactory = await ethers.getContractFactoryFromArtifact(
+  mockStarknetMessengerFactory = await ethers.getContractFactoryFromArtifact(
     mockStarknetMessagingArtifact,
     deployer,
   )
 
-  mockStarkNetMessenger = await mockStarkNetMessengerFactory.deploy()
-  await mockStarkNetMessenger.deployed()
+  const messageCancellationDelay = 5 * 60 // seconds
+  mockStarknetMessenger = await mockStarknetMessengerFactory.deploy(messageCancellationDelay)
+  await mockStarknetMessenger.deployed()
 
-  const UptimeFeedArtifact = loadContractPath(UPTIME_FEED_PATH, UPTIME_FEED_NAME)
+  const UptimeFeedArtifact = loadContractPath(UPTIME_FEED_PATH) as CompiledContract
 
   const mockUptimeFeedDeploy = new StarknetContract(
     UptimeFeedArtifact.abi,
@@ -90,8 +91,10 @@ export async function consumerValidator() {
     provider,
   )
 
+  mockUptimeFeedDeploy.connect(account)
+
   validator = await validatorFactory.deploy(
-    mockStarkNetMessenger.address,
+    mockStarknetMessenger.address,
     mockAccessController.address,
     mockGasPriceFeed.address,
     mockAggregator.address,
@@ -100,23 +103,17 @@ export async function consumerValidator() {
   )
 
   console.log('Validator address: ', validator.address)
-  const transaction = await account.execute(
-    {
-      contractAddress: mockUptimeFeedDeploy.address,
-      entrypoint: 'set_l1_sender',
-      calldata: [validator.address],
-    },
-    [UptimeFeedArtifact.abi],
-  )
 
-  await provider.waitForTransaction(transaction.transaction_hash)
+  const tx = await mockUptimeFeedDeploy.invoke('set_l1_sender', [validator.address])
+
+  await provider.waitForTransaction(tx.transaction_hash)
 
   await validator.addAccess(eoaValidator.address)
   setInterval(callFunction, 60_000)
 }
 
 async function callFunction() {
-  await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarkNetMessenger.address)
+  await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessenger.address)
 
   await validator.connect(eoaValidator).validate(0, 0, 1, 1)
 

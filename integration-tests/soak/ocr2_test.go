@@ -1,26 +1,25 @@
 package soak_test
 
-// revive:disable:dot-imports
 import (
 	"flag"
 	"fmt"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
+
 	"github.com/smartcontractkit/chainlink/integration-tests/actions"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
-	keepAlive     bool
-	err           error
-	testState     *common.Test
-	decimals      = 9
-	mockServerVal = 900000000
+	keepAlive bool
+	err       error
+	testState *common.Test
+	decimals  = 9
 )
 
 func init() {
@@ -42,15 +41,15 @@ func TestOCRSoak(t *testing.T) {
 	}
 	err = testState.Sg.SetupNetwork(testState.Common.L2RPCUrl)
 	require.NoError(t, err, "Setting up network should not fail")
-	time.Sleep(8 * time.Hour)
-	err = testState.DeployGauntlet(-100000000000, 100000000000, decimals, "auto", 1, 1)
+	err = testState.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
 	require.NoError(t, err, "Deploying contracts should not fail")
 	if !testState.Common.Testnet {
 		testState.Devnet.AutoLoadState(testState.OCR2Client, testState.OCRAddr)
 	}
-	testState.SetUpNodes(mockServerVal)
 	err = testState.ValidateRounds(99999999, true)
 	require.NoError(t, err, "Validating round should not fail")
-	err = actions.TeardownSuite(testState.T, testState.Common.Env, "./", testState.GetChainlinkNodes(), nil, zapcore.DPanicLevel, nil)
-	require.NoError(t, err)
+	t.Cleanup(func() {
+		err = actions.TeardownSuite(t, testState.Common.Env, testState.Cc.ChainlinkNodes, nil, zapcore.ErrorLevel)
+		require.NoError(t, err, "Error tearing down environment")
+	})
 }

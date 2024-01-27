@@ -1,4 +1,3 @@
-import { constants, encode, number } from 'starknet'
 import { expect } from 'chai'
 import { artifacts, network } from 'hardhat'
 
@@ -15,12 +14,12 @@ export const addCompilationToNetwork = async (fullyQualifiedName: string) => {
       throw Error('Cannot find build info')
     }
     const { solcVersion, input, output } = buildInfo
-    console.log('Sending compilation result for StarkNetValidator test')
+    console.log('Sending compilation result for StarknetValidator test')
     await network.provider.request({
       method: 'hardhat_addCompilationResult',
       params: [solcVersion, input, output],
     })
-    console.log('Successfully sent compilation result for StarkNetValidator test')
+    console.log('Successfully sent compilation result for StarknetValidator test')
   }
 }
 
@@ -59,22 +58,24 @@ export const expectCallErrorMsg = (actual: string, expected?: string) => {
 }
 
 export const expectSpecificMsg = (actual: string, expected: string) => {
-  // Match specific error
-  const matches = actual.match(/Error message: (.+?)\n/g)
-  // Joint matches should include the expected, or fail
-  if (matches && matches.length > 0) {
-    expect(matches.join()).to.include(expected)
-  } else expect.fail(`\nActual: ${actual}\n\nExpected: ${expected}`)
+  // The error message is displayed as a felt hex string, so we need to convert the text.
+  // ref: https://github.com/starkware-libs/cairo-lang/blob/c954f154bbab04c3fb27f7598b015a9475fc628e/src/starkware/starknet/business_logic/execution/execute_entry_point.py#L223
+  const expectedHex = '0x' + Buffer.from(expected, 'utf8').toString('hex')
+  const errorMessage = `Execution was reverted; failure reason: [${expectedHex}]`
+  if (!actual.includes(errorMessage)) {
+    expect.fail(`\nActual: ${actual}\n\nExpected:\n\tFelt hex: ${expectedHex}\n\tText: ${expected}`)
+  }
 }
 
-// Required to convert negative values into [0, PRIME) range
-export const toFelt = (int: number | number.BigNumberish): number.BigNumberish => {
-  const prime = number.toBN(encode.addHexPrefix(constants.FIELD_PRIME))
-  return number.toBN(int).umod(prime)
-}
-
-// NOTICE: Leading zeros are trimmed for an encoded felt (number).
-//   To decode, the raw felt needs to be start padded up to max felt size (252 bits or < 32 bytes).
-export const hexPadStart = (data: number | bigint, len: number) => {
-  return `0x${data.toString(16).padStart(len, '0')}`
+// Starknet v0.11.0 and higher only allow declaring a class once:
+// https://github.com/starkware-libs/starknet-specs/pull/85
+export const expectSuccessOrDeclared = async (declareContractPromise: Promise<any>) => {
+  try {
+    await declareContractPromise
+  } catch (err: any) {
+    if (/Class with hash 0x[0-9a-f]+ is already declared\./.test(err?.message)) {
+      return // force
+    }
+    expect.fail(err)
+  }
 }

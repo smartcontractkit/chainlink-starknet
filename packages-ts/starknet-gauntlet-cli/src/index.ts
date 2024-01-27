@@ -7,8 +7,16 @@ import {
   inspectionCommands as ExampleInspectionsCommands,
 } from '@chainlink/starknet-gauntlet-example'
 import { Commands as OZCommands } from '@chainlink/starknet-gauntlet-oz'
-import { Commands as StarkgateCommands } from '@chainlink/starknet-gauntlet-starkgate'
+import {
+  L2Commands as L2StarkgateCommands,
+  InspectionCommands as StarkgateInspectionCommands,
+} from '@chainlink/starknet-gauntlet-token'
 import { Commands as ArgentCommands } from '@chainlink/starknet-gauntlet-argent'
+import {
+  L1Commands as L1EmergencyProtocolCommands,
+  L2Commands as L2EmergencyProtocolCommands,
+  L2InspectionCommands as L2EmergencyProtocolInspectionCommands,
+} from '@chainlink/starknet-gauntlet-emergency-protocol'
 import {
   executeCommands as MultisigExecuteCommands,
   inspectionCommands as MultisigInspectionCommands,
@@ -28,6 +36,13 @@ import {
   makeProvider,
   makeWallet as makeDefaultWallet,
 } from '@chainlink/starknet-gauntlet'
+import {
+  EVMExecuteCommandInstance,
+  CommandCtor as EVMCommandCtor,
+  makeWallet as EVMMakeWallet,
+  makeProvider as EVMMakeProvider,
+  EVMDependencies,
+} from '@chainlink/evm-gauntlet'
 import { makeWallet as makeLedgerWallet } from '@chainlink/starknet-gauntlet-ledger'
 
 export const noopPrompt: typeof prompt = async () => {}
@@ -41,7 +56,7 @@ const registerExecuteCommand = <UI, CI>(
     prompt: emptyPrompt ? noopPrompt : prompt,
     makeEnv: (flags) => {
       const env: Env = {
-        providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
+        providerUrl: process.env.NODE_URL,
         pk: process.env.PRIVATE_KEY,
         publicKey: process.env.PUBLIC_KEY,
         account: process.env.ACCOUNT,
@@ -66,6 +81,25 @@ const registerExecuteCommand = <UI, CI>(
   return registerCommand(deps)
 }
 
+const registerEVMExecuteCommand = <UI, CI extends Iterable<any>>(
+  registerCommand: (deps: EVMDependencies) => EVMCommandCtor<EVMExecuteCommandInstance<UI, CI>>,
+  gauntletConfig,
+) => {
+  const deps: EVMDependencies = {
+    logger: logger,
+    prompt: prompt,
+    makeEnv: (flags) => {
+      return {
+        providerUrl: process.env.NODE_URL,
+        pk: process.env.PRIVATE_KEY,
+      }
+    },
+    makeProvider: EVMMakeProvider,
+    makeWallet: EVMMakeWallet,
+  }
+  return registerCommand(deps)
+}
+
 const registerInspectionCommand = <QueryResult>(
   registerCommand: (
     deps: Omit<Dependencies, 'makeWallet'>,
@@ -76,7 +110,7 @@ const registerInspectionCommand = <QueryResult>(
     prompt: prompt,
     makeEnv: (flags) => {
       const env: Env = {
-        providerUrl: process.env.NODE_URL || 'https://alpha4.starknet.io',
+        providerUrl: process.env.NODE_URL,
       }
       return env
     },
@@ -85,26 +119,32 @@ const registerInspectionCommand = <QueryResult>(
   return registerCommand(deps)
 }
 
-const executeCommands = [
+const L1ExecuteCommands: any[] = [...L1EmergencyProtocolCommands]
+const L2ExecuteCommands = [
   ...OCR2ExecuteCommands,
   ...ExampleExecuteCommands,
   ...OZCommands,
-  ...StarkgateCommands,
+  ...L2StarkgateCommands,
   ...ArgentCommands,
   ...MultisigExecuteCommands,
+  ...L2EmergencyProtocolCommands,
 ]
-const msigCommands = executeCommands
-  .map((c) => registerExecuteCommand(c, true))
-  .map(multisigWrapCommand)
+
+const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(
+  multisigWrapCommand,
+)
 const unregistedInspectionCommands = [
   ...ExampleInspectionsCommands,
   ...MultisigInspectionCommands,
   ...OCR2InspectionCommands,
+  ...L2EmergencyProtocolInspectionCommands,
+  ...StarkgateInspectionCommands,
 ]
 
 const commands = {
   custom: [
-    ...executeCommands.map((c) => registerExecuteCommand(c)),
+    ...L2ExecuteCommands.map((c) => registerExecuteCommand(c)),
+    ...L1ExecuteCommands.map((c) => registerEVMExecuteCommand(c, null)),
     ...msigCommands.map((c) => registerExecuteCommand(c)),
     ...unregistedInspectionCommands.map(registerInspectionCommand),
   ],
@@ -114,7 +154,6 @@ const commands = {
     makeCommand: () => undefined,
   },
 }
-
 ;(async () => {
   try {
     const networkPossiblePaths = [

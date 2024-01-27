@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"math/big"
 
-	relayMonitoring "github.com/smartcontractkit/chainlink-relay/pkg/monitoring"
+	caigotypes "github.com/smartcontractkit/caigo/types"
+
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 )
@@ -31,7 +33,7 @@ func (s *proxySourceFactory) NewSource(
 	feedConfig relayMonitoring.FeedConfig,
 ) (relayMonitoring.Source, error) {
 	return &proxySource{
-		feedConfig.GetContractAddress(),
+		caigotypes.HexToHash(feedConfig.GetContractAddress()),
 		s.ocr2Reader,
 	}, nil
 }
@@ -41,7 +43,7 @@ func (s *proxySourceFactory) GetType() string {
 }
 
 type proxySource struct {
-	contractAddress string
+	contractAddress caigotypes.Hash
 	ocr2Reader      ocr2.OCR2Reader
 }
 

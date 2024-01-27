@@ -11,7 +11,8 @@ import {
   LOCAL_URL,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
-import { CONTRACT_LIST, loadContract } from '../../src/lib/contracts'
+import { loadContract } from '@chainlink/starknet-gauntlet'
+import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('Multisig', () => {
@@ -122,14 +123,14 @@ describe('Multisig', () => {
       report = await executeCommand.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const multisig = loadContract(CONTRACT_LIST.MULTISIG)
+      const { contract } = loadContract(CONTRACT_LIST.MULTISIG)
       const multisigContract = new Contract(
-        multisig.abi,
+        contract.abi,
         multisigContractAddress,
         makeProvider(LOCAL_URL).provider,
       )
-      const { threshold } = await multisigContract.get_threshold()
-      expect(threshold.toNumber()).toEqual(2)
+      const threshold = await multisigContract.get_threshold()
+      expect(Number(threshold)).toEqual(2)
     },
     TIMEOUT,
   )
@@ -205,13 +206,13 @@ describe('Multisig', () => {
       report = await executeCommand.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
-      const multisig = loadContract(CONTRACT_LIST.MULTISIG)
+      const { contract } = loadContract(CONTRACT_LIST.MULTISIG)
       const multisigContract = new Contract(
-        multisig.abi,
+        contract.abi,
         multisigContractAddress,
         makeProvider(LOCAL_URL).provider,
       )
-      const { signers } = await multisigContract.get_signers()
+      const signers = await multisigContract.get_signers()
       expect(signers).toHaveLength(4)
     },
     TIMEOUT,

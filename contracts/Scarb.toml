@@ -1,0 +1,29 @@
+[package]
+name = "chainlink"
+version = "0.1.0"
+description = "Chainlink contracts for Starknet"
+homepage = "https://github.com/smartcontractkit/chainlink-starknet"
+
+[scripts]
+sierra = "cairo-compile . -r"
+# Add your own custom commands and run them with scarb run <command>
+
+# Uncomment if you want to use dependencies
+# Note: currently testing doesn't work with dependencies
+[dependencies]
+starknet = ">=1.0.0"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
+
+[lib]
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+# pythonic hints are necessary for cairo-lang to parse the casm file:
+# Unsupported compiled class format. Cairo 1.0 compiled class must contain the attribute `pythonic_hints`.
+casm-add-pythonic-hints = true
+
+# this elevates the severity of disallowed libfuncs to compilation errors
+# https://docs.swmansion.com/scarb/docs/starknet/contract-target#allowed-libfuncs-validation
+allowed-libfuncs-deny = true
+allowed-libfuncs-list.name = "audited"

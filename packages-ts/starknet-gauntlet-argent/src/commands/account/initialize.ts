@@ -20,9 +20,9 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
 
   // If public key is not provided, generate a new address
-  const keypair = ec.genKeyPair()
-  const generatedPK = '0x' + keypair.getPrivate('hex')
-  const pubkey = flags.publicKey || ec.getStarkKey(ec.getKeyPair(generatedPK))
+  const keypair = ec.starkCurve.utils.randomPrivateKey()
+  const generatedPK = '0x' + Buffer.from(keypair).toString('hex')
+  const pubkey = flags.publicKey || ec.starkCurve.getStarkKey(keypair)
   return {
     publicKey: pubkey,
     privateKey: !flags.publicKey && generatedPK,
@@ -38,7 +38,9 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
   input,
   deps,
 ) => async () => {
-  deps.logger.info(`About to deploy an Account Contract with public key ${input.contract[0]}`)
+  deps.logger.info(
+    `About to deploy an Argent Account Contract with public key ${input.contract[0]}`,
+  )
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
     deps.logger.line()
