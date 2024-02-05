@@ -361,6 +361,25 @@
   dependencies:
     "@eth-optimism/contracts" "^0.5.21"
 
+"@chainlink/evm-gauntlet-common@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet-common/-/evm-gauntlet-common-0.3.1.tgz#7a1d82a5300f1f1f70b92de37bc77d987ffa86b7"
+  integrity sha512-+aaIFvMEqoEeEOfUkgUW/Kn/ACuPB5ysNEvJLfZpzaP7x+h3oV1EbtQ+f3k/tkqnEHdsXX/KoeVS2nEZfe4CDA==
+  dependencies:
+    "@chainlink/evm-gauntlet" "*"
+    "@chainlink/gauntlet-contracts-link" "*"
+    "@chainlink/gauntlet-core" "0.6.0"
+    "@chainlink/zksync-gauntlet" "*"
+    ethers "^5.7.0"
+
+"@chainlink/evm-gauntlet@*":
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.12.0.tgz#639f1e308735807016eb5d4ef6c6e25d21255604"
+  integrity sha512-LAvomZD70AhSkz8sycNepchypke4UoD61lyjb+i6Wxpq+K7jiTfBNgHOpiLtOvlnVrJfgYEhoBGlfj3F7Xeq4Q==
+  dependencies:
+    "@chainlink/gauntlet-core" "0.6.0"
+    ethers "^5.6.9"
+
 "@chainlink/evm-gauntlet@0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@chainlink/evm-gauntlet/-/evm-gauntlet-0.1.0.tgz#cf5cdbf66f1126b5b1d23fa8d494ab4598317674"
@@ -392,6 +411,13 @@
   dependencies:
     "@chainlink/gauntlet-core" "*"
 
+"@chainlink/gauntlet-contracts-link@*":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-contracts-link/-/gauntlet-contracts-link-0.1.3.tgz#3107c4773df8a378ac88e6e5b4c87fa80a4cf6ca"
+  integrity sha512-+OzDDljKBe2q2g66rOUYa+i1KL5ZUeRJb/mmK66eFyhw+sMStG/s4aXh2l2wvyBCqOxz+hmkfiyeIQsd8wHGTA==
+  dependencies:
+    "@chainlink/gauntlet-core" "*"
+
 "@chainlink/gauntlet-contracts-ocr2@0.2.2":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-contracts-ocr2/-/gauntlet-contracts-ocr2-0.2.2.tgz#b2e6deab8c52abea588cad7c152bf8cc7a03ca28"
@@ -418,6 +444,25 @@
     axios "^0.24.0"
     bn.js "^5.2.0"
     protobufjs "^6.11.2"
+
+"@chainlink/gauntlet-core@0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@chainlink/gauntlet-core/-/gauntlet-core-0.6.0.tgz#0a21802ea63ad0bd5948099d7c6f6e96b3868a5c"
+  integrity sha512-e2yLhvZUHiCT1N8sDJcqoKz6LwViQL55EMp8/eTb9PQktqBRhQDHdJK0dAlolFC+BiKVbka6THUAqyTXXxZxUQ==
+  dependencies:
+    "@ethersproject/keccak256" "^5.5.0"
+    axios "^0.24.0"
+    bn.js "^5.2.0"
+    protobufjs "^6.11.2"
+
+"@chainlink/zksync-gauntlet@*":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@chainlink/zksync-gauntlet/-/zksync-gauntlet-0.3.1.tgz#c15d9c8648a0929ef0434a9ba9b1cf5d85d8ef55"
+  integrity sha512-qxD4gLIHjB/Zhy9tAAl8TqJ1hHeU4X5cD9eiMoBHRnViW2ylXLY5oTxcTjxQHbwYqd/6gBz3TRFVdeMu4w/Ctg==
+  dependencies:
+    "@chainlink/gauntlet-core" "0.6.0"
+    ethers "^5.7.1"
+    zksync-web3 "^0.14.0"
 
 "@chainsafe/as-sha256@^0.3.1":
   version "0.3.1"
@@ -3930,7 +3975,7 @@ ethereumjs-util@^7.1.0:
     ethereum-cryptography "^0.1.3"
     rlp "^2.2.4"
 
-ethers@^5.6.8, ethers@^5.6.9, ethers@^5.7.1:
+ethers@^5.6.8, ethers@^5.6.9, ethers@^5.7.0, ethers@^5.7.1:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.2.tgz#3a7deeabbb8c030d4126b24f84e525466145872e"
   integrity sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==
@@ -8326,3 +8371,8 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
+
+zksync-web3@^0.14.0:
+  version "0.14.3"
+  resolved "https://registry.yarnpkg.com/zksync-web3/-/zksync-web3-0.14.3.tgz#64ac2a16d597464c3fc4ae07447a8007631c57c9"
+  integrity sha512-hT72th4AnqyLW1d5Jlv8N2B/qhEnl2NePK2A3org7tAa24niem/UAaHMkEvmWI3SF9waYUPtqAtjpf+yvQ9zvQ==
