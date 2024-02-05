@@ -167,9 +167,9 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	// Defining relay config
 	bootstrapRelayConfig := job.JSONConfig{
-		"nodeName":       fmt.Sprintf("\"starknet-OCRv2-%s-%s\"", "node", uuid.New().String()),
-		"accountAddress": fmt.Sprintf("\"%s\"", accountAddresses[0]),
-		"chainID":        fmt.Sprintf("\"%s\"", c.ChainId),
+		"nodeName":       fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.New().String()),
+		"accountAddress": fmt.Sprintf("%s", accountAddresses[0]),
+		"chainID":        fmt.Sprintf("%s", c.ChainId),
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
@@ -207,7 +207,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		}
 		relayConfig := job.JSONConfig{
 			"nodeName":       bootstrapRelayConfig["nodeName"],
-			"accountAddress": fmt.Sprintf("\"%s\"", accountAddresses[nIdx]),
+			"accountAddress": fmt.Sprintf("%s", accountAddresses[nIdx]),
 			"chainID":        bootstrapRelayConfig["chainID"],
 		}
 
