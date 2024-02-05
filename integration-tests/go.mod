@@ -10,7 +10,7 @@ require (
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240205180946-df826cb540ce
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240119162652-3a7274645007
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240122062216-46e109a03936
 	github.com/smartcontractkit/chainlink-testing-framework v1.23.2
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240126190200-9635b276b3b6
 	github.com/smartcontractkit/chainlink/v2 v2.8.0-beta0.0.20240126190200-9635b276b3b6
