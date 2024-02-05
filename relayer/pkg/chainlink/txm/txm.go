@@ -165,7 +165,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		Nonce:         nonce,
 		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
 			L1Gas: starknetrpc.ResourceBounds{
-				MaxAmount:       "0x64",
+				MaxAmount:       "0x9472",
 				MaxPricePerUnit: "0x174876e800",
 			},
 			L2Gas: starknetrpc.ResourceBounds{
