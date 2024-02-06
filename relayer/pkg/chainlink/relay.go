@@ -106,6 +106,10 @@ func (r *relayer) NewMercuryProvider(rargs relaytypes.RelayArgs, pargs relaytype
 	return nil, errors.New("mercury is not supported for starknet")
 }
 
+func (r *relayer) NewLLOProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.LLOProvider, error) {
+	return nil, errors.New("data streams is not supported for starknet")
+}
+
 func (r *relayer) NewFunctionsProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.FunctionsProvider, error) {
 	return nil, errors.New("functions are not supported for solana")
 }
