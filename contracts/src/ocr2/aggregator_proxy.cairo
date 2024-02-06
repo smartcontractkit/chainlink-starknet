@@ -9,7 +9,6 @@ trait IAggregatorProxy<TContractState> {
     fn round_data(self: @TContractState, round_id: felt252) -> Round;
     fn description(self: @TContractState) -> felt252;
     fn decimals(self: @TContractState) -> u8;
-    fn type_and_version(self: @TContractState) -> felt252;
 }
 
 #[starknet::interface]
@@ -53,6 +52,9 @@ mod AggregatorProxy {
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use chainlink::utils::split_felt;
+    use chainlink::libraries::type_and_version::{
+        ITypeAndVersion, ITypeAndVersionDispatcher, ITypeAndVersionDispatcherTrait
+    };
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000;
@@ -148,10 +150,13 @@ mod AggregatorProxy {
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.decimals()
         }
+    }
 
+    #[abi(embed_v0)]
+    impl TypeAndVersion of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
             let phase = self._current_phase.read();
-            let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
+            let aggregator = ITypeAndVersionDispatcher { contract_address: phase.aggregator };
             aggregator.type_and_version()
         }
     }
