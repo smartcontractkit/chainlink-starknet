@@ -122,7 +122,7 @@ format: format-go format-cairo format-ts
 format-check: format-cairo-check format-ts-check
 
 .PHONY: format-go
-format-go: format-go-fmt format-go-mod-tidy
+format-go: format-go-fmt gomodtidy
 
 .PHONY: format-go-fmt
 format-go-fmt:
@@ -130,8 +130,8 @@ format-go-fmt:
 	cd ./ops && go fmt ./...
 	cd ./integration-tests && go fmt ./...
 
-.PHONY: format-go-mod-tidy
-format-go-mod-tidy:
+.PHONY: gomodtidy
+gomodtidy:
 	cd ./relayer && go mod tidy
 	cd ./monitoring && go mod tidy
 	cd ./ops && go mod tidy
