@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"sync"
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
-	"github.com/NethermindEth/starknet.go/rpc"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"golang.org/x/exp/maps"
@@ -124,7 +124,7 @@ func (txm *starktxm) broadcastLoop() {
 	}
 }
 
-const FEE_MARGIN uint64 = 115
+const FEE_MARGIN uint32 = 115
 
 func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
@@ -149,36 +149,49 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
 
-	// TODO: update to v3
+	// Building the tx struct
+	tx := starknetrpc.InvokeTxnV1{
+		MaxFee:        &felt.Zero,
+		Type:          starknetrpc.TransactionType_Invoke,
+		SenderAddress: account.AccountAddress,
+		Version:       starknetrpc.TransactionV1,
+		Signature:     []*felt.Felt{},
+		Nonce:         nonce,
+	}
 
-	// maxfee, err := starknetutils.HexToFelt("0x95e566845d000")
+	// TODO: upgrade to V3 once devnet uses OZ 0.8.1 (accounts need to support v3)
+	// tx := starknetrpc.InvokeTxnV3{
+	// 	Type:          starknetrpc.TransactionType_Invoke,
+	// 	SenderAddress: account.AccountAddress,
+	// 	Version:       starknetrpc.TransactionV3,
+	// 	Signature:     []*felt.Felt{},
+	// 	Nonce:         nonce,
+	// 	ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
+	// 		L1Gas: starknetrpc.ResourceBounds{
+	// 			MaxAmount:       "0x186a0",
+	// 			MaxPricePerUnit: "0x1388",
+	// 		},
+	// 		L2Gas: starknetrpc.ResourceBounds{
+	// 			MaxAmount:       "0x0",
+	// 			MaxPricePerUnit: "0x0",
+	// 		},
+	// 	},
+	// 	Tip:                   "0x0",
+	// 	PayMasterData:         []*felt.Felt{},
+	// 	AccountDeploymentData: []*felt.Felt{},
+	// 	NonceDataMode:         rpc.DAModeL1, // TODO: confirm
+	// 	FeeMode:               rpc.DAModeL1, // TODO: confirm
+	// }
+	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
+	// hash, err := account.TransactionHashInvoke(tx)
 	// if err != nil {
 	// 	return txhash, err
 	// }
-
-	// Building the tx struct
-	tx := starknetrpc.InvokeTxnV3{
-		Type:          starknetrpc.TransactionType_Invoke,
-		SenderAddress: account.AccountAddress,
-		Version:       starknetrpc.TransactionV3,
-		Signature:     []*felt.Felt{},
-		Nonce:         nonce,
-		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
-			L1Gas: starknetrpc.ResourceBounds{
-				MaxAmount:       "0x186a0",
-				MaxPricePerUnit: "0x1388",
-			},
-			L2Gas: starknetrpc.ResourceBounds{
-				MaxAmount:       "0x0",
-				MaxPricePerUnit: "0x0",
-			},
-		},
-		Tip:                   "0x0",
-		PayMasterData:         []*felt.Felt{},
-		AccountDeploymentData: []*felt.Felt{},
-		NonceDataMode:         rpc.DAModeL1, // TODO: confirm
-		FeeMode:               rpc.DAModeL1, // TODO: confirm
-	}
+	// signature, err := account.Sign(ctx, hash)
+	// if err != nil {
+	// 	return txhash, err
+	// }
+	// tx.Signature = signature
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
 	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
@@ -189,33 +202,38 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// TODO: if we estimate with sig then the hash changes and we have to re-sign
 	// if we don't then the signature is invalid??
 
+	// Signing of the transaction that is done by the account
+	err = account.SignInvokeTransaction(context.Background(), &tx)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+	}
+
 	// get fee for tx
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
-	// simFlags := []starknetrpc.SimulationFlag{}
-	// feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
-	// if err != nil {
-	// 	return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
-	// }
-	// expandedFee := new(felt.Felt).Mul(feeEstimate[0].OverallFee, FEE_MARGIN)
-	// maxfee = new(felt.Felt).Div(expandedFee, new(felt.Felt).SetUint64(100))
-	// tx.MaxFee = feeEstimate[0].OverallFee // TODO: mul times margin
+	simFlags := []starknetrpc.SimulationFlag{}
+	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
+	if err != nil {
+		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
+	}
 
-	// Signing of the transaction that is done by the account
-	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	// err = account.SignInvokeTransaction(context.Background(), &tx)
-	// if err != nil {
-	// 	return txhash, fmt.Errorf("failed to sign tx: %+w", err)
-	// }
-	hash, err := account.TransactionHashInvoke(tx)
+	overallFee := feeEstimate[0].OverallFee.BigInt(new(big.Int))
+	expandedFee := new(big.Int).Mul(overallFee, big.NewInt(int64(FEE_MARGIN)))
+	maxFee := new(big.Int).Div(expandedFee, big.NewInt(100))
+	tx.MaxFee = starknetutils.BigIntToFelt(maxFee)
+
+	// pad estimate to 110%
+	// gasConsumed := feeEstimate[0].GasConsumed.BigInt(new(big.Int))
+	// expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
+	// maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+	// maxAmount := starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+	// tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+
+	// Re-sign transaction now that we've determined MaxFee
+	err = account.SignInvokeTransaction(context.Background(), &tx)
 	if err != nil {
-		return txhash, err
+		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
 	}
-	signature, err := account.Sign(ctx, hash)
-	if err != nil {
-		return txhash, err
-	}
-	tx.Signature = signature
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
