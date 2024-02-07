@@ -23,7 +23,7 @@ spec:
             path: /dumps
         - name: cairo-build
           emptyDir: {}
-      initContainers:
+      initContainers: # TODO: probably not needed anymore
         - name: cairo-download
           image: appropriate/curl
           command: ["/bin/sh"]
@@ -48,7 +48,7 @@ spec:
           - name: cairo-build
             mountPath: /cairo-build
         image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "latest"}}"
-        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1"]
+        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1", "--gas-price", "1"]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}
