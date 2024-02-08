@@ -221,6 +221,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	expandedFee := new(big.Int).Mul(overallFee, big.NewInt(int64(FEE_MARGIN)))
 	maxFee := new(big.Int).Div(expandedFee, big.NewInt(100))
 	tx.MaxFee = starknetutils.BigIntToFelt(maxFee)
+	txm.lggr.Infow("Estimated fee", "fee", tx.MaxFee)
+	txm.lggr.Infow("Account", "account", account.AccountAddress)
 
 	// pad estimate to 110%
 	// gasConsumed := feeEstimate[0].GasConsumed.BigInt(new(big.Int))
