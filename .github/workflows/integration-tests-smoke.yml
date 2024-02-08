@@ -148,7 +148,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@2c9f401149f6c25fb632067b7e6626aebeee5d69
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ea889b3133bd7f16ab19ba4ba130de5d9162c669 # v2.3.4
         with:
           test_command_to_run: nix develop -c helm repo update && make test-integration-smoke-ci
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
