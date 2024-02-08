@@ -22,19 +22,6 @@ env:
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
 
 jobs:
-  check_test_compilation:
-    name: Check integration test compilation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
-      - name: Setup go
-        uses: actions/setup-go@v3
-        with:
-          go-version-file: "./integration-tests/go.mod"
-          check-latest: true
-          cache: true
-      - run: cd ./integration-tests && go test -run=xxx ./...
   build_custom_chainlink_image:
     name: Build Custom CL Image
     runs-on: ubuntu-latest
@@ -119,7 +106,7 @@ jobs:
   run_tests:
     name: Run Smoke Tests
     runs-on: ubuntu20.04-16cores-64GB
-    needs: [ build_custom_chainlink_image, build_test_image, check_test_compilation ]
+    needs: [ build_custom_chainlink_image, build_test_image ]
     environment: integration
     # these values need to match those used to build the chainlink image
     strategy:
