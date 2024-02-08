@@ -105,7 +105,7 @@ func (devnet *StarknetDevnetClient) FundAccounts(l2AccList []string) error {
 	for _, key := range l2AccList {
 		res, err := devnet.client.R().SetBody(map[string]any{
 			"address": key,
-			"amount":  9000000000000000000000.0,
+			"amount":  900000000000000000,
 		}).Post("/mint")
 		if err != nil {
 			return err
