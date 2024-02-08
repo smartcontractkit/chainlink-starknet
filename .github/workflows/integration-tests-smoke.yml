@@ -124,7 +124,8 @@ jobs:
       TTL: 3h
       TEST_DURATION: 15m
       NODE_COUNT: 5
-      INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
+      CHAINLINK_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
+      CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
     permissions:
       checks: write
       pull-requests: write
