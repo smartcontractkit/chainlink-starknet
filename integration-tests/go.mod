@@ -10,10 +10,10 @@ require (
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240205180946-df826cb540ce
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240205181852-8fb943189377
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240206145519-35a4346b5944
 	github.com/smartcontractkit/chainlink-testing-framework v1.23.2
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240206152247-1ab8573ba164
-	github.com/smartcontractkit/chainlink/v2 v2.9.0-beta0.0.20240206152247-1ab8573ba164
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240207222909-f90e419c7f2e
+	github.com/smartcontractkit/chainlink/v2 v2.9.0-beta0.0.20240207222909-f90e419c7f2e
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 	gopkg.in/guregu/null.v4 v4.0.0
@@ -349,10 +349,10 @@ require (
 	github.com/slack-go/slack v0.12.2 // indirect
 	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704 // indirect
 	github.com/smartcontractkit/chainlink-automation v1.0.2-0.20240118014648-1ab6a88c9429 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240205181756-d7587fda3735 // indirect
+	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240206150430-fbccaa95af62 // indirect
 	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20231204152908-a6e3fe8ff2a1 // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.0.0-20240119021347-3c541a78cdb8 // indirect
-	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20240205181727-534abc878abb // indirect
+	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20240207182351-414a66663857 // indirect
 	github.com/smartcontractkit/chainlink-vrf v0.0.0-20231120191722-fef03814f868 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20240112202000-6359502d2ff1 // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
