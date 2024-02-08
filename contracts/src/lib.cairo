@@ -1,5 +1,6 @@
 // All modules must be present here
 
+mod account;
 mod ocr2;
 mod libraries;
 mod utils;
