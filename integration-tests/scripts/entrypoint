@@ -14,4 +14,7 @@ cd "$SCRIPT_DIR"/../ || exit 1
 # SUITE=${SUITE:=} the suite of tests you want to run
 # TEST_NAME=${TEST_NAME:=} The specific test to run
 # run the tests
+nix develop -c helm repo add chainlink-qa https://raw.githubusercontent.com/smartcontractkit/qa-charts/gh-pages/
+nix develop -c helm repo add grafana https://grafana.github.io/helm-charts
+nix develop -c helm repo update
 nix develop -c ./"${SUITE}".test -test.v -test.count 1 ${ARGS} -test.run ^${TEST_NAME}$
