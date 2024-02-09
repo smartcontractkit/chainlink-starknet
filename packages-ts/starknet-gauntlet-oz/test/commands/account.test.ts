@@ -21,7 +21,7 @@ describe('OZ Account Contract', () => {
 
       const { contract: oz } = accountContractLoader()
       const ozContract = new Contract(oz.abi, contractAddress, makeProvider(LOCAL_URL).provider)
-      const { publicKey: onChainPubKey } = await ozContract.getPublicKey()
+      const onChainPubKey = await ozContract.getPublicKey()
       expect(onChainPubKey).toEqual(BigInt(publicKey))
     },
     TIMEOUT,
