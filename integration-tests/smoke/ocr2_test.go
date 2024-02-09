@@ -53,6 +53,7 @@ func TestOCRBasic(t *testing.T) {
 	require.NoError(t, err, "Validating round should not fail")
 
 	t.Cleanup(func() {
+		testState.Common.TearDownLocalEnvironment(t)
 		// TODO:
 		// err = actions.TeardownSuite(t, testState.Common.Env, testState.Cc.ChainlinkNodes, nil, zapcore.ErrorLevel, nil, nil)
 		// require.NoError(t, err, "Error tearing down environment")
