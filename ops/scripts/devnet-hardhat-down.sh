@@ -10,8 +10,8 @@ then
     echo "No docker Hardhat container running.";
 else
     docker kill $dpid;
-    docker rm $dpid;
 fi
+docker rm "chainlink-starknet.hardhat";
 
 echo "Cleaning up Starknet Devnet container..."
 
@@ -22,7 +22,7 @@ then
     echo "No docker Starknet Devnet container running.";
 else
     docker kill $dpid;
-    docker rm $dpid;
 fi
+docker rm "chainlink-starknet.starknet-devnet";
 
 echo "Cleanup finished."

@@ -1,7 +1,7 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
 import deployCommand from '../../src/commands/account/deploy'
 import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/starknet-gauntlet/test/utils'
-import { accountContractLoader, CONTRACT_LIST } from '../../src/lib/contracts'
+import { accountContractLoader } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
 
 describe('OZ Account Contract', () => {

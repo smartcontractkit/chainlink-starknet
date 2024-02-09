@@ -18,10 +18,10 @@
     (golangci-lint.override { buildGoModule = buildGo121Module; })
     gotools
 
-    kube3d
     kubectl
-    k9s
     kubernetes-helm
+
+    postgresql_15 # psql
 
   ] ++ lib.optionals stdenv.isLinux [
     # ledger specific packages
