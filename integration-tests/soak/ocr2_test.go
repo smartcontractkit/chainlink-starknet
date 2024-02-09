@@ -29,8 +29,7 @@ func TestOCRSoak(t *testing.T) {
 	testState = &common.Test{
 		T: t,
 	}
-	testState.Common = common.New()
-	testState.Common.Default(t)
+	testState.Common = common.New(t)
 	// Setting this to the root of the repo for cmd exec func for Gauntlet
 	testState.Sg, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
 	require.NoError(t, err, "Could not get a new gauntlet struct")

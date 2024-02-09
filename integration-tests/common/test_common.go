@@ -2,16 +2,14 @@ package common
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	curve "github.com/NethermindEth/starknet.go/curve"
+	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +17,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/chainlink/v2/core/services/keystore/keys/starkkey"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
@@ -30,47 +27,9 @@ import (
 )
 
 var (
-	// These are one of the default addresses based on the seed we pass to devnet which is 0
-	defaultWalletPrivKey = ops.PrivateKeys0Seed[0]
-	defaultWalletAddress string // derived in init()
-	rpcRequestTimeout    = time.Second * 300
-	dumpPath             = "/dumps/dump.pkl"
+	rpcRequestTimeout = time.Second * 300
+	dumpPath          = "/dumps/dump.pkl"
 )
-
-func init() {
-	// wallet contract derivation
-	var keyBytes []byte
-	keyBytes, err := hex.DecodeString(strings.TrimPrefix(defaultWalletPrivKey, "0x"))
-	if err != nil {
-		panic(err)
-	}
-	accountBytes, err := pubKeyToDevnetAccount(starkkey.Raw(keyBytes).Key().PublicKey())
-	if err != nil {
-		panic(err)
-	}
-	defaultWalletAddress = "0x" + hex.EncodeToString(accountBytes)
-}
-
-func pubKeyToDevnetAccount(pubkey starkkey.PublicKey) ([]byte, error) {
-	xHash, err := curve.Curve.ComputeHashOnElements([]*big.Int{pubkey.X})
-	if err != nil {
-		return nil, err
-	}
-	elements := []*big.Int{
-		new(big.Int).SetBytes([]byte("STARKNET_CONTRACT_ADDRESS")),
-		big.NewInt(0),
-		ops.DevnetSalt,
-		ops.DevnetClassHash,
-		xHash,
-	}
-	hash, err := curve.Curve.ComputeHashOnElements(elements)
-	if err != nil {
-		return nil, err
-	}
-
-	// pad big.Int to 32 bytes if needed
-	return starknet.PadBytes(hash.Bytes(), 32), nil
-}
 
 type Test struct {
 	Devnet                *devnet.StarknetDevnetClient
@@ -92,7 +51,7 @@ type Test struct {
 
 type ChainlinkClient struct {
 	NKeys          []client.NodeKeysBundle
-	ChainlinkNodes []*client.ChainlinkK8sClient
+	ChainlinkNodes []*client.ChainlinkClient
 	bTypeAttr      *client.BridgeTypeAttributes
 	bootstrapPeers []client.P2PData
 }
@@ -113,7 +72,7 @@ func (testState *Test) DeployCluster() {
 	}
 	var err error
 	testState.Cc.NKeys, testState.Cc.ChainlinkNodes, err = testState.Common.CreateKeys(testState.Common.Env)
-	require.NoError(testState.T, err, "Creating chains and keys should not fail")
+	require.NoError(testState.T, err, "Creating chains and keys should not fail") // TODO; fails here
 	baseURL := testState.Common.L2RPCUrl
 	if !testState.Common.Testnet { // devnet!
 		// chainlink starknet client needs the RPC API url which is at /rpc on devnet
@@ -124,9 +83,15 @@ func (testState *Test) DeployCluster() {
 	testState.OCR2Client, err = ocr2.NewClient(testState.Starknet, lggr)
 	require.NoError(testState.T, err, "Creating ocr2 client should not fail")
 	if !testState.Common.Testnet {
-		err = os.Setenv("PRIVATE_KEY", testState.GetDefaultPrivateKey())
+		// fetch predeployed account 0 to use as funder
+		devnet := starknetdevnet.NewDevNet(testState.Common.L2RPCUrl)
+		accounts, err := devnet.Accounts()
+		require.NoError(testState.T, err)
+		account := accounts[0]
+
+		err = os.Setenv("PRIVATE_KEY", account.PrivateKey)
 		require.NoError(testState.T, err, "Setting private key should not fail")
-		err = os.Setenv("ACCOUNT", testState.GetDefaultWalletAddress())
+		err = os.Setenv("ACCOUNT", account.Address)
 		require.NoError(testState.T, err, "Setting account address should not fail")
 		testState.Devnet.AutoDumpState() // Auto dumping devnet state to avoid losing contracts on crash
 	}
@@ -134,11 +99,10 @@ func (testState *Test) DeployCluster() {
 
 // DeployEnv Deploys the environment
 func (testState *Test) DeployEnv() {
-	err := testState.Common.Env.Run()
-	require.NoError(testState.T, err)
-	if testState.Common.Env.WillUseRemoteRunner() {
-		return // short circuit here if using a remote runner
-	}
+	testState.Common.SetLocalEnvironment(testState.T)
+	// if testState.Common.Env.WillUseRemoteRunner() {
+	// 	return // short circuit here if using a remote runner
+	// }
 }
 
 // SetupClients Sets up the starknet client
@@ -147,10 +111,11 @@ func (testState *Test) SetupClients() {
 	if testState.Common.Testnet {
 		l.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", testState.Common.L2RPCUrl))
 	} else {
-		testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
-		if testState.Common.Env.Cfg.InsideK8s {
-			testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
-		}
+		// TODO: HAXX:
+		// testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
+		// if testState.Common.Env.Cfg.InsideK8s {
+		// 	testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
+		// }
 		l.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
 		testState.Devnet = testState.Devnet.NewStarknetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
 	}
@@ -182,22 +147,8 @@ func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 }
 
 func (testState *Test) SetUpNodes() {
-	testState.SetBridgeTypeAttrs(&client.BridgeTypeAttributes{
-		Name: "bridge-mockserver",
-		URL:  fmt.Sprintf("%s/%s", testState.Common.Env.URLs["qa_mock_adapter_internal"][0], "five"),
-	})
-	err := testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
+	err := testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.Common.MockUrl, testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
 	require.NoError(testState.T, err, "Creating jobs should not fail")
-}
-
-// GetStarknetAddress Returns the local StarkNET address
-func (testState *Test) GetStarknetAddress() string {
-	return testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0]
-}
-
-// GetStarknetAddressRemote Returns the remote StarkNET address
-func (testState *Test) GetStarknetAddressRemote() string {
-	return testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1]
 }
 
 // GetNodeKeys Returns the node key bundles
@@ -206,20 +157,7 @@ func (testState *Test) GetNodeKeys() []client.NodeKeysBundle {
 }
 
 func (testState *Test) GetChainlinkNodes() []*client.ChainlinkClient {
-	// retrieve client from K8s client
-	chainlinkNodes := []*client.ChainlinkClient{}
-	for i := range testState.Cc.ChainlinkNodes {
-		chainlinkNodes = append(chainlinkNodes, testState.Cc.ChainlinkNodes[i].ChainlinkClient)
-	}
-	return chainlinkNodes
-}
-
-func (testState *Test) GetDefaultPrivateKey() string {
-	return defaultWalletPrivKey
-}
-
-func (testState *Test) GetDefaultWalletAddress() string {
-	return defaultWalletAddress
+	return testState.Cc.ChainlinkNodes
 }
 
 func (testState *Test) GetChainlinkClient() *ChainlinkClient {
@@ -242,7 +180,7 @@ func (testState *Test) ConfigureL1Messaging() {
 
 func (testState *Test) GetDefaultObservationSource() string {
 	return `
-			val [type = "bridge" name="bridge-mockserver"]
+			val [type = "bridge" name="mockserver-bridge"]
 			parse [type="jsonparse" path="data,result"]
 			val -> parse
 			`
