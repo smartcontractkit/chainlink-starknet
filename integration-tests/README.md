@@ -1,4 +1,4 @@
-# Local k8s run
+# Local e2e testing
 
 Make sure to have `psql` installed locally. We use it to create a new database for each node.
 
@@ -31,7 +31,7 @@ cd integration-tests
 go test -count 1 -v -timeout 30m --run OCRBasic ./smoke
 ```
 
-Cleanup is broken right now, so use `something.down.sh` scripts to teardown everything afterwards.
+Use `something.down.sh` scripts to teardown everything afterwards if the tests don't properly clean up.
 
 # Old docs
 
