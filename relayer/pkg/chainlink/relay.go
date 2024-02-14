@@ -117,3 +117,7 @@ func (r *relayer) NewFunctionsProvider(rargs relaytypes.RelayArgs, pargs relayty
 func (r *relayer) NewAutomationProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.AutomationProvider, error) {
 	return nil, errors.New("automation is not supported for starknet")
 }
+
+func (r *relayer) NewPluginProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.PluginProvider, error) {
+	return nil, errors.New("plugin provider is not supported for starknet")
+}
