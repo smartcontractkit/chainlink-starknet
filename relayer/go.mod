@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/go-plugin v1.5.2
 	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240205180946-df826cb540ce
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
 	github.com/smartcontractkit/libocr v0.0.0-20240112202000-6359502d2ff1
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/multierr v1.11.0
@@ -72,6 +72,7 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
@@ -88,12 +89,12 @@ require (
 	go.opentelemetry.io/otel/sdk v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

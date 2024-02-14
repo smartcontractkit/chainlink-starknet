@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.30.0
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240205180946-df826cb540ce
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240206145519-35a4346b5944
 	github.com/smartcontractkit/chainlink-testing-framework v1.23.2
@@ -421,14 +421,14 @@ require (
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/arch v0.6.0 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
