@@ -1,9 +1,15 @@
 package common
 
 import (
-	"bytes"
 	"fmt"
-	"io"
+	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	ctf_test_env "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
+	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"os"
 	"os/exec"
 	"regexp"
@@ -18,20 +24,24 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v4"
 
+	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/alias"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
+	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
 	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 )
 
 var (
-	serviceKeyL1        = "Hardhat"
-	serviceKeyL2        = "chainlink-starknet.starknet-devnet"
-	serviceKeyChainlink = "chainlink"
 	chainName           = "starknet"
 	chainId             = "SN_GOERLI"
-	defaultNodeUrl      = "http://127.0.0.1:5050"
+	defaultNodeUrl      = "http://starknet:5050"
+	testnetUrl          = "https://starknet-testnet.public.blastapi.io"
+	DefaultNodeCount    = 5
+	DefaultTTL          = "3h"
+	DefaultTestDuration = 50 * time.Minute
 )
 
 type Common struct {
@@ -51,6 +61,98 @@ type Common struct {
 	Account             string
 	ChainlinkConfig     string
 	Env                 *environment.Environment
+	IsK8s               bool
+	K8Config            *environment.Config
+	NodeOpts            []test_env.ClNodeOption
+	DockerEnv           *StarknetClusterTestEnv
+}
+
+type StarknetClusterTestEnv struct {
+	*test_env.CLClusterTestEnv
+	Starknet  *test_env_starknet.Starknet
+	Killgrave *ctf_test_env.Killgrave
+}
+
+func New(env string, isK8s bool) *Common {
+	var err error
+	var c *Common
+	if env == "testnet" {
+		c = &Common{
+			IsK8s:        isK8s,
+			ChainName:    chainId,
+			ChainId:      chainId,
+			L2RPCUrl:     testnetUrl,
+			Testnet:      true,
+			TestDuration: DefaultTestDuration,
+		}
+	} else {
+		c = &Common{
+			IsK8s:        isK8s,
+			ChainName:    chainName,
+			ChainId:      chainId,
+			L2RPCUrl:     defaultNodeUrl,
+			TestDuration: DefaultTestDuration,
+		}
+	}
+	// Checking if count of OCR nodes is defined in ENV
+	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
+	if nodeCountDefined && nodeCountSet != "" {
+		c.NodeCount, err = strconv.Atoi(nodeCountSet)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
+		}
+	} else {
+		c.NodeCount = DefaultNodeCount
+	}
+
+	// Checking if TTL env var is set in ENV
+	ttlValue, ttlDefined := os.LookupEnv("TTL")
+	if ttlDefined && ttlValue != "" {
+		duration, err := time.ParseDuration(ttlValue)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+	} else {
+		duration, err := time.ParseDuration(DefaultTTL)
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
+		if err != nil {
+			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
+		}
+	}
+
+	return c
+}
+
+func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) {
+	c.K8Config = &environment.Config{
+		NamespacePrefix: fmt.Sprintf("solana-%s", namespacePrefix),
+		TTL:             c.TTL,
+		Test:            t,
+	}
+
+	if c.IsK8s {
+		toml := c.DefaultNodeConfig()
+		tomlString, err := toml.TOMLString()
+		if err != nil {
+			return nil, err
+		}
+		c.Env = environment.New(c.K8Config).
+			AddHelm(devnet.New(nil)).
+			AddHelm(mock_adapter.New(nil)).
+			AddHelm(chainlink.New(0, map[string]interface{}{
+				"toml":     tomlString,
+				"replicas": c.NodeCount,
+			}))
+	}
+
+	return c, nil
 }
 
 // getEnv gets the environment variable if it exists and sets it for the remote runner
@@ -107,129 +209,30 @@ func getTestDuration() time.Duration {
 	return t
 }
 
-func New(t *testing.T) *Common {
-	c := &Common{
-		ChainName:           chainName,
-		ChainId:             chainId,
-		NodeCount:           getNodeCount(),
-		TTL:                 getTTL(),
-		TestDuration:        getTestDuration(),
-		ServiceKeyChainlink: serviceKeyChainlink,
-		ServiceKeyL1:        serviceKeyL1,
-		ServiceKeyL2:        serviceKeyL2,
-		L2RPCUrl:            getEnv("L2_RPC_URL"), // Fetch L2 RPC url if defined
-		MockUrl:             "http://host.containers.internal:6060",
-		PrivateKey:          getEnv("PRIVATE_KEY"),
-		Account:             getEnv("ACCOUNT"),
-		// P2PPort:             "6690",
+func (c *Common) DefaultNodeConfig() *cl.Config {
+	starkConfig := config.TOMLConfig{
+		Enabled: ptr.Ptr(true),
+		ChainID: ptr.Ptr(c.ChainId),
+		Nodes: []*config.Node{
+			{
+				Name: ptr.Ptr("primary"),
+				URL:  common_cfg.MustParseURL(defaultNodeUrl),
+			},
+		},
 	}
-	c.Testnet = c.L2RPCUrl != ""
-
-	// TODO: HAXX: we force the URL to a local docker container
-	c.L2RPCUrl = defaultNodeUrl
-
-	starknetUrl := fmt.Sprintf("http://%s:%d/rpc", serviceKeyL2, 5050)
-	if c.Testnet {
-		starknetUrl = c.L2RPCUrl
+	baseConfig := node.NewBaseConfig()
+	baseConfig.Starknet = config.TOMLConfigs{
+		&starkConfig,
 	}
+	baseConfig.OCR2.Enabled = ptr.Ptr(true)
+	baseConfig.P2P.V2.Enabled = ptr.Ptr(true)
+	fiveSecondDuration := common_cfg.MustNewDuration(5 * time.Second)
 
-	chainlinkConfig := fmt.Sprintf(`[[Starknet]]
-Enabled = true
-ChainID = '%s'
-[[Starknet.Nodes]]
-Name = 'primary'
-URL = '%s'
+	baseConfig.P2P.V2.DeltaDial = fiveSecondDuration
+	baseConfig.P2P.V2.DeltaReconcile = fiveSecondDuration
+	baseConfig.P2P.V2.ListenAddresses = &[]string{"0.0.0.0:6690"}
 
-[OCR2]
-Enabled = true
-
-[P2P]
-[P2P.V2]
-Enabled = true
-DeltaDial = '5s'
-DeltaReconcile = '5s'
-ListenAddresses = ['0.0.0.0:6690']
-
-[WebServer]
-HTTPPort = 6688
-[WebServer.TLS]
-HTTPSPort = 0
-`, c.ChainId, starknetUrl)
-
-	c.ChainlinkConfig = chainlinkConfig
-	log.Debug().Str("toml", chainlinkConfig).Msg("Created chainlink config")
-
-	c.Env = &environment.Environment{}
-	return c
-}
-
-// CapturingPassThroughWriter is a writer that remembers
-// data written to it and passes it to w
-type CapturingPassThroughWriter struct {
-	buf bytes.Buffer
-	w   io.Writer
-}
-
-// NewCapturingPassThroughWriter creates new CapturingPassThroughWriter
-func NewCapturingPassThroughWriter(w io.Writer) *CapturingPassThroughWriter {
-	return &CapturingPassThroughWriter{
-		w: w,
-	}
-}
-
-func (w *CapturingPassThroughWriter) Write(d []byte) (int, error) {
-	w.buf.Write(d)
-	return w.w.Write(d)
-}
-
-// Bytes returns bytes written to the writer
-func (w *CapturingPassThroughWriter) Bytes() []byte {
-	return w.buf.Bytes()
-}
-
-func debug(cmd *exec.Cmd) error {
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	if startErr := cmd.Start(); startErr != nil {
-		panic(startErr)
-	}
-
-	doneStdOut := make(chan any)
-	doneStdErr := make(chan any)
-	osstdout := NewCapturingPassThroughWriter(os.Stdout)
-	osstderr := NewCapturingPassThroughWriter(os.Stderr)
-	go handleOutput(osstdout, stdout, doneStdOut)
-	go handleOutput(osstderr, stderr, doneStdErr)
-
-	err = cmd.Wait()
-
-	errStdOut := <-doneStdOut
-	if errStdOut != nil {
-		fmt.Println("error writing to standard out")
-	}
-
-	errStdErr := <-doneStdErr
-	if errStdErr != nil {
-		fmt.Println("error writing to standard in")
-	}
-
-	if err != nil {
-		fmt.Printf("Command finished with error: %v\n", err)
-	}
-
-	return err
-}
-
-func handleOutput(dst io.Writer, src io.Reader, done chan<- any) {
-	_, err := io.Copy(dst, src)
-	done <- err
+	return baseConfig
 }
 
 func (c *Common) SetLocalEnvironment(t *testing.T) {
@@ -247,8 +250,9 @@ func (c *Common) SetLocalEnvironment(t *testing.T) {
 	log.Info().Msg("Starting core nodes...")
 	cmd := exec.Command("../../scripts/core.sh")
 	cmd.Env = append(os.Environ(), fmt.Sprintf("CL_CONFIG=%s", c.ChainlinkConfig))
-	// easy debug
-	err = debug(cmd)
+	// out, err := cmd.Output()
+	// fmt.Println(string(out))
+	err = cmd.Run()
 	require.NoError(t, err, "Could not start core nodes")
 	log.Info().Msg("Set up local stack complete.")
 
@@ -316,40 +320,35 @@ func parseHostname(s string) string {
 	return r.FindStringSubmatch(s)[1]
 }
 
-// CreateKeys Creates node keys and defines chain and nodes for each node
-func (c *Common) CreateKeys(env *environment.Environment) ([]client.NodeKeysBundle, []*client.ChainlinkClient, error) {
-	nodes, err := connectChainlinkNodes(env)
-	if err != nil {
-		return nil, nil, err
-	}
+func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client.NodeKeysBundle, error) {
+	nkb := make([]client.NodeKeysBundle, 0)
+	for _, n := range nodes {
+		p2pkeys, err := n.MustReadP2PKeys()
+		if err != nil {
+			return nil, err
+		}
 
-	NKeys, _, err := client.CreateNodeKeysBundle(nodes, c.ChainName, c.ChainId)
-	if err != nil {
-		return nil, nil, err
+		peerID := p2pkeys.Data[0].Attributes.PeerID
+		txKey, _, err := n.CreateTxKey(chainName, c.ChainId)
+		if err != nil {
+			return nil, err
+		}
+		ocrKey, _, err := n.CreateOCR2Key(chainName)
+		if err != nil {
+			return nil, err
+		}
+
+		nkb = append(nkb, client.NodeKeysBundle{
+			PeerID:  peerID,
+			OCR2Key: *ocrKey,
+			TXKey:   *txKey,
+		})
 	}
-	// for _, n := range nodes {
-	// 	_, _, err = n.CreateStarkNetChain(&client.StarkNetChainAttributes{
-	// 		Type:    c.ChainName,
-	// 		ChainID: c.ChainId,
-	// 		Config:  client.StarkNetChainConfig{},
-	// 	})
-	// 	if err != nil {
-	// 		return nil, nil, err
-	// 	}
-	// 	_, _, err = n.CreateStarkNetNode(&client.StarkNetNodeAttributes{
-	// 		Name:    c.ChainName,
-	// 		ChainID: c.ChainId,
-	// 		Url:     "http://", // TODO:
-	// 	})
-	// 	if err != nil {
-	// 		return nil, nil, err
-	// 	}
-	// }
-	return NKeys, nodes, nil
+	return nkb, nil
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
-func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
+func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test_env.Killgrave, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
@@ -362,8 +361,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, obse
 	// Defining relay config
 	bootstrapRelayConfig := job.JSONConfig{
 		"nodeName":       fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.New().String()),
-		"accountAddress": accountAddresses[0],
-		"chainID":        c.ChainId,
+		"accountAddress": fmt.Sprintf("%s", accountAddresses[0]),
+		"chainID":        fmt.Sprintf("%s", c.ChainId),
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
@@ -391,9 +390,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, obse
 	}
 
 	sourceValueBridge := &client.BridgeTypeAttributes{
-		Name:        "mockserver-bridge",
-		URL:         fmt.Sprintf("%s/%s", mockUrl, "five"),
-		RequestData: "{}",
+		Name: "mockserver-bridge",
+		URL:  fmt.Sprintf("%s/%s", mockserver.InternalEndpoint, strings.TrimPrefix("mockserver-bridge", "/")),
 	}
 
 	// Setting up job specs
@@ -407,7 +405,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, obse
 		}
 		relayConfig := job.JSONConfig{
 			"nodeName":       bootstrapRelayConfig["nodeName"],
-			"accountAddress": accountAddresses[nIdx],
+			"accountAddress": fmt.Sprintf("%s", accountAddresses[nIdx]),
 			"chainID":        bootstrapRelayConfig["chainID"],
 		}
 
@@ -431,7 +429,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, obse
 			OCR2OracleSpec:    oracleSpec,
 			ObservationSource: observationSource,
 		}
-		_, _, err = n.CreateJob(jobSpec)
+		_, err = n.MustCreateJob(jobSpec)
 		if err != nil {
 			return err
 		}

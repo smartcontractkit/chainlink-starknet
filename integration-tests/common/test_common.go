@@ -3,27 +3,33 @@ package common
 import (
 	"context"
 	"fmt"
+	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
+	"github.com/go-resty/resty/v2"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
+	"net/http"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink-testing-framework/logging"
+	"github.com/smartcontractkit/chainlink/integration-tests/testconfig"
 	"math/big"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
-
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
 
 var (
@@ -31,10 +37,14 @@ var (
 	dumpPath          = "/dumps/dump.pkl"
 )
 
-type Test struct {
-	Devnet                *devnet.StarknetDevnetClient
+type OCRv2TestState struct {
+	Account               string
+	PrivateKey            string
+	StarknetClient        *starknet.Client
+	DevnetClient          *starknetdevnet.DevNet
+	Killgrave             *test_env_ctf.Killgrave
+	ChainlinkNodesK8s     []*client.ChainlinkK8sClient
 	Cc                    *ChainlinkClient
-	Starknet              *starknet.Client
 	OCR2Client            *ocr2.Client
 	Sg                    *gauntlet.StarknetGauntlet
 	L1RPCUrl              string
@@ -47,6 +57,10 @@ type Test struct {
 	ObservationSource     string
 	JuelsPerFeeCoinSource string
 	T                     *testing.T
+	L                     zerolog.Logger
+	TestConfig            *testconfig.TestConfig
+	Resty                 *resty.Client
+	err                   error
 }
 
 type ChainlinkClient struct {
@@ -56,82 +70,113 @@ type ChainlinkClient struct {
 	bootstrapPeers []client.P2PData
 }
 
-// DeployCluster Deploys and sets up config of the environment and nodes
-func (testState *Test) DeployCluster() {
-	lggr := logger.Nop()
-	testState.Cc = &ChainlinkClient{}
-	testState.ObservationSource = testState.GetDefaultObservationSource()
-	testState.JuelsPerFeeCoinSource = testState.GetDefaultJuelsPerFeeCoinSource()
-	testState.DeployEnv()
-	if testState.Common.Env.WillUseRemoteRunner() {
-		return // short circuit here if using a remote runner
+func NewOCRv2State(t *testing.T, env string, isK8s bool, namespacePrefix string, testConfig *testconfig.TestConfig) (*OCRv2TestState, error) {
+	c, err := New(env, isK8s).Default(t, namespacePrefix)
+	if err != nil {
+		return nil, err
 	}
-	testState.SetupClients()
-	if testState.Common.Testnet {
-		testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] = testState.Common.L2RPCUrl
+	state := &OCRv2TestState{
+		Common:         c,
+		T:              t,
+		L:              log.Logger,
+		TestConfig:     testConfig,
+		Cc:             &ChainlinkClient{},
+		StarknetClient: &starknet.Client{},
 	}
-	var err error
-	testState.Cc.NKeys, testState.Cc.ChainlinkNodes, err = testState.Common.CreateKeys(testState.Common.Env)
-	require.NoError(testState.T, err, "Creating chains and keys should not fail") // TODO; fails here
-	baseURL := testState.Common.L2RPCUrl
-	if !testState.Common.Testnet { // devnet!
-		// chainlink starknet client needs the RPC API url which is at /rpc on devnet
-		baseURL += "/rpc"
-	}
-	testState.Starknet, err = starknet.NewClient(testState.Common.ChainId, baseURL, lggr, &rpcRequestTimeout)
-	require.NoError(testState.T, err, "Creating starknet client should not fail")
-	testState.OCR2Client, err = ocr2.NewClient(testState.Starknet, lggr)
-	require.NoError(testState.T, err, "Creating ocr2 client should not fail")
-	if !testState.Common.Testnet {
-		// fetch predeployed account 0 to use as funder
-		devnet := starknetdevnet.NewDevNet(testState.Common.L2RPCUrl)
-		accounts, err := devnet.Accounts()
-		require.NoError(testState.T, err)
-		account := accounts[0]
 
-		err = os.Setenv("PRIVATE_KEY", account.PrivateKey)
-		require.NoError(testState.T, err, "Setting private key should not fail")
-		err = os.Setenv("ACCOUNT", account.Address)
-		require.NoError(testState.T, err, "Setting account address should not fail")
-		testState.Devnet.AutoDumpState() // Auto dumping devnet state to avoid losing contracts on crash
+	if state.T != nil {
+		state.L = logging.GetTestLogger(state.T)
+	}
+
+	return state, nil
+}
+
+// DeployCluster Deploys and sets up config of the environment and nodes
+func (m *OCRv2TestState) DeployCluster() {
+	if m.Common.IsK8s {
+		m.DeployEnv()
+	} else {
+		env, err := test_env.NewTestEnv()
+		require.NoError(m.T, err)
+		stark := test_env_starknet.NewStarknet([]string{env.Network.Name})
+		err = stark.StartContainer()
+		require.NoError(m.T, err)
+		m.Common.L2RPCUrl = stark.ExternalHttpUrl
+		m.Resty = resty.New().SetBaseURL(m.Common.L2RPCUrl)
+		b, err := test_env.NewCLTestEnvBuilder().
+			WithNonEVM().
+			WithTestInstance(m.T).
+			WithTestConfig(m.TestConfig).
+			WithMockAdapter().
+			WithCLNodeConfig(m.Common.DefaultNodeConfig()).
+			WithCLNodes(m.Common.NodeCount).
+			WithCLNodeOptions(m.Common.NodeOpts...).
+			WithStandardCleanup().
+			WithTestEnv(env)
+		require.NoError(m.T, err)
+		env, err = b.Build()
+		require.NoError(m.T, err)
+		m.Common.DockerEnv = &StarknetClusterTestEnv{
+			CLClusterTestEnv: env,
+			Starknet:         stark,
+			Killgrave:        env.MockAdapter,
+		}
+		m.Killgrave = env.MockAdapter
+	}
+
+	m.ObservationSource = m.GetDefaultObservationSource()
+	m.JuelsPerFeeCoinSource = m.GetDefaultJuelsPerFeeCoinSource()
+	m.SetupClients()
+	if m.Common.IsK8s {
+		m.Cc.NKeys, m.err = m.Common.CreateNodeKeysBundle(m.GetChainlinkNodes())
+		require.NoError(m.T, m.err)
+	} else {
+		m.Cc.NKeys, m.err = m.Common.CreateNodeKeysBundle(m.Common.DockerEnv.ClCluster.NodeAPIs())
+		require.NoError(m.T, m.err)
+	}
+	lggr := logger.Nop()
+	m.StarknetClient, m.err = starknet.NewClient(m.Common.ChainId, m.Common.L2RPCUrl, lggr, &rpcRequestTimeout)
+	require.NoError(m.T, m.err, "Creating starknet client should not fail")
+	m.OCR2Client, m.err = ocr2.NewClient(m.StarknetClient, lggr)
+	require.NoError(m.T, m.err, "Creating ocr2 client should not fail")
+	if !m.Common.Testnet {
+		// fetch predeployed account 0 to use as funder
+		m.DevnetClient = starknetdevnet.NewDevNet(m.Common.L2RPCUrl)
+		accounts, err := m.DevnetClient.Accounts()
+		require.NoError(m.T, err)
+		account := accounts[0]
+		m.Account = account.Address
+		m.PrivateKey = account.PrivateKey
 	}
 }
 
 // DeployEnv Deploys the environment
-func (testState *Test) DeployEnv() {
-	testState.Common.SetLocalEnvironment(testState.T)
-	// if testState.Common.Env.WillUseRemoteRunner() {
-	// 	return // short circuit here if using a remote runner
-	// }
+func (m *OCRv2TestState) DeployEnv() {
+	err := m.Common.Env.Run()
+	require.NoError(m.T, err)
 }
 
 // SetupClients Sets up the starknet client
-func (testState *Test) SetupClients() {
-	l := utils.GetTestLogger(testState.T)
-	if testState.Common.Testnet {
-		l.Debug().Msg(fmt.Sprintf("Overriding L2 RPC: %s", testState.Common.L2RPCUrl))
+func (m *OCRv2TestState) SetupClients() {
+	if m.Common.IsK8s {
+		m.ChainlinkNodesK8s, m.err = client.ConnectChainlinkNodes(m.Common.Env)
+		require.NoError(m.T, m.err)
 	} else {
-		// TODO: HAXX:
-		// testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][0] // For local runs setting local ip
-		// if testState.Common.Env.Cfg.InsideK8s {
-		// 	testState.Common.L2RPCUrl = testState.Common.Env.URLs[testState.Common.ServiceKeyL2][1] // For remote runner setting remote IP
-		// }
-		l.Debug().Msg(fmt.Sprintf("L2 RPC: %s", testState.Common.L2RPCUrl))
-		testState.Devnet = testState.Devnet.NewStarknetDevnetClient(testState.Common.L2RPCUrl, dumpPath)
+		m.Cc.ChainlinkNodes = m.Common.DockerEnv.ClCluster.NodeAPIs()
 	}
 }
 
 // LoadOCR2Config Loads and returns the default starknet gauntlet config
-func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
+func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var offChaiNKeys []string
 	var onChaiNKeys []string
 	var peerIds []string
 	var txKeys []string
 	var cfgKeys []string
-	for i, key := range testState.Cc.NKeys {
+	for i, key := range m.Cc.NKeys {
 		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIds = append(peerIds, key.PeerID)
-		txKeys = append(txKeys, testState.AccountAddresses[i])
+		txKeys = append(txKeys, m.AccountAddresses[i])
 		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
@@ -146,39 +191,29 @@ func (testState *Test) LoadOCR2Config() (*ops.OCR2Config, error) {
 	return &payload, nil
 }
 
-func (testState *Test) SetUpNodes() {
-	err := testState.Common.CreateJobsForContract(testState.GetChainlinkClient(), testState.Common.MockUrl, testState.ObservationSource, testState.JuelsPerFeeCoinSource, testState.OCRAddr, testState.AccountAddresses)
-	require.NoError(testState.T, err, "Creating jobs should not fail")
+func (m *OCRv2TestState) SetUpNodes() {
+	err := m.Common.CreateJobsForContract(m.GetChainlinkClient(), m.Killgrave, m.ObservationSource, m.JuelsPerFeeCoinSource, m.OCRAddr, m.AccountAddresses)
+	require.NoError(m.T, err, "Creating jobs should not fail")
 }
 
 // GetNodeKeys Returns the node key bundles
-func (testState *Test) GetNodeKeys() []client.NodeKeysBundle {
-	return testState.Cc.NKeys
+func (m *OCRv2TestState) GetNodeKeys() []client.NodeKeysBundle {
+	return m.Cc.NKeys
 }
 
-func (testState *Test) GetChainlinkNodes() []*client.ChainlinkClient {
-	return testState.Cc.ChainlinkNodes
+func (m *OCRv2TestState) GetChainlinkNodes() []*client.ChainlinkClient {
+	return m.Cc.ChainlinkNodes
 }
 
-func (testState *Test) GetChainlinkClient() *ChainlinkClient {
-	return testState.Cc
+func (m *OCRv2TestState) GetChainlinkClient() *ChainlinkClient {
+	return m.Cc
 }
 
-func (testState *Test) GetStarknetDevnetClient() *devnet.StarknetDevnetClient {
-	return testState.Devnet
+func (m *OCRv2TestState) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
+	m.Cc.bTypeAttr = attr
 }
 
-func (testState *Test) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
-	testState.Cc.bTypeAttr = attr
-}
-
-// ConfigureL1Messaging Sets the L1 messaging contract location and RPC url on L2
-func (testState *Test) ConfigureL1Messaging() {
-	err := testState.Devnet.LoadL1MessagingContract(testState.L1RPCUrl)
-	require.NoError(testState.T, err, "Setting up L1 messaging should not fail")
-}
-
-func (testState *Test) GetDefaultObservationSource() string {
+func (m *OCRv2TestState) GetDefaultObservationSource() string {
 	return `
 			val [type = "bridge" name="mockserver-bridge"]
 			parse [type="jsonparse" path="data,result"]
@@ -186,7 +221,7 @@ func (testState *Test) GetDefaultObservationSource() string {
 			`
 }
 
-func (testState *Test) GetDefaultJuelsPerFeeCoinSource() string {
+func (m *OCRv2TestState) GetDefaultJuelsPerFeeCoinSource() string {
 	return `"""
 			sum  [type="sum" values=<[451000]> ]
 			sum
@@ -194,8 +229,7 @@ func (testState *Test) GetDefaultJuelsPerFeeCoinSource() string {
 			`
 }
 
-func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
-	l := utils.GetTestLogger(testState.T)
+func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 	ctx := context.Background() // context background used because timeout handled by requestTimeout param
 	// assert new rounds are occurring
 	details := ocr2.TransmissionDetails{}
@@ -205,25 +239,25 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 	var positive bool
 
 	// validate balance in aggregator
-	linkContractAddress, err := starknetutils.HexToFelt(testState.LinkTokenAddr)
+	linkContractAddress, err := starknetutils.HexToFelt(m.LinkTokenAddr)
 	if err != nil {
 		return err
 	}
-	contractAddress, err := starknetutils.HexToFelt(testState.OCRAddr)
+	contractAddress, err := starknetutils.HexToFelt(m.OCRAddr)
 	if err != nil {
 		return err
 	}
-	resLINK, errLINK := testState.Starknet.CallContract(ctx, starknet.CallOps{
+	resLINK, errLINK := m.StarknetClient.CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkContractAddress,
 		Selector:        starknetutils.GetSelectorFromNameFelt("balance_of"),
 		Calldata:        []*felt.Felt{contractAddress},
 	})
-	require.NoError(testState.T, errLINK, "Reader balance from LINK contract should not fail", "err", errLINK)
-	resAgg, errAgg := testState.Starknet.CallContract(ctx, starknet.CallOps{
+	require.NoError(m.T, errLINK, "Reader balance from LINK contract should not fail", "err", errLINK)
+	resAgg, errAgg := m.StarknetClient.CallContract(ctx, starknet.CallOps{
 		ContractAddress: contractAddress,
 		Selector:        starknetutils.GetSelectorFromNameFelt("link_available_for_payment"),
 	})
-	require.NoError(testState.T, errAgg, "link_available_for_payment should not fail", "err", errAgg)
+	require.NoError(m.T, errAgg, "link_available_for_payment should not fail", "err", errAgg)
 	balLINK := resLINK[0].BigInt(big.NewInt(0))
 	balAgg := resAgg[1].BigInt(big.NewInt(0))
 	isNegative := resAgg[0].BigInt(big.NewInt(0))
@@ -231,13 +265,15 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 		balAgg = new(big.Int).Neg(balAgg)
 	}
 
-	assert.Equal(testState.T, balLINK.Cmp(big.NewInt(0)), 1, "Aggregator should have non-zero balance")
-	assert.GreaterOrEqual(testState.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
+	assert.Equal(m.T, balLINK.Cmp(big.NewInt(0)), 1, "Aggregator should have non-zero balance")
+	assert.GreaterOrEqual(m.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
 
-	for start := time.Now(); time.Since(start) < testState.Common.TestDuration; {
-		l.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), testState.Common.TestDuration))
-		res, err2 := testState.OCR2Client.LatestTransmissionDetails(ctx, contractAddress)
-		require.NoError(testState.T, err2, "Failed to get latest transmission details")
+	err = m.Killgrave.SetAdapterBasedIntValuePath("/mockserver-bridge", []string{http.MethodGet, http.MethodPost}, 10)
+	require.NoError(m.T, err, "Failed to set mock adapter value")
+	for start := time.Now(); time.Since(start) < m.Common.TestDuration; {
+		m.L.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), m.Common.TestDuration))
+		res, err2 := m.OCR2Client.LatestTransmissionDetails(ctx, contractAddress)
+		require.NoError(m.T, err2, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
 			break
@@ -245,7 +281,7 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 
 		// end condition: rounds have been stuck
 		if stuck && stuckCount > 50 {
-			l.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
+			m.L.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
 			break
 		}
 
@@ -253,10 +289,10 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 		time.Sleep(5 * time.Second)
 
 		if err != nil {
-			l.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
+			m.L.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
 			continue
 		}
-		l.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
+		m.L.Info().Msg(fmt.Sprintf("Transmission Details: %+v", res))
 
 		// continue if no changes
 		if res.Epoch == 0 && res.Round == 0 {
@@ -269,21 +305,21 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 		// if changes from zero values set (should only initially)
 		if res.Epoch > 0 && details.Epoch == 0 {
 			if !isSoak {
-				assert.Greater(testState.T, res.Epoch, details.Epoch)
-				assert.GreaterOrEqual(testState.T, res.Round, details.Round)
-				assert.NotEqual(testState.T, ansCmp, 0) // assert changed from 0
-				assert.NotEqual(testState.T, res.Digest, details.Digest)
-				assert.Equal(testState.T, details.LatestTimestamp.Before(res.LatestTimestamp), true)
+				assert.Greater(m.T, res.Epoch, details.Epoch)
+				assert.GreaterOrEqual(m.T, res.Round, details.Round)
+				assert.NotEqual(m.T, ansCmp, 0) // assert changed from 0
+				assert.NotEqual(m.T, res.Digest, details.Digest)
+				assert.Equal(m.T, details.LatestTimestamp.Before(res.LatestTimestamp), true)
 			}
 			details = res
 			continue
 		}
 		// check increasing rounds
 		if !isSoak {
-			assert.Equal(testState.T, res.Digest, details.Digest, "Config digest should not change")
+			assert.Equal(m.T, res.Digest, details.Digest, "Config digest should not change")
 		} else {
 			if res.Digest != details.Digest {
-				l.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
+				m.L.Error().Msg(fmt.Sprintf("Config digest should not change, expected %s got %s", details.Digest, res.Digest))
 			}
 		}
 		if (res.Epoch > details.Epoch || (res.Epoch == details.Epoch && res.Round > details.Round)) && details.LatestTimestamp.Before(res.LatestTimestamp) {
@@ -301,31 +337,31 @@ func (testState *Test) ValidateRounds(rounds int, isSoak bool) error {
 		}
 	}
 	if !isSoak {
-		assert.GreaterOrEqual(testState.T, increasing, rounds, "Round + epochs should be increasing")
-		assert.Equal(testState.T, positive, true, "Positive value should have been submitted")
-		assert.Equal(testState.T, stuck, false, "Round + epochs should not be stuck")
+		assert.GreaterOrEqual(m.T, increasing, rounds, "Round + epochs should be increasing")
+		assert.Equal(m.T, positive, true, "Positive value should have been submitted")
+		assert.Equal(m.T, stuck, false, "Round + epochs should not be stuck")
 	}
 
 	// Test proxy reading
 	// TODO: would be good to test proxy switching underlying feeds
 
-	proxyAddress, err := starknetutils.HexToFelt(testState.ProxyAddr)
+	proxyAddress, err := starknetutils.HexToFelt(m.ProxyAddr)
 	if err != nil {
 		return err
 	}
-	roundDataRaw, err := testState.Starknet.CallContract(ctx, starknet.CallOps{
+	roundDataRaw, err := m.StarknetClient.CallContract(ctx, starknet.CallOps{
 		ContractAddress: proxyAddress,
 		Selector:        starknetutils.GetSelectorFromNameFelt("latest_round_data"),
 	})
 	if !isSoak {
-		require.NoError(testState.T, err, "Reading round data from proxy should not fail")
-		assert.Equal(testState.T, len(roundDataRaw), 5, "Round data from proxy should match expected size")
+		require.NoError(m.T, err, "Reading round data from proxy should not fail")
+		assert.Equal(m.T, len(roundDataRaw), 5, "Round data from proxy should match expected size")
 	}
 	valueBig := roundDataRaw[1].BigInt(big.NewInt(0))
-	require.NoError(testState.T, err)
+	require.NoError(m.T, err)
 	value := valueBig.Int64()
 	if value < 0 {
-		assert.Equal(testState.T, value, int64(5), "Reading from proxy should return correct value")
+		assert.Equal(m.T, value, int64(5), "Reading from proxy should return correct value")
 	}
 
 	return nil
