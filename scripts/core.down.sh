@@ -4,7 +4,7 @@ echo "Cleaning up core containers.."
 
 echo "Checking for existing 'chainlink.core' docker containers..."
 
-for i in {1..4}
+for i in {1..5}
 do
 	echo " Checking for chainlink.core.$i"
 	dpid=$(docker ps -a | grep chainlink.core.$i | awk '{print $1}')
