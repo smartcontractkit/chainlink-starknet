@@ -1,7 +1,9 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -157,10 +159,77 @@ HTTPSPort = 0
 	c.ChainlinkConfig = chainlinkConfig
 	log.Debug().Str("toml", chainlinkConfig).Msg("Created chainlink config")
 
-	envConfig := &environment.Config{NamespacePrefix: "chainlink-ocr-starknet", TTL: c.TTL, Test: t}
-
-	c.Env = environment.New(envConfig)
+	c.Env = &environment.Environment{}
 	return c
+}
+
+// CapturingPassThroughWriter is a writer that remembers
+// data written to it and passes it to w
+type CapturingPassThroughWriter struct {
+	buf bytes.Buffer
+	w   io.Writer
+}
+
+// NewCapturingPassThroughWriter creates new CapturingPassThroughWriter
+func NewCapturingPassThroughWriter(w io.Writer) *CapturingPassThroughWriter {
+	return &CapturingPassThroughWriter{
+		w: w,
+	}
+}
+
+func (w *CapturingPassThroughWriter) Write(d []byte) (int, error) {
+	w.buf.Write(d)
+	return w.w.Write(d)
+}
+
+// Bytes returns bytes written to the writer
+func (w *CapturingPassThroughWriter) Bytes() []byte {
+	return w.buf.Bytes()
+}
+
+func debug(cmd *exec.Cmd) error {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		panic(err)
+	}
+
+	doneStdOut := make(chan any)
+	doneStdErr := make(chan any)
+	osstdout := NewCapturingPassThroughWriter(os.Stdout)
+	osstderr := NewCapturingPassThroughWriter(os.Stderr)
+	go handleOutput(osstdout, stdout, doneStdOut)
+	go handleOutput(osstderr, stderr, doneStdErr)
+
+	err = cmd.Wait()
+
+	errStdOut := <-doneStdOut
+	if errStdOut != nil {
+		fmt.Println("error writing to standard out")
+	}
+
+	errStdErr := <-doneStdErr
+	if errStdErr != nil {
+		fmt.Println("error writing to standard in")
+	}
+
+	if err != nil {
+		fmt.Printf("Command finished with error: %v\n", err)
+	}
+
+	return err
+}
+
+func handleOutput(dst io.Writer, src io.Reader, done chan<- any) {
+	_, err := io.Copy(dst, src)
+	done <- err
 }
 
 func (c *Common) SetLocalEnvironment(t *testing.T) {
@@ -178,9 +247,8 @@ func (c *Common) SetLocalEnvironment(t *testing.T) {
 	log.Info().Msg("Starting core nodes...")
 	cmd := exec.Command("../../scripts/core.sh")
 	cmd.Env = append(os.Environ(), fmt.Sprintf("CL_CONFIG=%s", c.ChainlinkConfig))
-	// out, err := cmd.Output()
-	// fmt.Println(string(out))
-	err = cmd.Run()
+	// easy debug
+	err = debug(cmd)
 	require.NoError(t, err, "Could not start core nodes")
 	log.Info().Msg("Set up local stack complete.")
 
