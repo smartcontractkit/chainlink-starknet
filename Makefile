@@ -221,8 +221,6 @@ test-integration-soak-ci:
 test-integration-contracts: build-ts env-devnet-hardhat
 	echo "Tests currently broken because of starknet-hardhat-plugin"
 	exit 1
-	cd packages-ts/integration-multisig/ && \
-		yarn test
 	cd packages-ts/starknet/ && \
 		yarn test
 
