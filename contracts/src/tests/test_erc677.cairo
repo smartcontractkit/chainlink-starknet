@@ -13,7 +13,8 @@ use core::result::ResultTrait;
 
 use chainlink::token::mock::valid_erc667_receiver::ValidReceiver;
 use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
-use chainlink::libraries::token::erc677::ERC677;
+use chainlink::libraries::token::erc677::ERC677Component;
+use chainlink::libraries::token::erc677::ERC677Component::ERC677Impl;
 
 #[starknet::interface]
 trait MockInvalidReceiver<TContractState> {
@@ -54,11 +55,14 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
     (address, contract)
 }
 
+type ComponentState =
+    ERC677Component::ComponentState<chainlink::token::link_token::LinkToken::ContractState>;
+
 fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();
     // have to send 0 because ERC20 is not initialized with starting supply when using this library by itself
-    let mut erc677 = ERC677::unsafe_new_contract_state();
-    ERC677::transfer_and_call(ref erc677, receiver, u256 { high: 0, low: 0 }, data);
+    let mut state: ComponentState = ERC677Component::component_state_for_testing();
+    state.transfer_and_call(receiver, u256 { high: 0, low: 0 }, data);
 }
 
 #[test]

@@ -15,7 +15,7 @@ import (
 
 const (
 	L2RpcUrl = "https://alpha4-2.starknet.io"
-	P2pPort  = "5001"
+	P2pPort  = "6691"
 )
 
 var (
@@ -61,8 +61,7 @@ func createKeys(testState *testing.T) ([]*client.ChainlinkK8sClient, error) {
 func TestOCRBasic(testState *testing.T) {
 	var err error
 	t := &common.Test{}
-	t.Common = common.New()
-	t.Common.Default(testState)
+	t.Common = common.New(testState)
 	t.Cc = &common.ChainlinkClient{}
 	t.Common.P2PPort = P2pPort
 	t.Cc.ChainlinkNodes, err = createKeys(testState)

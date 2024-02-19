@@ -72,8 +72,8 @@ func defaultProps() map[string]any {
 		"replicas": "1",
 		"starknet-dev": map[string]any{
 			"image": map[string]any{
-				"image":   "shardlabs/starknet-devnet",
-				"version": "v0.6.0",
+				"image":   "shardlabs/starknet-devnet-rs",
+				"version": "latest",
 			},
 			"resources": map[string]any{
 				"requests": map[string]any{

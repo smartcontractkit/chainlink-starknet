@@ -3,10 +3,9 @@ package txm
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"sync"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -16,16 +15,16 @@ import (
 //go:generate mockery --name NonceManagerClient --output ./mocks/ --case=underscore --filename nonce_manager_client.go
 
 type NonceManagerClient interface {
-	AccountNonce(context.Context, caigotypes.Felt) (*big.Int, error)
+	AccountNonce(context.Context, *felt.Felt) (*felt.Felt, error)
 }
 
 type NonceManager interface {
 	services.Service
 
-	Register(ctx context.Context, address caigotypes.Felt, chainId string, client NonceManagerClient) error
+	Register(ctx context.Context, address *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error
 
-	NextSequence(address caigotypes.Felt, chainID string) (*big.Int, error)
-	IncrementNextSequence(address caigotypes.Felt, chainID string, currentNonce *big.Int) error
+	NextSequence(address *felt.Felt, chainID string) (*felt.Felt, error)
+	IncrementNextSequence(address *felt.Felt, chainID string, currentNonce *felt.Felt) error
 }
 
 var _ NonceManager = (*nonceManager)(nil)
@@ -34,14 +33,14 @@ type nonceManager struct {
 	starter utils.StartStopOnce
 	lggr    logger.Logger
 
-	n    map[string]map[string]*big.Int // map address + chain ID to nonce
+	n    map[string]map[string]*felt.Felt // map address + chain ID to nonce
 	lock sync.RWMutex
 }
 
 func NewNonceManager(lggr logger.Logger) *nonceManager {
 	return &nonceManager{
 		lggr: logger.Named(lggr, "NonceManager"),
-		n:    map[string]map[string]*big.Int{},
+		n:    map[string]map[string]*felt.Felt{},
 	}
 }
 
@@ -66,12 +65,12 @@ func (nm *nonceManager) HealthReport() map[string]error {
 }
 
 // Register is used because we cannot pre-fetch nonces. the pubkey is known before hand, but the account address is not known until a job is started and sends a tx
-func (nm *nonceManager) Register(ctx context.Context, addr caigotypes.Felt, chainId string, client NonceManagerClient) error {
+func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
-	addressNonces, exists := nm.n[addr.String()]
+	addressNonces, exists := nm.n[publicKey.String()]
 	if !exists {
-		nm.n[addr.String()] = map[string]*big.Int{}
+		nm.n[publicKey.String()] = map[string]*felt.Felt{}
 	}
 	_, exists = addressNonces[chainId]
 	if !exists {
@@ -79,13 +78,13 @@ func (nm *nonceManager) Register(ctx context.Context, addr caigotypes.Felt, chai
 		if err != nil {
 			return err
 		}
-		nm.n[addr.String()][chainId] = n
+		nm.n[publicKey.String()][chainId] = n
 	}
 
 	return nil
 }
 
-func (nm *nonceManager) NextSequence(addr caigotypes.Felt, chainId string) (*big.Int, error) {
+func (nm *nonceManager) NextSequence(addr *felt.Felt, chainId string) (*felt.Felt, error) {
 	if err := nm.validate(addr, chainId); err != nil {
 		return nil, err
 	}
@@ -95,7 +94,7 @@ func (nm *nonceManager) NextSequence(addr caigotypes.Felt, chainId string) (*big
 	return nm.n[addr.String()][chainId], nil
 }
 
-func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Felt, chainId string, currentNonce *big.Int) error {
+func (nm *nonceManager) IncrementNextSequence(addr *felt.Felt, chainId string, currentNonce *felt.Felt) error {
 	if err := nm.validate(addr, chainId); err != nil {
 		return err
 	}
@@ -106,11 +105,12 @@ func (nm *nonceManager) IncrementNextSequence(addr caigotypes.Felt, chainId stri
 	if n.Cmp(currentNonce) != 0 {
 		return fmt.Errorf("mismatched nonce for %s: %s (expected) != %s (got)", addr, n, currentNonce)
 	}
-	nm.n[addr.String()][chainId] = big.NewInt(n.Int64() + 1)
+	one := new(felt.Felt).SetUint64(1)
+	nm.n[addr.String()][chainId] = new(felt.Felt).Add(n, one)
 	return nil
 }
 
-func (nm *nonceManager) validate(addr caigotypes.Felt, id string) error {
+func (nm *nonceManager) validate(addr *felt.Felt, id string) error {
 	nm.lock.RLock()
 	defer nm.lock.RUnlock()
 	if _, exists := nm.n[addr.String()]; !exists {

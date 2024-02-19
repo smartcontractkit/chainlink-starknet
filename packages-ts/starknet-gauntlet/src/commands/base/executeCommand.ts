@@ -257,7 +257,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         return tx
       }
 
-      deps.logger.success(`Contract declared at ${tx.tx.class_hash}`)
+      deps.logger.success(`Contract declared at ${this.compiledContractHash}`)
       return tx
     }
 

@@ -5,17 +5,12 @@
   buildInputs = with pkgs; [
     stdenv.cc.cc.lib
     (rust-bin.stable.latest.default.override { extensions = ["rust-src"]; })
-    python39
-    python39Packages.pip
-    python39Packages.venvShellHook
-    python39Packages.fastecdsa # so libgmp is correctly sourced
-    zlib # for numpy
-    gmp
     nodejs-18_x
     (yarn.override { nodejs = nodejs-18_x; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
+    python3
 
     go_1_21
     gopls
@@ -23,10 +18,10 @@
     (golangci-lint.override { buildGoModule = buildGo121Module; })
     gotools
 
-    kube3d
     kubectl
-    k9s
     kubernetes-helm
+
+    postgresql_15 # psql
 
   ] ++ lib.optionals stdenv.isLinux [
     # ledger specific packages
@@ -36,6 +31,4 @@
 
   LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.zlib stdenv.cc.cc.lib]; # lib64
   HELM_REPOSITORY_CONFIG = "./.helm-repositories.yaml";
-
-  venvDir = "./.venv";
 }

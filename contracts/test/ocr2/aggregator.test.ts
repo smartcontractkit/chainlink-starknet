@@ -36,8 +36,6 @@ describe('Aggregator', function () {
   let oracles: Oracle[] = []
   let config_digest: number
 
-  let answer: string
-
   before(async () => {
     aggregatorFactory = await starknet.getContractFactory('aggregator')
 
@@ -56,7 +54,7 @@ describe('Aggregator', function () {
       owner: owner.starknetContract.address,
     })
 
-    await owner.invoke(token, 'permissionedMint', {
+    await owner.invoke(token, 'permissioned_mint', {
       account: owner.starknetContract.address,
       amount: 100_000_000_000,
     })

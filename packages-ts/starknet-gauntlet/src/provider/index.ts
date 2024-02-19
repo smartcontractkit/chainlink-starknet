@@ -1,8 +1,8 @@
 import { TransactionResponse } from '../transaction'
 import {
-  SequencerProvider as StarknetProvider,
+  RpcProvider as StarknetProvider,
+  InvokeFunctionResponse,
   DeployContractResponse,
-  Sequencer,
   CompiledContract,
   Account,
   Call,
@@ -44,7 +44,7 @@ export const makeProvider = (
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: Sequencer.AddTransactionResponse | DeployContractResponse,
+  response: InvokeFunctionResponse | DeployContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
@@ -64,7 +64,7 @@ export const wrapResponse = (
         success = false
       }
       const status = await provider.provider.getTransactionStatus(response.transaction_hash)
-      txResponse.tx.code = status.tx_status as any // For some reason, starknet does not consider any other status than "TRANSACTION_RECEIVED"
+      txResponse.code = status.finality_status // For some reason, starknet does not consider any other status than "TRANSACTION_RECEIVED"
       return { success }
     },
     status: 'PENDING',
@@ -77,8 +77,8 @@ class Provider implements IStarknetProvider {
   provider: StarknetProvider
   account: Account
 
-  constructor(baseUrl: string, wallet?: IStarknetWallet) {
-    this.provider = new StarknetProvider({ baseUrl })
+  constructor(nodeUrl: string, wallet?: IStarknetWallet) {
+    this.provider = new StarknetProvider({ nodeUrl })
     if (wallet) {
       this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
     }

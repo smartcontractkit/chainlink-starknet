@@ -5,8 +5,9 @@ import (
 	"math/big"
 	"time"
 
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/pkg/errors"
-	caigotypes "github.com/smartcontractkit/caigo/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -22,14 +23,19 @@ type Reader interface {
 var _ Reader = (*contractReader)(nil)
 
 type contractReader struct {
-	address caigotypes.Felt
+	address *felt.Felt
 	reader  OCR2Reader
 	lggr    logger.Logger
 }
 
 func NewContractReader(address string, reader OCR2Reader, lggr logger.Logger) Reader {
+	felt, err := starknetutils.HexToFelt(address)
+	if err != nil {
+		panic("invalid felt value")
+	}
+
 	return &contractReader{
-		address: caigotypes.StrToFelt(address), // TODO: propagate type everywhere
+		address: felt, // TODO: propagate type everywhere
 		reader:  reader,
 		lggr:    lggr,
 	}

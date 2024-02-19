@@ -72,21 +72,25 @@ class LedgerSigner implements SignerInterface {
     transactionsDetail: InvocationsSignerDetails,
     abis?: Abi[],
   ): Promise<Signature> {
+    // TODO: match https://github.com/starknet-io/starknet.js/blob/0f8b266da6709ddb897860575e09578e547d185c/src/signer/default.ts#L46-L77
+
     const calldata = transaction.fromCallsToExecuteCalldataWithNonce(
       transactions,
       transactionsDetail.nonce,
     )
 
-    const msgHash = hash.calculateTransactionHash(
-      transactionsDetail.walletAddress,
-      transactionsDetail.version,
-      calldata,
-      transactionsDetail.maxFee,
-      transactionsDetail.chainId,
-      transactionsDetail.nonce,
-    )
+    // const msgHash = hash.calculateTransactionHash(
+    //   transactionsDetail.walletAddress,
+    //   transactionsDetail.version,
+    //   calldata,
+    //   transactionsDetail.maxFee,
+    //   transactionsDetail.chainId,
+    //   transactionsDetail.nonce,
+    // )
 
-    return this.sign(msgHash)
+    // return this.sign(msgHash)
+
+    throw 'unimplemented'
   }
 
   async signDeployAccountTransaction(transaction: DeployAccountSignerDetails): Promise<Signature> {

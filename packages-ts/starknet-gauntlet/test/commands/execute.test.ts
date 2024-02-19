@@ -6,7 +6,6 @@ import {
   registerExecuteCommand,
   TIMEOUT,
 } from '../utils'
-import { IntegratedDevnet, startNetwork } from '../utils/network'
 
 let account: string = devnetAccount0Address
 let privateKey: string = devnetPrivateKey
@@ -65,12 +64,7 @@ describe('Execute Command', () => {
 })
 
 describe('Execute with network', () => {
-  let network: IntegratedDevnet
   let contractAddress: string
-
-  beforeAll(async () => {
-    network = await startNetwork({ seed: 0 })
-  }, TIMEOUT)
 
   it(
     'Command deploy execution',
@@ -107,8 +101,4 @@ describe('Execute with network', () => {
     },
     TIMEOUT,
   )
-
-  afterAll(() => {
-    network.stop()
-  })
 })

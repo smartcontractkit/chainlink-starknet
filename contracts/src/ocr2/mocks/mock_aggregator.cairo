@@ -18,6 +18,7 @@ mod MockAggregator {
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Aggregator::{Transmission, NewTransmission};
     use chainlink::ocr2::aggregator::Round;
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
 
     #[event]
     use chainlink::ocr2::aggregator::Aggregator::Event;
@@ -83,6 +84,13 @@ mod MockAggregator {
         }
     }
 
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'mock_aggregator.cairo 1.0.0'
+        }
+    }
+
     #[external(v0)]
     impl Aggregator of IAggregator<ContractState> {
         fn round_data(self: @ContractState, round_id: u128) -> Round {
@@ -108,10 +116,6 @@ mod MockAggregator {
 
         fn description(self: @ContractState) -> felt252 {
             'mock'
-        }
-
-        fn type_and_version(self: @ContractState) -> felt252 {
-            'mock_aggregator.cairo 1.0.0'
         }
     }
 }
