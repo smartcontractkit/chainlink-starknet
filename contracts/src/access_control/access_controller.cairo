@@ -5,6 +5,7 @@ mod AccessController {
 
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -42,13 +43,11 @@ mod AccessController {
         self.access_control.initializer();
     }
 
-    ///
-    /// Upgradeable
-    ///
-
-    // #[view]
-    fn type_and_version(self: @ContractState) -> felt252 {
-        'AccessController 1.0.0'
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'AccessController 1.0.0'
+        }
     }
 
     #[external(v0)]

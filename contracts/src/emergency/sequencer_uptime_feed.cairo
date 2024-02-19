@@ -30,6 +30,7 @@ mod SequencerUptimeFeed {
     use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::{Transmission};
@@ -108,6 +109,13 @@ mod SequencerUptimeFeed {
         to_address: EthAddress
     }
 
+    #[abi(embed_v0)]
+    impl TypeAndVersion of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'SequencerUptimeFeed 1.0.0'
+        }
+    }
+
     #[external(v0)]
     impl AggregatorImpl of IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
@@ -142,10 +150,6 @@ mod SequencerUptimeFeed {
 
         fn decimals(self: @ContractState) -> u8 {
             0_u8
-        }
-
-        fn type_and_version(self: @ContractState) -> felt252 {
-            'SequencerUptimeFeed 1.0.0'
         }
     }
 

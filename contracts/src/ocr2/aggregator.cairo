@@ -63,7 +63,6 @@ trait IAggregator<TContractState> {
     fn round_data(self: @TContractState, round_id: u128) -> Round;
     fn description(self: @TContractState) -> felt252;
     fn decimals(self: @TContractState) -> u8;
-    fn type_and_version(self: @TContractState) -> felt252;
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -205,6 +204,7 @@ mod Aggregator {
     use chainlink::libraries::access_control::{
         IAccessControllerDispatcher, IAccessControllerDispatcherTrait
     };
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
@@ -326,6 +326,13 @@ mod Aggregator {
         }
     }
 
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'ocr2/aggregator.cairo 1.0.0'
+        }
+    }
+
     #[external(v0)]
     impl AggregatorImpl of super::IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
@@ -361,10 +368,6 @@ mod Aggregator {
         fn decimals(self: @ContractState) -> u8 {
             self._require_read_access();
             self._decimals.read()
-        }
-
-        fn type_and_version(self: @ContractState) -> felt252 {
-            'ocr2/aggregator.cairo 1.0.0'
         }
     }
 
