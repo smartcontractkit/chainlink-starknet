@@ -122,7 +122,7 @@ format: format-go format-cairo format-ts
 format-check: format-cairo-check format-ts-check
 
 .PHONY: format-go
-format-go: format-go-fmt format-go-mod-tidy
+format-go: format-go-fmt gomodtidy
 
 .PHONY: format-go-fmt
 format-go-fmt:
@@ -130,8 +130,8 @@ format-go-fmt:
 	cd ./ops && go fmt ./...
 	cd ./integration-tests && go fmt ./...
 
-.PHONY: format-go-mod-tidy
-format-go-mod-tidy:
+.PHONY: gomodtidy
+gomodtidy:
 	cd ./relayer && go mod tidy
 	cd ./monitoring && go mod tidy
 	cd ./ops && go mod tidy
@@ -180,14 +180,12 @@ test-unit-go:
 
 .PHONY: test-integration-go
 # only runs tests with TestIntegration_* + //go:build integration
-test-integration-go:
+test-integration-go: env-devnet-hardhat
 	cd ./relayer && go test -v ./... -run TestIntegration -tags integration
 
 .PHONY: test-integration-prep
 test-integration-prep:
-	python -m venv ~/cairo_venv && \
-		. ~/cairo_venv/bin/activate
-	cd ./contracts && pip install -r requirements.txt
+	cd ./contracts
 	make build
 
 .PHONY: test-integration
@@ -202,7 +200,7 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -json ./smoke
+		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
@@ -221,17 +219,16 @@ test-integration-soak-ci:
 #       cd examples/contracts/aggregator-consumer/ && \
 #         yarn test
 test-integration-contracts: build-ts env-devnet-hardhat
-	cd packages-ts/integration-multisig/ && \
-		yarn test
+	echo "Tests currently broken because of starknet-hardhat-plugin"
+	exit 1
 	cd packages-ts/starknet/ && \
 		yarn test
 
 .PHONY: test-integration-gauntlet
-# TODO: better network lifecycle setup - tests setup/run their own network (L1 + conflict w/ above if not cleaned up)
 # TODO: fix example
 # cd packages-ts/starknet-gauntlet-example/ && \
 #   yarn test
-test-integration-gauntlet: build-ts env-devnet-hardhat-down
+test-integration-gauntlet: build-ts env-devnet-hardhat
 	cd packages-ts/starknet-gauntlet/ && \
 		yarn test
 	cd packages-ts/starknet-gauntlet-argent/ && \

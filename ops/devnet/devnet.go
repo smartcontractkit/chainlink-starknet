@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 
 	"github.com/go-resty/resty/v2"
@@ -74,6 +74,7 @@ func (devnet *StarknetDevnetClient) AutoDumpState() {
 
 // AutoLoadState auto loads last saved devnet state on contract not found
 func (devnet *StarknetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddress string) {
+	addr, _ := starknetutils.HexToFelt(ocrAddress)
 	t := time.NewTicker(15 * time.Second)
 	go func() {
 		for {
@@ -83,7 +84,8 @@ func (devnet *StarknetDevnetClient) AutoLoadState(client *ocr2.Client, ocrAddres
 				return
 			case <-t.C:
 				log.Debug().Msg("Checking for devnet OCR contract errors")
-				_, err := client.LatestTransmissionDetails(devnet.ctx, caigotypes.StrToFelt(ocrAddress))
+
+				_, err := client.LatestTransmissionDetails(devnet.ctx, addr)
 				if err != nil && strings.Contains(err.Error(), "is not deployed") {
 					_, err = devnet.client.R().SetBody(map[string]any{
 						"path": devnet.dumpPath,
@@ -103,7 +105,7 @@ func (devnet *StarknetDevnetClient) FundAccounts(l2AccList []string) error {
 	for _, key := range l2AccList {
 		res, err := devnet.client.R().SetBody(map[string]any{
 			"address": key,
-			"amount":  1e21,
+			"amount":  900000000000000000,
 		}).Post("/mint")
 		if err != nil {
 			return err

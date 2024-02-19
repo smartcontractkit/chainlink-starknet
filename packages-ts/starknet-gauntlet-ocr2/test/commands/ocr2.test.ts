@@ -7,8 +7,6 @@ import {
   registerExecuteCommand,
   TIMEOUT,
   LOCAL_URL,
-  startNetwork,
-  IntegratedDevnet,
   devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadContract } from '@chainlink/starknet-gauntlet'
@@ -75,13 +73,8 @@ const validInput = {
 }
 
 describe('OCR2 Contract', () => {
-  let network: IntegratedDevnet
   let contractAddress: string
   let accessController: string
-
-  beforeAll(async () => {
-    network = await startNetwork()
-  }, TIMEOUT)
 
   it(
     'Deploy AC',
@@ -195,8 +188,4 @@ describe('OCR2 Contract', () => {
     },
     TIMEOUT,
   )
-
-  afterAll(() => {
-    network.stop()
-  })
 })

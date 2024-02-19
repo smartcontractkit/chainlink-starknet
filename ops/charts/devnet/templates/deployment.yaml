@@ -21,22 +21,6 @@ spec:
         - name: vol
           hostPath:
             path: /dumps
-        - name: cairo-build
-          emptyDir: {}
-      initContainers:
-        - name: cairo-download
-          image: appropriate/curl
-          command: ["/bin/sh"]
-          args:
-            - "-c"
-            - |
-              mkdir -p cairo-build
-              curl -L --output release.tgz https://github.com/starkware-libs/cairo/releases/download/v2.0.2/release-x86_64-unknown-linux-musl.tar.gz
-              tar xzf release.tgz
-              mv cairo/* cairo-build/
-          volumeMounts:
-            - name: cairo-build
-              mountPath: /cairo-build
       containers:
       - name: {{ .Chart.Name }}
         volumeMounts:
@@ -45,10 +29,8 @@ spec:
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
-          - name: cairo-build
-            mountPath: /cairo-build
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet"}}:{{ .Values.tag | default "0.6.0"}}"
-        args: ["--sierra-compiler-path", "/cairo-build/bin/starknet-sierra-compile", "--lite-mode", "--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}]
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "d7c168ac53da3e9d717ed3ff8dad665ccade43e0"}}"
+        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1", "--gas-price", "1"]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}

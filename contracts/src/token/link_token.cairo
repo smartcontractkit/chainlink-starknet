@@ -1,11 +1,10 @@
 use starknet::ContractAddress;
 
+// https://github.com/starknet-io/starkgate-contracts/blob/v2.0/src/cairo/mintable_token_interface.cairo
 #[starknet::interface]
 trait IMintableToken<TContractState> {
-    #[external(v0)]
-    fn permissionedMint(ref self: TContractState, account: ContractAddress, amount: u256);
-    #[external(v0)]
-    fn permissionedBurn(ref self: TContractState, account: ContractAddress, amount: u256);
+    fn permissioned_mint(ref self: TContractState, account: ContractAddress, amount: u256);
+    fn permissioned_burn(ref self: TContractState, account: ContractAddress, amount: u256);
 }
 
 #[starknet::contract]
@@ -14,21 +13,56 @@ mod LinkToken {
 
     use zeroable::Zeroable;
 
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use chainlink::libraries::token::erc677::ERC677Component;
+    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
+    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+
+    use openzeppelin::token::erc20::ERC20Component;
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
-    use openzeppelin::token::erc20::ERC20;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-    use chainlink::libraries::token::erc677::ERC677;
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: ERC20Component, storage: erc20, event: ERC20Event);
+    component!(path: ERC677Component, storage: erc677, event: ERC677Event);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC20MetadataImpl = ERC20Component::ERC20MetadataImpl<ContractState>;
+    impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl ERC677Impl = ERC677Component::ERC677Impl<ContractState>;
 
     const NAME: felt252 = 'ChainLink Token';
     const SYMBOL: felt252 = 'LINK';
 
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
         _minter: ContractAddress,
+        #[substorage(v0)]
+        erc20: ERC20Component::Storage,
+        #[substorage(v0)]
+        erc677: ERC677Component::Storage
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        ERC20Event: ERC20Component::Event,
+        #[flat]
+        ERC677Event: ERC677Component::Event
     }
 
     //
@@ -36,152 +70,43 @@ mod LinkToken {
     //
     #[external(v0)]
     impl MintableToken of IMintableToken<ContractState> {
-        fn permissionedMint(ref self: ContractState, account: ContractAddress, amount: u256) {
+        fn permissioned_mint(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
-            let mut state = ERC20::unsafe_new_contract_state();
-            ERC20::InternalImpl::_mint(ref state, account, amount);
+            self.erc20._mint(account, amount);
         }
 
-        fn permissionedBurn(ref self: ContractState, account: ContractAddress, amount: u256) {
+        fn permissioned_burn(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
-            let mut state = ERC20::unsafe_new_contract_state();
-            ERC20::InternalImpl::_burn(ref state, account, amount);
+            self.erc20._burn(account, amount);
         }
     }
 
 
     #[constructor]
     fn constructor(ref self: ContractState, minter: ContractAddress, owner: ContractAddress) {
-        let mut state = ERC20::unsafe_new_contract_state();
-        ERC20::InternalImpl::initializer(ref state, NAME, SYMBOL);
+        self.erc20.initializer(NAME, SYMBOL);
         assert(!minter.is_zero(), 'minter is 0');
         self._minter.write(minter);
-        let mut ownable = Ownable::unsafe_new_contract_state();
-        Ownable::constructor(ref ownable, owner); // Ownable::initializer(owner);
+        self.ownable.initializer(owner);
     }
 
-    #[view]
+    // TODO #[view]
     fn minter(self: @ContractState) -> ContractAddress {
         self._minter.read()
     }
 
-    #[view]
-    fn type_and_version(self: @ContractState) -> felt252 {
-        'LinkToken 1.0.0'
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'LinkToken 1.0.0'
+        }
     }
 
-    // 
-    // ERC677
-    //
-
-    #[external(v0)]
-    fn transfer_and_call(
-        ref self: ContractState, to: ContractAddress, value: u256, data: Array<felt252>
-    ) -> bool {
-        let mut erc677 = ERC677::unsafe_new_contract_state();
-        ERC677::transfer_and_call(ref erc677, to, value, data)
-    }
-
-    //
-    //  Upgradeable
-    //
     #[external(v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
-        }
-    }
-
-    //
-    // Ownership
-    //
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
-        }
-    }
-
-    //
-    // ERC20
-    //
-
-    #[external(v0)]
-    impl ERC20Impl of IERC20<ContractState> {
-        fn name(self: @ContractState) -> felt252 {
-            let state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::name(@state)
-        }
-
-        fn symbol(self: @ContractState) -> felt252 {
-            let state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::symbol(@state)
-        }
-
-        fn decimals(self: @ContractState) -> u8 {
-            let state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::decimals(@state)
-        }
-
-        fn total_supply(self: @ContractState) -> u256 {
-            let state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::total_supply(@state)
-        }
-
-        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
-            let state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::balance_of(@state, account)
-        }
-
-        fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress
-        ) -> u256 {
-            let state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::allowance(@state, owner, spender)
-        }
-
-        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
-            let mut state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::transfer(ref state, recipient, amount)
-        }
-
-        fn transfer_from(
-            ref self: ContractState,
-            sender: ContractAddress,
-            recipient: ContractAddress,
-            amount: u256
-        ) -> bool {
-            let mut state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::transfer_from(ref state, sender, recipient, amount)
-        }
-
-        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
-            let mut state = ERC20::unsafe_new_contract_state();
-            ERC20::ERC20Impl::approve(ref state, spender, amount)
         }
     }
 

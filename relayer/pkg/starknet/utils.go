@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
@@ -88,39 +88,12 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	return data, nil
 }
 
-func FeltToUnsignedBig(felt caigotypes.Felt) (num *big.Int, err error) {
-	num = felt.Big()
-	if caigotypes.MaxFelt.Big().Cmp(num) == -1 {
-		return nil, fmt.Errorf("felt value is too large: %s", num)
-	}
-	// will always return a non-negative value because it uses Bytes() behind the scenes
-	return num, nil
-}
-
-func HexToUnsignedBig(str string) (num *big.Int, err error) {
-	felt := caigotypes.StrToFelt(str)
-	return FeltToUnsignedBig(felt)
-}
-
-func FeltsToBig(in []caigotypes.Felt) (out []*big.Int) {
+func FeltsToBig(in []*felt.Felt) (out []*big.Int) {
 	for _, f := range in {
-		out = append(out, f.Big())
+		out = append(out, f.BigInt(big.NewInt(0)))
 	}
 
 	return out
-}
-
-// StringsToFelt maps felts from 'string' (hex) representation to 'caigo.Felt' representation
-func StringsToFelt(in []string) (out []caigotypes.Felt, _ error) {
-	if in == nil {
-		return nil, errors.New("invalid: input value")
-	}
-
-	for _, f := range in {
-		out = append(out, caigotypes.StrToFelt(f))
-	}
-
-	return out, nil
 }
 
 /* Testing utils - do not use (XXX) outside testing context */

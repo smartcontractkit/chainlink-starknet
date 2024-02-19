@@ -27,15 +27,33 @@ mod SequencerUptimeFeed {
     use option::OptionTrait;
     use zeroable::Zeroable;
 
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
-    use chainlink::libraries::access_control::{AccessControl, IAccessController};
+    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
+    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
+    use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::{Transmission};
     use chainlink::libraries::upgradeable::Upgradeable;
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        access_control: AccessControlComponent::Storage,
         // l1 sender is an starknet validator ethereum address
         _l1_sender: felt252,
         // maps round id to round transmission
@@ -46,6 +64,10 @@ mod SequencerUptimeFeed {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
         RoundUpdated: RoundUpdated,
         NewRound: NewRound,
         AnswerUpdated: AnswerUpdated,
@@ -87,6 +109,13 @@ mod SequencerUptimeFeed {
         to_address: EthAddress
     }
 
+    #[abi(embed_v0)]
+    impl TypeAndVersion of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'SequencerUptimeFeed 1.0.0'
+        }
+    }
+
     #[external(v0)]
     impl AggregatorImpl of IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
@@ -121,10 +150,6 @@ mod SequencerUptimeFeed {
 
         fn decimals(self: @ContractState) -> u8 {
             0_u8
-        }
-
-        fn type_and_version(self: @ContractState) -> felt252 {
-            'SequencerUptimeFeed 1.0.0'
         }
     }
 
@@ -167,8 +192,7 @@ mod SequencerUptimeFeed {
     #[external(v0)]
     impl SequencerUptimeFeedImpl of super::ISequencerUptimeFeed<ContractState> {
         fn set_l1_sender(ref self: ContractState, address: EthAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
 
             assert(!address.is_zero(), '0 address not allowed');
 
@@ -198,84 +222,9 @@ mod SequencerUptimeFeed {
 
     #[external(v0)]
     fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
+        self.ownable.assert_only_owner();
         Upgradeable::upgrade(new_impl)
     }
-
-    ///
-    /// Ownership
-    ///
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
-        }
-    }
-
-
-    ///
-    /// Access Control
-    ///
-
-    #[external(v0)]
-    impl AccessControllerImpl of IAccessController<ContractState> {
-        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
-            let state = AccessControl::unsafe_new_contract_state();
-            AccessControl::has_access(@state, user, data)
-        }
-
-        fn add_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::add_access(ref state, user)
-        }
-
-        fn remove_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::remove_access(ref state, user)
-        }
-
-        fn enable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::enable_access_check(ref state)
-        }
-
-        fn disable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::disable_access_check(ref state)
-        }
-    }
-
 
     ///
     /// Internals
@@ -285,17 +234,14 @@ mod SequencerUptimeFeed {
     impl Internals of InternalTrait {
         fn _require_read_access(self: @ContractState) {
             let sender = starknet::info::get_caller_address();
-            let access_control = AccessControl::unsafe_new_contract_state();
-            AccessControl::check_read_access(@access_control, sender);
+            self.access_control.check_read_access(sender);
         }
 
         fn _initializer(
             ref self: ContractState, initial_status: u128, owner_address: ContractAddress
         ) {
-            let mut ownable = Ownable::unsafe_new_contract_state();
-            Ownable::constructor(ref ownable, owner_address);
-            let mut access_control = AccessControl::unsafe_new_contract_state();
-            AccessControl::constructor(ref access_control);
+            self.ownable.initializer(owner_address);
+            self.access_control.initializer();
             let round_id = 1_u128;
             let timestamp = starknet::info::get_block_timestamp();
             self._record_round(round_id, initial_status, timestamp);

@@ -5,11 +5,12 @@ go 1.21.3
 toolchain go1.21.5
 
 require (
+	github.com/NethermindEth/juno v0.3.1
+	github.com/NethermindEth/starknet.go v0.6.1-0.20231218140327-915109ab5bc1
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/hashicorp/go-plugin v1.5.2
 	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/pkg/errors v0.9.1
-	github.com/smartcontractkit/caigo v0.0.0-20230621050857-b29a4ca8c704
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
 	github.com/smartcontractkit/libocr v0.0.0-20240112202000-6359502d2ff1
 	github.com/stretchr/testify v1.8.4
@@ -44,7 +45,6 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.0 // indirect
@@ -76,6 +76,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
+	github.com/test-go/testify v1.1.4 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

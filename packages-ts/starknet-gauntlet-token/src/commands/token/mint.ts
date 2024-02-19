@@ -59,7 +59,7 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
       `${CATEGORIES.TOKEN}:mint --network=<NETWORK> --recipient=<ACCOUNT> --amount=<AMOUNT> <CONTRACT_ADDRESS>`,
     ],
   },
-  internalFunction: 'permissionedMint',
+  internalFunction: 'permissioned_mint',
   makeUserInput,
   makeContractInput,
   validations: [validateRecipient, validateAmount],
