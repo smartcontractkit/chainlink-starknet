@@ -171,16 +171,6 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		NonceDataMode:         starknetrpc.DAModeL1, // TODO: confirm
 		FeeMode:               starknetrpc.DAModeL1, // TODO: confirm
 	}
-	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	hash, err := account.TransactionHashInvoke(tx)
-	if err != nil {
-		return txhash, err
-	}
-	signature, err := account.Sign(ctx, hash)
-	if err != nil {
-		return txhash, err
-	}
-	tx.Signature = signature
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
 	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
@@ -191,11 +181,16 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// TODO: if we estimate with sig then the hash changes and we have to re-sign
 	// if we don't then the signature is invalid??
 
-	// Signing of the transaction that is done by the account
-	err = account.SignInvokeTransaction(context.Background(), &tx)
+	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
+	hash, err := account.TransactionHashInvoke(tx)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+		return txhash, err
 	}
+	signature, err := account.Sign(ctx, hash)
+	if err != nil {
+		return txhash, err
+	}
+	tx.Signature = signature
 
 	// get fee for tx
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
