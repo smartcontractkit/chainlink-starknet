@@ -196,7 +196,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
 	simFlags := []starknetrpc.SimulationFlag{}
-	txm.lggr.Infow("Estimated fee", "fee", tx.MaxFee)
+	txm.lggr.Infow("Estimated fee", "fee", tx.ResourceBounds.L2Gas.MaxAmount)
 	txm.lggr.Infow("Account", "account", account.AccountAddress)
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
@@ -206,8 +206,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	overallFee := feeEstimate[0].OverallFee.BigInt(new(big.Int))
 	expandedFee := new(big.Int).Mul(overallFee, big.NewInt(int64(FEE_MARGIN)))
 	maxFee := new(big.Int).Div(expandedFee, big.NewInt(100))
-	tx.MaxFee = starknetutils.BigIntToFelt(maxFee)
-	txm.lggr.Infow("Estimated fee", "fee", tx.MaxFee)
+	tx.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxFee).String())
+	txm.lggr.Infow("Estimated fee", "fee", tx.ResourceBounds.L2Gas.MaxAmount)
 	txm.lggr.Infow("Account", "account", account.AccountAddress)
 
 	// pad estimate to 110%
@@ -218,10 +218,16 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
 	// Re-sign transaction now that we've determined MaxFee
-	err = account.SignInvokeTransaction(context.Background(), &tx)
+	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
+	hash, err = account.TransactionHashInvoke(tx)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+		return txhash, err
 	}
+	signature, err = account.Sign(ctx, hash)
+	if err != nil {
+		return txhash, err
+	}
+	tx.Signature = signature
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
