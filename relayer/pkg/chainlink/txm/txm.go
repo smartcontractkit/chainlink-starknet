@@ -149,49 +149,38 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
 
-	// Building the tx struct
-	tx := starknetrpc.InvokeTxnV1{
-		MaxFee:        &felt.Zero,
+	tx := starknetrpc.InvokeTxnV3{
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
-		Version:       starknetrpc.TransactionV1,
+		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
 		Nonce:         nonce,
+		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
+			L1Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x186a0",
+				MaxPricePerUnit: "0x1388",
+			},
+			L2Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
+			},
+		},
+		Tip:                   "0x0",
+		PayMasterData:         []*felt.Felt{},
+		AccountDeploymentData: []*felt.Felt{},
+		NonceDataMode:         rpc.DAModeL1, // TODO: confirm
+		FeeMode:               rpc.DAModeL1, // TODO: confirm
 	}
-
-	// TODO: upgrade to V3 once devnet uses OZ 0.8.1 (accounts need to support v3)
-	// tx := starknetrpc.InvokeTxnV3{
-	// 	Type:          starknetrpc.TransactionType_Invoke,
-	// 	SenderAddress: account.AccountAddress,
-	// 	Version:       starknetrpc.TransactionV3,
-	// 	Signature:     []*felt.Felt{},
-	// 	Nonce:         nonce,
-	// 	ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
-	// 		L1Gas: starknetrpc.ResourceBounds{
-	// 			MaxAmount:       "0x186a0",
-	// 			MaxPricePerUnit: "0x1388",
-	// 		},
-	// 		L2Gas: starknetrpc.ResourceBounds{
-	// 			MaxAmount:       "0x0",
-	// 			MaxPricePerUnit: "0x0",
-	// 		},
-	// 	},
-	// 	Tip:                   "0x0",
-	// 	PayMasterData:         []*felt.Felt{},
-	// 	AccountDeploymentData: []*felt.Felt{},
-	// 	NonceDataMode:         rpc.DAModeL1, // TODO: confirm
-	// 	FeeMode:               rpc.DAModeL1, // TODO: confirm
-	// }
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	// hash, err := account.TransactionHashInvoke(tx)
-	// if err != nil {
-	// 	return txhash, err
-	// }
-	// signature, err := account.Sign(ctx, hash)
-	// if err != nil {
-	// 	return txhash, err
-	// }
-	// tx.Signature = signature
+	hash, err := account.TransactionHashInvoke(tx)
+	if err != nil {
+		return txhash, err
+	}
+	signature, err := account.Sign(ctx, hash)
+	if err != nil {
+		return txhash, err
+	}
+	tx.Signature = signature
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
 	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
