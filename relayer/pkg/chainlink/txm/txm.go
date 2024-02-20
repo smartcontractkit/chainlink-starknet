@@ -168,8 +168,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		Tip:                   "0x0",
 		PayMasterData:         []*felt.Felt{},
 		AccountDeploymentData: []*felt.Felt{},
-		NonceDataMode:         rpc.DAModeL1, // TODO: confirm
-		FeeMode:               rpc.DAModeL1, // TODO: confirm
+		NonceDataMode:         starknetrpc.DAModeL1, // TODO: confirm
+		FeeMode:               starknetrpc.DAModeL1, // TODO: confirm
 	}
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
 	hash, err := account.TransactionHashInvoke(tx)
