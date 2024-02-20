@@ -168,14 +168,14 @@ var zeroBigInt = big.NewInt(0)
 func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress, contractAddress *felt.Felt) (*big.Int, error) {
 	results, err := s.ocr2Reader.BaseReader().CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkTokenAddress,
-		Selector:        starknetutils.GetSelectorFromNameFelt("balanceOf"),
+		Selector:        starknetutils.GetSelectorFromNameFelt("balance_of"),
 		Calldata:        []*felt.Felt{contractAddress},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed call to ECR20 contract, balanceOf method: %w", err)
+		return nil, fmt.Errorf("failed call to ECR20 contract, balance_of method: %w", err)
 	}
 	if len(results) < 1 {
-		return nil, fmt.Errorf("insufficient data from balanceOf '%v': %w", results, err)
+		return nil, fmt.Errorf("insufficient data from balance_of '%v': %w", results, err)
 	}
 	linkBalance := results[0].BigInt(big.NewInt(0))
 	if linkBalance.Cmp(zeroBigInt) == 0 {

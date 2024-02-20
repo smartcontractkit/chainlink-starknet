@@ -173,10 +173,17 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payment'")
 	}
-	if len(results) != 1 {
+	if len(results) != 2 {
 		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
 	}
-	return results[0].BigInt(big.NewInt(0)), nil
+
+	isNegative := !results[0].IsZero()
+	ans := results[1].BigInt(big.NewInt(0))
+	if isNegative {
+		ans.Neg(ans)
+	}
+
+	return ans, nil
 }
 
 func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*felt.Felt, err error) {
