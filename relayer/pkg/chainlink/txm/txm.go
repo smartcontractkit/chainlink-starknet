@@ -196,26 +196,35 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
 	simFlags := []starknetrpc.SimulationFlag{}
-	txm.lggr.Infow("Estimated fee", "fee", tx.ResourceBounds.L2Gas.MaxAmount)
-	txm.lggr.Infow("Account", "account", account.AccountAddress)
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
 		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
 	}
 
-	overallFee := feeEstimate[0].OverallFee.BigInt(new(big.Int))
-	expandedFee := new(big.Int).Mul(overallFee, big.NewInt(int64(FEE_MARGIN)))
-	maxFee := new(big.Int).Div(expandedFee, big.NewInt(100))
-	tx.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxFee).String())
-	txm.lggr.Infow("Estimated fee", "fee", tx.ResourceBounds.L2Gas.MaxAmount)
 	txm.lggr.Infow("Account", "account", account.AccountAddress)
 
+	var friEstimate *starknetrpc.FeeEstimate = nil
+	for i, f := range feeEstimate {
+		txm.lggr.Infow("Estimated fee", "index", i, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
+		if f.FeeUnit == "FRI" && friEstimate == nil {
+			friEstimate = &feeEstimate[i]
+		}
+	}
+	if friEstimate == nil {
+		return txhash, fmt.Errorf("failed to get FRI estimate")
+	}
+
+	// TODO: does v3 tx uses fri instead of wei? check feeEstimate[0].FeeUnit?
 	// pad estimate to 110%
-	// gasConsumed := feeEstimate[0].GasConsumed.BigInt(new(big.Int))
-	// expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
-	// maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	// maxAmount := starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
-	// tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
+	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+	tx.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+
+	// TODO: add margin
+	tx.ResourceBounds.L2Gas.MaxPricePerUnit = starknetrpc.U128(friEstimate.GasPrice.String())
+
+	txm.lggr.Infow("Set resource bounds", "L2MaxAmount", tx.ResourceBounds.L2Gas.MaxAmount, "L2MaxPricePerUnit", tx.ResourceBounds.L2Gas.MaxPricePerUnit)
 
 	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
