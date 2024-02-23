@@ -30,17 +30,15 @@ fn setup() -> ContractAddress {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_not_owner() {
-    let sender = setup();
+    let _ = setup();
     let mut state = STATE();
 
     UpgradeableImpl::upgrade(ref state, class_hash_const::<2>());
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_access_control() {
     let owner = setup();
     // Deploy access controller

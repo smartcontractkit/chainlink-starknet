@@ -51,21 +51,18 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_ownable() {
     let (account, sequencerFeedAddr, _) = setup();
     should_implement_ownable(sequencerFeedAddr, account);
 }
 
 #[test]
-#[available_gas(3000000)]
 fn test_access_control() {
     let (account, sequencerFeedAddr, _) = setup();
     should_implement_access_control(sequencerFeedAddr, account);
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic()]
 fn test_set_l1_sender_not_owner() {
     let (_, _, sequencerUptimeFeed) = setup();
@@ -73,7 +70,6 @@ fn test_set_l1_sender_not_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_set_l1_sender() {
     let (owner, _, sequencerUptimeFeed) = setup();
     set_contract_address(owner);
@@ -82,7 +78,6 @@ fn test_set_l1_sender() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('user does not have read access',))]
 fn test_latest_round_data_no_access() {
     let (owner, sequencerFeedAddr, _) = setup();
@@ -92,7 +87,6 @@ fn test_latest_round_data_no_access() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('user does not have read access',))]
 fn test_aggregator_proxy_response() {
     let (owner, sequencerFeedAddr, _) = setup();
