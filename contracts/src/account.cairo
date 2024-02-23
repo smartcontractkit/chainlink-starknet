@@ -1,57 +1,233 @@
-// copied from https://github.com/OpenZeppelin/cairo-contracts/blob/v0.8.1/src/presets/account.cairo
+// copied from https://github.com/OpenZeppelin/cairo-contracts/blob/release-v0.9.0/src/access/ownable/ownable.cairo
 
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts for Cairo v0.8.1 (presets/account.cairo)
+// OpenZeppelin Contracts for Cairo v0.9.0 (access/ownable/ownable.cairo)
 
-/// # Account Preset
+/// # Ownable Component
 ///
-/// OpenZeppelin's basic account which can change its public key and declare, deploy, or call contracts.
-#[starknet::contract(account)]
-mod Account {
-    use openzeppelin::account::AccountComponent;
-    use openzeppelin::introspection::src5::SRC5Component;
-
-    component!(path: AccountComponent, storage: account, event: AccountEvent);
-    component!(path: SRC5Component, storage: src5, event: SRC5Event);
-
-    // Account
-    #[abi(embed_v0)]
-    impl SRC6Impl = AccountComponent::SRC6Impl<ContractState>;
-    #[abi(embed_v0)]
-    impl SRC6CamelOnlyImpl = AccountComponent::SRC6CamelOnlyImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl PublicKeyImpl = AccountComponent::PublicKeyImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl PublicKeyCamelImpl = AccountComponent::PublicKeyCamelImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl DeclarerImpl = AccountComponent::DeclarerImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl DeployableImpl = AccountComponent::DeployableImpl<ContractState>;
-    impl AccountInternalImpl = AccountComponent::InternalImpl<ContractState>;
-
-    // SRC5
-    #[abi(embed_v0)]
-    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
+/// The Ownable component provides a basic access control mechanism, where
+/// there is an account (an owner) that can be granted exclusive access to
+/// specific functions.
+///
+/// The initial owner can be set by using the `initializer` function in
+/// construction time. This can later be changed with `transfer_ownership`.
+///
+/// The component also offers functionality for a two-step ownership
+/// transfer where the new owner first has to accept their ownership to
+/// finalize the transfer.
+#[starknet::component]
+mod OwnableComponent {
+    use openzeppelin::access::ownable::interface;
+    use starknet::ContractAddress;
+    use starknet::get_caller_address;
 
     #[storage]
     struct Storage {
-        #[substorage(v0)]
-        account: AccountComponent::Storage,
-        #[substorage(v0)]
-        src5: SRC5Component::Storage
+        Ownable_owner: ContractAddress,
+        Ownable_pending_owner: ContractAddress
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
-        AccountEvent: AccountComponent::Event,
-        #[flat]
-        SRC5Event: SRC5Component::Event
+        OwnershipTransferred: OwnershipTransferred,
+        OwnershipTransferStarted: OwnershipTransferStarted
     }
 
-    #[constructor]
-    fn constructor(ref self: ContractState, public_key: felt252) {
-        self.account.initializer(public_key);
+    #[derive(Drop, starknet::Event)]
+    struct OwnershipTransferred {
+        #[key]
+        previous_owner: ContractAddress,
+        #[key]
+        new_owner: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct OwnershipTransferStarted {
+        #[key]
+        previous_owner: ContractAddress,
+        #[key]
+        new_owner: ContractAddress,
+    }
+
+    mod Errors {
+        const NOT_OWNER: felt252 = 'Caller is not the owner';
+        const NOT_PENDING_OWNER: felt252 = 'Caller is not the pending owner';
+        const ZERO_ADDRESS_CALLER: felt252 = 'Caller is the zero address';
+        const ZERO_ADDRESS_OWNER: felt252 = 'New owner is the zero address';
+    }
+
+    #[embeddable_as(OwnableImpl)]
+    impl Ownable<
+        TContractState, +HasComponent<TContractState>
+    > of interface::IOwnable<ComponentState<TContractState>> {
+        /// Returns the address of the current owner.
+        fn owner(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.Ownable_owner.read()
+        }
+
+        /// Transfers ownership of the contract to a new address.
+        ///
+        /// Requirements:
+        ///
+        /// - `new_owner` is not the zero address.
+        /// - The caller is the contract owner.
+        ///
+        /// Emits an `OwnershipTransferred` event.
+        fn transfer_ownership(
+            ref self: ComponentState<TContractState>, new_owner: ContractAddress
+        ) {
+            assert(!new_owner.is_zero(), Errors::ZERO_ADDRESS_OWNER);
+            self.assert_only_owner();
+            self._transfer_ownership(new_owner);
+        }
+
+        /// Leaves the contract without owner. It will not be possible to call `assert_only_owner`
+        /// functions anymore. Can only be called by the current owner.
+        ///
+        /// Requirements:
+        ///
+        /// - The caller is the contract owner.
+        ///
+        /// Emits an `OwnershipTransferred` event.
+        fn renounce_ownership(ref self: ComponentState<TContractState>) {
+            self.assert_only_owner();
+            self._transfer_ownership(Zeroable::zero());
+        }
+    }
+
+    /// Adds support for two step ownership transfer.
+    #[embeddable_as(OwnableTwoStepImpl)]
+    impl OwnableTwoStep<
+        TContractState, +HasComponent<TContractState>
+    > of interface::IOwnableTwoStep<ComponentState<TContractState>> {
+        /// Returns the address of the current owner.
+        fn owner(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.Ownable_owner.read()
+        }
+
+        /// Returns the address of the pending owner.
+        fn pending_owner(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.Ownable_pending_owner.read()
+        }
+
+        /// Finishes the two-step ownership transfer process by accepting the ownership.
+        /// Can only be called by the pending owner.
+        fn accept_ownership(ref self: ComponentState<TContractState>) {
+            let caller = get_caller_address();
+            let pending_owner = self.Ownable_pending_owner.read();
+            assert(caller == pending_owner, Errors::NOT_PENDING_OWNER);
+            self._accept_ownership();
+        }
+
+        /// Starts the two-step ownership transfer process by setting the pending owner.
+        fn transfer_ownership(
+            ref self: ComponentState<TContractState>, new_owner: ContractAddress
+        ) {
+            self.assert_only_owner();
+            self._propose_owner(new_owner);
+        }
+
+        /// Leaves the contract without owner. It will not be possible to call `assert_only_owner`
+        /// functions anymore. Can only be called by the current owner.
+        fn renounce_ownership(ref self: ComponentState<TContractState>) {
+            Ownable::renounce_ownership(ref self);
+        }
+    }
+
+    /// Adds camelCase support for `IOwnable`.
+    #[embeddable_as(OwnableCamelOnlyImpl)]
+    impl OwnableCamelOnly<
+        TContractState, +HasComponent<TContractState>
+    > of interface::IOwnableCamelOnly<ComponentState<TContractState>> {
+        fn transferOwnership(ref self: ComponentState<TContractState>, newOwner: ContractAddress) {
+            Ownable::transfer_ownership(ref self, newOwner);
+        }
+
+        fn renounceOwnership(ref self: ComponentState<TContractState>) {
+            Ownable::renounce_ownership(ref self);
+        }
+    }
+
+    /// Adds camelCase support for `IOwnableTwoStep`.
+    #[embeddable_as(OwnableTwoStepCamelOnlyImpl)]
+    impl OwnableTwoStepCamelOnly<
+        TContractState, +HasComponent<TContractState>
+    > of interface::IOwnableTwoStepCamelOnly<ComponentState<TContractState>> {
+        fn pendingOwner(self: @ComponentState<TContractState>) -> ContractAddress {
+            OwnableTwoStep::pending_owner(self)
+        }
+
+        fn acceptOwnership(ref self: ComponentState<TContractState>) {
+            self.accept_ownership();
+        }
+
+        fn transferOwnership(ref self: ComponentState<TContractState>, newOwner: ContractAddress) {
+            OwnableTwoStep::transfer_ownership(ref self, newOwner);
+        }
+
+        fn renounceOwnership(ref self: ComponentState<TContractState>) {
+            OwnableTwoStep::renounce_ownership(ref self);
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of InternalTrait<TContractState> {
+        /// Sets the contract's initial owner.
+        ///
+        /// This function should be called at construction time.
+        fn initializer(ref self: ComponentState<TContractState>, owner: ContractAddress) {
+            self._transfer_ownership(owner);
+        }
+
+        /// Panics if called by any account other than the owner. Use this
+        /// to restrict access to certain functions to the owner.
+        fn assert_only_owner(self: @ComponentState<TContractState>) {
+            let owner = self.Ownable_owner.read();
+            let caller = get_caller_address();
+            assert(!caller.is_zero(), Errors::ZERO_ADDRESS_CALLER);
+            assert(caller == owner, Errors::NOT_OWNER);
+        }
+
+        /// Transfers ownership to the pending owner.
+        ///
+        /// Internal function without access restriction.
+        fn _accept_ownership(ref self: ComponentState<TContractState>) {
+            let pending_owner = self.Ownable_pending_owner.read();
+            self.Ownable_pending_owner.write(Zeroable::zero());
+            self._transfer_ownership(pending_owner);
+        }
+
+        /// Sets a new pending owner.
+        ///
+        /// Internal function without access restriction.
+        fn _propose_owner(ref self: ComponentState<TContractState>, new_owner: ContractAddress) {
+            let previous_owner = self.Ownable_owner.read();
+            self.Ownable_pending_owner.write(new_owner);
+            self
+                .emit(
+                    OwnershipTransferStarted {
+                        previous_owner: previous_owner, new_owner: new_owner
+                    }
+                );
+        }
+
+        /// Transfers ownership of the contract to a new address.
+        ///
+        /// Internal function without access restriction.
+        ///
+        /// Emits an `OwnershipTransferred` event.
+        fn _transfer_ownership(
+            ref self: ComponentState<TContractState>, new_owner: ContractAddress
+        ) {
+            let previous_owner: ContractAddress = self.Ownable_owner.read();
+            self.Ownable_owner.write(new_owner);
+            self
+                .emit(
+                    OwnershipTransferred { previous_owner: previous_owner, new_owner: new_owner }
+                );
+        }
     }
 }

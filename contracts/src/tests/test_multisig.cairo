@@ -24,9 +24,13 @@ mod MultisigTest {
     #[storage]
     struct Storage {}
 
-    #[external(v0)]
-    fn increment(ref self: ContractState, val1: felt252, val2: felt252) -> Array<felt252> {
-        array![val1 + 1, val2 + 1]
+    #[abi(per_item)]
+    #[generate_trait]
+    impl HelperImpl of HelperTrait {
+        #[external(v0)]
+        fn increment(ref self: ContractState, val1: felt252, val2: felt252) -> Array<felt252> {
+            array![val1 + 1, val2 + 1]
+        }
     }
 }
 
@@ -40,21 +44,18 @@ fn sample_calldata() -> Array::<felt252> {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_assert_unique_values_empty() {
     let a = ArrayTrait::<felt252>::new();
     assert_unique_values(@a);
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_assert_unique_values_no_duplicates() {
     let a = array![1, 2, 3];
     assert_unique_values(@a);
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_assert_unique_values_with_duplicate() {
     let a = array![1, 2, 3, 3];
@@ -62,7 +63,6 @@ fn test_assert_unique_values_with_duplicate() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_is_signer_true() {
     let mut state = STATE();
     let signer = contract_address_const::<1>();
@@ -73,7 +73,6 @@ fn test_is_signer_true() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_is_signer_false() {
     let mut state = STATE();
     let not_signer = contract_address_const::<2>();
@@ -84,7 +83,6 @@ fn test_is_signer_false() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_signer_len() {
     let mut state = STATE();
     let mut signers = ArrayTrait::new();
@@ -95,7 +93,6 @@ fn test_signer_len() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_get_signers() {
     let mut state = STATE();
     let signer1 = contract_address_const::<1>();
@@ -110,7 +107,6 @@ fn test_get_signers() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_get_threshold() {
     let mut state = STATE();
     let mut signers = ArrayTrait::new();
@@ -121,7 +117,6 @@ fn test_get_threshold() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_submit_transaction() {
     let mut state = STATE();
     let signer = contract_address_const::<1>();
@@ -135,7 +130,7 @@ fn test_submit_transaction() {
         ref state, :to, :function_selector, calldata: sample_calldata()
     );
 
-    let (transaction, calldata) = MultisigImpl::get_transaction(@state, 0);
+    let (transaction, _) = MultisigImpl::get_transaction(@state, 0);
     assert(transaction.to == to, 'should match target address');
     assert(transaction.function_selector == function_selector, 'should match function selector');
     assert(transaction.calldata_len == sample_calldata().len(), 'should match calldata length');
@@ -145,7 +140,6 @@ fn test_submit_transaction() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_submit_transaction_not_signer() {
     let mut state = STATE();
@@ -163,7 +157,6 @@ fn test_submit_transaction_not_signer() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_confirm_transaction() {
     let mut state = STATE();
     let signer1 = contract_address_const::<1>();
@@ -189,7 +182,6 @@ fn test_confirm_transaction() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_confirm_transaction_not_signer() {
     let mut state = STATE();
@@ -210,7 +202,6 @@ fn test_confirm_transaction_not_signer() {
 }
 
 #[test]
-#[available_gas(4000000)]
 fn test_revoke_confirmation() {
     let mut state = STATE();
     let signer1 = contract_address_const::<1>();
@@ -239,7 +230,6 @@ fn test_revoke_confirmation() {
 }
 
 #[test]
-#[available_gas(4000000)]
 #[should_panic]
 fn test_revoke_confirmation_not_signer() {
     let mut state = STATE();
@@ -261,7 +251,6 @@ fn test_revoke_confirmation_not_signer() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_execute_confirmation_below_threshold() {
     let mut state = STATE();
@@ -281,7 +270,6 @@ fn test_execute_confirmation_below_threshold() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only multisig allowed',))]
 fn test_upgrade_not_multisig() {
     let mut state = STATE();
@@ -292,7 +280,6 @@ fn test_upgrade_not_multisig() {
 }
 
 #[test]
-#[available_gas(80000000)]
 fn test_execute() {
     let mut state = STATE();
     let signer1 = contract_address_const::<1>();
@@ -324,7 +311,6 @@ fn test_execute() {
 }
 
 #[test]
-#[available_gas(8000000)]
 #[should_panic(expected: ('invalid signer',))]
 fn test_execute_not_signer() {
     let mut state = STATE();
@@ -348,7 +334,6 @@ fn test_execute_not_signer() {
 }
 
 #[test]
-#[available_gas(8000000)]
 #[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_signers() {
     let mut state = STATE();
@@ -378,7 +363,6 @@ fn test_execute_after_set_signers() {
 }
 
 #[test]
-#[available_gas(8000000)]
 #[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_signers_and_threshold() {
     let mut state = STATE();
@@ -408,7 +392,6 @@ fn test_execute_after_set_signers_and_threshold() {
 }
 
 #[test]
-#[available_gas(8000000)]
 #[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_threshold() {
     let mut state = STATE();
@@ -455,7 +438,6 @@ fn test_set_threshold() {
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
     assert(multisig.get_threshold() == init_threshold, 'invalid init threshold');
-    set_caller_address(multisig_address);
     set_contract_address(multisig_address);
     multisig.set_threshold(new_threshold);
     assert(multisig.get_threshold() == new_threshold, 'threshold was not updated');
@@ -485,30 +467,24 @@ fn test_recursive_set_threshold() {
 
     // Checks that the threshold was correctly initialized on deployment
     assert(multisig.get_threshold() == init_threshold, 'invalid init threshold');
-
     // Recursive call occurs here - this code proposes a transaction to the 
     // multisig contract that calls the set_threshold function on the multisig 
     // contract. 
     let mut set_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_threshold, ref set_threshold_calldata);
-    set_caller_address(multisig_address);
-    set_contract_address(multisig_address);
+    set_contract_address(s1);
     multisig
         .submit_transaction(multisig_address, selector!("set_threshold"), set_threshold_calldata);
-
     // Signer 1 confirms the transaction
-    set_caller_address(s1);
     set_contract_address(s1);
     multisig.confirm_transaction(0);
 
     // Signer 2 confirms the transaction
-    set_caller_address(s2);
     set_contract_address(s2);
     multisig.confirm_transaction(0);
 
     // Once we have enough confirmations, we execute the transaction
-    set_caller_address(multisig_address);
-    set_contract_address(multisig_address);
+    set_contract_address(s1);
     multisig.execute_transaction(0);
 
     // Now we check that the threshold was actually updated
@@ -540,7 +516,6 @@ fn test_set_signers() {
     assert(*returned_signers.at(1) == s2, 'should match signer 2');
     assert(multisig.get_threshold() == 2, 'wrong init threshold');
 
-    set_caller_address(multisig_address);
     set_contract_address(multisig_address);
     multisig.set_signers(new_signers);
 
@@ -584,23 +559,19 @@ fn test_recursive_set_signers() {
     // contract. 
     let mut set_signers_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_calldata);
-    set_caller_address(multisig_address);
-    set_contract_address(multisig_address);
+    set_contract_address(s1);
     multisig.submit_transaction(multisig_address, selector!("set_signers"), set_signers_calldata);
 
     // Signer 1 confirms the transaction
-    set_caller_address(s1);
     set_contract_address(s1);
     multisig.confirm_transaction(0);
 
     // Signer 2 confirms the transaction
-    set_caller_address(s2);
     set_contract_address(s2);
     multisig.confirm_transaction(0);
 
     // Once we have enough confirmations, we execute the transaction
-    set_caller_address(multisig_address);
-    set_contract_address(multisig_address);
+    set_contract_address(s1);
     multisig.execute_transaction(0);
 
     // Now we check that the signers were actually updated
@@ -638,7 +609,6 @@ fn test_set_signers_and_threshold() {
     assert(*returned_signers.at(2) == s3, 'should match signer 3');
     assert(multisig.get_threshold() == init_threshold, 'wrong init threshold');
 
-    set_caller_address(multisig_address);
     set_contract_address(multisig_address);
     multisig.set_signers_and_threshold(new_signers, new_threshold);
 
@@ -687,8 +657,7 @@ fn test_recursive_set_signers_and_threshold() {
     let mut set_signers_and_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_and_threshold_calldata);
     Serde::serialize(@new_threshold, ref set_signers_and_threshold_calldata);
-    set_caller_address(multisig_address);
-    set_contract_address(multisig_address);
+    set_contract_address(s1);
     multisig
         .submit_transaction(
             multisig_address,
@@ -697,23 +666,19 @@ fn test_recursive_set_signers_and_threshold() {
         );
 
     // Signer 1 confirms the transaction
-    set_caller_address(s1);
     set_contract_address(s1);
     multisig.confirm_transaction(0);
 
     // Signer 2 confirms the transaction
-    set_caller_address(s2);
     set_contract_address(s2);
     multisig.confirm_transaction(0);
 
     // Signer 3 confirms the transaction
-    set_caller_address(s3);
     set_contract_address(s3);
     multisig.confirm_transaction(0);
 
     // Once we have enough confirmations, we execute the transaction
-    set_caller_address(multisig_address);
-    set_contract_address(multisig_address);
+    set_contract_address(s1);
     multisig.execute_transaction(0);
 
     // Now we check that the signers were actually updated

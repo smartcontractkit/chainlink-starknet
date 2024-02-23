@@ -11,7 +11,7 @@ mod MockNonUpgradeable {
     #[constructor]
     fn constructor(ref self: ContractState) {}
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MockNonUpgradeableImpl of super::IMockNonUpgradeable<ContractState> {
         fn bar(self: @ContractState) -> bool {
             true
