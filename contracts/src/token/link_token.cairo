@@ -20,7 +20,6 @@ mod LinkToken {
     use super::IMintableToken;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::erc677::ERC677Component;
-    // use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 

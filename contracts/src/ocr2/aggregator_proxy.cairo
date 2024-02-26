@@ -50,7 +50,6 @@ mod AggregatorProxy {
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
-    // use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use chainlink::utils::split_felt;
