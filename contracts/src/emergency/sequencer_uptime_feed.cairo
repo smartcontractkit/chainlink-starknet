@@ -29,7 +29,6 @@ mod SequencerUptimeFeed {
 
     use openzeppelin::access::ownable::ownable::OwnableComponent;
 
-    // use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use chainlink::libraries::type_and_version::ITypeAndVersion;

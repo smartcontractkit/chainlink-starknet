@@ -14,7 +14,6 @@ use core::result::ResultTrait;
 use chainlink::ocr2::mocks::mock_aggregator::{
     MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait
 };
-// use chainlink::ocr2::aggregator::{IAggregator, IAggregatorDispatcher, IAggregatorDispatcherTrait};
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
     AggregatorProxyImpl, AggregatorProxyInternal, UpgradeableImpl

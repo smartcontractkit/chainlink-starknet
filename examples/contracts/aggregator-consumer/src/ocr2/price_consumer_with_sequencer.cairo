@@ -53,7 +53,7 @@ mod AggregatorPriceConsumerWithSequencer {
             0 => {
                 assert(!report_stale, 'L2 seq up & report stale');
             },
-            _ => {
+            1 | _ => {
                 assert(!report_stale, 'L2 seq down & report stale');
                 assert(false, 'L2 seq down & report ok');
             }

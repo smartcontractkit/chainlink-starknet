@@ -17,7 +17,6 @@ mod AccessControlComponent {
     use zeroable::Zeroable;
 
     use openzeppelin::access::ownable::ownable::OwnableComponent;
-    // use chainlink::libraries::ownable::{OwnableComponent};
 
     use OwnableComponent::InternalImpl as OwnableInternalImpl;
 
