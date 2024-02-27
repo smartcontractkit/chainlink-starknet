@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -223,37 +222,6 @@ func (c *Common) TearDownLocalEnvironment(t *testing.T) {
 	log.Info().Msg("Tear down local stack complete.")
 }
 
-// connectChainlinkNodes creates a chainlink client for each node in the environment
-// This is a non k8s version of the function in chainlink_k8s.go
-// https://github.com/smartcontractkit/chainlink/blob/cosmos-test-keys/integration-tests/client/chainlink_k8s.go#L77
-func connectChainlinkNodes(e *environment.Environment) ([]*client.ChainlinkClient, error) {
-	var clients []*client.ChainlinkClient
-	for _, nodeDetails := range e.ChainlinkNodeDetails {
-		c, err := client.NewChainlinkClient(&client.ChainlinkConfig{
-			URL:        nodeDetails.LocalIP,
-			Email:      "notreal@fakeemail.ch",
-			Password:   "fj293fbBnlQ!f9vNs",
-			InternalIP: parseHostname(nodeDetails.InternalIP),
-		}, log.Logger)
-		if err != nil {
-			return nil, err
-		}
-		log.Debug().
-			Str("URL", c.Config.URL).
-			Str("Internal IP", c.Config.InternalIP).
-			Str("Chart Name", nodeDetails.ChartName).
-			Str("Pod Name", nodeDetails.PodName).
-			Msg("Connected to Chainlink node")
-		clients = append(clients, c)
-	}
-	return clients, nil
-}
-
-func parseHostname(s string) string {
-	r := regexp.MustCompile(`://(?P<Host>.*):`)
-	return r.FindStringSubmatch(s)[1]
-}
-
 func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client.NodeKeysBundle, error) {
 	nkb := make([]client.NodeKeysBundle, 0)
 	for _, n := range nodes {
@@ -295,8 +263,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	// Defining relay config
 	bootstrapRelayConfig := job.JSONConfig{
 		"nodeName":       fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.New().String()),
-		"accountAddress": fmt.Sprintf("%s", accountAddresses[0]),
-		"chainID":        fmt.Sprintf("%s", c.ChainDetails.ChainId),
+		"accountAddress": accountAddresses[0],
+		"chainID":        c.ChainDetails.ChainId,
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
@@ -325,7 +293,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	sourceValueBridge := &client.BridgeTypeAttributes{
 		Name: "mockserver-bridge",
-		URL:  fmt.Sprintf("%s/%s", c.RPCDetails.MockServerEndpoint, strings.TrimPrefix(c.RPCDetails.MockServerUrl, "/")),
+		URL:  c.RPCDetails.MockServerEndpoint + "/" + strings.TrimPrefix(c.RPCDetails.MockServerUrl, "/"),
 	}
 
 	// Setting up job specs
@@ -339,7 +307,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		}
 		relayConfig := job.JSONConfig{
 			"nodeName":       bootstrapRelayConfig["nodeName"],
-			"accountAddress": fmt.Sprintf("%s", accountAddresses[nIdx]),
+			"accountAddress": accountAddresses[nIdx],
 			"chainID":        bootstrapRelayConfig["chainID"],
 		}
 
@@ -363,7 +331,6 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 			OCR2OracleSpec:    oracleSpec,
 			ObservationSource: observationSource,
 		}
-		fmt.Println(jobSpec.String())
 		_, err = n.MustCreateJob(jobSpec)
 		if err != nil {
 			return err

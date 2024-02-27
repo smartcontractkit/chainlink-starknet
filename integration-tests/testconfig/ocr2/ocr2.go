@@ -22,7 +22,8 @@ func (o *Config) Validate() error {
 	if o.Smoke == nil {
 		return errors.New("smoke must be defined")
 	}
-	if err := o.Smoke.Validate(); err != nil {
+	err := o.Smoke.Validate()
+	if err != nil {
 		return err
 	}
 

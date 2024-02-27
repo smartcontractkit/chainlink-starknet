@@ -91,12 +91,12 @@ func (s *Starknet) StartContainer() error {
 	return nil
 }
 
-func (ms *Starknet) getContainerRequest() (*tc.ContainerRequest, error) {
+func (s *Starknet) getContainerRequest() (*tc.ContainerRequest, error) {
 	return &tc.ContainerRequest{
-		Name:         ms.ContainerName,
+		Name:         s.ContainerName,
 		Image:        "shardlabs/starknet-devnet-rs:b41e566a3f17aa0e51871f02d5165959e50ce358",
 		ExposedPorts: []string{test_env.NatPortFormat(STARK_HTTP_PORT)},
-		Networks:     ms.Networks,
+		Networks:     s.Networks,
 		WaitingFor: tcwait.ForLog("Starknet Devnet listening").
 			WithStartupTimeout(30 * time.Second).
 			WithPollInterval(100 * time.Millisecond),

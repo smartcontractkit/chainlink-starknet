@@ -30,7 +30,7 @@ func TestOCRBasicNew(t *testing.T) {
 		name string
 		env  map[string]string
 	}{
-		{name: "embeded"},
+		{name: "embedded"},
 		//{name: "plugins", env: map[string]string{
 		//	"CL_MEDIAN_CMD": "chainlink-feeds",
 		//	"CL_SOLANA_CMD": "chainlink-solana",
@@ -51,7 +51,7 @@ func TestOCRBasicNew(t *testing.T) {
 			// K8s specific config and cleanup
 			if *config.Common.InsideK8s {
 				t.Cleanup(func() {
-					if err := actions.TeardownSuite(t, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
+					if err = actions.TeardownSuite(t, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
 						state.TestConfig.L.Error().Err(err).Msg("Error tearing down environment")
 					}
 				})
@@ -66,6 +66,7 @@ func TestOCRBasicNew(t *testing.T) {
 			}
 			state.DeployCluster()
 			state.Clients.GauntletClient, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
+			require.NoError(t, err, "Setting up gauntlet should not fail")
 			err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)
 			require.NoError(t, err, "Setting up gauntlet network should not fail")
 			err = state.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
