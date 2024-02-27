@@ -1,3 +1,5 @@
+# This is the default configuration so OCR2 tests can run without issues
+
 [Logging]
 test_log_collect=false
 

@@ -70,10 +70,15 @@ type RPCDetails struct {
 
 func New(testConfig *testconfig.TestConfig) *Common {
 	var c *Common
+	l2RpcUrl := DefaultL2RPCInternal
 
 	duration, err := time.ParseDuration(*testConfig.OCR2.TestDuration)
 	if err != nil {
 		panic("Invalid test duration")
+	}
+
+	if *testConfig.Common.Network == "testnet" {
+		l2RpcUrl = *testConfig.Common.L2RPCUrl
 	}
 
 	c = &Common{
@@ -87,7 +92,7 @@ func New(testConfig *testconfig.TestConfig) *Common {
 		},
 		RPCDetails: &RPCDetails{
 			P2PPort:       "6690",
-			RPCL2Internal: DefaultL2RPCInternal,
+			RPCL2Internal: l2RpcUrl,
 		},
 	}
 
@@ -112,7 +117,7 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 			AddHelm(mock_adapter.New(nil)).
 			AddHelm(chainlink.New(0, map[string]interface{}{
 				"toml":     tomlString,
-				"replicas": c.TestConfig.OCR2.NodeCount,
+				"replicas": *c.TestConfig.OCR2.NodeCount,
 			}))
 	}
 
