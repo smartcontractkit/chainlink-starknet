@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euox pipefail
+set -euo pipefail
 
 bash "$(dirname -- "$0")/core.down.sh"
 
