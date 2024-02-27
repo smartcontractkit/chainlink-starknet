@@ -35,7 +35,7 @@ mod MockAggregator {
         self._decimals.write(decimals);
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MockImpl of super::IMockAggregator<ContractState> {
         fn set_latest_round_data(
             ref self: ContractState,
@@ -91,7 +91,7 @@ mod MockAggregator {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl Aggregator of IAggregator<ContractState> {
         fn round_data(self: @ContractState, round_id: u128) -> Round {
             panic_with_felt252('unimplemented')

@@ -18,7 +18,8 @@ mod ValidReceiver {
     #[constructor]
     fn constructor(ref self: ContractState) {}
 
-    #[external(v0)]
+
+    #[abi(embed_v0)]
     impl ERC677Receiver of IERC677Receiver<ContractState> {
         fn on_token_transfer(
             ref self: ContractState, sender: ContractAddress, value: u256, data: Array<felt252>
@@ -31,7 +32,7 @@ mod ValidReceiver {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl ValidReceiver of super::MockValidReceiver<ContractState> {
         fn verify(self: @ContractState) -> ContractAddress {
             self._sender.read()

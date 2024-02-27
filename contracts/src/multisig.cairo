@@ -168,7 +168,7 @@ mod Multisig {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
             self._require_multisig();
@@ -176,7 +176,7 @@ mod Multisig {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MultisigImpl of super::IMultisig<ContractState> {
         /// Views
 
