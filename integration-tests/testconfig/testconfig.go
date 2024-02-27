@@ -41,10 +41,6 @@ type Ocr2TestConfig interface {
 	GetOCR2Config() *ocr2_config.Config
 }
 
-type NamedConfiguration interface {
-	GetConfigurationName() string
-}
-
 type TestConfig struct {
 	ChainlinkImage        *ctf_config.ChainlinkImageConfig `toml:"ChainlinkImage"`
 	Logging               *ctf_config.LoggingConfig        `toml:"Logging"`
@@ -135,6 +131,7 @@ func (c *TestConfig) AsBase64() (string, error) {
 type Common struct {
 	Network   *string `toml:"network"`
 	InsideK8s *bool   `toml:"inside_k8"`
+	User      *string `toml:"user"`
 	L2RPCUrl  *string `toml:"l2_rpc_url"`
 }
 
@@ -155,6 +152,11 @@ func (c *Common) Validate() error {
 	if c.InsideK8s == nil {
 		return fmt.Errorf("inside_k8 must be set")
 	}
+
+	if c.User == nil {
+		return fmt.Errorf("user must be set")
+	}
+
 	if c.L2RPCUrl == nil && *c.Network == "testnet" {
 		return fmt.Errorf("l2_rpc_url must be set")
 	}
@@ -168,18 +170,7 @@ const (
 	OCR2 Product = "ocr2"
 )
 
-var TestTypesWithLoki = []string{"Soak", "Smoke"}
-
 const TestTypeEnvVarName = "TEST_TYPE"
-
-func GetConfigurationNameFromEnv() (string, error) {
-	testType := os.Getenv(TestTypeEnvVarName)
-	if testType == "" {
-		return "", fmt.Errorf("%s env var not set", TestTypeEnvVarName)
-	}
-
-	return cases.Title(language.English, cases.NoLower).String(testType), nil
-}
 
 const (
 	Base64OverrideEnvVarName = k8s_config.EnvBase64ConfigOverride

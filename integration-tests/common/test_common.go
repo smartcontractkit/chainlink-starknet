@@ -34,7 +34,6 @@ import (
 
 var (
 	rpcRequestTimeout = time.Second * 300
-	dumpPath          = "/dumps/dump.pkl"
 )
 
 // OCRv2TestState Main testing state struct
