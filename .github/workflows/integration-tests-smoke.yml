@@ -125,7 +125,9 @@ jobs:
       TEST_DURATION: 15m
       NODE_COUNT: 5
       CHAINLINK_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-      CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+      CHAINLINK_VERSION: starknet.${{ github.sha }}
+      INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
+      scarb_version: "v2.5.4"
     permissions:
       checks: write
       pull-requests: write
@@ -151,19 +153,18 @@ jobs:
         id: install-scarb
         shell: bash
         run: |
-          wget https://github.com/software-mansion/scarb/releases/download/v2.5.4/scarb-v2.5.4-x86_64-unknown-linux-musl.tar.gz
-          tar -xvzf scarb-v2.5.4-x86_64-unknown-linux-musl.tar.gz
-          mv -vf scarb-v2.5.4-x86_64-unknown-linux-musl scarb-build
+          wget https://github.com/software-mansion/scarb/releases/download/${{ env.scarb_version }}/scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
+          tar -xvzf scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
+          mv -vf scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl scarb-build
           echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
-      - name: Build contracts
-        run: |
-          cd contracts && scarb --profile release build
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
           [ChainlinkImage]
           image="${{ env.CHAINLINK_IMAGE }}"
-          version="${{ github.sha }}"
+          version="${{ env.CHAINLINK_VERSION }}"
+          [Network]
+          selected_networks=["SIMULATED"]
           EOF
           # shellcheck disable=SC2002
           BASE64_CONFIG_OVERRIDE=$(cat config.toml | base64 -w 0)
@@ -174,11 +175,11 @@ jobs:
       - name: Run Tests ${{ matrix.image.name }}
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ea889b3133bd7f16ab19ba4ba130de5d9162c669 # v2.3.4
         with:
+          aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c helm repo update && make test-integration-smoke-ci
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
-          aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           token: ${{ secrets.GITHUB_TOKEN }}
           go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}

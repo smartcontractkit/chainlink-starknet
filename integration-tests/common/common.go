@@ -2,10 +2,9 @@ package common
 
 import (
 	"fmt"
-	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	ctf_test_env "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
 	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
@@ -26,7 +25,6 @@ import (
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
-	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/alias"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
 	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
@@ -35,188 +33,100 @@ import (
 )
 
 var (
-	chainName           = "starknet"
-	chainId             = "SN_GOERLI"
-	defaultNodeUrl      = "http://starknet:5050"
-	testnetUrl          = "https://starknet-testnet.public.blastapi.io"
-	DefaultNodeCount    = 5
-	DefaultTTL          = "3h"
-	DefaultTestDuration = 50 * time.Minute
+	chainName            = "starknet"
+	chainId              = "SN_GOERLI"
+	DefaultL2RPCInternal = "http://starknet-dev:5000"
 )
 
 type Common struct {
-	P2PPort             string
-	ServiceKeyL1        string
-	ServiceKeyL2        string
-	ServiceKeyChainlink string
-	ChainName           string
-	ChainId             string
-	NodeCount           int
-	TTL                 time.Duration
-	TestDuration        time.Duration
-	Testnet             bool
-	L2RPCUrl            string
-	MockUrl             string
-	PrivateKey          string
-	Account             string
-	ChainlinkConfig     string
-	Env                 *environment.Environment
-	IsK8s               bool
-	K8Config            *environment.Config
-	NodeOpts            []test_env.ClNodeOption
-	DockerEnv           *StarknetClusterTestEnv
+	ChainDetails    *ChainDetails
+	TestEnvDetails  *TestEnvDetails
+	Env             *environment.Environment
+	RPCDetails      *RPCDetails
+	ChainlinkConfig string
+	TestConfig      *testconfig.TestConfig
 }
 
-type StarknetClusterTestEnv struct {
-	*test_env.CLClusterTestEnv
-	Starknet  *test_env_starknet.Starknet
-	Killgrave *ctf_test_env.Killgrave
+type ChainDetails struct {
+	ChainName string
+	ChainId   string
 }
 
-func New(env string, isK8s bool) *Common {
-	var err error
+type TestEnvDetails struct {
+	TestDuration time.Duration
+	K8Config     *environment.Config
+	NodeOpts     []test_env.ClNodeOption
+}
+
+type RPCDetails struct {
+	RPCL1Internal      string
+	RPCL2Internal      string
+	RPCL1External      string
+	RPCL2External      string
+	MockServerUrl      string
+	MockServerEndpoint string
+	P2PPort            string
+}
+
+func New(testConfig *testconfig.TestConfig) *Common {
 	var c *Common
-	if env == "testnet" {
-		c = &Common{
-			IsK8s:        isK8s,
-			ChainName:    chainId,
-			ChainId:      chainId,
-			L2RPCUrl:     testnetUrl,
-			Testnet:      true,
-			TestDuration: DefaultTestDuration,
-		}
-	} else {
-		c = &Common{
-			IsK8s:        isK8s,
-			ChainName:    chainName,
-			ChainId:      chainId,
-			L2RPCUrl:     defaultNodeUrl,
-			TestDuration: DefaultTestDuration,
-		}
-	}
-	// Checking if count of OCR nodes is defined in ENV
-	nodeCountSet, nodeCountDefined := os.LookupEnv("NODE_COUNT")
-	if nodeCountDefined && nodeCountSet != "" {
-		c.NodeCount, err = strconv.Atoi(nodeCountSet)
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
-		}
-	} else {
-		c.NodeCount = DefaultNodeCount
+
+	duration, err := time.ParseDuration(*testConfig.OCR2.TestDuration)
+	if err != nil {
+		panic("Invalid test duration")
 	}
 
-	// Checking if TTL env var is set in ENV
-	ttlValue, ttlDefined := os.LookupEnv("TTL")
-	if ttlDefined && ttlValue != "" {
-		duration, err := time.ParseDuration(ttlValue)
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-		}
-		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-		}
-	} else {
-		duration, err := time.ParseDuration(DefaultTTL)
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-		}
-		c.TTL, err = time.ParseDuration(*alias.ShortDur(duration))
-		if err != nil {
-			panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-		}
+	c = &Common{
+		TestConfig: testConfig,
+		ChainDetails: &ChainDetails{
+			ChainName: chainName,
+			ChainId:   chainId,
+		},
+		TestEnvDetails: &TestEnvDetails{
+			TestDuration: duration,
+		},
+		RPCDetails: &RPCDetails{
+			P2PPort:       "6690",
+			RPCL2Internal: DefaultL2RPCInternal,
+		},
 	}
 
 	return c
 }
 
 func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) {
-	c.K8Config = &environment.Config{
-		NamespacePrefix: fmt.Sprintf("solana-%s", namespacePrefix),
-		TTL:             c.TTL,
+	c.TestEnvDetails.K8Config = &environment.Config{
+		NamespacePrefix: fmt.Sprintf("starknet-%s", namespacePrefix),
+		TTL:             c.TestEnvDetails.TestDuration,
 		Test:            t,
 	}
 
-	if c.IsK8s {
+	if *c.TestConfig.Common.InsideK8s {
 		toml := c.DefaultNodeConfig()
 		tomlString, err := toml.TOMLString()
 		if err != nil {
 			return nil, err
 		}
-		c.Env = environment.New(c.K8Config).
+		c.Env = environment.New(c.TestEnvDetails.K8Config).
 			AddHelm(devnet.New(nil)).
 			AddHelm(mock_adapter.New(nil)).
 			AddHelm(chainlink.New(0, map[string]interface{}{
 				"toml":     tomlString,
-				"replicas": c.NodeCount,
+				"replicas": c.TestConfig.OCR2.NodeCount,
 			}))
 	}
 
 	return c, nil
 }
 
-// getEnv gets the environment variable if it exists and sets it for the remote runner
-func getEnv(v string) string {
-	val := os.Getenv(v)
-	if val != "" {
-		os.Setenv(fmt.Sprintf("TEST_%s", v), val)
-	}
-	return val
-}
-
-func getNodeCount() int {
-	// Checking if count of OCR nodes is defined in ENV
-	nodeCountSet := getEnv("NODE_COUNT")
-	if nodeCountSet == "" {
-		nodeCountSet = "4"
-	}
-	nodeCount, err := strconv.Atoi(nodeCountSet)
-	if err != nil {
-		panic(fmt.Sprintf("Please define a proper node count for the test: %v", err))
-	}
-	return nodeCount
-}
-
-func getTTL() time.Duration {
-	ttlValue := getEnv("TTL")
-	if ttlValue == "" {
-		ttlValue = "72h"
-	}
-	duration, err := time.ParseDuration(ttlValue)
-	if err != nil {
-		panic(fmt.Sprintf("Please define a proper TTL for the test: %v", err))
-	}
-	t, err := time.ParseDuration(*alias.ShortDur(duration))
-	if err != nil {
-		panic(fmt.Sprintf("Please define a proper TTL for the test: %v", err))
-	}
-	return t
-}
-
-func getTestDuration() time.Duration {
-	testDurationValue := getEnv("TEST_DURATION")
-	if testDurationValue == "" {
-		return time.Duration(time.Minute * 15)
-	}
-	duration, err := time.ParseDuration(testDurationValue)
-	if err != nil {
-		panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-	}
-	t, err := time.ParseDuration(*alias.ShortDur(duration))
-	if err != nil {
-		panic(fmt.Sprintf("Please define a proper duration for the test: %v", err))
-	}
-	return t
-}
-
 func (c *Common) DefaultNodeConfig() *cl.Config {
 	starkConfig := config.TOMLConfig{
 		Enabled: ptr.Ptr(true),
-		ChainID: ptr.Ptr(c.ChainId),
+		ChainID: ptr.Ptr(c.ChainDetails.ChainId),
 		Nodes: []*config.Node{
 			{
 				Name: ptr.Ptr("primary"),
-				URL:  common_cfg.MustParseURL(defaultNodeUrl),
+				URL:  common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
 			},
 		},
 	}
@@ -250,8 +160,6 @@ func (c *Common) SetLocalEnvironment(t *testing.T) {
 	log.Info().Msg("Starting core nodes...")
 	cmd := exec.Command("../../scripts/core.sh")
 	cmd.Env = append(os.Environ(), fmt.Sprintf("CL_CONFIG=%s", c.ChainlinkConfig))
-	// out, err := cmd.Output()
-	// fmt.Println(string(out))
 	err = cmd.Run()
 	require.NoError(t, err, "Could not start core nodes")
 	log.Info().Msg("Set up local stack complete.")
@@ -259,7 +167,7 @@ func (c *Common) SetLocalEnvironment(t *testing.T) {
 	// Set ChainlinkNodeDetails
 	var nodeDetails []*environment.ChainlinkNodeDetail
 	var basePort = 50100
-	for i := 0; i < c.NodeCount; i++ {
+	for i := 0; i < *c.TestConfig.OCR2.NodeCount; i++ {
 		dbLocalIP := fmt.Sprintf("postgresql://postgres:postgres@chainlink.postgres:5432/starknet_test_%d?sslmode=disable", i+1)
 		nodeDetails = append(nodeDetails, &environment.ChainlinkNodeDetail{
 			ChartName: "unused",
@@ -329,7 +237,7 @@ func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client
 		}
 
 		peerID := p2pkeys.Data[0].Attributes.PeerID
-		txKey, _, err := n.CreateTxKey(chainName, c.ChainId)
+		txKey, _, err := n.CreateTxKey(chainName, c.ChainDetails.ChainId)
 		if err != nil {
 			return nil, err
 		}
@@ -348,12 +256,12 @@ func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client
 }
 
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
-func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test_env.Killgrave, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
+func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{
 		{
 			InternalIP:   cc.ChainlinkNodes[0].InternalIP(),
-			InternalPort: c.P2PPort,
+			InternalPort: c.RPCDetails.P2PPort,
 			PeerID:       cc.NKeys[0].PeerID,
 		},
 	}
@@ -362,7 +270,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test
 	bootstrapRelayConfig := job.JSONConfig{
 		"nodeName":       fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.New().String()),
 		"accountAddress": fmt.Sprintf("%s", accountAddresses[0]),
-		"chainID":        fmt.Sprintf("%s", c.ChainId),
+		"chainID":        fmt.Sprintf("%s", c.ChainDetails.ChainId),
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
@@ -377,7 +285,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
 	}
-
+	fmt.Println(jobSpec.String())
 	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
 		return err
@@ -391,7 +299,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test
 
 	sourceValueBridge := &client.BridgeTypeAttributes{
 		Name: "mockserver-bridge",
-		URL:  fmt.Sprintf("%s/%s", mockserver.InternalEndpoint, strings.TrimPrefix("mockserver-bridge", "/")),
+		URL:  fmt.Sprintf("%s/%s", c.RPCDetails.MockServerEndpoint, strings.TrimPrefix(c.RPCDetails.MockServerUrl, "/")),
 	}
 
 	// Setting up job specs
@@ -399,7 +307,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test
 		if nIdx == 0 {
 			continue
 		}
-		_, err := n.CreateBridge(sourceValueBridge)
+		err := n.MustCreateBridge(sourceValueBridge)
 		if err != nil {
 			return err
 		}
@@ -429,6 +337,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockserver *ctf_test
 			OCR2OracleSpec:    oracleSpec,
 			ObservationSource: observationSource,
 		}
+		fmt.Println(jobSpec.String())
 		_, err = n.MustCreateJob(jobSpec)
 		if err != nil {
 			return err
