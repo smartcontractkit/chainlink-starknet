@@ -178,6 +178,7 @@ jobs:
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           token: ${{ secrets.GITHUB_TOKEN }}
           go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
