@@ -94,7 +94,7 @@ func (s *Starknet) StartContainer() error {
 func (ms *Starknet) getContainerRequest() (*tc.ContainerRequest, error) {
 	return &tc.ContainerRequest{
 		Name:         ms.ContainerName,
-		Image:        "shardlabs/starknet-devnet-rs:latest",
+		Image:        "shardlabs/starknet-devnet-rs:b41e566a3f17aa0e51871f02d5165959e50ce358",
 		ExposedPorts: []string{test_env.NatPortFormat(STARK_HTTP_PORT)},
 		Networks:     ms.Networks,
 		WaitingFor: tcwait.ForLog("Starknet Devnet listening").
