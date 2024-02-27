@@ -45,7 +45,7 @@ func TestOCRBasicNew(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			logging.Init()
-			state, err := common.NewOCRv2State(t, "test", &config)
+			state, err := common.NewOCRv2State(t, "smoke-ocr2", &config)
 			require.NoError(t, err, "Could not setup the ocrv2 state")
 
 			// Cleanup K8s
