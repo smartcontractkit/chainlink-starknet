@@ -10,7 +10,7 @@ golangci-lint 1.55.0
 actionlint 1.6.12
 shellcheck 0.8.0
 scarb 2.5.4
-postgres 13.3
+postgres 15.1
 
 # Kubernetes
 k3d 5.4.4

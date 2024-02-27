@@ -63,7 +63,7 @@ func TestEnvelopeSource(t *testing.T) {
 		mock.Anything, // ctx
 		starknet.CallOps{
 			ContractAddress: chainConfig.GetLinkTokenAddress(),
-			Selector:        "balanceOf",
+			Selector:        "balance_of",
 			Calldata: []string{
 				starknetutils.HexToBN(feedConfig.ContractAddress).String(),
 			},
