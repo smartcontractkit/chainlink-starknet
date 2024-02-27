@@ -9,6 +9,14 @@ on:
         required: true
         default: develop
         type: string
+      cairo_version:
+        description: Cairo release version
+        default: "v2.5.4"
+        required: false
+      scarb_version:
+        description: Scarb release version
+        default: "v2.5.4"
+        required: false
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
