@@ -118,6 +118,10 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 			AddHelm(chainlink.New(0, map[string]interface{}{
 				"toml":     tomlString,
 				"replicas": *c.TestConfig.OCR2.NodeCount,
+				"db": map[string]any{
+					"image": map[string]any{
+						"version": "15.5",
+					}},
 			}))
 	}
 

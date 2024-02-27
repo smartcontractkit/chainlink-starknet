@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 	"maps"
+	"os"
 	"testing"
 )
 
@@ -36,11 +37,21 @@ func TestOCRBasicNew(t *testing.T) {
 		//	"CL_SOLANA_CMD": "chainlink-solana",
 		//}},
 	} {
-
 		config, err := tc.GetConfig("Smoke", tc.OCR2)
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		// We have to export these since the charts read from env
+		if *config.Common.InsideK8s {
+			err = os.Setenv("CHAINLINK_IMAGE", *config.ChainlinkImage.Image)
+			require.NoError(t, err, "Could not pull image from config")
+			err = os.Setenv("CHAINLINK_VERSION", *config.ChainlinkImage.Version)
+			require.NoError(t, err, "Could not pull version from config")
+			err = os.Setenv("CHAINLINK_ENV_USER", *config.Common.User)
+			require.NoError(t, err, "Could not pull user from config")
+		}
+
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -48,7 +59,7 @@ func TestOCRBasicNew(t *testing.T) {
 			state, err := common.NewOCRv2State(t, "smoke-ocr2", &config)
 			require.NoError(t, err, "Could not setup the ocrv2 state")
 
-			// Cleanup K8s
+			// K8s specific config and cleanup
 			if *config.Common.InsideK8s {
 				t.Cleanup(func() {
 					if err := actions.TeardownSuite(t, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {

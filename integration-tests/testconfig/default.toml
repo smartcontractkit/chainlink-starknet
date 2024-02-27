@@ -20,6 +20,7 @@ simulated = ["wss://127.0.0.1"] # Not needed for Starknet but mandatory from CTF
 [Common]
 inside_k8 = false
 network = "localnet"
+user = "satoshi"
 
 [OCR2]
 node_count = 6
