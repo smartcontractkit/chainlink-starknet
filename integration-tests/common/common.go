@@ -5,6 +5,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
 	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
@@ -112,17 +113,33 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 		if err != nil {
 			return nil, err
 		}
+		var overrideFn = func(_ interface{}, target interface{}) {
+			ctfconfig.MustConfigOverrideChainlinkVersion(c.TestConfig.ChainlinkImage, target)
+		}
+		cd := chainlink.NewWithOverride(0, map[string]any{
+			"toml":     tomlString,
+			"replicas": *c.TestConfig.OCR2.NodeCount,
+			"chainlink": map[string]interface{}{
+				"resources": map[string]interface{}{
+					"requests": map[string]interface{}{
+						"cpu":    "2000m",
+						"memory": "4Gi",
+					},
+					"limits": map[string]interface{}{
+						"cpu":    "2000m",
+						"memory": "4Gi",
+					},
+				},
+			},
+			"db": map[string]any{
+				"image": map[string]any{
+					"version": "15.5",
+				}},
+		}, c.TestConfig.ChainlinkImage, overrideFn)
 		c.Env = environment.New(c.TestEnvDetails.K8Config).
 			AddHelm(devnet.New(nil)).
 			AddHelm(mock_adapter.New(nil)).
-			AddHelm(chainlink.New(0, map[string]interface{}{
-				"toml":     tomlString,
-				"replicas": *c.TestConfig.OCR2.NodeCount,
-				"db": map[string]any{
-					"image": map[string]any{
-						"version": "15.5",
-					}},
-			}))
+			AddHelm(cd)
 	}
 
 	return c, nil
