@@ -8,15 +8,18 @@ mod InvalidReceiver {
     #[constructor]
     fn constructor(ref self: ContractState) {}
 
-    // toggle whether or not receiver says it supports the interface id
-    #[external(v0)]
-    fn set_supports(ref self: ContractState, support: bool) {
-        self._supports.write(support);
-    }
+    #[abi(per_item)]
+    #[generate_trait]
+    impl HelperImpl of HelperTrait {
+        // toggle whether or not receiver says it supports the interface id
+        #[external(v0)]
+        fn set_supports(ref self: ContractState, support: bool) {
+            self._supports.write(support);
+        }
 
-
-    #[external(v0)]
-    fn supports_interface(self: @ContractState, interface_id: u32) -> bool {
-        self._supports.read()
+        #[external(v0)]
+        fn supports_interface(self: @ContractState, interface_id: u32) -> bool {
+            self._supports.read()
+        }
     }
 }

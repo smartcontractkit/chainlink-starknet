@@ -9,25 +9,26 @@ trait IMintableToken<TContractState> {
 
 #[starknet::contract]
 mod LinkToken {
-    use super::IMintableToken;
+    use starknet::ContractAddress;
+    use starknet::class_hash::ClassHash;
 
     use zeroable::Zeroable;
 
+    use openzeppelin::token::erc20::ERC20Component;
+    use openzeppelin::access::ownable::ownable::OwnableComponent;
+
+    use super::IMintableToken;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::erc677::ERC677Component;
-    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
-
-    use openzeppelin::token::erc20::ERC20Component;
-    use starknet::ContractAddress;
-    use starknet::class_hash::ClassHash;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: ERC677Component, storage: erc677, event: ERC677Event);
 
     #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
     impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
@@ -67,7 +68,7 @@ mod LinkToken {
     //
     // IMintableToken (StarkGate)
     //
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MintableToken of IMintableToken<ContractState> {
         fn permissioned_mint(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
@@ -94,15 +95,14 @@ mod LinkToken {
         self._minter.read()
     }
 
-    // TODO #[view]
-    fn type_and_version(self: @ContractState) -> felt252 {
-        'LinkToken 1.0.0'
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'LinkToken 1.0.0'
+        }
     }
 
-    //
-    //  Upgradeable
-    //
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
             self.ownable.assert_only_owner();

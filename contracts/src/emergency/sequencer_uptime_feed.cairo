@@ -27,9 +27,11 @@ mod SequencerUptimeFeed {
     use option::OptionTrait;
     use zeroable::Zeroable;
 
-    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
+    use openzeppelin::access::ownable::ownable::OwnableComponent;
+
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::{Transmission};
@@ -39,7 +41,7 @@ mod SequencerUptimeFeed {
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
 
     #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
@@ -108,7 +110,14 @@ mod SequencerUptimeFeed {
         to_address: EthAddress
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
+    impl TypeAndVersion of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'SequencerUptimeFeed 1.0.0'
+        }
+    }
+
+    #[abi(embed_v0)]
     impl AggregatorImpl of IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
             self._require_read_access();
@@ -142,10 +151,6 @@ mod SequencerUptimeFeed {
 
         fn decimals(self: @ContractState) -> u8 {
             0_u8
-        }
-
-        fn type_and_version(self: @ContractState) -> felt252 {
-            'SequencerUptimeFeed 1.0.0'
         }
     }
 
@@ -185,7 +190,7 @@ mod SequencerUptimeFeed {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl SequencerUptimeFeedImpl of super::ISequencerUptimeFeed<ContractState> {
         fn set_l1_sender(ref self: ContractState, address: EthAddress) {
             self.ownable.assert_only_owner();
@@ -216,7 +221,7 @@ mod SequencerUptimeFeed {
     /// Upgradeable
     ///
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     fn upgrade(ref self: ContractState, new_impl: ClassHash) {
         self.ownable.assert_only_owner();
         Upgradeable::upgrade(new_impl)

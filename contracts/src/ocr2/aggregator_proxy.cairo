@@ -9,7 +9,6 @@ trait IAggregatorProxy<TContractState> {
     fn round_data(self: @TContractState, round_id: felt252) -> Round;
     fn description(self: @TContractState) -> felt252;
     fn decimals(self: @TContractState) -> u8;
-    fn type_and_version(self: @TContractState) -> felt252;
 }
 
 #[starknet::interface]
@@ -47,12 +46,16 @@ mod AggregatorProxy {
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
 
+    use openzeppelin::access::ownable::ownable::OwnableComponent;
+
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
-    use chainlink::libraries::ownable::{OwnableComponent, IOwnable};
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use chainlink::utils::split_felt;
+    use chainlink::libraries::type_and_version::{
+        ITypeAndVersion, ITypeAndVersionDispatcher, ITypeAndVersionDispatcherTrait
+    };
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000;
@@ -68,7 +71,7 @@ mod AggregatorProxy {
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
 
     #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
@@ -103,13 +106,14 @@ mod AggregatorProxy {
     #[event]
     fn AggregatorConfirmed(previous: ContractAddress, latest: ContractAddress) {}
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl AggregatorProxyImpl of IAggregatorProxy<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
             self._require_read_access();
             let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             let round = aggregator.latest_round_data();
+
             Round {
                 round_id: (phase.id.into() * SHIFT) + round.round_id,
                 answer: round.answer,
@@ -148,10 +152,13 @@ mod AggregatorProxy {
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.decimals()
         }
+    }
 
+    #[abi(embed_v0)]
+    impl TypeAndVersion of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
             let phase = self._current_phase.read();
-            let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
+            let aggregator = ITypeAndVersionDispatcher { contract_address: phase.aggregator };
             aggregator.type_and_version()
         }
     }
@@ -165,7 +172,7 @@ mod AggregatorProxy {
 
     // -- Upgradeable -- 
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
             self.ownable.assert_only_owner();
@@ -175,7 +182,7 @@ mod AggregatorProxy {
 
     //
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl AggregatorProxyInternal of super::IAggregatorProxyInternal<ContractState> {
         fn propose_aggregator(ref self: ContractState, address: ContractAddress) {
             self.ownable.assert_only_owner();

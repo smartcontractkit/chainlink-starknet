@@ -3,8 +3,10 @@ use starknet::ContractAddress;
 use starknet::testing::set_caller_address;
 use starknet::testing::set_contract_address;
 use zeroable::Zeroable;
-use chainlink::libraries::ownable::{
-    OwnableComponent, IOwnable, IOwnableDispatcher, IOwnableDispatcherTrait
+
+use openzeppelin::access::ownable::ownable::OwnableComponent;
+use openzeppelin::access::ownable::interface::{
+    IOwnableTwoStep, IOwnableTwoStepDispatcher, IOwnableTwoStepDispatcherTrait
 };
 use OwnableComponent::InternalTrait;
 
@@ -16,7 +18,7 @@ mod OwnableMock {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
     impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
@@ -52,7 +54,6 @@ fn setup() -> (ContractAddress, ContractAddress) {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_assert_only_owner() {
     let (owner, _) = setup();
 
@@ -62,7 +63,6 @@ fn test_assert_only_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_assert_only_owner_panics_if_not_owner() {
     let (owner, other_user) = setup();
@@ -74,7 +74,6 @@ fn test_assert_only_owner_panics_if_not_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_owner() {
     let (owner, _) = setup();
     let mut state = STATE();
@@ -85,7 +84,6 @@ fn test_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_transfer_ownership() {
     let (owner, other_user) = setup();
     let mut state = STATE();
@@ -93,22 +91,10 @@ fn test_transfer_ownership() {
     state.initializer(owner);
     state.transfer_ownership(other_user);
 
-    assert(other_user == state.proposed_owner(), 'should equal proposed owner');
+    assert(other_user == state.pending_owner(), 'should equal proposed owner');
 }
 
 #[test]
-#[available_gas(2000000)]
-#[should_panic]
-fn test_transfer_ownership_panics_if_zero_address() {
-    let (owner, other_user) = setup();
-    let mut state = STATE();
-
-    state.initializer(owner);
-    state.transfer_ownership(Zeroable::zero());
-}
-
-#[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_transfer_ownership_panics_if_not_owner() {
     let (owner, other_user) = setup();
@@ -120,7 +106,6 @@ fn test_transfer_ownership_panics_if_not_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_accept_ownership() {
     let (owner, other_user) = setup();
     let mut state = STATE();
@@ -134,9 +119,8 @@ fn test_accept_ownership() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
-fn test_accept_ownership_panics_if_not_proposed_owner() {
+fn test_accept_ownership_panics_if_not_pending_owner() {
     let (owner, other_user) = setup();
     let mut state = STATE();
 
@@ -148,7 +132,6 @@ fn test_accept_ownership_panics_if_not_proposed_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_renounce_ownership() {
     let (owner, _) = setup();
     let mut state = STATE();
@@ -161,7 +144,6 @@ fn test_renounce_ownership() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic]
 fn test_renounce_ownership_panics_if_not_owner() {
     let (owner, other_user) = setup();
@@ -176,7 +158,7 @@ fn test_renounce_ownership_panics_if_not_owner() {
 //
 
 fn should_implement_ownable(contract_addr: ContractAddress, owner: ContractAddress) {
-    let contract = IOwnableDispatcher { contract_address: contract_addr };
+    let contract = IOwnableTwoStepDispatcher { contract_address: contract_addr };
     let acc2: ContractAddress = contract_address_const::<2222>();
 
     // check owner is set correctly
@@ -184,16 +166,15 @@ fn should_implement_ownable(contract_addr: ContractAddress, owner: ContractAddre
 
     // transfer ownership - check owner unchanged and proposed owner set correctly
     set_contract_address(owner); // required to call contract as owner
-    let caller = starknet::get_caller_address();
     contract.transfer_ownership(acc2);
     assert(owner == contract.owner(), 'owner should remain unchanged');
-    assert(acc2 == contract.proposed_owner(), 'acc2 should be proposed owner');
+    assert(acc2 == contract.pending_owner(), 'acc2 should be proposed owner');
 
     // accept ownership - check owner changed and proposed owner set to zero
     set_contract_address(acc2); // required to call function as acc2
     contract.accept_ownership();
     assert(contract.owner() == acc2, 'failed to change ownership');
-    assert(contract.proposed_owner().is_zero(), 'proposed owner should be zero');
+    assert(contract.pending_owner().is_zero(), 'proposed owner should be zero');
 
     // renounce ownership
     contract.renounce_ownership();
