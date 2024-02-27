@@ -9,14 +9,6 @@ on:
         required: true
         default: develop
         type: string
-      cairo_version:
-        description: Cairo release version
-        default: "v2.5.4"
-        required: false
-      scarb_version:
-        description: Scarb release version
-        default: "v2.5.4"
-        required: false
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -159,9 +151,9 @@ jobs:
         id: install-scarb
         shell: bash
         run: |
-          wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
-          tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
-          mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl scarb-build
+          wget https://github.com/software-mansion/scarb/releases/download/v2.5.4/scarb-v2.5.4-x86_64-unknown-linux-musl.tar.gz
+          tar -xvzf scarb-v2.5.4-x86_64-unknown-linux-musl.tar.gz
+          mv -vf scarb-v2.5.4-x86_64-unknown-linux-musl scarb-build
           echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
       - name: Build contracts
         run: |
