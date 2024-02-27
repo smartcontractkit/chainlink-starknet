@@ -13,10 +13,10 @@ echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]
 then
     echo "Starting arm devnet container..."
-    container_version="d7c168ac53da3e9d717ed3ff8dad665ccade43e0-arm"
+    container_version="b41e566a3f17aa0e51871f02d5165959e50ce358-arm"
 else
     echo "Starting i386 devnet container..."
-    container_version="d7c168ac53da3e9d717ed3ff8dad665ccade43e0"
+    container_version="b41e566a3f17aa0e51871f02d5165959e50ce358"
 fi
 
 echo "Starting starknet-devnet"
