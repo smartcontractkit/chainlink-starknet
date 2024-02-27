@@ -686,7 +686,12 @@ mod Aggregator {
             let latest_round_id = self._latest_aggregator_round_id.read();
             let epoch_and_round = self._latest_epoch_and_round.read();
             let transmission = self._transmissions.read(latest_round_id);
-            (config_digest, epoch_and_round, transmission.answer, transmission.transmission_timestamp)
+            (
+                config_digest,
+                epoch_and_round,
+                transmission.answer,
+                transmission.transmission_timestamp
+            )
         }
 
         #[external(v0)]
@@ -717,14 +722,15 @@ mod Aggregator {
             let f = self._f.read();
             assert(signatures_len == (f + 1_u8).into(), 'wrong number of signatures');
 
-            let msg = self.hash_report(
-                @report_context,
-                observation_timestamp,
-                observers,
-                @observations,
-                juels_per_fee_coin,
-                gas_price
-            );
+            let msg = self
+                .hash_report(
+                    @report_context,
+                    observation_timestamp,
+                    observers,
+                    @observations,
+                    juels_per_fee_coin,
+                    gas_price
+                );
 
             // Check all signatures are unique (we only saw each pubkey once)
             // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
@@ -750,7 +756,9 @@ mod Aggregator {
             // Validate median in min-max range
             let min_answer = self._min_answer.read();
             let max_answer = self._max_answer.read();
-            assert((min_answer <= median) & (median <= max_answer), 'median is out of min-max range');
+            assert(
+                (min_answer <= median) & (median <= max_answer), 'median is out of min-max range'
+            );
 
             let prev_round_id = self._latest_aggregator_round_id.read();
             let round_id = prev_round_id + 1_u128;
