@@ -157,6 +157,9 @@ jobs:
           tar -xvzf scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
           mv -vf scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl scarb-build
           echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
+      - name: Build contracts
+        run: |
+          cd contracts && scarb --profile release build
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
