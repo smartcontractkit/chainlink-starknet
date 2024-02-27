@@ -25,7 +25,7 @@ func init() {
 	flag.BoolVar(&keepAlive, "keep-alive", false, "enable to keep the cluster alive")
 }
 
-func TestOCRBasicNew(t *testing.T) {
+func TestOCRBasic(t *testing.T) {
 	for _, test := range []struct {
 		name string
 		env  map[string]string
