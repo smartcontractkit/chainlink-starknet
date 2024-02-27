@@ -149,49 +149,28 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
 
-	// Building the tx struct
-	tx := starknetrpc.InvokeTxnV1{
-		MaxFee:        &felt.Zero,
+	tx := starknetrpc.InvokeTxnV3{
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
-		Version:       starknetrpc.TransactionV1,
+		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
 		Nonce:         nonce,
+		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
+			L1Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
+			},
+			L2Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
+			},
+		},
+		Tip:                   "0x0",
+		PayMasterData:         []*felt.Felt{},
+		AccountDeploymentData: []*felt.Felt{},
+		NonceDataMode:         starknetrpc.DAModeL1, // TODO: confirm
+		FeeMode:               starknetrpc.DAModeL1, // TODO: confirm
 	}
-
-	// TODO: upgrade to V3 once devnet uses OZ 0.8.1 (accounts need to support v3)
-	// tx := starknetrpc.InvokeTxnV3{
-	// 	Type:          starknetrpc.TransactionType_Invoke,
-	// 	SenderAddress: account.AccountAddress,
-	// 	Version:       starknetrpc.TransactionV3,
-	// 	Signature:     []*felt.Felt{},
-	// 	Nonce:         nonce,
-	// 	ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
-	// 		L1Gas: starknetrpc.ResourceBounds{
-	// 			MaxAmount:       "0x186a0",
-	// 			MaxPricePerUnit: "0x1388",
-	// 		},
-	// 		L2Gas: starknetrpc.ResourceBounds{
-	// 			MaxAmount:       "0x0",
-	// 			MaxPricePerUnit: "0x0",
-	// 		},
-	// 	},
-	// 	Tip:                   "0x0",
-	// 	PayMasterData:         []*felt.Felt{},
-	// 	AccountDeploymentData: []*felt.Felt{},
-	// 	NonceDataMode:         rpc.DAModeL1, // TODO: confirm
-	// 	FeeMode:               rpc.DAModeL1, // TODO: confirm
-	// }
-	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	// hash, err := account.TransactionHashInvoke(tx)
-	// if err != nil {
-	// 	return txhash, err
-	// }
-	// signature, err := account.Sign(ctx, hash)
-	// if err != nil {
-	// 	return txhash, err
-	// }
-	// tx.Signature = signature
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
 	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
@@ -202,42 +181,62 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// TODO: if we estimate with sig then the hash changes and we have to re-sign
 	// if we don't then the signature is invalid??
 
-	// Signing of the transaction that is done by the account
-	err = account.SignInvokeTransaction(context.Background(), &tx)
+	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
+	hash, err := account.TransactionHashInvoke(tx)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+		return txhash, err
 	}
+	signature, err := account.Sign(ctx, hash)
+	if err != nil {
+		return txhash, err
+	}
+	tx.Signature = signature
 
 	// get fee for tx
 	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
 	// can we estimate fee without calling estimate - tbd with 1.0
 	simFlags := []starknetrpc.SimulationFlag{}
-	txm.lggr.Infow("Estimated fee", "fee", tx.MaxFee)
-	txm.lggr.Infow("Account", "account", account.AccountAddress)
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
 		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
 	}
 
-	overallFee := feeEstimate[0].OverallFee.BigInt(new(big.Int))
-	expandedFee := new(big.Int).Mul(overallFee, big.NewInt(int64(FEE_MARGIN)))
-	maxFee := new(big.Int).Div(expandedFee, big.NewInt(100))
-	tx.MaxFee = starknetutils.BigIntToFelt(maxFee)
-	txm.lggr.Infow("Estimated fee", "fee", tx.MaxFee)
 	txm.lggr.Infow("Account", "account", account.AccountAddress)
 
+	var friEstimate *starknetrpc.FeeEstimate
+	for i, f := range feeEstimate {
+		txm.lggr.Infow("Estimated fee", "index", i, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
+		if f.FeeUnit == "FRI" && friEstimate == nil {
+			friEstimate = &feeEstimate[i]
+		}
+	}
+	if friEstimate == nil {
+		return txhash, fmt.Errorf("failed to get FRI estimate")
+	}
+
+	// TODO: does v3 tx uses fri instead of wei? check feeEstimate[0].FeeUnit?
 	// pad estimate to 110%
-	// gasConsumed := feeEstimate[0].GasConsumed.BigInt(new(big.Int))
-	// expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
-	// maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	// maxAmount := starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
-	// tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
+	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+	tx.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+
+	// TODO: add margin
+	tx.ResourceBounds.L2Gas.MaxPricePerUnit = starknetrpc.U128(friEstimate.GasPrice.String())
+
+	txm.lggr.Infow("Set resource bounds", "L2MaxAmount", tx.ResourceBounds.L2Gas.MaxAmount, "L2MaxPricePerUnit", tx.ResourceBounds.L2Gas.MaxPricePerUnit)
 
 	// Re-sign transaction now that we've determined MaxFee
-	err = account.SignInvokeTransaction(context.Background(), &tx)
+	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
+	hash, err = account.TransactionHashInvoke(tx)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to sign tx: %+w", err)
+		return txhash, err
 	}
+	signature, err = account.Sign(ctx, hash)
+	if err != nil {
+		return txhash, err
+	}
+	tx.Signature = signature
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()

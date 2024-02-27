@@ -7269,7 +7269,7 @@ starknet@~5.19.3:
     pako "^2.0.4"
     url-join "^4.0.1"
 
-starsign-multisig@0.3.0, starsign-multisig@^0.3.0:
+starsign-multisig@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/starsign-multisig/-/starsign-multisig-0.3.0.tgz#de4ed470f3c692902d003e94cde65406e62e2bc6"
   integrity sha512-GbUHI+9CtvXKca4HrKqBrHpqo7Sv2Aad6lBjf+eyK4f2AA9RemV+cIl0A8819Z4KLaRSdOQioyHNL1siFMV1Ew==
