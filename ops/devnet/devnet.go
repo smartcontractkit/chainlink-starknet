@@ -110,6 +110,7 @@ func (devnet *StarknetDevnetClient) FundAccounts(l2AccList []string) error {
 		if err != nil {
 			return err
 		}
+		log.Info().Msg(fmt.Sprintf("Funding account (WEI): %s", string(res.Body())))
 		res, err = devnet.client.R().SetBody(map[string]any{
 			"address": key,
 			"amount":  900000000000000000,
@@ -118,7 +119,7 @@ func (devnet *StarknetDevnetClient) FundAccounts(l2AccList []string) error {
 		if err != nil {
 			return err
 		}
-		log.Info().Msg(fmt.Sprintf("Funding account: %s", string(res.Body())))
+		log.Info().Msg(fmt.Sprintf("Funding account (FRI): %s", string(res.Body())))
 	}
 	return nil
 }
