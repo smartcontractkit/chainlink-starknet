@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 	"maps"
-	"os"
 	"testing"
 )
 
@@ -40,16 +39,6 @@ func TestOCRBasicNew(t *testing.T) {
 		config, err := tc.GetConfig("Smoke", tc.OCR2)
 		if err != nil {
 			t.Fatal(err)
-		}
-
-		// We have to export these since the charts read from env
-		if *config.Common.InsideK8s {
-			err = os.Setenv("CHAINLINK_IMAGE", *config.ChainlinkImage.Image)
-			require.NoError(t, err, "Could not pull image from config")
-			err = os.Setenv("CHAINLINK_VERSION", *config.ChainlinkImage.Version)
-			require.NoError(t, err, "Could not pull version from config")
-			err = os.Setenv("CHAINLINK_ENV_USER", *config.Common.User)
-			require.NoError(t, err, "Could not pull user from config")
 		}
 
 		test := test
