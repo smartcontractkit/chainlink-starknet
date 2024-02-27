@@ -147,6 +147,17 @@ jobs:
         uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
+      - name: Setup Scarb for Linux
+        id: install-scarb
+        shell: bash
+        run: |
+          wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
+          tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
+          mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl scarb-build
+          echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
+      - name: Build contracts
+        run: |
+          cd contracts && scarb --profile release build
       - name: Run Tests ${{ matrix.image.name }}
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ea889b3133bd7f16ab19ba4ba130de5d9162c669 # v2.3.4
         with:
