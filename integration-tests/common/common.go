@@ -197,8 +197,8 @@ func debug(cmd *exec.Cmd) error {
 		panic(err)
 	}
 
-	if err := cmd.Start(); err != nil {
-		panic(err)
+	if startErr := cmd.Start(); startErr != nil {
+		panic(startErr)
 	}
 
 	doneStdOut := make(chan any)
@@ -362,8 +362,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, obse
 	// Defining relay config
 	bootstrapRelayConfig := job.JSONConfig{
 		"nodeName":       fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.New().String()),
-		"accountAddress": fmt.Sprintf("%s", accountAddresses[0]),
-		"chainID":        fmt.Sprintf("%s", c.ChainId),
+		"accountAddress": accountAddresses[0],
+		"chainID":        c.ChainId,
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
@@ -407,7 +407,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, mockUrl string, obse
 		}
 		relayConfig := job.JSONConfig{
 			"nodeName":       bootstrapRelayConfig["nodeName"],
-			"accountAddress": fmt.Sprintf("%s", accountAddresses[nIdx]),
+			"accountAddress": accountAddresses[nIdx],
 			"chainID":        bootstrapRelayConfig["chainID"],
 		}
 
