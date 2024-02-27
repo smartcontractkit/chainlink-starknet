@@ -66,7 +66,6 @@ fn transfer_and_call(receiver: ContractAddress) {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('ERC20: transfer to 0',))]
 fn test_to_zero_address() {
     setup();
@@ -74,7 +73,6 @@ fn test_to_zero_address() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_valid_transfer_and_call() {
     let sender = setup();
     let (receiver_address, receiver) = setup_valid_receiver();
@@ -85,7 +83,6 @@ fn test_valid_transfer_and_call() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('ENTRYPOINT_NOT_FOUND',))]
 fn test_invalid_receiver_supports_interface_true() {
     setup();
@@ -97,17 +94,15 @@ fn test_invalid_receiver_supports_interface_true() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_invalid_receiver_supports_interface_false() {
     setup();
-    let (receiver_address, receiver) = setup_invalid_receiver();
+    let (receiver_address, _) = setup_invalid_receiver();
 
     transfer_and_call(receiver_address);
 }
 
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('CONTRACT_NOT_DEPLOYED',))]
 fn test_nonexistent_receiver() {
     setup();

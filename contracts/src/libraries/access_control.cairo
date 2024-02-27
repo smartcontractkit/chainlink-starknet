@@ -16,7 +16,8 @@ mod AccessControlComponent {
     use starknet::class_hash::ClassHash;
     use zeroable::Zeroable;
 
-    use chainlink::libraries::ownable::{OwnableComponent};
+    use openzeppelin::access::ownable::ownable::OwnableComponent;
+
     use OwnableComponent::InternalImpl as OwnableInternalImpl;
 
     #[storage]
@@ -90,7 +91,7 @@ mod AccessControlComponent {
         }
 
         fn add_access(ref self: ComponentState<TContractState>, user: ContractAddress) {
-            get_dep_component!(self, Ownable).assert_only_owner();
+            get_dep_component!(@self, Ownable).assert_only_owner();
             let has_access = self._access_list.read(user);
             if !has_access {
                 self._access_list.write(user, true);
@@ -99,7 +100,7 @@ mod AccessControlComponent {
         }
 
         fn remove_access(ref self: ComponentState<TContractState>, user: ContractAddress) {
-            get_dep_component!(self, Ownable).assert_only_owner();
+            get_dep_component!(@self, Ownable).assert_only_owner();
             let has_access = self._access_list.read(user);
             if has_access {
                 self._access_list.write(user, false);
@@ -108,7 +109,7 @@ mod AccessControlComponent {
         }
 
         fn enable_access_check(ref self: ComponentState<TContractState>) {
-            get_dep_component!(self, Ownable).assert_only_owner();
+            get_dep_component!(@self, Ownable).assert_only_owner();
             let check_enabled = self._check_enabled.read();
             if !check_enabled {
                 self._check_enabled.write(true);
@@ -117,7 +118,7 @@ mod AccessControlComponent {
         }
 
         fn disable_access_check(ref self: ComponentState<TContractState>) {
-            get_dep_component!(self, Ownable).assert_only_owner();
+            get_dep_component!(@self, Ownable).assert_only_owner();
             let check_enabled = self._check_enabled.read();
             if check_enabled {
                 self._check_enabled.write(false);

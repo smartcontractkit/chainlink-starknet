@@ -32,7 +32,6 @@ fn setup() -> ContractAddress {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_ownable() {
     let account = setup();
     // Deploy LINK token
@@ -48,7 +47,6 @@ fn test_ownable() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('minter is 0',))]
 fn test_constructor_zero_address() {
     let sender = setup();
@@ -58,7 +56,6 @@ fn test_constructor_zero_address() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_constructor() {
     let sender = setup();
     let mut state = STATE();
@@ -70,7 +67,6 @@ fn test_constructor() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_permissioned_mint_from_minter() {
     let sender = setup();
     let mut state = STATE();
@@ -89,7 +85,6 @@ fn test_permissioned_mint_from_minter() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only minter',))]
 fn test_permissioned_mint_from_nonminter() {
     let sender = setup();
@@ -103,7 +98,6 @@ fn test_permissioned_mint_from_nonminter() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('u256_sub Overflow',))]
 fn test_permissioned_burn_from_minter() {
     let zero = 0;
@@ -132,7 +126,6 @@ fn test_permissioned_burn_from_minter() {
 
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only minter',))]
 fn test_permissioned_burn_from_nonminter() {
     let sender = setup();
@@ -146,7 +139,6 @@ fn test_permissioned_burn_from_nonminter() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_non_owner() {
     let sender = setup();

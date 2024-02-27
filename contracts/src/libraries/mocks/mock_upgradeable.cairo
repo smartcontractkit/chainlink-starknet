@@ -18,7 +18,7 @@ mod MockUpgradeable {
     #[constructor]
     fn constructor(ref self: ContractState) {}
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MockUpgradeableImpl of super::IMockUpgradeable<ContractState> {
         fn foo(self: @ContractState) -> bool {
             true

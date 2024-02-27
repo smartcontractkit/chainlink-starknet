@@ -26,7 +26,6 @@ use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
 #[test]
-#[available_gas(10000000)]
 fn test_pow_2_0() {
     assert(pow(2, 0) == 0x1, 'expected 0x1');
     assert(pow(2, 1) == 0x2, 'expected 0x2');
@@ -107,7 +106,6 @@ fn setup() -> (
 }
 
 #[test]
-#[available_gas(3000000)]
 fn test_ownable() {
     let (account, _, _, _) = setup();
     // Deploy aggregator
@@ -129,7 +127,6 @@ fn test_ownable() {
 }
 
 #[test]
-#[available_gas(3000000)]
 fn test_access_control() {
     let (account, _, _, _) = setup();
     // Deploy aggregator
@@ -152,10 +149,9 @@ fn test_access_control() {
 
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_non_owner() {
-    let sender = setup();
+    let _ = setup();
     let mut state = STATE();
 
     UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
@@ -164,7 +160,6 @@ fn test_upgrade_non_owner() {
 // --- Billing tests ---
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_billing_access_controller_not_owner() {
     let (owner, acc2, billingAccessController, _) = setup();
@@ -179,7 +174,6 @@ fn test_set_billing_access_controller_not_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('caller does not have access',))]
 fn test_set_billing_config_no_access() {
     let (owner, acc2, billingAccessController, _) = setup();
@@ -207,7 +201,6 @@ fn test_set_billing_config_no_access() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_set_billing_config_as_owner() {
     let (owner, _, billingAccessController, _) = setup();
     let mut state = STATE();
@@ -240,7 +233,6 @@ fn test_set_billing_config_as_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_set_billing_config_as_acc_with_access() {
     let (owner, acc2, billingAccessController, _) = setup();
     let mut state = STATE();
@@ -280,7 +272,6 @@ fn test_set_billing_config_as_acc_with_access() {
 // --- Payee Management Tests ---
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_payees_caller_not_owner() {
     let (owner, acc2, _, _) = setup();
@@ -297,7 +288,6 @@ fn test_set_payees_caller_not_owner() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_set_single_payee() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -312,7 +302,6 @@ fn test_set_single_payee() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_set_multiple_payees() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -330,7 +319,6 @@ fn test_set_multiple_payees() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only current payee can update',))]
 fn test_transfer_payeeship_caller_not_payee() {
     let (owner, acc2, _, _) = setup();
@@ -348,7 +336,6 @@ fn test_transfer_payeeship_caller_not_payee() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('cannot transfer to self',))]
 fn test_transfer_payeeship_to_self() {
     let (owner, acc2, _, _) = setup();
@@ -367,7 +354,6 @@ fn test_transfer_payeeship_to_self() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only proposed payee can accept',))]
 fn test_accept_payeeship_caller_not_proposed_payee() {
     let (owner, acc2, _, _) = setup();
@@ -387,7 +373,6 @@ fn test_accept_payeeship_caller_not_proposed_payee() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_transfer_and_accept_payeeship() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -413,7 +398,6 @@ fn test_transfer_and_accept_payeeship() {
 // verification logic removed in the future.
 
 #[test]
-#[available_gas(2000000)]
 fn test_owed_payment_no_rounds() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
@@ -432,7 +416,6 @@ fn test_owed_payment_no_rounds() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_link_available_for_payment_no_rounds_or_funds() {
     let (owner, acc2, _, linkToken) = setup();
     let mut state = STATE();
