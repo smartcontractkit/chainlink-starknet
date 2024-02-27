@@ -23,24 +23,6 @@ import (
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/osutil"
 )
 
-type GlobalTestConfig interface {
-	GetChainlinkImageConfig() *ctf_config.ChainlinkImageConfig
-	GetLoggingConfig() *ctf_config.LoggingConfig
-	GetNetworkConfig() *ctf_config.NetworkConfig
-}
-
-type UpgradeableChainlinkTestConfig interface {
-	GetChainlinkUpgradeImageConfig() *ctf_config.ChainlinkImageConfig
-}
-
-type CommonTestConfig interface {
-	GetCommonConfig() *Common
-}
-
-type Ocr2TestConfig interface {
-	GetOCR2Config() *ocr2_config.Config
-}
-
 type TestConfig struct {
 	ChainlinkImage        *ctf_config.ChainlinkImageConfig `toml:"ChainlinkImage"`
 	Logging               *ctf_config.LoggingConfig        `toml:"Logging"`
