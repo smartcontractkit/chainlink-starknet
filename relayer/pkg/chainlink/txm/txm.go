@@ -157,8 +157,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		Nonce:         nonce,
 		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
 			L1Gas: starknetrpc.ResourceBounds{
-				MaxAmount:       "0x186a0",
-				MaxPricePerUnit: "0x1388",
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
 			},
 			L2Gas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x0",
@@ -203,7 +203,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	txm.lggr.Infow("Account", "account", account.AccountAddress)
 
-	var friEstimate *starknetrpc.FeeEstimate = nil
+	var friEstimate *starknetrpc.FeeEstimate
 	for i, f := range feeEstimate {
 		txm.lggr.Infow("Estimated fee", "index", i, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
 		if f.FeeUnit == "FRI" && friEstimate == nil {
