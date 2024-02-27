@@ -38,13 +38,11 @@ func (c *TestConfig) GetLoggingConfig() *ctf_config.LoggingConfig {
 }
 
 func (c *TestConfig) GetPrivateEthereumNetworkConfig() *test_env.EthereumNetwork {
-	//TODO implement me
-	return nil
+	return &test_env.EthereumNetwork{}
 }
 
 func (c *TestConfig) GetPyroscopeConfig() *ctf_config.PyroscopeConfig {
-	//TODO implement me
-	return nil
+	return &ctf_config.PyroscopeConfig{}
 }
 
 var embeddedConfigs embed.FS
