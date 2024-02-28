@@ -34,7 +34,8 @@ import (
 
 var (
 	chainName            = "starknet"
-	chainId              = "SN_GOERLI"
+	chainIdLocalNet      = "SN_GOERLI"
+	chainIdTestnet       = "SN_SEPOLIA"
 	DefaultL2RPCInternal = "http://starknet-dev:5000"
 )
 
@@ -71,6 +72,7 @@ type RPCDetails struct {
 func New(testConfig *testconfig.TestConfig) *Common {
 	var c *Common
 	l2RpcUrl := DefaultL2RPCInternal
+	chainId := chainIdLocalNet
 
 	duration, err := time.ParseDuration(*testConfig.OCR2.TestDuration)
 	if err != nil {
@@ -79,6 +81,7 @@ func New(testConfig *testconfig.TestConfig) *Common {
 
 	if *testConfig.Common.Network == "testnet" {
 		l2RpcUrl = *testConfig.Common.L2RPCUrl
+		chainId = chainIdTestnet
 	}
 
 	c = &Common{
