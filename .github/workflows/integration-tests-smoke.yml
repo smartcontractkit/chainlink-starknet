@@ -168,6 +168,9 @@ jobs:
           version="${{ env.CHAINLINK_VERSION }}"
           [Network]
           selected_networks=["SIMULATED"]
+          [Common]
+          internal_docker_repo = "${{ env.INTERNAL_DOCKER_REPO }}"
+          stateful_db = false
           EOF
           # shellcheck disable=SC2002
           BASE64_CONFIG_OVERRIDE=$(cat config.toml | base64 -w 0)
