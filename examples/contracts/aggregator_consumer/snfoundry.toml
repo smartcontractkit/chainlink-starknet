@@ -1,0 +1,8 @@
+# A full list of RPC endpoints can be found here:
+#
+#  https://blastapi.io/public-api/starknet
+#
+
+[sncast.default]
+url = "https://starknet-testnet.public.blastapi.io/rpc/v0_6"
+
