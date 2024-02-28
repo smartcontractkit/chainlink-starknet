@@ -138,6 +138,10 @@ func (m *OCRv2TestState) DeployCluster() {
 		}
 		// Setting RPC details
 		m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][0]
+		if *m.Common.TestConfig.Common.Network == "testnet" {
+			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
+			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
+		}
 		m.Common.RPCDetails.MockServerEndpoint = m.Common.Env.URLs["qa_mock_adapter_internal"][0]
 		m.Common.RPCDetails.MockServerUrl = "five"
 
@@ -151,6 +155,11 @@ func (m *OCRv2TestState) DeployCluster() {
 		// Setting RPC details
 		m.Common.RPCDetails.RPCL2External = stark.ExternalHttpUrl
 		m.Common.RPCDetails.RPCL2Internal = stark.InternalHttpUrl
+
+		if *m.Common.TestConfig.Common.Network == "testnet" {
+			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
+			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
+		}
 
 		// Creating docker containers
 		b, err := test_env.NewCLTestEnvBuilder().
@@ -205,6 +214,9 @@ func (m *OCRv2TestState) DeployCluster() {
 		account := accounts[0]
 		m.Account.Account = account.Address
 		m.Account.PrivateKey = account.PrivateKey
+	} else {
+		m.Account.Account = *m.TestConfig.TestConfig.Common.Account
+		m.Account.PrivateKey = *m.TestConfig.TestConfig.Common.PrivateKey
 	}
 }
 

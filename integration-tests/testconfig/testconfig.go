@@ -109,10 +109,14 @@ func (c *TestConfig) AsBase64() (string, error) {
 }
 
 type Common struct {
-	Network   *string `toml:"network"`
-	InsideK8s *bool   `toml:"inside_k8"`
-	User      *string `toml:"user"`
-	L2RPCUrl  *string `toml:"l2_rpc_url"`
+	Network            *string `toml:"network"`
+	InsideK8s          *bool   `toml:"inside_k8"`
+	User               *string `toml:"user"`
+	L2RPCUrl           *string `toml:"l2_rpc_url"`
+	PrivateKey         *string `toml:"private_key"`
+	Account            *string `toml:"account"`
+	Stateful           *bool   `toml:"stateful_db"`
+	InternalDockerRepo *string `toml:"internal_docker_repo"`
 }
 
 func (c *Common) Validate() error {
@@ -133,12 +137,28 @@ func (c *Common) Validate() error {
 		return fmt.Errorf("inside_k8 must be set")
 	}
 
+	if c.InternalDockerRepo == nil {
+		return fmt.Errorf("internal_docker_repo must be set")
+	}
+
 	if c.User == nil {
 		return fmt.Errorf("user must be set")
 	}
 
+	if c.Stateful == nil {
+		return fmt.Errorf("stateful_db state for db must be set")
+	}
+
 	if c.L2RPCUrl == nil && *c.Network == "testnet" {
 		return fmt.Errorf("l2_rpc_url must be set")
+	}
+
+	if c.Account == nil && *c.Network == "testnet" {
+		return fmt.Errorf("account must be set")
+	}
+
+	if c.PrivateKey == nil && *c.Network == "testnet" {
+		return fmt.Errorf("private_key must be set")
 	}
 
 	return nil

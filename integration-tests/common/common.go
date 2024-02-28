@@ -133,7 +133,9 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 			"db": map[string]any{
 				"image": map[string]any{
 					"version": "15.5",
-				}},
+				},
+				"stateful": c.TestConfig.Common.Stateful,
+			},
 		}, c.TestConfig.ChainlinkImage, overrideFn)
 		c.Env = environment.New(c.TestEnvDetails.K8Config).
 			AddHelm(devnet.New(nil)).

@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ethAddressGoerli = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
-	nAccount         string
+	ethAddressSepolia  = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+	strkAddressSepolia = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"
+	nAccount           string
 )
 
 func (m *OCRv2TestState) fundNodes() ([]string, error) {
@@ -36,7 +37,7 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = m.Clients.GauntletClient.TransferToken(ethAddressGoerli, key, "100000000000000000") // Transferring 1 ETH to each node
+			_, err = m.Clients.GauntletClient.TransferToken(strkAddressSepolia, key, "100000000000000000") // Transferring 1 ETH to each node
 			if err != nil {
 				return nil, err
 			}
