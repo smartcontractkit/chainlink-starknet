@@ -198,6 +198,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	simFlags := []starknetrpc.SimulationFlag{}
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
+		var data any
+		var rpcError *starknetrpc.RPCError
+		if errors.As(err, &rpcError) {
+			data = rpcError.Data()
+		}
+		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
 	}
 
@@ -245,6 +251,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
+		var data any
+		var rpcError *starknetrpc.RPCError
+		if errors.As(err, &rpcError) {
+			data = rpcError.Data()
+		}
+		txm.lggr.Errorw("failed to invoke tx", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
