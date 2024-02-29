@@ -1,7 +1,8 @@
 use snforge_std::{declare, ContractClassTrait};
 
-use aggregator_consumer::mocks::mock_aggregator::IMockAggregatorDispatcherTrait;
-use aggregator_consumer::mocks::mock_aggregator::IMockAggregatorDispatcher;
+use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcherTrait;
+use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcher;
+
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcherTrait;
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcher;
 

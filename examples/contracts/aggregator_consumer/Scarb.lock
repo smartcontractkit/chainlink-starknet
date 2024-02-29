@@ -6,7 +6,6 @@ name = "aggregator_consumer"
 version = "0.1.0"
 dependencies = [
  "chainlink",
- "openzeppelin",
  "snforge_std",
 ]
 

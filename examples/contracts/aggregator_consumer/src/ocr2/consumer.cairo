@@ -6,11 +6,13 @@ pub trait IAggregatorConsumer<TContractState> {
 
 #[starknet::contract]
 mod AggregatorConsumer {
-    use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcherTrait;
-    use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcher;
-    use chainlink::ocr2::aggregator_proxy::IAggregator;
-    use chainlink::ocr2::aggregator::Round;
     use starknet::ContractAddress;
+
+    use chainlink::ocr2::aggregator::Round;
+
+    use chainlink::ocr2::aggregator_proxy::IAggregator;
+    use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcher;
+    use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcherTrait;
 
     #[storage]
     struct Storage {
