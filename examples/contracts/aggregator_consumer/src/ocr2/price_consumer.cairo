@@ -5,10 +5,10 @@ pub trait IAggregatorPriceConsumer<TContractState> {
 
 #[starknet::contract]
 mod AggregatorPriceConsumer {
-    use core::starknet::ContractAddress;
-    use core::starknet::get_block_info;
-    use core::box::BoxTrait;
-    use core::traits::Into;
+    use box::BoxTrait;
+    use starknet::ContractAddress;
+    use zeroable::Zeroable;
+    use traits::Into;
 
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator_proxy::IAggregator;
@@ -30,6 +30,8 @@ mod AggregatorPriceConsumer {
         uptime_feed_address: ContractAddress,
         aggregator_address: ContractAddress
     ) {
+        assert(!uptime_feed_address.is_zero(), 'uptime feed is 0');
+        assert(!aggregator_address.is_zero(), 'aggregator is 0');
         self._uptime_feed_address.write(uptime_feed_address);
         self._aggregator_address.write(aggregator_address);
     }
@@ -48,7 +50,7 @@ mod AggregatorPriceConsumer {
     fn assert_sequencer_healthy(self: @ContractState) {
         let round = IAggregatorDispatcher { contract_address: self._uptime_feed_address.read() }
             .latest_round_data();
-        let timestamp = get_block_info().unbox().block_timestamp;
+        let timestamp = starknet::get_block_info().unbox().block_timestamp;
 
         // After 60 sec the report is considered stale
         let report_stale = timestamp - round.updated_at > 60_u64;

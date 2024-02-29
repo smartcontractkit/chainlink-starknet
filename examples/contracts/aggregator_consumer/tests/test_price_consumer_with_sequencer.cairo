@@ -1,13 +1,14 @@
 use snforge_std::{declare, ContractClassTrait, start_prank, stop_prank, CheatTarget};
 
-use aggregator_consumer::emergency::sequencer_uptime_feed::ISequencerUptimeFeedDispatcherTrait;
-use aggregator_consumer::emergency::sequencer_uptime_feed::ISequencerUptimeFeedDispatcher;
+use chainlink::emergency::sequencer_uptime_feed::ISequencerUptimeFeedDispatcherTrait;
+use chainlink::emergency::sequencer_uptime_feed::ISequencerUptimeFeedDispatcher;
+use chainlink::libraries::access_control::IAccessControllerDispatcherTrait;
+use chainlink::libraries::access_control::IAccessControllerDispatcher;
+use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcherTrait;
+use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcher;
+
 use aggregator_consumer::ocr2::price_consumer::IAggregatorPriceConsumerDispatcherTrait;
 use aggregator_consumer::ocr2::price_consumer::IAggregatorPriceConsumerDispatcher;
-use aggregator_consumer::libraries::access_control::IAccessControllerDispatcherTrait;
-use aggregator_consumer::libraries::access_control::IAccessControllerDispatcher;
-use aggregator_consumer::mocks::mock_aggregator::IMockAggregatorDispatcherTrait;
-use aggregator_consumer::mocks::mock_aggregator::IMockAggregatorDispatcher;
 
 use starknet::contract_address_const;
 use starknet::get_caller_address;

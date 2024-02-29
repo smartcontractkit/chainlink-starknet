@@ -224,6 +224,11 @@ test-integration-contracts: build-ts env-devnet-hardhat
 	cd packages-ts/starknet/ && \
 		yarn test
 
+.PHONY test-examples
+test-examples:
+	cd ./examples/contracts/aggregator_consumer && \
+		snforge test
+
 .PHONY: test-integration-gauntlet
 # TODO: fix example
 # cd packages-ts/starknet-gauntlet-example/ && \
