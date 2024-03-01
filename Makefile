@@ -213,17 +213,6 @@ test-integration-soak-ci:
 	cd integration-tests/ && \
 		go test --timeout=1h -v -count=1 -json ./soak
 
-.PHONY: test-integration-contracts
-# TODO: better network lifecycle setup - requires external network (L1 + L2)
-# TODO: readd test examples
-#       cd examples/contracts/aggregator-consumer/ && \
-#         yarn test
-test-integration-contracts: build-ts env-devnet-hardhat
-	echo "Tests currently broken because of starknet-hardhat-plugin"
-	exit 1
-	cd packages-ts/starknet/ && \
-		yarn test
-
 .PHONY: test-examples
 test-examples:
 	cd ./examples/contracts/aggregator_consumer && \
