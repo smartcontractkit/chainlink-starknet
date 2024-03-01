@@ -1,4 +1,4 @@
-name: Integration Contracts (Vendor, Examples)
+name: Example Contracts
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  integration_contracts_run_tests:
+  run_examples_tests:
     name: Run Tests
     runs-on: ubuntu-latest
     steps:
@@ -23,5 +23,8 @@ jobs:
       - name: Install Cairo
         uses: ./.github/actions/install-cairo
 
+      - name: Install Starknet Foundry
+        uses: ./.github/actions/install-starknet-foundry
+
       - name: Test
-        run: nix develop -c make test-integration-contracts
+        run: nix develop -c make test-examples

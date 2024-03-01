@@ -1,0 +1,19 @@
+name: Install Starknet Foundry (snforge and sncast)
+description: A composite action that installs the snforge and sncast binaries
+
+inputs:
+  starknet_foundry_version:
+    description: Starknet Foundry release version
+    default: "v0.18.0"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Starknet Foundry for Linux
+      id: install-starknet-foundry
+      shell: bash
+      run: |
+        curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh 
+        snfoundryup -v ${{ inputs.starknet_foundry_version }}
+
