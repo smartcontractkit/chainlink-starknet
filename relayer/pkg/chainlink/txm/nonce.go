@@ -20,11 +20,11 @@ type NonceManagerClient interface {
 
 type NonceManager interface {
 	services.Service
-
 	Register(ctx context.Context, address *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error
-
 	NextSequence(address *felt.Felt, chainID string) (*felt.Felt, error)
 	IncrementNextSequence(address *felt.Felt, chainID string, currentNonce *felt.Felt) error
+	// Resets local account nonce to on-chain account nonce
+	Sync(ctx context.Context, address *felt.Felt, chainId string, client NonceManagerClient) error
 }
 
 var _ NonceManager = (*nonceManager)(nil)
@@ -62,6 +62,23 @@ func (nm *nonceManager) Close() error {
 
 func (nm *nonceManager) HealthReport() map[string]error {
 	return map[string]error{nm.Name(): nm.starter.Healthy()}
+}
+
+func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, chainId string, client NonceManagerClient) error {
+	if err := nm.validate(address, chainId); err != nil {
+		return err
+	}
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
+
+	n, err := client.AccountNonce(ctx, address)
+	if err != nil {
+		return err
+	}
+
+	nm.n[address.String()][chainId] = n
+
+	return nil
 }
 
 // Register is used because we cannot pre-fetch nonces. the pubkey is known before hand, but the account address is not known until a job is started and sends a tx
@@ -110,14 +127,14 @@ func (nm *nonceManager) IncrementNextSequence(addr *felt.Felt, chainId string, c
 	return nil
 }
 
-func (nm *nonceManager) validate(addr *felt.Felt, id string) error {
+func (nm *nonceManager) validate(addr *felt.Felt, chainId string) error {
 	nm.lock.RLock()
 	defer nm.lock.RUnlock()
 	if _, exists := nm.n[addr.String()]; !exists {
 		return fmt.Errorf("nonce tracking does not exist for key: %s", addr.String())
 	}
-	if _, exists := nm.n[addr.String()][id]; !exists {
-		return fmt.Errorf("nonce does not exist for key: %s and chain: %s", addr.String(), id)
+	if _, exists := nm.n[addr.String()][chainId]; !exists {
+		return fmt.Errorf("nonce does not exist for key: %s and chain: %s", addr.String(), chainId)
 	}
 	return nil
 }
