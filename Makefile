@@ -224,7 +224,7 @@ test-integration-contracts: build-ts env-devnet-hardhat
 	cd packages-ts/starknet/ && \
 		yarn test
 
-.PHONY test-examples
+.PHONY: test-examples
 test-examples:
 	cd ./examples/contracts/aggregator_consumer && \
 		snforge test
