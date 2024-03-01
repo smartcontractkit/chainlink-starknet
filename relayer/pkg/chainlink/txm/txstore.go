@@ -89,6 +89,7 @@ type UnconfirmedTx struct {
 	Call      *starknetrpc.FunctionCall
 }
 
+// Retrieve Unconfirmed Txs in their queued order (by nonce)
 func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
