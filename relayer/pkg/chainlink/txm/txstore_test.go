@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/juno/core/felt"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,9 +18,16 @@ func TestTxStore(t *testing.T) {
 	t.Run("happypath", func(t *testing.T) {
 		t.Parallel()
 
+		call := &starknetrpc.FunctionCall{
+			ContractAddress:    new(felt.Felt).SetUint64(0),
+			EntryPointSelector: new(felt.Felt).SetUint64(0),
+		}
+
+		feltKey := new(felt.Felt).SetUint64(7)
+
 		s := NewTxStore(&felt.Zero)
 		assert.Equal(t, 0, s.InflightCount())
-		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0", call, feltKey))
 		assert.Equal(t, 1, s.InflightCount())
 		assert.Equal(t, []string{"0x0"}, s.GetUnconfirmed())
 		require.NoError(t, s.Confirm("0x0"))
@@ -33,36 +41,43 @@ func TestTxStore(t *testing.T) {
 		// create
 		s := NewTxStore(new(felt.Felt).SetUint64(0))
 
+		call := &starknetrpc.FunctionCall{
+			ContractAddress:    new(felt.Felt).SetUint64(0),
+			EntryPointSelector: new(felt.Felt).SetUint64(0),
+		}
+
+		feltKey := new(felt.Felt).SetUint64(7)
+
 		// accepts tx in order
-		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0", call, feltKey))
 		assert.Equal(t, 1, s.InflightCount())
 		assert.Equal(t, new(felt.Felt).SetUint64(1), &s.currentNonce)
 
 		// accepts tx that skips a nonce
-		require.NoError(t, s.Save(new(felt.Felt).SetUint64(2), "0x2"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(2), "0x2", call, feltKey))
 		assert.Equal(t, 2, s.InflightCount())
 		assert.Equal(t, new(felt.Felt).SetUint64(1), &s.currentNonce)
 
 		// accepts tx that fills in the missing nonce + fast forwards currentNonce
-		require.NoError(t, s.Save(new(felt.Felt).SetUint64(1), "0x1"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(1), "0x1", call, feltKey))
 		assert.Equal(t, 3, s.InflightCount())
 		assert.Equal(t, new(felt.Felt).SetUint64(3), &s.currentNonce)
 
 		// skip a nonce for later tests
-		require.NoError(t, s.Save(new(felt.Felt).SetUint64(4), "0x4"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(4), "0x4", call, feltKey))
 		assert.Equal(t, 4, s.InflightCount())
 		assert.Equal(t, new(felt.Felt).SetUint64(3), &s.currentNonce)
 
 		// rejects old nonce
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold"), "nonce too low: 0x0 < 0x3 (lowest)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold", call, feltKey), "nonce too low: 0x0 < 0x3 (lowest)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// reject already in use nonce
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(4), "0xskip"), "nonce used: tried to use nonce (0x4) for tx (0xskip), already used by (0x4)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(4), "0xskip", call, feltKey), "nonce used: tried to use nonce (0x4) for tx (0xskip), already used by (0x4)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// reject already in use tx hash
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(5), "0x0"), "hash used: tried to use tx (0x0) for nonce (0x5), already used nonce (0x0)")
+		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(5), "0x0", call, feltKey), "hash used: tried to use tx (0x0) for nonce (0x5), already used nonce (0x0)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// race save
@@ -71,11 +86,11 @@ func TestTxStore(t *testing.T) {
 		var wg sync.WaitGroup
 		wg.Add(2)
 		go func() {
-			err0 = s.Save(new(felt.Felt).SetUint64(10), "0x10")
+			err0 = s.Save(new(felt.Felt).SetUint64(10), "0x10", call, feltKey)
 			wg.Done()
 		}()
 		go func() {
-			err1 = s.Save(new(felt.Felt).SetUint64(10), "0x10")
+			err1 = s.Save(new(felt.Felt).SetUint64(10), "0x10", call, feltKey)
 			wg.Done()
 		}()
 		wg.Wait()
@@ -85,10 +100,17 @@ func TestTxStore(t *testing.T) {
 	t.Run("confirm", func(t *testing.T) {
 		t.Parallel()
 
+		call := &starknetrpc.FunctionCall{
+			ContractAddress:    new(felt.Felt).SetUint64(0),
+			EntryPointSelector: new(felt.Felt).SetUint64(0),
+		}
+
+		feltKey := new(felt.Felt).SetUint64(7)
+
 		// init store
 		s := NewTxStore(new(felt.Felt).SetUint64(0))
 		for i := 0; i < 5; i++ {
-			require.NoError(t, s.Save(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i)))
+			require.NoError(t, s.Save(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i), call, feltKey))
 		}
 
 		// confirm in order
@@ -107,7 +129,7 @@ func TestTxStore(t *testing.T) {
 		require.ErrorContains(t, s.Confirm("0xNULL"), "tx hash does not exist - it may already be confirmed")
 
 		// race confirm
-		require.NoError(t, s.Save(new(felt.Felt).SetUint64(10), "0x10"))
+		require.NoError(t, s.Save(new(felt.Felt).SetUint64(10), "0x10", call, feltKey))
 		var err0 error
 		var err1 error
 		var wg sync.WaitGroup
@@ -132,14 +154,20 @@ func TestChainTxStore(t *testing.T) {
 
 	felt0 := new(felt.Felt).SetUint64(0)
 	felt1 := new(felt.Felt).SetUint64(1)
+	feltKey := new(felt.Felt).SetUint64(2)
+
+	call := &starknetrpc.FunctionCall{
+		ContractAddress:    new(felt.Felt).SetUint64(0),
+		EntryPointSelector: new(felt.Felt).SetUint64(0),
+	}
 
 	// automatically save the from address
-	require.NoError(t, c.Save(felt0, new(felt.Felt).SetUint64(0), "0x0"))
+	require.NoError(t, c.Save(felt0, new(felt.Felt).SetUint64(0), "0x0", call, feltKey))
 
 	// reject saving for existing address and reused hash & nonce
 	// error messages are tested within TestTxStore
-	assert.Error(t, c.Save(felt0, new(felt.Felt).SetUint64(0), "0x1"))
-	assert.Error(t, c.Save(felt0, new(felt.Felt).SetUint64(1), "0x0"))
+	assert.Error(t, c.Save(felt0, new(felt.Felt).SetUint64(0), "0x1", call, feltKey), "nonce exists")
+	assert.Error(t, c.Save(felt0, new(felt.Felt).SetUint64(1), "0x0", call, feltKey), "hash exists")
 
 	// inflight count
 	count, exists := c.GetAllInflightCount()[felt0]

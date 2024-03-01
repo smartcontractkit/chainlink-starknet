@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 
@@ -123,6 +124,42 @@ func (txm *starktxm) broadcastLoop() {
 			}
 		}
 	}
+}
+
+func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt) error {
+	// resync nonce so that new queued txs can be unblocked
+	client, err := txm.client.Get()
+	if err != nil {
+		return err
+	}
+
+	chainId, err := client.Provider.ChainID(ctx)
+	if err != nil {
+		return err
+	}
+
+	txm.nonce.Sync(ctx, accountAddress, chainId, client)
+
+	// todo: in the future, revisit resetting txm.txStore.currentNonce
+
+	unconfirmedTxs, err := txm.txStore.GetUnconfirmedSorted(accountAddress)
+	if err != nil {
+		return err
+	}
+
+	// delete all unconfirmed txs and resubmit them to the txm queue
+	for i := 0; i < len(unconfirmedTxs); i++ {
+		// remove/confirm tx and resubmit tx to queue
+		tx := unconfirmedTxs[i]
+		if err = txm.txStore.Confirm(accountAddress, tx.Hash); err != nil {
+			return err
+		}
+		if err = txm.Enqueue(accountAddress, tx.PublicKey, *tx.Call); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 const FEE_MARGIN uint32 = 115
@@ -269,7 +306,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	txhash = res.TransactionHash.String()
 	err = errors.Join(
 		txm.nonce.IncrementNextSequence(publicKey, chainID, nonce),
-		txm.txStore.Save(accountAddress, nonce, txhash),
+		txm.txStore.Save(accountAddress, nonce, txhash, &call, publicKey),
 	)
 	return txhash, err
 }
@@ -304,6 +341,10 @@ func (txm *starktxm) confirmLoop() {
 						continue
 					}
 					response, err := client.Provider.GetTransactionStatus(ctx, f)
+
+					// tx can be rejected due to a nonce error. but we cannot know from the Starknet RPC :/ , so we have to wait for
+					// a broadcasted tx to fail in order to fix the nonce errors
+
 					if err != nil {
 						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
 						continue
