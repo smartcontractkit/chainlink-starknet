@@ -5,17 +5,9 @@ import (
 	"testing"
 	"time"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/require"
 )
-
-func StringsToCaigoFelts(in []string) []caigotypes.Felt {
-	out := make([]caigotypes.Felt, len(in))
-	for i := 0; i < len(in); i++ {
-		out[i] = caigotypes.StrToFelt(in[i])
-	}
-	return out
-}
 
 func TestNewRoundData(t *testing.T) {
 	raw := []string{
@@ -26,7 +18,8 @@ func TestNewRoundData(t *testing.T) {
 		"0x633344a5",
 	}
 
-	felts := StringsToCaigoFelts(raw)
+	felts, err := starknetutils.HexArrToFelt(raw)
+	require.NoError(t, err)
 	actualRound, err := NewRoundData(felts)
 	require.NoError(t, err)
 	expectedRound := RoundData{

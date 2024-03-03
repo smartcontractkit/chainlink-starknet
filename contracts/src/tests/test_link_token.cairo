@@ -13,7 +13,8 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::token::link_token::LinkToken;
-use chainlink::token::link_token::LinkToken::{MintableToken, ERC20Impl, UpgradeableImpl};
+use chainlink::token::link_token::LinkToken::{MintableToken, UpgradeableImpl};
+use openzeppelin::token::erc20::ERC20Component::{ERC20Impl, ERC20MetadataImpl};
 use chainlink::tests::test_ownable::should_implement_ownable;
 
 // only tests link token specific functionality 
@@ -31,7 +32,6 @@ fn setup() -> ContractAddress {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_ownable() {
     let account = setup();
     // Deploy LINK token
@@ -47,7 +47,6 @@ fn test_ownable() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('minter is 0',))]
 fn test_constructor_zero_address() {
     let sender = setup();
@@ -57,19 +56,17 @@ fn test_constructor_zero_address() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_constructor() {
     let sender = setup();
     let mut state = STATE();
     LinkToken::constructor(ref state, sender, sender);
 
     assert(LinkToken::minter(@state) == sender, 'minter valid');
-    assert(ERC20Impl::name(@state) == 'ChainLink Token', 'name valid');
-    assert(ERC20Impl::symbol(@state) == 'LINK', 'symbol valid');
+    assert(state.erc20.name() == 'ChainLink Token', 'name valid');
+    assert(state.erc20.symbol() == 'LINK', 'symbol valid');
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_permissioned_mint_from_minter() {
     let sender = setup();
     let mut state = STATE();
@@ -81,14 +78,13 @@ fn test_permissioned_mint_from_minter() {
     assert(ERC20Impl::balance_of(@state, to) == zero.into(), 'zero balance');
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedMint(ref state, to, amount.into());
+    MintableToken::permissioned_mint(ref state, to, amount.into());
 
     assert(ERC20Impl::balance_of(@state, sender) == zero.into(), 'zero balance');
     assert(ERC20Impl::balance_of(@state, to) == amount.into(), 'expect balance');
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only minter',))]
 fn test_permissioned_mint_from_nonminter() {
     let sender = setup();
@@ -98,11 +94,10 @@ fn test_permissioned_mint_from_nonminter() {
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedMint(ref state, to, amount.into());
+    MintableToken::permissioned_mint(ref state, to, amount.into());
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('u256_sub Overflow',))]
 fn test_permissioned_burn_from_minter() {
     let zero = 0;
@@ -112,26 +107,25 @@ fn test_permissioned_burn_from_minter() {
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedMint(ref state, to, amount.into());
+    MintableToken::permissioned_mint(ref state, to, amount.into());
     assert(ERC20Impl::balance_of(@state, to) == amount.into(), 'expect balance');
 
     // burn some
     let burn_amount: felt252 = 2000;
     let remaining_amount: felt252 = amount - burn_amount;
-    MintableToken::permissionedBurn(ref state, to, burn_amount.into());
+    MintableToken::permissioned_burn(ref state, to, burn_amount.into());
     assert(ERC20Impl::balance_of(@state, to) == remaining_amount.into(), 'remaining balance');
 
     // burn remaining
-    MintableToken::permissionedBurn(ref state, to, remaining_amount.into());
+    MintableToken::permissioned_burn(ref state, to, remaining_amount.into());
     assert(ERC20Impl::balance_of(@state, to) == zero.into(), 'no balance');
 
     // burn too much
-    MintableToken::permissionedBurn(ref state, to, amount.into());
+    MintableToken::permissioned_burn(ref state, to, amount.into());
 }
 
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('only minter',))]
 fn test_permissioned_burn_from_nonminter() {
     let sender = setup();
@@ -141,12 +135,11 @@ fn test_permissioned_burn_from_nonminter() {
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
-    MintableToken::permissionedBurn(ref state, to, amount.into());
+    MintableToken::permissioned_burn(ref state, to, amount.into());
 }
 
 #[test]
-#[available_gas(2000000)]
-#[should_panic(expected: ('Ownable: caller is not owner',))]
+#[should_panic(expected: ('Caller is not the owner',))]
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();

@@ -13,7 +13,8 @@ use core::result::ResultTrait;
 
 use chainlink::token::mock::valid_erc667_receiver::ValidReceiver;
 use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
-use chainlink::libraries::token::erc677::ERC677;
+use chainlink::libraries::token::erc677::ERC677Component;
+use chainlink::libraries::token::erc677::ERC677Component::ERC677Impl;
 
 #[starknet::interface]
 trait MockInvalidReceiver<TContractState> {
@@ -54,15 +55,17 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
     (address, contract)
 }
 
+type ComponentState =
+    ERC677Component::ComponentState<chainlink::token::link_token::LinkToken::ContractState>;
+
 fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();
     // have to send 0 because ERC20 is not initialized with starting supply when using this library by itself
-    let mut erc677 = ERC677::unsafe_new_contract_state();
-    ERC677::transfer_and_call(ref erc677, receiver, u256 { high: 0, low: 0 }, data);
+    let mut state: ComponentState = ERC677Component::component_state_for_testing();
+    state.transfer_and_call(receiver, u256 { high: 0, low: 0 }, data);
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('ERC20: transfer to 0',))]
 fn test_to_zero_address() {
     setup();
@@ -70,7 +73,6 @@ fn test_to_zero_address() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_valid_transfer_and_call() {
     let sender = setup();
     let (receiver_address, receiver) = setup_valid_receiver();
@@ -81,7 +83,6 @@ fn test_valid_transfer_and_call() {
 }
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('ENTRYPOINT_NOT_FOUND',))]
 fn test_invalid_receiver_supports_interface_true() {
     setup();
@@ -93,17 +94,15 @@ fn test_invalid_receiver_supports_interface_true() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_invalid_receiver_supports_interface_false() {
     setup();
-    let (receiver_address, receiver) = setup_invalid_receiver();
+    let (receiver_address, _) = setup_invalid_receiver();
 
     transfer_and_call(receiver_address);
 }
 
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('CONTRACT_NOT_DEPLOYED',))]
 fn test_nonexistent_receiver() {
     setup();

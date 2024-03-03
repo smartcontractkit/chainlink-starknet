@@ -49,7 +49,6 @@ trait IMultisig<TContractState> {
     fn is_confirmed(self: @TContractState, nonce: u128, signer: ContractAddress) -> bool;
     fn is_executed(self: @TContractState, nonce: u128) -> bool;
     fn get_transaction(self: @TContractState, nonce: u128) -> (Transaction, Array::<felt252>);
-    fn type_and_version(self: @TContractState) -> felt252;
     fn submit_transaction(
         ref self: TContractState,
         to: ContractAddress,
@@ -92,6 +91,7 @@ mod Multisig {
     use starknet::storage_write_syscall;
     use starknet::class_hash::ClassHash;
 
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     #[event]
@@ -161,7 +161,14 @@ mod Multisig {
         self._set_threshold(threshold);
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState,) -> felt252 {
+            'Multisig 1.0.0'
+        }
+    }
+
+    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
             self._require_multisig();
@@ -169,7 +176,7 @@ mod Multisig {
         }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl MultisigImpl of super::IMultisig<ContractState> {
         /// Views
 
@@ -213,10 +220,6 @@ mod Multisig {
             self._get_transaction_calldata_range(nonce, 0_usize, calldata_len, ref calldata);
 
             (transaction, calldata)
-        }
-
-        fn type_and_version(self: @ContractState,) -> felt252 {
-            'Multisig 1.0.0'
         }
 
         /// Externals

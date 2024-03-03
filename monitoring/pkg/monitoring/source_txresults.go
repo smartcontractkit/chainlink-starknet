@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	caigotypes "github.com/smartcontractkit/caigo/types"
+	"github.com/NethermindEth/juno/core/felt"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 
@@ -28,8 +29,12 @@ func (s *txResultsSourceFactory) NewSource(
 	_ relayMonitoring.ChainConfig,
 	feedConfig relayMonitoring.FeedConfig,
 ) (relayMonitoring.Source, error) {
+	contractAddress, err := starknetutils.HexToFelt(feedConfig.GetContractAddress())
+	if err != nil {
+		return nil, err
+	}
 	return &txResultsSource{
-		caigotypes.HexToHash(feedConfig.GetContractAddress()),
+		contractAddress,
 		s.ocr2Reader,
 		0,
 		sync.Mutex{},
@@ -41,7 +46,7 @@ func (s *txResultsSourceFactory) GetType() string {
 }
 
 type txResultsSource struct {
-	contractAddress caigotypes.Hash
+	contractAddress *felt.Felt
 	ocr2Reader      ocr2.OCR2Reader
 
 	prevRoundID   uint32

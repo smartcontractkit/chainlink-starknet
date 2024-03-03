@@ -63,7 +63,6 @@ trait IAggregator<TContractState> {
     fn round_data(self: @TContractState, round_id: u128) -> Round;
     fn description(self: @TContractState) -> felt252;
     fn decimals(self: @TContractState) -> u8;
-    fn type_and_version(self: @TContractState) -> felt252;
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -108,6 +107,9 @@ trait Billing<TContractState> {
     fn link_available_for_payment(
         self: @TContractState
     ) -> (bool, u128); // (is negative, absolute difference)
+    fn set_link_token(
+        ref self: TContractState, link_token: ContractAddress, recipient: ContractAddress
+    );
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -194,16 +196,30 @@ mod Aggregator {
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
 
-    use chainlink::utils::split_felt;
-    use chainlink::libraries::ownable::{Ownable, IOwnable};
-    use chainlink::libraries::access_control::AccessControl;
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
-
+    use openzeppelin::access::ownable::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
+    use chainlink::utils::split_felt;
+    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
+    use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+
     use chainlink::libraries::access_control::{
-        IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+        IAccessControllerDispatcher, IAccessControllerDispatcherTrait
     };
+    use chainlink::libraries::type_and_version::ITypeAndVersion;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     const GIGA: u128 = 1000000000_u128;
 
@@ -212,6 +228,10 @@ mod Aggregator {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
         NewTransmission: NewTransmission,
         ConfigSet: ConfigSet,
         LinkTokenSet: LinkTokenSet,
@@ -266,6 +286,10 @@ mod Aggregator {
 
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        access_control: AccessControlComponent::Storage,
         /// Maximum number of faulty oracles
         _f: u8,
         _latest_epoch_and_round: u64, // (u32, u32)
@@ -292,20 +316,30 @@ mod Aggregator {
         _billing: BillingConfig,
         // payee management
         _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
-        _proposed_payees: LegacyMap<ContractAddress,
-        ContractAddress> // <transmitter, payment_address>
+        _proposed_payees: LegacyMap<
+            ContractAddress, ContractAddress
+        > // <transmitter, payment_address>
     }
 
-    fn _require_read_access() {
-        let caller = starknet::info::get_caller_address();
-        let state = AccessControl::unsafe_new_contract_state();
-        AccessControl::check_read_access(@state, caller);
+    #[generate_trait]
+    impl AccessHelperImpl of AccessHelperTrait {
+        fn _require_read_access(self: @ContractState) {
+            let caller = starknet::info::get_caller_address();
+            self.access_control.check_read_access(caller);
+        }
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
+    impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
+        fn type_and_version(self: @ContractState) -> felt252 {
+            'ocr2/aggregator.cairo 1.0.0'
+        }
+    }
+
+    #[abi(embed_v0)]
     impl AggregatorImpl of super::IAggregator<ContractState> {
         fn latest_round_data(self: @ContractState) -> Round {
-            _require_read_access();
+            self._require_read_access();
             let latest_round_id = self._latest_aggregator_round_id.read();
             let transmission = self._transmissions.read(latest_round_id);
             Round {
@@ -318,7 +352,7 @@ mod Aggregator {
         }
 
         fn round_data(self: @ContractState, round_id: u128) -> Round {
-            _require_read_access();
+            self._require_read_access();
             let transmission = self._transmissions.read(round_id);
             Round {
                 round_id: round_id.into(),
@@ -330,17 +364,13 @@ mod Aggregator {
         }
 
         fn description(self: @ContractState) -> felt252 {
-            _require_read_access();
+            self._require_read_access();
             self._description.read()
         }
 
         fn decimals(self: @ContractState) -> u8 {
-            _require_read_access();
+            self._require_read_access();
             self._decimals.read()
-        }
-
-        fn type_and_version(self: @ContractState) -> felt252 {
-            'ocr2/aggregator.cairo 1.0.0'
         }
     }
 
@@ -357,10 +387,8 @@ mod Aggregator {
         decimals: u8,
         description: felt252
     ) {
-        let mut ownable = Ownable::unsafe_new_contract_state();
-        Ownable::constructor(ref ownable, owner); // Ownable::initializer(owner);
-        let mut access_control = AccessControl::unsafe_new_contract_state();
-        AccessControl::constructor(ref access_control);
+        self.ownable.initializer(owner);
+        self.access_control.initializer();
         self._link_token.write(link);
         self._billing_access_controller.write(billing_access_controller);
 
@@ -374,80 +402,11 @@ mod Aggregator {
 
     // --- Upgradeable ---
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             Upgradeable::upgrade(new_impl)
-        }
-    }
-
-    // --- Ownership ---
-
-    #[external(v0)]
-    impl OwnableImpl of IOwnable<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::owner(@state)
-        }
-
-        fn proposed_owner(self: @ContractState) -> ContractAddress {
-            let state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::proposed_owner(@state)
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::transfer_ownership(ref state, new_owner)
-        }
-
-        fn accept_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::accept_ownership(ref state)
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            let mut state = Ownable::unsafe_new_contract_state();
-            Ownable::OwnableImpl::renounce_ownership(ref state)
-        }
-    }
-
-    // -- Access Control --
-
-    #[external(v0)]
-    impl AccessControllerImpl of IAccessController<ContractState> {
-        fn has_access(self: @ContractState, user: ContractAddress, data: Array<felt252>) -> bool {
-            let state = AccessControl::unsafe_new_contract_state();
-            AccessControl::has_access(@state, user, data)
-        }
-
-        fn add_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::add_access(ref state, user)
-        }
-
-        fn remove_access(ref self: ContractState, user: ContractAddress) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::remove_access(ref state, user)
-        }
-
-        fn enable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::enable_access_check(ref state)
-        }
-
-        fn disable_access_check(ref self: ContractState) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
-            let mut state = AccessControl::unsafe_new_contract_state();
-            AccessControl::disable_access_check(ref state)
         }
     }
 
@@ -519,7 +478,7 @@ mod Aggregator {
         masked
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl ConfigurationImpl of super::Configuration<ContractState> {
         fn set_config(
             ref self: ContractState,
@@ -529,8 +488,7 @@ mod Aggregator {
             offchain_config_version: u64,
             offchain_config: Array<felt252>,
         ) -> felt252 { // digest
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             assert(oracles.len() <= MAX_ORACLES, 'too many oracles');
             assert((3_u8 * f).into() < oracles.len(), 'faulty-oracle f too high');
             assert(f > 0_u8, 'f must be positive');
@@ -612,10 +570,7 @@ mod Aggregator {
             let mut index = 1;
             let mut len = self._oracles_len.read();
             let mut result = ArrayTrait::new();
-            loop {
-                if len == 0_usize {
-                    break ();
-                }
+            while len > 0_usize {
                 let transmitter = self._transmitters_list.read(index);
                 result.append(transmitter);
                 len -= 1;
@@ -629,12 +584,7 @@ mod Aggregator {
     impl ConfigurationHelperImpl of ConfigurationHelperTrait {
         fn remove_oracles(ref self: ContractState) {
             let mut index = self._oracles_len.read();
-            loop {
-                if index == 0_usize {
-                    self._oracles_len.write(0_usize);
-                    break ();
-                }
-
+            while index > 0_usize {
                 let signer = self._signers_list.read(index);
                 self._signers.write(signer, 0_usize);
 
@@ -644,7 +594,8 @@ mod Aggregator {
                     .write(transmitter, Oracle { index: 0_usize, payment_juels: 0_u128 });
 
                 index -= 1;
-            }
+            };
+            self._oracles_len.write(0_usize);
         }
 
         fn add_oracles(
@@ -702,157 +653,167 @@ mod Aggregator {
         extra_hash: felt252,
     }
 
-    #[external(v0)]
-    fn transmit(
-        ref self: ContractState,
-        report_context: ReportContext,
-        observation_timestamp: u64,
-        observers: felt252,
-        observations: Array<u128>,
-        juels_per_fee_coin: u128,
-        gas_price: u128,
-        mut signatures: Array<Signature>,
-    ) {
-        let signatures_len = signatures.len();
-
-        let epoch_and_round = self._latest_epoch_and_round.read();
-        assert(epoch_and_round < report_context.epoch_and_round, 'stale report');
-
-        // validate transmitter
-        let caller = starknet::info::get_caller_address();
-        let mut oracle = self._transmitters.read(caller);
-        assert(oracle.index != 0_usize, 'unknown sender'); // 0 index = uninitialized
-
-        // Validate config digest matches latest_config_digest
-        let config_digest = self._latest_config_digest.read();
-        assert(report_context.config_digest == config_digest, 'config digest mismatch');
-
-        let f = self._f.read();
-        assert(signatures_len == (f + 1_u8).into(), 'wrong number of signatures');
-
-        let msg = hash_report(
-            @report_context,
-            observation_timestamp,
-            observers,
-            @observations,
-            juels_per_fee_coin,
-            gas_price
-        );
-
-        // Check all signatures are unique (we only saw each pubkey once)
-        // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
-        // ensures we have enough bits to store a count for each oracle. Whenever the MAX_ORACLES
-        // is updated, the signed_count parameter should be reconsidered.
-        //
-        // Although 31 bits is enough, we use a u128 here for simplicity because BitAnd and BitOr
-        // operators are defined only for u128 and u256.
-        assert(MAX_ORACLES == 31_u32, '');
-        self.verify_signatures(msg, ref signatures, 0_u128);
-
-        // report():
-
-        let observations_len = observations.len();
-        assert(observations_len <= MAX_ORACLES, '');
-        assert(f.into() < observations_len, '');
-
-        self._latest_epoch_and_round.write(report_context.epoch_and_round);
-
-        let median_idx = observations_len / 2_usize;
-        let median = *observations[median_idx];
-
-        // Validate median in min-max range
-        let min_answer = self._min_answer.read();
-        let max_answer = self._max_answer.read();
-        assert((min_answer <= median) & (median <= max_answer), 'median is out of min-max range');
-
-        let prev_round_id = self._latest_aggregator_round_id.read();
-        let round_id = prev_round_id + 1_u128;
-        self._latest_aggregator_round_id.write(round_id);
-
-        let block_info = starknet::info::get_block_info().unbox();
-
-        self
-            ._transmissions
-            .write(
-                round_id,
-                Transmission {
-                    answer: median,
-                    block_num: block_info.block_number,
-                    observation_timestamp,
-                    transmission_timestamp: block_info.block_timestamp,
-                }
-            );
-
-        // NOTE: Usually validating via validator would happen here, currently disabled
-
-        let billing = self._billing.read();
-        let reimbursement_juels = calculate_reimbursement(
-            juels_per_fee_coin, signatures_len, gas_price, billing
-        );
-
-        // end report()
-
-        self
-            .emit(
-                Event::NewTransmission(
-                    NewTransmission {
-                        round_id: round_id,
-                        answer: median,
-                        transmitter: caller,
-                        observation_timestamp: observation_timestamp,
-                        observers: observers,
-                        observations: observations,
-                        juels_per_fee_coin: juels_per_fee_coin,
-                        gas_price: gas_price,
-                        config_digest: report_context.config_digest,
-                        epoch_and_round: report_context.epoch_and_round,
-                        reimbursement: reimbursement_juels,
-                    }
-                )
-            );
-
-        // pay transmitter
-        let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
-        // TODO: check overflow
-
-        oracle.payment_juels += payment;
-        self._transmitters.write(caller, oracle);
-    }
-
-    #[external(v0)]
-    fn latest_transmission_details(self: @ContractState) -> (felt252, u64, u128, u64) {
-        let config_digest = self._latest_config_digest.read();
-        let latest_round_id = self._latest_aggregator_round_id.read();
-        let epoch_and_round = self._latest_epoch_and_round.read();
-        let transmission = self._transmissions.read(latest_round_id);
-        (config_digest, epoch_and_round, transmission.answer, transmission.transmission_timestamp)
-    }
-
-    fn hash_report(
-        report_context: @ReportContext,
-        observation_timestamp: u64,
-        observers: felt252,
-        observations: @Array<u128>,
-        juels_per_fee_coin: u128,
-        gas_price: u128
-    ) -> felt252 {
-        let mut state = 0;
-        state = LegacyHash::hash(state, *report_context.config_digest);
-        state = LegacyHash::hash(state, *report_context.epoch_and_round);
-        state = LegacyHash::hash(state, *report_context.extra_hash);
-        state = LegacyHash::hash(state, observation_timestamp);
-        state = LegacyHash::hash(state, observers);
-        state = LegacyHash::hash(state, observations.len());
-        state = LegacyHash::hash(state, observations.span());
-        state = LegacyHash::hash(state, juels_per_fee_coin);
-        state = LegacyHash::hash(state, gas_price);
-        let len: usize = 5 + 1 + observations.len() + 2;
-        state = LegacyHash::hash(state, len);
-        state
-    }
-
+    #[abi(per_item)]
     #[generate_trait]
     impl TransmissionHelperImpl of TransmissionHelperTrait {
+        fn hash_report(
+            self: @ContractState,
+            report_context: @ReportContext,
+            observation_timestamp: u64,
+            observers: felt252,
+            observations: @Array<u128>,
+            juels_per_fee_coin: u128,
+            gas_price: u128
+        ) -> felt252 {
+            let mut state = 0;
+            state = LegacyHash::hash(state, *report_context.config_digest);
+            state = LegacyHash::hash(state, *report_context.epoch_and_round);
+            state = LegacyHash::hash(state, *report_context.extra_hash);
+            state = LegacyHash::hash(state, observation_timestamp);
+            state = LegacyHash::hash(state, observers);
+            state = LegacyHash::hash(state, observations.len());
+            state = LegacyHash::hash(state, observations.span());
+            state = LegacyHash::hash(state, juels_per_fee_coin);
+            state = LegacyHash::hash(state, gas_price);
+            let len: usize = 5 + 1 + observations.len() + 2;
+            state = LegacyHash::hash(state, len);
+            state
+        }
+
+        #[external(v0)]
+        fn latest_transmission_details(self: @ContractState) -> (felt252, u64, u128, u64) {
+            let config_digest = self._latest_config_digest.read();
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let epoch_and_round = self._latest_epoch_and_round.read();
+            let transmission = self._transmissions.read(latest_round_id);
+            (
+                config_digest,
+                epoch_and_round,
+                transmission.answer,
+                transmission.transmission_timestamp
+            )
+        }
+
+        #[external(v0)]
+        fn transmit(
+            ref self: ContractState,
+            report_context: ReportContext,
+            observation_timestamp: u64,
+            observers: felt252,
+            observations: Array<u128>,
+            juels_per_fee_coin: u128,
+            gas_price: u128,
+            mut signatures: Array<Signature>,
+        ) {
+            let signatures_len = signatures.len();
+
+            let epoch_and_round = self._latest_epoch_and_round.read();
+            assert(epoch_and_round < report_context.epoch_and_round, 'stale report');
+
+            // validate transmitter
+            let caller = starknet::info::get_caller_address();
+            let mut oracle = self._transmitters.read(caller);
+            assert(oracle.index != 0_usize, 'unknown sender'); // 0 index = uninitialized
+
+            // Validate config digest matches latest_config_digest
+            let config_digest = self._latest_config_digest.read();
+            assert(report_context.config_digest == config_digest, 'config digest mismatch');
+
+            let f = self._f.read();
+            assert(signatures_len == (f + 1_u8).into(), 'wrong number of signatures');
+
+            let msg = self
+                .hash_report(
+                    @report_context,
+                    observation_timestamp,
+                    observers,
+                    @observations,
+                    juels_per_fee_coin,
+                    gas_price
+                );
+
+            // Check all signatures are unique (we only saw each pubkey once)
+            // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
+            // ensures we have enough bits to store a count for each oracle. Whenever the MAX_ORACLES
+            // is updated, the signed_count parameter should be reconsidered.
+            //
+            // Although 31 bits is enough, we use a u128 here for simplicity because BitAnd and BitOr
+            // operators are defined only for u128 and u256.
+            assert(MAX_ORACLES == 31_u32, '');
+            self.verify_signatures(msg, ref signatures, 0_u128);
+
+            // report():
+
+            let observations_len = observations.len();
+            assert(observations_len <= MAX_ORACLES, '');
+            assert(f.into() < observations_len, '');
+
+            self._latest_epoch_and_round.write(report_context.epoch_and_round);
+
+            let median_idx = observations_len / 2_usize;
+            let median = *observations[median_idx];
+
+            // Validate median in min-max range
+            let min_answer = self._min_answer.read();
+            let max_answer = self._max_answer.read();
+            assert(
+                (min_answer <= median) & (median <= max_answer), 'median is out of min-max range'
+            );
+
+            let prev_round_id = self._latest_aggregator_round_id.read();
+            let round_id = prev_round_id + 1_u128;
+            self._latest_aggregator_round_id.write(round_id);
+
+            let block_info = starknet::info::get_block_info().unbox();
+
+            self
+                ._transmissions
+                .write(
+                    round_id,
+                    Transmission {
+                        answer: median,
+                        block_num: block_info.block_number,
+                        observation_timestamp,
+                        transmission_timestamp: block_info.block_timestamp,
+                    }
+                );
+
+            // NOTE: Usually validating via validator would happen here, currently disabled
+
+            let billing = self._billing.read();
+            let reimbursement_juels = calculate_reimbursement(
+                juels_per_fee_coin, signatures_len, gas_price, billing
+            );
+
+            // end report()
+
+            self
+                .emit(
+                    Event::NewTransmission(
+                        NewTransmission {
+                            round_id: round_id,
+                            answer: median,
+                            transmitter: caller,
+                            observation_timestamp: observation_timestamp,
+                            observers: observers,
+                            observations: observations,
+                            juels_per_fee_coin: juels_per_fee_coin,
+                            gas_price: gas_price,
+                            config_digest: report_context.config_digest,
+                            epoch_and_round: report_context.epoch_and_round,
+                            reimbursement: reimbursement_juels,
+                        }
+                    )
+                );
+
+            // pay transmitter
+            let payment = reimbursement_juels + (billing.transmission_payment_gjuels.into() * GIGA);
+            // TODO: check overflow
+
+            oracle.payment_juels += payment;
+            self._transmitters.write(caller, oracle);
+        }
+
         fn verify_signatures(
             self: @ContractState,
             msg: felt252,
@@ -886,52 +847,6 @@ mod Aggregator {
         }
     }
 
-    // --- RequestNewRound
-
-    // --- Set LINK Token
-
-    #[derive(Drop, starknet::Event)]
-    struct LinkTokenSet {
-        old_link_token: ContractAddress,
-        new_link_token: ContractAddress
-    }
-
-    #[external(v0)]
-    fn set_link_token(
-        ref self: ContractState, link_token: ContractAddress, recipient: ContractAddress
-    ) {
-        let ownable = Ownable::unsafe_new_contract_state();
-        Ownable::assert_only_owner(@ownable);
-
-        let old_token = self._link_token.read();
-
-        if link_token == old_token {
-            return ();
-        }
-
-        let contract_address = starknet::info::get_contract_address();
-
-        // call balanceOf as a sanity check to confirm we're talking to a token
-        let token = IERC20Dispatcher { contract_address: link_token };
-        token.balance_of(account: contract_address);
-
-        self.pay_oracles();
-
-        // transfer remaining balance of old token to recipient
-        let old_token_dispatcher = IERC20Dispatcher { contract_address: old_token };
-        let amount = old_token_dispatcher.balance_of(account: contract_address);
-        old_token_dispatcher.transfer(recipient, amount);
-
-        self._link_token.write(link_token);
-
-        self
-            .emit(
-                Event::LinkTokenSet(
-                    LinkTokenSet { old_link_token: old_token, new_link_token: link_token }
-                )
-            );
-    }
-
     // --- Billing Config
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -963,13 +878,52 @@ mod Aggregator {
         link_token: ContractAddress,
     }
 
-    #[external(v0)]
+    #[derive(Drop, starknet::Event)]
+    struct LinkTokenSet {
+        old_link_token: ContractAddress,
+        new_link_token: ContractAddress
+    }
+
+    #[abi(embed_v0)]
     impl BillingImpl of super::Billing<ContractState> {
+        fn set_link_token(
+            ref self: ContractState, link_token: ContractAddress, recipient: ContractAddress
+        ) {
+            self.ownable.assert_only_owner();
+
+            let old_token = self._link_token.read();
+
+            if link_token == old_token {
+                return ();
+            }
+
+            let contract_address = starknet::info::get_contract_address();
+
+            // call balanceOf as a sanity check to confirm we're talking to a token
+            let token = IERC20Dispatcher { contract_address: link_token };
+            token.balance_of(account: contract_address);
+
+            self.pay_oracles();
+
+            // transfer remaining balance of old token to recipient
+            let old_token_dispatcher = IERC20Dispatcher { contract_address: old_token };
+            let amount = old_token_dispatcher.balance_of(account: contract_address);
+            old_token_dispatcher.transfer(recipient, amount);
+
+            self._link_token.write(link_token);
+
+            self
+                .emit(
+                    Event::LinkTokenSet(
+                        LinkTokenSet { old_link_token: old_token, new_link_token: link_token }
+                    )
+                );
+        }
+
         fn set_billing_access_controller(
             ref self: ContractState, access_controller: ContractAddress
         ) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
 
             let old_controller = self._billing_access_controller.read();
             if access_controller == old_controller {
@@ -1068,8 +1022,7 @@ mod Aggregator {
     impl BillingHelperImpl of BillingHelperTrait {
         fn has_billing_access(self: @ContractState) {
             let caller = starknet::info::get_caller_address();
-            let ownable = Ownable::unsafe_new_contract_state();
-            let owner = Ownable::OwnableImpl::owner(@ownable);
+            let owner = self.ownable.owner();
 
             // owner always has access
             if caller == owner {
@@ -1150,14 +1103,11 @@ mod Aggregator {
             let mut index = self._oracles_len.read();
             let latest_round_id = self._latest_aggregator_round_id.read();
             let link_token = self._link_token.read();
-            loop {
-                if index == 0_usize {
-                    break ();
-                }
+            while index > 0_usize {
                 let transmitter = self._transmitters_list.read(index);
                 self.pay_oracle(transmitter, latest_round_id, link_token);
                 index -= 1;
-            }
+            };
         }
 
         fn total_link_due(self: @ContractState) -> u128 {
@@ -1225,11 +1175,10 @@ mod Aggregator {
         current: ContractAddress,
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl PayeeManagementImpl of super::PayeeManagement<ContractState> {
         fn set_payees(ref self: ContractState, mut payees: Array<PayeeConfig>) {
-            let ownable = Ownable::unsafe_new_contract_state();
-            Ownable::assert_only_owner(@ownable);
+            self.ownable.assert_only_owner();
             loop {
                 match payees.pop_front() {
                     Option::Some(payee) => {

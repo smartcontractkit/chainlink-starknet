@@ -7,7 +7,6 @@ use starknet::class_hash::class_hash_const;
 use starknet::syscalls::deploy_syscall;
 
 use chainlink::libraries::upgradeable::Upgradeable;
-use chainlink::libraries::ownable::Ownable;
 use chainlink::libraries::mocks::mock_upgradeable::{
     MockUpgradeable, IMockUpgradeableDispatcher, IMockUpgradeableDispatcherTrait,
     IMockUpgradeableDispatcherImpl
@@ -24,18 +23,8 @@ fn setup() -> ContractAddress {
 }
 
 #[test]
-#[available_gas(2000000)]
-fn test_upgrade() {
-    let sender = setup();
-
-    // doesn't error
-    Upgradeable::upgrade(class_hash_const::<1>());
-}
-
-#[test]
-#[available_gas(2000000)]
 fn test_upgrade_and_call() {
-    let sender = setup();
+    let _ = setup();
 
     let calldata = array![];
     let (contractAddr, _) = deploy_syscall(
@@ -54,10 +43,9 @@ fn test_upgrade_and_call() {
 
 
 #[test]
-#[available_gas(2000000)]
 #[should_panic(expected: ('Class hash cannot be zero',))]
 fn test_upgrade_zero_hash() {
-    let sender = setup();
+    let _ = setup();
 
     Upgradeable::upgrade(class_hash_const::<0>());
 }

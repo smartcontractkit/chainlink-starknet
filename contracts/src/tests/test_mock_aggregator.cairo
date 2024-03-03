@@ -16,7 +16,6 @@ fn setup() -> ContractAddress {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_deploy() {
     setup();
 
@@ -28,7 +27,7 @@ fn test_deploy() {
 
     let latest_round = MockAggregator::Aggregator::latest_round_data(@state);
 
-    let zeroed_round = Round {
+    let _ = Round {
         round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64
     };
 
@@ -41,7 +40,6 @@ fn test_deploy() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn test_set_latest_round() {
     setup();
 
