@@ -284,7 +284,6 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
 	}
-	fmt.Println(jobSpec.String())
 	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
 		return err
