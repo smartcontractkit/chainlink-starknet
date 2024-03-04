@@ -127,6 +127,9 @@ func (txm *starktxm) broadcastLoop() {
 }
 
 func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt) error {
+
+	txm.lggr.Debugw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
+
 	// resync nonce so that new queued txs can be unblocked
 	client, err := txm.client.Get()
 	if err != nil {
@@ -294,7 +297,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		if errors.As(err, &dataErr) {
 			data = dataErr.ErrorData()
 		}
-		txm.lggr.Errorw("failed to invoke tx", "error", err, "data", data)
+		txm.lggr.Errorw("failed to invoke tx from address", accountAddress, "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
@@ -342,7 +345,7 @@ func (txm *starktxm) confirmLoop() {
 					}
 					response, err := client.Provider.GetTransactionStatus(ctx, f)
 
-					// tx can be rejected due to a nonce error. but we cannot know from the Starknet RPC :/ , so we have to wait for
+					// tx can be rejected due to a nonce error. but we cannot know from the Starknet RPC directly  so we have to wait for
 					// a broadcasted tx to fail in order to fix the nonce errors
 
 					if err != nil {
