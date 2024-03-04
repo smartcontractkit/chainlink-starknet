@@ -16,7 +16,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CHAINLINK_ENV_USER: ${{ github.actor }}
   TEST_LOG_LEVEL: debug
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
@@ -117,15 +116,6 @@ jobs:
           - name: plugins
             tag-suffix: -plugins
     env:
-      TEST_SUITE: smoke
-      TEST_ARGS: -test.timeout 1h
-      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
-      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
-      TTL: 3h
-      TEST_DURATION: 15m
-      NODE_COUNT: 5
-      CHAINLINK_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-      CHAINLINK_VERSION: starknet.${{ github.sha }}
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
       scarb_version: "v2.5.4"
     permissions:
