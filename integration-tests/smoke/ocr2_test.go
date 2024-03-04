@@ -46,11 +46,11 @@ func TestOCRBasic(t *testing.T) {
 		err = os.Setenv("INTERNAL_DOCKER_REPO", *config.Common.InternalDockerRepo)
 		require.NoError(t, err, "Could not set INTERNAL_DOCKER_REPO")
 		test := test
-		if test.name == "plugins" {
-			pluginImage := *config.ChainlinkImage.Image + "-plugins"
-			config.ChainlinkImage.Image = &pluginImage
-		}
 		t.Run(test.name, func(t *testing.T) {
+			if test.name == "plugins" {
+				pluginImage := *config.ChainlinkImage.Version + "-plugins"
+				config.ChainlinkImage.Version = &pluginImage
+			}
 			t.Parallel()
 			logging.Init()
 			state, err := common.NewOCRv2State(t, "smoke-ocr2", &config)
