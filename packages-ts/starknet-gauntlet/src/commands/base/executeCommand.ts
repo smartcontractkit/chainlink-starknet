@@ -270,21 +270,10 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       await deps.prompt('Continue?')
       deps.logger.loading(`Sending transaction...`)
 
-      // if "--classHash" is not included, declare before deploying
-      let classHash: string | undefined = this.input?.user?.['classHash']
+      // classHash has to be provided, we can't declare on new accounts.
+      const classHash: string = this.input?.user?.['classHash']
 
-      let tx: TransactionResponse
-
-      if (classHash === undefined) {
-        tx = await this.provider.declareContract(this.contract, this.compiledContractHash, false)
-        const declaredTx = tx.tx as DeclareContractResponse
-        classHash = declaredTx?.class_hash
-        if (!classHash) {
-          deps.logger.error(`Failed to declare contract:\n${JSON.stringify(tx, null, 2)}`)
-          return tx
-        }
-      }
-      tx = await this.provider.deployAccountContract(
+      const tx: TransactionResponse = await this.provider.deployAccountContract(
         classHash,
         this.input.contract,
         false,
