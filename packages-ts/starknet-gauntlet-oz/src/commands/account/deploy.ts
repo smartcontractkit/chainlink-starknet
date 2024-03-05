@@ -52,7 +52,8 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
 ) => async () => {
   deps.logger.info(`About to deploy an OZ 0.x Account Contract with:
     public key: ${input.contract[0]}
-    salt: ${input.user.salt || 'randomly generated'}`)
+    salt: ${input.user.salt || 'randomly generated'}
+    action: ${context.action}`)
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
     deps.logger.line()
