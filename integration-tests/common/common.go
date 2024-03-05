@@ -2,20 +2,22 @@ package common
 
 import (
 	"fmt"
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
-	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
-	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
+	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -36,6 +38,7 @@ var (
 	chainName            = "starknet"
 	chainIdLocalNet      = "SN_GOERLI"
 	chainIdTestnet       = "SN_SEPOLIA"
+	feederTestnet        = "https://alpha-sepolia.starknet.io/feeder_gateway"
 	DefaultL2RPCInternal = "http://starknet-dev:5000"
 )
 
@@ -51,6 +54,7 @@ type Common struct {
 type ChainDetails struct {
 	ChainName string
 	ChainId   string
+	FeederURL string
 }
 
 type TestEnvDetails struct {
@@ -73,6 +77,7 @@ func New(testConfig *testconfig.TestConfig) *Common {
 	var c *Common
 	l2RpcUrl := DefaultL2RPCInternal
 	chainId := chainIdLocalNet
+	var feederUrl string
 
 	duration, err := time.ParseDuration(*testConfig.OCR2.TestDuration)
 	if err != nil {
@@ -82,6 +87,11 @@ func New(testConfig *testconfig.TestConfig) *Common {
 	if *testConfig.Common.Network == "testnet" {
 		l2RpcUrl = *testConfig.Common.L2RPCUrl
 		chainId = chainIdTestnet
+		feederUrl = feederTestnet
+	} else {
+		// set up mocked local feedernet server because starknet-devnet does not provide one
+		srv := starknet.NewTestServer()
+		feederUrl = srv.URL
 	}
 
 	c = &Common{
@@ -89,6 +99,7 @@ func New(testConfig *testconfig.TestConfig) *Common {
 		ChainDetails: &ChainDetails{
 			ChainName: chainName,
 			ChainId:   chainId,
+			FeederURL: feederUrl,
 		},
 		TestEnvDetails: &TestEnvDetails{
 			TestDuration: duration,
@@ -151,8 +162,9 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 
 func (c *Common) DefaultNodeConfig() *cl.Config {
 	starkConfig := config.TOMLConfig{
-		Enabled: ptr.Ptr(true),
-		ChainID: ptr.Ptr(c.ChainDetails.ChainId),
+		Enabled:   ptr.Ptr(true),
+		ChainID:   ptr.Ptr(c.ChainDetails.ChainId),
+		FeederURL: common_cfg.MustParseURL(c.ChainDetails.FeederURL),
 		Nodes: []*config.Node{
 			{
 				Name: ptr.Ptr("primary"),
