@@ -272,12 +272,25 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       // classHash has to be provided, we can't declare on new accounts.
       const classHash: string = this.input?.user?.['classHash']
+      const salt = this.input?.user?.['salt']
+      const contractInput = this.input.contract as any
+
+      const newAccountAddress = hash.calculateContractAddressFromHash(
+        salt,
+        classHash,
+        contractInput,
+        0,
+      )
+      deps.logger.info(
+        `Add funds to pay for deploy fees to the account address: ${newAccountAddress}`,
+      )
+      await deps.prompt('Funded?')
 
       const tx: TransactionResponse = await this.provider.deployAccountContract(
         classHash,
         this.input.contract,
         false,
-        this.input?.user?.['salt'],
+        salt,
       )
 
       if (tx.hash === undefined) {
