@@ -79,12 +79,12 @@ const afterExecute: AfterExecute<UserInput, ContractInput> = (context, input, de
   }
 }
 
-const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+const deployCommandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   contractId: CONTRACT_LIST.ACCOUNT,
   category: CATEGORIES.ACCOUNT,
   action: 'deploy',
   ux: {
-    description: 'Deploys an OpenZeppelin Account contract',
+    description: 'Deploys an OpenZeppelin Account contract from an existing account',
     examples: [
       `${CATEGORIES.ACCOUNT}:deploy --network=<NETWORK> --address=<ADDRESS> --classHash=<CLASS_HASH> <CONTRACT_ADDRESS>`,
     ],
@@ -99,4 +99,21 @@ const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
   },
 }
 
-export default makeExecuteCommand(commandConfig)
+const deployAccountCommandConfig: ExecuteCommandConfig<UserInput, ContractInput> = Object.assign(
+  {},
+  deployCommandConfig,
+  {
+    action: 'deploy-account',
+    ux: {
+      description: 'Deploys an OpenZeppelin Account contract using DEPLOY_ACCOUNT',
+      examples: [
+        `${CATEGORIES.ACCOUNT}:deploy-account --network=<NETWORK> --address=<ADDRESS> --classHash=<CLASS_HASH> <CONTRACT_ADDRESS>`,
+      ],
+    },
+  },
+)
+
+const Deploy = makeExecuteCommand(deployCommandConfig)
+const DeployAccount = makeExecuteCommand(deployAccountCommandConfig)
+
+export { Deploy, DeployAccount }
