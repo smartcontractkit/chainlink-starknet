@@ -11,7 +11,6 @@ import (
 func (m *OCRv2TestState) fundNodes() ([]string, error) {
 	l := utils.GetTestLogger(m.TestConfig.T)
 	var nAccounts []string
-	var err error
 	for _, key := range m.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return nil, errors.New("stark key can't be empty")
@@ -23,15 +22,11 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		nAccounts = append(nAccounts, nAccount)
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	if *m.Common.TestConfig.Common.Network == "testnet" {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "100000000000000000") // Transferring 0.1 STRK to each node
+			_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "100000000000000000") // Transferring 0.1 STRK to each node
 			if err != nil {
 				return nil, err
 			}
@@ -50,7 +45,7 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 			res, err = m.TestConfig.Resty.R().SetBody(map[string]any{
 				"address": key,
 				"amount":  900000000000000000,
-				"unit":    "FRI",
+				"unit":    m.Common.ChainDetails.TokenName,
 			}).Post("/mint")
 			if err != nil {
 				return nil, err
