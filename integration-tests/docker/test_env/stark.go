@@ -25,10 +25,12 @@ type Starknet struct {
 	InternalHttpUrl string
 	t               *testing.T
 	l               zerolog.Logger
+	Image           string
 }
 
-func NewStarknet(networks []string, opts ...test_env.EnvComponentOption) *Starknet {
+func NewStarknet(networks []string, image string, opts ...test_env.EnvComponentOption) *Starknet {
 	ms := &Starknet{
+		Image: image,
 		EnvComponent: test_env.EnvComponent{
 			ContainerName: "starknet",
 			Networks:      networks,
@@ -94,7 +96,7 @@ func (s *Starknet) StartContainer() error {
 func (s *Starknet) getContainerRequest() (*tc.ContainerRequest, error) {
 	return &tc.ContainerRequest{
 		Name:         s.ContainerName,
-		Image:        "shardlabs/starknet-devnet-rs:b41e566a3f17aa0e51871f02d5165959e50ce358",
+		Image:        s.Image,
 		ExposedPorts: []string{test_env.NatPortFormat(STARK_HTTP_PORT)},
 		Networks:     s.Networks,
 		WaitingFor: tcwait.ForLog("Starknet Devnet listening").

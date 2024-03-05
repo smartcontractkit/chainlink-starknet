@@ -117,6 +117,7 @@ type Common struct {
 	Account            *string `toml:"account"`
 	Stateful           *bool   `toml:"stateful_db"`
 	InternalDockerRepo *string `toml:"internal_docker_repo"`
+	DevnetImage        *string `toml:"devnet_image"`
 }
 
 func (c *Common) Validate() error {
@@ -126,9 +127,20 @@ func (c *Common) Validate() error {
 
 	switch *c.Network {
 	case "localnet":
-		break
+		if c.DevnetImage == nil {
+			return fmt.Errorf("devnet_image must be set")
+		}
 	case "testnet":
-		break
+		if c.PrivateKey == nil {
+			return fmt.Errorf("private_key must be set")
+		}
+		if c.L2RPCUrl == nil {
+			return fmt.Errorf("l2_rpc_url must be set")
+		}
+
+		if c.Account == nil {
+			return fmt.Errorf("account must be set")
+		}
 	default:
 		return fmt.Errorf("network must be either 'localnet' or 'testnet'")
 	}
@@ -147,18 +159,6 @@ func (c *Common) Validate() error {
 
 	if c.Stateful == nil {
 		return fmt.Errorf("stateful_db state for db must be set")
-	}
-
-	if c.L2RPCUrl == nil && *c.Network == "testnet" {
-		return fmt.Errorf("l2_rpc_url must be set")
-	}
-
-	if c.Account == nil && *c.Network == "testnet" {
-		return fmt.Errorf("account must be set")
-	}
-
-	if c.PrivateKey == nil && *c.Network == "testnet" {
-		return fmt.Errorf("private_key must be set")
 	}
 
 	return nil

@@ -90,10 +90,6 @@ func (sg *StarknetGauntlet) InstallDependencies() error {
 	if err != nil {
 		return err
 	}
-	_, err = sg.G.ExecCommand([]string{"build"}, *sg.options)
-	if err != nil {
-		return err
-	}
 	sg.G.Command = "gauntlet"
 	return nil
 }
