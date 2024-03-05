@@ -16,7 +16,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CHAINLINK_ENV_USER: ${{ github.actor }}
   TEST_LOG_LEVEL: debug
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
@@ -114,20 +113,12 @@ jobs:
         image:
           - name: ""
             tag-suffix: ""
-          - name: (plugins)
+            test-name: embedded
+          - name: plugins
             tag-suffix: -plugins
+            test-name: plugins
     env:
-      TEST_SUITE: smoke
-      TEST_ARGS: -test.timeout 1h
-      PRIVATE_KEY: ${{ secrets.GOERLI_PRIVATE_KEY }}
-      ACCOUNT: ${{ secrets.GOERLI_ACCOUNT }}
-      TTL: 3h
-      TEST_DURATION: 15m
-      NODE_COUNT: 5
-      CHAINLINK_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
-      CHAINLINK_VERSION: starknet.${{ github.sha }}
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
-      scarb_version: "v2.5.4"
     permissions:
       checks: write
       pull-requests: write
@@ -149,23 +140,20 @@ jobs:
         uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - name: Setup Scarb for Linux
-        id: install-scarb
-        shell: bash
-        run: |
-          wget https://github.com/software-mansion/scarb/releases/download/${{ env.scarb_version }}/scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
-          tar -xvzf scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
-          mv -vf scarb-${{ env.scarb_version }}-x86_64-unknown-linux-musl scarb-build
-          echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
       - name: Build contracts
         run: |
           cd contracts && scarb --profile release build
+      - name: Build gauntlet
+        run: |
+          yarn install && yarn build
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
           [ChainlinkImage]
-          image="${{ env.CHAINLINK_IMAGE }}"
-          version="${{ env.CHAINLINK_VERSION }}"
+          image="${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink"
+          version="starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}"
           [Network]
           selected_networks=["SIMULATED"]
           [Common]
@@ -182,7 +170,7 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@ea889b3133bd7f16ab19ba4ba130de5d9162c669 # v2.3.4
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: nix develop -c helm repo update && make test-integration-smoke-ci
+          test_command_to_run: nix develop -c helm repo update && make test=${{ matrix.image.test-name }} test-integration-smoke-ci
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}

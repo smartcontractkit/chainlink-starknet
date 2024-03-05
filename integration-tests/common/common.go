@@ -9,6 +9,16 @@ import (
 	"testing"
 	"time"
 
+	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
+	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
@@ -34,27 +44,13 @@ import (
 	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 )
 
-var (
-	chainName            = "starknet"
-	chainIdLocalNet      = "SN_GOERLI"
-	chainIdTestnet       = "SN_SEPOLIA"
-	feederTestnet        = "https://alpha-sepolia.starknet.io/feeder_gateway"
-	DefaultL2RPCInternal = "http://starknet-dev:5000"
-)
-
 type Common struct {
-	ChainDetails    *ChainDetails
+	ChainDetails    *chainconfig.Config
 	TestEnvDetails  *TestEnvDetails
 	Env             *environment.Environment
 	RPCDetails      *RPCDetails
 	ChainlinkConfig string
 	TestConfig      *testconfig.TestConfig
-}
-
-type ChainDetails struct {
-	ChainName string
-	ChainId   string
-	FeederURL string
 }
 
 type TestEnvDetails struct {
@@ -75,9 +71,7 @@ type RPCDetails struct {
 
 func New(testConfig *testconfig.TestConfig) *Common {
 	var c *Common
-	l2RpcUrl := DefaultL2RPCInternal
-	chainId := chainIdLocalNet
-	var feederUrl string
+	chainDetails := chainconfig.DevnetConfig()
 
 	duration, err := time.ParseDuration(*testConfig.OCR2.TestDuration)
 	if err != nil {
@@ -85,28 +79,23 @@ func New(testConfig *testconfig.TestConfig) *Common {
 	}
 
 	if *testConfig.Common.Network == "testnet" {
-		l2RpcUrl = *testConfig.Common.L2RPCUrl
-		chainId = chainIdTestnet
-		feederUrl = feederTestnet
+		chainDetails = chainconfig.SepoliaConfig()
+		chainDetails.L2RPCInternal = *testConfig.Common.L2RPCUrl
 	} else {
 		// set up mocked local feedernet server because starknet-devnet does not provide one
-		srv := starknet.NewTestServer()
-		feederUrl = srv.URL
+		localDevnetFeederSrv := starknet.NewTestServer()
+		chainDetails.FeederURL = localDevnetFeederSrv.URL
 	}
 
 	c = &Common{
-		TestConfig: testConfig,
-		ChainDetails: &ChainDetails{
-			ChainName: chainName,
-			ChainId:   chainId,
-			FeederURL: feederUrl,
-		},
+		TestConfig:   testConfig,
+		ChainDetails: chainDetails,
 		TestEnvDetails: &TestEnvDetails{
 			TestDuration: duration,
 		},
 		RPCDetails: &RPCDetails{
 			P2PPort:       "6690",
-			RPCL2Internal: l2RpcUrl,
+			RPCL2Internal: chainDetails.L2RPCInternal,
 		},
 	}
 
@@ -163,7 +152,7 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 func (c *Common) DefaultNodeConfig() *cl.Config {
 	starkConfig := config.TOMLConfig{
 		Enabled:   ptr.Ptr(true),
-		ChainID:   ptr.Ptr(c.ChainDetails.ChainId),
+		ChainID:   ptr.Ptr(c.ChainDetails.ChainID),
 		FeederURL: common_cfg.MustParseURL(c.ChainDetails.FeederURL),
 		Nodes: []*config.Node{
 			{
@@ -248,11 +237,11 @@ func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client
 		}
 
 		peerID := p2pkeys.Data[0].Attributes.PeerID
-		txKey, _, err := n.CreateTxKey(chainName, c.ChainDetails.ChainId)
+		txKey, _, err := n.CreateTxKey(c.ChainDetails.ChainName, c.ChainDetails.ChainID)
 		if err != nil {
 			return nil, err
 		}
-		ocrKey, _, err := n.CreateOCR2Key(chainName)
+		ocrKey, _, err := n.CreateOCR2Key(c.ChainDetails.ChainName)
 		if err != nil {
 			return nil, err
 		}
@@ -281,7 +270,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 	bootstrapRelayConfig := job.JSONConfig{
 		"nodeName":       fmt.Sprintf("starknet-OCRv2-%s-%s", "node", uuid.New().String()),
 		"accountAddress": accountAddresses[0],
-		"chainID":        c.ChainDetails.ChainId,
+		"chainID":        c.ChainDetails.ChainID,
 	}
 
 	oracleSpec := job.OCR2OracleSpec{
@@ -296,7 +285,6 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
 	}
-	fmt.Println(jobSpec.String())
 	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
 		return err
