@@ -9,6 +9,7 @@ type Config struct {
 	ChainID           string
 	StarkTokenAddress string
 	L2RPCInternal     string
+	TokenName         string
 }
 
 func SepoliaConfig() *Config {
@@ -28,5 +29,6 @@ func DevnetConfig() *Config {
 		StarkTokenAddress: starkTokenAddress,
 		// Will be overridden if set in toml
 		L2RPCInternal: "http://starknet-dev:5000",
+		TokenName:     "FRI",
 	}
 }

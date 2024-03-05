@@ -130,7 +130,6 @@ func (c *Common) Validate() error {
 		if c.DevnetImage == nil {
 			return fmt.Errorf("devnet_image must be set")
 		}
-		break
 	case "testnet":
 		if c.PrivateKey == nil {
 			return fmt.Errorf("private_key must be set")
@@ -142,7 +141,6 @@ func (c *Common) Validate() error {
 		if c.Account == nil {
 			return fmt.Errorf("account must be set")
 		}
-		break
 	default:
 		return fmt.Errorf("network must be either 'localnet' or 'testnet'")
 	}
