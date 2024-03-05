@@ -128,7 +128,7 @@ class Provider implements IStarknetProvider {
     const tx = await this.account.declareAndDeploy({
       contract,
       compiledClassHash,
-      salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
       // unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
@@ -162,7 +162,7 @@ class Provider implements IStarknetProvider {
   deployContract = async (classHash: string, input: any = [], wait = true, salt = undefined) => {
     const tx = await this.account.deployContract({
       classHash: classHash,
-      salt: salt ? '0x' + salt.toString(16) : salt,
+      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
     const response = wrapResponse(this, tx)
