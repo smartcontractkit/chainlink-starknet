@@ -54,19 +54,22 @@ type starktxm struct {
 	cfg     Config
 	nonce   NonceManager
 
-	client  *utils.LazyLoad[*starknet.Client]
-	txStore *ChainTxStore
+	client       *utils.LazyLoad[*starknet.Client]
+	feederClient *utils.LazyLoad[*starknet.FeederClient]
+	txStore      *ChainTxStore
 }
 
-func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
+	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
-		lggr:    logger.Named(lggr, "StarknetTxm"),
-		queue:   make(chan Tx, MaxQueueLen),
-		stop:    make(chan struct{}),
-		client:  utils.NewLazyLoad(getClient),
-		ks:      NewKeystoreAdapter(keystore),
-		cfg:     cfg,
-		txStore: NewChainTxStore(),
+		lggr:         logger.Named(lggr, "StarknetTxm"),
+		queue:        make(chan Tx, MaxQueueLen),
+		stop:         make(chan struct{}),
+		client:       utils.NewLazyLoad(getClient),
+		feederClient: utils.NewLazyLoad(getFeederClient),
+		ks:           NewKeystoreAdapter(keystore),
+		cfg:          cfg,
+		txStore:      NewChainTxStore(),
 	}
 	txm.nonce = NewNonceManager(txm.lggr)
 
@@ -166,6 +169,12 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 }
 
 const FEE_MARGIN uint32 = 115
+const BROADCASTER_NONCE_ERR = "Invalid transaction nonce"
+const CONFIRMER_NONCE_ERR = "InvalidNonce"
+
+func isInvalidNonce(err string) bool {
+	return strings.Contains(err, BROADCASTER_NONCE_ERR) || strings.Contains(err, CONFIRMER_NONCE_ERR)
+}
 
 func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
@@ -243,10 +252,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		if err, ok := err.(ethrpc.DataError); ok {
 			data = err.ErrorData()
 
-			if strings.Contains(err.Error(), "Invalid transaction nonce") {
+			if isInvalidNonce(err.Error()) {
 				// resubmits all unconfirmed transactions
 				txm.handleNonceErr(ctx, accountAddress)
-				// resubmits the current one tx that just failed
+				// resubmits the current 1 unbroadcasted tx that just failed
 				txm.Enqueue(accountAddress, publicKey, call)
 			}
 		}
@@ -302,10 +311,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		if err, ok := err.(ethrpc.DataError); ok {
 			data = err.ErrorData()
 
-			if strings.Contains(err.Error(), "Invalid transaction nonce") {
+			if isInvalidNonce(err.Error()) {
 				// resubmits all unconfirmed transactions
 				txm.handleNonceErr(ctx, accountAddress)
-				// resubmits the current one tx that just failed
+				// resubmits the current 1 unbroadcasted tx that just failed
 				txm.Enqueue(accountAddress, publicKey, call)
 			}
 		}
@@ -366,6 +375,31 @@ func (txm *starktxm) confirmLoop() {
 					}
 
 					status := response.FinalityStatus
+
+					// currently, feeder client is only way to get rejected reason
+					if status == starknetrpc.TxnStatus_Rejected {
+						feederClient, err := txm.feederClient.Get()
+						if err != nil {
+							txm.lggr.Errorw("failed to load feeder client", "error", err)
+							break
+						}
+
+						rejectedTx, err := feederClient.TransactionFailure(ctx, f)
+						if err != nil {
+							txm.lggr.Errorw("failed to fetch reason for transaction failure", "hash", hash, err)
+							continue
+						}
+
+						if isInvalidNonce(rejectedTx.ErrorMessage) {
+							// resubmits all unconfirmed transactions (includes the current one that just failed)
+							txm.handleNonceErr(ctx, addr)
+							// move on to process next address's txs because
+							// unconfirmed txs for this address are out of date because they have been purged and resubmitted
+							// we'll reprocess this address's txs on the next cycle of the confirm loop
+							break
+						}
+
+					}
 
 					// any status other than received
 					if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {

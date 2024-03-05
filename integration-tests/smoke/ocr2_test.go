@@ -3,6 +3,10 @@ package smoke_test
 import (
 	"flag"
 	"fmt"
+	"maps"
+	"os"
+	"testing"
+
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	tc "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
@@ -12,9 +16,6 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
-	"maps"
-	"os"
-	"testing"
 )
 
 var (
@@ -53,6 +54,7 @@ func TestOCRBasic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			logging.Init()
+			//
 			state, err := common.NewOCRv2State(t, "smoke-ocr2", &config)
 			require.NoError(t, err, "Could not setup the ocrv2 state")
 
