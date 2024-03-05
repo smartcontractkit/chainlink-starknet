@@ -89,8 +89,12 @@ func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logg
 		return ch.getClient()
 	}
 
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return ch.getFeederClient(), nil
+	}
+
 	var err error
-	ch.txm, err = txm.New(lggr, loopKs, cfg, getClient)
+	ch.txm, err = txm.New(lggr, loopKs, cfg, getClient, getFeederClient)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +120,10 @@ func (c *chain) Reader() (starknet.Reader, error) {
 
 func (c *chain) ChainID() string {
 	return c.id
+}
+
+func (c *chain) getFeederClient() *starknet.FeederClient {
+	return starknet.NewFeederClient(c.cfg.FeederURL.String())
 }
 
 // getClient returns a client, randomly selecting one from available and valid nodes
