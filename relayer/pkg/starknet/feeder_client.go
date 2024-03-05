@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
@@ -183,4 +184,28 @@ func NewTestServer() *httptest.Server {
 
 		w.Write(defaultErr)
 	}))
+}
+
+// NewTestClient returns a client and a function to close a test server.
+func NewTestClient(t *testing.T) *FeederClient {
+	srv := NewTestServer()
+	t.Cleanup(srv.Close)
+
+	c := NewFeederClient(srv.URL).WithBackoff(NopBackoff).WithMaxRetries(0)
+	c.client = &http.Client{
+		Transport: &http.Transport{
+			// On macOS tests often fail with the following error:
+			//
+			// "Get "http://127.0.0.1:xxxx/get_{feeder gateway method}?{arg}={value}": dial tcp 127.0.0.1:xxxx:
+			//    connect: can't assign requested address"
+			//
+			// This error makes running local tests, in quick succession, difficult because we have to wait for the OS to release ports.
+			// Sometimes the sync tests will hang because sync process will keep making requests if there was some error.
+			// This problem is further exacerbated by having parallel tests.
+			//
+			// Increasing test client's idle conns allows for large concurrent requests to be made from a single test client.
+			MaxIdleConnsPerHost: 1000,
+		},
+	}
+	return c
 }
