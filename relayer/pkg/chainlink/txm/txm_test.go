@@ -63,6 +63,10 @@ func TestIntegration_Txm(t *testing.T) {
 	client, err := starknet.NewClient("SN_GOERLI", url+"/rpc", lggr, &timeout)
 	require.NoError(t, err)
 
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return starknet.NewTestClient(), nil
+	}
+
 	getClient := func() (*starknet.Client, error) {
 		return client, err
 	}
@@ -72,7 +76,7 @@ func TestIntegration_Txm(t *testing.T) {
 	cfg.On("TxTimeout").Return(20 * time.Second)
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 
-	txm, err := New(lggr, ksAdapter.Loopp(), cfg, getClient)
+	txm, err := New(lggr, ksAdapter.Loopp(), cfg, getClient, getFeederClient)
 	require.NoError(t, err)
 
 	// ready fail if start not called
