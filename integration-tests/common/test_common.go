@@ -148,7 +148,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
-		stark := test_env_starknet.NewStarknet([]string{env.Network.Name})
+		stark := test_env_starknet.NewStarknet([]string{env.Network.Name}, *m.Common.TestConfig.Common.DevnetImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
 
@@ -200,7 +200,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
 	lggr := logger.Nop()
-	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainId, m.Common.RPCDetails.RPCL2External, lggr, &rpcRequestTimeout)
+	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, lggr, &rpcRequestTimeout)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating starknet client should not fail")
 	m.Clients.OCR2Client, m.TestConfig.err = ocr2.NewClient(m.Clients.StarknetClient, lggr)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating ocr2 client should not fail")
