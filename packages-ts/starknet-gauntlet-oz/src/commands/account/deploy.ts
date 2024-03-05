@@ -34,10 +34,22 @@ const makeUserInput = async (flags, _, env): Promise<UserInput> => {
   }
 }
 
-const validateClassHash = async (input) => {
-  if (isValidAddress(input.classHash) || input.classHash === undefined) {
+const validateClassHash = async (input, executionContext) => {
+  if (isValidAddress(input.classHash)) {
     return true
   }
+
+  if (input.classHash === undefined) {
+    // declaring the contract will happen automatically as part of our regular deploy action, but
+    // deploying account contracts for a new account require an already declared account contract,
+    // which has to be done from a funded account.
+    // ref: https://book.starknet.io/ch04-03-deploy-hello-account.html#declaring-the-account-contract
+    if (executionContext.action === 'deploy-account') {
+      throw new Error('Account contract has to be declared for a DEPLOY_ACCOUNT action')
+    }
+    return true
+  }
+
   throw new Error(`Invalid Class Hash: ${input.classHash}`)
 }
 
