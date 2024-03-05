@@ -91,6 +91,8 @@ export const wrapCommand = <UI, CI>(
       c.executionContext = {
         provider: c.provider,
         wallet: c.wallet,
+        category: registeredCommand.id,
+        action: 'multisig',
         id,
         contractAddress: c.contractAddress,
         flags: flags,

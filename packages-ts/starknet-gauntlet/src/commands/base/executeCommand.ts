@@ -16,6 +16,8 @@ import { IStarknetWallet } from '../../wallet'
 import { makeCommandId, Validation, Input } from './command'
 
 export interface ExecutionContext {
+  category: string
+  action: string
   id: string
   contractAddress: string
   wallet: IStarknetWallet
@@ -112,6 +114,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       }
 
       c.executionContext = {
+        category: config.category,
+        action: config.action,
         provider: c.provider,
         wallet: c.wallet,
         id: makeCommandId(config.category, config.action, config.suffixes),
