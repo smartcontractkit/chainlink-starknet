@@ -28,6 +28,12 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
+  deployAccountContract: (
+    classHash: string,
+    input: any,
+    wait?: boolean,
+    salt?: number,
+  ) => Promise<TransactionResponse>
   declareContract: (
     contract: CompiledContract,
     compiledClassHash?: string,
@@ -158,6 +164,23 @@ class Provider implements IStarknetProvider {
       classHash: classHash,
       salt: salt ? '0x' + salt.toString(16) : salt,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
+    })
+    const response = wrapResponse(this, tx)
+
+    if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  /**
+   * Deploys an account contract using DEPLOY_ACCOUNT given a class hash
+   */
+
+  deployAccountContract = async (classHash: string, input: any = [], wait = true, salt = 0) => {
+    const tx = await this.account.deployAccount({
+      classHash: classHash,
+      constructorCalldata: input,
+      addressSalt: '0x' + salt.toString(16),
     })
     const response = wrapResponse(this, tx)
 
