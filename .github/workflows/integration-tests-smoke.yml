@@ -144,7 +144,7 @@ jobs:
         uses: ./.github/actions/install-cairo
       - name: Build contracts
         run: |
-          cd contracts && scarb --profile release build && yarn build
+          cd contracts && scarb --profile release build
       - name: Build gauntlet
         run: |
           yarn build
