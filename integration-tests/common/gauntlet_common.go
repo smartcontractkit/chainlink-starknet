@@ -8,11 +8,6 @@ import (
 	"os"
 )
 
-var (
-	strkAddressSepolia = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"
-	nAccount           string
-)
-
 func (m *OCRv2TestState) fundNodes() ([]string, error) {
 	l := utils.GetTestLogger(m.TestConfig.T)
 	var nAccounts []string
@@ -21,7 +16,7 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return nil, errors.New("stark key can't be empty")
 		}
-		nAccount, err = m.Clients.GauntletClient.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		nAccount, err := m.Clients.GauntletClient.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
 			return nil, err
 		}
@@ -36,7 +31,7 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = m.Clients.GauntletClient.TransferToken(strkAddressSepolia, key, "100000000000000000") // Transferring 1 ETH to each node
+			_, err = m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "100000000000000000") // Transferring 1 ETH to each node
 			if err != nil {
 				return nil, err
 			}
