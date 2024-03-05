@@ -6,6 +6,7 @@ import {
   CompiledContract,
   Account,
   Call,
+  constants,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -34,7 +35,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> {}
+export interface IStarknetProvider extends IProvider<StarknetProvider> { }
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -80,12 +81,24 @@ class Provider implements IStarknetProvider {
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
     this.provider = new StarknetProvider({ nodeUrl })
     if (wallet) {
-      this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
+      this.account = new Account(
+        this.provider,
+        wallet.getAccountAddress(),
+        wallet.signer,
+        /* cairoVersion= */ null, // don't set cairo version so that it's automatically detected from the contract
+        /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
+      )
     }
   }
 
   setAccount(wallet: IStarknetWallet) {
-    this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
+    this.account = new Account(
+      this.provider,
+      wallet.getAccountAddress(),
+      wallet.signer,
+      /* cairoVersion= */ null,
+      /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
+    )
   }
 
   send = async () => {
