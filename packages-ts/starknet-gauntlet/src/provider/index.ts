@@ -1,6 +1,7 @@
 import { TransactionResponse } from '../transaction'
 import {
   RpcProvider as StarknetProvider,
+  DeclareContractResponse,
   InvokeFunctionResponse,
   DeployContractResponse,
   CompiledContract,
@@ -45,7 +46,7 @@ export const makeProvider = (
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: InvokeFunctionResponse | DeployContractResponse,
+  response: InvokeFunctionResponse | DeployContractResponse | DeclareContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
