@@ -147,7 +147,7 @@ jobs:
           cd contracts && scarb --profile release build
       - name: Build gauntlet
         run: |
-          yarn build
+          yarn install && yarn build
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
