@@ -1,6 +1,6 @@
 import { ethers, starknet, network } from 'hardhat'
 import { BigNumber, Contract, ContractFactory } from 'ethers'
-import { hash, number } from 'starknet'
+import { hash } from 'starknet'
 import {
   Account,
   StarknetContractFactory,
@@ -13,7 +13,8 @@ import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/cairo-lang/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
-import { account, addCompilationToNetwork, expectSuccessOrDeclared } from '@chainlink/starknet'
+import * as account from '../account'
+import { addCompilationToNetwork, expectSuccessOrDeclared } from '../utils'
 
 describe('StarknetValidator', () => {
   /** Fake L2 target */
