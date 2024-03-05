@@ -144,7 +144,7 @@ jobs:
         uses: ./.github/actions/install-cairo
       - name: Build contracts
         run: |
-          cd contracts && scarb --profile release build
+          cd contracts && scarb --profile release build && yarn build
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
