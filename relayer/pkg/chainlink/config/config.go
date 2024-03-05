@@ -134,7 +134,8 @@ func (cs *TOMLConfigs) SetFrom(fs *TOMLConfigs) (err error) {
 }
 
 type TOMLConfig struct {
-	ChainID *string
+	ChainID   *string
+	FeederURL *config.URL
 	// Do not access directly. Use [IsEnabled]
 	Enabled *bool
 	Chain
