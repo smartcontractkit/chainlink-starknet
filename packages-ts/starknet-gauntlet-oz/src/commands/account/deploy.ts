@@ -25,7 +25,7 @@ const makeUserInput = async (flags, _, env): Promise<UserInput> => {
   const keypair = ec.starkCurve.utils.randomPrivateKey()
   const generatedPK = '0x' + Buffer.from(keypair).toString('hex')
   const pubkey = flags.publicKey || env.publicKey || ec.starkCurve.getStarkKey(keypair)
-  const salt: number = flags.salt ? +flags.salt : undefined
+  const salt: number = !isNaN(flags.salt) ? +flags.salt : undefined
   return {
     publicKey: pubkey,
     privateKey: (!flags.publicKey || !env.account) && generatedPK,
@@ -64,7 +64,7 @@ const beforeExecute: BeforeExecute<UserInput, ContractInput> = (
 ) => async () => {
   deps.logger.info(`About to deploy an OZ 0.x Account Contract with:
     public key: ${input.contract[0]}
-    salt: ${input.user.salt || 'randomly generated'}
+    salt: ${!isNaN(input.user.salt) ? input.user.salt : 'randomly generated'}
     action: ${context.action}`)
   if (input.user.privateKey) {
     await deps.prompt(`The generated private key will be shown next, continue?`)
