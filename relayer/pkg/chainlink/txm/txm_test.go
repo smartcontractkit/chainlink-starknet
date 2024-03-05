@@ -64,7 +64,7 @@ func TestIntegration_Txm(t *testing.T) {
 	require.NoError(t, err)
 
 	getFeederClient := func() (*starknet.FeederClient, error) {
-		return starknet.NewTestClient(), nil
+		return starknet.NewTestClient(t), nil
 	}
 
 	getClient := func() (*starknet.Client, error) {
