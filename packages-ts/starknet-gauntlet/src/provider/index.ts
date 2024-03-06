@@ -6,6 +6,7 @@ import {
   CompiledContract,
   Account,
   Call,
+  constants,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -80,12 +81,24 @@ class Provider implements IStarknetProvider {
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
     this.provider = new StarknetProvider({ nodeUrl })
     if (wallet) {
-      this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
+      this.account = new Account(
+        this.provider,
+        wallet.getAccountAddress(),
+        wallet.signer,
+        /* cairoVersion= */ null, // don't set cairo version so that it's automatically detected from the contract
+        /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
+      )
     }
   }
 
   setAccount(wallet: IStarknetWallet) {
-    this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
+    this.account = new Account(
+      this.provider,
+      wallet.getAccountAddress(),
+      wallet.signer,
+      /* cairoVersion= */ null,
+      /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
+    )
   }
 
   send = async () => {
