@@ -1,14 +1,5 @@
+import { loadExampleContract, registerExecuteCommand, TIMEOUT } from '../utils'
 import { ExecuteCommandConfig, makeExecuteCommand } from '../../src/index'
-import {
-  devnetAccount0Address,
-  devnetPrivateKey,
-  loadExampleContract,
-  registerExecuteCommand,
-  TIMEOUT,
-} from '../utils'
-
-let account: string = devnetAccount0Address
-let privateKey: string = devnetPrivateKey
 
 describe('Execute Command', () => {
   type UserInput = {
@@ -18,7 +9,7 @@ describe('Execute Command', () => {
 
   type ContractInput = [string, number]
 
-  const makeUserInput = async (flags, args): Promise<UserInput> => {
+  const makeUserInput = async (flags): Promise<UserInput> => {
     return {
       a: flags.a,
       b: Number(flags.b),
@@ -64,20 +55,18 @@ describe('Execute Command', () => {
 })
 
 describe('Execute with network', () => {
-  let contractAddress: string
-
   it(
     'Command deploy execution',
     async () => {
-      const makeUserInput = async (flags, args) => {
+      const makeUserInput = async () => {
         return
       }
 
-      const makeContractInput = async (userInput) => {
+      const makeContractInput = async () => {
         return {}
       }
 
-      const deployCommandConfig: ExecuteCommandConfig<any, any> = {
+      const deployCommandConfig: ExecuteCommandConfig<unknown, unknown> = {
         contractId: '',
         category: 'example',
         action: 'deploy',
@@ -96,8 +85,6 @@ describe('Execute with network', () => {
       const commandInstance = await command.create({}, [])
       const report = await commandInstance.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-
-      contractAddress = report.responses[0].contract
     },
     TIMEOUT,
   )

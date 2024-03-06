@@ -4,17 +4,21 @@ import deployProxyCommand from '../../src/commands/proxy/deploy'
 import proposeAggregatorCommand from '../../src/commands/proxy/proposeAggregator'
 import confirmAggregatorCommand from '../../src/commands/proxy/confirmAggregator'
 import {
+  StarknetAccount,
+  fetchAccount,
   registerExecuteCommand,
   TIMEOUT,
-  devnetAccount0Address,
 } from '@chainlink/starknet-gauntlet/test/utils'
 
-let account = devnetAccount0Address
-
 describe('Proxy Contract', () => {
+  let account: StarknetAccount
   let contractAddress: string
   let accessController: string
   let proxy: string
+
+  beforeAll(async () => {
+    account = await fetchAccount()
+  })
 
   it(
     'Deploy AC',
@@ -35,7 +39,7 @@ describe('Proxy Contract', () => {
       const command = await registerExecuteCommand(deployOCR2Command).create(
         {
           input: {
-            owner: account,
+            owner: account.address,
             maxAnswer: 10000,
             minAnswer: 1,
             decimals: 18,
@@ -60,7 +64,7 @@ describe('Proxy Contract', () => {
       const command = await registerExecuteCommand(deployProxyCommand).create(
         {
           input: {
-            owner: account,
+            owner: account.address,
             address: contractAddress,
           },
         },
@@ -80,7 +84,7 @@ describe('Proxy Contract', () => {
       const command = await registerExecuteCommand(proposeAggregatorCommand).create(
         {
           input: {
-            owner: account,
+            owner: account.address,
             address: contractAddress,
           },
         },
@@ -99,7 +103,7 @@ describe('Proxy Contract', () => {
       const command = await registerExecuteCommand(confirmAggregatorCommand).create(
         {
           input: {
-            owner: account,
+            owner: account.address,
             address: contractAddress,
           },
         },
