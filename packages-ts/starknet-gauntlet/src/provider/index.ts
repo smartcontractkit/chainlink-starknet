@@ -35,7 +35,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> { }
+export interface IStarknetProvider extends IProvider<StarknetProvider> {}
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
