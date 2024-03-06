@@ -88,7 +88,7 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
     static create = async (flags, args) => {
       const c = new InspectionCommand(flags, args)
 
-      const env = deps.makeEnv(flags)
+      const env = await deps.makeEnv(flags)
 
       c.provider = deps.makeProvider(env.providerUrl)
       c.contractAddress = args[0]
