@@ -1,6 +1,7 @@
 package txm
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -89,10 +90,30 @@ type UnconfirmedTx struct {
 	Call      *starknetrpc.FunctionCall
 }
 
+func (s *TxStore) GetSingleUnconfirmed(hash string) (tx UnconfirmedTx, err error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	n, hExists := s.hashToNonce[hash]
+	c, cExists := s.hashToCall[hash]
+	k, kExists := s.hashToKey[hash]
+
+	if !hExists || !cExists || !kExists {
+		return tx, errors.New("datum not found in txstore")
+	}
+
+	tx.Call = c
+	tx.Nonce = &n
+	tx.PublicKey = &k
+	tx.Hash = hash
+
+	return tx, nil
+}
+
 // Retrieve Unconfirmed Txs in their queued order (by nonce)
 func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 
 	nonces := maps.Values(s.hashToNonce)
 	sort.Slice(nonces, func(i, j int) bool {
@@ -148,15 +169,25 @@ func (c *ChainTxStore) Confirm(from *felt.Felt, hash string) error {
 }
 
 func (c *ChainTxStore) GetUnconfirmedSorted(from *felt.Felt) ([]UnconfirmedTx, error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
 	if err := c.validate(from); err != nil {
 		return nil, err
 	}
 
 	return c.store[from].GetUnconfirmedSorted(), nil
+}
 
+func (c *ChainTxStore) GetSingleUnconfirmed(from *felt.Felt, hash string) (tx UnconfirmedTx, err error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	if err := c.validate(from); err != nil {
+		return tx, err
+	}
+
+	return c.store[from].GetSingleUnconfirmed(hash)
 }
 
 func (c *ChainTxStore) GetAllInflightCount() map[*felt.Felt]int {

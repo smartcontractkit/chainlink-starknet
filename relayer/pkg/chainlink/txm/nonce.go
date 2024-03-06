@@ -24,7 +24,7 @@ type NonceManager interface {
 	NextSequence(address *felt.Felt, chainID string) (*felt.Felt, error)
 	IncrementNextSequence(address *felt.Felt, chainID string, currentNonce *felt.Felt) error
 	// Resets local account nonce to on-chain account nonce
-	Sync(ctx context.Context, address *felt.Felt, chainId string, client NonceManagerClient) error
+	Sync(ctx context.Context, address *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error
 }
 
 var _ NonceManager = (*nonceManager)(nil)
@@ -64,7 +64,7 @@ func (nm *nonceManager) HealthReport() map[string]error {
 	return map[string]error{nm.Name(): nm.starter.Healthy()}
 }
 
-func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, chainId string, client NonceManagerClient) error {
+func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, publicKey *felt.Felt, chainId string, client NonceManagerClient) error {
 	if err := nm.validate(address, chainId); err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, chainId st
 		return err
 	}
 
-	nm.n[address.String()][chainId] = n
+	nm.n[publicKey.String()][chainId] = n
 
 	return nil
 }
@@ -101,40 +101,40 @@ func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, publicKey
 	return nil
 }
 
-func (nm *nonceManager) NextSequence(addr *felt.Felt, chainId string) (*felt.Felt, error) {
-	if err := nm.validate(addr, chainId); err != nil {
+func (nm *nonceManager) NextSequence(publicKey *felt.Felt, chainId string) (*felt.Felt, error) {
+	if err := nm.validate(publicKey, chainId); err != nil {
 		return nil, err
 	}
 
 	nm.lock.RLock()
 	defer nm.lock.RUnlock()
-	return nm.n[addr.String()][chainId], nil
+	return nm.n[publicKey.String()][chainId], nil
 }
 
-func (nm *nonceManager) IncrementNextSequence(addr *felt.Felt, chainId string, currentNonce *felt.Felt) error {
-	if err := nm.validate(addr, chainId); err != nil {
+func (nm *nonceManager) IncrementNextSequence(publicKey *felt.Felt, chainId string, currentNonce *felt.Felt) error {
+	if err := nm.validate(publicKey, chainId); err != nil {
 		return err
 	}
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
-	n := nm.n[addr.String()][chainId]
+	n := nm.n[publicKey.String()][chainId]
 	if n.Cmp(currentNonce) != 0 {
-		return fmt.Errorf("mismatched nonce for %s: %s (expected) != %s (got)", addr, n, currentNonce)
+		return fmt.Errorf("mismatched nonce for %s: %s (expected) != %s (got)", publicKey, n, currentNonce)
 	}
 	one := new(felt.Felt).SetUint64(1)
-	nm.n[addr.String()][chainId] = new(felt.Felt).Add(n, one)
+	nm.n[publicKey.String()][chainId] = new(felt.Felt).Add(n, one)
 	return nil
 }
 
-func (nm *nonceManager) validate(addr *felt.Felt, chainId string) error {
+func (nm *nonceManager) validate(publicKey *felt.Felt, chainId string) error {
 	nm.lock.RLock()
 	defer nm.lock.RUnlock()
-	if _, exists := nm.n[addr.String()]; !exists {
-		return fmt.Errorf("nonce tracking does not exist for key: %s", addr.String())
+	if _, exists := nm.n[publicKey.String()]; !exists {
+		return fmt.Errorf("nonce tracking does not exist for key: %s", publicKey.String())
 	}
-	if _, exists := nm.n[addr.String()][chainId]; !exists {
-		return fmt.Errorf("nonce does not exist for key: %s and chain: %s", addr.String(), chainId)
+	if _, exists := nm.n[publicKey.String()][chainId]; !exists {
+		return fmt.Errorf("nonce does not exist for key: %s and chain: %s", publicKey.String(), chainId)
 	}
 	return nil
 }

@@ -138,7 +138,7 @@ func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAd
 
 	if isInvalidNonce(errData) {
 		// resubmits all unconfirmed transactions
-		err := txm.handleNonceErr(ctx, accountAddress)
+		err := txm.handleNonceErr(ctx, accountAddress, publicKey)
 		if err != nil {
 			return pkgerrors.Wrap(err, "error in nonce handling")
 		}
@@ -152,7 +152,7 @@ func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAd
 	return nil
 }
 
-func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt) error {
+func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt) error {
 
 	txm.lggr.Debugw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
 
@@ -167,13 +167,13 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		return err
 	}
 
-	oldVal, err := txm.nonce.NextSequence(accountAddress, chainId)
+	oldVal, err := txm.nonce.NextSequence(publicKey, chainId)
 	if err != nil {
 		return err
 	}
 
-	txm.nonce.Sync(ctx, accountAddress, chainId, client)
-	getVal, err := txm.nonce.NextSequence(accountAddress, chainId)
+	txm.nonce.Sync(ctx, accountAddress, publicKey, chainId, client)
+	getVal, err := txm.nonce.NextSequence(publicKey, chainId)
 	if err != nil {
 		return err
 	}
@@ -422,8 +422,13 @@ func (txm *starktxm) confirmLoop() {
 						}
 
 						if isInvalidNonce(rejectedTx.ErrorMessage) {
+
+							utx, err := txm.txStore.GetSingleUnconfirmed(addr, hash)
+							if err != nil {
+								txm.lggr.Errorw("failed to fetch unconfirmed tx from txstore", err)
+							}
 							// resubmits all unconfirmed transactions (includes the current one that just failed)
-							err = txm.handleNonceErr(ctx, addr)
+							err = txm.handleNonceErr(ctx, addr, utx.PublicKey)
 
 							if err != nil {
 								txm.lggr.Errorw("error in nonce handling: ", err)
