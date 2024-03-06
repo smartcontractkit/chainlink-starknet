@@ -253,6 +253,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		if errors.As(err, &dataErr) {
 			data = dataErr.ErrorData()
 		}
+
 		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to estimate fee: %T %+w", err, err)
 	}
