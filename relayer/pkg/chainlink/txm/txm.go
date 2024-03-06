@@ -251,14 +251,17 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		var data any
 		if err, ok := err.(ethrpc.DataError); ok {
 			data = err.ErrorData()
+			errData := fmt.Sprintf("%s", data)
+			txm.lggr.Debug("err data formatted as string", errData)
 
-			if isInvalidNonce(err.Error()) {
+			if isInvalidNonce(errData) {
 				// resubmits all unconfirmed transactions
 				txm.handleNonceErr(ctx, accountAddress)
 				// resubmits the current 1 unbroadcasted tx that just failed
 				txm.Enqueue(accountAddress, publicKey, call)
 			}
 		}
+
 		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to estimate fee: %T %+w", err, err)
 	}
@@ -310,8 +313,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		var data any
 		if err, ok := err.(ethrpc.DataError); ok {
 			data = err.ErrorData()
+			errData := fmt.Sprintf("%s", data)
+			txm.lggr.Debug("err data formatted as string", errData)
 
-			if isInvalidNonce(err.Error()) {
+			if isInvalidNonce(errData) {
 				// resubmits all unconfirmed transactions
 				txm.handleNonceErr(ctx, accountAddress)
 				// resubmits the current 1 unbroadcasted tx that just failed
