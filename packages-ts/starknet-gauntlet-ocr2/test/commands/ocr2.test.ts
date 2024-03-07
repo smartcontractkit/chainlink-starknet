@@ -7,13 +7,12 @@ import {
   registerExecuteCommand,
   TIMEOUT,
   LOCAL_URL,
-  devnetAccount0Address,
+  StarknetAccount,
+  fetchAccount,
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadContract } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
-
-let account = devnetAccount0Address
 
 const signers = [
   'ocr2on_starknet_04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730', // ocr2on_starknet_<key>
@@ -73,8 +72,13 @@ const validInput = {
 }
 
 describe('OCR2 Contract', () => {
+  let account: StarknetAccount
   let contractAddress: string
   let accessController: string
+
+  beforeAll(async () => {
+    account = await fetchAccount()
+  })
 
   it(
     'Deploy AC',
@@ -95,7 +99,7 @@ describe('OCR2 Contract', () => {
       const command = await registerExecuteCommand(deployCommand).create(
         {
           input: {
-            owner: account,
+            owner: account.address,
             maxAnswer: 10000,
             minAnswer: 1,
             decimals: 18,
@@ -174,7 +178,7 @@ describe('OCR2 Contract', () => {
       // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
       const eventData = receipt.events[0].data
       // reconstruct signers array from event
-      let eventSigners: bigint[] = []
+      const eventSigners: bigint[] = []
       for (let i = 0; i < signers.length; i++) {
         const signer = BigInt(eventData[4 + 2 * i]) // split according to event structure
         eventSigners.push(signer)

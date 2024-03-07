@@ -98,7 +98,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     static create = async (flags, args) => {
       const c = new ExecuteCommand(flags, args)
 
-      const env = deps.makeEnv(flags)
+      const env = await deps.makeEnv(flags)
 
       c.wallet = await deps.makeWallet(env)
       c.provider = deps.makeProvider(env.providerUrl, c.wallet)
@@ -291,7 +291,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         tx = await this.executeWithSigner()
       }
 
-      let result = {
+      const result = {
         responses: [
           {
             tx,
@@ -301,7 +301,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       }
       const data = await this.afterExecute(result)
 
-      return !!data ? { ...result, data: { ...data } } : result
+      return data ? { ...result, data: { ...data } } : result
     }
   }
 
