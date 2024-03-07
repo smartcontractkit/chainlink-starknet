@@ -203,5 +203,5 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 	if err != nil {
 		return nil, errors.Wrap(err, "error in client.AccountNonce")
 	}
-	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, account.AccountAddress)
+	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, account.AccountAddress)
 }

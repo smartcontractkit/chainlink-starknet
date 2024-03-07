@@ -277,10 +277,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	tx.Signature = signature
 
 	// get fee for tx
-	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
-	// can we estimate fee without calling estimate - tbd with 1.0
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
-	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
+	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 	if err != nil {
 		var data any
 		if err, ok := err.(ethrpc.DataError); ok {
