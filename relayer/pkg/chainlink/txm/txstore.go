@@ -145,7 +145,15 @@ func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
 	for i := 0; i < len(nonces); i++ {
 		n := nonces[i]
 		h := s.nonceToHash[n]
-		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: &n, Call: s.hashToCall[h]})
+		k := s.hashToKey[h]
+		c := s.hashToCall[h]
+
+		// deep copy all non-primitive types
+		newNonce := new(felt.Felt).Set(&n)
+		newCall := copyCall(c)
+		newPublicKey := new(felt.Felt).Set(&k)
+
+		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: newNonce, Call: newCall, PublicKey: newPublicKey})
 	}
 
 	return txs
