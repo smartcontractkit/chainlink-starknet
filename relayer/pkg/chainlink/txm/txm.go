@@ -486,6 +486,7 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test
 	// existence of a key
+	txm.lggr.Debugw("We have public key %s", publicKey)
 	if _, err := txm.ks.Loopp().Sign(context.Background(), publicKey.String(), nil); err != nil {
 		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}

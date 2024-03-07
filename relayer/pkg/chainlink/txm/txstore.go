@@ -31,6 +31,18 @@ func NewTxStore(current *felt.Felt) *TxStore {
 	}
 }
 
+func copyCall(call *starknetrpc.FunctionCall) *starknetrpc.FunctionCall {
+	copyCall := starknetrpc.FunctionCall{
+		ContractAddress:    new(felt.Felt).Set(call.ContractAddress),
+		EntryPointSelector: new(felt.Felt).Set(call.EntryPointSelector),
+		Calldata:           []*felt.Felt{},
+	}
+	for i := 0; i < len(call.Calldata); i++ {
+		copyCall.Calldata = append(copyCall.Calldata, new(felt.Felt).Set(call.Calldata[i]))
+	}
+	return &copyCall
+}
+
 // TODO: Save should make a copy otherwise wee're modiffying the same memory and could loop
 func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.FunctionCall, publicKey *felt.Felt) error {
 	s.lock.Lock()
@@ -46,12 +58,17 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.Function
 		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%s)", hash, nonce, &n)
 	}
 
-	// store hash
-	s.nonceToHash[*nonce] = hash
+	// deep copy all non-primitive types
+	newNonce := new(felt.Felt).Set(nonce)
+	newCall := copyCall(call)
+	newPublicKey := new(felt.Felt).Set(publicKey)
 
-	s.hashToNonce[hash] = *nonce
-	s.hashToCall[hash] = call
-	s.hashToKey[hash] = *publicKey
+	// store hash
+	s.nonceToHash[*newNonce] = hash
+
+	s.hashToNonce[hash] = *newNonce
+	s.hashToCall[hash] = newCall
+	s.hashToKey[hash] = *newPublicKey
 
 	// find next unused nonce
 	_, exists := s.nonceToHash[s.currentNonce]
@@ -102,9 +119,14 @@ func (s *TxStore) GetSingleUnconfirmed(hash string) (tx UnconfirmedTx, err error
 		return tx, errors.New("datum not found in txstore")
 	}
 
-	tx.Call = c
-	tx.Nonce = &n
-	tx.PublicKey = &k
+	// deep copy all non-primitive types
+	newNonce := new(felt.Felt).Set(&n)
+	newCall := copyCall(c)
+	newPublicKey := new(felt.Felt).Set(&k)
+
+	tx.Call = newCall
+	tx.Nonce = newNonce
+	tx.PublicKey = newPublicKey
 	tx.Hash = hash
 
 	return tx, nil
