@@ -51,13 +51,14 @@ type TestEnvDetails struct {
 }
 
 type RPCDetails struct {
-	RPCL1Internal      string
-	RPCL2Internal      string
-	RPCL1External      string
-	RPCL2External      string
-	MockServerUrl      string
-	MockServerEndpoint string
-	P2PPort            string
+	RPCL1Internal       string
+	RPCL2Internal       string
+	RPCL2InternalApiKey string
+	RPCL1External       string
+	RPCL2External       string
+	MockServerUrl       string
+	MockServerEndpoint  string
+	P2PPort             string
 }
 
 func New(testConfig *testconfig.TestConfig) *Common {
@@ -72,6 +73,11 @@ func New(testConfig *testconfig.TestConfig) *Common {
 	if *testConfig.Common.Network == "testnet" {
 		chainDetails = chainconfig.SepoliaConfig()
 		chainDetails.L2RPCInternal = *testConfig.Common.L2RPCUrl
+		if testConfig.Common.L2RPCApiKey == nil {
+			chainDetails.L2RPCInternalApiKey = ""
+		} else {
+			chainDetails.L2RPCInternalApiKey = *testConfig.Common.L2RPCApiKey
+		}
 	} else {
 		// set up mocked local feedernet server because starknet-devnet does not provide one
 		localDevnetFeederSrv := starknet.NewTestServer()
@@ -85,8 +91,9 @@ func New(testConfig *testconfig.TestConfig) *Common {
 			TestDuration: duration,
 		},
 		RPCDetails: &RPCDetails{
-			P2PPort:       "6690",
-			RPCL2Internal: chainDetails.L2RPCInternal,
+			P2PPort:             "6690",
+			RPCL2Internal:       chainDetails.L2RPCInternal,
+			RPCL2InternalApiKey: chainDetails.L2RPCInternalApiKey,
 		},
 	}
 
@@ -147,8 +154,9 @@ func (c *Common) DefaultNodeConfig() *cl.Config {
 		FeederURL: common_cfg.MustParseURL(c.ChainDetails.FeederURL),
 		Nodes: []*config.Node{
 			{
-				Name: ptr.Ptr("primary"),
-				URL:  common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
+				Name:   ptr.Ptr("primary"),
+				URL:    common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
+				APIKey: ptr.Ptr(c.RPCDetails.RPCL2InternalApiKey),
 			},
 		},
 	}

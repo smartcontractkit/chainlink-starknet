@@ -93,7 +93,7 @@ func TestOCR2Client(t *testing.T) {
 
 	url := mockServer.URL
 	duration := 10 * time.Second
-	reader, err := starknet.NewClient(chainID, url, lggr, &duration)
+	reader, err := starknet.NewClient(chainID, url, "", lggr, &duration)
 	require.NoError(t, err)
 	client, err := NewClient(reader, lggr)
 	assert.NoError(t, err)
