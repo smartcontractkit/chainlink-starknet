@@ -15,6 +15,8 @@ import (
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"golang.org/x/exp/maps"
 
+	pkgerrors "github.com/pkg/errors"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -129,7 +131,28 @@ func (txm *starktxm) broadcastLoop() {
 	}
 }
 
-func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt) error {
+func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAddress *felt.Felt, publicKey *felt.Felt, call starknetrpc.FunctionCall) error {
+
+	errData := fmt.Sprintf("%s", data)
+	txm.lggr.Debug("encountered handleBroadcastErr", errData)
+
+	if isInvalidNonce(errData) {
+		// resubmits all unconfirmed transactions
+		err := txm.handleNonceErr(ctx, accountAddress, publicKey)
+		if err != nil {
+			return pkgerrors.Wrap(err, "error in nonce handling")
+		}
+		// resubmits the current 1 unbroadcasted tx that just failed
+		err = txm.Enqueue(accountAddress, publicKey, call)
+		if err != nil {
+			return pkgerrors.Wrap(err, "error in re-enqueuing after nonce handling")
+		}
+	}
+
+	return nil
+}
+
+func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt) error {
 
 	txm.lggr.Debugw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
 
@@ -144,9 +167,20 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		return err
 	}
 
-	txm.nonce.Sync(ctx, accountAddress, chainId, client)
+	// get current nonce before syncing (for logging purposes)
+	oldVal, err := txm.nonce.NextSequence(publicKey, chainId)
+	if err != nil {
+		return err
+	}
 
-	// todo: in the future, revisit resetting txm.txStore.currentNonce
+	txm.nonce.Sync(ctx, accountAddress, publicKey, chainId, client)
+
+	getVal, err := txm.nonce.NextSequence(publicKey, chainId)
+	if err != nil {
+		return err
+	}
+
+	txm.lggr.Debug("prior nonce: ", oldVal, "new nonce: ", getVal)
 
 	unconfirmedTxs, err := txm.txStore.GetUnconfirmedSorted(accountAddress)
 	if err != nil {
@@ -243,22 +277,16 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	tx.Signature = signature
 
 	// get fee for tx
-	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
-	// can we estimate fee without calling estimate - tbd with 1.0
-	simFlags := []starknetrpc.SimulationFlag{}
-	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
+	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
+	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 	if err != nil {
 		var data any
 		if err, ok := err.(ethrpc.DataError); ok {
 			data = err.ErrorData()
-			errData := fmt.Sprintf("%s", data)
-			txm.lggr.Debug("err data formatted as string", errData)
 
-			if isInvalidNonce(errData) {
-				// resubmits all unconfirmed transactions
-				txm.handleNonceErr(ctx, accountAddress)
-				// resubmits the current 1 unbroadcasted tx that just failed
-				txm.Enqueue(accountAddress, publicKey, call)
+			err := txm.handleBroadcastErr(ctx, data, accountAddress, publicKey, call)
+			if err != nil {
+				return txhash, err
 			}
 		}
 
@@ -280,14 +308,18 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 
 	// TODO: does v3 tx uses fri instead of wei? check feeEstimate[0].FeeUnit?
-	// pad estimate to 110%
+
+	// pad estimate to 140% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
 	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
-	// TODO: add margin
-	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(friEstimate.GasPrice.String())
+	// pad by 120%
+	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(120))
+	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
+	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 
 	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
@@ -313,14 +345,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		var data any
 		if err, ok := err.(ethrpc.DataError); ok {
 			data = err.ErrorData()
-			errData := fmt.Sprintf("%s", data)
-			txm.lggr.Debug("err data formatted as string", errData)
 
-			if isInvalidNonce(errData) {
-				// resubmits all unconfirmed transactions
-				txm.handleNonceErr(ctx, accountAddress)
-				// resubmits the current 1 unbroadcasted tx that just failed
-				txm.Enqueue(accountAddress, publicKey, call)
+			err := txm.handleBroadcastErr(ctx, data, accountAddress, publicKey, call)
+			if err != nil {
+				return txhash, err
 			}
 		}
 		txm.lggr.Errorw("failed to invoke tx from address", accountAddress, "error", err, "data", data)
@@ -396,8 +424,17 @@ func (txm *starktxm) confirmLoop() {
 						}
 
 						if isInvalidNonce(rejectedTx.ErrorMessage) {
+
+							utx, err := txm.txStore.GetSingleUnconfirmed(addr, hash)
+							if err != nil {
+								txm.lggr.Errorw("failed to fetch unconfirmed tx from txstore", err)
+							}
 							// resubmits all unconfirmed transactions (includes the current one that just failed)
-							txm.handleNonceErr(ctx, addr)
+							err = txm.handleNonceErr(ctx, addr, utx.PublicKey)
+
+							if err != nil {
+								txm.lggr.Errorw("error in nonce handling: ", err)
+							}
 							// move on to process next address's txs because
 							// unconfirmed txs for this address are out of date because they have been purged and resubmitted
 							// we'll reprocess this address's txs on the next cycle of the confirm loop
