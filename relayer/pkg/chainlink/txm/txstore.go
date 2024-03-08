@@ -13,21 +13,19 @@ import (
 
 // TxStore tracks broadcast & unconfirmed txs per account address per chain id
 type TxStore struct {
-	lock         sync.RWMutex
-	nonceToHash  map[felt.Felt]string // map nonce to txhash
-	hashToNonce  map[string]felt.Felt // map hash to nonce
-	currentNonce felt.Felt            // minimum nonce
-	hashToCall   map[string]*starknetrpc.FunctionCall
-	hashToKey    map[string]felt.Felt
+	lock        sync.RWMutex
+	nonceToHash map[felt.Felt]string // map nonce to txhash
+	hashToNonce map[string]felt.Felt // map hash to nonce
+	hashToCall  map[string]*starknetrpc.FunctionCall
+	hashToKey   map[string]felt.Felt
 }
 
-func NewTxStore(current *felt.Felt) *TxStore {
+func NewTxStore() *TxStore {
 	return &TxStore{
-		currentNonce: *current,
-		nonceToHash:  map[felt.Felt]string{},
-		hashToNonce:  map[string]felt.Felt{},
-		hashToCall:   map[string]*starknetrpc.FunctionCall{},
-		hashToKey:    map[string]felt.Felt{},
+		nonceToHash: map[felt.Felt]string{},
+		hashToNonce: map[string]felt.Felt{},
+		hashToCall:  map[string]*starknetrpc.FunctionCall{},
+		hashToKey:   map[string]felt.Felt{},
 	}
 }
 
@@ -47,9 +45,6 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.Function
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if s.currentNonce.Cmp(nonce) == 1 {
-		return fmt.Errorf("nonce too low: %s < %s (lowest)", nonce, &s.currentNonce)
-	}
 	if h, exists := s.nonceToHash[*nonce]; exists {
 		return fmt.Errorf("nonce used: tried to use nonce (%s) for tx (%s), already used by (%s)", nonce, hash, h)
 	}
@@ -69,12 +64,6 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.Function
 	s.hashToCall[hash] = newCall
 	s.hashToKey[hash] = *newPublicKey
 
-	// find next unused nonce
-	_, exists := s.nonceToHash[s.currentNonce]
-	for exists {
-		s.currentNonce = *new(felt.Felt).Add(&s.currentNonce, new(felt.Felt).SetUint64(1))
-		_, exists = s.nonceToHash[s.currentNonce]
-	}
 	return nil
 }
 
@@ -181,7 +170,7 @@ func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string, call
 	defer c.lock.Unlock()
 	if err := c.validate(from); err != nil {
 		// if does not exist, create a new store for the address
-		c.store[from] = NewTxStore(nonce)
+		c.store[from] = NewTxStore()
 	}
 	return c.store[from].Save(nonce, hash, call, publicKey)
 }

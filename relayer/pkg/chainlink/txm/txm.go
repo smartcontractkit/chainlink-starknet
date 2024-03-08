@@ -167,6 +167,7 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		return err
 	}
 
+	// get current nonce before syncing (for logging purposes)
 	oldVal, err := txm.nonce.NextSequence(publicKey, chainId)
 	if err != nil {
 		return err
@@ -180,8 +181,6 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 	}
 
 	txm.lggr.Debug("prior nonce: ", oldVal, "new nonce: ", getVal)
-
-	// todo: in the future, revisit resetting txm.txStore.currentNonce
 
 	unconfirmedTxs, err := txm.txStore.GetUnconfirmedSorted(accountAddress)
 	if err != nil {
