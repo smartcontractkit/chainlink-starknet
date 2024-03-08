@@ -75,6 +75,8 @@ func (c *Chain) SetDefaults() {
 type Node struct {
 	Name *string
 	URL  *config.URL
+	// only if rpc url needs api key passed in header
+	APIKey *string
 }
 
 type TOMLConfigs []*TOMLConfig
@@ -227,6 +229,7 @@ func legacyNode(n *Node, id string) db.Node {
 		Name:    *n.Name,
 		ChainID: id,
 		URL:     (*url.URL)(n.URL).String(),
+		APIKey:  *n.APIKey,
 	}
 }
 

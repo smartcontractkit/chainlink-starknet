@@ -52,7 +52,7 @@ func TestRPCClient(t *testing.T) {
 	defer mockServer.Close()
 
 	lggr := logger.Test(t)
-	client, err := NewClient(chainID, mockServer.URL, lggr, &timeout)
+	client, err := NewClient(chainID, mockServer.URL, "", lggr, &timeout)
 	require.NoError(t, err)
 	assert.Equal(t, timeout, client.defaultTimeout)
 

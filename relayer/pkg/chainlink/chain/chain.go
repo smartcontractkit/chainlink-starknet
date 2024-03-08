@@ -143,7 +143,7 @@ func (c *chain) getClient() (*starknet.Client, error) {
 	for _, i := range index {
 		node = nodes[i]
 		// create client and check
-		client, err = starknet.NewClient(node.ChainID, node.URL, c.lggr, &timeout)
+		client, err = starknet.NewClient(node.ChainID, node.URL, node.APIKey, c.lggr, &timeout)
 		// if error, try another node
 		if err != nil {
 			c.lggr.Warnw("failed to create node", "name", node.Name, "starknet-url", node.URL, "err", err.Error())

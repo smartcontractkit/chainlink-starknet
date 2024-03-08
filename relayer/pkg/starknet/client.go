@@ -2,6 +2,7 @@ package starknet
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -48,9 +49,13 @@ type Client struct {
 }
 
 // pass nil or 0 to timeout to not use built in default timeout
-func NewClient(_chainID string, baseURL string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
+func NewClient(_chainID string, baseURL string, apiKey string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	// TODO: chainID now unused
 	c, err := ethrpc.DialContext(context.Background(), baseURL)
+	if strings.TrimSpace(apiKey) != "" {
+		c.SetHeader("x-apikey", apiKey)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -203,5 +208,5 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 	if err != nil {
 		return nil, errors.Wrap(err, "error in client.AccountNonce")
 	}
-	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, account.AccountAddress)
+	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, account.AccountAddress)
 }

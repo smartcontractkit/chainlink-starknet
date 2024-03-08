@@ -5,12 +5,13 @@ var (
 )
 
 type Config struct {
-	ChainName         string
-	ChainID           string
-	StarkTokenAddress string
-	L2RPCInternal     string
-	TokenName         string
-	FeederURL         string
+	ChainName           string
+	ChainID             string
+	StarkTokenAddress   string
+	L2RPCInternal       string
+	L2RPCInternalApiKey string
+	TokenName           string
+	FeederURL           string
 }
 
 func SepoliaConfig() *Config {
