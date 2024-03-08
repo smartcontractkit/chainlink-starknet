@@ -11,6 +11,7 @@ import (
 
 type StarknetConfig struct {
 	rpcEndpoint      string
+	rpcApiKey        string
 	networkName      string
 	networkID        string
 	chainID          string
@@ -22,6 +23,7 @@ type StarknetConfig struct {
 var _ relayMonitoring.ChainConfig = StarknetConfig{}
 
 func (s StarknetConfig) GetRPCEndpoint() string         { return s.rpcEndpoint }
+func (s StarknetConfig) GetRPCApiKey() string           { return s.rpcApiKey }
 func (s StarknetConfig) GetNetworkName() string         { return s.networkName }
 func (s StarknetConfig) GetNetworkID() string           { return s.networkID }
 func (s StarknetConfig) GetChainID() string             { return s.chainID }
@@ -53,6 +55,9 @@ func ParseStarknetConfig() (StarknetConfig, error) {
 func parseEnvVars(cfg *StarknetConfig) error {
 	if value, isPresent := os.LookupEnv("STARKNET_RPC_ENDPOINT"); isPresent {
 		cfg.rpcEndpoint = value
+	}
+	if value, isPresent := os.LookupEnv("STARKNET_RPC_API_KEY"); isPresent {
+		cfg.rpcApiKey = value
 	}
 	if value, isPresent := os.LookupEnv("STARKNET_NETWORK_NAME"); isPresent {
 		cfg.networkName = value
