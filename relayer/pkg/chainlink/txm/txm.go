@@ -156,6 +156,9 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 
 	txm.lggr.Debugw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
 
+	// wait for rpc starknet_estimateFee to catch up with nonce returned by starknet_getNonce
+	<-time.After(utils.WithJitter(time.Second))
+
 	// resync nonce so that new queued txs can be unblocked
 	client, err := txm.client.Get()
 	if err != nil {
@@ -414,6 +417,8 @@ func (txm *starktxm) confirmLoop() {
 							txm.lggr.Errorw("failed to fetch reason for transaction failure", "hash", hash, err)
 							continue
 						}
+
+						txm.lggr.Errorw("tx rejected reason", rejectedTx.ErrorMessage, "hash", hash, "addr", addr)
 
 						if isInvalidNonce(rejectedTx.ErrorMessage) {
 
