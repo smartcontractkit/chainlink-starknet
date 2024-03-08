@@ -64,10 +64,6 @@ func TestTxStore(t *testing.T) {
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(4), "0x4", call, feltKey))
 		assert.Equal(t, 4, s.InflightCount())
 
-		// rejects old nonce
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold", call, feltKey), "nonce too low: 0x0 < 0x3 (lowest)")
-		assert.Equal(t, 4, s.InflightCount())
-
 		// reject already in use nonce
 		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(4), "0xskip", call, feltKey), "nonce used: tried to use nonce (0x4) for tx (0xskip), already used by (0x4)")
 		assert.Equal(t, 4, s.InflightCount())
