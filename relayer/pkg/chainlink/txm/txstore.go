@@ -43,7 +43,6 @@ func copyCall(call *starknetrpc.FunctionCall) *starknetrpc.FunctionCall {
 	return &copyCall
 }
 
-// TODO: Save should make a copy otherwise wee're modiffying the same memory and could loop
 func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.FunctionCall, publicKey *felt.Felt) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()

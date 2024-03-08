@@ -131,10 +131,10 @@ func (txm *starktxm) broadcastLoop() {
 	}
 }
 
-func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAddress *felt.Felt,
-	publicKey *felt.Felt, call starknetrpc.FunctionCall) error {
+func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAddress *felt.Felt, publicKey *felt.Felt, call starknetrpc.FunctionCall) error {
+
 	errData := fmt.Sprintf("%s", data)
-	txm.lggr.Debug("err data formatted as string", errData)
+	txm.lggr.Debug("encountered handleBroadcastErr", errData)
 
 	if isInvalidNonce(errData) {
 		// resubmits all unconfirmed transactions
@@ -173,12 +173,13 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 	}
 
 	txm.nonce.Sync(ctx, accountAddress, publicKey, chainId, client)
+
 	getVal, err := txm.nonce.NextSequence(publicKey, chainId)
 	if err != nil {
 		return err
 	}
 
-	txm.lggr.Debug("Vortex Handling Nonce Old Value", oldVal, "new Nonce value", getVal)
+	txm.lggr.Debug("prior nonce: ", oldVal, "new nonce: ", getVal)
 
 	// todo: in the future, revisit resetting txm.txStore.currentNonce
 
