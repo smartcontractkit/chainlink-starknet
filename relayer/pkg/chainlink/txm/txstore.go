@@ -29,6 +29,13 @@ func NewTxStore() *TxStore {
 	}
 }
 
+func deepCopy(nonce *felt.Felt, call *starknetrpc.FunctionCall, publicKey *felt.Felt) (newNonce *felt.Felt, newCall *starknetrpc.FunctionCall, newPublicKey *felt.Felt) {
+	newNonce = new(felt.Felt).Set(nonce)
+	newPublicKey = new(felt.Felt).Set(publicKey)
+	newCall = copyCall(call)
+	return
+}
+
 func copyCall(call *starknetrpc.FunctionCall) *starknetrpc.FunctionCall {
 	copyCall := starknetrpc.FunctionCall{
 		ContractAddress:    new(felt.Felt).Set(call.ContractAddress),
@@ -52,10 +59,7 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.Function
 		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%s)", hash, nonce, &n)
 	}
 
-	// deep copy all non-primitive types
-	newNonce := new(felt.Felt).Set(nonce)
-	newCall := copyCall(call)
-	newPublicKey := new(felt.Felt).Set(publicKey)
+	newNonce, newCall, newPublicKey := deepCopy(nonce, call, publicKey)
 
 	// store hash
 	s.nonceToHash[*newNonce] = hash
@@ -107,10 +111,7 @@ func (s *TxStore) GetSingleUnconfirmed(hash string) (tx UnconfirmedTx, err error
 		return tx, errors.New("datum not found in txstore")
 	}
 
-	// deep copy all non-primitive types
-	newNonce := new(felt.Felt).Set(&n)
-	newCall := copyCall(c)
-	newPublicKey := new(felt.Felt).Set(&k)
+	newNonce, newCall, newPublicKey := deepCopy(&n, c, &k)
 
 	tx.Call = newCall
 	tx.Nonce = newNonce
@@ -136,10 +137,7 @@ func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
 		k := s.hashToKey[h]
 		c := s.hashToCall[h]
 
-		// deep copy all non-primitive types
-		newNonce := new(felt.Felt).Set(&n)
-		newCall := copyCall(c)
-		newPublicKey := new(felt.Felt).Set(&k)
+		newNonce, newCall, newPublicKey := deepCopy(&n, c, &k)
 
 		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: newNonce, Call: newCall, PublicKey: newPublicKey})
 	}
