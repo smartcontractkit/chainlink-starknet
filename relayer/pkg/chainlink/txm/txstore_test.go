@@ -25,7 +25,7 @@ func TestTxStore(t *testing.T) {
 
 		feltKey := new(felt.Felt).SetUint64(7)
 
-		s := NewTxStore(&felt.Zero)
+		s := NewTxStore()
 		assert.Equal(t, 0, s.InflightCount())
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0", call, feltKey))
 		assert.Equal(t, 1, s.InflightCount())
@@ -39,7 +39,7 @@ func TestTxStore(t *testing.T) {
 		t.Parallel()
 
 		// create
-		s := NewTxStore(new(felt.Felt).SetUint64(0))
+		s := NewTxStore()
 
 		call := &starknetrpc.FunctionCall{
 			ContractAddress:    new(felt.Felt).SetUint64(0),
@@ -51,25 +51,17 @@ func TestTxStore(t *testing.T) {
 		// accepts tx in order
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(0), "0x0", call, feltKey))
 		assert.Equal(t, 1, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(1), &s.currentNonce)
 
 		// accepts tx that skips a nonce
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(2), "0x2", call, feltKey))
 		assert.Equal(t, 2, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(1), &s.currentNonce)
 
-		// accepts tx that fills in the missing nonce + fast forwards currentNonce
+		// accepts tx that fills in the missing nonce
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(1), "0x1", call, feltKey))
 		assert.Equal(t, 3, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(3), &s.currentNonce)
 
 		// skip a nonce for later tests
 		require.NoError(t, s.Save(new(felt.Felt).SetUint64(4), "0x4", call, feltKey))
-		assert.Equal(t, 4, s.InflightCount())
-		assert.Equal(t, new(felt.Felt).SetUint64(3), &s.currentNonce)
-
-		// rejects old nonce
-		require.ErrorContains(t, s.Save(new(felt.Felt).SetUint64(0), "0xold", call, feltKey), "nonce too low: 0x0 < 0x3 (lowest)")
 		assert.Equal(t, 4, s.InflightCount())
 
 		// reject already in use nonce
@@ -108,7 +100,7 @@ func TestTxStore(t *testing.T) {
 		feltKey := new(felt.Felt).SetUint64(7)
 
 		// init store
-		s := NewTxStore(new(felt.Felt).SetUint64(0))
+		s := NewTxStore()
 		for i := 0; i < 5; i++ {
 			require.NoError(t, s.Save(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i), call, feltKey))
 		}

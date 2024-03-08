@@ -1,6 +1,7 @@
 package txm
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -12,32 +13,45 @@ import (
 
 // TxStore tracks broadcast & unconfirmed txs per account address per chain id
 type TxStore struct {
-	lock         sync.RWMutex
-	nonceToHash  map[felt.Felt]string // map nonce to txhash
-	hashToNonce  map[string]felt.Felt // map hash to nonce
-	currentNonce felt.Felt            // minimum nonce
-	hashToCall   map[string]*starknetrpc.FunctionCall
-	hashToKey    map[string]felt.Felt
+	lock        sync.RWMutex
+	nonceToHash map[felt.Felt]string // map nonce to txhash
+	hashToNonce map[string]felt.Felt // map hash to nonce
+	hashToCall  map[string]*starknetrpc.FunctionCall
+	hashToKey   map[string]felt.Felt
 }
 
-func NewTxStore(current *felt.Felt) *TxStore {
+func NewTxStore() *TxStore {
 	return &TxStore{
-		currentNonce: *current,
-		nonceToHash:  map[felt.Felt]string{},
-		hashToNonce:  map[string]felt.Felt{},
-		hashToCall:   map[string]*starknetrpc.FunctionCall{},
-		hashToKey:    map[string]felt.Felt{},
+		nonceToHash: map[felt.Felt]string{},
+		hashToNonce: map[string]felt.Felt{},
+		hashToCall:  map[string]*starknetrpc.FunctionCall{},
+		hashToKey:   map[string]felt.Felt{},
 	}
 }
 
-// TODO: Save should make a copy otherwise wee're modiffying the same memory and could loop
+func deepCopy(nonce *felt.Felt, call *starknetrpc.FunctionCall, publicKey *felt.Felt) (newNonce *felt.Felt, newCall *starknetrpc.FunctionCall, newPublicKey *felt.Felt) {
+	newNonce = new(felt.Felt).Set(nonce)
+	newPublicKey = new(felt.Felt).Set(publicKey)
+	newCall = copyCall(call)
+	return
+}
+
+func copyCall(call *starknetrpc.FunctionCall) *starknetrpc.FunctionCall {
+	copyCall := starknetrpc.FunctionCall{
+		ContractAddress:    new(felt.Felt).Set(call.ContractAddress),
+		EntryPointSelector: new(felt.Felt).Set(call.EntryPointSelector),
+		Calldata:           []*felt.Felt{},
+	}
+	for i := 0; i < len(call.Calldata); i++ {
+		copyCall.Calldata = append(copyCall.Calldata, new(felt.Felt).Set(call.Calldata[i]))
+	}
+	return &copyCall
+}
+
 func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.FunctionCall, publicKey *felt.Felt) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if s.currentNonce.Cmp(nonce) == 1 {
-		return fmt.Errorf("nonce too low: %s < %s (lowest)", nonce, &s.currentNonce)
-	}
 	if h, exists := s.nonceToHash[*nonce]; exists {
 		return fmt.Errorf("nonce used: tried to use nonce (%s) for tx (%s), already used by (%s)", nonce, hash, h)
 	}
@@ -45,19 +59,15 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.Function
 		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%s)", hash, nonce, &n)
 	}
 
+	newNonce, newCall, newPublicKey := deepCopy(nonce, call, publicKey)
+
 	// store hash
-	s.nonceToHash[*nonce] = hash
+	s.nonceToHash[*newNonce] = hash
 
-	s.hashToNonce[hash] = *nonce
-	s.hashToCall[hash] = call
-	s.hashToKey[hash] = *publicKey
+	s.hashToNonce[hash] = *newNonce
+	s.hashToCall[hash] = newCall
+	s.hashToKey[hash] = *newPublicKey
 
-	// find next unused nonce
-	_, exists := s.nonceToHash[s.currentNonce]
-	for exists {
-		s.currentNonce = *new(felt.Felt).Add(&s.currentNonce, new(felt.Felt).SetUint64(1))
-		_, exists = s.nonceToHash[s.currentNonce]
-	}
 	return nil
 }
 
@@ -89,10 +99,32 @@ type UnconfirmedTx struct {
 	Call      *starknetrpc.FunctionCall
 }
 
+func (s *TxStore) GetSingleUnconfirmed(hash string) (tx UnconfirmedTx, err error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	n, hExists := s.hashToNonce[hash]
+	c, cExists := s.hashToCall[hash]
+	k, kExists := s.hashToKey[hash]
+
+	if !hExists || !cExists || !kExists {
+		return tx, errors.New("datum not found in txstore")
+	}
+
+	newNonce, newCall, newPublicKey := deepCopy(&n, c, &k)
+
+	tx.Call = newCall
+	tx.Nonce = newNonce
+	tx.PublicKey = newPublicKey
+	tx.Hash = hash
+
+	return tx, nil
+}
+
 // Retrieve Unconfirmed Txs in their queued order (by nonce)
 func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 
 	nonces := maps.Values(s.hashToNonce)
 	sort.Slice(nonces, func(i, j int) bool {
@@ -102,7 +134,12 @@ func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
 	for i := 0; i < len(nonces); i++ {
 		n := nonces[i]
 		h := s.nonceToHash[n]
-		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: &n, Call: s.hashToCall[h]})
+		k := s.hashToKey[h]
+		c := s.hashToCall[h]
+
+		newNonce, newCall, newPublicKey := deepCopy(&n, c, &k)
+
+		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: newNonce, Call: newCall, PublicKey: newPublicKey})
 	}
 
 	return txs
@@ -131,7 +168,7 @@ func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string, call
 	defer c.lock.Unlock()
 	if err := c.validate(from); err != nil {
 		// if does not exist, create a new store for the address
-		c.store[from] = NewTxStore(nonce)
+		c.store[from] = NewTxStore()
 	}
 	return c.store[from].Save(nonce, hash, call, publicKey)
 }
@@ -148,15 +185,25 @@ func (c *ChainTxStore) Confirm(from *felt.Felt, hash string) error {
 }
 
 func (c *ChainTxStore) GetUnconfirmedSorted(from *felt.Felt) ([]UnconfirmedTx, error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
 	if err := c.validate(from); err != nil {
 		return nil, err
 	}
 
 	return c.store[from].GetUnconfirmedSorted(), nil
+}
 
+func (c *ChainTxStore) GetSingleUnconfirmed(from *felt.Felt, hash string) (tx UnconfirmedTx, err error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	if err := c.validate(from); err != nil {
+		return tx, err
+	}
+
+	return c.store[from].GetSingleUnconfirmed(hash)
 }
 
 func (c *ChainTxStore) GetAllInflightCount() map[*felt.Felt]int {

@@ -59,13 +59,14 @@ type TestEnvDetails struct {
 }
 
 type RPCDetails struct {
-	RPCL1Internal      string
-	RPCL2Internal      string
-	RPCL1External      string
-	RPCL2External      string
-	MockServerUrl      string
-	MockServerEndpoint string
-	P2PPort            string
+	RPCL1Internal       string
+	RPCL2Internal       string
+	RPCL2InternalApiKey string
+	RPCL1External       string
+	RPCL2External       string
+	MockServerUrl       string
+	MockServerEndpoint  string
+	P2PPort             string
 }
 
 func New(testConfig *testconfig.TestConfig) *Common {
@@ -89,8 +90,9 @@ func New(testConfig *testconfig.TestConfig) *Common {
 			TestDuration: duration,
 		},
 		RPCDetails: &RPCDetails{
-			P2PPort:       "6690",
-			RPCL2Internal: chainDetails.L2RPCInternal,
+			P2PPort:             "6690",
+			RPCL2Internal:       chainDetails.L2RPCInternal,
+			RPCL2InternalApiKey: chainDetails.L2RPCInternalApiKey,
 		},
 	}
 
@@ -150,8 +152,9 @@ func (c *Common) DefaultNodeConfig() *cl.Config {
 		ChainID: ptr.Ptr(c.ChainDetails.ChainID),
 		Nodes: []*config.Node{
 			{
-				Name: ptr.Ptr("primary"),
-				URL:  common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
+				Name:   ptr.Ptr("primary"),
+				URL:    common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
+				APIKey: ptr.Ptr(c.RPCDetails.RPCL2InternalApiKey),
 			},
 		},
 	}

@@ -36,6 +36,7 @@ func main() {
 	starknetClient, err := starknet.NewClient(
 		starknetConfig.GetChainID(),
 		starknetConfig.GetRPCEndpoint(),
+		starknetConfig.GetRPCApiKey(),
 		logger.With(log, "component", "starknet-client"),
 		&readTimeout,
 	)
