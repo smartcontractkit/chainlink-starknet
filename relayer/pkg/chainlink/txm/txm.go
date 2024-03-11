@@ -270,7 +270,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	tx.Signature = signature
 
 	// get fee for tx
-	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
+	simFlags := []starknetrpc.SimulationFlag{}
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 	if err != nil {
 		var data any
