@@ -308,15 +308,15 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	txm.lggr.Infow("Fee estimate", "in units", friEstimate.FeeUnit)
 
-	// pad estimate to 120% (add extra because estimate did not include validation)
+	// pad estimate to 150% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
-	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(120))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(150))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
-	// pad by 120%
+	// pad by 150%
 	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
-	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(120))
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
 	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 
