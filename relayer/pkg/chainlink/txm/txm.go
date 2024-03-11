@@ -165,20 +165,15 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		return err
 	}
 
-	chainId, err := client.Provider.ChainID(ctx)
-	if err != nil {
-		return err
-	}
-
 	// get current nonce before syncing (for logging purposes)
-	oldVal, err := txm.nonce.NextSequence(publicKey, chainId)
+	oldVal, err := txm.nonce.NextSequence(publicKey)
 	if err != nil {
 		return err
 	}
 
-	txm.nonce.Sync(ctx, accountAddress, publicKey, chainId, client)
+	txm.nonce.Sync(ctx, accountAddress, publicKey, client)
 
-	getVal, err := txm.nonce.NextSequence(publicKey, chainId)
+	getVal, err := txm.nonce.NextSequence(publicKey)
 	if err != nil {
 		return err
 	}
@@ -226,12 +221,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	chainID, err := client.Provider.ChainID(ctx)
-	if err != nil {
-		return txhash, fmt.Errorf("failed to get chainID: %+w", err)
-	}
-
-	nonce, err := txm.nonce.NextSequence(publicKey, chainID)
+	nonce, err := txm.nonce.NextSequence(publicKey)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
 	}
@@ -357,7 +347,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// update nonce if transaction is successful
 	txhash = res.TransactionHash.String()
 	err = errors.Join(
-		txm.nonce.IncrementNextSequence(publicKey, chainID, nonce),
+		txm.nonce.IncrementNextSequence(publicKey, nonce),
 		txm.txStore.Save(accountAddress, nonce, txhash, &call, publicKey),
 	)
 	return txhash, err
@@ -493,13 +483,8 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 
-	chainID, err := client.Provider.ChainID(context.TODO())
-	if err != nil {
-		return fmt.Errorf("failed to get chainID: %+w", err)
-	}
-
 	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, publicKey, chainID, client); err != nil {
+	if err := txm.nonce.Register(context.TODO(), accountAddress, publicKey, client); err != nil {
 		return fmt.Errorf("failed to register nonce: %+w", err)
 	}
 
