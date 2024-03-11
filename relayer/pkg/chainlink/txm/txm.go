@@ -310,7 +310,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to get FRI estimate")
 	}
 
-	txm.lggr.Infow("Fee estimate token units", friEstimate.FeeUnit)
+	txm.lggr.Infow("Fee estimate", "unit", friEstimate.FeeUnit)
 
 	// pad estimate to 140% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
