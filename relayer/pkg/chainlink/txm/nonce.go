@@ -65,11 +65,12 @@ func (nm *nonceManager) HealthReport() map[string]error {
 }
 
 func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, publicKey *felt.Felt, client NonceManagerClient) error {
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
+
 	if err := nm.validate(address); err != nil {
 		return err
 	}
-	nm.lock.Lock()
-	defer nm.lock.Unlock()
 
 	n, err := client.AccountNonce(ctx, address)
 	if err != nil {
@@ -85,6 +86,7 @@ func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, publicKey 
 func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, publicKey *felt.Felt, client NonceManagerClient) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
+
 	_, exists := nm.n[publicKey.String()]
 	if !exists {
 		n, err := client.AccountNonce(ctx, addr)
@@ -98,22 +100,24 @@ func (nm *nonceManager) Register(ctx context.Context, addr *felt.Felt, publicKey
 }
 
 func (nm *nonceManager) NextSequence(publicKey *felt.Felt) (*felt.Felt, error) {
+	nm.lock.RLock()
+	defer nm.lock.RUnlock()
+
 	if err := nm.validate(publicKey); err != nil {
 		return nil, err
 	}
 
-	nm.lock.RLock()
-	defer nm.lock.RUnlock()
 	return nm.n[publicKey.String()], nil
 }
 
 func (nm *nonceManager) IncrementNextSequence(publicKey *felt.Felt, currentNonce *felt.Felt) error {
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
+
 	if err := nm.validate(publicKey); err != nil {
 		return err
 	}
 
-	nm.lock.Lock()
-	defer nm.lock.Unlock()
 	n := nm.n[publicKey.String()]
 	if n.Cmp(currentNonce) != 0 {
 		return fmt.Errorf("mismatched nonce for %s: %s (expected) != %s (got)", publicKey, n, currentNonce)
@@ -124,8 +128,6 @@ func (nm *nonceManager) IncrementNextSequence(publicKey *felt.Felt, currentNonce
 }
 
 func (nm *nonceManager) validate(publicKey *felt.Felt) error {
-	nm.lock.RLock()
-	defer nm.lock.RUnlock()
 	if _, exists := nm.n[publicKey.String()]; !exists {
 		return fmt.Errorf("nonce tracking does not exist for key: %s", publicKey.String())
 	}
