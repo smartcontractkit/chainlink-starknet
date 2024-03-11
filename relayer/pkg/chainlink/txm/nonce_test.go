@@ -78,11 +78,6 @@ func TestNonceManager_IncrementNextSequence(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, initPlusOne, next)
 
-	// should fail with invalid chain id
-	err = nm.IncrementNextSequence(k, initPlusOne)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("nonce does not exist for key: %s and chain: %s", k.String(), "invalid_chainId"))
-
 	// should fail with invalid address
 	randAddr1 := starknetutils.BigIntToFelt(big.NewInt(1))
 	err = nm.IncrementNextSequence(randAddr1, initPlusOne)
