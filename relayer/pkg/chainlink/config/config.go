@@ -75,7 +75,7 @@ func (c *Chain) SetDefaults() {
 type Node struct {
 	Name *string
 	URL  *config.URL
-	// only if rpc url needs api key passed in header
+	// optional, only if rpc url needs api key passed in header
 	APIKey *string
 }
 
@@ -225,11 +225,17 @@ func setFromNode(n, f *Node) {
 }
 
 func legacyNode(n *Node, id string) db.Node {
+	var apiKey string
+	if n.APIKey == nil {
+		apiKey = ""
+	} else {
+		apiKey = *n.APIKey
+	}
 	return db.Node{
 		Name:    *n.Name,
 		ChainID: id,
 		URL:     (*url.URL)(n.URL).String(),
-		APIKey:  *n.APIKey,
+		APIKey:  apiKey,
 	}
 }
 
