@@ -306,21 +306,21 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to get FRI estimate")
 	}
 
-	txm.lggr.Infow("Fee estimate", "unit", friEstimate.FeeUnit)
+	txm.lggr.Infow("Fee estimate", "in units", friEstimate.FeeUnit)
 
-	// pad estimate to 140% (add extra because estimate did not include validation)
+	// pad estimate to 120% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
-	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(120))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	tx.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
 	// pad by 120%
 	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
 	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(120))
 	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
-	tx.ResourceBounds.L2Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
+	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 
-	txm.lggr.Infow("Set resource bounds", "L2MaxAmount", tx.ResourceBounds.L2Gas.MaxAmount, "L2MaxPricePerUnit", tx.ResourceBounds.L2Gas.MaxPricePerUnit)
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
 	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
