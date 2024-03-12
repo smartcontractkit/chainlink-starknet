@@ -46,15 +46,77 @@ type StarkTXM interface {
 	TxManager
 }
 
+type ExpTimer struct {
+	waitTime      time.Duration
+	minDuration   time.Duration
+	maxDuration   time.Duration
+	resetDuration time.Duration
+	lock          chan struct{}
+	done          sync.WaitGroup
+}
+
+func NewExpTimer(minDuration, maxDuration, resetDuration time.Duration) *ExpTimer {
+	return &ExpTimer{
+		waitTime:      minDuration,
+		minDuration:   minDuration,
+		maxDuration:   maxDuration,
+		resetDuration: resetDuration,
+		lock:          make(chan struct{}, 1),
+	}
+}
+
+func (e *ExpTimer) Start(stop <-chan struct{}) {
+	e.resetLoop(stop)
+}
+
+func (e *ExpTimer) Stop() {
+	e.done.Wait()
+}
+
+func (e *ExpTimer) Wait(ctx context.Context) {
+	e.lock <- struct{}{}
+
+	<-time.After(e.waitTime)
+
+	e.waitTime *= 2
+	if e.waitTime > e.maxDuration {
+		e.waitTime = e.maxDuration
+	}
+
+	<-e.lock
+}
+
+func (e *ExpTimer) resetLoop(stop <-chan struct{}) {
+	e.done.Add(1)
+
+	go func() {
+	loop:
+		for {
+			select {
+			case <-stop:
+				break loop
+			case <-time.After(e.resetDuration):
+				e.lock <- struct{}{}
+				e.waitTime = e.minDuration
+				<-e.lock
+				continue
+			}
+		}
+
+		e.done.Done()
+	}()
+}
+
 type starktxm struct {
-	starter utils.StartStopOnce
-	lggr    logger.Logger
-	done    sync.WaitGroup
-	stop    chan struct{}
-	queue   chan Tx
-	ks      KeystoreAdapter
-	cfg     Config
-	nonce   NonceManager
+	starter         utils.StartStopOnce
+	lggr            logger.Logger
+	done            sync.WaitGroup
+	stop            chan struct{}
+	queue           chan Tx
+	ks              KeystoreAdapter
+	cfg             Config
+	nonce           NonceManager
+	nonceRetryTimer ExpTimer
 
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
@@ -64,14 +126,15 @@ type starktxm struct {
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
-		lggr:         logger.Named(lggr, "StarknetTxm"),
-		queue:        make(chan Tx, MaxQueueLen),
-		stop:         make(chan struct{}),
-		client:       utils.NewLazyLoad(getClient),
-		feederClient: utils.NewLazyLoad(getFeederClient),
-		ks:           NewKeystoreAdapter(keystore),
-		cfg:          cfg,
-		txStore:      NewChainTxStore(),
+		lggr:            logger.Named(lggr, "StarknetTxm"),
+		queue:           make(chan Tx, MaxQueueLen),
+		stop:            make(chan struct{}),
+		client:          utils.NewLazyLoad(getClient),
+		feederClient:    utils.NewLazyLoad(getFeederClient),
+		ks:              NewKeystoreAdapter(keystore),
+		cfg:             cfg,
+		txStore:         NewChainTxStore(),
+		nonceRetryTimer: *NewExpTimer(2*time.Second, 10*time.Second, 20*time.Second),
 	}
 	txm.nonce = NewNonceManager(txm.lggr)
 
@@ -91,6 +154,9 @@ func (txm *starktxm) Start(ctx context.Context) error {
 		txm.done.Add(2) // waitgroup: tx sender + confirmer
 		go txm.broadcastLoop()
 		go txm.confirmLoop()
+
+		txm.nonceRetryTimer.Start(txm.stop)
+
 		return nil
 	})
 }
@@ -156,8 +222,8 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 
 	txm.lggr.Debugw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
 
-	// wait for rpc starknet_estimateFee to catch up with nonce returned by starknet_getNonce
-	<-time.After(utils.WithJitter(time.Second))
+	// exponential backoff wait for rpc starknet_estimateFee to catch up with nonce returned by starknet_getNonce
+	txm.nonceRetryTimer.Wait(ctx)
 
 	// resync nonce so that new queued txs can be unblocked
 	client, err := txm.client.Get()
@@ -299,8 +365,6 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	if friEstimate == nil {
 		return txhash, fmt.Errorf("failed to get FRI estimate")
 	}
-
-	txm.lggr.Infow("Fee estimate", "in units", friEstimate.FeeUnit)
 
 	// pad estimate to 150% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
@@ -460,6 +524,7 @@ func (txm *starktxm) Close() error {
 	return txm.starter.StopOnce("starktxm", func() error {
 		close(txm.stop)
 		txm.done.Wait()
+		txm.nonceRetryTimer.Stop()
 		return nil
 	})
 }
