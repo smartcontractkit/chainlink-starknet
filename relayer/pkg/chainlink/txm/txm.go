@@ -269,8 +269,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 	tx.Signature = signature
 
-	// get fee for tx
-	simFlags := []starknetrpc.SimulationFlag{}
+	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
+	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 	if err != nil {
 		var data any
