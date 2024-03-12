@@ -72,8 +72,10 @@ func (sg *StarknetGauntlet) FetchGauntletJsonOutput() (*GauntletResponse, error)
 }
 
 // SetupNetwork Sets up a new network and sets the NODE_URL for Devnet / Starknet RPC
-func (sg *StarknetGauntlet) SetupNetwork(addr string) error {
+func (sg *StarknetGauntlet) SetupNetwork(addr string, account string, privateKey string) error {
 	sg.G.AddNetworkConfigVar("NODE_URL", addr)
+	sg.G.AddNetworkConfigVar("ACCOUNT", account)
+	sg.G.AddNetworkConfigVar("PRIVATE_KEY", privateKey)
 	err := sg.G.WriteNetworkConfigMap(sg.dir + "packages-ts/starknet-gauntlet-cli/networks/")
 	if err != nil {
 		return err

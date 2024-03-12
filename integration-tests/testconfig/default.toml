@@ -1,0 +1,36 @@
+# This is the default configuration so OCR2 tests can run without issues
+[ChainlinkImage]
+image="public.ecr.aws/chainlink/chainlink"
+version="2.9.0"
+
+[Logging]
+test_log_collect=false
+
+[Logging.LogStream]
+log_targets=["file"]
+log_producer_timeout="10s"
+log_producer_retry_limit=10
+
+[Network]
+selected_networks=["SIMULATED"] # Not needed for Starknet but mandatory from CTF (do not change)
+
+[Network.RpcHttpUrls]
+simulated = ["http://127.0.0.1"] # Not needed for Starknet but mandatory from CTF (do not change)
+
+[Network.RpcWsUrls]
+simulated = ["wss://127.0.0.1"] # Not needed for Starknet but mandatory from CTF (do not change)
+
+[Common]
+internal_docker_repo = "public.ecr.aws/chainlink"
+inside_k8 = false
+network = "localnet"
+user = "satoshi"
+stateful_db = false
+devnet_image = "shardlabs/starknet-devnet-rs:b41e566a3f17aa0e51871f02d5165959e50ce358"
+
+[OCR2]
+node_count = 6
+test_duration = "30m"
+
+[OCR2.Smoke]
+number_of_rounds = 10
