@@ -14,7 +14,7 @@ export const loadContract = (name: string): CompiledContract => {
   return json.parse(fs.readFileSync(`${__dirname}/../__mocks__/${name}.json`).toString('ascii'))
 }
 
-export const loadExampleContract = (): any => {
+export const loadExampleContract = () => {
   return { contract: loadContract('example') }
 }
 
@@ -38,10 +38,23 @@ export const noopPrompt: typeof prompt = async () => {}
 
 export const TIMEOUT = 900000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
-export const devnetPrivateKey = '0x71d7bb07b9a64f6f78ac4c816aff4da9'
-export const devnetAccount0Address =
-  '0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691'
-// export const devnetKeyPair = ec.getKeyPair(devnetPrivateKey);
+
+export type StarknetAccount = Awaited<ReturnType<typeof fetchAccount>>
+export const fetchAccount = async (accountIndex = 0) => {
+  const response = await fetch(`${LOCAL_URL}predeployed_accounts`)
+  const accounts = await response.json()
+
+  const account = accounts.at(accountIndex)
+  if (account == null) {
+    throw new Error('no accounts available')
+  }
+
+  return {
+    address: account.address as string,
+    privateKey: account.private_key as string,
+    balance: parseInt(account.initial_balance, 10),
+  }
+}
 
 export const registerExecuteCommand = <UI, CI>(
   registerCommand: (deps: Dependencies) => CommandCtor<ExecuteCommandInstance<UI, CI>>,
@@ -49,11 +62,17 @@ export const registerExecuteCommand = <UI, CI>(
   const deps: Dependencies = {
     logger: noopLogger,
     prompt: noopPrompt,
-    makeEnv: (flags) => {
+    makeEnv: async (flags) => {
+      if (flags.pk == null || flags.account == null) {
+        const acct = await fetchAccount()
+        flags.account = flags.account ?? acct.address
+        flags.pk = flags.pk ?? acct.privateKey
+      }
+
       return {
         providerUrl: LOCAL_URL,
-        pk: (flags.pk as string) || devnetPrivateKey,
-        account: (flags.account as string) || devnetAccount0Address,
+        pk: flags.pk as string,
+        account: flags.account as string,
       }
     },
     makeProvider: makeProvider,
@@ -70,11 +89,17 @@ export const registerInspectCommand = <QueryResult>(
   const deps: Omit<Dependencies, 'makeWallet'> = {
     logger: noopLogger,
     prompt: noopPrompt,
-    makeEnv: (flags) => {
+    makeEnv: async (flags) => {
+      if (flags.pk == null || flags.account == null) {
+        const acct = await fetchAccount()
+        flags.account = flags.accout ?? acct.address
+        flags.pk = flags.pk ?? acct.privateKey
+      }
+
       return {
         providerUrl: LOCAL_URL,
-        pk: (flags.pk as string) || devnetPrivateKey,
-        account: (flags.account as string) || devnetAccount0Address,
+        pk: flags.pk as string,
+        account: flags.account as string,
       }
     },
     makeProvider: makeProvider,

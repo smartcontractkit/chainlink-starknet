@@ -340,8 +340,9 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 	if err != nil {
 		var data any
-		if err, ok := err.(ethrpc.DataError); ok {
-			data = err.ErrorData()
+		var dataErr ethrpc.DataError
+		if errors.As(err, &dataErr) {
+			data = dataErr.ErrorData()
 
 			err := txm.handleBroadcastErr(ctx, data, accountAddress, publicKey, call)
 			if err != nil {
@@ -400,8 +401,9 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		var data any
-		if err, ok := err.(ethrpc.DataError); ok {
-			data = err.ErrorData()
+		var dataErr ethrpc.DataError
+		if errors.As(err, &dataErr) {
+			data = dataErr.ErrorData()
 
 			err := txm.handleBroadcastErr(ctx, data, accountAddress, publicKey, call)
 			if err != nil {
