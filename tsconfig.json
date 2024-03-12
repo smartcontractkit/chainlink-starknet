@@ -4,9 +4,6 @@
   "include": [],
   "references": [
     {
-      "path": "./packages-ts/starknet"
-    },
-    {
       "path": "./packages-ts/starknet-gauntlet"
     },
     {

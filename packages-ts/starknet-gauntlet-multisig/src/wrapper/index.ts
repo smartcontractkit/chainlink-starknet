@@ -75,7 +75,7 @@ export const wrapCommand = <UI, CI>(
     static create = async (flags, args) => {
       const c = new MsigCommand(flags, args)
 
-      const env = deps.makeEnv(flags)
+      const env = await deps.makeEnv(flags)
 
       c.wallet = await deps.makeWallet(env)
       c.provider = deps.makeProvider(env.providerUrl, c.wallet)
@@ -269,7 +269,7 @@ export const wrapCommand = <UI, CI>(
         deps.logger.success(`Tx executed at ${tx.hash}`)
       }
 
-      let result = {
+      const result = {
         responses: [
           {
             tx,
@@ -288,7 +288,7 @@ export const wrapCommand = <UI, CI>(
 
       const data = await this.afterExecute(result, proposalId)
 
-      return !!data ? { ...result, data: { ...data } } : result
+      return data ? { ...result, data: { ...data } } : result
     }
   }
 

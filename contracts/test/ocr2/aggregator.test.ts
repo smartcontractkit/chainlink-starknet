@@ -3,7 +3,8 @@ import { starknet } from 'hardhat'
 import { ec, hash, num } from 'starknet'
 import { Account, StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime'
 import { TIMEOUT } from '../constants'
-import { account, expectInvokeError, expectSuccessOrDeclared } from '@chainlink/starknet'
+import { expectInvokeError, expectSuccessOrDeclared } from '../utils'
+import * as account from '../account'
 import { bytesToFelts } from '@chainlink/starknet-gauntlet'
 
 interface Oracle {
