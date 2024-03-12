@@ -1,38 +1,28 @@
-# Local e2e testing
+## Integration tests - HOWTO
 
-Make sure to have `psql` installed locally. We use it to create a new database for each node.
+### Prerequisites
+1. `cd contracts && scarb --profile release build`
+2. `yarn install`
+3. `yarn build`
 
-Create a new network for containers (only needs to be done once). A custom network allows containers to DNS resolve each other using container names.
+#### TOML preparation
+The integration tests are using TOML as the configuration input. The logic and parsing is located under [Test config](./testconfig)
 
-```
-docker network create chainlink
-```
+By default, the tests will be running with the default config set in [default.toml](./testconfig/default.toml). This configuration is set to run on devnet with local docker.
 
-Build a custom core image with starknet relayer bumped to some commit.
+Fields in the default toml can be overriden by creating an `overrides.toml`file. Any values specified here take precedence and will be overwritten if they overlap with `default.toml`.
 
-```
-cd ../core
-go get github.com/smartcontractkit/chainlink-starknet/relayer@<MY COMMIT HERE>
-docker build . -t smartcontract/chainlink:starknet -f ./core/chainlink.Dockerfile
-```
+##### Testnet runs
+In order to run the tests on Testnet, additional variables need to be specified in the TOML, these would also be pointed out if `network = "testnet"` is set. The additional variables are:
 
-Compile contracts and gauntlet:
+- `l2_rpc_url` - L2 RPC url
+- `account` - Account address on L2
+- `private_key` - Private key for L2 account
 
-```
-yarn build
-cd contracts
-scarb --profile release build
-```
+##### Running in k8s
 
-Run the tests!
+Set `inside_k8 = true` under `[Common]`.
 
-```
-cd integration-tests
-go test -count 1 -v -timeout 30m --run OCRBasic ./smoke
-```
+#### Run tests
 
-Use `something.down.sh` scripts to teardown everything afterwards if the tests don't properly clean up.
-
-# Old docs
-
-For more information, see the [Chainlink Starknet Documentation | Integration Tests](../docs/integration-tests).
+`cd integration-tests && go test --timeout=2h -v -count=1 -json ./smoke`

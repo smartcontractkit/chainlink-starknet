@@ -4,83 +4,87 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
+	"os"
 )
 
-var (
-	ethAddressGoerli = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
-	nAccount         string
-)
-
-func (testState *Test) fundNodes() ([]string, error) {
-	l := utils.GetTestLogger(testState.T)
+func (m *OCRv2TestState) fundNodes() ([]string, error) {
+	l := utils.GetTestLogger(m.TestConfig.T)
 	var nAccounts []string
-	var err error
-	for _, key := range testState.GetNodeKeys() {
+	for _, key := range m.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return nil, errors.New("stark key can't be empty")
 		}
-		nAccount, err = testState.Sg.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		nAccount, err := m.Clients.GauntletClient.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
 			return nil, err
 		}
 		nAccounts = append(nAccounts, nAccount)
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	if testState.Common.Testnet {
+	if *m.Common.TestConfig.Common.Network == "testnet" {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err = testState.Sg.TransferToken(ethAddressGoerli, key, "100000000000000000") // Transferring 1 ETH to each node
+			_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "100000000000000000") // Transferring 0.1 STRK to each node
 			if err != nil {
 				return nil, err
 			}
 		}
-
 	} else {
-		err = testState.Devnet.FundAccounts(nAccounts)
-		if err != nil {
-			return nil, err
+		// The starknet provided mint method does not work so we send a req directly
+		for _, key := range nAccounts {
+			res, err := m.TestConfig.Resty.R().SetBody(map[string]any{
+				"address": key,
+				"amount":  900000000000000000,
+			}).Post("/mint")
+			if err != nil {
+				return nil, err
+			}
+			l.Info().Msg(fmt.Sprintf("Funding account (WEI): %s", string(res.Body())))
+			res, err = m.TestConfig.Resty.R().SetBody(map[string]any{
+				"address": key,
+				"amount":  900000000000000000,
+				"unit":    m.Common.ChainDetails.TokenName,
+			}).Post("/mint")
+			if err != nil {
+				return nil, err
+			}
+			l.Info().Msg(fmt.Sprintf("Funding account (FRI): %s", string(res.Body())))
 		}
 	}
 
 	return nAccounts, nil
 }
 
-func (testState *Test) deployLinkToken() error {
+func (m *OCRv2TestState) deployLinkToken() error {
 	var err error
-	testState.LinkTokenAddr, err = testState.Sg.DeployLinkTokenContract()
+	m.Contracts.LinkTokenAddr, err = m.Clients.GauntletClient.DeployLinkTokenContract()
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("LINK", testState.LinkTokenAddr)
+	err = os.Setenv("LINK", m.Contracts.LinkTokenAddr)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (testState *Test) deployAccessController() error {
+func (m *OCRv2TestState) deployAccessController() error {
 	var err error
-	testState.AccessControllerAddr, err = testState.Sg.DeployAccessControllerContract()
+	m.Contracts.AccessControllerAddr, err = m.Clients.GauntletClient.DeployAccessControllerContract()
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("BILLING_ACCESS_CONTROLLER", testState.AccessControllerAddr)
+	err = os.Setenv("BILLING_ACCESS_CONTROLLER", m.Contracts.AccessControllerAddr)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (testState *Test) setConfigDetails(ocrAddress string) error {
-	cfg, err := testState.LoadOCR2Config()
+func (m *OCRv2TestState) setConfigDetails(ocrAddress string) error {
+	cfg, err := m.LoadOCR2Config()
 	if err != nil {
 		return err
 	}
@@ -89,54 +93,54 @@ func (testState *Test) setConfigDetails(ocrAddress string) error {
 	if err != nil {
 		return err
 	}
-	_, err = testState.Sg.SetConfigDetails(string(parsedConfig), ocrAddress)
+	_, err = m.Clients.GauntletClient.SetConfigDetails(string(parsedConfig), ocrAddress)
 	return err
 }
 
-func (testState *Test) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
-	err := testState.Sg.InstallDependencies()
+func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
+	err := m.Clients.GauntletClient.InstallDependencies()
 	if err != nil {
 		return err
 	}
 
-	testState.AccountAddresses, err = testState.fundNodes()
+	m.Clients.ChainlinkClient.AccountAddresses, err = m.fundNodes()
 	if err != nil {
 		return err
 	}
 
-	err = testState.deployLinkToken()
+	err = m.deployLinkToken()
 	if err != nil {
 		return err
 	}
 
-	err = testState.deployAccessController()
+	err = m.deployAccessController()
 	if err != nil {
 		return err
 	}
 
-	testState.OCRAddr, err = testState.Sg.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, testState.LinkTokenAddr)
+	m.Contracts.OCRAddr, err = m.Clients.GauntletClient.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, m.Contracts.LinkTokenAddr)
 	if err != nil {
 		return err
 	}
 
-	testState.ProxyAddr, err = testState.Sg.DeployOCR2ProxyContract(testState.OCRAddr)
+	m.Contracts.ProxyAddr, err = m.Clients.GauntletClient.DeployOCR2ProxyContract(m.Contracts.OCRAddr)
 	if err != nil {
 		return err
 	}
-	_, err = testState.Sg.AddAccess(testState.OCRAddr, testState.ProxyAddr)
-	if err != nil {
-		return err
-	}
-
-	_, err = testState.Sg.MintLinkToken(testState.LinkTokenAddr, testState.OCRAddr, "100000000000000000000")
-	if err != nil {
-		return err
-	}
-	_, err = testState.Sg.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, testState.OCRAddr)
+	_, err = m.Clients.GauntletClient.AddAccess(m.Contracts.OCRAddr, m.Contracts.ProxyAddr)
 	if err != nil {
 		return err
 	}
 
-	err = testState.setConfigDetails(testState.OCRAddr)
+	_, err = m.Clients.GauntletClient.MintLinkToken(m.Contracts.LinkTokenAddr, m.Contracts.OCRAddr, "100000000000000000000")
+	if err != nil {
+		return err
+	}
+	_, err = m.Clients.GauntletClient.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, m.Contracts.OCRAddr)
+	if err != nil {
+		return err
+	}
+
+	err = m.setConfigDetails(m.Contracts.OCRAddr)
 	return err
 }
