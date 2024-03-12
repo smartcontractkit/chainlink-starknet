@@ -27,7 +27,7 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "1000000000000000000") // Transferring 0.1 STRK to each node
+			_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "10000000000000000000") // Transferring 10 STRK to each node
 			if err != nil {
 				return nil, err
 			}
