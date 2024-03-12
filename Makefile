@@ -200,12 +200,12 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
+		go test --timeout=2h -v -count=1 -run TestOCRBasic/$(test) -json ./smoke
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
 	cd integration-tests/ && \
-		go test --timeout=1h -v -json./soak
+		go test --timeout=1h -v -json ./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
