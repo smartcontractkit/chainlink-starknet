@@ -9,7 +9,6 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
@@ -50,13 +49,13 @@ type Client struct {
 // pass nil or 0 to timeout to not use built in default timeout
 func NewClient(_chainID string, baseURL string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	// TODO: chainID now unused
-	c, err := ethrpc.DialContext(context.Background(), baseURL)
+	provider, err := starknetrpc.NewProvider(baseURL)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		Provider: starknetrpc.NewProvider(c),
+		Provider: provider,
 		lggr:     lggr,
 	}
 
