@@ -8,7 +8,7 @@
 To get started, ensure that you have the following tools installed on your machine:
 
 - [starknet-foundry (v0.18.0)](https://github.com/foundry-rs/starknet-foundry/releases/tag/v0.18.0)
-- [scarb (v2.5.4)](https://github.com/software-mansion/scarb/releases/tag/v2.5.4)
+- [scarb (v2.6.3)](https://github.com/software-mansion/scarb/releases/tag/v2.6.3)
 
 ## Running Test Cases
 
