@@ -94,7 +94,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 	return res, nil
 }
 
-func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err error) {
+func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -103,7 +103,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 
 	blockNum, err := c.Provider.BlockNumber(ctx)
 	if err != nil {
-		return height, errors.Wrap(err, "error in client.LatestBlockHeight")
+		return 0, errors.Wrap(err, "error in client.LatestBlockHeight")
 	}
 
 	return blockNum, nil
