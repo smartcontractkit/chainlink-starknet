@@ -117,7 +117,7 @@ describe('Aggregator', function () {
     config_digest = response[2]
     console.log(`Config digest: 0x${config_digest.toString(16)}`)
 
-    // Immitate the fetch done by relay to confirm latest_config_details_works
+    // Imitate the fetch done by relay to confirm latest_config_details_works
     let block = await starknet.getBlock({ blockNumber: response.block_number })
     let events = block.transaction_receipts[0].events
 
@@ -272,7 +272,7 @@ describe('Aggregator', function () {
       // set up payees
       let payees = oracles.map((oracle) => ({
         transmitter: oracle.transmitter.starknetContract.address,
-        payee: oracle.transmitter.starknetContract.address, // reusing transmitter acocunts as payees for simplicity
+        payee: oracle.transmitter.starknetContract.address, // reusing transmitter accounts as payees for simplicity
       }))
       await owner.invoke(aggregator, 'set_payees', { payees })
 

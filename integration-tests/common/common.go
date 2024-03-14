@@ -239,7 +239,7 @@ func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client
 	return nkb, nil
 }
 
-// CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
+// CreateJobsForContract Creates and sets up the bootstrap jobs as well as OCR jobs
 func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
 	// Define node[0] as bootstrap node
 	cc.bootstrapPeers = []client.P2PData{

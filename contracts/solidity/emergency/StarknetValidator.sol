@@ -139,7 +139,7 @@ contract StarknetValidator is TypeAndVersionInterface, AggregatorValidatorInterf
 
   /**
    * @notice retries to send the latest answer as update message to L2
-   * @dev only with access, useful in cases where a previous x-domain message was handeled unsuccessfully.
+   * @dev only with access, useful in cases where a previous x-domain message was handled unsuccessfully.
    */
   function retry() external checkAccess returns (bool) {
     (, int256 latestAnswer, , , ) = AggregatorV3Interface(s_source).latestRoundData();
