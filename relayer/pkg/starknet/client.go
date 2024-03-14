@@ -48,19 +48,21 @@ type Client struct {
 }
 
 // pass nil or 0 to timeout to not use built in default timeout
-func NewClient(_chainID string, baseURL string, apiKey string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
+func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	// TODO: chainID now unused
-	c, err := ethrpc.DialContext(context.Background(), baseURL)
+
+	options := []ethrpc.ClientOption{}
 	if strings.TrimSpace(apiKey) != "" {
-		c.SetHeader("x-apikey", apiKey)
+		options = append(options, ethrpc.WithHeader("x-apikey", apiKey))
 	}
 
+	provider, err := starknetrpc.NewProvider(baseURL, options...)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		Provider: starknetrpc.NewProvider(c),
+		Provider: provider,
 		lggr:     lggr,
 	}
 

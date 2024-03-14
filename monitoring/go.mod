@@ -6,7 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/NethermindEth/juno v0.3.1
-	github.com/NethermindEth/starknet.go v0.6.1-0.20231218140327-915109ab5bc1
+	github.com/NethermindEth/starknet.go v0.7.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1

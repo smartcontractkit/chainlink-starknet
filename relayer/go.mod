@@ -6,7 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/NethermindEth/juno v0.3.1
-	github.com/NethermindEth/starknet.go v0.6.1-0.20231218140327-915109ab5bc1
+	github.com/NethermindEth/starknet.go v0.7.0
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/hashicorp/go-plugin v1.5.2
 	github.com/pelletier/go-toml/v2 v2.1.1
@@ -17,6 +17,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
+	golang.org/x/net v0.20.0
 )
 
 require (
@@ -101,7 +102,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
@@ -117,6 +117,8 @@ require (
 )
 
 replace (
+
+	github.com/NethermindEth/starknet.go => github.com/archseer/starknet.go v0.0.0-20240401053959-f95862005c46
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	// until merged upstream: https://github.com/hashicorp/go-plugin/pull/257
