@@ -19,7 +19,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -140,11 +139,11 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 
 		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 		if err != nil {
-			var dataErr ethrpc.DataError
+			var dataErr *starknetrpc.RPCError
 			if !errors.As(err, &dataErr) {
 				return nil, nil, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
 			}
-			data := dataErr.ErrorData()
+			data := dataErr.Data
 			dataStr := fmt.Sprintf("%+v", data)
 
 			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
@@ -284,12 +283,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
-		var dataErr ethrpc.DataError
+		var dataErr *starknetrpc.RPCError
 		var dataStr string
 		if !errors.As(err, &dataErr) {
 			return txhash, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
 		}
-		data := dataErr.ErrorData()
+		data := dataErr.Data
 		dataStr = fmt.Sprintf("%+v", data)
 		txm.lggr.Errorw("failed to invoke tx", "accountAddress", accountAddress, "error", err, "data", dataStr)
 
