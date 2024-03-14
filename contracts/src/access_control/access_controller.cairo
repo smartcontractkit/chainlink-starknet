@@ -3,7 +3,7 @@ mod AccessController {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
 
-    use openzeppelin::access::ownable::ownable::OwnableComponent;
+    use openzeppelin::access::ownable::OwnableComponent;
 
     use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
     use chainlink::libraries::type_and_version::ITypeAndVersion;

@@ -62,8 +62,8 @@ fn test_constructor() {
     LinkToken::constructor(ref state, sender, sender);
 
     assert(LinkToken::minter(@state) == sender, 'minter valid');
-    assert(state.erc20.name() == 'ChainLink Token', 'name valid');
-    assert(state.erc20.symbol() == 'LINK', 'symbol valid');
+    assert(state.erc20.name() == "ChainLink Token", 'name valid');
+    assert(state.erc20.symbol() == "LINK", 'symbol valid');
 }
 
 #[test]

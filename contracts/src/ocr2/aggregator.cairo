@@ -196,7 +196,7 @@ mod Aggregator {
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
 
-    use openzeppelin::access::ownable::ownable::OwnableComponent;
+    use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
     use chainlink::utils::split_felt;

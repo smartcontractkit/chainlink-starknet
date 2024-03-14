@@ -1,6 +1,7 @@
 [package]
 name = "chainlink"
 version = "0.1.0"
+cairo-version = "2.6.3"
 description = "Chainlink contracts for Starknet"
 homepage = "https://github.com/smartcontractkit/chainlink-starknet"
 
@@ -11,8 +12,8 @@ sierra = "cairo-compile . -r"
 # Uncomment if you want to use dependencies
 # Note: currently testing doesn't work with dependencies
 [dependencies]
-starknet = ">=1.3.0"
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.9.0" }
+starknet = ">=2.6.3"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.10.0" }
 
 [lib]
 
