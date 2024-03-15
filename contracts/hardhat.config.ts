@@ -1,5 +1,4 @@
 import { HardhatUserConfig } from 'hardhat/types'
-import '@shardlabs/starknet-hardhat-plugin'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
 import 'solidity-coverage'
@@ -19,6 +18,17 @@ const COMPILER_SETTINGS = {
  * @type import('hardhat/config').HardhatUserConfig
  */
 const config: HardhatUserConfig = {
+  // NOTE: hardhat comes with a built-in special network called 'harhdat'. This network is automatically created and
+  // used if no networks are defined in our config: https://hardhat.org/hardhat-runner/docs/config#hardhat-network. We
+  // do NOT want to use this network. Our testing scripts already spawn a hardhat node in a container, and we want to
+  // use this for the l1 <> l2 messaging tests rather than the automatically generated network. With that in mind, we
+  // need to modify this config to point to the hardhat container by adding the 'defaultNetwork' and 'networks' properties.
+  defaultNetwork: 'localhost',
+  networks: {
+    localhost: {
+      url: 'http://127.0.0.1:8545',
+    },
+  },
   solidity: {
     compilers: [
       {
@@ -26,36 +36,6 @@ const config: HardhatUserConfig = {
         settings: COMPILER_SETTINGS,
       },
     ],
-  },
-  starknet: {
-    // dockerizedVersion: "0.10.0", // alternatively choose one of the two venv options below
-    // uses (my-venv) defined by `python -m venv path/to/my-venv`
-    // venv: "../.venv",
-
-    // uses the currently active Python environment (hopefully with available Starknet commands!)
-    venv: 'active',
-    // network: "alpha",
-    network: 'devnet',
-    wallets: {
-      OpenZeppelin: {
-        accountName: 'OpenZeppelin',
-        modulePath: 'starkware.starknet.wallets.open_zeppelin.OpenZeppelinAccount',
-        accountPath: '~/.starknet_accounts',
-      },
-    },
-    requestTimeout: 1000000,
-  },
-  networks: {
-    devnet: {
-      url: 'http://127.0.0.1:5050',
-      args: ['--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
-    },
-    integratedDevnet: {
-      url: 'http://127.0.0.1:5050',
-      venv: 'active',
-      args: ['--lite-mode', '--cairo-compiler-manifest', '../vendor/cairo/Cargo.toml'],
-      // dockerizedVersion: "0.2.0"
-    },
   },
   mocha: {
     timeout: 10000000,
