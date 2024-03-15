@@ -8,7 +8,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber, Contract, ContractFactory } from 'ethers'
 import * as l1l2messaging from '../l1-l2-messaging'
 import { STARKNET_DEVNET_URL } from '../constants'
-import { account } from '@chainlink/starknet'
+import * as account from '../account'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 

@@ -5,8 +5,12 @@ go 1.21.4
 require (
 	github.com/NethermindEth/juno v0.3.1
 	github.com/NethermindEth/starknet.go v0.6.1-0.20231218140327-915109ab5bc1
+	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.4.0
 	github.com/lib/pq v1.10.9
+	github.com/pelletier/go-toml/v2 v2.1.1
+	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
@@ -15,7 +19,9 @@ require (
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240215151806-009c99876c4c
 	github.com/smartcontractkit/chainlink/v2 v2.9.0-beta0.0.20240215151806-009c99876c4c
 	github.com/stretchr/testify v1.8.4
+	github.com/testcontainers/testcontainers-go v0.23.0
 	go.uber.org/zap v1.26.0
+	golang.org/x/text v0.14.0
 	gopkg.in/guregu/null.v4 v4.0.0
 )
 
@@ -65,7 +71,6 @@ require (
 	github.com/aws/constructs-go/constructs/v10 v10.1.255 // indirect
 	github.com/aws/jsii-runtime-go v1.75.0 // indirect
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
-	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
@@ -173,7 +178,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.5 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/go-webauthn/webauthn v0.9.4 // indirect
 	github.com/go-webauthn/x v0.1.5 // indirect
@@ -317,11 +321,9 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/petermattis/goid v0.0.0-20230317030725-371a4b8eda08 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/alertmanager v0.26.0 // indirect
@@ -375,7 +377,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
-	github.com/testcontainers/testcontainers-go v0.23.0 // indirect
 	github.com/theodesp/go-heaps v0.0.0-20190520121037-88e35354fe0a // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
 	github.com/tidwall/gjson v1.17.0 // indirect
@@ -430,7 +431,6 @@ require (
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
