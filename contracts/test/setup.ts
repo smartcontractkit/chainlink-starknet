@@ -1,12 +1,12 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as path from 'node:path'
+import * as fs from 'node:fs'
 
 function findCommonPrefix(path1: string, path2: string): string {
   const segments1 = path1.split(path.sep)
   const segments2 = path2.split(path.sep)
 
   const minLength = Math.min(segments1.length, segments2.length)
-  let commonSegments = []
+  const commonSegments = []
 
   for (let i = 0; i < minLength; i++) {
     if (segments1[i] === segments2[i]) {
