@@ -1,7 +1,7 @@
 import { fetchStarknetAccount, getStarknetContractArtifacts } from '../utils'
 import { bytesToFelts } from '@chainlink/starknet-gauntlet'
 import { STARKNET_DEVNET_URL, TIMEOUT } from '../constants'
-import { account } from '@chainlink/starknet'
+import * as account from '../account'
 import { assert, expect } from 'chai'
 import {
   DeclareDeployUDCResponse,

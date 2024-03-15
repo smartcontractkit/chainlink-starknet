@@ -19,6 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -198,7 +199,13 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	simFlags := []starknetrpc.SimulationFlag{}
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
-		return txhash, fmt.Errorf("failed to estimate fee: %+w", err)
+		var data any
+		var dataErr ethrpc.DataError
+		if errors.As(err, &dataErr) {
+			data = dataErr.ErrorData()
+		}
+		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
+		return txhash, fmt.Errorf("failed to estimate fee: %T %+w", err, err)
 	}
 
 	txm.lggr.Infow("Account", "account", account.AccountAddress)
@@ -219,12 +226,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
 	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	tx.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
 	// TODO: add margin
-	tx.ResourceBounds.L2Gas.MaxPricePerUnit = starknetrpc.U128(friEstimate.GasPrice.String())
+	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(friEstimate.GasPrice.String())
 
-	txm.lggr.Infow("Set resource bounds", "L2MaxAmount", tx.ResourceBounds.L2Gas.MaxAmount, "L2MaxPricePerUnit", tx.ResourceBounds.L2Gas.MaxPricePerUnit)
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
 	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
@@ -245,6 +252,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
+		var data any
+		var dataErr ethrpc.DataError
+		if errors.As(err, &dataErr) {
+			data = dataErr.ErrorData()
+		}
+		txm.lggr.Errorw("failed to invoke tx", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
