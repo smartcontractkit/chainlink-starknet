@@ -2,11 +2,11 @@ package starknet
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/pkg/errors"
 )
 
 // type alias for readibility
@@ -47,13 +47,13 @@ func (c *Client) BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock,
 	block, err := c.Provider.BlockWithTxs(ctx, starknetrpc.BlockID{Hash: h})
 
 	if err != nil {
-		return FinalizedBlock{}, errors.Wrap(err, "error in BlockByHash")
+		return FinalizedBlock{}, fmt.Errorf("error in BlockByHash: %w", err)
 	}
 
 	finalizedBlock, ok := block.(*FinalizedBlock)
 
 	if !ok {
-		return FinalizedBlock{}, errors.Errorf("expected type Finalized block but found: %T", block)
+		return FinalizedBlock{}, fmt.Errorf("expected type Finalized block but found: %T", block)
 	}
 
 	return *finalizedBlock, nil
