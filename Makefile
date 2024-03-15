@@ -200,12 +200,12 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -json ./smoke 2>&1 | tee /tmp/gotest.log | gotestfmt
+		go test --timeout=2h -v -count=1 -run TestOCRBasic/$(test) -json ./smoke
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
 	cd integration-tests/ && \
-		go test --timeout=1h -v -json./soak
+		go test --timeout=1h -v -json ./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
@@ -213,16 +213,10 @@ test-integration-soak-ci:
 	cd integration-tests/ && \
 		go test --timeout=1h -v -count=1 -json ./soak
 
-.PHONY: test-integration-contracts
-# TODO: better network lifecycle setup - requires external network (L1 + L2)
-# TODO: readd test examples
-#       cd examples/contracts/aggregator-consumer/ && \
-#         yarn test
-test-integration-contracts: build-ts env-devnet-hardhat
-	echo "Tests currently broken because of starknet-hardhat-plugin"
-	exit 1
-	cd packages-ts/starknet/ && \
-		yarn test
+.PHONY: test-examples
+test-examples:
+	cd ./examples/contracts/aggregator_consumer && \
+		snforge test
 
 .PHONY: test-integration-gauntlet
 # TODO: fix example
