@@ -18,11 +18,12 @@ const COMPILER_SETTINGS = {
  * @type import('hardhat/config').HardhatUserConfig
  */
 const config: HardhatUserConfig = {
-  // NOTE: hardhat comes with a built-in special network called 'harhdat'. This network is automatically created and
-  // used if no networks are defined in our config: https://hardhat.org/hardhat-runner/docs/config#hardhat-network. We
-  // do NOT want to use this network. Our testing scripts already spawn a hardhat node in a container, and we want to
-  // use this for the l1 <> l2 messaging tests rather than the automatically generated network. With that in mind, we
-  // need to modify this config to point to the hardhat container by adding the 'defaultNetwork' and 'networks' properties.
+  // NOTE: hardhat comes with a special built-in network called 'harhdat'. This network is automatically created and
+  // used if no networks are defined in our config: https://hardhat.org/hardhat-runner/docs/config#hardhat-network. It
+  // is important to note that we DO NOT want to use this network. Our testing scripts already spawn a hardhat node in
+  // a container, so we should use this for the l1 <> l2 messaging tests rather than the auto-generated one from hardhat.
+  // To achieve this, the 'defaultNetwork' and 'networks' properties have been adjusted such that they reference the
+  // containerized hardhat node.
   defaultNetwork: 'localhost',
   networks: {
     localhost: {
