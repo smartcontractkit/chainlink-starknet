@@ -29,10 +29,10 @@ export const fetchStarknetAccount = async (params?: FetchStarknetAccountParams) 
 }
 
 export const getStarknetContractArtifacts = (name: string) => {
-  const root = getRootDir()
+  const rootDir = getRootDir()
   return {
-    contract: getStarknetContractArtifactPath(root, name, false),
-    casm: getStarknetContractArtifactPath(root, name, true),
+    contract: getStarknetContractArtifactPath(rootDir, name, false),
+    casm: getStarknetContractArtifactPath(rootDir, name, true),
   }
 }
 
@@ -41,12 +41,12 @@ const getRootDir = () => {
   return result.replace(/\n/g, '')
 }
 
-const getStarknetContractArtifactPath = (root: string, name: string, casm: boolean) => {
+const getStarknetContractArtifactPath = (rootDir: string, name: string, casm: boolean) => {
   return json.parse(
     fs
       .readFileSync(
         path.join(
-          root,
+          rootDir,
           'contracts',
           'target',
           'release',
