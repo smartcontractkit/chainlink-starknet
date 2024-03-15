@@ -14,12 +14,40 @@ type FinalizedBlock = starknetrpc.Block
 
 // used to create batch requests
 type StarknetBatchBuilder interface {
-	RequestBlockByHash(ctx context.Context, h *felt.Felt) (*StarknetBatchBuilder, error)
-	RequestBlockByNumber(ctx context.Context, id uint64) (*StarknetBatchBuilder, error)
-	RequestLatestPendingBlock(ctx context.Context) (*StarknetBatchBuilder, error)
-	LatestBlockHashAndNumber(ctx context.Context) (*StarknetBatchBuilder, error)
-	EventsByFilter(ctx context.Context, f starknetrpc.EventFilter) (*StarknetBatchBuilder, error)
-	TxReceiptByHash(ctx context.Context, h *felt.Felt) (*StarknetBatchBuilder, error)
+	RequestBlockByHash(h *felt.Felt) (StarknetBatchBuilder, error)
+	// RequestBlockByNumber(id uint64) (StarknetBatchBuilder, error)
+	// RequestLatestPendingBlock() (StarknetBatchBuilder, error)
+	// RequestLatestBlockHashAndNumber() (StarknetBatchBuilder, error)
+	// RequestEventsByFilter(f starknetrpc.EventFilter) (StarknetBatchBuilder, error)
+	// RequestTxReceiptByHash(h *felt.Felt) (StarknetBatchBuilder, error)
+	Build() []gethrpc.BatchElem
+}
+
+var _ StarknetBatchBuilder = (*batchBuilder)(nil)
+
+type batchBuilder struct {
+	args []gethrpc.BatchElem
+}
+
+func NewBatchBuilder() StarknetBatchBuilder {
+	return &batchBuilder{
+		args: make([]gethrpc.BatchElem, 0),
+	}
+}
+
+func (b *batchBuilder) RequestBlockByHash(h *felt.Felt) (StarknetBatchBuilder, error) {
+	b.args = append(b.args, gethrpc.BatchElem{
+		Method: "starknet_getBlockWithTxs",
+		Args: []interface{}{
+			starknetrpc.BlockID{Hash: h},
+		},
+		Result: &FinalizedBlock{},
+	})
+	return b, nil
+}
+
+func (b *batchBuilder) Build() []gethrpc.BatchElem {
+	return b.args
 }
 
 type StarknetChainClient interface {
@@ -34,7 +62,7 @@ type StarknetChainClient interface {
 	// get block logs, event logs, etc.
 	EventsByFilter(ctx context.Context, f starknetrpc.EventFilter) ([]starknetrpc.EmittedEvent, error)
 	TxReceiptByHash(ctx context.Context, h *felt.Felt) (starknetrpc.TransactionReceipt, error)
-	Batch(builder *StarknetBatchBuilder) ([]gethrpc.BatchElem, error)
+	Batch(builder StarknetBatchBuilder) ([]gethrpc.BatchElem, error)
 }
 
 func (c *Client) BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error) {
@@ -57,4 +85,22 @@ func (c *Client) BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock,
 	}
 
 	return *finalizedBlock, nil
+}
+
+func (c *Client) Batch(ctx context.Context, builder StarknetBatchBuilder) ([]gethrpc.BatchElem, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	args := builder.Build()
+
+	err := c.EthClient.BatchCallContext(ctx, args)
+
+	if err != nil {
+		return nil, fmt.Errorf("error in Batch: %w", err)
+	}
+
+	return args, nil
 }
