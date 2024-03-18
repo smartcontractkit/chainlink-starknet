@@ -237,7 +237,10 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		return err
 	}
 
-	txm.nonce.Sync(ctx, accountAddress, publicKey, client)
+	err = txm.nonce.Sync(ctx, accountAddress, publicKey, client)
+	if err != nil {
+		return err
+	}
 
 	getVal, err := txm.nonce.NextSequence(publicKey)
 	if err != nil {
