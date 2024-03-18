@@ -247,7 +247,7 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		return err
 	}
 
-	txm.lggr.Debug("prior nonce: ", oldVal, "new nonce: ", getVal)
+	txm.lggr.Errorw("handleNonceErr nonce comparison", "prior nonce: ", oldVal, "new nonce: ", getVal)
 
 	unconfirmedTxs, err := txm.txStore.GetUnconfirmedSorted(accountAddress)
 	if err != nil {
