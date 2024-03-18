@@ -4,7 +4,6 @@ import { STARKNET_DEVNET_URL, TIMEOUT } from '../constants'
 import * as account from '../account'
 import { assert, expect } from 'chai'
 import {
-  DeclareDeployUDCResponse,
   BigNumberish,
   ParsedStruct,
   LibraryError,
@@ -36,8 +35,8 @@ describe('Aggregator', function () {
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
-  let aggregator: DeclareDeployUDCResponse
-  let token: DeclareDeployUDCResponse
+  let aggregator: Contract
+  let token: Contract
   let owner: Account
 
   const maxAnswer = 1000000000
@@ -54,36 +53,38 @@ describe('Aggregator', function () {
     console.log('Owner account has been funded')
 
     // Declares and deploys the LINK token contract
-    token = await owner.declareAndDeploy({
+    const ddToken = await owner.declareAndDeploy({
       ...getStarknetContractArtifacts('LinkToken'),
       constructorCalldata: CallData.compile({
         minter: owner.address,
         owner: owner.address,
       }),
     })
-    console.log(`Successfully deployed LinkToken: ${token.deploy.address}`)
+    console.log(`Successfully deployed LinkToken: ${ddToken.deploy.address}`)
+
+    // Creates a starknet contract instance for token
+    const { abi: tokenAbi } = await provider.getClassByHash(ddToken.declare.class_hash)
+    token = new Contract(tokenAbi, ddToken.deploy.address, provider)
 
     // Funds the owner account with some LINK
-    await owner.execute({
-      contractAddress: token.deploy.address,
-      entrypoint: 'permissioned_mint',
-      calldata: CallData.compile({
+    await owner.execute(
+      token.populate('permissioned_mint', {
         account: owner.address,
         amount: cairo.uint256(100_000_000_000n),
       }),
-    })
+    )
     console.log('Successfully funded owner account with LINK')
 
     // Performs the following in parallel:
     //   Deploys the aggregator contract
     //   Populates the oracles array with devnet accounts
-    ;[aggregator] = await Promise.all([
+    const [ddAggregator] = await Promise.all([
       // Declares and deploys the aggregator
       owner.declareAndDeploy({
         ...getStarknetContractArtifacts('Aggregator'),
         constructorCalldata: CallData.compile({
           owner: owner.address,
-          link: token.deploy.address,
+          link: token.address,
           min_answer: minAnswer, // TODO: toFelt() to correctly wrap negative ints
           max_answer: maxAnswer, // TODO: toFelt() to correctly wrap negative ints
           billing_access_controller: 0, // TODO: billing AC
@@ -104,7 +105,11 @@ describe('Aggregator', function () {
         })
       }),
     ])
-    console.log(`Successfully deployed Aggregator: ${aggregator.deploy.address}`)
+    console.log(`Successfully deployed Aggregator: ${ddAggregator.deploy.address}`)
+
+    // Creates a starknet contract instance for aggregator
+    const { abi: aggregatorAbi } = await provider.getClassByHash(ddAggregator.declare.class_hash)
+    aggregator = new Contract(aggregatorAbi, ddAggregator.deploy.address, provider)
 
     // Defines the offchain config
     const onchain_config = new Array<number>()
@@ -125,41 +130,36 @@ describe('Aggregator', function () {
     }
     console.log('Encoded offchain_config: %O', offchain_config_encoded)
 
+    // Sets the billing config
+    await owner.execute(
+      aggregator.populate('set_billing', {
+        config: {
+          observation_payment_gjuels: 1,
+          transmission_payment_gjuels: 1,
+          gas_base: 1,
+          gas_per_signature: 1,
+        },
+      }),
+    )
+
     // Sets the OCR config
-    await owner.execute({
-      contractAddress: aggregator.deploy.address,
-      entrypoint: 'set_config',
-      calldata: CallData.compile(config),
-    })
+    await owner.execute(aggregator.populate('set_config', config))
     console.log('Config: %O', config)
 
-    // Sets the billing config
-    await owner.execute({
-      contractAddress: aggregator.deploy.address,
-      entrypoint: 'set_billing',
-      calldata: CallData.compile({
-        observation_payment_gjuels: 1,
-        transmission_payment_gjuels: 1,
-        gas_base: 1,
-        gas_per_signature: 1,
-      }),
-    })
-
-    // Gets the config details as hex encoded strings:
+    // Gets the config details as bigints:
     //
-    //   result[0] = config_count
-    //   result[1] = block_number
-    //   result[2] = config_digest
+    //   result["0"] = config_count
+    //   result["1"] = block_number
+    //   result["2"] = config_digest
     //
-    const [, blockNumber, configDigest] = await provider.callContract({
-      contractAddress: aggregator.deploy.address,
-      entrypoint: 'latest_config_details',
-    })
-    console.log(`Config digest: ${configDigest}`)
+    const result = await aggregator.latest_config_details()
+    const configDigest = result['2']
+    const blockNumber = result['1']
+    console.log(`Config digest: ${configDigest.toString(16)}`)
     config_digest = configDigest
 
     // Immitate the fetch done by relay to confirm latest_config_details_works
-    const block = await provider.getBlock(parseInt(blockNumber, 16))
+    const block = await provider.getBlock(blockNumber.toString(16))
     const txHash = block.transactions.at(0)
     if (txHash == null) {
       assert.fail('unexpectedly found no transacitons')
@@ -178,9 +178,7 @@ describe('Aggregator', function () {
     }
 
     // Decodes the events
-    const { abi: aggregatorAbi } = await provider.getClassByHash(aggregator.declare.class_hash)
-    const aggregatorContract = new Contract(aggregatorAbi, aggregator.deploy.address, provider)
-    const decodedEvents = aggregatorContract.parseEvents(receipt)
+    const decodedEvents = aggregator.parseEvents(receipt)
     const decodedEvent = decodedEvents.at(0)
     if (decodedEvent == null) {
       assert.fail('unexpectedly received no decoded events')
@@ -258,25 +256,21 @@ describe('Aggregator', function () {
       }
 
       // Executes the transmit function on the aggregator contract
-      return await transmitter.execute([
-        {
-          contractAddress: aggregator.deploy.address,
-          entrypoint: 'transmit',
-          calldata: CallData.compile({
-            report_context: {
-              config_digest,
-              epoch_and_round: epochAndRound,
-              extra_hash: extraHash,
-            },
-            observation_timestamp: observationTimestamp,
-            observers,
-            observations,
-            juels_per_fee_coin: juelsPerFeeCoin,
-            gas_price: gasPrice,
-            signatures,
-          }),
-        },
-      ])
+      return await transmitter.execute(
+        aggregator.populate('transmit', {
+          report_context: {
+            config_digest,
+            epoch_and_round: epochAndRound,
+            extra_hash: extraHash,
+          },
+          observation_timestamp: observationTimestamp,
+          observers,
+          observations,
+          juels_per_fee_coin: juelsPerFeeCoin,
+          gas_price: gasPrice,
+          signatures,
+        }),
+      )
     }
 
     it("should emit 'NewTransmission' event on transmit", async () => {
@@ -289,9 +283,7 @@ describe('Aggregator', function () {
       console.log("Log raw 'NewTransmission' event: %O", receipt.events[0])
 
       // Decodes the events
-      const { abi: aggregatorAbi } = await provider.getClassByHash(aggregator.declare.class_hash)
-      const aggregatorContract = new Contract(aggregatorAbi, aggregator.deploy.address, provider)
-      const decodedEvents = aggregatorContract.parseEvents(receipt)
+      const decodedEvents = aggregator.parseEvents(receipt)
       const decodedEvent = decodedEvents.at(0)
       if (decodedEvent == null) {
         assert.fail('unexpectedly received no decoded events')
@@ -337,27 +329,23 @@ describe('Aggregator', function () {
       }
 
       // Validates the config digest
-      const normalizedConfigDigest = '0x'.concat(config_digest.slice(2).padStart(len, '0'))
-      assert.equal(hexPadStart(e.config_digest, len), normalizedConfigDigest)
+      assert.equal(hexPadStart(e.config_digest, len), config_digest)
     })
 
     it('should transmit correctly', async () => {
       await transmit(2, 99)
 
-      // Gets the latest round details as hex encoded strings:
+      // Gets the latest round details as a map from string to bigint:
       //
-      //   result[0] = round ID
-      //   result[1] = answer
-      //   result[2] = block_num
-      //   result[3] = started_at
-      //   result[4] = updated_at
+      //   result["round_id"] = 2n
+      //   result["answer"] = 99n
+      //   result["block_num"] = 8n
+      //   result["started_at"] = 1n
+      //   result["updated_at"] = 1710802726n
       //
-      const round = await provider.callContract({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'latest_round_data',
-      })
-      assert.equal(parseInt(round[0], 16), 2)
-      assert.equal(parseInt(round[1], 16), 99)
+      const round = await aggregator.latest_round_data()
+      assert.equal(round['round_id'], 2n)
+      assert.equal(round['answer'], 99n)
 
       // await transmit(3, -10) // TODO: toFelt() to correctly wrap negative ints
       // ;({ round } = await aggregator.call('latest_round_data'))
@@ -369,10 +357,7 @@ describe('Aggregator', function () {
         expect.fail()
       } catch (err) {
         // Round should be unchanged
-        const newRound = await provider.callContract({
-          contractAddress: aggregator.deploy.address,
-          entrypoint: 'latest_round_data',
-        })
+        const newRound = await aggregator.latest_round_data()
         assert.deepEqual(round, newRound)
       }
     })
@@ -392,84 +377,63 @@ describe('Aggregator', function () {
 
     it('payments and withdrawals', async () => {
       // set up payees
-      await owner.execute({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'set_payees',
-        calldata: CallData.compile({
+      await owner.execute(
+        aggregator.populate('set_payees', {
           payees: oracles.map((oracle) => ({
             transmitter: oracle.transmitter.address,
             payee: oracle.transmitter.address, // reusing transmitter acocunts as payees for simplicity
           })),
         }),
-      })
+      )
 
-      // several rounds happened so we are owed payment
+      // Several rounds happened so we are owed payment
+      //
+      // The aggregator.owed_payment call returns a bigint
+      //
       const payee = oracles[0].transmitter
-      const [owed1] = await provider.callContract({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'owed_payment',
-        calldata: CallData.compile({
-          transmitter: payee.address,
-        }),
-      })
-      assert.ok(parseInt(owed1, 16) > 0)
+      const owed1 = await aggregator.owed_payment(payee.address)
+      assert.ok(owed1 > 0n)
 
       const availableToValue = ([is_negative, abs_difference]: [boolean, bigint]): bigint => {
         return is_negative ? -abs_difference : abs_difference
       }
 
       // no funds on contract, so no LINK available for payment
-      let [isNegative, absDiff] = await provider.callContract({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'link_available_for_payment',
-      })
-      assert.ok(availableToValue([isNegative === '0x1', BigInt(absDiff)]) < 0) // should be negative: we owe payments
+      //
+      // The aggregator.link_available_for_payment call returns a map:
+      //
+      //   result['0'] = is negative (e.g. true)
+      //   result['1'] = absolute difference (e.g. 10000000006n)
+      //
+      let result = await aggregator.link_available_for_payment()
+      assert.ok(availableToValue([result['0'], result['1']]) < 0) // should be negative: we owe payments
 
       // deposit LINK to contract
-      await owner.execute({
-        contractAddress: token.deploy.address,
-        entrypoint: 'transfer',
-        calldata: CallData.compile({
-          recipient: aggregator.deploy.address,
+      await owner.execute(
+        token.populate('transfer', {
+          recipient: aggregator.address,
           amount: cairo.uint256(100_000_000_000n),
         }),
-      })
+      )
 
       // we have enough funds available now
-      ;[isNegative, absDiff] = await provider.callContract({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'link_available_for_payment',
-      })
-      assert.ok(availableToValue([isNegative === '0x1', BigInt(absDiff)]) > 0)
+      result = await aggregator.link_available_for_payment()
+      assert.ok(availableToValue([result['0'], result['1']]) > 0)
 
       // attempt to withdraw the payment
-      await payee.execute({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'withdraw_payment',
-        calldata: CallData.compile({
+      await payee.execute(
+        aggregator.populate('withdraw_payment', {
           transmitter: payee.address,
         }),
-      })
+      )
 
       // balance as transferred to payee
-      const [balance] = await provider.callContract({
-        contractAddress: token.deploy.address,
-        entrypoint: 'balance_of',
-        calldata: CallData.compile({
-          account: payee.address,
-        }),
-      })
+      const balance = await token.balance_of(payee.address)
       assert.ok(owed1 === balance)
 
       // owed payment is now zero
-      const [owed2] = await provider.callContract({
-        contractAddress: aggregator.deploy.address,
-        entrypoint: 'owed_payment',
-        calldata: CallData.compile({
-          transmitter: payee.address,
-        }),
-      })
-      assert.ok(parseInt(owed2, 16) === 0)
+      const owed2 = await aggregator.owed_payment(payee.address)
+      assert.ok(owed2 === 0n)
     })
   })
 })
