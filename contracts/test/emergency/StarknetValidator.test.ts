@@ -1,11 +1,11 @@
 import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/cairo-lang/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
-import { DeclareDeployUDCResponse, RpcProvider, CallData, Account, hash } from 'starknet'
+import { Contract as StarknetContract, RpcProvider, CallData, Account, hash } from 'starknet'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
+import { BigNumber, Contract as EthersContract, ContractFactory } from 'ethers'
 import { fetchStarknetAccount, getStarknetContractArtifacts } from '../utils'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { BigNumber, Contract, ContractFactory } from 'ethers'
 import * as l1l2messaging from '../l1-l2-messaging'
 import { STARKNET_DEVNET_URL } from '../constants'
 import * as account from '../account'
@@ -23,14 +23,14 @@ describe('StarknetValidator', () => {
   let alice: SignerWithAddress
 
   let starknetValidatorFactory: ContractFactory
-  let starknetValidator: Contract
+  let starknetValidator: EthersContract
   let mockStarknetMessagingFactory: ContractFactory
-  let mockStarknetMessaging: Contract
+  let mockStarknetMessaging: EthersContract
   let mockGasPriceFeed: MockContract
   let mockAccessController: MockContract
   let mockAggregator: MockContract
 
-  let l2Contract: DeclareDeployUDCResponse
+  let l2Contract: StarknetContract
 
   before(async () => {
     // Setup L2 account
@@ -44,13 +44,17 @@ describe('StarknetValidator', () => {
     alice = accounts[2]
 
     // Deploy L2 feed contract
-    l2Contract = await defaultAccount.declareAndDeploy({
+    const ddL2Contract = await defaultAccount.declareAndDeploy({
       ...getStarknetContractArtifacts('SequencerUptimeFeed'),
       constructorCalldata: CallData.compile({
         initial_status: 0,
         owner_address: defaultAccount.address,
       }),
     })
+
+    // Creates a starknet contract instance for the l2 feed
+    const { abi: l2FeedAbi } = await provider.getClassByHash(ddL2Contract.declare.class_hash)
+    l2Contract = new StarknetContract(l2FeedAbi, ddL2Contract.deploy.address, provider)
 
     // Deploy the mock feed
     mockGasPriceFeed = await deployMockContract(deployer, aggregatorAbi)
@@ -93,19 +97,17 @@ describe('StarknetValidator', () => {
       mockAccessController.address,
       mockGasPriceFeed.address,
       mockAggregator.address,
-      l2Contract.deploy.address,
+      l2Contract.address,
       0,
       0,
     )
 
     // Point the L2 feed contract to receive from the L1 StarknetValidator contract
-    await defaultAccount.execute({
-      contractAddress: l2Contract.deploy.address,
-      entrypoint: 'set_l1_sender',
-      calldata: CallData.compile({
+    await defaultAccount.execute(
+      l2Contract.populate('set_l1_sender', {
         address: starknetValidator.address,
       }),
-    })
+    )
   })
 
   describe('#constructor', () => {
@@ -116,7 +118,7 @@ describe('StarknetValidator', () => {
           mockAccessController.address,
           mockGasPriceFeed.address,
           mockAggregator.address,
-          l2Contract.deploy.address,
+          l2Contract.address,
           0,
           0,
         ),
@@ -144,7 +146,7 @@ describe('StarknetValidator', () => {
           mockAccessController.address,
           mockGasPriceFeed.address,
           ethers.constants.AddressZero,
-          l2Contract.deploy.address,
+          l2Contract.address,
           0,
           0,
         ),
@@ -158,7 +160,7 @@ describe('StarknetValidator', () => {
           ethers.constants.AddressZero,
           mockGasPriceFeed.address,
           mockAggregator.address,
-          l2Contract.deploy.address,
+          l2Contract.address,
           0,
           0,
         ),
@@ -172,7 +174,7 @@ describe('StarknetValidator', () => {
           mockAccessController.address,
           ethers.constants.AddressZero,
           mockAggregator.address,
-          l2Contract.deploy.address,
+          l2Contract.address,
           0,
           0,
         ),
@@ -240,7 +242,7 @@ describe('StarknetValidator', () => {
           mockAccessController.address,
           mockGasPriceFeed.address,
           mockAggregator.address,
-          l2Contract.deploy.address,
+          l2Contract.address,
           0,
           0,
         )
@@ -460,11 +462,8 @@ describe('StarknetValidator', () => {
     })
 
     it('should not revert if `sequencer_uptime_feed.latest_round_data` called by an Account with no explicit access (Accounts are allowed read access)', async () => {
-      const [, answer] = await provider.callContract({
-        contractAddress: l2Contract.deploy.address,
-        entrypoint: 'latest_round_data',
-      })
-      expect(answer).to.hexEqual('0x0')
+      const result = await l2Contract.latest_round_data()
+      expect(result['answer']).to.equal('0')
     })
 
     it('should deploy the messaging contract', async () => {
@@ -510,14 +509,11 @@ describe('StarknetValidator', () => {
       expect(resp.messages_to_l1).to.be.empty
 
       expect(msgFromL1.at(0)?.l1_contract_address).to.hexEqual(starknetValidator.address)
-      expect(msgFromL1.at(0)?.l2_contract_address).to.hexEqual(l2Contract.deploy.address)
+      expect(msgFromL1.at(0)?.l2_contract_address).to.hexEqual(l2Contract.address)
 
       // Assert L2 effects
-      const [, answer] = await provider.callContract({
-        contractAddress: l2Contract.deploy.address,
-        entrypoint: 'latest_round_data',
-      })
-      expect(answer).to.hexEqual('0x1')
+      const result = await l2Contract.latest_round_data()
+      expect(result['answer']).to.equal('1')
     })
 
     it('should always send a **boolean** message to L2 contract', async () => {
@@ -549,14 +545,11 @@ describe('StarknetValidator', () => {
       expect(resp.messages_to_l1).to.be.empty
 
       expect(msgFromL1[0].l1_contract_address).to.hexEqual(starknetValidator.address)
-      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.deploy.address)
+      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.address)
 
       // Assert L2 effects
-      const [, answer] = await provider.callContract({
-        contractAddress: l2Contract.deploy.address,
-        entrypoint: 'latest_round_data',
-      })
-      expect(answer).to.hexEqual('0x0') // status unchanged - incorrect value treated as false
+      const result = await l2Contract.latest_round_data()
+      expect(result['answer']).to.equal('0') // status unchanged - incorrect value treated as false
     })
 
     it('should send multiple messages', async () => {
@@ -592,14 +585,11 @@ describe('StarknetValidator', () => {
       expect(resp.messages_to_l1).to.be.empty
 
       expect(msgFromL1[0].l1_contract_address).to.hexEqual(starknetValidator.address)
-      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.deploy.address)
+      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.address)
 
       // Assert L2 effects
-      const [, answer] = await provider.callContract({
-        contractAddress: l2Contract.deploy.address,
-        entrypoint: 'latest_round_data',
-      })
-      expect(answer).to.hexEqual('0x0') // final status 0
+      const result = await l2Contract.latest_round_data()
+      expect(result['answer']).to.equal('0') // final status 0
     })
   })
 
