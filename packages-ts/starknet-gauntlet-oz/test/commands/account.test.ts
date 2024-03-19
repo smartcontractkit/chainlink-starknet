@@ -1,5 +1,5 @@
 import { makeProvider } from '@chainlink/starknet-gauntlet'
-import deployCommand from '../../src/commands/account/deploy'
+import { Deploy } from '../../src/commands/account/deploy'
 import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/starknet-gauntlet/test/utils'
 import { accountContractLoader } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
@@ -11,7 +11,7 @@ describe('OZ Account Contract', () => {
   it(
     'Deployment',
     async () => {
-      const command = await registerExecuteCommand(deployCommand).create({}, [])
+      const command = await registerExecuteCommand(Deploy).create({}, [])
 
       const report = await command.execute()
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
