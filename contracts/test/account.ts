@@ -24,7 +24,7 @@ interface FunderOptions {
   network?: string
   gateway?: string
   accountAddr?: string
-  keyPair?: Uint8Array
+  keyPair: Uint8Array
 }
 
 // Define the Strategy to use depending on the network.
@@ -71,7 +71,7 @@ class DevnetFundingStrategy implements IFundingStrategy {
 
 // Fund the Account on Testnet
 class AllowanceFundingStrategy implements IFundingStrategy {
-  public async fund(accounts: FundAccounts[], opts: FunderOptions) {
+  public async fund(accounts: FundAccounts[], opts: Required<FunderOptions>) {
     const provider = new RpcProvider({
       nodeUrl: constants.NetworkName.SN_GOERLI,
     })
