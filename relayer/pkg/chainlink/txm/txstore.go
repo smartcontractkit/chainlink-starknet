@@ -184,15 +184,16 @@ func (c *ChainTxStore) Confirm(from *felt.Felt, hash string) error {
 	return c.store[from].Confirm(hash)
 }
 
-func (c *ChainTxStore) GetUnconfirmedSorted(from *felt.Felt) ([]UnconfirmedTx, error) {
+func (c *ChainTxStore) GetUnconfirmedSorted(from *felt.Felt) []UnconfirmedTx {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
+	// empty slice if address isn't found
 	if err := c.validate(from); err != nil {
-		return nil, err
+		return nil
 	}
 
-	return c.store[from].GetUnconfirmedSorted(), nil
+	return c.store[from].GetUnconfirmedSorted()
 }
 
 func (c *ChainTxStore) GetSingleUnconfirmed(from *felt.Felt, hash string) (tx UnconfirmedTx, err error) {
