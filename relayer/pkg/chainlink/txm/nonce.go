@@ -68,7 +68,7 @@ func (nm *nonceManager) Sync(ctx context.Context, address *felt.Felt, publicKey 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	if err := nm.validate(address); err != nil {
+	if err := nm.validate(publicKey); err != nil {
 		return err
 	}
 
