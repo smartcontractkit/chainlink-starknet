@@ -249,10 +249,7 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 
 	txm.lggr.Errorw("handleNonceErr nonce comparison", "prior nonce: ", oldVal, "new nonce: ", getVal)
 
-	unconfirmedTxs, err := txm.txStore.GetUnconfirmedSorted(accountAddress)
-	if err != nil {
-		return err
-	}
+	unconfirmedTxs := txm.txStore.GetUnconfirmedSorted(accountAddress)
 
 	// delete all unconfirmed txs and resubmit them to the txm queue
 	for i := 0; i < len(unconfirmedTxs); i++ {
