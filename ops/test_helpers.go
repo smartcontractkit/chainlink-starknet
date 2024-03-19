@@ -51,7 +51,7 @@ var TestOCR2Config = OCR2Config{
 		DeltaGraceNanoseconds:    5000000000,   // 5s
 		DeltaStageNanoseconds:    30000000000,  // 20s
 		RMax:                     5,
-		S:                        []int{1, 2},
+		S:                        []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
 		// PeerIds:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
