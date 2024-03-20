@@ -128,6 +128,118 @@ func TestIntegration_Txm(t *testing.T) {
 	assert.Equal(t, n*len(localKeys), len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())) // validate txs were successfully included on chain
 }
 
+func TestIntegration_TxmNonce(t *testing.T) {
+	n := 20 // number of txs per key
+	url := "https://free-rpc.nethermind.io/sepolia-juno/rpc/v0_6"
+	type TestAccount struct {
+		PrivateKey string
+		PublicKey  string
+		Address    string
+	}
+
+	account := TestAccount{
+		PrivateKey: "0x0",
+		PublicKey:  "0x0",
+		Address:    "0x0",
+	}
+
+	accounts := []TestAccount{account}
+
+	// parse keys into expected format
+	type Key struct {
+		PrivateKey *big.Int
+		Account    string
+	}
+	localKeys := map[string]Key{}
+	for i := range accounts {
+		publicKey := accounts[i].PublicKey
+		fmt.Printf("account %v pubkey %v\n", accounts[i].Address, publicKey)
+		localKeys[publicKey] = Key{
+			PrivateKey: starknetutils.HexToBN(accounts[i].PrivateKey),
+			Account:    accounts[i].Address,
+		}
+	}
+
+	// mock keystore
+	looppKs := NewLooppKeystore(func(publicKey string) (*big.Int, error) {
+		key, ok := localKeys[publicKey]
+		if !ok {
+			return nil, fmt.Errorf("key does not exist id=%s", publicKey)
+		}
+		return key.PrivateKey, nil
+	})
+	ksAdapter := NewKeystoreAdapter(looppKs)
+
+	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
+	timeout := 10 * time.Second
+	client, err := starknet.NewClient("SN_GOERLI", url, "", lggr, &timeout)
+	require.NoError(t, err)
+
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return starknet.NewTestClient(t), nil
+	}
+
+	getClient := func() (*starknet.Client, error) {
+		return client, err
+	}
+
+	// mock config to prevent import cycle
+	cfg := mocks.NewConfig(t)
+	cfg.On("TxTimeout").Return(20 * time.Second)
+	cfg.On("ConfirmationPoll").Return(1 * time.Second)
+
+	txm, err := New(lggr, ksAdapter.Loopp(), cfg, getClient, getFeederClient)
+	require.NoError(t, err)
+
+	// ready fail if start not called
+	require.Error(t, txm.Ready())
+
+	// start txm + checks
+	require.NoError(t, txm.Start(context.Background()))
+	require.NoError(t, txm.Ready())
+	fmt.Println("sss")
+
+	for publicKeyStr := range localKeys {
+		publicKey, err := starknetutils.HexToFelt(publicKeyStr)
+		require.NoError(t, err)
+
+		accountAddress, err := starknetutils.HexToFelt(localKeys[publicKeyStr].Account)
+		require.NoError(t, err)
+
+		contractAddress, err := starknetutils.HexToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7")
+		require.NoError(t, err)
+
+		selector := starknetutils.GetSelectorFromNameFelt("totalSupply")
+
+		for i := 0; i < n; i++ {
+			require.NoError(t, txm.Enqueue(accountAddress, publicKey, starknetrpc.FunctionCall{
+				ContractAddress:    contractAddress, // send to ETH token contract
+				EntryPointSelector: selector,
+			}))
+		}
+	}
+	var empty bool
+	for i := 0; i < 120; i++ {
+		time.Sleep(500 * time.Millisecond)
+		queued, unconfirmed := txm.InflightCount()
+		accepted := len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())
+		t.Logf("inflight count: queued (%d), unconfirmed (%d), accepted (%d)", queued, unconfirmed, accepted)
+
+		// check queue + tx store counts are 0, accepted txs == total txs broadcast
+		if queued == 0 && unconfirmed == 0 && n*len(localKeys) == accepted {
+			empty = true
+			break
+		}
+	}
+
+	// stop txm
+	assert.True(t, empty, "txm timed out while trying to confirm transactions")
+	require.NoError(t, txm.Close())
+	require.Error(t, txm.Ready())
+	assert.Equal(t, 0, observer.FilterLevelExact(zapcore.ErrorLevel).Len())                       // assert no error logs
+	assert.Equal(t, n*len(localKeys), len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())) // validate txs were successfully included on chain
+}
+
 // LooppKeystore implements [loop.Keystore] interface and the requirements
 // of signature d/encoding of the [KeystoreAdapter]
 type LooppKeystore struct {
