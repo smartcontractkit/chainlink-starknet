@@ -200,7 +200,7 @@ func (txm *starktxm) broadcastLoop() {
 func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAddress *felt.Felt, publicKey *felt.Felt, call starknetrpc.FunctionCall) error {
 
 	errData := fmt.Sprintf("%s", data)
-	txm.lggr.Debug("encountered handleBroadcastErr", errData)
+	txm.lggr.Debug("encountered handleBroadcastErr", "err", errData)
 
 	if isInvalidNonce(errData) {
 		// resubmits all unconfirmed transactions
