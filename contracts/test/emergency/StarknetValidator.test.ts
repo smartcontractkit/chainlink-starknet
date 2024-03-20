@@ -43,19 +43,6 @@ describe('StarknetValidator', () => {
     eoaValidator = accounts[1]
     alice = accounts[2]
 
-    // Deploy L2 feed contract
-    const ddL2Contract = await defaultAccount.declareAndDeploy({
-      ...getStarknetContractArtifacts('SequencerUptimeFeed'),
-      constructorCalldata: CallData.compile({
-        initial_status: 0,
-        owner_address: defaultAccount.address,
-      }),
-    })
-
-    // Creates a starknet contract instance for the l2 feed
-    const { abi: l2FeedAbi } = await provider.getClassByHash(ddL2Contract.declare.class_hash)
-    l2Contract = new StarknetContract(l2FeedAbi, ddL2Contract.deploy.address, provider)
-
     // Deploy the mock feed
     mockGasPriceFeed = await deployMockContract(deployer, aggregatorAbi)
     await mockGasPriceFeed.mock.latestRoundData.returns(
@@ -89,6 +76,19 @@ describe('StarknetValidator', () => {
     const messageCancellationDelay = 5 * 60 // seconds
     mockStarknetMessaging = await mockStarknetMessagingFactory.deploy(messageCancellationDelay)
     await mockStarknetMessaging.deployed()
+
+    // Deploy L2 feed contract
+    const ddL2Contract = await defaultAccount.declareAndDeploy({
+      ...getStarknetContractArtifacts('SequencerUptimeFeed'),
+      constructorCalldata: CallData.compile({
+        initial_status: 0,
+        owner_address: defaultAccount.address,
+      }),
+    })
+
+    // Creates a starknet contract instance for the l2 feed
+    const { abi: l2FeedAbi } = await provider.getClassByHash(ddL2Contract.declare.class_hash)
+    l2Contract = new StarknetContract(l2FeedAbi, ddL2Contract.deploy.address, provider)
 
     // Deploy the L1 StarknetValidator
     starknetValidatorFactory = await ethers.getContractFactory('StarknetValidator', deployer)
