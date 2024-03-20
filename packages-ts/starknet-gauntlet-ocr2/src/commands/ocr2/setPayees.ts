@@ -8,14 +8,18 @@ import {
 import { CATEGORIES } from '../../lib/categories'
 import { CONTRACT_LIST, ocr2ContractLoader } from '../../lib/contracts'
 
-type PayeeConfig = {
+type Payee = {
   transmitter: string
   payee: string
 }
 
-type UserInput = PayeeConfig[]
+type PayeeConfig = {
+  payees: Payee[]
+}
 
-type ContractInput = [payees: PayeeConfig[]]
+type UserInput = Payee[]
+
+type ContractInput = PayeeConfig
 
 const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.input) return flags.input as UserInput
@@ -40,12 +44,12 @@ const makeContractInput = async (
   input: UserInput,
   ctx: ExecutionContext,
 ): Promise<ContractInput> => {
-  return input.map((payeeConfig) => [
-    {
-      transmitter: payeeConfig.transmitter,
-      payee: payeeConfig.payee,
-    },
-  ]) as ContractInput
+  return {
+    payees: input.map((payee: Payee) => ({
+      transmitter: payee.transmitter,
+      payee: payee.payee,
+    })),
+  } as ContractInput
 }
 
 const commandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
