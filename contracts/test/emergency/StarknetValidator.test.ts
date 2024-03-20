@@ -566,17 +566,24 @@ describe('StarknetValidator', () => {
       )
 
       // Simulate L1 transmit + validate
+      let tx: Awaited<ReturnType<typeof ethers.provider.sendTransaction>>
       await starknetValidator.addAccess(eoaValidator.address)
       const c = starknetValidator.connect(eoaValidator)
       // by default the gas config is 0, we need to change it or we will submit a 0 fee
       const newGasEstimate = 1
-      await starknetValidator
+      tx = await starknetValidator
         .connect(deployer)
         .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
-      await c.validate(0, 0, 1, 1)
-      await c.validate(0, 0, 1, 1)
-      await c.validate(0, 0, 1, 127) // incorrect value
-      await c.validate(0, 0, 1, 0) // final status
+      await tx.wait()
+
+      tx = await c.validate(0, 0, 1, 1)
+      await tx.wait()
+      tx = await c.validate(0, 0, 1, 1)
+      await tx.wait()
+      tx = await c.validate(0, 0, 1, 127) // incorrect value
+      await tx.wait()
+      tx = await c.validate(0, 0, 1, 0) // final status
+      await tx.wait()
 
       // Simulate the L1 - L2 comms
       const resp = await l1l2messaging.flush()
