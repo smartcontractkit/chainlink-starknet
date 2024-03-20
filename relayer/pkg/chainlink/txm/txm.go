@@ -287,9 +287,14 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	nonce, err := txm.nonce.NextSequence(publicKey)
-	if err != nil {
-		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
+	unconfirmed := txm.txStore.GetSmallestUnconfirmedNonce(accountAddress)
+	txm.lggr.Debugw("estimate GetSmallestUnconfirmedNonce", "unconfirmed", unconfirmed)
+	if unconfirmed == nil {
+		unconfirmed, err = txm.nonce.NextSequence(publicKey)
+		if err != nil {
+			panic(err)
+		}
+		txm.lggr.Debugw("estimate NextSequence", "unconfirmed", unconfirmed)
 	}
 
 	tx := starknetrpc.InvokeTxnV3{
@@ -297,7 +302,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		SenderAddress: account.AccountAddress,
 		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
-		Nonce:         nonce,
+		Nonce:         unconfirmed,
 		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
 			L1Gas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x0",
@@ -376,6 +381,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
+	nonce, err := txm.nonce.NextSequence(publicKey)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
+	}
+	tx.Nonce = nonce
 	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
 	hash, err = account.TransactionHashInvoke(tx)
