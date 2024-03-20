@@ -576,6 +576,10 @@ describe('StarknetValidator', () => {
         .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
       await tx.wait()
 
+      // To ensure that these transactions are sent in the order we expect, we'll use `.wait()`:
+      //
+      //  https://docs.ethers.org/v5/api/contract/contract/#contract-functionsSend
+      //
       tx = await c.validate(0, 0, 1, 1)
       await tx.wait()
       tx = await c.validate(0, 0, 1, 1)
