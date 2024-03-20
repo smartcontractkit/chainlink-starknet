@@ -92,6 +92,23 @@ func (s *TxStore) GetUnconfirmed() []string {
 	return maps.Values(s.nonceToHash)
 }
 
+func (s *TxStore) GetUnconfirmedNonces() []felt.Felt {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return maps.Keys(s.nonceToHash)
+}
+
+func (s *TxStore) GetSmallestUnconfirmedNonce() *felt.Felt {
+	nonces := s.GetUnconfirmedNonces()
+	smallest := &nonces[0]
+	for i := 1; i < len(nonces); i++ {
+		current := &nonces[i]
+		if smallest.Cmp(current) > 0 {
+			smallest = current
+		}
+	}
+	return smallest
+}
 type UnconfirmedTx struct {
 	PublicKey *felt.Felt
 	Hash      string
@@ -194,6 +211,18 @@ func (c *ChainTxStore) GetUnconfirmedSorted(from *felt.Felt) []UnconfirmedTx {
 	}
 
 	return c.store[from].GetUnconfirmedSorted()
+}
+
+func (c *ChainTxStore) GetSmallestUnconfirmedNonce(from *felt.Felt) *felt.Felt {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	// empty slice if address isn't found
+	if err := c.validate(from); err != nil {
+		return nil
+	}
+
+	return c.store[from].GetSmallestUnconfirmedNonce()
 }
 
 func (c *ChainTxStore) GetSingleUnconfirmed(from *felt.Felt, hash string) (tx UnconfirmedTx, err error) {
