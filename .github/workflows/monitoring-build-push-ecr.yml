@@ -32,7 +32,7 @@ jobs:
           registry: ${{ secrets.MONITORING_ECR_HOSTNAME }}
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325 # v2.2.1
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
 
       - name: Generate docker metadata
         id: docker_meta
