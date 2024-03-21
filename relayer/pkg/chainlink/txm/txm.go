@@ -177,12 +177,48 @@ func (txm *starktxm) broadcastLoop() {
 				continue
 			}
 
-			// broadcast tx serially - wait until accepted by mempool before processing next
-			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
-			if err != nil {
-				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
-			} else {
-				txm.lggr.Infow("transaction broadcast", "txhash", hash)
+			// ordered list of account addresses
+			// TODO: can we assume that the publicKey will be the same?
+			type Account struct {
+				PublicKey string
+				Address   string
+			}
+			firstAccount := Account{PublicKey: tx.publicKey.String(), Address: tx.accountAddress.String()}
+			accounts := []Account{firstAccount}
+			callsByAccount := map[Account][]starknetrpc.FunctionCall{
+				firstAccount: []starknetrpc.FunctionCall{tx.call},
+			}
+
+		readTxLoop:
+			for i := 0; i < 20; i++ {
+				select {
+				case tx2 := <-txm.queue:
+					account := Account{PublicKey: tx2.publicKey.String(), Address: tx2.accountAddress.String()}
+					if txList, ok := callsByAccount[account]; ok {
+						callsByAccount[account] = append(txList, tx2.call)
+					} else {
+						accounts = append(accounts, account)
+						callsByAccount[account] = []starknetrpc.FunctionCall{tx.call}
+					}
+				default:
+					break readTxLoop
+				}
+			}
+
+			for _, account := range accounts {
+				calls := callsByAccount[account]
+
+				var publicKey felt.Felt
+				var accountAddress felt.Felt
+				publicKey.SetString(account.PublicKey)
+				accountAddress.SetString(account.Address)
+
+				hash, err := txm.broadcast(ctx, &publicKey, &accountAddress, calls)
+				if err != nil {
+					txm.lggr.Errorw("transaction failed to broadcast", "error", err, "calls", calls)
+				} else {
+					txm.lggr.Infow("transaction broadcast", "txhash", hash)
+				}
 			}
 		}
 	}
@@ -228,8 +264,10 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 		if err = txm.txStore.Confirm(accountAddress, tx.Hash); err != nil {
 			return err
 		}
-		if err = txm.Enqueue(accountAddress, tx.PublicKey, *tx.Call); err != nil {
-			return err
+		for _, call := range tx.Calls {
+			if err = txm.Enqueue(accountAddress, tx.PublicKey, call); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -294,7 +332,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 	return nil, fmt.Errorf("all attempts to estimate fee failed")
 }
 
-func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, calls []starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
 	if err != nil {
 		txm.client.Reset()
@@ -331,7 +369,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
-	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
+	tx.Calldata, err = account.FmtCalldata(calls)
 	if err != nil {
 		return txhash, err
 	}
@@ -397,7 +435,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	txhash = res.TransactionHash.String()
 	err = errors.Join(
 		txm.nonce.IncrementNextSequence(publicKey, nonce),
-		txm.txStore.Save(accountAddress, nonce, txhash, &call, publicKey),
+		txm.txStore.Save(accountAddress, nonce, txhash, calls, publicKey),
 	)
 	return txhash, err
 }

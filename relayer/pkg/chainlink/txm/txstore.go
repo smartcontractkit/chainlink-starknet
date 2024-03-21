@@ -16,7 +16,7 @@ type TxStore struct {
 	lock        sync.RWMutex
 	nonceToHash map[felt.Felt]string // map nonce to txhash
 	hashToNonce map[string]felt.Felt // map hash to nonce
-	hashToCall  map[string]*starknetrpc.FunctionCall
+	hashToCalls map[string][]starknetrpc.FunctionCall
 	hashToKey   map[string]felt.Felt
 }
 
@@ -24,15 +24,16 @@ func NewTxStore() *TxStore {
 	return &TxStore{
 		nonceToHash: map[felt.Felt]string{},
 		hashToNonce: map[string]felt.Felt{},
-		hashToCall:  map[string]*starknetrpc.FunctionCall{},
+		hashToCalls: map[string][]starknetrpc.FunctionCall{},
 		hashToKey:   map[string]felt.Felt{},
 	}
 }
 
-func deepCopy(nonce *felt.Felt, call *starknetrpc.FunctionCall, publicKey *felt.Felt) (newNonce *felt.Felt, newCall *starknetrpc.FunctionCall, newPublicKey *felt.Felt) {
+func deepCopy(nonce *felt.Felt, calls []starknetrpc.FunctionCall, publicKey *felt.Felt) (newNonce *felt.Felt, newCalls []starknetrpc.FunctionCall, newPublicKey *felt.Felt) {
 	newNonce = new(felt.Felt).Set(nonce)
 	newPublicKey = new(felt.Felt).Set(publicKey)
-	newCall = copyCall(call)
+	// TODO: make new felts?
+	newCalls = calls
 	return
 }
 
@@ -48,7 +49,7 @@ func copyCall(call *starknetrpc.FunctionCall) *starknetrpc.FunctionCall {
 	return &copyCall
 }
 
-func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.FunctionCall, publicKey *felt.Felt) error {
+func (s *TxStore) Save(nonce *felt.Felt, hash string, calls []starknetrpc.FunctionCall, publicKey *felt.Felt) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -59,13 +60,12 @@ func (s *TxStore) Save(nonce *felt.Felt, hash string, call *starknetrpc.Function
 		return fmt.Errorf("hash used: tried to use tx (%s) for nonce (%s), already used nonce (%s)", hash, nonce, &n)
 	}
 
-	newNonce, newCall, newPublicKey := deepCopy(nonce, call, publicKey)
+	newNonce, newCalls, newPublicKey := deepCopy(nonce, calls, publicKey)
 
 	// store hash
 	s.nonceToHash[*newNonce] = hash
-
 	s.hashToNonce[hash] = *newNonce
-	s.hashToCall[hash] = newCall
+	s.hashToCalls[hash] = newCalls
 	s.hashToKey[hash] = *newPublicKey
 
 	return nil
@@ -79,7 +79,7 @@ func (s *TxStore) Confirm(hash string) error {
 		delete(s.nonceToHash, nonce)
 
 		delete(s.hashToNonce, hash)
-		delete(s.hashToCall, hash)
+		delete(s.hashToCalls, hash)
 		delete(s.hashToKey, hash)
 		return nil
 	}
@@ -109,11 +109,12 @@ func (s *TxStore) GetSmallestUnconfirmedNonce() *felt.Felt {
 	}
 	return smallest
 }
+
 type UnconfirmedTx struct {
 	PublicKey *felt.Felt
 	Hash      string
 	Nonce     *felt.Felt
-	Call      *starknetrpc.FunctionCall
+	Calls     []starknetrpc.FunctionCall
 }
 
 func (s *TxStore) GetSingleUnconfirmed(hash string) (tx UnconfirmedTx, err error) {
@@ -121,16 +122,16 @@ func (s *TxStore) GetSingleUnconfirmed(hash string) (tx UnconfirmedTx, err error
 	defer s.lock.RUnlock()
 
 	n, hExists := s.hashToNonce[hash]
-	c, cExists := s.hashToCall[hash]
+	c, cExists := s.hashToCalls[hash]
 	k, kExists := s.hashToKey[hash]
 
 	if !hExists || !cExists || !kExists {
 		return tx, errors.New("datum not found in txstore")
 	}
 
-	newNonce, newCall, newPublicKey := deepCopy(&n, c, &k)
+	newNonce, newCalls, newPublicKey := deepCopy(&n, c, &k)
 
-	tx.Call = newCall
+	tx.Calls = newCalls
 	tx.Nonce = newNonce
 	tx.PublicKey = newPublicKey
 	tx.Hash = hash
@@ -152,11 +153,11 @@ func (s *TxStore) GetUnconfirmedSorted() (txs []UnconfirmedTx) {
 		n := nonces[i]
 		h := s.nonceToHash[n]
 		k := s.hashToKey[h]
-		c := s.hashToCall[h]
+		c := s.hashToCalls[h]
 
-		newNonce, newCall, newPublicKey := deepCopy(&n, c, &k)
+		newNonce, newCalls, newPublicKey := deepCopy(&n, c, &k)
 
-		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: newNonce, Call: newCall, PublicKey: newPublicKey})
+		txs = append(txs, UnconfirmedTx{Hash: h, Nonce: newNonce, Calls: newCalls, PublicKey: newPublicKey})
 	}
 
 	return txs
@@ -179,7 +180,7 @@ func NewChainTxStore() *ChainTxStore {
 	}
 }
 
-func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string, call *starknetrpc.FunctionCall, publicKey *felt.Felt) error {
+func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string, calls []starknetrpc.FunctionCall, publicKey *felt.Felt) error {
 	// use write lock for methods that modify underlying data
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -187,7 +188,7 @@ func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string, call
 		// if does not exist, create a new store for the address
 		c.store[from] = NewTxStore()
 	}
-	return c.store[from].Save(nonce, hash, call, publicKey)
+	return c.store[from].Save(nonce, hash, calls, publicKey)
 }
 
 func (c *ChainTxStore) Confirm(from *felt.Felt, hash string) error {
