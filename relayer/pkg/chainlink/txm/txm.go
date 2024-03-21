@@ -188,7 +188,6 @@ func (txm *starktxm) broadcastLoop() {
 	}
 }
 
-
 func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt) error {
 
 	txm.lggr.Errorw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
@@ -337,43 +336,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 
-	// TODO: if we estimate with sig then the hash changes and we have to re-sign
-	// if we don't then the signature is invalid??
-
-	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	hash, err := account.TransactionHashInvoke(tx)
-	if err != nil {
-		return txhash, err
-	}
-	signature, err := account.Sign(ctx, hash)
-	if err != nil {
-		return txhash, err
-	}
-	tx.Signature = signature
-
-	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
-	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
-	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
-	if err != nil {
-		var data any
-		var dataErr ethrpc.DataError
-		if errors.As(err, &dataErr) {
-			data = dataErr.ErrorData()
-		}
-
-		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
-		return txhash, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
-	}
-
-	txm.lggr.Infow("Account", "account", account.AccountAddress)
-
-	var friEstimate *starknetrpc.FeeEstimate
-	for i, f := range feeEstimate {
-		txm.lggr.Infow("Estimated fee", "index", i, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
-		if f.FeeUnit == "FRI" && friEstimate == nil {
-			friEstimate = &feeEstimate[i]
-		}
-	}
+	friEstimate, err := txm.estimateFriFee(ctx, client, accountAddress, tx)
 	if friEstimate == nil {
 		return txhash, fmt.Errorf("failed to get FRI estimate")
 	}
@@ -419,7 +382,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		var dataErr ethrpc.DataError
 		var dataStr string
 		if errors.As(err, &dataErr) {
-			data = dataErr.ErrorData()
+			data := dataErr.ErrorData()
+			dataStr = fmt.Sprintf("%+v", data)
 		}
 		txm.lggr.Errorw("failed to invoke tx from address", accountAddress, "error", err, "data", dataStr)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
