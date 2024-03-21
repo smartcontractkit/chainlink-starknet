@@ -198,7 +198,7 @@ func (txm *starktxm) broadcastLoop() {
 
 func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt) error {
 
-	txm.lggr.Debugw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
+	txm.lggr.Errorw("Handling Nonce Validation Error By Resubmitting Txs...", "account", accountAddress)
 
 	// exponential backoff wait for rpc starknet_estimateFee to catch up with nonce returned by starknet_getNonce
 	txm.nonceRetryTimer.Wait(ctx)
