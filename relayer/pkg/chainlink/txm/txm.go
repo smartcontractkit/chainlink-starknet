@@ -15,8 +15,6 @@ import (
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"golang.org/x/exp/maps"
 
-	pkgerrors "github.com/pkg/errors"
-
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -197,26 +195,6 @@ func (txm *starktxm) broadcastLoop() {
 	}
 }
 
-func (txm *starktxm) handleBroadcastErr(ctx context.Context, data any, accountAddress *felt.Felt, publicKey *felt.Felt, call starknetrpc.FunctionCall) error {
-
-	errData := fmt.Sprintf("%s", data)
-	txm.lggr.Debug("encountered handleBroadcastErr", "err", errData)
-
-	if isInvalidNonce(errData) {
-		// resubmits all unconfirmed transactions
-		err := txm.handleNonceErr(ctx, accountAddress, publicKey)
-		if err != nil {
-			return pkgerrors.Wrap(err, "error in nonce handling")
-		}
-		// resubmits the current 1 unbroadcasted tx that just failed
-		err = txm.Enqueue(accountAddress, publicKey, call)
-		if err != nil {
-			return pkgerrors.Wrap(err, "error in re-enqueuing after nonce handling")
-		}
-	}
-
-	return nil
-}
 
 func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt) error {
 
@@ -274,6 +252,56 @@ func isInvalidNonce(err string) bool {
 	return strings.Contains(err, BROADCASTER_NONCE_ERR) || strings.Contains(err, CONFIRMER_NONCE_ERR)
 }
 
+// TODO: change Errors to Debugs after testing
+func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, error) {
+	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
+	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
+
+	for i := 1; i <= 3; i++ {
+		txm.lggr.Errorw("attempt to estimate fee", "attempt", i)
+
+		estimateNonce, err := client.AccountNonce(ctx, accountAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check account nonce: %+w", err)
+		}
+		tx.Nonce = estimateNonce
+
+		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
+		if err != nil {
+			var dataErr ethrpc.DataError
+			if !errors.As(err, &dataErr) {
+				return nil, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
+			}
+			data := dataErr.ErrorData()
+			dataStr := fmt.Sprintf("%+v", data)
+
+			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
+
+			if strings.Contains(dataStr, BROADCASTER_NONCE_ERR) {
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
+		}
+
+		// track the FRI estimate, but keep looping so we print out all estimates
+		var friEstimate *starknetrpc.FeeEstimate
+		for j, f := range feeEstimate {
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
+			if f.FeeUnit == "FRI" {
+				friEstimate = &feeEstimate[j]
+			}
+		}
+		if friEstimate != nil {
+			return friEstimate, nil
+		}
+
+		txm.lggr.Errorw("No FRI estimate was returned", "attempt", i)
+	}
+
+	return nil, fmt.Errorf("all attempts to estimate fee failed")
+}
+
 func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
 	if err != nil {
@@ -287,22 +315,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	unconfirmed := txm.txStore.GetSmallestUnconfirmedNonce(accountAddress)
-	txm.lggr.Debugw("estimate GetSmallestUnconfirmedNonce", "unconfirmed", unconfirmed)
-	if unconfirmed == nil {
-		unconfirmed, err = txm.nonce.NextSequence(publicKey)
-		if err != nil {
-			panic(err)
-		}
-		txm.lggr.Debugw("estimate NextSequence", "unconfirmed", unconfirmed)
-	}
-
 	tx := starknetrpc.InvokeTxnV3{
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
 		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
-		Nonce:         unconfirmed,
+		Nonce:         &felt.Zero, // filled in below
 		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
 			L1Gas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x0",
@@ -388,11 +406,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	tx.Nonce = nonce
 	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	hash, err = account.TransactionHashInvoke(tx)
+	hash, err := account.TransactionHashInvoke(tx)
 	if err != nil {
 		return txhash, err
 	}
-	signature, err = account.Sign(ctx, hash)
+	signature, err := account.Sign(ctx, hash)
 	if err != nil {
 		return txhash, err
 	}
@@ -405,12 +423,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
-		var data any
 		var dataErr ethrpc.DataError
+		var dataStr string
 		if errors.As(err, &dataErr) {
 			data = dataErr.ErrorData()
 		}
-		txm.lggr.Errorw("failed to invoke tx from address", accountAddress, "error", err, "data", data)
+		txm.lggr.Errorw("failed to invoke tx from address", accountAddress, "error", err, "data", dataStr)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
