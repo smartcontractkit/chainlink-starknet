@@ -171,18 +171,11 @@ func (txm *starktxm) broadcastLoop() {
 		case <-txm.stop:
 			txm.lggr.Debugw("broadcastLoop: stopped")
 			return
-		default:
-			// skip processing if queue is empty
-			if len(txm.queue) == 0 {
-				continue
-			}
-
-			// preserve tx queue: don't pull tx from queue until client is known to work
+		case tx := <-txm.queue:
 			if _, err := txm.client.Get(); err != nil {
 				txm.lggr.Errorw("failed to fetch client: skipping processing tx", "error", err)
 				continue
 			}
-			tx := <-txm.queue
 
 			// broadcast tx serially - wait until accepted by mempool before processing next
 			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
