@@ -1,6 +1,7 @@
 import { TransactionResponse } from '../transaction'
 import {
   RpcProvider as StarknetProvider,
+  DeclareContractResponse,
   InvokeFunctionResponse,
   DeployContractResponse,
   CompiledContract,
@@ -27,6 +28,12 @@ interface IProvider<P> {
     wait?: boolean,
     salt?: number,
   ) => Promise<TransactionResponse>
+  deployAccountContract: (
+    classHash: string,
+    input: any,
+    wait?: boolean,
+    salt?: number,
+  ) => Promise<TransactionResponse>
   declareContract: (
     contract: CompiledContract,
     compiledClassHash?: string,
@@ -45,7 +52,7 @@ export const makeProvider = (
 
 export const wrapResponse = (
   provider: IStarknetProvider,
-  response: InvokeFunctionResponse | DeployContractResponse,
+  response: InvokeFunctionResponse | DeployContractResponse | DeclareContractResponse,
   address?: string,
 ): TransactionResponse => {
   const txResponse: TransactionResponse = {
@@ -121,7 +128,7 @@ class Provider implements IStarknetProvider {
     const tx = await this.account.declareAndDeploy({
       contract,
       compiledClassHash,
-      salt: salt ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
       // unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
     })
@@ -155,8 +162,25 @@ class Provider implements IStarknetProvider {
   deployContract = async (classHash: string, input: any = [], wait = true, salt = undefined) => {
     const tx = await this.account.deployContract({
       classHash: classHash,
-      salt: salt ? '0x' + salt.toString(16) : salt,
+      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
+    })
+    const response = wrapResponse(this, tx)
+
+    if (!wait) return response
+    await response.wait()
+    return response
+  }
+
+  /**
+   * Deploys an account contract using DEPLOY_ACCOUNT given a class hash
+   */
+
+  deployAccountContract = async (classHash: string, input: any = [], wait = true, salt = 0) => {
+    const tx = await this.account.deployAccount({
+      classHash: classHash,
+      constructorCalldata: input,
+      addressSalt: '0x' + salt.toString(16),
     })
     const response = wrapResponse(this, tx)
 

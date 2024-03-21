@@ -16,6 +16,8 @@ import { IStarknetWallet } from '../../wallet'
 import { makeCommandId, Validation, Input } from './command'
 
 export interface ExecutionContext {
+  category: string
+  action: string
   id: string
   contractAddress: string
   wallet: IStarknetWallet
@@ -112,6 +114,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       }
 
       c.executionContext = {
+        category: config.category,
+        action: config.action,
         provider: c.provider,
         wallet: c.wallet,
         id: makeCommandId(config.category, config.action, config.suffixes),
@@ -261,6 +265,52 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       return tx
     }
 
+    deployAccountContract = async (): Promise<TransactionResponse> => {
+      deps.logger.info(`Deploying account contract ${config.category}`)
+      await deps.prompt('Continue?')
+      deps.logger.loading(`Sending transaction...`)
+
+      // classHash has to be provided, we can't declare on new accounts.
+      const classHash: string = this.input?.user?.['classHash']
+      const salt = this.input?.user?.['salt']
+      const contractInput = this.input.contract as any
+
+      const newAccountAddress = hash.calculateContractAddressFromHash(
+        salt,
+        classHash,
+        contractInput,
+        0,
+      )
+      deps.logger.info(
+        `Add funds to pay for deploy fees to the account address: ${newAccountAddress}`,
+      )
+      await deps.prompt('Funded?')
+
+      const tx: TransactionResponse = await this.provider.deployAccountContract(
+        classHash,
+        this.input.contract,
+        false,
+        salt,
+      )
+
+      if (tx.hash === undefined) {
+        deps.logger.error(`No tx hash found: \n${JSON.stringify(tx, null, 2)}`)
+        return tx
+      }
+
+      deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)
+      const response = await tx.wait()
+      if (!response.success) {
+        deps.logger.error(`Contract was not deployed: ${tx.errorMessage}`)
+        return tx
+      }
+      deps.logger.success(`Contract deployed on ${tx.hash} with address ${tx.address}`)
+      deps.logger.info(
+        `If using RDD, change the RDD ID with the new contract address: ${tx.address}`,
+      )
+      return tx
+    }
+
     executeWithSigner = async (): Promise<TransactionResponse> => {
       const pubkey = await this.wallet.getPublicKey()
       deps.logger.info(`Using wallet: ${pubkey}`)
@@ -287,6 +337,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         tx = await this.deployContract()
       } else if (config.action === 'declare') {
         tx = await this.declareContract()
+      } else if (config.action === 'deploy-account') {
+        tx = await this.deployAccountContract()
       } else {
         tx = await this.executeWithSigner()
       }

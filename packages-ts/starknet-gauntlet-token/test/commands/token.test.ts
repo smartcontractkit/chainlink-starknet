@@ -1,4 +1,4 @@
-import deployOZCommand from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
+import { Deploy as deployOZCommand } from '@chainlink/starknet-gauntlet-oz/src/commands/account/deploy'
 import deployTokenCommand from '../../src/commands/token/deploy'
 import mintTokensCommand from '../../src/commands/token/mint'
 import transferTokensCommand from '../../src/commands/token/transfer'
