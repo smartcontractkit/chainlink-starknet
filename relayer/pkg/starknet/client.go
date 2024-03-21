@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/NethermindEth/juno/core/felt"
-	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
@@ -202,11 +201,5 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 		defer cancel()
 	}
 
-	sender := &felt.Zero // not actually used in account.Nonce()
-	cairoVersion := 2
-	account, err := starknetaccount.NewAccount(c.Provider, accountAddress, sender.String(), nil, cairoVersion)
-	if err != nil {
-		return nil, errors.Wrap(err, "error in client.AccountNonce")
-	}
-	return account.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, account.AccountAddress)
+	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, accountAddress)
 }
