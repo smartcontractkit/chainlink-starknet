@@ -237,12 +237,7 @@ func (txm *starktxm) handleNonceErr(ctx context.Context, accountAddress *felt.Fe
 }
 
 const FEE_MARGIN uint32 = 115
-const BROADCASTER_NONCE_ERR = "Invalid transaction nonce"
-const CONFIRMER_NONCE_ERR = "InvalidNonce"
-
-func isInvalidNonce(err string) bool {
-	return strings.Contains(err, BROADCASTER_NONCE_ERR) || strings.Contains(err, CONFIRMER_NONCE_ERR)
-}
+const RPC_NONCE_ERR = "Invalid transaction nonce"
 
 // TODO: change Errors to Debugs after testing
 func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, error) {
@@ -269,7 +264,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 
 			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
 
-			if strings.Contains(dataStr, BROADCASTER_NONCE_ERR) {
+			if strings.Contains(dataStr, RPC_NONCE_ERR) {
 				continue
 			}
 
@@ -411,6 +406,7 @@ func (txm *starktxm) confirmLoop() {
 	tick := time.After(txm.cfg.ConfirmationPoll())
 
 	txm.lggr.Debugw("confirmLoop: started")
+
 	for {
 		var start time.Time
 		select {
@@ -441,50 +437,25 @@ func (txm *starktxm) confirmLoop() {
 						continue
 					}
 
-					status := response.FinalityStatus
+					finalityStatus := response.FinalityStatus
+					executionStatus := response.ExecutionStatus
 
-					// currently, feeder client is only way to get rejected reason
-					if status == starknetrpc.TxnStatus_Rejected {
-						feederClient, err := txm.feederClient.Get()
-						if err != nil {
-							txm.lggr.Errorw("failed to load feeder client", "error", err)
-							break
-						}
-
-						rejectedTx, err := feederClient.TransactionFailure(ctx, f)
-						if err != nil {
-							txm.lggr.Errorw("failed to fetch reason for transaction failure", "hash", hash, err)
-							continue
-						}
-
-						txm.lggr.Errorw("tx rejected reason", rejectedTx.ErrorMessage, "hash", hash, "addr", addr)
-
-						if isInvalidNonce(rejectedTx.ErrorMessage) {
-
-							utx, err := txm.txStore.GetSingleUnconfirmed(addr, hash)
-							if err != nil {
-								txm.lggr.Errorw("failed to fetch unconfirmed tx from txstore", err)
-							}
-							// resubmits all unconfirmed transactions (includes the current one that just failed)
-							err = txm.handleNonceErr(ctx, addr, utx.PublicKey)
-
-							if err != nil {
-								txm.lggr.Errorw("error in nonce handling: ", err)
-							}
-							// move on to process next address's txs because
-							// unconfirmed txs for this address are out of date because they have been purged and resubmitted
-							// we'll reprocess this address's txs on the next cycle of the confirm loop
-							break
-						}
-
-					}
-
-					// any status other than received
-					if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
+					// any finalityStatus other than received
+					if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 || finalityStatus == starknetrpc.TxnStatus_Rejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "finalityStatus", finalityStatus)
 						if err := txm.txStore.Confirm(addr, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 						}
+					}
+
+					// currently, feeder client is only way to get rejected reason
+					if finalityStatus == starknetrpc.TxnStatus_Rejected {
+						go txm.logFeederError(ctx, hash, f)
+					}
+
+					if executionStatus == starknetrpc.TxnExecutionStatusREVERTED {
+						// TODO: get revert reason?
+						txm.lggr.Errorw("transaction reverted", "hash", hash)
 					}
 				}
 			}
@@ -495,6 +466,22 @@ func (txm *starktxm) confirmLoop() {
 		t := txm.cfg.ConfirmationPoll() - time.Since(start)
 		tick = time.After(utils.WithJitter(t.Abs()))
 	}
+}
+
+func (txm *starktxm) logFeederError(ctx context.Context, hash string, f *felt.Felt) {
+	feederClient, err := txm.feederClient.Get()
+	if err != nil {
+		txm.lggr.Errorw("failed to load feeder client", "error", err)
+		return
+	}
+
+	rejectedTx, err := feederClient.TransactionFailure(ctx, f)
+	if err != nil {
+		txm.lggr.Errorw("failed to fetch reason for transaction failure", "hash", hash, "error", err)
+		return
+	}
+
+	txm.lggr.Errorw("feeder rejected reason", "hash", hash, "errorMessage", rejectedTx.ErrorMessage)
 }
 
 func (txm *starktxm) Close() error {
