@@ -10,7 +10,7 @@ import (
 )
 
 func TestFeederClient(t *testing.T) {
-	client := NewTestClient(t)
+	client := NewTestFeederClient(t)
 	tx, err := client.TransactionFailure(context.TODO(), &felt.Zero)
 	require.NoError(t, err)
 

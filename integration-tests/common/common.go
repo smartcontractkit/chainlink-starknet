@@ -80,7 +80,7 @@ func New(testConfig *testconfig.TestConfig) *Common {
 		}
 	} else {
 		// set up mocked local feedernet server because starknet-devnet does not provide one
-		localDevnetFeederSrv := starknet.NewTestServer()
+		localDevnetFeederSrv := starknet.NewTestFeederServer()
 		chainDetails.FeederURL = localDevnetFeederSrv.URL
 	}
 
