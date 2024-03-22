@@ -25,8 +25,8 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "@chainlink/gauntlet-contracts-ocr2": "0.2.2",
-    "@chainlink/gauntlet-core": "0.3.1",
+    "@chainlink/gauntlet-contracts-ocr2": "0.2.3",
+    "@chainlink/gauntlet-core": "0.7.0",
     "@chainlink/starknet-gauntlet": "*",
     "@chainlink/starknet-gauntlet-oz": "*"
   }

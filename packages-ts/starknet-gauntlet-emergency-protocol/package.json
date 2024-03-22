@@ -25,8 +25,8 @@
     "bundle": "yarn build && pkg ."
   },
   "dependencies": {
-    "@chainlink/gauntlet-core": "0.3.1",
-    "@chainlink/evm-gauntlet": "0.1.0",
+    "@chainlink/evm-gauntlet": "0.31.0",
+    "@chainlink/gauntlet-core": "0.7.0",
     "@chainlink/starknet-gauntlet": "*"
   }
 }

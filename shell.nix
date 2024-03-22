@@ -5,8 +5,8 @@
   buildInputs = with pkgs; [
     stdenv.cc.cc.lib
     (rust-bin.stable.latest.default.override { extensions = ["rust-src"]; })
-    nodejs-18_x
-    (yarn.override { nodejs = nodejs-18_x; })
+    nodejs_20
+    (yarn.override { nodejs = nodejs_20; })
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.npm
