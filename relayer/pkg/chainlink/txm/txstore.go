@@ -92,23 +92,6 @@ func (s *TxStore) GetUnconfirmed() []string {
 	return maps.Values(s.nonceToHash)
 }
 
-func (s *TxStore) GetUnconfirmedNonces() []felt.Felt {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-	return maps.Keys(s.nonceToHash)
-}
-
-func (s *TxStore) GetSmallestUnconfirmedNonce() *felt.Felt {
-	nonces := s.GetUnconfirmedNonces()
-	smallest := &nonces[0]
-	for i := 1; i < len(nonces); i++ {
-		current := &nonces[i]
-		if smallest.Cmp(current) > 0 {
-			smallest = current
-		}
-	}
-	return smallest
-}
 type UnconfirmedTx struct {
 	PublicKey *felt.Felt
 	Hash      string
@@ -168,75 +151,30 @@ func (s *TxStore) InflightCount() int {
 	return len(s.nonceToHash)
 }
 
-type ChainTxStore struct {
+type AccountStore struct {
 	store map[*felt.Felt]*TxStore // map account address to txstore
 	lock  sync.RWMutex
 }
 
-func NewChainTxStore() *ChainTxStore {
-	return &ChainTxStore{
+func NewAccountStore() *AccountStore {
+	return &AccountStore{
 		store: map[*felt.Felt]*TxStore{},
 	}
 }
 
-func (c *ChainTxStore) Save(from *felt.Felt, nonce *felt.Felt, hash string, call *starknetrpc.FunctionCall, publicKey *felt.Felt) error {
-	// use write lock for methods that modify underlying data
+// GetTxStore returns the TxStore for the provided account, creating it if it does not exist.
+func (c *AccountStore) GetTxStore(accountAddress *felt.Felt) *TxStore {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	if err := c.validate(from); err != nil {
-		// if does not exist, create a new store for the address
-		c.store[from] = NewTxStore()
+	store, ok := c.store[accountAddress]
+	if !ok {
+		store = NewTxStore()
+		c.store[accountAddress] = store
 	}
-	return c.store[from].Save(nonce, hash, call, publicKey)
+	return store
 }
 
-func (c *ChainTxStore) Confirm(from *felt.Felt, hash string) error {
-	// use write lock for methods that modify underlying data
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	if err := c.validate(from); err != nil {
-		return err
-	}
-	return c.store[from].Confirm(hash)
-}
-
-func (c *ChainTxStore) GetUnconfirmedSorted(from *felt.Felt) []UnconfirmedTx {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
-
-	// empty slice if address isn't found
-	if err := c.validate(from); err != nil {
-		return nil
-	}
-
-	return c.store[from].GetUnconfirmedSorted()
-}
-
-func (c *ChainTxStore) GetSmallestUnconfirmedNonce(from *felt.Felt) *felt.Felt {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
-
-	// empty slice if address isn't found
-	if err := c.validate(from); err != nil {
-		return nil
-	}
-
-	return c.store[from].GetSmallestUnconfirmedNonce()
-}
-
-func (c *ChainTxStore) GetSingleUnconfirmed(from *felt.Felt, hash string) (tx UnconfirmedTx, err error) {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
-
-	if err := c.validate(from); err != nil {
-		return tx, err
-	}
-
-	return c.store[from].GetSingleUnconfirmed(hash)
-}
-
-func (c *ChainTxStore) GetAllInflightCount() map[*felt.Felt]int {
+func (c *AccountStore) GetAllInflightCount() map[*felt.Felt]int {
 	// use read lock for methods that read underlying data
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -250,7 +188,7 @@ func (c *ChainTxStore) GetAllInflightCount() map[*felt.Felt]int {
 	return list
 }
 
-func (c *ChainTxStore) GetAllUnconfirmed() map[*felt.Felt][]string {
+func (c *AccountStore) GetAllUnconfirmed() map[*felt.Felt][]string {
 	// use read lock for methods that read underlying data
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -261,11 +199,4 @@ func (c *ChainTxStore) GetAllUnconfirmed() map[*felt.Felt][]string {
 		list[i] = c.store[i].GetUnconfirmed()
 	}
 	return list
-}
-
-func (c *ChainTxStore) validate(from *felt.Felt) error {
-	if _, exists := c.store[from]; !exists {
-		return fmt.Errorf("from address does not exist: %s", from)
-	}
-	return nil
 }
