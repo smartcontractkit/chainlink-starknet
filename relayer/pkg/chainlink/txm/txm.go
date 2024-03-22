@@ -336,15 +336,16 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
 	}
 
+	// TODO: consider making this configurable
 	// pad estimate to 150% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
-	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(150))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
 	// pad by 150%
 	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
-	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(250))
 	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 
