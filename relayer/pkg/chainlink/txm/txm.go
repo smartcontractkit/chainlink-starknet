@@ -131,7 +131,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
 
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 5; i++ {
 		txm.lggr.Infow("attempt to estimate fee", "attempt", i)
 
 		estimateNonce, err := client.AccountNonce(ctx, accountAddress)
