@@ -119,7 +119,6 @@ func (txm *starktxm) broadcastLoop() {
 const FEE_MARGIN uint32 = 115
 const RPC_NONCE_ERR = "Invalid transaction nonce"
 
-// TODO: change Errors to Debugs after testing
 func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, error) {
 	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
@@ -232,13 +231,13 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 
 	// TODO: consider making this configurable
-	// pad estimate to 150% (add extra because estimate did not include validation)
+	// pad estimate to 250% (add extra because estimate did not include validation)
 	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
 	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
-	// pad by 150%
+	// pad by 250%
 	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
 	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(250))
 	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
@@ -274,7 +273,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 			data := dataErr.ErrorData()
 			dataStr = fmt.Sprintf("%+v", data)
 		}
-		txm.lggr.Errorw("failed to invoke tx from address", accountAddress, "error", err, "data", dataStr)
+		txm.lggr.Errorw("failed to invoke tx", "accountAddress", accountAddress, "error", err, "data", dataStr)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
@@ -333,7 +332,7 @@ func (txm *starktxm) confirmLoop() {
 					// a broadcasted tx to fail in order to fix the nonce errors
 
 					if err != nil {
-						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
+						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "nonce", unconfirmedTx.Nonce, "error", err)
 						continue
 					}
 
@@ -342,7 +341,7 @@ func (txm *starktxm) confirmLoop() {
 
 					// any finalityStatus other than received
 					if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 || finalityStatus == starknetrpc.TxnStatus_Rejected {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "finalityStatus", finalityStatus)
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "nonce", unconfirmedTx.Nonce, "finalityStatus", finalityStatus)
 						if err := txm.accountStore.GetTxStore(accountAddress).Confirm(unconfirmedTx.Nonce, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
 						}
