@@ -56,7 +56,7 @@ type starktxm struct {
 
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
-	txStore      *ChainTxStore
+	accountStore *AccountStore
 }
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
@@ -69,7 +69,7 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		feederClient: utils.NewLazyLoad(getFeederClient),
 		ks:           NewKeystoreAdapter(keystore),
 		cfg:          cfg,
-		txStore:      NewChainTxStore(),
+		accountStore: NewAccountStore(),
 	}
 	txm.nonce = NewNonceManager(txm.lggr)
 
@@ -281,7 +281,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	txhash = res.TransactionHash.String()
 	err = errors.Join(
 		txm.nonce.IncrementNextSequence(publicKey, nonce),
-		txm.txStore.Save(accountAddress, nonce, txhash, &call, publicKey),
+		txm.accountStore.GetTxStore(accountAddress).Save(nonce, txhash, &call, publicKey),
 	)
 	return txhash, err
 }
@@ -307,7 +307,7 @@ func (txm *starktxm) confirmLoop() {
 				break
 			}
 
-			hashes := txm.txStore.GetAllUnconfirmed()
+			hashes := txm.accountStore.GetAllUnconfirmed()
 			for addr := range hashes {
 				for i := range hashes[addr] {
 					hash := hashes[addr][i]
@@ -332,7 +332,7 @@ func (txm *starktxm) confirmLoop() {
 					// any finalityStatus other than received
 					if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 || finalityStatus == starknetrpc.TxnStatus_Rejected {
 						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "finalityStatus", finalityStatus)
-						if err := txm.txStore.Confirm(addr, hash); err != nil {
+						if err := txm.accountStore.GetTxStore(addr).Confirm(hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
 						}
 					}
@@ -423,7 +423,7 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 }
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
-	list := maps.Values(txm.txStore.GetAllInflightCount())
+	list := maps.Values(txm.accountStore.GetAllInflightCount())
 	for _, count := range list {
 		unconfirmed += count
 	}
