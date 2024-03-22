@@ -37,12 +37,6 @@ describe('StarknetValidator', () => {
     defaultAccount = await fetchStarknetAccount()
     await funder.fund([{ account: defaultAccount.address, amount: 1e21 }])
 
-    // Fetch predefined L1 EOA accounts
-    const accounts = await ethers.getSigners()
-    deployer = accounts[0]
-    eoaValidator = accounts[1]
-    alice = accounts[2]
-
     // Deploy L2 feed contract
     const ddL2Contract = await defaultAccount.declareAndDeploy({
       ...getStarknetContractArtifacts('SequencerUptimeFeed'),
@@ -55,6 +49,12 @@ describe('StarknetValidator', () => {
     // Creates a starknet contract instance for the l2 feed
     const { abi: l2FeedAbi } = await provider.getClassByHash(ddL2Contract.declare.class_hash)
     l2Contract = new StarknetContract(l2FeedAbi, ddL2Contract.deploy.address, provider)
+
+    // Fetch predefined L1 EOA accounts
+    const accounts = await ethers.getSigners()
+    deployer = accounts[0]
+    eoaValidator = accounts[1]
+    alice = accounts[2]
 
     // Deploy the mock feed
     mockGasPriceFeed = await deployMockContract(deployer, aggregatorAbi)
@@ -566,17 +566,28 @@ describe('StarknetValidator', () => {
       )
 
       // Simulate L1 transmit + validate
+      let tx: Awaited<ReturnType<typeof ethers.provider.sendTransaction>>
       await starknetValidator.addAccess(eoaValidator.address)
       const c = starknetValidator.connect(eoaValidator)
       // by default the gas config is 0, we need to change it or we will submit a 0 fee
       const newGasEstimate = 1
-      await starknetValidator
+      tx = await starknetValidator
         .connect(deployer)
         .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
-      await c.validate(0, 0, 1, 1)
-      await c.validate(0, 0, 1, 1)
-      await c.validate(0, 0, 1, 127) // incorrect value
-      await c.validate(0, 0, 1, 0) // final status
+      await tx.wait()
+
+      // To ensure that these transactions are sent in the order we expect, we'll use `.wait()`:
+      //
+      //  https://docs.ethers.org/v5/api/contract/contract/#contract-functionsSend
+      //
+      tx = await c.validate(0, 0, 1, 1)
+      await tx.wait()
+      tx = await c.validate(0, 0, 1, 1)
+      await tx.wait()
+      tx = await c.validate(0, 0, 1, 127) // incorrect value
+      await tx.wait()
+      tx = await c.validate(0, 0, 1, 0) // final status
+      await tx.wait()
 
       // Simulate the L1 - L2 comms
       const resp = await l1l2messaging.flush()
