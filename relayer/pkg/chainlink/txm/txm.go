@@ -132,7 +132,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
 
 	for i := 1; i <= 3; i++ {
-		txm.lggr.Errorw("attempt to estimate fee", "attempt", i)
+		txm.lggr.Infow("attempt to estimate fee", "attempt", i)
 
 		estimateNonce, err := client.AccountNonce(ctx, accountAddress)
 		if err != nil {
@@ -173,6 +173,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		txm.lggr.Errorw("No FRI estimate was returned", "attempt", i)
 	}
 
+	txm.lggr.Errorw("all attempts to estimate fee failed")
 	return nil, fmt.Errorf("all attempts to estimate fee failed")
 }
 
