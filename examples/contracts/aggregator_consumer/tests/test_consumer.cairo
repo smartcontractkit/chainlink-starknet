@@ -11,13 +11,13 @@ use starknet::ContractAddress;
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
-    return declare('MockAggregator').deploy(@calldata).unwrap();
+    return declare("MockAggregator").deploy(@calldata).unwrap();
 }
 
 fn deploy_consumer(aggregator_address: ContractAddress) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(aggregator_address.into());
-    return declare('AggregatorConsumer').deploy(@calldata).unwrap();
+    return declare("AggregatorConsumer").deploy(@calldata).unwrap();
 }
 
 #[test]

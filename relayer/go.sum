@@ -44,8 +44,8 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/NethermindEth/juno v0.3.1 h1:AW72LiAm9gqUeCVJWvepnZcTnpU4Vkl0KzPMxS+42FA=
 github.com/NethermindEth/juno v0.3.1/go.mod h1:SGbTpgGaCsxhFsKOid7Ylnz//WZ8swtILk+NbHGsk/Q=
-github.com/NethermindEth/starknet.go v0.6.1-0.20231218140327-915109ab5bc1 h1:9SBvy3eZut1X+wEyAFqfb7ADGj8IQw7ZnlkMwz0YOTY=
-github.com/NethermindEth/starknet.go v0.6.1-0.20231218140327-915109ab5bc1/go.mod h1:V6qrbi1+fTDCftETIT1grBXIf+TvWP/4Aois1a9EF1E=
+github.com/NethermindEth/starknet.go v0.7.0 h1:OmKkPs7EvS8uUkoxh+y/4xeluFx4fepZoqhczr51Y/c=
+github.com/NethermindEth/starknet.go v0.7.0/go.mod h1:k6qFeYocOAeY7sdF7oAaabvjXvmcVtBbLn7YE2azVyQ=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

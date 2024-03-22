@@ -19,7 +19,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -200,9 +199,9 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
 	if err != nil {
 		var data any
-		var dataErr ethrpc.DataError
+		var dataErr *starknetrpc.RPCError
 		if errors.As(err, &dataErr) {
-			data = dataErr.ErrorData()
+			data = dataErr.Data
 		}
 		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to estimate fee: %T %+w", err, err)
@@ -253,9 +252,9 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		var data any
-		var dataErr ethrpc.DataError
+		var dataErr *starknetrpc.RPCError
 		if errors.As(err, &dataErr) {
-			data = dataErr.ErrorData()
+			data = dataErr.Data
 		}
 		txm.lggr.Errorw("failed to invoke tx", "error", err, "data", data)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
