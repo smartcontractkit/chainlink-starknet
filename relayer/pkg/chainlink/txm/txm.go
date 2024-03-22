@@ -13,7 +13,6 @@ import (
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
@@ -52,7 +51,6 @@ type starktxm struct {
 	queue   chan Tx
 	ks      KeystoreAdapter
 	cfg     Config
-	nonce   NonceManager
 
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
@@ -71,7 +69,6 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		cfg:          cfg,
 		accountStore: NewAccountStore(),
 	}
-	txm.nonce = NewNonceManager(txm.lggr)
 
 	return txm, nil
 }
@@ -82,11 +79,7 @@ func (txm *starktxm) Name() string {
 
 func (txm *starktxm) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("starktxm", func() error {
-		if err := txm.nonce.Start(ctx); err != nil {
-			return err
-		}
-
-		txm.done.Add(2) // waitgroup: tx sender + confirmer
+		txm.done.Add(2) // waitgroup: broadcast loop and confirm loop
 		go txm.broadcastLoop()
 		go txm.confirmLoop()
 
@@ -183,6 +176,20 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		txm.client.Reset()
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
+
+	txStore := txm.accountStore.GetTxStore(accountAddress)
+	if txStore == nil {
+		initialNonce, accountNonceErr := client.AccountNonce(ctx, accountAddress)
+		if accountNonceErr != nil {
+			return txhash, fmt.Errorf("failed to check account nonce during TxStore creation: %+w", accountNonceErr)
+		}
+		newTxStore, createErr := txm.accountStore.CreateTxStore(accountAddress, initialNonce)
+		if createErr != nil {
+			return txhash, fmt.Errorf("failed to create TxStore: %+w", createErr)
+		}
+		txStore = newTxStore
+	}
+
 	// create new account
 	cairoVersion := 2
 	account, err := starknetaccount.NewAccount(client.Provider, accountAddress, publicKey.String(), txm.ks, cairoVersion)
@@ -239,10 +246,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
-	nonce, err := txm.nonce.NextSequence(publicKey)
-	if err != nil {
-		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
-	}
+	nonce := txStore.GetNextNonce()
+
 	tx.Nonce = nonce
 	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
@@ -279,11 +284,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	// update nonce if transaction is successful
 	txhash = res.TransactionHash.String()
-	err = errors.Join(
-		txm.nonce.IncrementNextSequence(publicKey, nonce),
-		txm.accountStore.GetTxStore(accountAddress).Save(nonce, txhash, &call, publicKey),
-	)
-	return txhash, err
+	err = txStore.AddUnconfirmed(nonce, txhash, call, publicKey)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
+	}
+	return txhash, nil
 }
 
 func (txm *starktxm) confirmLoop() {
@@ -307,10 +312,16 @@ func (txm *starktxm) confirmLoop() {
 				break
 			}
 
-			hashes := txm.accountStore.GetAllUnconfirmed()
-			for addr := range hashes {
-				for i := range hashes[addr] {
-					hash := hashes[addr][i]
+			allUnconfirmedTxs := txm.accountStore.GetAllUnconfirmed()
+			for accountAddressStr, unconfirmedTxs := range allUnconfirmedTxs {
+				accountAddress, err := new(felt.Felt).SetString(accountAddressStr)
+				// this should never occur because the acccount address string key was created from the account address felt.
+				if err != nil {
+					txm.lggr.Errorw("could not recreate account address felt", "accountAddress", accountAddressStr)
+					continue
+				}
+				for _, unconfirmedTx := range unconfirmedTxs {
+					hash := unconfirmedTx.Hash
 					f, err := starknetutils.HexToFelt(hash)
 					if err != nil {
 						txm.lggr.Errorw("invalid felt value", "hash", hash)
@@ -332,8 +343,8 @@ func (txm *starktxm) confirmLoop() {
 					// any finalityStatus other than received
 					if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 || finalityStatus == starknetrpc.TxnStatus_Rejected {
 						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "finalityStatus", finalityStatus)
-						if err := txm.accountStore.GetTxStore(addr).Confirm(hash); err != nil {
-							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+						if err := txm.accountStore.GetTxStore(accountAddress).Confirm(unconfirmedTx.Nonce, hash); err != nil {
+							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
 						}
 					}
 
@@ -402,17 +413,6 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}
 
-	client, err := txm.client.Get()
-	if err != nil {
-		txm.client.Reset()
-		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
-	}
-
-	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, publicKey, client); err != nil {
-		return fmt.Errorf("failed to register nonce: %+w", err)
-	}
-
 	select {
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
@@ -423,9 +423,5 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 }
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
-	list := maps.Values(txm.accountStore.GetAllInflightCount())
-	for _, count := range list {
-		unconfirmed += count
-	}
-	return len(txm.queue), unconfirmed
+	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
 }
