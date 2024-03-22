@@ -161,7 +161,7 @@ func (c *FeederClient) TransactionFailure(ctx context.Context, transactionHash *
 }
 
 // Only responds on valid /get_transaction?transactionHash=<TRANSACTION_HASH> requests. fails otherwise
-func NewTestServer() *httptest.Server {
+func NewTestFeederServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		queryMap, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil || !strings.HasSuffix(r.URL.Path, "get_transaction") {
@@ -182,13 +182,16 @@ func NewTestServer() *httptest.Server {
 			"error_message": "some error was encountered"
 		}`)
 
-		w.Write(defaultErr)
+		_, err = w.Write(defaultErr)
+		if err != nil {
+			panic(err)
+		}
 	}))
 }
 
-// NewTestClient returns a client and a function to close a test server.
-func NewTestClient(t *testing.T) *FeederClient {
-	srv := NewTestServer()
+// NewTestFeederClient returns a client and a function to close a test server.
+func NewTestFeederClient(t *testing.T) *FeederClient {
+	srv := NewTestFeederServer()
 	t.Cleanup(srv.Close)
 
 	c := NewFeederClient(srv.URL).WithBackoff(NopBackoff).WithMaxRetries(0)
