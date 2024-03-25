@@ -2,21 +2,23 @@ package common
 
 import (
 	"fmt"
-	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
-	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
-	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
+	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -49,13 +51,14 @@ type TestEnvDetails struct {
 }
 
 type RPCDetails struct {
-	RPCL1Internal      string
-	RPCL2Internal      string
-	RPCL1External      string
-	RPCL2External      string
-	MockServerUrl      string
-	MockServerEndpoint string
-	P2PPort            string
+	RPCL1Internal       string
+	RPCL2Internal       string
+	RPCL2InternalApiKey string
+	RPCL1External       string
+	RPCL2External       string
+	MockServerUrl       string
+	MockServerEndpoint  string
+	P2PPort             string
 }
 
 func New(testConfig *testconfig.TestConfig) *Common {
@@ -70,6 +73,15 @@ func New(testConfig *testconfig.TestConfig) *Common {
 	if *testConfig.Common.Network == "testnet" {
 		chainDetails = chainconfig.SepoliaConfig()
 		chainDetails.L2RPCInternal = *testConfig.Common.L2RPCUrl
+		if testConfig.Common.L2RPCApiKey == nil {
+			chainDetails.L2RPCInternalApiKey = ""
+		} else {
+			chainDetails.L2RPCInternalApiKey = *testConfig.Common.L2RPCApiKey
+		}
+	} else {
+		// set up mocked local feedernet server because starknet-devnet does not provide one
+		localDevnetFeederSrv := starknet.NewTestFeederServer()
+		chainDetails.FeederURL = localDevnetFeederSrv.URL
 	}
 
 	c = &Common{
@@ -79,8 +91,9 @@ func New(testConfig *testconfig.TestConfig) *Common {
 			TestDuration: duration,
 		},
 		RPCDetails: &RPCDetails{
-			P2PPort:       "6690",
-			RPCL2Internal: chainDetails.L2RPCInternal,
+			P2PPort:             "6690",
+			RPCL2Internal:       chainDetails.L2RPCInternal,
+			RPCL2InternalApiKey: chainDetails.L2RPCInternalApiKey,
 		},
 	}
 
@@ -136,12 +149,14 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 
 func (c *Common) DefaultNodeConfig() *cl.Config {
 	starkConfig := config.TOMLConfig{
-		Enabled: ptr.Ptr(true),
-		ChainID: ptr.Ptr(c.ChainDetails.ChainID),
+		Enabled:   ptr.Ptr(true),
+		ChainID:   ptr.Ptr(c.ChainDetails.ChainID),
+		FeederURL: common_cfg.MustParseURL(c.ChainDetails.FeederURL),
 		Nodes: []*config.Node{
 			{
-				Name: ptr.Ptr("primary"),
-				URL:  common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
+				Name:   ptr.Ptr("primary"),
+				URL:    common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
+				APIKey: ptr.Ptr(c.RPCDetails.RPCL2InternalApiKey),
 			},
 		},
 	}

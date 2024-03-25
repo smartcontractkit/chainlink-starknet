@@ -4,9 +4,10 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
 	"os"
 	"strings"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
 
 	"github.com/barkimedes/go-deepcopy"
 	"github.com/google/uuid"
@@ -109,9 +110,11 @@ func (c *TestConfig) AsBase64() (string, error) {
 }
 
 type Common struct {
-	Network            *string `toml:"network"`
-	InsideK8s          *bool   `toml:"inside_k8"`
-	User               *string `toml:"user"`
+	Network   *string `toml:"network"`
+	InsideK8s *bool   `toml:"inside_k8"`
+	User      *string `toml:"user"`
+	// if rpc requires api key to be passed as an HTTP header
+	L2RPCApiKey        *string `toml:"l2_rpc_url_api_key"`
 	L2RPCUrl           *string `toml:"l2_rpc_url"`
 	PrivateKey         *string `toml:"private_key"`
 	Account            *string `toml:"account"`
