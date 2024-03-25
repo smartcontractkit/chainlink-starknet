@@ -9,6 +9,7 @@ type Node struct {
 	Name      string
 	ChainID   string `db:"starknet_chain_id"`
 	URL       string
+	APIKey    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

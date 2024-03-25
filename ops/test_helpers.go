@@ -44,13 +44,14 @@ var TestOCR2Config = OCR2Config{
 	// Transmitters:  txKeys, // user defined
 	OnchainConfig: "",
 	OffchainConfig: &OffchainConfig{
-		DeltaProgressNanoseconds: 8000000000,
-		DeltaResendNanoseconds:   30000000000,
-		DeltaRoundNanoseconds:    3000000000,
-		DeltaGraceNanoseconds:    1000000000,
-		DeltaStageNanoseconds:    20000000000,
+		// todo: increase delta round but decrease delta stage
+		DeltaProgressNanoseconds: 150000000000, // 120s
+		DeltaResendNanoseconds:   150000000000, // 150s
+		DeltaRoundNanoseconds:    90000000000,  // 90s
+		DeltaGraceNanoseconds:    5000000000,   // 5s
+		DeltaStageNanoseconds:    30000000000,  // 20s
 		RMax:                     5,
-		S:                        []int{1, 2},
+		S:                        []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
 		// PeerIds:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
