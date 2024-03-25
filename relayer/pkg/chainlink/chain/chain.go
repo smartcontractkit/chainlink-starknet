@@ -89,8 +89,12 @@ func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logg
 		return ch.getClient()
 	}
 
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return ch.getFeederClient(), nil
+	}
+
 	var err error
-	ch.txm, err = txm.New(lggr, loopKs, cfg, getClient)
+	ch.txm, err = txm.New(lggr, loopKs, cfg, getClient, getFeederClient)
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +122,10 @@ func (c *chain) ChainID() string {
 	return c.id
 }
 
+func (c *chain) getFeederClient() *starknet.FeederClient {
+	return starknet.NewFeederClient(c.cfg.FeederURL.String())
+}
+
 // getClient returns a client, randomly selecting one from available and valid nodes
 func (c *chain) getClient() (*starknet.Client, error) {
 	var node db.Node
@@ -135,7 +143,7 @@ func (c *chain) getClient() (*starknet.Client, error) {
 	for _, i := range index {
 		node = nodes[i]
 		// create client and check
-		client, err = starknet.NewClient(node.ChainID, node.URL, c.lggr, &timeout)
+		client, err = starknet.NewClient(node.ChainID, node.URL, node.APIKey, c.lggr, &timeout)
 		// if error, try another node
 		if err != nil {
 			c.lggr.Warnw("failed to create node", "name", node.Name, "starknet-url", node.URL, "err", err.Error())
