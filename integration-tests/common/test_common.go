@@ -3,21 +3,20 @@ package common
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"net/http"
+	"testing"
+	"time"
 
 	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
-
-	"math/big"
-	"testing"
-	"time"
-
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
@@ -150,7 +149,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
-		stark := test_env_starknet.NewStarknet([]string{env.Network.Name}, *m.Common.TestConfig.Common.DevnetImage)
+		stark := test_env_starknet.NewStarknet([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.DevnetImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
 
