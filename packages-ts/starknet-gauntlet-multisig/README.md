@@ -36,7 +36,12 @@ yarn gauntlet multisig:set_thresold:multisig --network=<NETWORK> --threshold=<AP
 
 ### Upgrade
 
-To upgrade the multisig, you will need to create a proposal calling the `upgrade` function on the multisig contract. Please read the instructions below for how to create a proposal
+Upgrade can only be updated through a transaction executed from the multisig itself.
+
+```bash
+yarn gauntlet multisig:upgrade:multisig --network=<NETWORK> --classHash=<CLASS_HASH> <MULTISIG_CONTRACT_ADDRESS>
+```
+
 
 ## Wrapping Gauntlet commands
 
