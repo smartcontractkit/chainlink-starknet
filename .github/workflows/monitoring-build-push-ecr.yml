@@ -27,7 +27,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: ${{ secrets.MONITORING_ECR_HOSTNAME }}
 
@@ -36,7 +36,7 @@ jobs:
 
       - name: Generate docker metadata
         id: docker_meta
-        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea # v4.1.1
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           flavor: | # prevent auto tagging with latest
             latest=false

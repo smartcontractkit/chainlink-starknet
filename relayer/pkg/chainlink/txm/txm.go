@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"golang.org/x/exp/maps"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
@@ -51,23 +51,24 @@ type starktxm struct {
 	queue   chan Tx
 	ks      KeystoreAdapter
 	cfg     Config
-	nonce   NonceManager
 
-	client  *utils.LazyLoad[*starknet.Client]
-	txStore *ChainTxStore
+	client       *utils.LazyLoad[*starknet.Client]
+	feederClient *utils.LazyLoad[*starknet.FeederClient]
+	accountStore *AccountStore
 }
 
-func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error)) (StarkTXM, error) {
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
+	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
-		lggr:    logger.Named(lggr, "StarknetTxm"),
-		queue:   make(chan Tx, MaxQueueLen),
-		stop:    make(chan struct{}),
-		client:  utils.NewLazyLoad(getClient),
-		ks:      NewKeystoreAdapter(keystore),
-		cfg:     cfg,
-		txStore: NewChainTxStore(),
+		lggr:         logger.Named(lggr, "StarknetTxm"),
+		queue:        make(chan Tx, MaxQueueLen),
+		stop:         make(chan struct{}),
+		client:       utils.NewLazyLoad(getClient),
+		feederClient: utils.NewLazyLoad(getFeederClient),
+		ks:           NewKeystoreAdapter(keystore),
+		cfg:          cfg,
+		accountStore: NewAccountStore(),
 	}
-	txm.nonce = NewNonceManager(txm.lggr)
 
 	return txm, nil
 }
@@ -78,13 +79,10 @@ func (txm *starktxm) Name() string {
 
 func (txm *starktxm) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("starktxm", func() error {
-		if err := txm.nonce.Start(ctx); err != nil {
-			return err
-		}
-
-		txm.done.Add(2) // waitgroup: tx sender + confirmer
+		txm.done.Add(2) // waitgroup: broadcast loop and confirm loop
 		go txm.broadcastLoop()
 		go txm.confirmLoop()
+
 		return nil
 	})
 }
@@ -101,18 +99,11 @@ func (txm *starktxm) broadcastLoop() {
 		case <-txm.stop:
 			txm.lggr.Debugw("broadcastLoop: stopped")
 			return
-		default:
-			// skip processing if queue is empty
-			if len(txm.queue) == 0 {
-				continue
-			}
-
-			// preserve tx queue: don't pull tx from queue until client is known to work
+		case tx := <-txm.queue:
 			if _, err := txm.client.Get(); err != nil {
 				txm.lggr.Errorw("failed to fetch client: skipping processing tx", "error", err)
 				continue
 			}
-			tx := <-txm.queue
 
 			// broadcast tx serially - wait until accepted by mempool before processing next
 			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
@@ -126,6 +117,57 @@ func (txm *starktxm) broadcastLoop() {
 }
 
 const FEE_MARGIN uint32 = 115
+const RPC_NONCE_ERR = "Invalid transaction nonce"
+
+func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, error) {
+	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
+	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
+
+	for i := 1; i <= 5; i++ {
+		txm.lggr.Infow("attempt to estimate fee", "attempt", i)
+
+		estimateNonce, err := client.AccountNonce(ctx, accountAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check account nonce: %+w", err)
+		}
+		tx.Nonce = estimateNonce
+
+		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
+		if err != nil {
+			var dataErr ethrpc.DataError
+			if !errors.As(err, &dataErr) {
+				return nil, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
+			}
+			data := dataErr.ErrorData()
+			dataStr := fmt.Sprintf("%+v", data)
+
+			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
+
+			if strings.Contains(dataStr, RPC_NONCE_ERR) {
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
+		}
+
+		// track the FRI estimate, but keep looping so we print out all estimates
+		var friEstimate *starknetrpc.FeeEstimate
+		for j, f := range feeEstimate {
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
+			if f.FeeUnit == "FRI" {
+				friEstimate = &feeEstimate[j]
+			}
+		}
+		if friEstimate != nil {
+			return friEstimate, nil
+		}
+
+		txm.lggr.Errorw("No FRI estimate was returned", "attempt", i)
+	}
+
+	txm.lggr.Errorw("all attempts to estimate fee failed")
+	return nil, fmt.Errorf("all attempts to estimate fee failed")
+}
 
 func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
@@ -133,6 +175,20 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		txm.client.Reset()
 		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
+
+	txStore := txm.accountStore.GetTxStore(accountAddress)
+	if txStore == nil {
+		initialNonce, accountNonceErr := client.AccountNonce(ctx, accountAddress)
+		if accountNonceErr != nil {
+			return txhash, fmt.Errorf("failed to check account nonce during TxStore creation: %+w", accountNonceErr)
+		}
+		newTxStore, createErr := txm.accountStore.CreateTxStore(accountAddress, initialNonce)
+		if createErr != nil {
+			return txhash, fmt.Errorf("failed to create TxStore: %+w", createErr)
+		}
+		txStore = newTxStore
+	}
+
 	// create new account
 	cairoVersion := 2
 	account, err := starknetaccount.NewAccount(client.Provider, accountAddress, publicKey.String(), txm.ks, cairoVersion)
@@ -140,22 +196,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
-	chainID, err := client.Provider.ChainID(ctx)
-	if err != nil {
-		return txhash, fmt.Errorf("failed to get chainID: %+w", err)
-	}
-
-	nonce, err := txm.nonce.NextSequence(publicKey, chainID)
-	if err != nil {
-		return txhash, fmt.Errorf("failed to get nonce: %+w", err)
-	}
-
 	tx := starknetrpc.InvokeTxnV3{
 		Type:          starknetrpc.TransactionType_Invoke,
 		SenderAddress: account.AccountAddress,
 		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
-		Nonce:         nonce,
+		Nonce:         &felt.Zero, // filled in below
 		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
 			L1Gas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x0",
@@ -179,67 +225,36 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 
-	// TODO: if we estimate with sig then the hash changes and we have to re-sign
-	// if we don't then the signature is invalid??
+	friEstimate, err := txm.estimateFriFee(ctx, client, accountAddress, tx)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
+	}
 
+	// TODO: consider making this configurable
+	// pad estimate to 250% (add extra because estimate did not include validation)
+	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
+	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+
+	// pad by 250%
+	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(250))
+	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
+	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
+
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
+
+	nonce := txStore.GetNextNonce()
+
+	tx.Nonce = nonce
+	// Re-sign transaction now that we've determined MaxFee
 	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
 	hash, err := account.TransactionHashInvoke(tx)
 	if err != nil {
 		return txhash, err
 	}
 	signature, err := account.Sign(ctx, hash)
-	if err != nil {
-		return txhash, err
-	}
-	tx.Signature = signature
-
-	// get fee for tx
-	// optional - pass nonce to fee estimate (if nonce gets ahead, estimate may fail)
-	// can we estimate fee without calling estimate - tbd with 1.0
-	simFlags := []starknetrpc.SimulationFlag{}
-	feeEstimate, err := account.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "latest"})
-	if err != nil {
-		var data any
-		var dataErr ethrpc.DataError
-		if errors.As(err, &dataErr) {
-			data = dataErr.ErrorData()
-		}
-		txm.lggr.Errorw("failed to estimate fee", "error", err, "data", data)
-		return txhash, fmt.Errorf("failed to estimate fee: %T %+w", err, err)
-	}
-
-	txm.lggr.Infow("Account", "account", account.AccountAddress)
-
-	var friEstimate *starknetrpc.FeeEstimate
-	for i, f := range feeEstimate {
-		txm.lggr.Infow("Estimated fee", "index", i, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
-		if f.FeeUnit == "FRI" && friEstimate == nil {
-			friEstimate = &feeEstimate[i]
-		}
-	}
-	if friEstimate == nil {
-		return txhash, fmt.Errorf("failed to get FRI estimate")
-	}
-
-	// TODO: does v3 tx uses fri instead of wei? check feeEstimate[0].FeeUnit?
-	// pad estimate to 110%
-	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
-	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(140))
-	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
-
-	// TODO: add margin
-	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(friEstimate.GasPrice.String())
-
-	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
-
-	// Re-sign transaction now that we've determined MaxFee
-	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	hash, err = account.TransactionHashInvoke(tx)
-	if err != nil {
-		return txhash, err
-	}
-	signature, err = account.Sign(ctx, hash)
 	if err != nil {
 		return txhash, err
 	}
@@ -252,12 +267,13 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
-		var data any
 		var dataErr ethrpc.DataError
+		var dataStr string
 		if errors.As(err, &dataErr) {
-			data = dataErr.ErrorData()
+			data := dataErr.ErrorData()
+			dataStr = fmt.Sprintf("%+v", data)
 		}
-		txm.lggr.Errorw("failed to invoke tx", "error", err, "data", data)
+		txm.lggr.Errorw("failed to invoke tx", "accountAddress", accountAddress, "error", err, "data", dataStr)
 		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
@@ -267,11 +283,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	// update nonce if transaction is successful
 	txhash = res.TransactionHash.String()
-	err = errors.Join(
-		txm.nonce.IncrementNextSequence(publicKey, chainID, nonce),
-		txm.txStore.Save(accountAddress, nonce, txhash),
-	)
-	return txhash, err
+	err = txStore.AddUnconfirmed(nonce, txhash, call, publicKey)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
+	}
+	return txhash, nil
 }
 
 func (txm *starktxm) confirmLoop() {
@@ -283,6 +299,7 @@ func (txm *starktxm) confirmLoop() {
 	tick := time.After(txm.cfg.ConfirmationPoll())
 
 	txm.lggr.Debugw("confirmLoop: started")
+
 	for {
 		var start time.Time
 		select {
@@ -294,29 +311,50 @@ func (txm *starktxm) confirmLoop() {
 				break
 			}
 
-			hashes := txm.txStore.GetAllUnconfirmed()
-			for addr := range hashes {
-				for i := range hashes[addr] {
-					hash := hashes[addr][i]
+			allUnconfirmedTxs := txm.accountStore.GetAllUnconfirmed()
+			for accountAddressStr, unconfirmedTxs := range allUnconfirmedTxs {
+				accountAddress, err := new(felt.Felt).SetString(accountAddressStr)
+				// this should never occur because the acccount address string key was created from the account address felt.
+				if err != nil {
+					txm.lggr.Errorw("could not recreate account address felt", "accountAddress", accountAddressStr)
+					continue
+				}
+				for _, unconfirmedTx := range unconfirmedTxs {
+					hash := unconfirmedTx.Hash
 					f, err := starknetutils.HexToFelt(hash)
 					if err != nil {
 						txm.lggr.Errorw("invalid felt value", "hash", hash)
 						continue
 					}
 					response, err := client.Provider.GetTransactionStatus(ctx, f)
+
+					// tx can be rejected due to a nonce error. but we cannot know from the Starknet RPC directly  so we have to wait for
+					// a broadcasted tx to fail in order to fix the nonce errors
+
 					if err != nil {
-						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "error", err)
+						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "nonce", unconfirmedTx.Nonce, "error", err)
 						continue
 					}
 
-					status := response.FinalityStatus
+					finalityStatus := response.FinalityStatus
+					executionStatus := response.ExecutionStatus
 
-					// any status other than received
-					if status == starknetrpc.TxnStatus_Accepted_On_L1 || status == starknetrpc.TxnStatus_Accepted_On_L2 || status == starknetrpc.TxnStatus_Rejected {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", status), "hash", hash, "status", status)
-						if err := txm.txStore.Confirm(addr, hash); err != nil {
-							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "sender", addr, "error", err)
+					// any finalityStatus other than received
+					if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 || finalityStatus == starknetrpc.TxnStatus_Rejected {
+						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "nonce", unconfirmedTx.Nonce, "finalityStatus", finalityStatus)
+						if err := txm.accountStore.GetTxStore(accountAddress).Confirm(unconfirmedTx.Nonce, hash); err != nil {
+							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
 						}
+					}
+
+					// currently, feeder client is only way to get rejected reason
+					if finalityStatus == starknetrpc.TxnStatus_Rejected {
+						go txm.logFeederError(ctx, hash, f)
+					}
+
+					if executionStatus == starknetrpc.TxnExecutionStatusREVERTED {
+						// TODO: get revert reason?
+						txm.lggr.Errorw("transaction reverted", "hash", hash)
 					}
 				}
 			}
@@ -327,6 +365,22 @@ func (txm *starktxm) confirmLoop() {
 		t := txm.cfg.ConfirmationPoll() - time.Since(start)
 		tick = time.After(utils.WithJitter(t.Abs()))
 	}
+}
+
+func (txm *starktxm) logFeederError(ctx context.Context, hash string, f *felt.Felt) {
+	feederClient, err := txm.feederClient.Get()
+	if err != nil {
+		txm.lggr.Errorw("failed to load feeder client", "error", err)
+		return
+	}
+
+	rejectedTx, err := feederClient.TransactionFailure(ctx, f)
+	if err != nil {
+		txm.lggr.Errorw("failed to fetch reason for transaction failure", "hash", hash, "error", err)
+		return
+	}
+
+	txm.lggr.Errorw("feeder rejected reason", "hash", hash, "errorMessage", rejectedTx.ErrorMessage)
 }
 
 func (txm *starktxm) Close() error {
@@ -358,22 +412,6 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}
 
-	client, err := txm.client.Get()
-	if err != nil {
-		txm.client.Reset()
-		return fmt.Errorf("broadcast: failed to fetch client: %+w", err)
-	}
-
-	chainID, err := client.Provider.ChainID(context.TODO())
-	if err != nil {
-		return fmt.Errorf("failed to get chainID: %+w", err)
-	}
-
-	// register account for nonce manager
-	if err := txm.nonce.Register(context.TODO(), accountAddress, publicKey, chainID, client); err != nil {
-		return fmt.Errorf("failed to register nonce: %+w", err)
-	}
-
 	select {
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
@@ -384,9 +422,5 @@ func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrp
 }
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
-	list := maps.Values(txm.txStore.GetAllInflightCount())
-	for _, count := range list {
-		unconfirmed += count
-	}
-	return len(txm.queue), unconfirmed
+	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
 }

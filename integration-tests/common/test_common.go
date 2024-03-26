@@ -3,21 +3,23 @@ package common
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
-	"net/http"
+
+	"math/big"
+	"testing"
+	"time"
 
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
-	"math/big"
-	"testing"
-	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
@@ -200,7 +202,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
 	lggr := logger.Nop()
-	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, lggr, &rpcRequestTimeout)
+	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, m.Common.RPCDetails.RPCL2InternalApiKey, lggr, &rpcRequestTimeout)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating starknet client should not fail")
 	m.Clients.OCR2Client, m.TestConfig.err = ocr2.NewClient(m.Clients.StarknetClient, lggr)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating ocr2 client should not fail")

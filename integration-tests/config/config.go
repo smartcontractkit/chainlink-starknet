@@ -5,11 +5,13 @@ var (
 )
 
 type Config struct {
-	ChainName         string
-	ChainID           string
-	StarkTokenAddress string
-	L2RPCInternal     string
-	TokenName         string
+	ChainName           string
+	ChainID             string
+	StarkTokenAddress   string
+	L2RPCInternal       string
+	L2RPCInternalApiKey string
+	TokenName           string
+	FeederURL           string
 }
 
 func SepoliaConfig() *Config {
@@ -19,6 +21,7 @@ func SepoliaConfig() *Config {
 		StarkTokenAddress: starkTokenAddress,
 		// Will be overridden if set in toml
 		L2RPCInternal: "https://starknet-sepolia.public.blastapi.io/rpc/v0_6",
+		FeederURL:     "https://alpha-sepolia.starknet.io/feeder_gateway",
 	}
 }
 

@@ -75,6 +75,8 @@ func (c *Chain) SetDefaults() {
 type Node struct {
 	Name *string
 	URL  *config.URL
+	// optional, only if rpc url needs api key passed in header
+	APIKey *string
 }
 
 type TOMLConfigs []*TOMLConfig
@@ -134,7 +136,8 @@ func (cs *TOMLConfigs) SetFrom(fs *TOMLConfigs) (err error) {
 }
 
 type TOMLConfig struct {
-	ChainID *string
+	ChainID   *string
+	FeederURL *config.URL
 	// Do not access directly. Use [IsEnabled]
 	Enabled *bool
 	Chain
@@ -222,10 +225,17 @@ func setFromNode(n, f *Node) {
 }
 
 func legacyNode(n *Node, id string) db.Node {
+	var apiKey string
+	if n.APIKey == nil {
+		apiKey = ""
+	} else {
+		apiKey = *n.APIKey
+	}
 	return db.Node{
 		Name:    *n.Name,
 		ChainID: id,
 		URL:     (*url.URL)(n.URL).String(),
+		APIKey:  apiKey,
 	}
 }
 
