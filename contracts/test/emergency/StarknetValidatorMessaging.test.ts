@@ -11,7 +11,7 @@ import * as account from '../account'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
-describe('StarknetMessaging', () => {
+describe('StarknetValidatorMessaging', () => {
   const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL })
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
@@ -128,7 +128,7 @@ describe('StarknetMessaging', () => {
 
       // Simulate L1 transmit + validate
       const newGasEstimate = 1
-      const receipts = await waitForTransactions([
+      await waitForTransactions([
         // Add access
         () => starknetValidator.addAccess(eoaValidator.address),
 
@@ -153,21 +153,6 @@ describe('StarknetMessaging', () => {
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
-
-      // TODO: remove once flaky test is fixed
-      // Logging (to help debug flaky test)
-      console.log(
-        JSON.stringify(
-          {
-            latestRoundData: result,
-            flushResponse: resp,
-            txReceipts: receipts,
-          },
-          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-          2,
-        ),
-      )
-
       expect(result['answer']).to.equal('1')
     })
 
@@ -186,7 +171,7 @@ describe('StarknetMessaging', () => {
 
       // Simulate L1 transmit + validate
       const newGasEstimate = 1
-      const receipts = await waitForTransactions([
+      await waitForTransactions([
         // Add access
         () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
 
@@ -211,21 +196,6 @@ describe('StarknetMessaging', () => {
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
-
-      // TODO: remove once flaky test is fixed
-      // Logging (to help debug flaky test)
-      console.log(
-        JSON.stringify(
-          {
-            latestRoundData: result,
-            flushResponse: resp,
-            txReceipts: receipts,
-          },
-          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-          2,
-        ),
-      )
-
       expect(result['answer']).to.equal('0') // status unchanged - incorrect value treated as false
     })
 
@@ -244,7 +214,7 @@ describe('StarknetMessaging', () => {
 
       // Simulate L1 transmit + validate
       const newGasEstimate = 1
-      const receipts = await waitForTransactions([
+      await waitForTransactions([
         // Add access
         () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
 
@@ -272,21 +242,6 @@ describe('StarknetMessaging', () => {
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
-
-      // TODO: remove once flaky test is fixed
-      // Logging (to help debug flaky test)
-      console.log(
-        JSON.stringify(
-          {
-            latestRoundData: result,
-            flushResponse: resp,
-            txReceipts: receipts,
-          },
-          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-          2,
-        ),
-      )
-
       expect(result['answer']).to.equal('0') // final status 0
     })
   })
