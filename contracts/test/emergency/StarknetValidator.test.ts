@@ -1,10 +1,10 @@
 import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/cairo-lang/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
+import { fetchStarknetAccount, getStarknetContractArtifacts, waitForTransactions } from '../utils'
 import { Contract as StarknetContract, RpcProvider, CallData, Account, hash } from 'starknet'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { BigNumber, Contract as EthersContract, ContractFactory } from 'ethers'
-import { fetchStarknetAccount, getStarknetContractArtifacts } from '../utils'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import * as l1l2messaging from '../l1-l2-messaging'
 import { STARKNET_DEVNET_URL } from '../constants'
@@ -478,6 +478,180 @@ describe('StarknetValidator', () => {
         address: mockStarknetMessaging.address,
       })
       expect(mockStarknetMessaging.address).to.hexEqual(messaging_contract_address)
+    })
+
+    it('should send a message to the L2 contract', async () => {
+      // Load the mock messaging contract
+      await l1l2messaging.loadL1MessagingContract({ address: mockStarknetMessaging.address })
+
+      // Return gas price of 1
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        1 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+
+      // Simulate L1 transmit + validate
+      const newGasEstimate = 1
+      const receipts = await waitForTransactions([
+        // Add access
+        () => starknetValidator.addAccess(eoaValidator.address),
+
+        // By default the gas config is 0, we need to change it or we will submit a 0 fee
+        () =>
+          starknetValidator
+            .connect(deployer)
+            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+
+        // gasPrice (1) * newGasEstimate (1)
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+      ])
+
+      // Simulate the L1 - L2 comms
+      const resp = await l1l2messaging.flush()
+      const msgFromL1 = resp.messages_to_l2
+      expect(msgFromL1).to.have.a.lengthOf(1)
+      expect(resp.messages_to_l1).to.be.empty
+
+      expect(msgFromL1.at(0)?.l1_contract_address).to.hexEqual(starknetValidator.address)
+      expect(msgFromL1.at(0)?.l2_contract_address).to.hexEqual(l2Contract.address)
+
+      // Assert L2 effects
+      const result = await l2Contract.latest_round_data()
+
+      // Logging (to help debug potential flaky test)
+      console.log(
+        JSON.stringify(
+          {
+            latestRoundData: result,
+            flushResponse: resp,
+            txReceipts: receipts,
+          },
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2,
+        ),
+      )
+
+      expect(result['answer']).to.equal('1')
+    })
+
+    it('should always send a **boolean** message to L2 contract', async () => {
+      // Load the mock messaging contract
+      await l1l2messaging.loadL1MessagingContract({ address: mockStarknetMessaging.address })
+
+      // Return gas price of 1
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        1 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+
+      // Simulate L1 transmit + validate
+      const newGasEstimate = 1
+      const receipts = await waitForTransactions([
+        // Add access
+        () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
+
+        // By default the gas config is 0, we need to change it or we will submit a 0 fee
+        () =>
+          starknetValidator
+            .connect(deployer)
+            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+
+        // Incorrect value
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127),
+      ])
+
+      // Simulate the L1 - L2 comms
+      const resp = await l1l2messaging.flush()
+      const msgFromL1 = resp.messages_to_l2
+      expect(msgFromL1).to.have.a.lengthOf(1)
+      expect(resp.messages_to_l1).to.be.empty
+
+      expect(msgFromL1[0].l1_contract_address).to.hexEqual(starknetValidator.address)
+      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.address)
+
+      // Assert L2 effects
+      const result = await l2Contract.latest_round_data()
+
+      // Logging (to help debug potential flaky test)
+      console.log(
+        JSON.stringify(
+          {
+            latestRoundData: result,
+            flushResponse: resp,
+            txReceipts: receipts,
+          },
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2,
+        ),
+      )
+
+      expect(result['answer']).to.equal('0') // status unchanged - incorrect value treated as false
+    })
+
+    it('should send multiple messages', async () => {
+      // Load the mock messaging contract
+      await l1l2messaging.loadL1MessagingContract({ address: mockStarknetMessaging.address })
+
+      // Return gas price of 1
+      await mockGasPriceFeed.mock.latestRoundData.returns(
+        '0' /** roundId */,
+        1 /** answer */,
+        '0' /** startedAt */,
+        '0' /** updatedAt */,
+        '0' /** answeredInRound */,
+      )
+
+      // Simulate L1 transmit + validate
+      const newGasEstimate = 1
+      const receipts = await waitForTransactions([
+        // Add access
+        () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
+
+        // By default the gas config is 0, we need to change it or we will submit a 0 fee
+        () =>
+          starknetValidator
+            .connect(deployer)
+            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+
+        // Validate
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127), // incorrect value
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 0), // final status
+      ])
+
+      // Simulate the L1 - L2 comms
+      const resp = await l1l2messaging.flush()
+      const msgFromL1 = resp.messages_to_l2
+      expect(msgFromL1).to.have.a.lengthOf(4)
+      expect(resp.messages_to_l1).to.be.empty
+
+      expect(msgFromL1[0].l1_contract_address).to.hexEqual(starknetValidator.address)
+      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.address)
+
+      // Assert L2 effects
+      const result = await l2Contract.latest_round_data()
+
+      // Logging (to help debug potential flaky test)
+      console.log(
+        JSON.stringify(
+          {
+            latestRoundData: result,
+            flushResponse: resp,
+            txReceipts: receipts,
+          },
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2,
+        ),
+      )
+
+      expect(result['answer']).to.equal('0') // final status 0
     })
   })
 
