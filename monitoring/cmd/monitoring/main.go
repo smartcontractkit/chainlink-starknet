@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -54,7 +53,7 @@ func main() {
 	envelopeSourceFactory := monitoring.NewEnvelopeSourceFactory(ocr2Client)
 	txResultsFactory := monitoring.NewTxResultsSourceFactory(ocr2Client)
 
-	monitor, err := relayMonitoring.NewMonitor(
+	monitor, err := monitoring.NewMonitorPrometheusOnly(
 		ctx,
 		logger.With(log, "component", "monitor"),
 		starknetConfig,

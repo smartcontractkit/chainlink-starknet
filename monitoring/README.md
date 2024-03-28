@@ -8,12 +8,7 @@
 
 ## Local development
 
-- Start the monitor's third party dependencies using [docker-compose](https://docs.docker.com/compose/).
-  Use the docker-compose.yml file in `./ops`:
-
-```sh
-docker-compose up
-```
+Note: Previously, this monitor also wrote to Kafka, but the dependency on Kafka has been removed in order to simplify deployment. The kafka topics were unused anyway.
 
 - Start an http server that mimics weiwatchers locally. It needs to export a json configuration file for feeds:
 
@@ -60,17 +55,6 @@ STARKNET_CHAIN_ID="1" \
 STARKNET_READ_TIMEOUT="5s" \
 STARKNET_POLL_INTERVAL="10s" #test \
 STARKNET_LINK_TOKEN_ADDRESS="<LINK_TOKEN_ADDRESS>" \
-KAFKA_BROKERS="localhost:29092" \
-KAFKA_CLIENT_ID="starknet" \
-KAFKA_SECURITY_PROTOCOL="PLAINTEXT" \
-KAFKA_SASL_MECHANISM="PLAIN" \
-KAFKA_SASL_USERNAME="" \
-KAFKA_SASL_PASSWORD="" \
-KAFKA_CONFIG_SET_SIMPLIFIED_TOPIC="config_set_simplified" \
-KAFKA_TRANSMISSION_TOPIC="transmission_topic" \
-SCHEMA_REGISTRY_URL="http://localhost:8989" \
-SCHEMA_REGISTRY_USERNAME="" \
-SCHEMA_REGISTRY_PASSWORD="" \
 HTTP_ADDRESS="localhost:3000" \
 FEEDS_URL="http://localhost:4000/feeds.json" \
 NODES_URL="http://localhost:4000/nodes.json" \
@@ -81,11 +65,4 @@ go run ./cmd/monitoring/main.go
 
 ```bash
 curl http://localhost:3000/metrics
-```
-
-- To check the output for Kafka, you need to install [kcat](https://github.com/edenhill/kcat). After you install, run:
-
-```bash
-kcat -b localhost:29092 -t config_set_simplified
-kcat -b localhost:29092 -t transmission_topic
 ```
