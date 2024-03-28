@@ -2,6 +2,7 @@ import { STARKNET_DEVNET_URL } from './constants'
 import { execSync } from 'node:child_process'
 import { Account } from 'starknet'
 import * as path from 'node:path'
+import { ethers } from 'hardhat'
 import { json } from 'starknet'
 import * as fs from 'node:fs'
 
@@ -34,6 +35,23 @@ export const getStarknetContractArtifacts = (name: string) => {
     contract: getStarknetContractArtifactPath(rootDir, name, false),
     casm: getStarknetContractArtifactPath(rootDir, name, true),
   }
+}
+
+export const waitForTransaction = async (
+  tx: () => ReturnType<typeof ethers.provider.sendTransaction>,
+) => {
+  const result = await tx()
+  return await result.wait()
+}
+
+export const waitForTransactions = async (
+  txs: (() => ReturnType<typeof ethers.provider.sendTransaction>)[],
+) => {
+  const results = new Array<Awaited<ReturnType<typeof waitForTransaction>>>()
+  for (const tx of txs) {
+    results.push(await waitForTransaction(tx))
+  }
+  return results
 }
 
 const getRootDir = () => {

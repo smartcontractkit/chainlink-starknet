@@ -1,10 +1,10 @@
 import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-libs/cairo-lang/src/starkware/starknet/solidity/IStarknetMessaging.sol/IStarknetMessaging.json'
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
+import { fetchStarknetAccount, getStarknetContractArtifacts, waitForTransactions } from '../utils'
 import { Contract as StarknetContract, RpcProvider, CallData, Account, hash } from 'starknet'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { BigNumber, Contract as EthersContract, ContractFactory } from 'ethers'
-import { fetchStarknetAccount, getStarknetContractArtifacts } from '../utils'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import * as l1l2messaging from '../l1-l2-messaging'
 import { STARKNET_DEVNET_URL } from '../constants'
@@ -494,13 +494,20 @@ describe('StarknetValidator', () => {
       )
 
       // Simulate L1 transmit + validate
-      await starknetValidator.addAccess(eoaValidator.address)
-      // by default the gas config is 0, we need to change it or we will submit a 0 fee
       const newGasEstimate = 1
-      await starknetValidator
-        .connect(deployer)
-        .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
-      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1) // gasPrice (1) * newGasEstimate (1)
+      const receipts = await waitForTransactions([
+        // Add access
+        () => starknetValidator.addAccess(eoaValidator.address),
+
+        // By default the gas config is 0, we need to change it or we will submit a 0 fee
+        () =>
+          starknetValidator
+            .connect(deployer)
+            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+
+        // gasPrice (1) * newGasEstimate (1)
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+      ])
 
       // Simulate the L1 - L2 comms
       const resp = await l1l2messaging.flush()
@@ -513,6 +520,20 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
+
+      // Logging (to help debug potential flaky test)
+      console.log(
+        JSON.stringify(
+          {
+            latestRoundData: result,
+            flushResponse: resp,
+            txReceipts: receipts,
+          },
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2,
+        ),
+      )
+
       expect(result['answer']).to.equal('1')
     })
 
@@ -530,13 +551,20 @@ describe('StarknetValidator', () => {
       )
 
       // Simulate L1 transmit + validate
-      await starknetValidator.addAccess(eoaValidator.address)
-      // by default the gas config is 0, we need to change it or we will submit a 0 fee
       const newGasEstimate = 1
-      await starknetValidator
-        .connect(deployer)
-        .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
-      await starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127) // incorrect value
+      const receipts = await waitForTransactions([
+        // Add access
+        () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
+
+        // By default the gas config is 0, we need to change it or we will submit a 0 fee
+        () =>
+          starknetValidator
+            .connect(deployer)
+            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+
+        // Incorrect value
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127),
+      ])
 
       // Simulate the L1 - L2 comms
       const resp = await l1l2messaging.flush()
@@ -549,6 +577,20 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
+
+      // Logging (to help debug potential flaky test)
+      console.log(
+        JSON.stringify(
+          {
+            latestRoundData: result,
+            flushResponse: resp,
+            txReceipts: receipts,
+          },
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2,
+        ),
+      )
+
       expect(result['answer']).to.equal('0') // status unchanged - incorrect value treated as false
     })
 
@@ -566,28 +608,23 @@ describe('StarknetValidator', () => {
       )
 
       // Simulate L1 transmit + validate
-      let tx: Awaited<ReturnType<typeof ethers.provider.sendTransaction>>
-      await starknetValidator.addAccess(eoaValidator.address)
-      const c = starknetValidator.connect(eoaValidator)
-      // by default the gas config is 0, we need to change it or we will submit a 0 fee
       const newGasEstimate = 1
-      tx = await starknetValidator
-        .connect(deployer)
-        .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100)
-      await tx.wait()
+      const receipts = await waitForTransactions([
+        // Add access
+        () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
 
-      // To ensure that these transactions are sent in the order we expect, we'll use `.wait()`:
-      //
-      //  https://docs.ethers.org/v5/api/contract/contract/#contract-functionsSend
-      //
-      tx = await c.validate(0, 0, 1, 1)
-      await tx.wait()
-      tx = await c.validate(0, 0, 1, 1)
-      await tx.wait()
-      tx = await c.validate(0, 0, 1, 127) // incorrect value
-      await tx.wait()
-      tx = await c.validate(0, 0, 1, 0) // final status
-      await tx.wait()
+        // By default the gas config is 0, we need to change it or we will submit a 0 fee
+        () =>
+          starknetValidator
+            .connect(deployer)
+            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+
+        // Validate
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127), // incorrect value
+        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 0), // final status
+      ])
 
       // Simulate the L1 - L2 comms
       const resp = await l1l2messaging.flush()
@@ -600,6 +637,20 @@ describe('StarknetValidator', () => {
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
+
+      // Logging (to help debug potential flaky test)
+      console.log(
+        JSON.stringify(
+          {
+            latestRoundData: result,
+            flushResponse: resp,
+            txReceipts: receipts,
+          },
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2,
+        ),
+      )
+
       expect(result['answer']).to.equal('0') // final status 0
     })
   })
