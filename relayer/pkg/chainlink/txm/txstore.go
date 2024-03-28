@@ -32,18 +32,28 @@ func NewTxStore(initialNonce *felt.Felt) *TxStore {
 	}
 }
 
-func (s *TxStore) SetNextNonce(newNextNonce *felt.Felt) {
+func (s *TxStore) SetNextNonce(newNextNonce *felt.Felt) []*UnconfirmedTx {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	staleTxs := []*UnconfirmedTx{}
 	s.nextNonce = new(felt.Felt).Set(newNextNonce)
 
 	// Remove any stale transactions with nonces greater than the new next nonce.
 	for nonceStr, tx := range s.unconfirmedNonces {
 		if tx.Nonce.Cmp(s.nextNonce) >= 0 {
+			staleTxs = append(staleTxs, tx)
 			delete(s.unconfirmedNonces, nonceStr)
 		}
 	}
+
+	sort.Slice(staleTxs, func(i, j int) bool {
+		a := staleTxs[i]
+		b := staleTxs[j]
+		return a.Nonce.Cmp(b.Nonce) < 0
+	})
+
+	return staleTxs
 }
 
 func (s *TxStore) GetNextNonce() *felt.Felt {
