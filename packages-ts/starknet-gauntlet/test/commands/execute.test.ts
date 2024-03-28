@@ -1,0 +1,91 @@
+import { loadExampleContract, registerExecuteCommand, TIMEOUT } from '../utils'
+import { ExecuteCommandConfig, makeExecuteCommand } from '../../src/index'
+
+describe('Execute Command', () => {
+  type UserInput = {
+    a: string
+    b: number
+  }
+
+  type ContractInput = [string, number]
+
+  const makeUserInput = async (flags): Promise<UserInput> => {
+    return {
+      a: flags.a,
+      b: Number(flags.b),
+    }
+  }
+
+  const makeContractInput = async (userInput: UserInput): Promise<ContractInput> => {
+    return [userInput.a, userInput.b]
+  }
+
+  const simpleCommandConfig: ExecuteCommandConfig<UserInput, ContractInput> = {
+    contractId: '',
+    category: 'example',
+    action: 'action',
+    ux: {
+      description: '',
+      examples: [],
+    },
+    makeUserInput,
+    makeContractInput,
+    validations: [],
+    loadContract: loadExampleContract,
+  }
+
+  const commandConfigWithSuffixes = {
+    ...simpleCommandConfig,
+    ...{ suffixes: ['send', 'bob'] },
+  }
+
+  const command = registerExecuteCommand(makeExecuteCommand(simpleCommandConfig))
+  const commandWithSuffixes = registerExecuteCommand(makeExecuteCommand(commandConfigWithSuffixes))
+
+  it('Command ID generation', async () => {
+    expect(command.id).toEqual('example:action')
+    expect(commandWithSuffixes.id).toEqual('example:action:send:bob')
+  })
+
+  it('Command input creation', async () => {
+    const commandInstance = await command.create({ a: 'a', b: '20' }, [])
+    expect(commandInstance.input.user).toEqual({ a: 'a', b: 20 })
+    expect(commandInstance.input.contract).toEqual(['a', 20])
+  })
+})
+
+describe('Execute with network', () => {
+  it(
+    'Command deploy execution',
+    async () => {
+      const makeUserInput = async () => {
+        return
+      }
+
+      const makeContractInput = async () => {
+        return {}
+      }
+
+      const deployCommandConfig: ExecuteCommandConfig<unknown, unknown> = {
+        contractId: '',
+        category: 'example',
+        action: 'deploy',
+        ux: {
+          description: '',
+          examples: [],
+        },
+        makeUserInput,
+        makeContractInput,
+        validations: [],
+        loadContract: loadExampleContract,
+      }
+
+      const command = registerExecuteCommand(makeExecuteCommand(deployCommandConfig))
+
+      const commandInstance = await command.create({}, [])
+      const report = await commandInstance.execute()
+      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+    },
+    TIMEOUT,
+  )
+})

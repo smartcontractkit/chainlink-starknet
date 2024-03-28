@@ -1,10 +1,18 @@
 migrations
-programs
 tests
 ops
 packages-rs
-relay
 target
 *.json
 dist
 *.yml
+typechain-types
+*.html
+*.md
+
+# Vendor files (contracts)
+vendor
+
+# Python virtual env
+.venv
+.direnv

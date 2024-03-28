@@ -1,0 +1,10 @@
+type            = "bootstrap"
+schemaVersion   = 1
+relay           = "starknet"
+name            = "<insert job name here>"
+contractID      = "<insert starknet ocr2 contract ID/address>"
+p2pPeerID       = "<insert p2p id>" # optional, overrides P2P_PEER_ID
+
+[relayConfig]
+chainID  = "goerli-alpha-4"
+nodeName = "goerli-alpha-4-node-1" # optional, defaults to random node with 'chainID'

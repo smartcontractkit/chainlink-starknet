@@ -1,0 +1,38 @@
+name: Integration Tests Publish
+# Publish the compiled integration tests
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  ECR_TAG: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:develop
+
+jobs:
+  publish-integration-test-image:
+    environment: integration
+    permissions:
+      id-token: write
+      contents: read
+    name: Publish Integration Test Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect Metrics
+        id: collect-gha-metrics
+        uses: smartcontractkit/push-gha-metrics-action@e34ae8a4df60f4d9fdef1e32a69747bab130840e # v2.2.0
+        with:
+          org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+          basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
+          hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
+          this-job-name: Publish Integration Test Image
+        continue-on-error: true
+      - name: Checkout the repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Build Image
+        uses: ./.github/actions/build-test-image
+        with:
+          other_tags: ${{ env.ECR_TAG }}
+          QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+          QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
+          QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}

@@ -1,1 +1,0 @@
-marshmallow-dataclass==8.5.3

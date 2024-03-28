@@ -1,0 +1,34 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+
+jobs:
+  lint_format_check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@29bd9290ef037a3ecbdafe83cbd2185e9dd0fa0a # v20
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
+
+      - name: Install
+        run: nix develop -c yarn install --frozen-lockfile
+
+      # NOTE: Runs outside the nix environment because starknet-devnet still pulls in 0.x cairo which ends up taking precedence.
+      - name: Check Cairo
+        run: make format-cairo-check
+
+      - name: Check Typescript
+        run: nix develop -c make format-ts-check

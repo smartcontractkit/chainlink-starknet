@@ -39,7 +39,7 @@ networks:
     gas_estimation_buffer: 10000
     block_gas_limit: 40000000
   starknet-dev:
-    name: 'StarkNet dev simulator'
+    name: 'Starknet dev simulator'
     chain_id: 2020
     type: l2_starknet_dev
     l1_bridge_addr: '0x83D76591560d9CD02CE16c060c92118d19F996b3'

@@ -1,86 +1,87 @@
 package smoke_test
 
-//revive:disable:dot-imports
 import (
-	"math/big"
+	"flag"
+	"fmt"
+	"maps"
+	"os"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	it "github.com/smartcontractkit/chainlink-starknet/integration-tests"
-	"github.com/smartcontractkit/chainlink-starknet/ops"
-	"github.com/smartcontractkit/chainlink-testing-framework/actions"
-	"github.com/smartcontractkit/chainlink-testing-framework/blockchain"
-	"github.com/smartcontractkit/chainlink-testing-framework/client"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils"
-	"github.com/smartcontractkit/helmenv/environment"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
+	tc "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
+	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
+	"github.com/smartcontractkit/chainlink-testing-framework/logging"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 )
 
-var _ = Describe("StarkNET OCR suite @ocr", func() {
-	var (
-		err           error
-		nets          *blockchain.Networks
-		cls           []client.Chainlink
-		networkL1     blockchain.EVMClient
-		networkL2     blockchain.EVMClient
-		ocrDeployer   *it.OCRDeployer
-		starkDeployer *it.StarkNetContractDeployer
-		e             *environment.Environment
-	)
+var (
+	keepAlive bool
+	decimals  = 9
+)
 
-	BeforeEach(func() {
-		By("Deploying the environment", func() {
-			e, err = environment.DeployOrLoadEnvironment(ops.DefaultStarkNETEnv())
-			Expect(err).ShouldNot(HaveOccurred())
-			err = e.ConnectAll()
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+func init() {
+	flag.BoolVar(&keepAlive, "keep-alive", false, "enable to keep the cluster alive")
+}
 
-		By("Connecting to launched resources", func() {
-			networkRegistry := blockchain.NewDefaultNetworkRegistry()
-			networkRegistry.RegisterNetwork(
-				"l2_starknet_dev",
-				it.GetStarkNetClient,
-				it.GetStarkNetURLs,
-			)
-			nets, err = networkRegistry.GetNetworks(e)
-			Expect(err).ShouldNot(HaveOccurred())
-			networkL1, err = nets.Get(0)
-			Expect(err).ShouldNot(HaveOccurred())
-			networkL2, err = nets.Get(1)
-			Expect(err).ShouldNot(HaveOccurred())
-			ocrDeployer, err = it.NewOCRDeployer(networkL1)
-			Expect(err).ShouldNot(HaveOccurred())
-			starkDeployer, err = it.NewStarkNetContractDeployer(networkL2)
-			Expect(err).ShouldNot(HaveOccurred())
-			nets.Default.ParallelTransactions(true)
-		})
-		By("Funding Chainlink nodes", func() {
-			cls, err = client.ConnectChainlinkNodes(e)
-			Expect(err).ShouldNot(HaveOccurred())
-			err = actions.FundChainlinkNodes(cls, networkL1, big.NewFloat(3))
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+func TestOCRBasic(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		env  map[string]string
+	}{
+		{name: "embedded"},
+		{name: "plugins", env: map[string]string{
+			"CL_MEDIAN_CMD": "chainlink-feeds",
+			"CL_SOLANA_CMD": "chainlink-solana",
+		}},
+	} {
+		config, err := tc.GetConfig("Smoke", tc.OCR2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = os.Setenv("CHAINLINK_ENV_USER", *config.Common.User)
+		require.NoError(t, err, "Could not set CHAINLINK_ENV_USER")
+		err = os.Setenv("INTERNAL_DOCKER_REPO", *config.Common.InternalDockerRepo)
+		require.NoError(t, err, "Could not set INTERNAL_DOCKER_REPO")
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			logging.Init()
+			//
+			state, err := common.NewOCRv2State(t, "smoke-ocr2", &config)
+			require.NoError(t, err, "Could not setup the ocrv2 state")
 
-		By("Deploying L1 contracts", func() {
-			err = ocrDeployer.Deploy()
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+			// K8s specific config and cleanup
+			if *config.Common.InsideK8s {
+				t.Cleanup(func() {
+					if err = actions.TeardownSuite(t, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
+						state.TestConfig.L.Error().Err(err).Msg("Error tearing down environment")
+					}
+				})
+			}
+			if len(test.env) > 0 {
+				state.Common.TestEnvDetails.NodeOpts = append(state.Common.TestEnvDetails.NodeOpts, func(n *test_env.ClNode) {
+					if n.ContainerEnvs == nil {
+						n.ContainerEnvs = map[string]string{}
+					}
+					maps.Copy(n.ContainerEnvs, test.env)
+				})
+			}
+			state.DeployCluster()
+			state.Clients.GauntletClient, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
+			require.NoError(t, err, "Setting up gauntlet should not fail")
+			err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)
+			require.NoError(t, err, "Setting up gauntlet network should not fail")
+			err = state.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
+			require.NoError(t, err, "Deploying contracts should not fail")
 
-		By("Deploying L2 contracts", func() {
-			err = starkDeployer.Deploy()
-			Expect(err).ShouldNot(HaveOccurred())
-		})
-	})
+			state.SetUpNodes()
 
-	Describe("with OCRv2 job", func() {
-		It("works", func() {
+			err = state.ValidateRounds(*config.OCR2.Smoke.NumberOfRounds, false)
+			require.NoError(t, err, "Validating round should not fail")
 		})
-	})
-
-	AfterEach(func() {
-		By("Tearing down the environment", func() {
-			err = actions.TeardownSuite(e, nets, utils.ProjectRoot, nil, nil)
-			Expect(err).ShouldNot(HaveOccurred())
-		})
-	})
-})
+	}
+}

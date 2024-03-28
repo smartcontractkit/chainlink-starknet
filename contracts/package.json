@@ -1,5 +1,29 @@
 {
+  "name": "@chainlink/starknet-contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile:solidity": "hardhat compile",
+    "test": "hardhat test"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@ethereum-waffle/mock-contract": "^4.0.4",
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@types/chai": "^4.3.3",
+    "@types/elliptic": "^6.4.14",
+    "@types/mocha": "^9.1.1",
+    "chai": "^4.3.6",
+    "ethers": "^5.6.8",
+    "hardhat": "^2.16.1",
+    "solidity-coverage": "^0.8.2"
+  },
   "dependencies": {
-    "cairo-ls": "^0.0.4"
+    "@chainlink/contracts": "^0.4.2",
+    "@openzeppelin/contracts": "^4.7.3",
+    "axios": "^0.24.0"
   }
 }
