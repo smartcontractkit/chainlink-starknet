@@ -8,7 +8,7 @@
 
 ## Local development
 
-Note: Previously, the monitor also wrote to kafka topics, but the dependency on Kafka has been removed in order to simplify deployment. The kafka topics were unused anyway.
+Note: Previously, this monitor also wrote to Kafka, but the dependency on Kafka has been removed in order to simplify deployment. The kafka topics were unused anyway.
 
 - Start an http server that mimics weiwatchers locally. It needs to export a json configuration file for feeds:
 
@@ -65,11 +65,4 @@ go run ./cmd/monitoring/main.go
 
 ```bash
 curl http://localhost:3000/metrics
-```
-
-- To check the output for Kafka, you need to install [kcat](https://github.com/edenhill/kcat). After you install, run:
-
-```bash
-kcat -b localhost:29092 -t config_set_simplified
-kcat -b localhost:29092 -t transmission_topic
 ```
