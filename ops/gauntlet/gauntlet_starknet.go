@@ -188,6 +188,7 @@ func (sg *StarknetGauntlet) SetOCRBilling(observationPaymentGjuels int64, transm
 		return "", err
 	}
 	return sg.gr.Responses[0].Contract, nil
+
 }
 
 func (sg *StarknetGauntlet) SetConfigDetails(cfg string, ocrAddress string) (string, error) {
