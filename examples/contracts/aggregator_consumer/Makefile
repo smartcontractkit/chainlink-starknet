@@ -1,9 +1,15 @@
+# The starknet-devnet-rs container version - this version 
+# supports rpc v0.7 which is needed for snfoundry v0.20.1
+CONTAINER_VERSION="7743a089a33beb75d7012e4aa24745bee8ae0d71"
+
+# The name of the account that will be used for snfoundry
+# scripts + transactions
 ACCOUNT_NAME="test-acct"
 
 devnet:
 	@printf "\nStarting a local starknet devnet docker container:\n\n" \
 		&& bash ../../../ops/scripts/devnet-hardhat-down.sh \
-		&& bash ../../../ops/scripts/devnet-hardhat.sh \
+		&& CONTAINER_VERSION="$(CONTAINER_VERSION)" bash ../../../ops/scripts/devnet-hardhat.sh \
 		&& printf "\n\nIf you intend to use a local starknet devnet container to run these examples,\nadd \"url = http://localhost:5050/rpc\" in the snfoundry.toml file\n\n"
 
 create-account:
