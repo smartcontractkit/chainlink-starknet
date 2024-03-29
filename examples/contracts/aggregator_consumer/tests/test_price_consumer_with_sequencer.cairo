@@ -17,14 +17,14 @@ use starknet::ContractAddress;
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
-    return declare('MockAggregator').deploy(@calldata).unwrap();
+    return declare("MockAggregator").deploy(@calldata).unwrap();
 }
 
 fn deploy_uptime_feed(initial_status: u128, owner_address: ContractAddress) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(initial_status.into());
     calldata.append(owner_address.into());
-    return declare('SequencerUptimeFeed').deploy(@calldata).unwrap();
+    return declare("SequencerUptimeFeed").deploy(@calldata).unwrap();
 }
 
 fn deploy_price_consumer(
@@ -33,7 +33,7 @@ fn deploy_price_consumer(
     let mut calldata = ArrayTrait::new();
     calldata.append(uptime_feed_address.into());
     calldata.append(aggregator_address.into());
-    return declare('AggregatorPriceConsumer').deploy(@calldata).unwrap();
+    return declare("AggregatorPriceConsumer").deploy(@calldata).unwrap();
 }
 
 #[test]
@@ -84,6 +84,6 @@ fn test_get_latest_price() {
         contract_address: price_consumer_address
     }
         .get_latest_price();
-    assert(updated_latest_price == answer, 'updlatest price is incorrect');
+    assert(updated_latest_price == answer, 'updated price is incorrect');
 }
 

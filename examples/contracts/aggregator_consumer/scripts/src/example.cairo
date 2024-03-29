@@ -1,9 +1,11 @@
 use sncast_std::{call, CallResult};
 
-// The example below uses a contract deployed to the Goerli testnet
 fn main() {
-    let contract_address = 0x7ad10abd2cc24c2e066a2fee1e435cd5fa60a37f9268bfbaf2e98ce5ca3c436;
-    let call_result = call(contract_address.try_into().unwrap(), 'get_greeting', array![]);
-    assert(*call_result.data[0] == 'Hello, Starknet!', *call_result.data[0]);
+    let eth = 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7;
+    let call_result = call(eth.try_into().unwrap(), selector!("decimals"), array![])
+        .expect('call failed');
+    let call_result = *call_result.data[0];
+    assert(call_result == 18, call_result);
     println!("{:?}", call_result);
 }
+

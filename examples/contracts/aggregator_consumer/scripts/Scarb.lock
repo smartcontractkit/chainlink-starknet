@@ -2,13 +2,40 @@
 version = 1
 
 [[package]]
+name = "aggregator_consumer"
+version = "0.1.0"
+dependencies = [
+ "chainlink",
+ "snforge_std",
+]
+
+[[package]]
+name = "chainlink"
+version = "0.1.0"
+dependencies = [
+ "openzeppelin",
+]
+
+[[package]]
+name = "openzeppelin"
+version = "0.9.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.9.0#364db5b1aecc1335d2e65db887291d19aa28937d"
+
+[[package]]
 name = "sncast_std"
-version = "0.18.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry?tag=v0.18.0#48f909a56b08cbdc5ca6a21a836b0fbc6c36d55b"
+version = "0.20.1"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.20.1#fea2db8f2b20148cc15ee34b08de12028eb42942"
+
+[[package]]
+name = "snforge_std"
+version = "0.20.1"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.20.1#fea2db8f2b20148cc15ee34b08de12028eb42942"
 
 [[package]]
 name = "src"
 version = "0.1.0"
 dependencies = [
+ "aggregator_consumer",
+ "chainlink",
  "sncast_std",
 ]
