@@ -1,2 +1,2 @@
+mod test_consumer;
 mod example;
-mod deploy;
