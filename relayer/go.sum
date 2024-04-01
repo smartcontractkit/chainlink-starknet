@@ -48,12 +48,12 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/NethermindEth/juno v0.3.1 h1:AW72LiAm9gqUeCVJWvepnZcTnpU4Vkl0KzPMxS+42FA=
 github.com/NethermindEth/juno v0.3.1/go.mod h1:SGbTpgGaCsxhFsKOid7Ylnz//WZ8swtILk+NbHGsk/Q=
+github.com/NethermindEth/starknet.go v0.7.1-0.20240401080518-34a506f3cfdb h1:Mv8SscePPyw2ju4igIJAjFgcq5zCQfjgbz53DwYu5mc=
+github.com/NethermindEth/starknet.go v0.7.1-0.20240401080518-34a506f3cfdb/go.mod h1:gQkhWpAs9/QR6reZU2xoi1UIYlMS64FLTlh9CrgHH/Y=
 github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398/go.mod h1:a1uqRtAwp2Xwc6WNPJEufxJ7fx3npB4UV/JOLmbu5I0=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
-github.com/archseer/starknet.go v0.0.0-20240401053959-f95862005c46 h1:sQeIWqfuI6N52eSYHfPda/zwUsPc5TGgac8+jJLkThE=
-github.com/archseer/starknet.go v0.0.0-20240401053959-f95862005c46/go.mod h1:gQkhWpAs9/QR6reZU2xoi1UIYlMS64FLTlh9CrgHH/Y=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/aymerick/raymond v2.0.3-0.20180322193309-b565731e1464+incompatible/go.mod h1:osfaiScAUVup+UC9Nfq76eWqDhXlp+4UYaA8uhTBO6g=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

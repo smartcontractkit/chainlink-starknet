@@ -6,7 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/NethermindEth/juno v0.3.1
-	github.com/NethermindEth/starknet.go v0.7.0
+	github.com/NethermindEth/starknet.go v0.7.1-0.20240401080518-34a506f3cfdb
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/hashicorp/go-plugin v1.5.2
 	github.com/pelletier/go-toml/v2 v2.1.1
@@ -117,7 +117,6 @@ require (
 )
 
 replace (
-	github.com/NethermindEth/starknet.go => github.com/archseer/starknet.go v0.0.0-20240401053959-f95862005c46
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	// until merged upstream: https://github.com/hashicorp/go-plugin/pull/257
