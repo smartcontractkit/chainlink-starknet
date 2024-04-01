@@ -155,6 +155,9 @@ func (c *TOMLConfig) SetFrom(f *TOMLConfig) {
 	if f.Enabled != nil {
 		c.Enabled = f.Enabled
 	}
+	if f.FeederURL != nil {
+		c.FeederURL = f.FeederURL
+	}
 	setFromChain(&c.Chain, &f.Chain)
 	c.Nodes.SetFrom(&f.Nodes)
 }
