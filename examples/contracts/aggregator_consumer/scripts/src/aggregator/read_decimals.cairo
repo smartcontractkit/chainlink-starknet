@@ -5,11 +5,11 @@ use starknet::ContractAddress;
 fn main() {
     // If you are using testnet, this address may need to be changed
     // If you are using the local starknet-devnet-rs container, this can be left alone
-    let consumer_address = 0xa208894d6f5726cb9ba1d256bbd0ff9ff9eafa4fa187fd5f444fd2139f269a
+    let aggregator_address = 0x376b1abf788737bded2011a0f76ce61cabdeaec22e97b8a4e231b149dd49fc0
         .try_into()
         .unwrap();
 
-    let result = call(consumer_address, selector!("read_latest_round"), array![]);
+    let result = call(aggregator_address, selector!("read_decimals"), array![]);
     if result.is_err() {
         println!("{:?}", result.unwrap_err());
         panic_with_felt252('call failed');
