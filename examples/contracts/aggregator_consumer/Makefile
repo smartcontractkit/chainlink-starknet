@@ -2,52 +2,72 @@
 # supports rpc v0.7 which is needed for snfoundry v0.20.1
 CONTAINER_VERSION="7743a089a33beb75d7012e4aa24745bee8ae0d71"
 
-# The name of the account that will be used for snfoundry
-# scripts + transactions
-ACCOUNT_NAME="test-acct"
+export TESTNET_ACCOUNTS_FILE=~/.starknet_accounts/starknet_open_zeppelin_accounts.json
+export TESTNET_ACCOUNT_NAME=testnet-account
+
+export DEVNET_ACCOUNTS_FILE=$(shell pwd)/accounts.json
+export DEVNET_ACCOUNT_NAME=devnet-account
+
+# General Commands
+
+test:
+	@snforge test
 
 devnet:
 	@printf "\nStarting a local starknet devnet docker container:\n\n" \
-		&& bash ../../../ops/scripts/devnet-hardhat-down.sh \
 		&& CONTAINER_VERSION="$(CONTAINER_VERSION)" bash ../../../ops/scripts/devnet-hardhat.sh \
 		&& printf "\n\nIf you intend to use a local starknet devnet container to run these examples,\nadd \"url = http://localhost:5050/rpc\" in the snfoundry.toml file\n\n"
 
+# Account Management Commands
+
 create-account:
-	@printf "\nCreating an account named \"$(ACCOUNT_NAME)\"...\n\n" \
-		&& sncast account create --name $(ACCOUNT_NAME) \
+	@printf "\nCreating starknet account details for testnet...\n\n" \
+		&& sncast --profile testnet account create --name "$(TESTNET_ACCOUNT_NAME)" \
 	  && printf "\nYour accounts:\n\n" \
-		&& cat ~/.starknet_accounts/starknet_open_zeppelin_accounts.json \
+		&& cat $(TESTNET_ACCOUNTS_FILE) \
 		&& printf "\n\nYou can fund your account here: https://sepolia.starkgate.starknet.io\n"
 
 add-account:
-	@printf "\nAdding an account named \"$(ACCOUNT_NAME)\"...\n\n" \
-		&& sncast \
-			--url "http://127.0.0.1:5050/rpc" \
-			account add \
-			--name $(ACCOUNT_NAME) \
+	@printf "\nImporting a prefunded account from starknet devnet container...\n\n" \
+		&& sncast --profile devnet account add \
+			--name "$(DEVNET_ACCOUNT_NAME)" \
 			--address "0x4b3f4ba8c00a02b66142a4b1dd41a4dfab4f92650922a3280977b0f03c75ee1" \
 			--private-key "0x57b2f8431c772e647712ae93cc616638" \
 	  && printf "\nYour accounts:\n\n" \
-		&& cat ~/.starknet_accounts/starknet_open_zeppelin_accounts.json
-
-view-accounts:
-	@cat ~/.starknet_accounts/starknet_open_zeppelin_accounts.json
+		&& cat $(DEVNET_ACCOUNTS_FILE) \
 
 deploy-account:
-	@sncast account deploy --name $(ACCOUNT_NAME)
+	@sncast --profile testnet account deploy
 
-delete-account:
-	@sncast account delete --name $(ACCOUNT_NAME)
+# MockAggregator Commands
 
-tc-deploy:
-	@cd ./scripts && sncast --account "$(ACCOUNT_NAME)" script run deploy_test_consumer
+ma-deploy:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run deploy_mock_aggregator
 
-tc-set-latest-round:
-	@cd ./scripts && sncast --account "$(ACCOUNT_NAME)" script run set_latest_round 
+ma-set-latest-round:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run set_latest_round 
 
-tc-read-latest-round:
-	@cd ./scripts && sncast script run read_latest_round
+# Aggregator Commands
 
-tc-read-decimals:
-	@cd ./scripts && sncast script run read_decimals
+agg-read-latest-round:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_latest_round
+
+agg-read-decimals:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_decimals
+
+# AggregatorConsumer commands
+
+ac-deploy:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run deploy_aggregator_consumer
+
+ac-read-answer:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_answer
+
+ac-set-answer:
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run set_answer
+
+# Helpers
+
+devnet-deploy:
+	@make ma-deploy NETWORK=devnet && make ac-deploy NETWORK=devnet
 

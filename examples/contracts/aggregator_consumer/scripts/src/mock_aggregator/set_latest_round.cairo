@@ -15,12 +15,11 @@ fn main() {
     let observation_timestamp = 100000;
     let transmission_timestamp = 200000;
 
-    let max_fee = 99999999999999999;
     let result = invoke(
         mock_aggregator_address,
         selector!("set_latest_round_data"),
         array![answer, block_num, observation_timestamp, transmission_timestamp],
-        Option::Some(max_fee),
+        Option::None,
         Option::Some(get_nonce('pending'))
     );
 
