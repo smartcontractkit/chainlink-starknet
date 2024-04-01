@@ -26,7 +26,7 @@ inside_k8 = false
 network = "localnet"
 user = "satoshi"
 stateful_db = false
-devnet_image = "shardlabs/starknet-devnet-rs:37dc6e698297cd5173234397e77a72a756bfa270"
+devnet_image = "shardlabs/starknet-devnet-rs:a147b4cd72f9ce9d1fa665d871231370db0f51c7"
 
 [OCR2]
 node_count = 6
