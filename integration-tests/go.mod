@@ -4,7 +4,7 @@ go 1.21.4
 
 require (
 	github.com/NethermindEth/juno v0.3.1
-	github.com/NethermindEth/starknet.go v0.7.0
+	github.com/NethermindEth/starknet.go v0.7.1-0.20240401080518-34a506f3cfdb
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.6.0
