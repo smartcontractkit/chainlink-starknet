@@ -13,10 +13,10 @@ bash "$(dirname -- "$0")/devnet-hardhat-down.sh"
 echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]; then
 	echo "Starting arm devnet container..."
-	container_version="d7c168ac53da3e9d717ed3ff8dad665ccade43e0-arm"
+	container_version="a147b4cd72f9ce9d1fa665d871231370db0f51c7-arm"
 else
 	echo "Starting i386 devnet container..."
-	container_version="d7c168ac53da3e9d717ed3ff8dad665ccade43e0"
+	container_version="a147b4cd72f9ce9d1fa665d871231370db0f51c7"
 fi
 
 echo "Starting starknet-devnet"
