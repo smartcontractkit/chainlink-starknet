@@ -3,23 +3,30 @@ use sncast_std::{
     DisplayClassHash
 };
 
-use starknet::ContractAddress;
+use starknet::{ContractAddress, ClassHash};
 
 fn declare_and_deploy(
     contract_name: ByteArray, constructor_calldata: Array<felt252>
 ) -> DeployResult {
+    let mut class_hash: ClassHash =
+        0x4ef1d23b415f7edbb2d9f31fb86d91e84394316f44645467005a2d579380dbd
+        .try_into()
+        .unwrap();
+
     println!("Declaring contract...");
     let declare_result = declare(contract_name, Option::None, Option::None);
     if declare_result.is_err() {
         println!("{:?}", declare_result.unwrap_err());
-        panic_with_felt252('declare failed');
+    } else {
+        class_hash = declare_result.unwrap().class_hash;
     }
+    println!("Class hash = {:?}", class_hash);
 
     println!("Deploying contract...");
     let nonce = get_nonce('latest');
     let salt = get_nonce('pending');
     let deploy_result = deploy(
-        declare_result.unwrap().class_hash,
+        class_hash,
         constructor_calldata,
         Option::Some(salt),
         true,

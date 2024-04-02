@@ -15,8 +15,7 @@ test:
 
 devnet:
 	@printf "\nStarting a local starknet devnet docker container:\n\n" \
-		&& CONTAINER_VERSION="$(CONTAINER_VERSION)" bash ../../../ops/scripts/devnet-hardhat.sh \
-		&& printf "\n\nIf you intend to use a local starknet devnet container to run these examples,\nadd \"url = http://localhost:5050/rpc\" in the snfoundry.toml file\n\n"
+		&& CONTAINER_VERSION="$(CONTAINER_VERSION)" bash ../../../ops/scripts/devnet-hardhat.sh
 
 # Account Management Commands
 
@@ -37,7 +36,7 @@ add-account:
 		&& cat $(DEVNET_ACCOUNTS_FILE) \
 
 deploy-account:
-	@sncast --profile testnet account deploy
+	@sncast --profile testnet account deploy --name "$(TESTNET_ACCOUNT_NAME)"
 
 # MockAggregator Commands
 

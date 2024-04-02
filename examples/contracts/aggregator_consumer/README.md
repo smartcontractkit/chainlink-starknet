@@ -12,7 +12,7 @@ In this directory you'll find three top-level folders:
 
 To get started, ensure that you have the following tools installed on your machine:
 
-- [starknet-foundry (v0.20.1)](https://github.com/foundry-rs/starknet-foundry/releases/tag/v0.18.0)
+- [starknet-foundry (v0.20.1)](https://github.com/foundry-rs/starknet-foundry/releases/tag/v0.20.1)
 - [scarb (v2.5.4)](https://github.com/software-mansion/scarb/releases/tag/v2.5.4)
 
 ## Tests
@@ -89,6 +89,7 @@ Under the hood this command will run a declare transaction followed by a deploy 
 Declaring and deploying MockAggregator
 Declaring contract...
 Transaction hash = 0x568d29d07128cba750845b57a4bb77a31f628b6f4288861d8b31d12e71e4c3b
+Class hash = 301563338814178704943249302673347019225052832575378055777678731916437560881
 Deploying contract...
 Transaction hash = 0xfbc49eb82894a704ce536ab904cdee0fd021b0fba335900f8b9b12cfcd005f
 MockAggregator deployed at address: 1566652744716179301065270359129119857774335542042051464747302084192731701184
