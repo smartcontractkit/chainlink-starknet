@@ -41,29 +41,29 @@ deploy-account:
 # MockAggregator Commands
 
 ma-deploy:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run deploy_mock_aggregator
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run deploy_mock_aggregator --no-state-file
 
 ma-set-latest-round:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run set_latest_round 
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run set_latest_round --no-state-file
 
 # Aggregator Commands
 
 agg-read-latest-round:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_latest_round
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_latest_round --no-state-file
 
 agg-read-decimals:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_decimals
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_decimals --no-state-file
 
 # AggregatorConsumer commands
 
 ac-deploy:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run deploy_aggregator_consumer
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run deploy_aggregator_consumer --no-state-file
 
 ac-read-answer:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_answer
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run read_answer --no-state-file
 
 ac-set-answer:
-	@cd ./scripts && sncast --profile "$(NETWORK)" script run set_answer
+	@cd ./scripts && sncast --profile "$(NETWORK)" script run set_answer --no-state-file
 
 # Helpers
 
