@@ -12,8 +12,8 @@ In this directory you'll find three top-level folders:
 
 To get started, ensure that you have the following tools installed on your machine:
 
-- [starknet-foundry (v0.20.1)](https://github.com/foundry-rs/starknet-foundry/releases/tag/v0.20.1)
-- [scarb (v2.5.4)](https://github.com/software-mansion/scarb/releases/tag/v2.5.4)
+- [starknet-foundry (v0.21.0)](https://github.com/foundry-rs/starknet-foundry/releases/tag/v0.21.0)
+- [scarb (v2.6.4)](https://github.com/software-mansion/scarb/releases/tag/v2.6.4)
 
 ## Tests
 
