@@ -28,7 +28,7 @@ func SepoliaConfig() *Config {
 func DevnetConfig() *Config {
 	return &Config{
 		ChainName:         "starknet",
-		ChainID:           "SN_GOERLI",
+		ChainID:           "SN_SEPOLIA",
 		StarkTokenAddress: starkTokenAddress,
 		// Will be overridden if set in toml
 		L2RPCInternal: "http://starknet-dev:5000",
