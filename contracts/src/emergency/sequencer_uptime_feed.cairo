@@ -134,7 +134,7 @@ mod SequencerUptimeFeed {
 
         fn round_data(self: @ContractState, round_id: u128) -> Round {
             self._require_read_access();
-            assert(round_id < self._latest_round_id.read(), 'invalid round id');
+            assert(round_id <= self._latest_round_id.read(), 'invalid round id');
             let round_transmission = self._round_transmissions.read(round_id);
             Round {
                 round_id: round_id.into(),
