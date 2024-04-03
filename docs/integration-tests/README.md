@@ -83,7 +83,7 @@ Here you will find pod logs for all the chainlink nodes as well as Devnet / Geth
 ## Testnet
 
 - Chain name - `Starknet`
-- Chain ID - `SN_GOERLI`
+- Chain ID - `SN_SEPOLIA`
   - Testnet 1 - `[https://alpha4.starknet.io](https://alpha4.starknet.io)`
   - Testnet 2 - [`https://alpha4-2.starknet.io`](https://alpha4-2.starknet.io/)
 

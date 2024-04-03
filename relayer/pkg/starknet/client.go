@@ -48,19 +48,21 @@ type Client struct {
 }
 
 // pass nil or 0 to timeout to not use built in default timeout
-func NewClient(_chainID string, baseURL string, apiKey string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
+func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	// TODO: chainID now unused
-	c, err := ethrpc.DialContext(context.Background(), baseURL)
+
+	options := []ethrpc.ClientOption{}
 	if strings.TrimSpace(apiKey) != "" {
-		c.SetHeader("x-apikey", apiKey)
+		options = append(options, ethrpc.WithHeader("x-apikey", apiKey))
 	}
 
+	provider, err := starknetrpc.NewProvider(baseURL, options...)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		Provider: starknetrpc.NewProvider(c),
+		Provider: provider,
 		lggr:     lggr,
 	}
 
@@ -92,7 +94,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 	return res, nil
 }
 
-func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err error) {
+func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -101,7 +103,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (height uint64, err erro
 
 	blockNum, err := c.Provider.BlockNumber(ctx)
 	if err != nil {
-		return height, errors.Wrap(err, "error in client.LatestBlockHeight")
+		return 0, errors.Wrap(err, "error in client.LatestBlockHeight")
 	}
 
 	return blockNum, nil
