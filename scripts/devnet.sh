@@ -13,10 +13,10 @@ echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]
 then
     echo "Starting arm devnet container..."
-    container_version="b41e566a3f17aa0e51871f02d5165959e50ce358-arm"
+    container_version="a147b4cd72f9ce9d1fa665d871231370db0f51c7-arm"
 else
     echo "Starting i386 devnet container..."
-    container_version="b41e566a3f17aa0e51871f02d5165959e50ce358"
+    container_version="a147b4cd72f9ce9d1fa665d871231370db0f51c7"
 fi
 
 echo "Starting starknet-devnet"
@@ -35,6 +35,7 @@ docker run \
   "shardlabs/starknet-devnet-rs:${container_version}" \
   --seed 0 \
   --gas-price 1 \
+  --data-gas-price 1 \
   --account-class cairo1
 
 # echo "Starting hardhat..."

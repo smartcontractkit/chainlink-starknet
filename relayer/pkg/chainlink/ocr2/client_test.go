@@ -24,7 +24,7 @@ const BLOCK_OUTPUT = `{"result": {"events": [ {"from_address": "0xd43963a4e875a3
 const ocr2ContractAddress = "0xd43963a4e875a361f5d164b2e70953598eb4f45fde86924082d51b4d78e489" // matches BLOCK_OUTPUT event
 
 func TestOCR2Client(t *testing.T) {
-	chainID := "SN_GOERLI"
+	chainID := "SN_SEPOLIA"
 	lggr := logger.Test(t)
 
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
