@@ -42,7 +42,9 @@ mod ERC677Component {
 
     #[derive(Drop, starknet::Event)]
     struct TransferAndCall {
+        #[key]
         from: ContractAddress,
+        #[key]
         to: ContractAddress,
         value: u256,
         data: Array<felt252>
