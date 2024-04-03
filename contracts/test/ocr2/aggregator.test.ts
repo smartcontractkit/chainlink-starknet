@@ -153,13 +153,14 @@ describe('Aggregator', function () {
     //   result["2"] = config_digest
     //
     const result = await aggregator.latest_config_details()
+    const blockNumber = Number(result['1']) // we receive a bigint, but getBlock() assumes bigint = block hash, number = block number
     const configDigest = result['2']
-    const blockNumber = result['1']
     console.log(`Config digest: ${configDigest.toString(16)}`)
+    console.log(`Block number: ${blockNumber.toString(16)}`)
     config_digest = configDigest
 
     // Immitate the fetch done by relay to confirm latest_config_details_works
-    const block = await provider.getBlock(blockNumber.toString(16))
+    const block = await provider.getBlock(blockNumber)
     const txHash = block.transactions.at(0)
     if (txHash == null) {
       assert.fail('unexpectedly found no transacitons')

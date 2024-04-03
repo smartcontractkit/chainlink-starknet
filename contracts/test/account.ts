@@ -73,7 +73,7 @@ class DevnetFundingStrategy implements IFundingStrategy {
 class AllowanceFundingStrategy implements IFundingStrategy {
   public async fund(accounts: FundAccounts[], opts: Required<FunderOptions>) {
     const provider = new RpcProvider({
-      nodeUrl: constants.NetworkName.SN_GOERLI,
+      nodeUrl: constants.NetworkName.SN_SEPOLIA,
     })
 
     const operator = new Account(provider, opts.accountAddr, opts.keyPair)

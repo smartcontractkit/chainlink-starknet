@@ -46,7 +46,7 @@ mod AggregatorProxy {
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
 
-    use openzeppelin::access::ownable::ownable::OwnableComponent;
+    use openzeppelin::access::ownable::OwnableComponent;
 
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::Round;
