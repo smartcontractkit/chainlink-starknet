@@ -37,11 +37,13 @@ mod AccessControlComponent {
 
     #[derive(Drop, starknet::Event)]
     struct AddedAccess {
+        #[key]
         user: ContractAddress
     }
 
     #[derive(Drop, starknet::Event)]
     struct RemovedAccess {
+        #[key]
         user: ContractAddress
     }
 
