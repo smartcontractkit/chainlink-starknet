@@ -35,6 +35,7 @@ docker run \
   "shardlabs/starknet-devnet-rs:${container_version}" \
   --seed 0 \
   --gas-price 1 \
+  --data-gas-price 1 \
   --account-class cairo1
 
 # echo "Starting hardhat..."

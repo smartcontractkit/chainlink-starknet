@@ -102,6 +102,6 @@ func (s *Starknet) getContainerRequest() (*tc.ContainerRequest, error) {
 		WaitingFor: tcwait.ForLog("Starknet Devnet listening").
 			WithStartupTimeout(30 * time.Second).
 			WithPollInterval(100 * time.Millisecond),
-		Entrypoint: []string{"sh", "-c", "tini -- starknet-devnet --host 0.0.0.0 --port 5050 --seed 0 --account-class cairo1 --gas-price 1"},
+		Entrypoint: []string{"sh", "-c", "tini -- starknet-devnet --host 0.0.0.0 --port 5050 --seed 0 --account-class cairo1 --gas-price 1 --data-gas-price 1"},
 	}, nil
 }
