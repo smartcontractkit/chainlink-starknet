@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	chainID = "SN_GOERLI"
+	chainID = "SN_SEPOLIA"
 	timeout = 10 * time.Second
 )
 
