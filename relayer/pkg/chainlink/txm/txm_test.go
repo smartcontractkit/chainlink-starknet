@@ -60,7 +60,7 @@ func TestIntegration_Txm(t *testing.T) {
 
 	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
-	client, err := starknet.NewClient("SN_GOERLI", url+"/rpc", "", lggr, &timeout)
+	client, err := starknet.NewClient("SN_SEPOLIA", url+"/rpc", "", lggr, &timeout)
 	require.NoError(t, err)
 
 	getFeederClient := func() (*starknet.FeederClient, error) {

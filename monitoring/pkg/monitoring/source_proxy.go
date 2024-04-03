@@ -33,7 +33,11 @@ func (s *proxySourceFactory) NewSource(
 	_ relayMonitoring.ChainConfig,
 	feedConfig relayMonitoring.FeedConfig,
 ) (relayMonitoring.Source, error) {
-	contractAddress, err := starknetutils.HexToFelt(feedConfig.GetContractAddress())
+	starknetFeedConfig, ok := feedConfig.(StarknetFeedConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", feedConfig)
+	}
+	contractAddress, err := starknetutils.HexToFelt(starknetFeedConfig.ProxyAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -53,11 +57,11 @@ type proxySource struct {
 }
 
 func (s *proxySource) Fetch(ctx context.Context) (interface{}, error) {
-	latestTransmission, err := s.ocr2Reader.LatestTransmissionDetails(ctx, s.contractAddress)
+	latestRoundData, err := s.ocr2Reader.LatestRoundData(ctx, s.contractAddress)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't fetch latest_transmission_details: %w", err)
+		return nil, fmt.Errorf("couldn't fetch latest_round_data: %w", err)
 	}
 	return ProxyData{
-		Answer: latestTransmission.LatestAnswer,
+		Answer: latestRoundData.Answer,
 	}, nil
 }
