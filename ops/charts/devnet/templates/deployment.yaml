@@ -30,7 +30,7 @@ spec:
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.1.8-alpha"}}"
 {{- else }}
         image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "a147b4cd72f9ce9d1fa665d871231370db0f51c7"}}"
-        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1", "--gas-price", "1"]
+        args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1", "--gas-price", "1", "--data-gas-price", "1"]
 {{- end }}
         imagePullPolicy: IfNotPresent
 {{- if eq .Values.real_node true }}
