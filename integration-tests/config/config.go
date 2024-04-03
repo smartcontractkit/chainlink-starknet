@@ -20,7 +20,7 @@ func SepoliaConfig() *Config {
 		ChainID:           "SN_SEPOLIA",
 		StarkTokenAddress: starkTokenAddress,
 		// Will be overridden if set in toml
-		L2RPCInternal: "https://starknet-sepolia.public.blastapi.io/rpc/v0_6",
+		L2RPCInternal: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7",
 		FeederURL:     "https://alpha-sepolia.starknet.io/feeder_gateway",
 	}
 }
@@ -28,7 +28,7 @@ func SepoliaConfig() *Config {
 func DevnetConfig() *Config {
 	return &Config{
 		ChainName:         "starknet",
-		ChainID:           "SN_GOERLI",
+		ChainID:           "SN_SEPOLIA",
 		StarkTokenAddress: starkTokenAddress,
 		// Will be overridden if set in toml
 		L2RPCInternal: "http://starknet-dev:5000",
