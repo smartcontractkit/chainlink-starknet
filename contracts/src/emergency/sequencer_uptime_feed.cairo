@@ -79,11 +79,13 @@ mod SequencerUptimeFeed {
     #[derive(Drop, starknet::Event)]
     struct RoundUpdated {
         status: u128,
+        #[key]
         updated_at: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct NewRound {
+        #[key]
         round_id: u128,
         #[key]
         started_by: EthAddress,
@@ -93,21 +95,27 @@ mod SequencerUptimeFeed {
     #[derive(Drop, starknet::Event)]
     struct AnswerUpdated {
         current: u128,
+        #[key]
         round_id: u128,
+        #[key]
         timestamp: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct UpdateIgnored {
         latest_status: u128,
+        #[key]
         latest_timestamp: u64,
         incoming_status: u128,
+        #[key]
         incoming_timestamp: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct L1SenderTransferred {
+        #[key]
         from_address: EthAddress,
+        #[key]
         to_address: EthAddress
     }
 

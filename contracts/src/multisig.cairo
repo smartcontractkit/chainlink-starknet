@@ -107,36 +107,47 @@ mod Multisig {
 
     #[derive(Drop, starknet::Event)]
     struct TransactionSubmitted {
+        #[key]
         signer: ContractAddress,
+        #[key]
         nonce: u128,
+        #[key]
         to: ContractAddress
     }
 
     #[derive(Drop, starknet::Event)]
     struct TransactionConfirmed {
+        #[key]
         signer: ContractAddress,
+        #[key]
         nonce: u128
     }
 
     #[derive(Drop, starknet::Event)]
     struct ConfirmationRevoked {
+        #[key]
         signer: ContractAddress,
+        #[key]
         nonce: u128
     }
 
     #[derive(Drop, starknet::Event)]
     struct TransactionExecuted {
+        #[key]
         executor: ContractAddress,
+        #[key]
         nonce: u128
     }
 
     #[derive(Drop, starknet::Event)]
     struct SignersSet {
+        #[key]
         signers: Array<ContractAddress>
     }
 
     #[derive(Drop, starknet::Event)]
     struct ThresholdSet {
+        #[key]
         threshold: usize
     }
 
