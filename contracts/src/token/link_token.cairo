@@ -15,7 +15,7 @@ mod LinkToken {
     use zeroable::Zeroable;
 
     use openzeppelin::token::erc20::ERC20Component;
-    use openzeppelin::access::ownable::ownable::OwnableComponent;
+    use openzeppelin::access::ownable::OwnableComponent;
 
     use super::IMintableToken;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -39,9 +39,6 @@ mod LinkToken {
 
     #[abi(embed_v0)]
     impl ERC677Impl = ERC677Component::ERC677Impl<ContractState>;
-
-    const NAME: felt252 = 'ChainLink Token';
-    const SYMBOL: felt252 = 'LINK';
 
     #[storage]
     struct Storage {
@@ -84,7 +81,9 @@ mod LinkToken {
 
     #[constructor]
     fn constructor(ref self: ContractState, minter: ContractAddress, owner: ContractAddress) {
-        self.erc20.initializer(NAME, SYMBOL);
+        let name = "ChainLink Token";
+        let symbol = "LINK";
+        self.erc20.initializer(name, symbol);
         assert(!minter.is_zero(), 'minter is 0');
         self._minter.write(minter);
         self.ownable.initializer(owner);

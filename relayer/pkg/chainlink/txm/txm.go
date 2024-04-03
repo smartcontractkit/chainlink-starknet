@@ -19,7 +19,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -140,11 +139,11 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 
 		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 		if err != nil {
-			var dataErr ethrpc.DataError
+			var dataErr *starknetrpc.RPCError
 			if !errors.As(err, &dataErr) {
 				return nil, nil, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
 			}
-			data := dataErr.ErrorData()
+			data := dataErr.Data
 			dataStr := fmt.Sprintf("%+v", data)
 
 			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
@@ -159,7 +158,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		// track the FRI estimate, but keep looping so we print out all estimates
 		var friEstimate *starknetrpc.FeeEstimate
 		for j, f := range feeEstimate {
-			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.GasConsumed.String(), "GasPrice", f.GasPrice.String(), "OverallFee", f.OverallFee.String(), "FeeUnit", string(f.FeeUnit))
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.GasConsumed, "GasPrice", f.GasPrice, "DataGasConsumed", f.DataGasConsumed, "DataGasPrice", f.DataGasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
 			if f.FeeUnit == "FRI" {
 				friEstimate = &feeEstimate[j]
 			}
@@ -208,7 +207,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
 		Nonce:         &felt.Zero, // filled in below
-		ResourceBounds: starknetrpc.ResourceBoundsMapping{ // TODO: use proper values
+		ResourceBounds: starknetrpc.ResourceBoundsMapping{
 			L1Gas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x0",
 				MaxPricePerUnit: "0x0",
@@ -221,8 +220,8 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		Tip:                   "0x0",
 		PayMasterData:         []*felt.Felt{},
 		AccountDeploymentData: []*felt.Felt{},
-		NonceDataMode:         starknetrpc.DAModeL1, // TODO: confirm
-		FeeMode:               starknetrpc.DAModeL1, // TODO: confirm
+		NonceDataMode:         starknetrpc.DAModeL1,
+		FeeMode:               starknetrpc.DAModeL1,
 	}
 
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
@@ -256,9 +255,19 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
-	// pad by 250%
+	// pad by 150%
 	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
-	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(250))
+	overallFee := friEstimate.OverallFee.BigInt(new(big.Int)) // overallFee = gas_used*gas_price + data_gas_used*data_gas_price
+
+	// TODO: consider making this configurable
+	// pad estimate to 150% (add extra because estimate did not include validation)
+	gasUnits := new(big.Int).Div(overallFee, gasPrice)
+	expandedGasUnits := new(big.Int).Mul(gasUnits, big.NewInt(150))
+	maxGasUnits := new(big.Int).Div(expandedGasUnits, big.NewInt(100))
+	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGasUnits).String())
+
+	// pad by 150%
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
 	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 
@@ -284,12 +293,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	res, err := account.AddInvokeTransaction(execCtx, tx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
-		var dataErr ethrpc.DataError
+		var dataErr *starknetrpc.RPCError
 		var dataStr string
 		if !errors.As(err, &dataErr) {
 			return txhash, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
 		}
-		data := dataErr.ErrorData()
+		data := dataErr.Data
 		dataStr = fmt.Sprintf("%+v", data)
 		txm.lggr.Errorw("failed to invoke tx", "accountAddress", accountAddress, "error", err, "data", dataStr)
 

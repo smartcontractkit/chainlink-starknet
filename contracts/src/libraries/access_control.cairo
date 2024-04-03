@@ -16,7 +16,7 @@ mod AccessControlComponent {
     use starknet::class_hash::ClassHash;
     use zeroable::Zeroable;
 
-    use openzeppelin::access::ownable::ownable::OwnableComponent;
+    use openzeppelin::access::ownable::OwnableComponent;
 
     use OwnableComponent::InternalImpl as OwnableInternalImpl;
 
