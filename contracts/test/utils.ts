@@ -46,10 +46,12 @@ export const waitForTransaction = async (
 
 export const waitForTransactions = async (
   txs: (() => ReturnType<typeof ethers.provider.sendTransaction>)[],
+  cb?: () => void | Promise<void>,
 ) => {
   const results = new Array<Awaited<ReturnType<typeof waitForTransaction>>>()
   for (const tx of txs) {
     results.push(await waitForTransaction(tx))
+    cb != null && (await cb())
   }
   return results
 }
