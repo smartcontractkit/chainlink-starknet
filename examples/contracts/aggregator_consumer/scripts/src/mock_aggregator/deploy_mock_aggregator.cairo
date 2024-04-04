@@ -8,7 +8,8 @@ use starknet::{ContractAddress, ClassHash};
 fn declare_and_deploy(
     contract_name: ByteArray, constructor_calldata: Array<felt252>
 ) -> DeployResult {
-    let mut class_hash: ClassHash = 0xaaadc5e958f8fdc8e81a03cc7429e2129474419e4ac3210e316f73addf1e31
+    let mut class_hash: ClassHash =
+        0x728d8a221e2204c88df0642b7c6dcee60f7c3d3b3d5c190cac1ceba5baf15e8
         .try_into()
         .unwrap();
 
