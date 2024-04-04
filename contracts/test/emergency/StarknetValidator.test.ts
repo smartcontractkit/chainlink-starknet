@@ -608,32 +608,43 @@ describe('StarknetValidator', () => {
       )
 
       // Simulate L1 transmit + validate
+      const messages = new Array<l1l2messaging.FlushedMessages>()
       const newGasEstimate = 1
-      const receipts = await waitForTransactions([
-        // Add access
-        () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
+      const receipts = await waitForTransactions(
+        [
+          // Add access
+          () => starknetValidator.connect(deployer).addAccess(eoaValidator.address),
 
-        // By default the gas config is 0, we need to change it or we will submit a 0 fee
-        () =>
-          starknetValidator
-            .connect(deployer)
-            .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
+          // By default the gas config is 0, we need to change it or we will submit a 0 fee
+          () =>
+            starknetValidator
+              .connect(deployer)
+              .setGasConfig(newGasEstimate, mockGasPriceFeed.address, 100),
 
-        // Validate
-        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
-        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
-        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127), // incorrect value
-        () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 0), // final status
-      ])
+          // Validate
+          () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+          () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 1),
+          () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 127), // incorrect value
+          () => starknetValidator.connect(eoaValidator).validate(0, 0, 1, 0), // final status
+        ],
+        async () => {
+          // Simulate the L1 - L2 comms
+          const resp = await l1l2messaging.flush()
+          if (resp.messages_to_l2.length !== 0) {
+            expect(resp.messages_to_l1).to.be.empty
 
-      // Simulate the L1 - L2 comms
-      const resp = await l1l2messaging.flush()
-      const msgFromL1 = resp.messages_to_l2
-      expect(msgFromL1).to.have.a.lengthOf(4)
-      expect(resp.messages_to_l1).to.be.empty
+            const msgFromL1 = resp.messages_to_l2
+            expect(msgFromL1).to.have.a.lengthOf(1)
+            expect(msgFromL1[0].l1_contract_address).to.hexEqual(starknetValidator.address)
+            expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.address)
 
-      expect(msgFromL1[0].l1_contract_address).to.hexEqual(starknetValidator.address)
-      expect(msgFromL1[0].l2_contract_address).to.hexEqual(l2Contract.address)
+            messages.push(resp)
+          }
+        },
+      )
+
+      // Makes sure the correct number of messages were transmitted
+      expect(messages.length).to.eq(4)
 
       // Assert L2 effects
       const result = await l2Contract.latest_round_data()
@@ -643,7 +654,7 @@ describe('StarknetValidator', () => {
         JSON.stringify(
           {
             latestRoundData: result,
-            flushResponse: resp,
+            flushResponse: messages,
             txReceipts: receipts,
           },
           (_, value) => (typeof value === 'bigint' ? value.toString() : value),
