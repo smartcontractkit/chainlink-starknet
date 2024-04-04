@@ -36,7 +36,7 @@ add-account:
 		&& cat $(DEVNET_ACCOUNTS_FILE) \
 
 deploy-account:
-	@sncast --profile testnet account deploy --name "$(TESTNET_ACCOUNT_NAME)"
+	@sncast --profile testnet account deploy --name "$(TESTNET_ACCOUNT_NAME)" --max-fee 0x5af3107a3fff
 
 # MockAggregator Commands
 

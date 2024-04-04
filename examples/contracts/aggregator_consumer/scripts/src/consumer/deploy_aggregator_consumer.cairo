@@ -9,7 +9,7 @@ fn declare_and_deploy(
     contract_name: ByteArray, constructor_calldata: Array<felt252>
 ) -> DeployResult {
     let mut class_hash: ClassHash =
-        0x4ef1d23b415f7edbb2d9f31fb86d91e84394316f44645467005a2d579380dbd
+        0x100157fc2d1c88776e1c9b75dd6ee62e83212f45f6c4b511e02e1d5d3ae08f6
         .try_into()
         .unwrap();
 
@@ -44,7 +44,7 @@ fn declare_and_deploy(
 fn main() {
     // Point this to the address of the aggregator contract you'd like to use
     let aggregator_address: ContractAddress =
-        0x376b1abf788737bded2011a0f76ce61cabdeaec22e97b8a4e231b149dd49fc0
+        0x3c6f82da5dbfa89ec9dbe414f33d23d1720d15568e4a880afcc9b0c3d98d127
         .try_into()
         .unwrap();
 
