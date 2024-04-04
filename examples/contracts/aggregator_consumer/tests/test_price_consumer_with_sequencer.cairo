@@ -84,6 +84,6 @@ fn test_get_latest_price() {
         contract_address: price_consumer_address
     }
         .get_latest_price();
-    assert(updated_latest_price == answer, 'updlatest price is incorrect');
+    assert(updated_latest_price == answer, 'updated price is incorrect');
 }
 
