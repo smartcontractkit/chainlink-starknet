@@ -4,7 +4,7 @@ description: A composite action that installs the snforge and sncast binaries
 inputs:
   starknet_foundry_version:
     description: Starknet Foundry release version
-    default: "0.19.0"
+    default: "0.21.0"
     required: false
 
 runs:

@@ -23,5 +23,5 @@ source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.10.0#d7
 
 [[package]]
 name = "snforge_std"
-version = "0.18.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry?tag=v0.18.0#48f909a56b08cbdc5ca6a21a836b0fbc6c36d55b"
+version = "0.21.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.21.0#2996b8c1dd66b2715fc67e69578089f278a46790"

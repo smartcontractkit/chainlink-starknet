@@ -2,6 +2,8 @@ use snforge_std::{declare, ContractClassTrait};
 
 use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcherTrait;
 use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcher;
+use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcherTrait;
+use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcher;
 
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcherTrait;
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcher;
@@ -22,27 +24,25 @@ fn deploy_consumer(aggregator_address: ContractAddress) -> ContractAddress {
 
 #[test]
 fn test_read_decimals() {
+    // Deploys the mock aggregator
     let decimals = 16;
     let mock_aggregator_address = deploy_mock_aggregator(decimals);
-    let consumer_address = deploy_consumer(mock_aggregator_address);
-    let consumer_dispatcher = IAggregatorConsumerDispatcher { contract_address: consumer_address };
-    assert(decimals == consumer_dispatcher.read_decimals(), 'Invalid decimals');
-}
+    let aggregator_dispatcher = IAggregatorDispatcher { contract_address: mock_aggregator_address };
 
+    // Let's make sure the constructor arguments were passed in correctly
+    assert(decimals == aggregator_dispatcher.decimals(), 'Invalid decimals');
+}
 #[test]
-fn test_read_latest_round() {
+fn test_set_and_read_latest_round() {
     // Deploys the mock aggregator
     let mock_aggregator_address = deploy_mock_aggregator(16);
     let mock_aggregator_dispatcher = IMockAggregatorDispatcher {
         contract_address: mock_aggregator_address
     };
-
-    // Deploys the consumer
-    let consumer_address = deploy_consumer(mock_aggregator_address);
-    let consumer_dispatcher = IAggregatorConsumerDispatcher { contract_address: consumer_address };
+    let aggregator_dispatcher = IAggregatorDispatcher { contract_address: mock_aggregator_address };
 
     // No round data has been initialized, so reading the latest round should return no data
-    let empty_latest_round = consumer_dispatcher.read_latest_round();
+    let empty_latest_round = aggregator_dispatcher.latest_round_data();
     assert(empty_latest_round.round_id == 0, 'round_id != 0');
     assert(empty_latest_round.answer == 0, 'answer != 0');
     assert(empty_latest_round.block_num == 0, 'block_num != 0');
@@ -58,10 +58,47 @@ fn test_read_latest_round() {
         .set_latest_round_data(answer, block_num, observation_timestamp, transmission_timestamp);
 
     // The latest round should now have some data
-    let latest_round = consumer_dispatcher.read_latest_round();
+    let latest_round = aggregator_dispatcher.latest_round_data();
     assert(latest_round.round_id == 1, 'round_id != 1');
     assert(latest_round.answer == answer, 'bad answer');
     assert(latest_round.block_num == block_num, 'bad block_num');
     assert(latest_round.started_at == observation_timestamp, 'bad started_at');
     assert(latest_round.updated_at == transmission_timestamp, 'bad updated_at');
 }
+
+#[test]
+fn test_set_and_read_answer() {
+    // Deploys the mock aggregator
+    let mock_aggregator_address = deploy_mock_aggregator(16);
+    let mock_aggregator_dispatcher = IMockAggregatorDispatcher {
+        contract_address: mock_aggregator_address
+    };
+
+    // Deploys the consumer
+    let consumer_address = deploy_consumer(mock_aggregator_address);
+    let consumer_dispatcher = IAggregatorConsumerDispatcher { contract_address: consumer_address };
+
+    // The answer has not been set, so it should default to 0
+    assert(0 == consumer_dispatcher.read_answer(), 'Invalid answer');
+
+    // No mock data has been set for the MockAggregator, so this should write 0 into answer
+    consumer_dispatcher.set_answer();
+
+    // Let's double check that the answer is still 0
+    assert(0 == consumer_dispatcher.read_answer(), 'Invalid answer');
+
+    // Now let's set the latest round data to some random values
+    let answer = 1;
+    let block_num = 12345;
+    let observation_timestamp = 100000;
+    let transmission_timestamp = 200000;
+    mock_aggregator_dispatcher
+        .set_latest_round_data(answer, block_num, observation_timestamp, transmission_timestamp);
+
+    // This should update the consumer's answer with the mocked value
+    consumer_dispatcher.set_answer();
+
+    // Let's double check that this is the case
+    assert(answer == consumer_dispatcher.read_answer(), 'Invalid answer');
+}
+
