@@ -12,8 +12,8 @@ fn main() {
     // Feel free to modify these 
     let answer = 1;
     let block_num = 12345;
-    let observation_timestamp = 100000;
-    let transmission_timestamp = 200000;
+    let observation_timestamp = 1711716556;
+    let transmission_timestamp = 1711716514;
 
     let result = invoke(
         mock_aggregator_address,
