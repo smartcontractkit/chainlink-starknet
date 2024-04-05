@@ -9,7 +9,7 @@ fn main() {
         .try_into()
         .unwrap();
 
-    let result = call(aggregator_address, selector!("read_decimals"), array![]);
+    let result = call(aggregator_address, selector!("decimals"), array![]);
     if result.is_err() {
         println!("{:?}", result.unwrap_err());
         panic_with_felt252('call failed');

@@ -5,7 +5,7 @@ use starknet::ContractAddress;
 fn main() {
     // If you are using testnet, this address may need to be changed
     // If you are using the local starknet-devnet-rs container, this can be left alone
-    let consumer_address = 0x5b12015734ce4bc3c72f9ae4d87ed80e2a28497b21e220a702d1e20e854b0cd
+    let consumer_address = 0x56e078ee90929f13f2ca83545c71b98136c99b22822ada66ad2aff9595439fc
         .try_into()
         .unwrap();
 
