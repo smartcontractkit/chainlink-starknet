@@ -186,7 +186,7 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt
 	return ans, nil
 }
 
-func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (eventsAsFeltArrs [][]*felt.Felt, err error) {
+func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (events []starknetrpc.EmittedEvent, err error) {
 	block := starknetrpc.WithBlockNumber(blockNum)
 
 	eventKey := starknetutils.GetSelectorFromNameFelt(eventType)
@@ -205,32 +205,30 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, e
 			ChunkSize: 10,
 		},
 	}
-	events, err := c.r.Events(ctx, input)
+	chunk, err := c.r.Events(ctx, input)
+	events = chunk.Events
 
 	// TODO: check events.isLastPage, query more if needed
 
 	if err != nil {
-		return eventsAsFeltArrs, errors.Wrap(err, "couldn't fetch events for block")
+		return events, errors.Wrap(err, "couldn't fetch events for block")
 	}
 
-	for _, event := range events.Events {
-		eventsAsFeltArrs = append(eventsAsFeltArrs, event.Data)
-	}
-	if len(eventsAsFeltArrs) == 0 {
+	if len(events) == 0 {
 		return nil, errors.New("events not found in the block")
 	}
-	return eventsAsFeltArrs, nil
+	return events, nil
 }
 
 func (c *Client) ConfigFromEventAt(ctx context.Context, address *felt.Felt, blockNum uint64) (cc ContractConfig, err error) {
-	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
+	events, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
 	if err != nil {
 		return cc, errors.Wrap(err, "failed to fetch config_set events")
 	}
-	if len(eventsAsFeltArrs) != 1 {
-		return cc, fmt.Errorf("expected to find one config_set event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	if len(events) != 1 {
+		return cc, fmt.Errorf("expected to find one config_set event in block %d for address %s but found %d", blockNum, address, len(events))
 	}
-	configAtEvent := eventsAsFeltArrs[0]
+	configAtEvent := events[0]
 	config, err := ParseConfigSetEvent(configAtEvent)
 	if err != nil {
 		return cc, errors.Wrap(err, "couldn't parse config event")
@@ -243,16 +241,16 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address *felt.Felt, bloc
 
 // NewTransmissionsFromEventsAt finds events of type new_transmission emitted by the contract address in a given block number.
 func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address *felt.Felt, blockNum uint64) (events []NewTransmissionEvent, err error) {
-	eventsAsFeltArrs, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
+	rawEvents, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch new_transmission events")
 	}
-	if len(eventsAsFeltArrs) == 0 {
-		return nil, fmt.Errorf("expected to find at least one new_transmission event in block %d for address %s but found %d", blockNum, address, len(eventsAsFeltArrs))
+	if len(rawEvents) == 0 {
+		return nil, fmt.Errorf("expected to find at least one new_transmission event in block %d for address %s but found %d", blockNum, address, len(rawEvents))
 	}
 	events = []NewTransmissionEvent{}
-	for _, felts := range eventsAsFeltArrs {
-		event, err := ParseNewTransmissionEvent(felts)
+	for _, rawEvent := range rawEvents {
+		event, err := ParseNewTransmissionEvent(rawEvent)
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't parse new_transmission event")
 		}
