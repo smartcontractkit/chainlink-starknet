@@ -172,84 +172,50 @@ Once the container is restarted, let's deploy the MockAggregator contract and th
 make devnet-deploy
 ```
 
-The AggregatorConsumer takes the address of an aggregator contract as input (in this case it is the MockAggregator). It comes with two methods:
+The AggregatorConsumer is a simple contract that can be used to store the latest answer of an Aggregator contract. It takes the address of an aggregator contract as input (in this case it is the MockAggregator), and it comes with the following methods:
 
-- `set_answer`: this function reads the latest round data from the aggregator and stores the round answer in storage.
+- `set_answer`: this function sets the answer to a new value.
 - `read_answer`: this function reads the answer from storage. The answer is initially set to 0 on deployment.
+- `read_ocr_address`: this function returns the address of the aggregator contract.
 
-At this point, the latest round data has not been set, so calling `set_answer` on the AggregatorConsumer contract will trivially set the answer to 0. You can run the following commands to verify this:
+At this point, the AggregatorConsumer's answer has not been set, so calling `read_answer` on the AggregatorConsumer contract will return 0. You can run the following commands to verify this:
 
-- Let's check that the answer is initially set to 0:
-
-  Command:
-
-  ```sh
-  make ac-read-answer NETWORK=devnet
-  ```
-
-  Output:
-
-
-  ```text
-  Result::Ok(CallResult { data: [0] })
-  command: script run
-  status: success
-  ```
-
-- Let's set the answer:
-
-  Command:
-
-  ```sh
-  make ac-set-answer NETWORK=devnet 
-  ```
-
-  Output:
-
-  ```text
-  Transaction hash = 0x7897b80451a4e4d6df1dc575fffe9b6ebc774bd675eb24c8cf83e0a3818071
-  Result::Ok(InvokeResult { transaction_hash: 213068772556793858646692905972104002796353690311811440814152767066255491185 })
-  command: script run
-  status: success
-  ```
-
-- The answer should still be 0:
-
-  Command:
-
-  ```sh
-  make ac-read-answer NETWORK=devnet
-  ```
-
-  Output:
-
-
-  ```text
-  Result::Ok(CallResult { data: [0] })
-  command: script run
-  status: success
-  ```
-
-
-To change this, let's set the latest round data to some dummy values:
-
-```sh
-make ma-set-latest-round NETWORK=devnet 
-```
-
-Then let's refresh the AggregatorConsumer's answer:
-
-```sh
-make ac-set-answer NETWORK=devnet 
-```
-
-Finally, let's read the AggregatorConsumer's answer:
+Command:
 
 ```sh
 make ac-read-answer NETWORK=devnet
 ```
 
-This should result in the following:
+Output:
+
+
+```text
+Result::Ok(CallResult { data: [0] })
+command: script run
+status: success
+```
+
+To change this, let's use the set the MockAggregator's latest round data to some dummy values:
+
+```sh
+make ma-set-latest-round NETWORK=devnet 
+```
+
+Now let's query the latest round data from the MockAggregator and store the latest round answer in the AggregatorConsumer:
+
+```sh
+make ac-set-answer NETWORK=devnet 
+```
+
+Now, reading the AggregatorConsumer's answer returns a non-zero value:
+
+Command:
+
+```sh
+make ac-read-answer NETWORK=devnet
+```
+
+Output:
 
 ```text
 Result::Ok(CallResult { data: [1] })

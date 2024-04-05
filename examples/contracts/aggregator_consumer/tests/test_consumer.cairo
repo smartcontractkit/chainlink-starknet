@@ -78,14 +78,17 @@ fn test_set_and_read_answer() {
     let consumer_address = deploy_consumer(mock_aggregator_address);
     let consumer_dispatcher = IAggregatorConsumerDispatcher { contract_address: consumer_address };
 
-    // The answer has not been set, so it should default to 0
-    assert(0 == consumer_dispatcher.read_answer(), 'Invalid answer');
+    // Let's make sure the AggregatorConsumer was initialized correctly
+    assert(consumer_dispatcher.read_ocr_address() == mock_aggregator_address, 'Invalid OCR address');
+    assert(consumer_dispatcher.read_answer() == 0, 'Invalid initial answer');
 
-    // No mock data has been set for the MockAggregator, so this should write 0 into answer
-    consumer_dispatcher.set_answer();
-
-    // Let's double check that the answer is still 0
-    assert(0 == consumer_dispatcher.read_answer(), 'Invalid answer');
+    // No round data has been initialized, so reading the latest round should return no data
+    let empty_latest_round = consumer_dispatcher.read_latest_round();
+    assert(empty_latest_round.round_id == 0, 'round_id != 0');
+    assert(empty_latest_round.answer == 0, 'answer != 0');
+    assert(empty_latest_round.block_num == 0, 'block_num != 0');
+    assert(empty_latest_round.started_at == 0, 'started_at != 0');
+    assert(empty_latest_round.updated_at == 0, 'updated_at != 0');
 
     // Now let's set the latest round data to some random values
     let answer = 1;
@@ -95,10 +98,16 @@ fn test_set_and_read_answer() {
     mock_aggregator_dispatcher
         .set_latest_round_data(answer, block_num, observation_timestamp, transmission_timestamp);
 
-    // This should update the consumer's answer with the mocked value
-    consumer_dispatcher.set_answer();
+    // The consumer should be able to query the aggregator for the new latest round data
+    let latest_round = consumer_dispatcher.read_latest_round();
+    assert(latest_round.round_id == 1, 'round_id != 1');
+    assert(latest_round.answer == answer, 'bad answer');
+    assert(latest_round.block_num == block_num, 'bad block_num');
+    assert(latest_round.started_at == observation_timestamp, 'bad started_at');
+    assert(latest_round.updated_at == transmission_timestamp, 'bad updated_at');
 
-    // Let's double check that this is the case
+    // Now let's test that we can set the answer 
+    consumer_dispatcher.set_answer(latest_round.answer);
     assert(answer == consumer_dispatcher.read_answer(), 'Invalid answer');
 }
 
