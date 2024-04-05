@@ -9,7 +9,7 @@ fn declare_and_deploy(
     contract_name: ByteArray, constructor_calldata: Array<felt252>
 ) -> DeployResult {
     let mut class_hash: ClassHash =
-        0x100157fc2d1c88776e1c9b75dd6ee62e83212f45f6c4b511e02e1d5d3ae08f6
+        0x6d1dd0e5fa4e0284dcf341997f1d781bc2fb7d76ada684da7a2a33c38031df5
         .try_into()
         .unwrap();
 
