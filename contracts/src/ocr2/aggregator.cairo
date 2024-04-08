@@ -244,8 +244,10 @@ mod Aggregator {
 
     #[derive(Drop, starknet::Event)]
     struct NewTransmission {
+        #[key]
         round_id: u128,
         answer: u128,
+        #[key]
         transmitter: ContractAddress,
         observation_timestamp: u64,
         observers: felt252,
@@ -418,7 +420,9 @@ mod Aggregator {
 
     #[derive(Drop, starknet::Event)]
     struct ConfigSet {
+        #[key]
         previous_config_block_number: u64,
+        #[key]
         latest_config_digest: felt252,
         config_count: u64,
         oracles: Array<OracleConfig>,
@@ -848,7 +852,9 @@ mod Aggregator {
 
     #[derive(Drop, starknet::Event)]
     struct BillingAccessControllerSet {
+        #[key]
         old_controller: ContractAddress,
+        #[key]
         new_controller: ContractAddress,
     }
 
@@ -859,6 +865,7 @@ mod Aggregator {
 
     #[derive(Drop, starknet::Event)]
     struct OraclePaid {
+        #[key]
         transmitter: ContractAddress,
         payee: ContractAddress,
         amount: u256,
@@ -867,7 +874,9 @@ mod Aggregator {
 
     #[derive(Drop, starknet::Event)]
     struct LinkTokenSet {
+        #[key]
         old_link_token: ContractAddress,
+        #[key]
         new_link_token: ContractAddress
     }
 
@@ -1150,15 +1159,21 @@ mod Aggregator {
 
     #[derive(Drop, starknet::Event)]
     struct PayeeshipTransferRequested {
+        #[key]
         transmitter: ContractAddress,
+        #[key]
         current: ContractAddress,
+        #[key]
         proposed: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
     struct PayeeshipTransferred {
+        #[key]
         transmitter: ContractAddress,
+        #[key]
         previous: ContractAddress,
+        #[key]
         current: ContractAddress,
     }
 

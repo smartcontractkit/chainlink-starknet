@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -18,28 +19,37 @@ import (
 )
 
 var (
+	// NewTransmission
+	newTransmissionEventKeysRaw = []string{
+		"0x9", // event_id
+		"0x1", // round_id
+		"0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d", // transmitter
+	}
 	newTransmissionEventRaw = []string{
-		"0x1",
-		"0x63",
-		"0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
-		"0x1",
-		"0x10203000000000000000000000000000000000000000000000000000000",
-		"0x4",
+		"0x63", // answer
+		"0x1",  // observation_timestamp
+		"0x10203000000000000000000000000000000000000000000000000000000", // observers
+		"0x4", // len(observations)
 		"0x63",
 		"0x63",
 		"0x63",
 		"0x63",
-		"0x1",
-		"0x1",
-		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453",
-		"0x1",
-		"0x1",
+		"0x1", // juels_per_fee_coin
+		"0x1", // gas_price
+		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453", // config_digest
+		"0x1", // epoch_and_round
+		"0x1", // reimbursement
+	}
+
+	// ConfigSet
+	configSetEventKeysRaw = []string{
+		"0x10", // event_id
+		"0x0",  // previous_block_number
+		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453", // lastest_config_digest
 	}
 	configSetEventRaw = []string{
-		"0x0",
-		"0x485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453",
-		"0x1",
-		"0x4",
+		"0x1", // config_count
+		"0x4", // len(oracles)
 		"0x21e867aa6e6c545949a9c6f9f5401b70007bd93675857a0a7d5345b8bffcbf0",
 		"0x2c0dd77ce74b1667dc6fa782bbafaef5becbe2d04b052726ab236daeb52ac5d",
 		"0x64642f34e68436f45757b920f4cdfbdff82728844d740bac672a19ad72011ca",
@@ -48,24 +58,32 @@ var (
 		"0x2f14e18cc198dd5133c8a9aa92992fc1a462f703401716f402d0ee383b54faa",
 		"0x4fcf11b05ebd00a207030c04836defbec3d37a3f77e581f2d0962a20a55adcd",
 		"0x5c35686f78db31d9d896bb425b3fd99be19019f8aeaf0f7a8767867903341d4",
-		"0x1",
-		"0x3",
+		"0x1", // f
+		"0x3", // len(onchain_config)
 		"0x1",
 		"0xa",
 		"0x3b9aca00",
-		"0x2",
-		"0x2",
+		"0x2", // offchain_config_version
+		"0x2", // len(offchain_config)
 		"0x1",
 		"0x1",
 	}
 )
 
 func TestNewTransmissionEvent_Parse(t *testing.T) {
+	eventKeys, err := starknetutils.HexArrToFelt(newTransmissionEventKeysRaw)
+	assert.NoError(t, err)
 	eventData, err := starknetutils.HexArrToFelt(newTransmissionEventRaw)
 	assert.NoError(t, err)
 	require.Equal(t, len(newTransmissionEventRaw), len(eventData))
 
-	e, err := ParseNewTransmissionEvent(eventData)
+	event := starknetrpc.EmittedEvent{
+		Event: starknetrpc.Event{
+			Keys: eventKeys,
+			Data: eventData,
+		},
+	}
+	e, err := ParseNewTransmissionEvent(event)
 	assert.NoError(t, err)
 
 	require.Equal(t, e.RoundId, uint32(1))
@@ -95,11 +113,19 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 }
 
 func TestConfigSetEvent_Parse(t *testing.T) {
+	eventKeys, err := starknetutils.HexArrToFelt(configSetEventKeysRaw)
+	assert.NoError(t, err)
 	eventData, err := starknetutils.HexArrToFelt(configSetEventRaw)
 	assert.NoError(t, err)
 	require.Equal(t, len(configSetEventRaw), len(eventData))
 
-	e, err := ParseConfigSetEvent(eventData)
+	event := starknetrpc.EmittedEvent{
+		Event: starknetrpc.Event{
+			Keys: eventKeys,
+			Data: eventData,
+		},
+	}
+	e, err := ParseConfigSetEvent(event)
 	assert.NoError(t, err)
 
 	configDigest := XXXMustBytesToConfigDigest(starknet.XXXMustHexDecodeString("000485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453"))
