@@ -46,7 +46,7 @@ func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionE
 	{
 		const observationsLenIndex = 3
 		const constNumOfElements = 9
-		const constNumOfKeys = 2
+		const constNumOfKeys = 2 + 1 // additional 1 for the automatic event ID key
 
 		if len(eventData) < constNumOfElements {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
