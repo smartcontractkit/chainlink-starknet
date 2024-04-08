@@ -4,8 +4,8 @@ import { feltsToBytes } from '@chainlink/starknet-gauntlet'
 export const decodeOffchainConfigFromEventData = (data: string[]): encoding.OffchainConfig => {
   // The ConfigSet event is defined as:
   // fn ConfigSet(
-  //   previous_config_block_number: u64,
-  //   latest_config_digest: felt252,
+  //   previous_config_block_number: u64, (key)
+  //   latest_config_digest: felt252, (key)
   //   config_count: u64,
   //   oracles: Array<OracleConfig>,
   //   f: u8,
@@ -13,7 +13,7 @@ export const decodeOffchainConfigFromEventData = (data: string[]): encoding.Offc
   //   offchain_config_version: u64,
   //   offchain_config: Array<felt252>,
   //)
-  const oraclesLenIndex = 3
+  const oraclesLenIndex = 1
   const oraclesLen = Number(BigInt(data[oraclesLenIndex]))
   const oracleStructSize = 2
   const fIndex = oraclesLenIndex + oraclesLen * oracleStructSize + 1
