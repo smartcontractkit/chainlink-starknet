@@ -56,7 +56,7 @@ mod SequencerUptimeFeed {
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
         // l1 sender is an starknet validator ethereum address
-        _l1_sender: felt252,
+        _l1_sender: EthAddress,
         // maps round id to round transmission
         _round_transmissions: LegacyMap<u128, Transmission>,
         _latest_round_id: u128,
@@ -79,34 +79,43 @@ mod SequencerUptimeFeed {
     #[derive(Drop, starknet::Event)]
     struct RoundUpdated {
         status: u128,
+        #[key]
         updated_at: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct NewRound {
+        #[key]
         round_id: u128,
-        started_by: ContractAddress,
+        #[key]
+        started_by: EthAddress,
         started_at: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct AnswerUpdated {
         current: u128,
+        #[key]
         round_id: u128,
+        #[key]
         timestamp: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct UpdateIgnored {
         latest_status: u128,
+        #[key]
         latest_timestamp: u64,
         incoming_status: u128,
+        #[key]
         incoming_timestamp: u64
     }
 
     #[derive(Drop, starknet::Event)]
     struct L1SenderTransferred {
+        #[key]
         from_address: EthAddress,
+        #[key]
         to_address: EthAddress
     }
 
@@ -134,7 +143,7 @@ mod SequencerUptimeFeed {
 
         fn round_data(self: @ContractState, round_id: u128) -> Round {
             self._require_read_access();
-            assert(round_id < self._latest_round_id.read(), 'invalid round id');
+            assert(round_id <= self._latest_round_id.read(), 'invalid round id');
             let round_transmission = self._round_transmissions.read(round_id);
             Round {
                 round_id: round_id.into(),
@@ -161,6 +170,8 @@ mod SequencerUptimeFeed {
 
     #[l1_handler]
     fn update_status(ref self: ContractState, from_address: felt252, status: u128, timestamp: u64) {
+        //  Cairo enforces from_address to be a felt252 on the method signature, but we can cast it right after
+        let from_address: EthAddress = from_address.try_into().unwrap();
         assert(self._l1_sender.read() == from_address, 'EXPECTED_FROM_BRIDGE_ONLY');
 
         let latest_round_id = self._latest_round_id.read();
@@ -186,7 +197,7 @@ mod SequencerUptimeFeed {
         } else {
             // only increment round when status flips
             let round_id = latest_round_id + 1_u128;
-            self._record_round(round_id, status, timestamp);
+            self._record_round(from_address, round_id, status, timestamp);
         }
     }
 
@@ -199,21 +210,19 @@ mod SequencerUptimeFeed {
 
             let old_address = self._l1_sender.read();
 
-            if old_address != address.into() {
-                self._l1_sender.write(address.into());
+            if old_address != address {
+                self._l1_sender.write(address);
                 self
                     .emit(
                         Event::L1SenderTransferred(
-                            L1SenderTransferred {
-                                from_address: old_address.try_into().unwrap(), to_address: address
-                            }
+                            L1SenderTransferred { from_address: old_address, to_address: address }
                         )
                     );
             }
         }
 
         fn l1_sender(self: @ContractState) -> EthAddress {
-            self._l1_sender.read().try_into().unwrap()
+            self._l1_sender.read()
         }
     }
 
@@ -245,10 +254,19 @@ mod SequencerUptimeFeed {
             self.access_control.initializer();
             let round_id = 1_u128;
             let timestamp = starknet::info::get_block_timestamp();
-            self._record_round(round_id, initial_status, timestamp);
+            let from_address = EthAddress {
+                address: 0
+            }; // initial round is set by the constructor, not by an L1 sender
+            self._record_round(from_address, round_id, initial_status, timestamp);
         }
 
-        fn _record_round(ref self: ContractState, round_id: u128, status: u128, timestamp: u64) {
+        fn _record_round(
+            ref self: ContractState,
+            sender: EthAddress,
+            round_id: u128,
+            status: u128,
+            timestamp: u64
+        ) {
             self._latest_round_id.write(round_id);
             let block_info = starknet::info::get_block_info().unbox();
             let block_number = block_info.block_number;
@@ -261,8 +279,6 @@ mod SequencerUptimeFeed {
                 transmission_timestamp: block_timestamp,
             };
             self._round_transmissions.write(round_id, round);
-
-            let sender = starknet::info::get_caller_address();
 
             self
                 .emit(

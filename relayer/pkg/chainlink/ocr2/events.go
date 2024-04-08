@@ -10,6 +10,7 @@ import (
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
@@ -40,12 +41,18 @@ type NewTransmissionEvent struct {
 }
 
 // ParseNewTransmissionEvent is decoding binary felt data as the NewTransmissionEvent type
-func ParseNewTransmissionEvent(eventData []*felt.Felt) (NewTransmissionEvent, error) {
+func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionEvent, error) {
+	eventData := event.Data
 	{
-		const observationsLenIndex = 5
-		const constNumOfElements = 11
+		const observationsLenIndex = 3
+		const constNumOfElements = 9
+		const constNumOfKeys = 2 + 1 // additional 1 for the automatic event ID key
 
 		if len(eventData) < constNumOfElements {
+			return NewTransmissionEvent{}, errors.New("invalid: event data")
+		}
+
+		if len(event.Keys) < constNumOfKeys {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
 
@@ -55,17 +62,16 @@ func ParseNewTransmissionEvent(eventData []*felt.Felt) (NewTransmissionEvent, er
 		}
 	}
 
+	// keys[0] == event_id
 	// round_id
+	roundId := uint32(event.Keys[1].BigInt(big.NewInt(0)).Uint64())
+	// transmitter
+	transmitter := event.Keys[2]
+
 	index := 0
-	roundId := uint32(eventData[index].BigInt(big.NewInt(0)).Uint64())
 
 	// answer
-	index++
 	latestAnswer := eventData[index].BigInt(big.NewInt(0))
-
-	// transmitter
-	index++
-	transmitter := eventData[index]
 
 	// observation_timestamp
 	index++
@@ -130,9 +136,10 @@ func ParseNewTransmissionEvent(eventData []*felt.Felt) (NewTransmissionEvent, er
 }
 
 // ParseConfigSetEvent is decoding binary felt data as the libocr ContractConfig type
-func ParseConfigSetEvent(eventData []*felt.Felt) (types.ContractConfig, error) {
+func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, error) {
+	eventData := event.Data
 	{
-		const oraclesLenIdx = 3
+		const oraclesLenIdx = 1
 		if len(eventData) < oraclesLenIdx {
 			return types.ContractConfig{}, errors.New("invalid: event data")
 		}
@@ -157,15 +164,15 @@ func ParseConfigSetEvent(eventData []*felt.Felt) (types.ContractConfig, error) {
 		}
 	}
 
-	index := 0
-	// previous_config_block_number - skip
+	// keys[0] == event_id
+	// keys[1] == previous_config_block_number - skip
 
 	// latest_config_digest
-	index++
-	digest := eventData[index].Bytes()
+	digest := event.Keys[2].Bytes()
+
+	index := 0
 
 	// config_count
-	index++
 	configCount := eventData[index].BigInt(big.NewInt(0)).Uint64()
 
 	// oracles_len

@@ -180,7 +180,7 @@ describe('OCR2 Contract', () => {
       // reconstruct signers array from event
       const eventSigners: bigint[] = []
       for (let i = 0; i < signers.length; i++) {
-        const signer = BigInt(eventData[4 + 2 * i]) // split according to event structure
+        const signer = BigInt(eventData[2 + 2 * i]) // split according to event structure
         eventSigners.push(signer)
       }
 
