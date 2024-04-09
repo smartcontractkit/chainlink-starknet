@@ -27,13 +27,5 @@ export const getLatestOCRConfigEvent = async (
     keys: [keyFilter],
     chunk_size: 10,
   })
-  const events = chunk.events
-  // if no config set events found in the given block, throw error
-  // this should not happen if block number in latestConfigDetails is set correctly
-  if (events.length === 0)
-    throw new Error(`No ConfigSet events found in block number ${latestConfigDetails.blockNumber}`)
-
-  // assume last event found is the latest config, in the event that multiple
-  // set_config transactions ended up in the same block
-  return events[events.length - 1].data
+  return chunk.events
 }
