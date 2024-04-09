@@ -260,7 +260,7 @@ test-cairo-contracts:
 .PHONY: env-devnet-hardhat
 env-devnet-hardhat:
 	./ops/scripts/devnet-hardhat.sh
-
+#
 .PHONY: env-devnet-hardhat-down
 env-devnet-hardhat-down:
 	./ops/scripts/devnet-hardhat-down.sh
