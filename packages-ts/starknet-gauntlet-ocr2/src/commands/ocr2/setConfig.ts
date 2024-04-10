@@ -14,6 +14,7 @@ import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contrac
 import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { getLatestOCRConfigEvent } from './inspection/configEvent'
+import { BigNumberish, GetTransactionReceiptResponse } from 'starknet'
 
 type Oracle = {
   signer: string
@@ -136,15 +137,26 @@ const beforeExecute: BeforeExecute<SetConfigInput, ContractInput> = (
     input.user.offchainConfig,
     input.user.secret,
   )
+
   const newOffchainConfig = encoding.deserializeConfig(offchainConfig)
 
-  const eventData = await getLatestOCRConfigEvent(context.provider, context.contractAddress)
-  if (eventData.length === 0) {
+  const rawEvents = await getLatestOCRConfigEvent(context.provider, context.contractAddress)
+  if (rawEvents.length === 0) {
+    // if no config set events found in the given block, throw error
+    // this should not happen if block number in latestConfigDetails is set correctly
     deps.logger.info('No previous config found, review the offchain config below:')
     deps.logger.log(newOffchainConfig)
     return
   }
-  const currOffchainConfig = decodeOffchainConfigFromEventData(eventData)
+  // assume last event found is the latest config, in the event that multiple
+  // set_config transactions ended up in the same block
+  const events = context.contract.parseEvents({
+    events: rawEvents,
+  } as GetTransactionReceiptResponse)
+  const event = events[events.length - 1]['ConfigSet']
+  const currOffchainConfig = decodeOffchainConfigFromEventData(
+    event.offchain_config as BigNumberish[],
+  )
 
   deps.logger.info(
     'Review the proposed offchain config changes below: green - added, red - deleted.',
@@ -162,7 +174,9 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
   }
   const eventData = txInfo.events[0].data
 
-  const offchainConfig = decodeOffchainConfigFromEventData(eventData)
+  const events = context.contract.parseEvents(txInfo)
+  const event = events[events.length - 1]['ConfigSet']
+  const offchainConfig = decodeOffchainConfigFromEventData(event.offchain_config as BigNumberish[])
   try {
     // remove cfg keys from user input
     delete input.user.offchainConfig.configPublicKeys

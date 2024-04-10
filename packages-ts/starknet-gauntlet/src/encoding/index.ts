@@ -1,4 +1,4 @@
-import { cairo } from 'starknet'
+import { BigNumberish, cairo } from 'starknet'
 
 const CHUNK_SIZE = 31
 
@@ -28,7 +28,7 @@ export function bytesToFelts(data: Uint8Array | Buffer): string[] {
 
 const MAX_LEN: bigint = (BigInt(1) << BigInt(54)) - BigInt(1)
 
-export function feltsToBytes(felts: string[]): Buffer {
+export function feltsToBytes(felts: BigNumberish[]): Buffer {
   const data: number[] = []
 
   if (!felts.length) {
