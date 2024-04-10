@@ -9,7 +9,7 @@ import { Stark as LedgerClient, LedgerError } from '@ledgerhq/hw-app-starknet'
 export const DEFAULT_LEDGER_PATH = "m/2645'/579218131'/894929996'/0'"
 export const LEDGER_PATH_REGEX = /^\s*m\s*\/\s*2645\s*\'\s*\/\s*579218131\s*\'\s*\/\s*(\d+)\s*\'\s*\/\s*(\d+)\s*\'$/
 
-class LedgerSigner extends Signer {
+export class LedgerSigner extends Signer {
   client: LedgerClient
   path: string
   publicKey: string
