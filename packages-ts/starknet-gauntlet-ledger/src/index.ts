@@ -1,18 +1,5 @@
 import { IStarknetWallet, Env } from '@chainlink/starknet-gauntlet'
-import {
-  SignerInterface,
-  encode,
-  DeployAccountSignerDetails,
-  DeclareSignerDetails,
-  typedData,
-  hash,
-  transaction,
-  Abi,
-  Signature,
-  Call,
-  InvocationsSignerDetails,
-  ec,
-} from 'starknet'
+import { encode, Signature, ec, Signer } from 'starknet'
 import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
 
 // EIP-2645 path
@@ -22,13 +9,13 @@ import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
 export const DEFAULT_LEDGER_PATH = "m/2645'/579218131'/894929996'/0'"
 export const LEDGER_PATH_REGEX = /^\s*m\s*\/\s*2645\s*\'\s*\/\s*579218131\s*\'\s*\/\s*(\d+)\s*\'\s*\/\s*(\d+)\s*\'$/
 
-// TODO: why are we copying this rather than using https://github.com/yogh333/starknetjs-signer-ledger/blob/main/src/ledger-signer.ts
-class LedgerSigner implements SignerInterface {
+class LedgerSigner extends Signer {
   client: Stark
   path: string
   publicKey: string
 
   private constructor(client: Stark, path: string, publicKey: string) {
+    super()
     this.client = client
     this.path = path
     this.publicKey = publicKey
@@ -63,52 +50,11 @@ class LedgerSigner implements SignerInterface {
     return signer
   }
 
-  async getPubKey(): Promise<string> {
+  public async getPubKey(): Promise<string> {
     return this.publicKey
   }
 
-  async signTransaction(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-    abis?: Abi[],
-  ): Promise<Signature> {
-    // TODO: match https://github.com/starknet-io/starknet.js/blob/0f8b266da6709ddb897860575e09578e547d185c/src/signer/default.ts#L46-L77
-
-    const calldata = transaction.fromCallsToExecuteCalldataWithNonce(
-      transactions,
-      transactionsDetail.nonce,
-    )
-
-    // const msgHash = hash.calculateTransactionHash(
-    //   transactionsDetail.walletAddress,
-    //   transactionsDetail.version,
-    //   calldata,
-    //   transactionsDetail.maxFee,
-    //   transactionsDetail.chainId,
-    //   transactionsDetail.nonce,
-    // )
-
-    // return this.sign(msgHash)
-
-    throw 'unimplemented'
-  }
-
-  async signDeployAccountTransaction(transaction: DeployAccountSignerDetails): Promise<Signature> {
-    // TODO: implement this
-    return new ec.starkCurve.Signature(BigInt(0), BigInt(0))
-  }
-
-  async signDeclareTransaction(transaction: DeclareSignerDetails): Promise<Signature> {
-    // TODO: implement this
-    return new ec.starkCurve.Signature(BigInt(0), BigInt(0))
-  }
-
-  async signMessage(data: typedData.TypedData, accountAddress: string): Promise<Signature> {
-    const msgHash = typedData.getMessageHash(data, accountAddress)
-    return this.sign(msgHash)
-  }
-
-  async sign(hash: string): Promise<Signature> {
+  async signRaw(hash: string): Promise<Signature> {
     const response = await this.client.sign(this.path, hash, true)
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to sign the message: ${response.errorMessage}`)
