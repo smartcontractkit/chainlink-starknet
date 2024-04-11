@@ -12,6 +12,8 @@
     nodePackages.npm
     python3
 
+    python311Packages.ledgerwallet
+
     go_1_21
     gopls
     delve
