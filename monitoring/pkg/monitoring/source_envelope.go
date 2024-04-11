@@ -31,14 +31,13 @@ type envelopeSourceFactory struct {
 }
 
 func (s *envelopeSourceFactory) NewSource(
-	chainConfig relayMonitoring.ChainConfig,
-	feedConfig relayMonitoring.FeedConfig,
+	cfg relayMonitoring.Params,
 ) (relayMonitoring.Source, error) {
-	starknetChainConfig, ok := chainConfig.(StarknetConfig)
+	starknetChainConfig, ok := cfg.ChainConfig.(StarknetConfig)
 	if !ok {
-		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", feedConfig)
+		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", cfg.FeedConfig)
 	}
-	contractAddress, err := starknetutils.HexToFelt(feedConfig.GetContractAddress())
+	contractAddress, err := starknetutils.HexToFelt(cfg.FeedConfig.GetContractAddress())
 	if err != nil {
 		return nil, err
 	}

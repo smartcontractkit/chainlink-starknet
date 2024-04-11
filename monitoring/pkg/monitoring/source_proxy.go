@@ -30,12 +30,11 @@ type proxySourceFactory struct {
 }
 
 func (s *proxySourceFactory) NewSource(
-	_ relayMonitoring.ChainConfig,
-	feedConfig relayMonitoring.FeedConfig,
+	cfg relayMonitoring.Params,
 ) (relayMonitoring.Source, error) {
-	starknetFeedConfig, ok := feedConfig.(StarknetFeedConfig)
+	starknetFeedConfig, ok := cfg.FeedConfig.(StarknetFeedConfig)
 	if !ok {
-		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", feedConfig)
+		return nil, fmt.Errorf("expected feedConfig to be of type StarknetFeedConfig not %T", cfg.FeedConfig)
 	}
 	contractAddress, err := starknetutils.HexToFelt(starknetFeedConfig.ProxyAddress)
 	if err != nil {

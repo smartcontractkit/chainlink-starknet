@@ -33,7 +33,10 @@ func TestTxResultsSource(t *testing.T) {
 	).Return(ocr2ClientLatestRoundDataResponseForTxResults2, nil).Once()
 
 	factory := NewTxResultsSourceFactory(ocr2Reader)
-	source, err := factory.NewSource(chainConfig, feedConfig)
+	source, err := factory.NewSource(relayMonitoring.Params{
+		ChainConfig: chainConfig,
+		FeedConfig:  feedConfig,
+	})
 	require.NoError(t, err)
 	// First call identifies no new transactions.
 	rawTxResults, err := source.Fetch(context.Background())

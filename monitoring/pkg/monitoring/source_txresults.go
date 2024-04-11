@@ -26,10 +26,9 @@ type txResultsSourceFactory struct {
 }
 
 func (s *txResultsSourceFactory) NewSource(
-	_ relayMonitoring.ChainConfig,
-	feedConfig relayMonitoring.FeedConfig,
+	cfg relayMonitoring.Params,
 ) (relayMonitoring.Source, error) {
-	contractAddress, err := starknetutils.HexToFelt(feedConfig.GetContractAddress())
+	contractAddress, err := starknetutils.HexToFelt(cfg.FeedConfig.GetContractAddress())
 	if err != nil {
 		return nil, err
 	}

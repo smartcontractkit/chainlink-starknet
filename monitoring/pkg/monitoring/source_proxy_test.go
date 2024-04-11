@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	ocr2Mocks "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/mocks"
 )
@@ -29,7 +31,10 @@ func TestProxySource(t *testing.T) {
 	).Return(ocr2ClientLatestTransmissionDetailsResponseForProxy, nil).Once()
 
 	factory := NewProxySourceFactory(ocr2Reader)
-	source, err := factory.NewSource(chainConfig, feedConfig)
+	source, err := factory.NewSource(relayMonitoring.Params{
+		ChainConfig: chainConfig,
+		FeedConfig:  feedConfig,
+	})
 	require.NoError(t, err)
 	rawProxyData, err := source.Fetch(context.Background())
 	require.NoError(t, err)

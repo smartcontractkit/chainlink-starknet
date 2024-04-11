@@ -22,7 +22,7 @@ type prometheusExporterFactory struct {
 }
 
 func (p *prometheusExporterFactory) NewExporter(
-	params relayMonitoring.ExporterParams,
+	params relayMonitoring.Params,
 ) (relayMonitoring.Exporter, error) {
 	starknetFeedConfig, ok := params.FeedConfig.(StarknetFeedConfig)
 	if !ok {
@@ -35,6 +35,10 @@ func (p *prometheusExporterFactory) NewExporter(
 		sync.Mutex{},
 		map[string]struct{}{},
 	}, nil
+}
+
+func (p *prometheusExporterFactory) GetType() string {
+	return "prometheus"
 }
 
 type prometheusExporter struct {

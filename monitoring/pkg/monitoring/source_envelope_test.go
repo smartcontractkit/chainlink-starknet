@@ -71,7 +71,10 @@ func TestEnvelopeSource(t *testing.T) {
 	).Return(starknetReaderCallContractBalanceOfResponse, nil)
 
 	factory := NewEnvelopeSourceFactory(ocr2Reader)
-	source, err := factory.NewSource(chainConfig, feedConfig)
+	source, err := factory.NewSource(relayMonitoring.Params{
+		ChainConfig: chainConfig,
+		FeedConfig:  feedConfig,
+	})
 	require.NoError(t, err)
 	rawEnvelope, err := source.Fetch(context.Background())
 	require.NoError(t, err)
