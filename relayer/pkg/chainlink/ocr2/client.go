@@ -215,7 +215,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, e
 	}
 
 	if len(events) == 0 {
-		return nil, errors.New("events not found in the block")
+		return nil, fmt.Errorf("events not found in the block %d", blockNum)
 	}
 	return events, nil
 }
