@@ -12,13 +12,13 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.30.0
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240415221539-61f49438443a
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240213121419-1272736c2ac0
 	github.com/smartcontractkit/chainlink-testing-framework v1.27.0
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240215151806-009c99876c4c
 	github.com/smartcontractkit/chainlink/v2 v2.9.0-beta0.0.20240215151806-009c99876c4c
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/text v0.14.0
@@ -222,7 +222,7 @@ require (
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/hashicorp/consul/api v1.25.1 // indirect
-	github.com/hashicorp/consul/sdk v0.14.1 // indirect
+	github.com/hashicorp/consul/sdk v0.16.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-envparse v0.1.0 // indirect
@@ -355,7 +355,7 @@ require (
 	github.com/smartcontractkit/chainlink-feeds v0.0.0-20240119021347-3c541a78cdb8 // indirect
 	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20240213161921-c4d342b761b0 // indirect
 	github.com/smartcontractkit/chainlink-vrf v0.0.0-20231120191722-fef03814f868 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20240112202000-6359502d2ff1 // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20240326191951-2bbe9382d052 // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
 	github.com/smartcontractkit/tdh2/go/tdh2 v0.0.0-20230906073235-9e478e5e19f1 // indirect
 	github.com/smartcontractkit/wasp v0.4.2 // indirect
@@ -369,7 +369,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.16.0 // indirect
 	github.com/status-im/keycard-go v0.2.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
