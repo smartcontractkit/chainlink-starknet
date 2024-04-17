@@ -39,18 +39,3 @@ func StarknetNodesParser(buf io.ReadCloser) ([]commonMonitoring.NodeConfig, erro
 	}
 	return nodes, nil
 }
-
-func MakeStarknetNodeConfigs(in []commonMonitoring.NodeConfig) (out []StarknetNodeConfig, err error) {
-	for i := range in {
-		if in[i] == nil {
-			return nil, fmt.Errorf("node config is nil")
-		}
-
-		cfg, ok := in[i].(StarknetNodeConfig)
-		if !ok {
-			return nil, fmt.Errorf("expected NodeConfig to be of type config.StarknetNodeConfig not %T - node name %s", in[i], in[i].GetName())
-		}
-		out = append(out, cfg)
-	}
-	return out, nil
-}
