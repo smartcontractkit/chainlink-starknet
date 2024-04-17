@@ -1451,8 +1451,10 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/errors/-/errors-6.16.1.tgz#df650a9ba105397dee2e8c0ceddf6931c5b25ede"
   integrity sha512-4D4wKecGzQpIu7sx03Sg4uE1e8g1oZUndWgw9gw776H8h9ov9c5TxPaldTn2j6orPECAERViLf7LTO4L5pE2Cw==
 
-"@ledgerhq/hw-app-starknet@file:vendor/starknet-js-client":
-  version "2.1.0"
+"@ledgerhq/hw-app-starknet@^2.1.0":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/hw-app-starknet/-/hw-app-starknet-2.1.1.tgz#c4efc6c4447d45a90db327d8d4819b12df6b0cb7"
+  integrity sha512-VlFEo/LAh0kfQdZrruKfmFnc4a5LCVK7MjBgMj8LIfd9gf2H46//lIhtC4IX7dt8dYyCX5KuvzO0vBlvL63UXA==
   dependencies:
     "@ledgerhq/hw-transport" "^6.27.1"
     "@types/bn.js" "^5.1.1"
