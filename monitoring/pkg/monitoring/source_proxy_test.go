@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,12 +21,15 @@ func TestProxySource(t *testing.T) {
 	chainConfig := generateChainConfig()
 	feedConfig := generateFeedConfig()
 
+	proxyContractAddressFelt, err := starknetutils.HexToFelt(feedConfig.ProxyAddress)
+	require.NoError(t, err)
+
 	ocr2Reader := ocr2Mocks.NewOCR2Reader(t)
 	ocr2Reader.On(
-		"LatestTransmissionDetails",
+		"LatestRoundData",
 		mock.Anything, // ctx
-		feedConfig.ContractAddress,
-	).Return(ocr2ClientLatestTransmissionDetailsResponseForProxy, nil).Once()
+		proxyContractAddressFelt,
+	).Return(ocr2ClientLatestRoundDataResponseForProxy, nil).Once()
 
 	factory := NewProxySourceFactory(ocr2Reader)
 	source, err := factory.NewSource(chainConfig, feedConfig)
@@ -37,17 +40,17 @@ func TestProxySource(t *testing.T) {
 	require.True(t, ok)
 
 	require.Equal(t,
-		ocr2ClientLatestTransmissionDetailsResponseForProxy.LatestAnswer.String(),
+		ocr2ClientLatestRoundDataResponseForProxy.Answer.String(),
 		proxyData.Answer.String(),
 	)
 }
 
 var (
-	ocr2ClientLatestTransmissionDetailsResponseForProxy = ocr2.TransmissionDetails{
-		Digest:          types.ConfigDigest{0x0, 0x4, 0x18, 0xe5, 0x44, 0xab, 0xa8, 0x18, 0x15, 0xa5, 0x2b, 0xf0, 0x11, 0x58, 0xc6, 0x9b, 0x38, 0x8a, 0x48, 0x9f, 0x76, 0xd, 0xd8, 0x3d, 0x84, 0x3f, 0x1d, 0x31, 0x22, 0xdb, 0x78, 0xa},
-		Epoch:           0x1,
-		Round:           0x9,
-		LatestAnswer:    big.NewInt(10000),
-		LatestTimestamp: time.Now(),
+	ocr2ClientLatestRoundDataResponseForProxy = ocr2.RoundData{
+		RoundID:     9,
+		Answer:      big.NewInt(10000),
+		BlockNumber: 777,
+		StartedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 )
