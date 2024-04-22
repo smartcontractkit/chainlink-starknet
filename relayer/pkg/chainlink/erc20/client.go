@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
+//go:generate mockery --name ERC20Reader --output ./mocks/
 type ERC20Reader interface {
 	BalanceOf(context.Context, *felt.Felt) (*big.Int, error)
 	Decimals(context.Context) (*big.Int, error)
