@@ -25,7 +25,6 @@ func (f *nodeBalancesExporterFactory) NewExporter(params commonMonitoring.Export
 		log:         f.log,
 		metrics:     f.metrics,
 		chainConfig: params.ChainConfig,
-		addrsSet:    []ContractAddressWithBalance{},
 	}, nil
 }
 

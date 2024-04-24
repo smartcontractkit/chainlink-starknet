@@ -50,6 +50,10 @@ func (c *Client) BalanceOf(ctx context.Context, accountAddress *felt.Felt) (*big
 		return nil, fmt.Errorf("couldn't call balance_of on erc20: %w", err)
 	}
 
+	if len(balanceRes) != 1 {
+		return nil, fmt.Errorf("unexpected data returned from balance_of on erc20")
+	}
+
 	return starknetutils.FeltToBigInt(balanceRes[0]), nil
 
 }
@@ -66,6 +70,10 @@ func (c *Client) Decimals(ctx context.Context) (*big.Int, error) {
 
 		if err != nil {
 			return nil, fmt.Errorf("couldn't call decimals on erc20: %w", err)
+		}
+
+		if len(decimalsRes) != 1 {
+			return nil, fmt.Errorf("unexpected data returned from decimals on erc20")
 		}
 
 		c.decimals = starknetutils.FeltToBigInt(decimalsRes[0])
