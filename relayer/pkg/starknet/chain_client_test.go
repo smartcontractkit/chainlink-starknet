@@ -114,7 +114,7 @@ func TestChainClient(t *testing.T) {
 	defer mockServer.Close()
 
 	lggr := logger.Test(t)
-	client, err := NewClient(chainID, mockServer.URL, lggr, &myTimeout)
+	client, err := NewClient(chainID, mockServer.URL, "", lggr, &myTimeout)
 	require.NoError(t, err)
 	assert.Equal(t, myTimeout, client.defaultTimeout)
 
