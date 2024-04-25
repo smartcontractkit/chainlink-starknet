@@ -6,6 +6,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/erc20"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
@@ -50,6 +51,16 @@ func main() {
 		log.Fatalw("failed to build a ocr2.Client", "error", err)
 	}
 
+	strTokenClient, err := erc20.NewClient(
+		starknetClient,
+		logger.With(log, "component", "erc20-client"),
+		starknetConfig.GetStrkTokenAddress(),
+	)
+
+	if err != nil {
+		log.Fatalw("failed to build erc20-client", "error", err)
+	}
+
 	envelopeSourceFactory := monitoring.NewEnvelopeSourceFactory(ocr2Client)
 	txResultsFactory := monitoring.NewTxResultsSourceFactory(ocr2Client)
 
@@ -70,10 +81,19 @@ func main() {
 	proxySourceFactory := monitoring.NewProxySourceFactory(ocr2Client)
 	monitor.SourceFactories = append(monitor.SourceFactories, proxySourceFactory)
 
-	prometheusExporterFactory := monitoring.NewPrometheusExporterFactory(
-		monitoring.NewMetrics(logger.With(log, "component", "starknet-metrics")),
-	)
+	metricsBuilder := monitoring.NewMetrics(logger.With(log, "component", "starknet-metrics-builder"))
+
+	prometheusExporterFactory := monitoring.NewPrometheusExporterFactory(metricsBuilder)
 	monitor.ExporterFactories = append(monitor.ExporterFactories, prometheusExporterFactory)
+
+	nodeBalancesSourceFactory := monitoring.NewNodeBalancesSourceFactory(strTokenClient)
+	monitor.NetworkSourceFactories = append(monitor.NetworkSourceFactories, nodeBalancesSourceFactory)
+
+	nodeBalancesExporterFactory := monitoring.NewNodeBalancesExporterFactory(
+		logger.With(log, "node-balances-exporter"),
+		metricsBuilder,
+	)
+	monitor.NetworkExporterFactories = append(monitor.NetworkExporterFactories, nodeBalancesExporterFactory)
 
 	monitor.Run()
 	log.Info("monitor stopped")

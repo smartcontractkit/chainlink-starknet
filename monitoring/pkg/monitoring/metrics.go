@@ -11,7 +11,9 @@ import (
 type Metrics interface {
 	SetProxyAnswersRaw(answer float64, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	SetProxyAnswers(answer float64, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
-	Cleanup(proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
+	CleanupProxy(proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
+	SetBalance(answer float64, contractAddress, alias, networkId, networkName, chainID string)
+	CleanupBalance(contractAddress, alias, networkId, networkName, chainID string)
 }
 
 var (
@@ -29,6 +31,13 @@ var (
 		},
 		[]string{"proxy_contract_address", "feed_id", "chain_id", "contract_status", "contract_type", "feed_name", "feed_path", "network_id", "network_name"},
 	)
+	contractBalance = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "strk_contract_balance",
+			Help: "Reports the latest STRK balance of a contract address",
+		},
+		[]string{"contract_address", "alias", "network_id", "network_name"},
+	)
 )
 
 // NewMetrics does wisott
@@ -38,6 +47,29 @@ func NewMetrics(log relayMonitoring.Logger) Metrics {
 
 type defaultMetrics struct {
 	log relayMonitoring.Logger
+}
+
+func (d *defaultMetrics) SetBalance(answer float64, contractAddress, alias, networkId, networkName, chainID string) {
+	contractBalance.With(prometheus.Labels{
+		"contract_address": contractAddress,
+		"alias":            alias,
+		"network_id":       networkId,
+		"network_name":     networkName,
+		"chain_id":         chainID,
+	}).Set(answer)
+}
+
+func (d *defaultMetrics) CleanupBalance(contractAddress, alias, networkId, networkName, chainID string) {
+	labels := prometheus.Labels{
+		"contract_address": contractAddress,
+		"alias":            alias,
+		"network_id":       networkId,
+		"network_name":     networkName,
+		"chain_id":         chainID,
+	}
+	if !contractBalance.Delete(labels) {
+		d.log.Errorw("failed to delete metric", "name", "strk_contract_balance", "labels", labels)
+	}
 }
 
 func (d *defaultMetrics) SetProxyAnswersRaw(answer float64, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string) {
@@ -68,7 +100,7 @@ func (d *defaultMetrics) SetProxyAnswers(answer float64, proxyContractAddress, f
 	}).Set(answer)
 }
 
-func (d *defaultMetrics) Cleanup(
+func (d *defaultMetrics) CleanupProxy(
 	proxyContractAddress, feedID, chainID, contractStatus, contractType string,
 	feedName, feedPath, networkID, networkName string,
 ) {

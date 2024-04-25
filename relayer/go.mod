@@ -8,12 +8,12 @@ require (
 	github.com/NethermindEth/juno v0.3.1
 	github.com/NethermindEth/starknet.go v0.7.1-0.20240401080518-34a506f3cfdb
 	github.com/ethereum/go-ethereum v1.13.8
-	github.com/hashicorp/go-plugin v1.5.2
+	github.com/hashicorp/go-plugin v1.6.0
 	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240213113935-001c2f4befd4
 	github.com/smartcontractkit/libocr v0.0.0-20240112202000-6359502d2ff1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
@@ -58,7 +58,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
-	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
+	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
@@ -83,7 +83,7 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/test-go/testify v1.1.4 // indirect

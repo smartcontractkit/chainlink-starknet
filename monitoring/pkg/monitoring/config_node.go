@@ -7,7 +7,7 @@ import (
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
-	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
+	commonMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 )
 
 type StarknetNodeConfig struct {
@@ -27,13 +27,13 @@ func (s StarknetNodeConfig) GetAccount() types.Account {
 	return types.Account(address)
 }
 
-func StarknetNodesParser(buf io.ReadCloser) ([]relayMonitoring.NodeConfig, error) {
+func StarknetNodesParser(buf io.ReadCloser) ([]commonMonitoring.NodeConfig, error) {
 	rawNodes := []StarknetNodeConfig{}
 	decoder := json.NewDecoder(buf)
 	if err := decoder.Decode(&rawNodes); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal nodes config data: %w", err)
 	}
-	nodes := make([]relayMonitoring.NodeConfig, len(rawNodes))
+	nodes := make([]commonMonitoring.NodeConfig, len(rawNodes))
 	for i, rawNode := range rawNodes {
 		nodes[i] = rawNode
 	}
