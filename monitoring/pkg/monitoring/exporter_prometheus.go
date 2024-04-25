@@ -88,7 +88,7 @@ func (p *prometheusExporter) Cleanup(_ context.Context) {
 	p.addressesMu.Lock()
 	defer p.addressesMu.Unlock()
 	for address := range p.addressesSet {
-		p.metrics.Cleanup(
+		p.metrics.CleanupProxy(
 			address,
 			p.feedConfig.GetContractAddress(),
 			p.chainConfig.GetChainID(),
