@@ -78,14 +78,18 @@ func main() {
 		return
 	}
 
+	// per-feed factories
 	proxySourceFactory := monitoring.NewProxySourceFactory(ocr2Client)
-	monitor.SourceFactories = append(monitor.SourceFactories, proxySourceFactory)
+	transmissionsDetailsSourceFactory := monitoring.NewTransmissionDetailsSourceFactory(ocr2Client)
+	monitor.SourceFactories = append(monitor.SourceFactories, proxySourceFactory, transmissionsDetailsSourceFactory)
 
 	metricsBuilder := monitoring.NewMetrics(logger.With(log, "component", "starknet-metrics-builder"))
 
 	prometheusExporterFactory := monitoring.NewPrometheusExporterFactory(metricsBuilder)
-	monitor.ExporterFactories = append(monitor.ExporterFactories, prometheusExporterFactory)
+	transmissionsDetailsExporterFactory := monitoring.NewTransmissionDetailsExporterFactory(metricsBuilder)
+	monitor.ExporterFactories = append(monitor.ExporterFactories, prometheusExporterFactory, transmissionsDetailsExporterFactory)
 
+	// network factories
 	nodeBalancesSourceFactory := monitoring.NewNodeBalancesSourceFactory(strTokenClient)
 	monitor.NetworkSourceFactories = append(monitor.NetworkSourceFactories, nodeBalancesSourceFactory)
 
