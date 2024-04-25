@@ -5,7 +5,28 @@ import (
 	"math/big"
 	"math/rand"
 	"time"
+
+	commonMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 )
+
+func generateNodeConfig() []commonMonitoring.NodeConfig {
+	starknetNodes := []StarknetNodeConfig{
+		{
+			ID:          "node-0",
+			NodeAddress: []string{generateAddr()},
+		},
+		{
+			ID:          "node-1",
+			NodeAddress: []string{generateAddr()},
+		},
+	}
+
+	nodes := make([]commonMonitoring.NodeConfig, len(starknetNodes))
+	for i, starknetNode := range starknetNodes {
+		nodes[i] = starknetNode
+	}
+	return nodes
+}
 
 func generateChainConfig() StarknetConfig {
 	return StarknetConfig{
