@@ -1,3 +1,4 @@
+import fs from 'fs'
 import {
   CONTRACT_TYPES,
   AfterExecute,
@@ -15,6 +16,7 @@ import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { getLatestOCRConfigEvent } from './inspection/configEvent'
 import { BigNumberish, GetTransactionReceiptResponse } from 'starknet'
+import { saveJSON } from '@chainlink/gauntlet-core/dist/utils/io'
 
 type Oracle = {
   signer: string
@@ -122,7 +124,7 @@ const makeContractInput = async (
     input.offchainConfig,
     input.secret,
   )
-  let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
+  const onchainConfig = [] // onchain config should be empty array for input (generate onchain)
   return [oracles, input.f, onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
@@ -173,15 +175,29 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
     return { successfulConfiguration: false }
   }
   const eventData = txInfo.events[0].data
-
   const events = context.contract.parseEvents(txInfo)
   const event = events[events.length - 1]['ConfigSet']
   const offchainConfig = decodeOffchainConfigFromEventData(event.offchain_config as BigNumberish[])
+
   try {
     // remove cfg keys from user input
     delete input.user.offchainConfig.configPublicKeys
     assert.deepStrictEqual(offchainConfig, input.user.offchainConfig)
     deps.logger.success('Configuration was successfully set')
+
+    // write lastConfigDigest back to RDD
+    const configDigest = event.latest_config_digest as BigNumberish
+    deps.logger.info(`lastConfigDigest to save in RDD: ${configDigest.toString()}`)
+    if (context.flags.rdd) {
+      deps.logger.info(`rdd file found! will automatically lastConfigDigest for you`)
+      const rdd = getRDD(context.flags.rdd)
+      const newRdd = { ...rdd, ...{ 'lastConfigDigest': configDigest.toString() } }
+      fs.writeFileSync(context.flags.rdd, JSON.stringify(newRdd, null, 2))
+      deps.logger.info(`rdd file ${context.flags.rdd} updated. please reformat file`)
+    } else {
+      deps.logger.info(`You must manually update lastConfigDigest yourself`)
+    }
+
     return { successfulConfiguration: true }
   } catch (e) {
     deps.logger.error('Configuration set is different than provided')
