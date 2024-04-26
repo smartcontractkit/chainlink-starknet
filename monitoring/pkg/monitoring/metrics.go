@@ -36,7 +36,7 @@ var (
 			Name: "strk_contract_balance",
 			Help: "Reports the latest STRK balance of a contract address",
 		},
-		[]string{"contract_address", "alias", "network_id", "network_name"},
+		[]string{"contract_address", "alias", "network_id", "network_name", "chain_id"},
 	)
 )
 
