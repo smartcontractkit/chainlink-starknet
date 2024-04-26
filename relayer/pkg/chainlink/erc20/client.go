@@ -50,11 +50,20 @@ func (c *Client) BalanceOf(ctx context.Context, accountAddress *felt.Felt) (*big
 		return nil, fmt.Errorf("couldn't call balance_of on erc20: %w", err)
 	}
 
-	if len(balanceRes) != 1 {
+	if len(balanceRes) != 2 {
 		return nil, fmt.Errorf("unexpected data returned from balance_of on erc20")
 	}
 
-	return starknetutils.FeltToBigInt(balanceRes[0]), nil
+	// a u256 balance consists of 2 felts (lower 128 bits | higher 128 bits)
+	balance := starknetutils.FeltArrToBigIntArr(balanceRes)
+	low := balance[0]
+	high := balance[1]
+
+	// left shift "high" by 128 bits
+	summand := new(big.Int).Lsh(high, 128)
+	total := new(big.Int).Add(low, summand)
+
+	return total, nil
 
 }
 
