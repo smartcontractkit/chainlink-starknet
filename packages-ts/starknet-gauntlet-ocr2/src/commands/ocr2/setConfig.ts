@@ -16,7 +16,6 @@ import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { getLatestOCRConfigEvent } from './inspection/configEvent'
 import { BigNumberish, GetTransactionReceiptResponse } from 'starknet'
-import { saveJSON } from '@chainlink/gauntlet-core/dist/utils/io'
 
 type Oracle = {
   signer: string
