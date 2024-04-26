@@ -185,15 +185,15 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 
     // write lastConfigDigest back to RDD
     const configDigest = `0x${(event.latest_config_digest as bigint).toString(16)}`
-    deps.logger.info(`lastConfigDigest to save in RDD: ${configDigest}`)
+    deps.logger.info(`ℹ️  lastConfigDigest to save in RDD: ${configDigest}`)
     if (context.flags.rdd) {
-      deps.logger.info(`rdd file found! will automatically lastConfigDigest for you`)
+      deps.logger.info(`ℹ️ RDD file ${context.flags.rdd} found! Will automatically update lastConfigDigest for you`)
       const rdd = getRDD(context.flags.rdd)
       const newRdd = { ...rdd, ...{ 'lastConfigDigest': configDigest } }
       fs.writeFileSync(context.flags.rdd, JSON.stringify(newRdd, null, 2))
-      deps.logger.info(`rdd file ${context.flags.rdd} updated. please reformat file`)
+      deps.logger.info(`✅ RDD file ${context.flags.rdd} updated. Please reformat (run ./bin/generate and ./bin/degenerate) as needed`)
     } else {
-      deps.logger.info(`You must manually update lastConfigDigest yourself`)
+      deps.logger.info(`❗❗ no rdd file input, you must manually update lastConfigDigest in rdd yourself`)
     }
 
     return { successfulConfiguration: true }
