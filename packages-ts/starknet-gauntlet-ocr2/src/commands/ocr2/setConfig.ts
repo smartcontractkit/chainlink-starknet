@@ -173,7 +173,6 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
   if (!txInfo.isSuccess()) {
     return { successfulConfiguration: false }
   }
-  const eventData = txInfo.events[0].data
   const events = context.contract.parseEvents(txInfo)
   const event = events[events.length - 1]['ConfigSet']
   const offchainConfig = decodeOffchainConfigFromEventData(event.offchain_config as BigNumberish[])
