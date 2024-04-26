@@ -115,9 +115,17 @@ func TestChainClient(t *testing.T) {
 				{
 					"jsonrpc": "2.0",
 					"id": %d,
+					%s
+				},
+				{
+					"jsonrpc": "2.0",
+					"id": %d,
 					"result": %s
 				}
-			]`, batchCall[0].Id, blockResponse, batchCall[1].Id, blockHashAndNumberResponse)
+			]`, batchCall[0].Id, blockResponse,
+				batchCall[1].Id, blockResponse,
+				batchCall[2].Id, blockHashAndNumberResponse,
+			)
 
 			out = []byte(response)
 
@@ -139,6 +147,12 @@ func TestChainClient(t *testing.T) {
 		assert.Equal(t, blockHash, block.BlockHash)
 	})
 
+	t.Run("get BlockByNumber", func(t *testing.T) {
+		block, err := client.BlockByNumber(context.TODO(), uint64(blockNumber))
+		require.NoError(t, err)
+		assert.Equal(t, uint64(blockNumber), block.BlockNumber)
+	})
+
 	t.Run("get LatestBlockHashAndNumber", func(t *testing.T) {
 		output, err := client.LatestBlockHashAndNumber(context.TODO())
 		require.NoError(t, err)
@@ -148,14 +162,15 @@ func TestChainClient(t *testing.T) {
 
 	t.Run("get Batch", func(t *testing.T) {
 		builder := NewBatchBuilder()
-		builder.RequestBlockByHash(
-			blockHash,
-		).RequestLatestBlockHashAndNumber()
+		builder.
+			RequestBlockByHash(blockHash).
+			RequestBlockByNumber(uint64(blockNumber)).
+			RequestLatestBlockHashAndNumber()
 
 		results, err := client.Batch(context.TODO(), builder)
 		require.NoError(t, err)
 
-		assert.Equal(t, 2, len(results))
+		assert.Equal(t, 3, len(results))
 
 		t.Run("gets BlockByHash in Batch", func(t *testing.T) {
 			assert.Equal(t, "starknet_getBlockWithTxs", results[0].Method)
@@ -165,10 +180,19 @@ func TestChainClient(t *testing.T) {
 			assert.Equal(t, blockHash, block.BlockHash)
 		})
 
-		t.Run("gets LatestBlockHashAndNumber in Batch", func(t *testing.T) {
-			assert.Equal(t, "starknet_blockHashAndNumber", results[1].Method)
+		t.Run("gets BlockByNumber in Batch", func(t *testing.T) {
+			assert.Equal(t, "starknet_getBlockWithTxs", results[1].Method)
 			assert.Nil(t, results[1].Error)
-			info, ok := results[1].Result.(*starknetrpc.BlockHashAndNumberOutput)
+			block, ok := results[1].Result.(*FinalizedBlock)
+			assert.True(t, ok)
+			assert.Equal(t, uint64(blockNumber), block.BlockNumber)
+
+		})
+
+		t.Run("gets LatestBlockHashAndNumber in Batch", func(t *testing.T) {
+			assert.Equal(t, "starknet_blockHashAndNumber", results[2].Method)
+			assert.Nil(t, results[2].Error)
+			info, ok := results[2].Result.(*starknetrpc.BlockHashAndNumberOutput)
 			assert.True(t, ok)
 			assert.Equal(t, blockHash, info.BlockHash)
 			assert.Equal(t, uint64(blockNumber), info.BlockNumber)

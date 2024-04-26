@@ -15,11 +15,11 @@ type FinalizedBlock = starknetrpc.Block
 // used to create batch requests
 type StarknetBatchBuilder interface {
 	RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder
-	// RequestBlockByNumber(id uint64) (StarknetBatchBuilder, error)
-	// RequestLatestPendingBlock() (StarknetBatchBuilder, error)
+	RequestBlockByNumber(id uint64) StarknetBatchBuilder
+	// RequestLatestPendingBlock() (StarknetBatchBuilder)
 	RequestLatestBlockHashAndNumber() StarknetBatchBuilder
-	// RequestEventsByFilter(f starknetrpc.EventFilter) (StarknetBatchBuilder, error)
-	// RequestTxReceiptByHash(h *felt.Felt) (StarknetBatchBuilder, error)
+	// RequestEventsByFilter(f starknetrpc.EventFilter) (StarknetBatchBuilder)
+	// RequestTxReceiptByHash(h *felt.Felt) (StarknetBatchBuilder)
 	Build() []gethrpc.BatchElem
 }
 
@@ -46,6 +46,17 @@ func (b *batchBuilder) RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder {
 	return b
 }
 
+func (b *batchBuilder) RequestBlockByNumber(id uint64) StarknetBatchBuilder {
+	b.args = append(b.args, gethrpc.BatchElem{
+		Method: "starknet_getBlockWithTxs",
+		Args: []interface{}{
+			starknetrpc.BlockID{Number: &id},
+		},
+		Result: &FinalizedBlock{},
+	})
+	return b
+}
+
 func (b *batchBuilder) RequestLatestBlockHashAndNumber() StarknetBatchBuilder {
 	b.args = append(b.args, gethrpc.BatchElem{
 		Method: "starknet_blockHashAndNumber",
@@ -63,7 +74,7 @@ type StarknetChainClient interface {
 	// only finalized blocks have a block hashes
 	BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error)
 	// only finalized blocks have numbers
-	// BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
+	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
 	// only way to get the latest pending block (only 1 pending block exists at a time)
 	// LatestPendingBlock(ctx context.Context) (starknetrpc.PendingBlock, error)
 	// returns block number and block has of latest finalized block
@@ -87,6 +98,28 @@ func (c *Client) BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock,
 
 	if err != nil {
 		return FinalizedBlock{}, fmt.Errorf("error in BlockByHash: %w", err)
+	}
+
+	finalizedBlock, ok := block.(*FinalizedBlock)
+
+	if !ok {
+		return FinalizedBlock{}, fmt.Errorf("expected type Finalized block but found: %T", block)
+	}
+
+	return *finalizedBlock, nil
+}
+
+func (c *Client) BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	block, err := c.Provider.BlockWithTxs(ctx, starknetrpc.BlockID{Number: &id})
+
+	if err != nil {
+		return FinalizedBlock{}, fmt.Errorf("error in BlockByNumber: %w", err)
 	}
 
 	finalizedBlock, ok := block.(*FinalizedBlock)
