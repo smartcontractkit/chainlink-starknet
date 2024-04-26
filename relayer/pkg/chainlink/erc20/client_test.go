@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,10 +13,9 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
@@ -53,11 +53,10 @@ func TestERC20Client(t *testing.T) {
 				fmt.Printf("%v %v\n", reqdata.Selector, starknetutils.GetSelectorFromNameFelt("latest_transmission_details").String())
 				switch reqdata.Selector {
 				case starknetutils.GetSelectorFromNameFelt("decimals").String():
-					// latest transmission details response
 					out = []byte(`{"result":["0x1"]}`)
 				case starknetutils.GetSelectorFromNameFelt("balance_of").String():
-					// latest transmission details response
-					out = []byte(`{"result":["0x0"]}`)
+					// balance_of returns a u256 which is represented as two felts [lower 128 bits, higher 128 bits]
+					out = []byte(`{"result":["0x2", "0x9"]}`)
 				default:
 					require.False(t, true, "unsupported contract method %s", reqdata.Selector)
 				}
@@ -80,14 +79,17 @@ func TestERC20Client(t *testing.T) {
 	client, err := NewClient(reader, lggr, &felt.Zero)
 	assert.NoError(t, err)
 
-	// contractAddress, err := starknetutils.HexToFelt(ocr2ContractAddress)
-	// require.NoError(t, err)
-
 	t.Run("get balance", func(t *testing.T) {
 		balance, err := client.BalanceOf(context.Background(), &felt.Zero)
 		require.NoError(t, err)
-		require.Equal(t, uint64(0), balance.Uint64())
-		// require.Equal(t, new(big.Int), balance)
+
+		// calculate the expected u256 value of two felts [0x2, 0x9]
+		low := new(big.Int).SetUint64(2)
+		high := new(big.Int).SetUint64(9)
+		summand := new(big.Int).Lsh(high, 128)
+		expectedTotal := new(big.Int).Add(low, summand)
+
+		require.Equal(t, expectedTotal.String(), balance.String())
 	})
 
 	t.Run("get decimals", func(t *testing.T) {
