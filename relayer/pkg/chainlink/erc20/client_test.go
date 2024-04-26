@@ -53,10 +53,9 @@ func TestERC20Client(t *testing.T) {
 				fmt.Printf("%v %v\n", reqdata.Selector, starknetutils.GetSelectorFromNameFelt("latest_transmission_details").String())
 				switch reqdata.Selector {
 				case starknetutils.GetSelectorFromNameFelt("decimals").String():
-					// latest transmission details response
 					out = []byte(`{"result":["0x1"]}`)
 				case starknetutils.GetSelectorFromNameFelt("balance_of").String():
-					// latest transmission details response
+					// balance_of returns a u256 which is represented as two felts [lower 128 bits, higher 128 bits]
 					out = []byte(`{"result":["0x2", "0x9"]}`)
 				default:
 					require.False(t, true, "unsupported contract method %s", reqdata.Selector)
