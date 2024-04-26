@@ -184,7 +184,7 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
     deps.logger.success('Configuration was successfully set')
 
     // write lastConfigDigest back to RDD
-    const configDigest = `0x${(event.latest_config_digest as bigint).toString(16)}`
+    const configDigest = `0x0${(event.latest_config_digest as bigint).toString(16)}`
     deps.logger.info(`ℹ️ lastConfigDigest to save in RDD: ${configDigest}`)
     if (context.flags.rdd) {
       deps.logger.info(
