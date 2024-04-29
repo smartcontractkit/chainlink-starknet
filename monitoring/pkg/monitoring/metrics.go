@@ -9,6 +9,8 @@ import (
 
 // Metrics is an interface for prometheus metrics. Makes testing easier.
 type Metrics interface {
+	SetReportObservations(answer float64, accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
+	CleanupReportObservations(accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	SetProxyAnswersRaw(answer float64, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	SetProxyAnswers(answer float64, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	CleanupProxy(proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
@@ -17,6 +19,23 @@ type Metrics interface {
 }
 
 var (
+	reportObservations = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "report_observations",
+			Help: "Reports # of observations included in a transmission report",
+		},
+		[]string{
+			"account_address",
+			"feed_id",
+			"chain_id",
+			"contract_status",
+			"contract_type",
+			"feed_name",
+			"feed_path",
+			"network_id",
+			"network_name",
+		},
+	)
 	proxyAnswersRaw = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "proxy_answers_raw",
@@ -69,6 +88,37 @@ func (d *defaultMetrics) CleanupBalance(contractAddress, alias, networkId, netwo
 	}
 	if !contractBalance.Delete(labels) {
 		d.log.Errorw("failed to delete metric", "name", "strk_contract_balance", "labels", labels)
+	}
+}
+
+func (d *defaultMetrics) SetReportObservations(answer float64, accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string) {
+	reportObservations.With(prometheus.Labels{
+		"account_address": accountAddress,
+		"feed_id":         feedID,
+		"chain_id":        chainID,
+		"contract_status": contractStatus,
+		"contract_type":   contractType,
+		"feed_name":       feedName,
+		"feed_path":       feedPath,
+		"network_id":      networkID,
+		"network_name":    networkName,
+	}).Set(answer)
+}
+
+func (d *defaultMetrics) CleanupReportObservations(accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string) {
+	labels := prometheus.Labels{
+		"account_address": accountAddress,
+		"feed_id":         feedID,
+		"chain_id":        chainID,
+		"contract_status": contractStatus,
+		"contract_type":   contractType,
+		"feed_name":       feedName,
+		"feed_path":       feedPath,
+		"network_id":      networkID,
+		"network_name":    networkName,
+	}
+	if !reportObservations.Delete(labels) {
+		d.log.Errorw("failed to delete metric", "name", "report_observations", "labels", labels)
 	}
 }
 
