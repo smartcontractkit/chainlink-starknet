@@ -1,3 +1,4 @@
+import fs from 'fs'
 import {
   CONTRACT_TYPES,
   AfterExecute,
@@ -122,7 +123,7 @@ const makeContractInput = async (
     input.offchainConfig,
     input.secret,
   )
-  let onchainConfig = [] // onchain config should be empty array for input (generate onchain)
+  const onchainConfig = [] // onchain config should be empty array for input (generate onchain)
   return [oracles, input.f, onchainConfig, 2, bytesToFelts(offchainConfig)]
 }
 
@@ -172,16 +173,36 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
   if (!txInfo.isSuccess()) {
     return { successfulConfiguration: false }
   }
-  const eventData = txInfo.events[0].data
-
   const events = context.contract.parseEvents(txInfo)
   const event = events[events.length - 1]['ConfigSet']
   const offchainConfig = decodeOffchainConfigFromEventData(event.offchain_config as BigNumberish[])
+
   try {
     // remove cfg keys from user input
     delete input.user.offchainConfig.configPublicKeys
     assert.deepStrictEqual(offchainConfig, input.user.offchainConfig)
     deps.logger.success('Configuration was successfully set')
+
+    // write lastConfigDigest back to RDD
+    const configDigest = `0x0${(event.latest_config_digest as bigint).toString(16)}`
+    deps.logger.info(`ℹ️ lastConfigDigest to save in RDD: ${configDigest}`)
+    if (context.flags.rdd) {
+      deps.logger.info(
+        `ℹ️ RDD file ${context.flags.rdd} found! Will automatically update lastConfigDigest for you`,
+      )
+      const rdd = getRDD(context.flags.rdd)
+      const newConfig = { ...rdd.config, ...{ lastConfigDigest: configDigest } }
+      const newRdd = { ...rdd, ...{ config: newConfig } }
+      fs.writeFileSync(context.flags.rdd, JSON.stringify(newRdd, null, 2))
+      deps.logger.info(
+        `✅ RDD file ${context.flags.rdd} updated. Please reformat RDD (run ./bin/generate and ./bin/degenerate) as needed`,
+      )
+    } else {
+      deps.logger.info(
+        `❗❗ no rdd file input, you must manually update lastConfigDigest in rdd yourself`,
+      )
+    }
+
     return { successfulConfiguration: true }
   } catch (e) {
     deps.logger.error('Configuration set is different than provided')
