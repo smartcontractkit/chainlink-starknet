@@ -26,7 +26,7 @@ runs:
       uses: ./.github/actions/install-cairo
     - name: Check if image exists
       id: check-image
-      uses: smartcontractkit/chainlink-github-actions/docker/image-exists@8489879838862929f43f7d7cd1b33903965cf507 # v2.1.6
+      uses: smartcontractkit/chainlink-github-actions/docker/image-exists@e29366cdecfe6befff9ab8c3cfe4825218505d58 # v2.3.16
       with:
         repository: chainlink-starknet-tests
         tag: ${{ inputs.tag }}
