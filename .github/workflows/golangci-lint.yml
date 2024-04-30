@@ -43,7 +43,7 @@ jobs:
         run: cat ./relayer/golangci-lint-relayer-report.xml
       - name: Store Golangci lint relayer report artifact
         if: always()
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: golangci-lint-relayer-report
           path: ./relayer/golangci-lint-relayer-report.xml
@@ -66,7 +66,7 @@ jobs:
         run: cat ./ops/golangci-lint-ops-report.xml
       - name: Store Golangci lint ops report artifact
         if: always()
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: golangci-lint-ops-report
           path: ./ops/golangci-lint-ops-report.xml
@@ -89,7 +89,7 @@ jobs:
         run: cat ./integration-tests/golangci-lint-integration-tests-report.xml
       - name: Store Golangci lint integration tests report artifact
         if: always()
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: golangci-lint-integration-tests-report
           path: ./integration-tests/golangci-lint-integration-tests-report.xml
