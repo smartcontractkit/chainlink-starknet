@@ -16,6 +16,7 @@ type FinalizedBlock = starknetrpc.Block
 type StarknetBatchBuilder interface {
 	RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder
 	RequestBlockByNumber(id uint64) StarknetBatchBuilder
+	RequestChainId() StarknetBatchBuilder
 	// RequestLatestPendingBlock() (StarknetBatchBuilder)
 	RequestLatestBlockHashAndNumber() StarknetBatchBuilder
 	// RequestEventsByFilter(f starknetrpc.EventFilter) (StarknetBatchBuilder)
@@ -33,6 +34,15 @@ func NewBatchBuilder() StarknetBatchBuilder {
 	return &batchBuilder{
 		args: nil,
 	}
+}
+
+func (b *batchBuilder) RequestChainId() StarknetBatchBuilder {
+	b.args = append(b.args, gethrpc.BatchElem{
+		Method: "starknet_chainId",
+		Args:   nil,
+		Result: new(string),
+	})
+	return b
 }
 
 func (b *batchBuilder) RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder {
@@ -75,6 +85,7 @@ type StarknetChainClient interface {
 	BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error)
 	// only finalized blocks have numbers
 	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
+	ChainId(ctx context.Context) (string, error)
 	// only way to get the latest pending block (only 1 pending block exists at a time)
 	// LatestPendingBlock(ctx context.Context) (starknetrpc.PendingBlock, error)
 	// returns block number and block has of latest finalized block
@@ -86,6 +97,25 @@ type StarknetChainClient interface {
 }
 
 var _ StarknetChainClient = (*Client)(nil)
+
+func (c *Client) ChainId(ctx context.Context) (string, error) {
+	// we do not use c.Provider.ChainID method because it caches
+	// the chainId after the first request
+
+	results, err := c.Batch(ctx, NewBatchBuilder().RequestChainId())
+
+	if err != nil {
+		return "", fmt.Errorf("error in ChainId: %w", err)
+	}
+
+	chainId, ok := results[0].Result.(*string)
+
+	if !ok {
+		return "", fmt.Errorf("expected type string block but found: %T", chainId)
+	}
+
+	return *chainId, nil
+}
 
 func (c *Client) BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error) {
 	if c.defaultTimeout != 0 {

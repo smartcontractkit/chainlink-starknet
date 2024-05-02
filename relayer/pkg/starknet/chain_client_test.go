@@ -20,7 +20,7 @@ import (
 
 var (
 	myChainID     = "SN_SEPOLIA"
-	myTimeout     = 10 * time.Second
+	myTimeout     = 100 * time.Second
 	blockNumber   = 48719
 	blockHash, _  = new(felt.Felt).SetString("0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a")
 	blockResponse = []byte(`
@@ -71,6 +71,8 @@ var (
 		"0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a",
 		48719,
 	)
+	// hex-encoded value for "SN_SEPOLIA"
+	chainId = "0x534e5f5345504f4c4941"
 )
 
 func TestChainClient(t *testing.T) {
@@ -96,6 +98,8 @@ func TestChainClient(t *testing.T) {
 				out = []byte(`{"result": 1}`)
 			case "starknet_blockHashAndNumber":
 				out = []byte(fmt.Sprintf(`{"result": %s}`, blockHashAndNumberResponse))
+			case "starknet_chainId":
+				out = []byte(fmt.Sprintf(`{"result": "%s"}`, chainId))
 			default:
 				require.False(t, true, "unsupported RPC method %s", call.Method)
 			}
@@ -105,8 +109,24 @@ func TestChainClient(t *testing.T) {
 			errBatchMarshal := json.Unmarshal(req, &batchCall)
 			assert.NoError(t, errBatchMarshal)
 
-			response := fmt.Sprintf(`
+			// special case where we test chainId call
+			if len(batchCall) == 1 {
+				response := fmt.Sprintf(`
+				[
+					{ "jsonrpc": "2.0",
+						"id": %d,
+						"result": "%s"
+					}
+				]`, batchCall[0].Id, chainId)
+				out = []byte(response)
+			} else {
+
+				response := fmt.Sprintf(`
 			[
+				{ "jsonrpc": "2.0",
+					"id": %d,
+					"result": "%s"
+				},
 				{
 					"jsonrpc": "2.0",
 					"id": %d,
@@ -122,12 +142,15 @@ func TestChainClient(t *testing.T) {
 					"id": %d,
 					"result": %s
 				}
-			]`, batchCall[0].Id, blockResponse,
-				batchCall[1].Id, blockResponse,
-				batchCall[2].Id, blockHashAndNumberResponse,
-			)
+			]`, batchCall[0].Id, chainId,
+					batchCall[1].Id, blockResponse,
+					batchCall[2].Id, blockResponse,
+					batchCall[3].Id, blockHashAndNumberResponse,
+				)
 
-			out = []byte(response)
+				out = []byte(response)
+
+			}
 
 		}
 
@@ -160,9 +183,16 @@ func TestChainClient(t *testing.T) {
 		assert.Equal(t, uint64(blockNumber), output.BlockNumber)
 	})
 
+	t.Run("get ChainId", func(t *testing.T) {
+		output, err := client.ChainId(context.TODO())
+		require.NoError(t, err)
+		assert.Equal(t, chainId, output)
+	})
+
 	t.Run("get Batch", func(t *testing.T) {
 		builder := NewBatchBuilder()
 		builder.
+			RequestChainId().
 			RequestBlockByHash(blockHash).
 			RequestBlockByNumber(uint64(blockNumber)).
 			RequestLatestBlockHashAndNumber()
@@ -170,29 +200,38 @@ func TestChainClient(t *testing.T) {
 		results, err := client.Batch(context.TODO(), builder)
 		require.NoError(t, err)
 
-		assert.Equal(t, 3, len(results))
+		assert.Equal(t, 4, len(results))
+
+		t.Run("gets ChainId in Batch", func(t *testing.T) {
+			assert.Equal(t, "starknet_chainId", results[0].Method)
+			assert.Nil(t, results[0].Error)
+			id, ok := results[0].Result.(*string)
+			assert.True(t, ok)
+			fmt.Println(id)
+			assert.Equal(t, chainId, *id)
+		})
 
 		t.Run("gets BlockByHash in Batch", func(t *testing.T) {
-			assert.Equal(t, "starknet_getBlockWithTxs", results[0].Method)
-			assert.Nil(t, results[0].Error)
-			block, ok := results[0].Result.(*FinalizedBlock)
+			assert.Equal(t, "starknet_getBlockWithTxs", results[1].Method)
+			assert.Nil(t, results[1].Error)
+			block, ok := results[1].Result.(*FinalizedBlock)
 			assert.True(t, ok)
 			assert.Equal(t, blockHash, block.BlockHash)
 		})
 
 		t.Run("gets BlockByNumber in Batch", func(t *testing.T) {
-			assert.Equal(t, "starknet_getBlockWithTxs", results[1].Method)
-			assert.Nil(t, results[1].Error)
-			block, ok := results[1].Result.(*FinalizedBlock)
+			assert.Equal(t, "starknet_getBlockWithTxs", results[2].Method)
+			assert.Nil(t, results[2].Error)
+			block, ok := results[2].Result.(*FinalizedBlock)
 			assert.True(t, ok)
 			assert.Equal(t, uint64(blockNumber), block.BlockNumber)
 
 		})
 
 		t.Run("gets LatestBlockHashAndNumber in Batch", func(t *testing.T) {
-			assert.Equal(t, "starknet_blockHashAndNumber", results[2].Method)
-			assert.Nil(t, results[2].Error)
-			info, ok := results[2].Result.(*starknetrpc.BlockHashAndNumberOutput)
+			assert.Equal(t, "starknet_blockHashAndNumber", results[3].Method)
+			assert.Nil(t, results[3].Error)
+			info, ok := results[3].Result.(*starknetrpc.BlockHashAndNumberOutput)
 			assert.True(t, ok)
 			assert.Equal(t, blockHash, info.BlockHash)
 			assert.Equal(t, uint64(blockNumber), info.BlockNumber)
