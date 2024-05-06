@@ -19,12 +19,12 @@ flowchart LR
   contract-bindings
   end
 
-  subgraph integration-tests
+  subgraph e2e-tests
   smoke
   soak
   end
 
-  contract-bindings --> integration-tests
+  contract-bindings --> e2e-tests
   test-helpers --> relayer
-  k8s --> integration-tests
+  k8s --> e2e-tests
 ```

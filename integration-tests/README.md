@@ -25,4 +25,4 @@ Set `inside_k8 = true` under `[Common]`.
 
 #### Run tests
 
-`cd integration-tests && go test --timeout=2h -v -count=1 -json ./smoke`
+`cd e2e-tests && go test --timeout=2h -v -count=1 -json ./smoke`
