@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	chainconfig "github.com/smartcontractkit/chainlink-starknet/e2e-tests/config"
-	"github.com/smartcontractkit/chainlink-starknet/e2e-tests/testconfig"
+	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"

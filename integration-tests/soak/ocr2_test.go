@@ -8,7 +8,7 @@ package soak_test
 //"github.com/stretchr/testify/require"
 //"go.uber.org/zap/zapcore"
 
-//"github.com/smartcontractkit/chainlink-starknet/e2e-tests/common"
+//"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 //"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 //"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 

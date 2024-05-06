@@ -17,7 +17,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	ocr2_config "github.com/smartcontractkit/chainlink-starknet/e2e-tests/testconfig/ocr2"
+	ocr2_config "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig/ocr2"
 	ctf_config "github.com/smartcontractkit/chainlink-testing-framework/config"
 	k8s_config "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"

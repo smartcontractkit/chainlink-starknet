@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/e2e-tests/docker/test_env"
-	"github.com/smartcontractkit/chainlink-starknet/e2e-tests/testconfig"
+	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
 	"github.com/smartcontractkit/chainlink/e2e-tests/docker/test_env"
 

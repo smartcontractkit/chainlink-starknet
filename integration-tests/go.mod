@@ -1,4 +1,4 @@
-module github.com/smartcontractkit/chainlink-starknet/e2e-tests
+module github.com/smartcontractkit/chainlink-starknet/integration-tests
 
 go 1.21.7
 
