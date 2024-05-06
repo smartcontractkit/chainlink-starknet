@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
+	"github.com/smartcontractkit/chainlink-starknet/e2e-tests/utils"
 )
 
 func (m *OCRv2TestState) fundNodes() ([]string, error) {
