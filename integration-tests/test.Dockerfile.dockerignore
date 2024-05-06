@@ -17,8 +17,8 @@ bin
 
 # test
 id.json
-e2e-tests/logs
-e2e-tests/smoke/logs
-e2e-teststests/smoke/contracts-chaos-state.json
+integration-tests/logs
+integration-tests/smoke/logs
+integration-teststests/smoke/contracts-chaos-state.json
 tmp-manifest-*
 tests-smoke-report.xml

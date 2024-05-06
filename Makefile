@@ -66,7 +66,7 @@ nix-flake-update:
 build: build-go build-ts
 
 .PHONY: build-go
-build-go: build-go-relayer build-go-ops build-go-e2e-tests
+build-go: build-go-relayer build-go-ops build-go-integration-tests
 
 .PHONY: build-go-relayer
 build-go-relayer:
@@ -76,9 +76,9 @@ build-go-relayer:
 build-go-ops:
 	cd ops/ && go build ./...
 
-.PHONY: build-go-e2e-tests
-build-go-e2e-tests:
-	cd e2e-tests/ && go build ./...
+.PHONY: build-go-integration-tests
+build-go-integration-tests:
+	cd integration-tests/ && go build ./...
 
 # TODO: fix and readd build-ts-examples
 .PHONY: build-ts
@@ -109,7 +109,7 @@ gowork:
 	go work init
 	go work use ./ops
 	go work use ./relayer
-	go work use ./e2e-tests
+	go work use ./integration-tests
 
 .PHONY: gowork_rm
 gowork_rm:
@@ -128,14 +128,14 @@ format-go: format-go-fmt gomodtidy
 format-go-fmt:
 	cd ./relayer && go fmt ./...
 	cd ./ops && go fmt ./...
-	cd ./e2e-tests && go fmt ./...
+	cd ./integration-tests && go fmt ./...
 
 .PHONY: gomodtidy
 gomodtidy:
 	cd ./relayer && go mod tidy
 	cd ./monitoring && go mod tidy
 	cd ./ops && go mod tidy
-	cd ./e2e-tests && go mod tidy
+	cd ./integration-tests && go mod tidy
 
 .PHONY: format-cairo
 format-cairo:
@@ -165,7 +165,7 @@ lint-go-relayer:
 
 .PHONY: lint-go-test
 lint-go-test:
-	cd ./e2e-tests && golangci-lint --color=always --exclude=dot-imports --out-format checkstyle:golangci-lint-e2e-tests-report.xml run
+	cd ./integration-tests && golangci-lint --color=always --exclude=dot-imports --out-format checkstyle:golangci-lint-integration-tests-report.xml run
 
 .PHONY: test-go
 test-go: test-unit-go test-integration-go
@@ -193,24 +193,24 @@ test-integration: test-integration-smoke test-integration-contracts test-integra
 
 .PHONY: test-integration-smoke
 test-integration-smoke: test-integration-prep
-	cd e2e-tests/ && \
+	cd integration-tests/ && \
 		go test --timeout=2h -v ./smoke
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
-	cd e2e-tests/ && \
+	cd integration-tests/ && \
 		go test --timeout=2h -v -count=1 -run TestOCRBasic/$(test) -json ./smoke
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
-	cd e2e-tests/ && \
+	cd integration-tests/ && \
 		go test --timeout=1h -v -json ./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
 test-integration-soak-ci:
-	cd e2e-tests/ && \
+	cd integration-tests/ && \
 		go test --timeout=1h -v -count=1 -json ./soak
 
 .PHONY: test-examples
