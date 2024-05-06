@@ -105,7 +105,15 @@ func (c *Client) ChainId(ctx context.Context) (string, error) {
 	results, err := c.Batch(ctx, NewBatchBuilder().RequestChainId())
 
 	if err != nil {
-		return "", fmt.Errorf("error in ChainId: %w", err)
+		return "", fmt.Errorf("error in ChainId : %w", err)
+	}
+
+	if len(results) != 1 {
+		return "", fmt.Errorf("unexpected result from ChainId")
+	}
+
+	if results[0].Error != nil {
+		return "", fmt.Errorf("error in ChainId result: %w", results[0].Error)
 	}
 
 	chainId, ok := results[0].Result.(*string)
