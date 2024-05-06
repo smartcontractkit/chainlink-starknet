@@ -9,7 +9,7 @@
 
 #### Smoke
 
-`cd e2e-tests/smoke/ && go test --timeout=2h -v` (from core of repo)
+`cd integration-tests/smoke/ && go test --timeout=2h -v` (from core of repo)
 
 #### Soak
 
@@ -39,24 +39,24 @@ error appears, but instead log it.
 
 ### Structure
 
-[Commons](../../e2e-tests/common/common.go) - Common Chainlink methods to generate chains, nodes, key bundles
+[Commons](../../integration-tests/common/common.go) - Common Chainlink methods to generate chains, nodes, key bundles
 
-[Test Commons](../../e2e-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch
+[Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch
 client details
 
 [Starknet Commons](../../ops/devnet/devnet.go) - Methods related to starknet and L2 actions such as minting, L1<>L2 sync
 
 [Gauntlet wrapper](../../relayer/pkg/starknet/gauntlet_starknet.go) - Wrapper for Starknet gauntlet
 
-[OCRv2 tests](../../e2e-tests/smoke/ocr2_test.go) - Example smoke test to set up environment, configure it and
+[OCRv2 tests](../../integration-tests/smoke/ocr2_test.go) - Example smoke test to set up environment, configure it and
 run the smoke test
 
 ### Writing tests
 
-See smoke examples [here](../../e2e-tests/smoke/ocr2_test.go)
+See smoke examples [here](../../integration-tests/smoke/ocr2_test.go)
 
-See soak examples [here](../../e2e-tests/soak/tests/ocr_test.go)
-and [here](../../e2e-tests/soak/soak_runner_test.go)
+See soak examples [here](../../integration-tests/soak/tests/ocr_test.go)
+and [here](../../integration-tests/soak/soak_runner_test.go)
 
 1. Instantiate Gauntlet
 2. Deploy Cluster

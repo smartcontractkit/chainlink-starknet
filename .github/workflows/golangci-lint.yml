@@ -82,19 +82,19 @@ jobs:
         uses: cachix/install-nix-action@8887e596b4ee1134dae06b98d573bd674693f47c # v26
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - name: Lint e2e-tests
+      - name: Lint integration-tests
         run: nix develop -c make lint-go-test
       - name: Print Report
         if: failure()
-        run: cat ./e2e-tests/golangci-lint-e2e-tests-report.xml
+        run: cat ./integration-tests/golangci-lint-integration-tests-report.xml
       - name: Store Golangci lint integration tests report artifact
         if: always()
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
-          name: golangci-lint-e2e-tests-report
-          path: ./e2e-tests/golangci-lint-e2e-tests-report.xml
+          name: golangci-lint-integration-tests-report
+          path: ./integration-tests/golangci-lint-integration-tests-report.xml
       # Note: I could not figure out why the golangci-lint-action would not work even though it is technically running the same as above, error message is this:
-      # Running [/home/runner/golangci-lint-1.50.1-linux-amd64/golangci-lint run --out-format=github-actions --path-prefix=e2e-tests --exclude=dot-imports] in [/home/runner/work/chainlink-starknet/chainlink-starknet/e2e-tests] ...
+      # Running [/home/runner/golangci-lint-1.50.1-linux-amd64/golangci-lint run --out-format=github-actions --path-prefix=integration-tests --exclude=dot-imports] in [/home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests] ...
       # level=warning msg="[runner] Can't run linter goanalysis_metalinter: inspect: failed to load package client: could not load export data: no export data for \"github.com/smartcontractkit/chainlink-testing-framework/client\""
       # level=error msg="Running error: 1 error occurred:\n\t* can't run linter goanalysis_metalinter: inspect: failed to load package client: could not load export data: no export data for \"github.com/smartcontractkit/chainlink-testing-framework/client\"\n\n"
       # - name: golangci-lint
@@ -103,5 +103,5 @@ jobs:
       #     CGO_ENABLED: 1
       #   with:
       #     version: v${{ needs.golangci-lint-version.outputs.version }}
-      #     working-directory: e2e-tests
+      #     working-directory: integration-tests
       #     args: --exclude=dot-imports

@@ -7,5 +7,5 @@ ENV PATH="/repo/cairo-build/bin:/repo/scarb-build/bin:${PATH}"
 COPY . /repo/
 WORKDIR /repo
 RUN nix develop -c helm repo update
-RUN nix develop -c /repo/e2e-tests/scripts/buildTests "${SUITES}"
-ENTRYPOINT ["/repo/e2e-tests/scripts/entrypoint"]
+RUN nix develop -c /repo/integration-tests/scripts/buildTests "${SUITES}"
+ENTRYPOINT ["/repo/integration-tests/scripts/entrypoint"]

@@ -12,7 +12,7 @@ Chainlink-Starknet contains a number of projects, all individually versioned and
 - [@chainlink/starknet-gauntlet-argent](/packages-ts/starknet-gauntlet-argent/)
 - [@chainlink/starknet-gauntlet-token](/packages-ts/starknet-gauntlet-token/)
 - [@chainlink/starknet-contracts](/contracts/)
-- [@chainlink/starknet-e2e-tests](/e2e-tests/)
+- [@chainlink/starknet-integration-tests](/integration-tests/)
 
 If a project is pre-v1.0, minor version bumps may cause breaking changes. All breaking changes are noted in changelogs.
 

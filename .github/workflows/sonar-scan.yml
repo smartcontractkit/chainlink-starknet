@@ -73,7 +73,7 @@ jobs:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
           name_is_regexp: true
-          name: golangci-lint-e2e-tests-report
+          name: golangci-lint-integration-tests-report
           if_no_artifact_found: warn
 
       - name: Download gauntlet eslint reports
