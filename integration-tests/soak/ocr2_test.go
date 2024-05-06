@@ -12,7 +12,7 @@ package soak_test
 //"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 //"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 
-//"github.com/smartcontractkit/chainlink/integration-tests/actions"
+//"github.com/smartcontractkit/chainlink/e2e-tests/actions"
 //)
 
 //var (
