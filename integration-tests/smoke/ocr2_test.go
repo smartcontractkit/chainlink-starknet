@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink-starknet/e2e-tests/common"
-	tc "github.com/smartcontractkit/chainlink-starknet/e2e-tests/testconfig"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
+	tc "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
