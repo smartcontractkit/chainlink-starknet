@@ -16,10 +16,10 @@ import (
 	"testing"
 	"time"
 
-	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/e2e-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink-starknet/e2e-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink/e2e-tests/docker/test_env"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
@@ -31,7 +31,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
-	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink/e2e-tests/client"
 )
 
 var (

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	chainconfig "github.com/smartcontractkit/chainlink-starknet/e2e-tests/config"
+	"github.com/smartcontractkit/chainlink-starknet/e2e-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -18,7 +18,7 @@ import (
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
 	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
+	"github.com/smartcontractkit/chainlink/e2e-tests/docker/test_env"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -28,8 +28,8 @@ import (
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
-	"github.com/smartcontractkit/chainlink/integration-tests/client"
-	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
+	"github.com/smartcontractkit/chainlink/e2e-tests/client"
+	"github.com/smartcontractkit/chainlink/e2e-tests/types/config/node"
 	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
 	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
