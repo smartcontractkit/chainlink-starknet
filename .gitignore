@@ -158,9 +158,9 @@ go.work.sum
 tmp-manifest-*
 
 # Test log files
-integration-tests/logs
-integration-tests/smoke/logs
-integration-tests/soak/logs
+e2e-tests/logs
+e2e-tests/smoke/logs
+e2e-tests/soak/logs
 remote.test
 ztarrepo.tar.gz
 eslint-report.json

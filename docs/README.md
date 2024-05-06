@@ -7,7 +7,7 @@ This repository is a monorepo of the various components required for Chainlink o
 - [Gauntlet & TS toolchain](../packages-ts)
   <!-- - [On-chain Monitoring](../pkg/monitoring) -->
 - [Ops](../ops)
-- [Integration Tests](../integration-tests)
+- [Integration Tests](../e2e-tests)
 - [Demos & Examples](../examples)
 
 Additional documentation can be found in this directory.

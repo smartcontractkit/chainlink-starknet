@@ -11,7 +11,7 @@ We run our software in Kubernetes.
 4. `k3d cluster create local`
 5. Check your contexts with `kubectl config get-contexts`
 6. Switch context `kubectl config use-context k3d-local`
-7. Run any tests, use a guide [here](integration-tests/README.md)
+7. Run any tests, use a guide [here](e2e-tests/README.md)
 8. Stop the cluster
 
 ```

@@ -39,7 +39,7 @@ runs:
         tags: |
           ${{ inputs.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ inputs.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ inputs.tag }}
           ${{ inputs.other_tags }}
-        file: ./integration-tests/test.Dockerfile
+        file: ./e2e-tests/test.Dockerfile
         build-args: |
           SUITES="smoke soak"
         AWS_REGION: ${{ inputs.QA_AWS_REGION }}
