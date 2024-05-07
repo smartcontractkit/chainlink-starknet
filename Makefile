@@ -168,20 +168,24 @@ lint-go-test:
 	cd ./integration-tests && golangci-lint --color=always --exclude=dot-imports --out-format checkstyle:golangci-lint-integration-tests-report.xml run
 
 .PHONY: test-go
-test-go: test-unit-go test-integration-go
+test-go: test-unit-go test-unit-go-race test-integration-go
 
 .PHONY: test-unit
-test-unit: test-unit-go
+test-unit: test-unit-go test-unit-go-race
 
+LOG_PATH ?= ./gotest.log
 .PHONY: test-unit-go
 test-unit-go:
-	cd ./relayer && go test -v ./... -covermode=atomic -coverpkg=./... -coverprofile=coverage.txt
-	cd ./relayer && go test -v ./... -race -count=10 -coverpkg=./... -coverprofile=race_coverage.txt
+	cd ./relayer && go test -json ./... -covermode=atomic -coverpkg=./... -coverprofile=coverage.txt 2>&1 | tee $(LOG_PATH) | gotestloghelper -ci
+
+.PHONY: test-unit-go-race
+test-unit-go-race:
+	cd ./relayer && CGO_ENABLED=1 go test -v ./... -race -count=10 -coverpkg=./... -coverprofile=race_coverage.txt
 
 .PHONY: test-integration-go
 # only runs tests with TestIntegration_* + //go:build integration
 test-integration-go: env-devnet-hardhat
-	cd ./relayer && go test -v ./... -run TestIntegration -tags integration
+	cd ./relayer && go test -json ./... -run TestIntegration -tags integration 2>&1 | tee $(LOG_PATH) | gotestloghelper -ci
 
 .PHONY: test-integration-prep
 test-integration-prep:
