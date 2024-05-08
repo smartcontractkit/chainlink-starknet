@@ -18,6 +18,7 @@ require (
 	github.com/smartcontractkit/chainlink-testing-framework v1.28.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240506164029-09f8c7fcd63b
 	github.com/smartcontractkit/chainlink/v2 v2.10.0-beta0.0.20240508135056-c90f6d5bdcfb
+	github.com/smartcontractkit/seth v0.1.6-0.20240429143720-cacb8160ecec
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
 	go.uber.org/zap v1.26.0
@@ -84,9 +85,6 @@ require (
 	github.com/chaos-mesh/chaos-mesh/api/v1alpha1 v0.0.0-20220226050744-799408773657 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
-	github.com/chzyer/readline v1.5.1 // indirect
-	github.com/cli/go-gh/v2 v2.0.0 // indirect
-	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/cockroachdb/errors v1.10.0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593 // indirect
@@ -284,7 +282,6 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
@@ -365,7 +362,6 @@ require (
 	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20240508123714-3a7c0d9d22e3 // indirect
 	github.com/smartcontractkit/chainlink-vrf v0.0.0-20231120191722-fef03814f868 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20240419185742-fd3cab206b2c // indirect
-	github.com/smartcontractkit/seth v0.1.6-0.20240429143720-cacb8160ecec // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
 	github.com/smartcontractkit/tdh2/go/tdh2 v0.0.0-20230906073235-9e478e5e19f1 // indirect
 	github.com/smartcontractkit/wasp v0.4.5 // indirect
