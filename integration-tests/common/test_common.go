@@ -150,7 +150,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
-		stark := test_env_starknet.NewStarknet([]string{env.Network.Name}, *m.Common.TestConfig.Common.DevnetImage)
+		stark := test_env_starknet.NewStarknet([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.DevnetImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
 
