@@ -4,10 +4,9 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/smartcontractkit/seth"
 	"os"
 	"strings"
-
-	"github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
 
 	"github.com/barkimedes/go-deepcopy"
 	"github.com/google/uuid"
@@ -38,8 +37,12 @@ func (c *TestConfig) GetLoggingConfig() *ctf_config.LoggingConfig {
 	return c.Logging
 }
 
-func (c *TestConfig) GetPrivateEthereumNetworkConfig() *test_env.EthereumNetwork {
-	return &test_env.EthereumNetwork{}
+func (c *TestConfig) GetPrivateEthereumNetworkConfig() *ctf_config.EthereumNetworkConfig {
+	return &ctf_config.EthereumNetworkConfig{}
+}
+
+func (c *TestConfig) GetSethConfig() *seth.Config {
+	return nil
 }
 
 func (c *TestConfig) GetPyroscopeConfig() *ctf_config.PyroscopeConfig {
