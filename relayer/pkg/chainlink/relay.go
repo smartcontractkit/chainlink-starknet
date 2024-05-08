@@ -121,3 +121,7 @@ func (r *relayer) NewAutomationProvider(rargs relaytypes.RelayArgs, pargs relayt
 func (r *relayer) NewPluginProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.PluginProvider, error) {
 	return nil, errors.New("plugin provider is not supported for starknet")
 }
+
+func (r *relayer) NewOCR3CapabilityProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.OCR3CapabilityProvider, error) {
+	return nil, errors.New("ocr3 capability provider is not supported for starknet")
+}
