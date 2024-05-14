@@ -3,7 +3,7 @@ import { ExecuteCommandConfig } from '.'
 
 type ContractInput = [newOwner: string]
 
-export interface ProposeOwnerhipUserInput {
+export interface TransferOwnershipUserInput {
   newOwner: string
 }
 
@@ -14,31 +14,29 @@ const validateNewOwner = async (input) => {
   throw new Error(`Invalid New Owner Address: ${input.newOwner}`)
 }
 
-const makeUserInput = async (flags): Promise<ProposeOwnerhipUserInput> => {
-  if (flags.input) return flags.input as ProposeOwnerhipUserInput
+const makeUserInput = async (flags): Promise<TransferOwnershipUserInput> => {
+  if (flags.input) return flags.input as TransferOwnershipUserInput
   return {
     newOwner: flags.newOwner,
   }
 }
 
-const makeContractInput = async (input: ProposeOwnerhipUserInput): Promise<ContractInput> => {
+const makeContractInput = async (input: TransferOwnershipUserInput): Promise<ContractInput> => {
   return [input.newOwner]
 }
 
-export const proposeOwnershipCommandConfig = (
+export const transferOwnershipCommandConfig = (
   contractId: string,
   category: string,
   contractLoader: any,
-): ExecuteCommandConfig<ProposeOwnerhipUserInput, ContractInput> => ({
+): ExecuteCommandConfig<TransferOwnershipUserInput, ContractInput> => ({
   contractId,
   category: contractId,
-  // the on-chain method is called 'transfer_ownership' but naming the gauntlet command
-  // 'propose_ownership' makes the intended purpose less ambiguous
   action: 'transfer_ownership',
   ux: {
     description: 'Begin two-step ownership transfer process by proposing pending owner',
     examples: [
-      `${contractId}:propose_ownership --network=<NETWORK> --newOwner=<NEW_OWNER_ADDRESS> <CONTRACT_ADDRESS>`,
+      `${contractId}:transfer_ownership --network=<NETWORK> --newOwner=<NEW_OWNER_ADDRESS> <CONTRACT_ADDRESS>`,
     ],
   },
   makeUserInput,

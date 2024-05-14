@@ -7,7 +7,7 @@ import SetConfig from './setConfig'
 import SetPayees from './setPayees'
 import AddAccess from './addAccess'
 import DisableAccessCheck from './disableAccessCheck'
-import ProposeOwnership from './proposeOwnership'
+import TransferOwnership from './transferOwnership'
 import AcceptOwnership from './acceptOwnership'
 
 export const executeCommands = [
@@ -19,7 +19,7 @@ export const executeCommands = [
   SetBilling,
   SetConfig,
   SetPayees,
-  ProposeOwnership,
+  TransferOwnership,
   AcceptOwnership,
 ]
 export const inspectionCommands = [inspect]

@@ -1,9 +1,9 @@
-import { makeExecuteCommand, proposeOwnershipCommandConfig } from '@chainlink/starknet-gauntlet'
+import { makeExecuteCommand, transferOwnershipCommandConfig } from '@chainlink/starknet-gauntlet'
 import { CATEGORIES } from '../../lib/categories'
 import { accessControllerContractLoader } from '../../lib/contracts'
 
 export default makeExecuteCommand(
-  proposeOwnershipCommandConfig(
+  transferOwnershipCommandConfig(
     CATEGORIES.ACCESS_CONTROLLER,
     CATEGORIES.ACCESS_CONTROLLER,
     accessControllerContractLoader,

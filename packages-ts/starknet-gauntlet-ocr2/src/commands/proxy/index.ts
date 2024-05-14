@@ -4,7 +4,7 @@ import Upgrade from './upgrade'
 import Inspect from './inspection/inspect'
 import ProposeAggregator from './proposeAggregator'
 import ConfirmAggregator from './confirmAggregator'
-import ProposeOwnership from './proposeOwnership'
+import TransferOwnership from './transferOwnership'
 import AcceptOwnership from './acceptOwnership'
 
 export const executeCommands = [
@@ -14,6 +14,7 @@ export const executeCommands = [
   ProposeAggregator,
   ConfirmAggregator,
   ProposeAggregator,
+  TransferOwnership,
   AcceptOwnership,
 ]
 export const inspectionCommands = [Inspect]
