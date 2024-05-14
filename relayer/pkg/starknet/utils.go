@@ -1,14 +1,13 @@
 package starknet
 
 import (
+	"cmp"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/NethermindEth/juno/core/felt"
-
-	"github.com/pkg/errors"
-	"golang.org/x/exp/constraints"
 )
 
 const (
@@ -31,7 +30,7 @@ func NilResultError(funcName string) error {
 	return fmt.Errorf("nil result in %s", funcName)
 }
 
-func Min[T constraints.Ordered](a, b T) T {
+func Min[T cmp.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}
@@ -78,7 +77,7 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 		felt.FillBytes(bytesBuffer)
 		data = append(data, bytesBuffer...)
 
-		length -= uint64(bytesLen)
+		length -= bytesLen
 	}
 
 	if length != 0 {

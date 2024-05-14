@@ -115,8 +115,8 @@ func (txm *starktxm) broadcastLoop() {
 	}
 }
 
-const FEE_MARGIN uint32 = 115
-const RPC_NONCE_ERR = "Invalid transaction nonce"
+const FeeMargin uint32 = 115
+const RPCNonceErrMsg = "Invalid transaction nonce"
 
 func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, *felt.Felt, error) {
 	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
@@ -148,7 +148,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 
 			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
 
-			if strings.Contains(dataStr, RPC_NONCE_ERR) {
+			if strings.Contains(dataStr, RPCNonceErrMsg) {
 				continue
 			}
 
@@ -302,7 +302,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		dataStr = fmt.Sprintf("%+v", data)
 		txm.lggr.Errorw("failed to invoke tx", "accountAddress", accountAddress, "error", err, "data", dataStr)
 
-		if strings.Contains(dataStr, RPC_NONCE_ERR) {
+		if strings.Contains(dataStr, RPCNonceErrMsg) {
 			// if we see an invalid nonce error at the broadcast stage, that means that we are out of sync.
 			// see the comment at resyncNonce for more details.
 			if resyncErr := txm.resyncNonce(ctx, client, accountAddress); resyncErr != nil {

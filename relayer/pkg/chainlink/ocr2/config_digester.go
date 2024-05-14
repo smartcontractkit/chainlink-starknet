@@ -35,7 +35,7 @@ func NewOffchainConfigDigester(chainID, contract string) offchainConfigDigester 
 func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
-	contract_address, valid := new(big.Int).SetString(strings.TrimPrefix(d.contract, "0x"), 16)
+	contractAddress, valid := new(big.Int).SetString(strings.TrimPrefix(d.contract, "0x"), 16)
 	if !valid {
 		return configDigest, errors.New("invalid contract address")
 	}
@@ -72,7 +72,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	// golang... https://stackoverflow.com/questions/28625546/mixing-exploded-slices-and-regular-parameters-in-variadic-functions
 	msg := []*big.Int{
 		new(big.Int).SetBytes([]byte(d.chainID)),       // chain_id
-		contract_address,                               // contract_address
+		contractAddress,                                // contract_address
 		new(big.Int).SetUint64(cfg.ConfigCount),        // config_count
 		new(big.Int).SetInt64(int64(len(cfg.Signers))), // oracles_len
 	}
