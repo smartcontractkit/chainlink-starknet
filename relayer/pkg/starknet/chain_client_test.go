@@ -71,7 +71,7 @@ var (
 		48719,
 	)
 	// hex-encoded value for "SN_SEPOLIA"
-	chainId = "0x534e5f5345504f4c4941"
+	chainIDHex = "0x534e5f5345504f4c4941"
 )
 
 func TestChainClient(t *testing.T) {
@@ -84,7 +84,7 @@ func TestChainClient(t *testing.T) {
 		type Call struct {
 			Method string            `json:"method"`
 			Params []json.RawMessage `json:"params"`
-			Id     uint              `json:"id,omitempty"`
+			ID     uint              `json:"id,omitempty"`
 		}
 
 		call := Call{}
@@ -98,7 +98,7 @@ func TestChainClient(t *testing.T) {
 			case "starknet_blockHashAndNumber":
 				out = []byte(fmt.Sprintf(`{"result": %s}`, blockHashAndNumberResponse))
 			case "starknet_chainId":
-				out = []byte(fmt.Sprintf(`{"result": "%s"}`, chainId))
+				out = []byte(fmt.Sprintf(`{"result": "%s"}`, chainIDHex))
 			default:
 				require.False(t, true, "unsupported RPC method %s", call.Method)
 			}
@@ -108,7 +108,7 @@ func TestChainClient(t *testing.T) {
 			errBatchMarshal := json.Unmarshal(req, &batchCall)
 			assert.NoError(t, errBatchMarshal)
 
-			// special case where we test chainId call
+			// special case where we test chainID call
 			if len(batchCall) == 1 {
 				response := fmt.Sprintf(`
 				[
@@ -116,10 +116,9 @@ func TestChainClient(t *testing.T) {
 						"id": %d,
 						"result": "%s"
 					}
-				]`, batchCall[0].Id, chainId)
+				]`, batchCall[0].ID, chainIDHex)
 				out = []byte(response)
 			} else {
-
 				response := fmt.Sprintf(`
 			[
 				{ "jsonrpc": "2.0",
@@ -141,16 +140,14 @@ func TestChainClient(t *testing.T) {
 					"id": %d,
 					"result": %s
 				}
-			]`, batchCall[0].Id, chainId,
-					batchCall[1].Id, blockResponse,
-					batchCall[2].Id, blockResponse,
-					batchCall[3].Id, blockHashAndNumberResponse,
+			]`, batchCall[0].ID, chainIDHex,
+					batchCall[1].ID, blockResponse,
+					batchCall[2].ID, blockResponse,
+					batchCall[3].ID, blockHashAndNumberResponse,
 				)
 
 				out = []byte(response)
-
 			}
-
 		}
 
 		_, err := w.Write(out)
@@ -182,16 +179,16 @@ func TestChainClient(t *testing.T) {
 		assert.Equal(t, uint64(blockNumber), output.BlockNumber)
 	})
 
-	t.Run("get ChainId", func(t *testing.T) {
-		output, err := client.ChainId(context.TODO())
+	t.Run("get ChainID", func(t *testing.T) {
+		output, err := client.ChainID(context.TODO())
 		require.NoError(t, err)
-		assert.Equal(t, chainId, output)
+		assert.Equal(t, chainIDHex, output)
 	})
 
 	t.Run("get Batch", func(t *testing.T) {
 		builder := NewBatchBuilder()
 		builder.
-			RequestChainId().
+			RequestChainID().
 			RequestBlockByHash(blockHash).
 			RequestBlockByNumber(uint64(blockNumber)).
 			RequestLatestBlockHashAndNumber()
@@ -201,13 +198,13 @@ func TestChainClient(t *testing.T) {
 
 		assert.Equal(t, 4, len(results))
 
-		t.Run("gets ChainId in Batch", func(t *testing.T) {
+		t.Run("gets ChainID in Batch", func(t *testing.T) {
 			assert.Equal(t, "starknet_chainId", results[0].Method)
 			assert.Nil(t, results[0].Error)
 			id, ok := results[0].Result.(*string)
 			assert.True(t, ok)
 			fmt.Println(id)
-			assert.Equal(t, chainId, *id)
+			assert.Equal(t, chainIDHex, *id)
 		})
 
 		t.Run("gets BlockByHash in Batch", func(t *testing.T) {
@@ -224,7 +221,6 @@ func TestChainClient(t *testing.T) {
 			block, ok := results[2].Result.(*FinalizedBlock)
 			assert.True(t, ok)
 			assert.Equal(t, uint64(blockNumber), block.BlockNumber)
-
 		})
 
 		t.Run("gets LatestBlockHashAndNumber in Batch", func(t *testing.T) {
@@ -235,6 +231,5 @@ func TestChainClient(t *testing.T) {
 			assert.Equal(t, blockHash, info.BlockHash)
 			assert.Equal(t, uint64(blockNumber), info.BlockNumber)
 		})
-
 	})
 }

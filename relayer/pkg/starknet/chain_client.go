@@ -13,30 +13,30 @@ import (
 type FinalizedBlock = starknetrpc.Block
 
 // used to create batch requests
-type StarknetBatchBuilder interface {
-	RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder
-	RequestBlockByNumber(id uint64) StarknetBatchBuilder
-	RequestChainId() StarknetBatchBuilder
-	// RequestLatestPendingBlock() (StarknetBatchBuilder)
-	RequestLatestBlockHashAndNumber() StarknetBatchBuilder
-	// RequestEventsByFilter(f starknetrpc.EventFilter) (StarknetBatchBuilder)
-	// RequestTxReceiptByHash(h *felt.Felt) (StarknetBatchBuilder)
+type BatchBuilder interface {
+	RequestBlockByHash(h *felt.Felt) BatchBuilder
+	RequestBlockByNumber(id uint64) BatchBuilder
+	RequestChainID() BatchBuilder
+	// RequestLatestPendingBlock() (BatchBuilder)
+	RequestLatestBlockHashAndNumber() BatchBuilder
+	// RequestEventsByFilter(f starknetrpc.EventFilter) (BatchBuilder)
+	// RequestTxReceiptByHash(h *felt.Felt) (BatchBuilder)
 	Build() []gethrpc.BatchElem
 }
 
-var _ StarknetBatchBuilder = (*batchBuilder)(nil)
+var _ BatchBuilder = (*batchBuilder)(nil)
 
 type batchBuilder struct {
 	args []gethrpc.BatchElem
 }
 
-func NewBatchBuilder() StarknetBatchBuilder {
+func NewBatchBuilder() BatchBuilder {
 	return &batchBuilder{
 		args: nil,
 	}
 }
 
-func (b *batchBuilder) RequestChainId() StarknetBatchBuilder {
+func (b *batchBuilder) RequestChainID() BatchBuilder {
 	b.args = append(b.args, gethrpc.BatchElem{
 		Method: "starknet_chainId",
 		Args:   nil,
@@ -45,7 +45,7 @@ func (b *batchBuilder) RequestChainId() StarknetBatchBuilder {
 	return b
 }
 
-func (b *batchBuilder) RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder {
+func (b *batchBuilder) RequestBlockByHash(h *felt.Felt) BatchBuilder {
 	b.args = append(b.args, gethrpc.BatchElem{
 		Method: "starknet_getBlockWithTxs",
 		Args: []interface{}{
@@ -56,7 +56,7 @@ func (b *batchBuilder) RequestBlockByHash(h *felt.Felt) StarknetBatchBuilder {
 	return b
 }
 
-func (b *batchBuilder) RequestBlockByNumber(id uint64) StarknetBatchBuilder {
+func (b *batchBuilder) RequestBlockByNumber(id uint64) BatchBuilder {
 	b.args = append(b.args, gethrpc.BatchElem{
 		Method: "starknet_getBlockWithTxs",
 		Args: []interface{}{
@@ -67,7 +67,7 @@ func (b *batchBuilder) RequestBlockByNumber(id uint64) StarknetBatchBuilder {
 	return b
 }
 
-func (b *batchBuilder) RequestLatestBlockHashAndNumber() StarknetBatchBuilder {
+func (b *batchBuilder) RequestLatestBlockHashAndNumber() BatchBuilder {
 	b.args = append(b.args, gethrpc.BatchElem{
 		Method: "starknet_blockHashAndNumber",
 		Args:   nil,
@@ -80,12 +80,12 @@ func (b *batchBuilder) Build() []gethrpc.BatchElem {
 	return b.args
 }
 
-type StarknetChainClient interface {
+type ChainClient interface {
 	// only finalized blocks have a block hashes
 	BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error)
 	// only finalized blocks have numbers
 	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
-	ChainId(ctx context.Context) (string, error)
+	ChainID(ctx context.Context) (string, error)
 	// only way to get the latest pending block (only 1 pending block exists at a time)
 	// LatestPendingBlock(ctx context.Context) (starknetrpc.PendingBlock, error)
 	// returns block number and block has of latest finalized block
@@ -93,36 +93,36 @@ type StarknetChainClient interface {
 	// get block logs, event logs, etc.
 	// EventsByFilter(ctx context.Context, f starknetrpc.EventFilter) ([]starknetrpc.EmittedEvent, error)
 	// TxReceiptByHash(ctx context.Context, h *felt.Felt) (starknetrpc.TransactionReceipt, error)
-	Batch(ctx context.Context, builder StarknetBatchBuilder) ([]gethrpc.BatchElem, error)
+	Batch(ctx context.Context, builder BatchBuilder) ([]gethrpc.BatchElem, error)
 }
 
-var _ StarknetChainClient = (*Client)(nil)
+var _ ChainClient = (*Client)(nil)
 
-func (c *Client) ChainId(ctx context.Context) (string, error) {
+func (c *Client) ChainID(ctx context.Context) (string, error) {
 	// we do not use c.Provider.ChainID method because it caches
-	// the chainId after the first request
+	// the chainID after the first request
 
-	results, err := c.Batch(ctx, NewBatchBuilder().RequestChainId())
+	results, err := c.Batch(ctx, NewBatchBuilder().RequestChainID())
 
 	if err != nil {
-		return "", fmt.Errorf("error in ChainId : %w", err)
+		return "", fmt.Errorf("error in ChainID : %w", err)
 	}
 
 	if len(results) != 1 {
-		return "", fmt.Errorf("unexpected result from ChainId")
+		return "", fmt.Errorf("unexpected result from ChainID")
 	}
 
 	if results[0].Error != nil {
-		return "", fmt.Errorf("error in ChainId result: %w", results[0].Error)
+		return "", fmt.Errorf("error in ChainID result: %w", results[0].Error)
 	}
 
-	chainId, ok := results[0].Result.(*string)
+	chainID, ok := results[0].Result.(*string)
 
 	if !ok {
-		return "", fmt.Errorf("expected type string block but found: %T", chainId)
+		return "", fmt.Errorf("expected type string block but found: %T", chainID)
 	}
 
-	return *chainId, nil
+	return *chainID, nil
 }
 
 func (c *Client) BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error) {
@@ -184,7 +184,7 @@ func (c *Client) LatestBlockHashAndNumber(ctx context.Context) (starknetrpc.Bloc
 	return *info, nil
 }
 
-func (c *Client) Batch(ctx context.Context, builder StarknetBatchBuilder) ([]gethrpc.BatchElem, error) {
+func (c *Client) Batch(ctx context.Context, builder BatchBuilder) ([]gethrpc.BatchElem, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)

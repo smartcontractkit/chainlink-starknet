@@ -1,4 +1,4 @@
-package test_env
+package testenv
 
 import (
 	"fmt"
@@ -16,13 +16,13 @@ import (
 )
 
 const (
-	STARK_HTTP_PORT = "5050"
+	StarkHTTPPort = "5050"
 )
 
 type Starknet struct {
 	test_env.EnvComponent
-	ExternalHttpUrl string
-	InternalHttpUrl string
+	ExternalHTTPURL string
+	InternalHTTPURL string
 	t               *testing.T
 	l               zerolog.Logger
 	Image           string
@@ -76,17 +76,17 @@ func (s *Starknet) StartContainer() error {
 	if err != nil {
 		return err
 	}
-	httpPort, err := c.MappedPort(testcontext.Get(s.t), test_env.NatPort(STARK_HTTP_PORT))
+	httpPort, err := c.MappedPort(testcontext.Get(s.t), test_env.NatPort(StarkHTTPPort))
 	if err != nil {
 		return err
 	}
 
-	s.ExternalHttpUrl = fmt.Sprintf("http://%s:%s", host, httpPort.Port())
-	s.InternalHttpUrl = fmt.Sprintf("http://%s:%s", s.ContainerName, STARK_HTTP_PORT)
+	s.ExternalHTTPURL = fmt.Sprintf("http://%s:%s", host, httpPort.Port())
+	s.InternalHTTPURL = fmt.Sprintf("http://%s:%s", s.ContainerName, StarkHTTPPort)
 
 	s.l.Info().
-		Any("ExternalHttpUrl", s.ExternalHttpUrl).
-		Any("InternalHttpUrl", s.InternalHttpUrl).
+		Any("ExternalHTTPURL", s.ExternalHTTPURL).
+		Any("InternalHTTPURL", s.InternalHTTPURL).
 		Str("containerName", s.ContainerName).
 		Msgf("Started Starknet container")
 
@@ -97,7 +97,7 @@ func (s *Starknet) getContainerRequest() (*tc.ContainerRequest, error) {
 	return &tc.ContainerRequest{
 		Name:         s.ContainerName,
 		Image:        s.Image,
-		ExposedPorts: []string{test_env.NatPortFormat(STARK_HTTP_PORT)},
+		ExposedPorts: []string{test_env.NatPortFormat(StarkHTTPPort)},
 		Networks:     s.Networks,
 		WaitingFor: tcwait.ForLog("Starknet Devnet listening").
 			WithStartupTimeout(30 * time.Second).

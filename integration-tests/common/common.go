@@ -9,17 +9,6 @@ import (
 	"testing"
 	"time"
 
-	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
-	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
-	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
-	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
-
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
@@ -28,11 +17,22 @@ import (
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
+	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
+	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
+	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
 	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
+
+	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
+	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 type Common struct {
@@ -53,10 +53,10 @@ type TestEnvDetails struct {
 type RPCDetails struct {
 	RPCL1Internal       string
 	RPCL2Internal       string
-	RPCL2InternalApiKey string
+	RPCL2InternalAPIKey string
 	RPCL1External       string
 	RPCL2External       string
-	MockServerUrl       string
+	MockServerURL       string
 	MockServerEndpoint  string
 	P2PPort             string
 }
@@ -74,9 +74,9 @@ func New(testConfig *testconfig.TestConfig) *Common {
 		chainDetails = chainconfig.SepoliaConfig()
 		chainDetails.L2RPCInternal = *testConfig.Common.L2RPCUrl
 		if testConfig.Common.L2RPCApiKey == nil {
-			chainDetails.L2RPCInternalApiKey = ""
+			chainDetails.L2RPCInternalAPIKey = ""
 		} else {
-			chainDetails.L2RPCInternalApiKey = *testConfig.Common.L2RPCApiKey
+			chainDetails.L2RPCInternalAPIKey = *testConfig.Common.L2RPCApiKey
 		}
 	} else {
 		// set up mocked local feedernet server because starknet-devnet does not provide one
@@ -93,7 +93,7 @@ func New(testConfig *testconfig.TestConfig) *Common {
 		RPCDetails: &RPCDetails{
 			P2PPort:             "6690",
 			RPCL2Internal:       chainDetails.L2RPCInternal,
-			RPCL2InternalApiKey: chainDetails.L2RPCInternalApiKey,
+			RPCL2InternalAPIKey: chainDetails.L2RPCInternalAPIKey,
 		},
 	}
 
@@ -156,7 +156,7 @@ func (c *Common) DefaultNodeConfig() *cl.Config {
 			{
 				Name:   ptr.Ptr("primary"),
 				URL:    common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
-				APIKey: ptr.Ptr(c.RPCDetails.RPCL2InternalApiKey),
+				APIKey: ptr.Ptr(c.RPCDetails.RPCL2InternalAPIKey),
 			},
 		},
 	}
@@ -297,7 +297,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	sourceValueBridge := &client.BridgeTypeAttributes{
 		Name: "mockserver-bridge",
-		URL:  c.RPCDetails.MockServerEndpoint + "/" + strings.TrimPrefix(c.RPCDetails.MockServerUrl, "/"),
+		URL:  c.RPCDetails.MockServerEndpoint + "/" + strings.TrimPrefix(c.RPCDetails.MockServerURL, "/"),
 	}
 
 	// Setting up job specs

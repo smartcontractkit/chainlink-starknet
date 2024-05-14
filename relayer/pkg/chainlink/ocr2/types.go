@@ -59,11 +59,11 @@ func NewRoundData(felts []*felt.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}
-	roundId := felts[0].BigInt(big.NewInt(0))
-	if !roundId.IsUint64() && roundId.Uint64() > math.MaxUint32 {
+	roundID := felts[0].BigInt(big.NewInt(0))
+	if !roundID.IsUint64() && roundID.Uint64() > math.MaxUint32 {
 		return data, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", felts[0].String())
 	}
-	data.RoundID = uint32(roundId.Uint64())
+	data.RoundID = uint32(roundID.Uint64())
 	data.Answer = felts[1].BigInt(big.NewInt(0))
 	blockNumber := felts[2].BigInt(big.NewInt(0))
 	if !blockNumber.IsUint64() {

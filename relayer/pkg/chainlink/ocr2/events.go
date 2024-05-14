@@ -1,16 +1,17 @@
 package ocr2
 
 import (
+	"errors"
+	"fmt"
 	"math/big"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/NethermindEth/juno/core/felt"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
@@ -25,7 +26,7 @@ var (
 
 // NewTransmissionEvent represents the 'NewTransmission' event
 type NewTransmissionEvent struct {
-	RoundId         uint32
+	RoundId         uint32 //nolint:revive
 	LatestAnswer    *big.Int
 	Transmitter     *felt.Felt
 	LatestTimestamp time.Time
@@ -64,7 +65,7 @@ func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionE
 
 	// keys[0] == event_id
 	// round_id
-	roundId := uint32(event.Keys[1].BigInt(big.NewInt(0)).Uint64())
+	roundID := uint32(event.Keys[1].BigInt(big.NewInt(0)).Uint64())
 	// transmitter
 	transmitter := event.Keys[2]
 
@@ -119,7 +120,7 @@ func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionE
 	reimbursement := eventData[index].BigInt(big.NewInt(0))
 
 	return NewTransmissionEvent{
-		RoundId:         roundId,
+		RoundId:         roundID,
 		LatestAnswer:    latestAnswer,
 		Transmitter:     transmitter,
 		LatestTimestamp: latestTimestamp,
@@ -210,7 +211,7 @@ func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, 
 		onchainConfigFelts[2].BigInt(big.NewInt(0)),
 	)
 	if err != nil {
-		return types.ContractConfig{}, errors.Wrap(err, "err in encoding onchain config from felts")
+		return types.ContractConfig{}, fmt.Errorf("err in encoding onchain config from felts: %w", err)
 	}
 
 	// offchain_config_version
@@ -226,7 +227,7 @@ func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, 
 	offchainConfigFelts := eventData[index:(index + int(offchainConfigLen))]
 	offchainConfig, err := starknet.DecodeFelts(starknet.FeltsToBig(offchainConfigFelts))
 	if err != nil {
-		return types.ContractConfig{}, errors.Wrap(err, "couldn't decode offchain config")
+		return types.ContractConfig{}, fmt.Errorf("couldn't decode offchain config: %w", err)
 	}
 
 	return types.ContractConfig{
