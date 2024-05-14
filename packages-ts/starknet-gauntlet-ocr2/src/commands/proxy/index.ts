@@ -13,7 +13,6 @@ export const executeCommands = [
   Upgrade,
   ProposeAggregator,
   ConfirmAggregator,
-  ProposeAggregator,
   TransferOwnership,
   AcceptOwnership,
 ]
