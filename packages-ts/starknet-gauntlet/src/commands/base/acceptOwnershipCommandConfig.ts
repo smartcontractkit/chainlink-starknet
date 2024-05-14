@@ -20,9 +20,7 @@ export const acceptOwnershipCommandConfig = (
   action: 'accept_ownership',
   ux: {
     description: 'End two-step ownership transfer process by accepting ownership',
-    examples: [
-      `${contractId}:accept_ownership --network=<NETWORK> <CONTRACT_ADDRESS>`,
-    ],
+    examples: [`${contractId}:accept_ownership --network=<NETWORK> <CONTRACT_ADDRESS>`],
   },
   makeUserInput,
   makeContractInput,

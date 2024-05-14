@@ -7,6 +7,8 @@ import SetConfig from './setConfig'
 import SetPayees from './setPayees'
 import AddAccess from './addAccess'
 import DisableAccessCheck from './disableAccessCheck'
+import ProposeOwnership from './proposeOwnership'
+import AcceptOwnership from './acceptOwnership'
 
 export const executeCommands = [
   Deploy,
@@ -17,5 +19,7 @@ export const executeCommands = [
   SetBilling,
   SetConfig,
   SetPayees,
+  ProposeOwnership,
+  AcceptOwnership,
 ]
 export const inspectionCommands = [inspect]
