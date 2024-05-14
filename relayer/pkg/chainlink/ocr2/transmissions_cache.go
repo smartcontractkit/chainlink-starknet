@@ -2,12 +2,11 @@ package ocr2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -47,7 +46,7 @@ func NewTransmissionsCache(cfg Config, reader Reader, lggr logger.Logger) *trans
 func (c *transmissionsCache) updateTransmission(ctx context.Context) error {
 	digest, epoch, round, answer, timestamp, err := c.reader.LatestTransmissionDetails(ctx)
 	if err != nil {
-		return errors.Wrap(err, "couldn't fetch latest transmission details")
+		return fmt.Errorf("couldn't fetch latest transmission details: %w", err)
 	}
 
 	c.tdLock.Lock()

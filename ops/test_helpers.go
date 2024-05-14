@@ -20,7 +20,7 @@ type OffchainConfig struct {
 	RMax                                               int                    `json:"rMax"`
 	S                                                  []int                  `json:"s"`
 	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
-	PeerIds                                            []string               `json:"peerIds"`
+	PeerIDs                                            []string               `json:"peerIds"`
 	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
 	MaxDurationQueryNanoseconds                        int                    `json:"maxDurationQueryNanoseconds"`
 	MaxDurationObservationNanoseconds                  int                    `json:"maxDurationObservationNanoseconds"`
@@ -53,7 +53,7 @@ var TestOCR2Config = OCR2Config{
 		RMax:                     5,
 		S:                        []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
-		// PeerIds:                  peerIds, // user defined
+		// PeerIDs:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
 			AlphaReportInfinite: false,
 			AlphaReportPpb:      0,

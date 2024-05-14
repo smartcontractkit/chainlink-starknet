@@ -13,9 +13,10 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
@@ -97,5 +98,4 @@ func TestERC20Client(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, uint64(1), decimals.Uint64())
 	})
-
 }
