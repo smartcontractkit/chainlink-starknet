@@ -19,7 +19,6 @@ import (
 )
 
 var (
-	myChainID     = "SN_SEPOLIA"
 	myTimeout     = 100 * time.Second
 	blockNumber   = 48719
 	blockHash, _  = new(felt.Felt).SetString("0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a")
