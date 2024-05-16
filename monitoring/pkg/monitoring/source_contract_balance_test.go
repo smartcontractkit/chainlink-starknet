@@ -13,18 +13,8 @@ import (
 )
 
 func TestContractBalancesSource(t *testing.T) {
-	// This test makes sure that the mapping between the response from the ocr2.Client
-	// method calls and the output of the Proxy source is correct.
-
 	chainConfig := generateChainConfig()
 	nodeConfig := generateNodeConfig()
-
-	// ocr2Reader := ocr2Mocks.NewOCR2Reader(t)
-	// ocr2Reader.On(
-	// 	"LatestRoundData",
-	// 	mock.Anything, // ctx
-	// 	proxyContractAddressFelt,
-	// ).Return(ocr2ClientLatestRoundDataResponseForProxy, nil).Once()
 
 	erc20Reader := erc20Mocks.NewERC20Reader(t)
 

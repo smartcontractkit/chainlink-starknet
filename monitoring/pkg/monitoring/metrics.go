@@ -8,7 +8,11 @@ import (
 )
 
 // Metrics is an interface for prometheus metrics. Makes testing easier.
+//
+//go:generate mockery --name Metrics --output ./mocks/
 type Metrics interface {
+	SetTransmissionGasPrice(answer float64, contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
+	CleanupTransmissionGasPrice(contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	SetReportObservations(answer float64, accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	CleanupReportObservations(accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	SetProxyAnswersRaw(answer float64, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
@@ -19,12 +23,30 @@ type Metrics interface {
 }
 
 var (
+	transmissionGasPrice = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "starknet_transmission_gas_price",
+			Help: "Reports gas price (units STRK) reported with transmission",
+		},
+		[]string{
+			"contract_address",
+			"feed_id",
+			"chain_id",
+			"contract_status",
+			"contract_type",
+			"feed_name",
+			"feed_path",
+			"network_id",
+			"network_name",
+		},
+	)
 	reportObservations = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "report_observations",
 			Help: "Reports # of observations included in a transmission report",
 		},
 		[]string{
+			// uses "account_address" instead of "contract_address" for consistency with solana dashboards
 			"account_address",
 			"feed_id",
 			"chain_id",
@@ -66,6 +88,37 @@ func NewMetrics(log relayMonitoring.Logger) Metrics {
 
 type defaultMetrics struct {
 	log relayMonitoring.Logger
+}
+
+func (d *defaultMetrics) SetTransmissionGasPrice(answer float64, contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string) {
+	transmissionGasPrice.With(prometheus.Labels{
+		"contract_address": contractAddress,
+		"feed_id":          feedID,
+		"chain_id":         chainID,
+		"contract_status":  contractStatus,
+		"contract_type":    contractType,
+		"feed_name":        feedName,
+		"feed_path":        feedPath,
+		"network_id":       networkID,
+		"network_name":     networkName,
+	}).Set(answer)
+}
+
+func (d *defaultMetrics) CleanupTransmissionGasPrice(contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string) {
+	labels := prometheus.Labels{
+		"contract_address": contractAddress,
+		"feed_id":          feedID,
+		"chain_id":         chainID,
+		"contract_status":  contractStatus,
+		"contract_type":    contractType,
+		"feed_name":        feedName,
+		"feed_path":        feedPath,
+		"network_id":       networkID,
+		"network_name":     networkName,
+	}
+	if !transmissionGasPrice.Delete(labels) {
+		d.log.Errorw("failed to delete metric", "name", "starknet_transmission_gas_price", "labels", labels)
+	}
 }
 
 func (d *defaultMetrics) SetBalance(answer float64, contractAddress, alias, networkId, networkName, chainID string) {
