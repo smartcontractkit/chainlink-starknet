@@ -3,6 +3,7 @@ package monitoring
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	relayMonitoring "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 )
@@ -47,6 +48,23 @@ func (p *transmissionDetailsExporter) Export(ctx context.Context, data interface
 	}
 
 	for _, t := range transmissionsEnvelope.Transmissions {
+		// gas price
+		divisor := new(big.Int).Exp(new(big.Int).SetUint64(10), new(big.Int).SetUint64(18), nil) // 10^18
+		gasPriceInSTRK := new(big.Int).Div(t.GasPrice, divisor)
+		p.metrics.SetTransmissionGasPrice(
+			toFloat64(gasPriceInSTRK),
+			p.feedConfig.ContractAddress,
+			p.feedConfig.GetID(),
+			p.chainConfig.GetChainID(),
+			p.feedConfig.GetContractStatus(),
+			p.feedConfig.GetContractType(),
+			p.feedConfig.Name,
+			p.feedConfig.Path,
+			p.chainConfig.GetNetworkID(),
+			p.chainConfig.GetNetworkName(),
+		)
+
+		// observation length
 		observationLength := float64(t.ObservationLength)
 		p.metrics.SetReportObservations(
 			observationLength,
@@ -64,6 +82,17 @@ func (p *transmissionDetailsExporter) Export(ctx context.Context, data interface
 }
 
 func (p *transmissionDetailsExporter) Cleanup(_ context.Context) {
+	p.metrics.CleanupTransmissionGasPrice(
+		p.feedConfig.GetContractAddress(),
+		p.feedConfig.GetID(),
+		p.chainConfig.GetChainID(),
+		p.feedConfig.GetContractStatus(),
+		p.feedConfig.GetContractType(),
+		p.feedConfig.GetName(),
+		p.feedConfig.GetPath(),
+		p.chainConfig.GetNetworkID(),
+		p.chainConfig.GetNetworkName(),
+	)
 	p.metrics.CleanupReportObservations(
 		p.feedConfig.GetContractAddress(),
 		p.feedConfig.GetID(),
