@@ -27,12 +27,12 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
+	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
 	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
-	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 )
 
 type Common struct {
@@ -274,7 +274,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	oracleSpec := job.OCR2OracleSpec{
 		ContractID:                  ocrControllerAddress,
-		Relay:                       relay.StarkNet,
+		Relay:                       types.NetworkStarkNet,
 		RelayConfig:                 bootstrapRelayConfig,
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
@@ -317,7 +317,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 		oracleSpec = job.OCR2OracleSpec{
 			ContractID:                  ocrControllerAddress,
-			Relay:                       relay.StarkNet,
+			Relay:                       types.NetworkStarkNet,
 			RelayConfig:                 relayConfig,
 			PluginType:                  "median",
 			OCRKeyBundleID:              null.StringFrom(cc.NKeys[nIdx].OCR2Key.Data.ID),
