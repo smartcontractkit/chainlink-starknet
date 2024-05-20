@@ -21,8 +21,8 @@ env:
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
 
 jobs:
-  build_custom_chainlink_image:
-    name: Build Chainlink Image${{matrix.image.tag-suffix}}
+  build_chainlink_image:
+    name: Build Chainlink Image ${{matrix.image.name}}
     runs-on: ubuntu-latest
     environment: integration
     permissions:
@@ -46,7 +46,7 @@ jobs:
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
           basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          this-job-name: Build Chainlink Image${{matrix.image.tag-suffix}}
+          this-job-name: Build Chainlink Image${{matrix.image.name}}
         continue-on-error: true
       - name: Check if image exists
         id: check-image
@@ -105,9 +105,9 @@ jobs:
           QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
 
   run_tests:
-    name: Run Smoke Tests
+    name: Run Smoke Tests ${{matrix.image.name}}
     runs-on: ubuntu20.04-16cores-64GB
-    needs: [ build_custom_chainlink_image, build_test_image ]
+    needs: [ build_chainlink_image, build_test_image ]
     environment: integration
     # these values need to match those used to build the chainlink image
     strategy:
@@ -174,7 +174,7 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@b49a9d04744b0237908831730f8553f26d73a94b # v2.3.17
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: nix develop -c helm repo update && make test=${{ matrix.image.test-name }} test-integration-smoke-ci | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
+          test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage"
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
