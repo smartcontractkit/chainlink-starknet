@@ -22,7 +22,7 @@ env:
 
 jobs:
   build_custom_chainlink_image:
-    name: Build Custom CL Image
+    name: Build Chainlink Image${{matrix.image.tag-suffix}}
     runs-on: ubuntu-latest
     environment: integration
     permissions:
@@ -46,7 +46,7 @@ jobs:
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
           basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          this-job-name: Build Custom CL Image
+          this-job-name: Build Chainlink Image${{matrix.image.tag-suffix}}
         continue-on-error: true
       - name: Check if image exists
         id: check-image
