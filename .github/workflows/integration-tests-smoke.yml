@@ -62,6 +62,7 @@ jobs:
         with:
           cl_repo: smartcontractkit/chainlink
           cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          should_checkout: true
           cl_dockerfile: ${{ matrix.image.dockerfile }}
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
