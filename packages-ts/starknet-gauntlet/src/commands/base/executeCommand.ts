@@ -188,13 +188,27 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
-      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
-      const invocation = contract.populate(
-        config.internalFunction || config.action,
-        this.input.contract as any,
-      )
+      const makeInvocation = (contractAddress: string) => {
+        const contract = new Contract(this.contract.abi, contractAddress, this.provider.provider)
+        return contract.populate(
+          config.internalFunction || config.action,
+          this.input.contract as any,
+        )
+      }
 
-      return [invocation]
+      // If a flag called `batch` is present and it's value is `true`,
+      // then the following assumptions will be made here:
+      //
+      //  - All `args` are valid Starknet contract addresses
+      //  - All contract addresses reference contracts with the same ABI
+      //  - All contract invocations will be populated with the same inputs
+      //
+      const batch = this.flags.batch
+      if (typeof batch === 'boolean' && batch) {
+        return this.args.map(makeInvocation)
+      }
+
+      return [makeInvocation(this.contractAddress)]
     }
 
     deployContract = async (): Promise<TransactionResponse> => {
