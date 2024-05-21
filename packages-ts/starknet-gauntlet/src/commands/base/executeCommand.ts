@@ -201,7 +201,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       //
       //  - All `args` are valid Starknet contract addresses
       //  - All contract addresses reference contracts with the same ABI
-      //  - All contract invocations will be populated with the same inputs
+      //  - All contract invocations should be populated with the same inputs
       //
       const batch = this.flags.batch
       if (typeof batch === 'boolean' && batch) {
