@@ -12,7 +12,7 @@ import {
 } from '@chainlink/starknet-gauntlet/test/utils'
 import { loadContract } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST } from '../../src/lib/contracts'
-import { Contract, InvokeTransactionReceiptResponse } from 'starknet'
+import { Contract, InvokeTransactionReceiptResponse, RpcProvider } from 'starknet'
 
 const signers = [
   'ocr2on_starknet_04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730', // ocr2on_starknet_<key>
@@ -120,8 +120,11 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Set billing',
+    'Set billing using --batch',
     async () => {
+      // the number of calls to batch into one transaction
+      const batchCount = 3
+
       // transfer overflow on set billing
       const command = await registerExecuteCommand(setBillingCommand).create(
         {
@@ -131,40 +134,71 @@ describe('OCR2 Contract', () => {
             gasBase: 14951,
             gasPerSignature: 13,
           },
+          batch: true,
         },
-        [contractAddress],
+        // Calls set_billing on the same contract `batchCount` times (with the
+        // same input) using one transaction. We use the same contract address
+        // here for simplicity, but a more realistic example would involve using
+        // different contract addresses (where each of them has the same ABI)
+        // and passing different inputs to each of them.
+        Array.from({ length: batchCount }).map(() => contractAddress),
       )
 
       const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+      const maybeRes = report.responses.at(0)
+      expect(maybeRes).not.toBeFalsy()
 
+      const res = maybeRes!
+      expect(res.tx.status).toEqual('ACCEPTED')
+      expect(res.tx.hash).not.toBeNull()
+
+      // Checks that the update was successful
+      const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const { contract } = loadContract(CONTRACT_LIST.OCR2)
-      const ocr2Contract = new Contract(
-        contract.abi,
-        contractAddress,
-        makeProvider(LOCAL_URL).provider,
-      )
+      const ocr2Contract = new Contract(contract.abi, contractAddress, provider)
       const billing = await ocr2Contract.billing()
       expect(billing.observation_payment_gjuels).toEqual(BigInt(1))
       expect(billing.transmission_payment_gjuels).toEqual(BigInt(1))
+
+      // Checks that the correct number of batch calls were made
+      const receipt = await provider.waitForTransaction(res.tx.hash)
+      expect(receipt.isSuccess()).toBeTruthy()
+      if (receipt.isSuccess()) {
+        const invocations = receipt.events.filter((ev) => ev.from_address === contractAddress)
+        expect(invocations.length).toEqual(batchCount)
+      }
     },
     TIMEOUT,
   )
 
   it(
-    'Set config using --input',
+    'Set config using --input and --batch',
     async () => {
+      // the number of calls to batch into one transaction
+      const batchCount = 3
+
       const command = await registerExecuteCommand(setConfigCommand).create(
         {
           input: validInput,
+          batch: true,
         },
-        [contractAddress],
+        // Calls set_config on the same contract `batchCount` times (with the
+        // same input) using one transaction. We use the same contract address
+        // here for simplicity, but a more realistic example would involve using
+        // different contract addresses (where each of them has the same ABI)
+        // and passing different inputs to each of them.
+        Array.from({ length: batchCount }).map(() => contractAddress),
       )
 
       const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
+      const maybeRes = report.responses.at(0)
+      expect(maybeRes).not.toBeFalsy()
 
-      const provider = makeProvider(LOCAL_URL).provider
+      const res = maybeRes!
+      expect(res.tx.status).toEqual('ACCEPTED')
+      expect(res.tx.hash).not.toBeNull()
+
+      const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const { contract } = loadContract(CONTRACT_LIST.OCR2)
       const ocr2Contract = new Contract(contract.abi, contractAddress, provider)
       const resultTransmitters = await ocr2Contract.transmitters()
@@ -172,8 +206,12 @@ describe('OCR2 Contract', () => {
       // retrieve signer keys from transaction event
       // based on event struct: https://github.com/smartcontractkit/chainlink-starknet/blob/develop/contracts/src/chainlink/ocr2/aggregator.cairo#L260
       const receipt = (await provider.getTransactionReceipt(
-        report.responses[0].tx.hash,
+        res.tx.hash,
       )) as InvokeTransactionReceiptResponse
+
+      // Checks that the correct number of batch calls were made
+      const invocations = receipt.events.filter((ev) => ev.from_address === contractAddress)
+      expect(invocations.length).toEqual(batchCount)
 
       // TODO: use StarknetContract decodeEvents from starknet-hardhat-plugin instead
       const eventData = receipt.events[0].data
