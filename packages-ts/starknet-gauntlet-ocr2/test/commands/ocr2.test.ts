@@ -141,7 +141,7 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Set billing using --batch',
+    'Set billing',
     async () => {
       // transfer overflow on set billing
       const command = await registerExecuteCommand(setBillingCommand).create(
@@ -152,7 +152,6 @@ describe('OCR2 Contract', () => {
             gasBase: 14951,
             gasPerSignature: 13,
           },
-          batch: true,
         },
         feedAddresses,
       )
@@ -196,12 +195,11 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Set config using --input and --batch',
+    'Set config using --input',
     async () => {
       const command = await registerExecuteCommand(setConfigCommand).create(
         {
           input: validInput,
-          batch: true,
         },
         feedAddresses,
       )
@@ -261,13 +259,12 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Transfer ownership using --batch',
+    'Transfer ownership',
     async () => {
       const command = await registerExecuteCommand(transferOwnershipCommand).create(
         {
           // Trivially transfer ownership to the same address
           newOwner: owner.address,
-          batch: true,
         },
         feedAddresses,
       )
@@ -301,14 +298,9 @@ describe('OCR2 Contract', () => {
   )
 
   it(
-    'Accept ownership using --batch',
+    'Accept ownership',
     async () => {
-      const command = await registerExecuteCommand(acceptOwnershipCommand).create(
-        {
-          batch: true,
-        },
-        feedAddresses,
-      )
+      const command = await registerExecuteCommand(acceptOwnershipCommand).create({}, feedAddresses)
 
       // Execute the command
       const report = await command.execute()
