@@ -8,8 +8,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 
-	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/NethermindEth/juno/core/felt"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
