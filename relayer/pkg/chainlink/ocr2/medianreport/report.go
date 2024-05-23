@@ -60,9 +60,11 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
 	juelsPerFeeCoinFelt := starknetutils.BigIntToFelt(juelsPerFeeCoin)
 
-	// TODO: source from observations
-	gasPrice := big.NewInt(1) // := oo[num/2].GasPrice
-	gasPriceFelt := starknetutils.BigIntToFelt(gasPrice)
+	sort.Slice(oo, func(i, j int) bool {
+		return oo[i].GasPriceSubunits.Cmp(oo[j].GasPriceSubunits) < 0
+	})
+	gasPriceSubunits := oo[num/2].GasPriceSubunits
+	gasPriceSubunitsFelt := starknetutils.BigIntToFelt(gasPriceSubunits)
 
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
@@ -91,7 +93,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	}
 	buf = juelsPerFeeCoinFelt.Bytes()
 	report = append(report, buf[:]...)
-	buf = gasPriceFelt.Bytes()
+	buf = gasPriceSubunitsFelt.Bytes()
 	report = append(report, buf[:]...)
 
 	return report, nil
