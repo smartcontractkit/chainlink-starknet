@@ -43,6 +43,7 @@ var _ ReaderWriter = (*Client)(nil)
 
 type Client struct {
 	Provider       starknetrpc.RpcProvider
+	EthClient      *ethrpc.Client
 	lggr           logger.Logger
 	defaultTimeout time.Duration
 }
@@ -61,9 +62,15 @@ func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger
 		return nil, err
 	}
 
+	c, err := ethrpc.DialContext(context.Background(), baseURL)
+	if err != nil {
+		return nil, err
+	}
+
 	client := &Client{
-		Provider: provider,
-		lggr:     lggr,
+		Provider:  provider,
+		EthClient: c,
+		lggr:      lggr,
 	}
 
 	// make copy to preserve value
