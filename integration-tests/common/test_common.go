@@ -3,35 +3,33 @@ package common
 import (
 	"context"
 	"fmt"
-	"net/http"
-
-	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
-	"github.com/go-resty/resty/v2"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
-
 	"math/big"
+	"net/http"
 	"testing"
 	"time"
 
-	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/test_env"
-	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
-	"github.com/smartcontractkit/chainlink-testing-framework/logging"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
-
 	"github.com/NethermindEth/juno/core/felt"
+	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/go-resty/resty/v2"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/docker/test_env"
+	"github.com/smartcontractkit/chainlink-testing-framework/logging"
+	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
+
+	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv"
+	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
-	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 var (
@@ -145,8 +143,7 @@ func (m *OCRv2TestState) DeployCluster() {
 			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
 		}
 		m.Common.RPCDetails.MockServerEndpoint = m.Common.Env.URLs["qa_mock_adapter_internal"][0]
-		m.Common.RPCDetails.MockServerUrl = "five"
-
+		m.Common.RPCDetails.MockServerURL = "five"
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
@@ -155,8 +152,8 @@ func (m *OCRv2TestState) DeployCluster() {
 		require.NoError(m.TestConfig.T, err)
 
 		// Setting RPC details
-		m.Common.RPCDetails.RPCL2External = stark.ExternalHttpUrl
-		m.Common.RPCDetails.RPCL2Internal = stark.InternalHttpUrl
+		m.Common.RPCDetails.RPCL2External = stark.ExternalHTTPURL
+		m.Common.RPCDetails.RPCL2Internal = stark.InternalHTTPURL
 
 		if *m.Common.TestConfig.Common.Network == "testnet" {
 			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
@@ -186,7 +183,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		// Setting up Mock adapter
 		m.Clients.KillgraveClient = env.MockAdapter
 		m.Common.RPCDetails.MockServerEndpoint = m.Clients.KillgraveClient.InternalEndpoint
-		m.Common.RPCDetails.MockServerUrl = "mockserver-bridge"
+		m.Common.RPCDetails.MockServerURL = "mockserver-bridge"
 		err = m.Clients.KillgraveClient.SetAdapterBasedIntValuePath("/mockserver-bridge", []string{http.MethodGet, http.MethodPost}, 10)
 		require.NoError(m.TestConfig.T, err, "Failed to set mock adapter value")
 	}
@@ -202,7 +199,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
 	lggr := logger.Nop()
-	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, m.Common.RPCDetails.RPCL2InternalApiKey, lggr, &rpcRequestTimeout)
+	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, m.Common.RPCDetails.RPCL2InternalAPIKey, lggr, &rpcRequestTimeout)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating starknet client should not fail")
 	m.Clients.OCR2Client, m.TestConfig.err = ocr2.NewClient(m.Clients.StarknetClient, lggr)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating ocr2 client should not fail")
@@ -230,7 +227,6 @@ func (m *OCRv2TestState) DeployEnv() {
 
 // SetupClients Sets up the starknet client
 func (m *OCRv2TestState) SetupClients() {
-
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.ChainlinkNodesK8s, m.TestConfig.err = client.ConnectChainlinkNodes(m.Common.Env)
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
@@ -243,12 +239,12 @@ func (m *OCRv2TestState) SetupClients() {
 func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var offChaiNKeys []string
 	var onChaiNKeys []string
-	var peerIds []string
+	var peerIDs []string
 	var txKeys []string
 	var cfgKeys []string
 	for i, key := range m.Clients.ChainlinkClient.NKeys {
 		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
-		peerIds = append(peerIds, key.PeerID)
+		peerIDs = append(peerIDs, key.PeerID)
 		txKeys = append(txKeys, m.Clients.ChainlinkClient.AccountAddresses[i])
 		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
@@ -258,7 +254,7 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	payload.Signers = onChaiNKeys
 	payload.Transmitters = txKeys
 	payload.OffchainConfig.OffchainPublicKeys = offChaiNKeys
-	payload.OffchainConfig.PeerIds = peerIds
+	payload.OffchainConfig.PeerIDs = peerIDs
 	payload.OffchainConfig.ConfigPublicKeys = cfgKeys
 
 	return &payload, nil

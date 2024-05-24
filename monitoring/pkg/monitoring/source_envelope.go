@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -74,7 +75,7 @@ func (s *envelopeSource) Fetch(ctx context.Context) (interface{}, error) {
 		envelopeMu.Lock()
 		defer envelopeMu.Unlock()
 		if err != nil {
-			envelopeErr = multierr.Combine(envelopeErr, fmt.Errorf("fetchLatestNewTransmissionEvent failed: %w", err))
+			envelopeErr = errors.Join(envelopeErr, fmt.Errorf("fetchLatestNewTransmissionEvent failed: %w", err))
 			return
 		}
 		envelope.BlockNumber = latestRoundData.BlockNumber

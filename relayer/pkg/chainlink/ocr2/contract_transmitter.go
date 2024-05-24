@@ -3,9 +3,8 @@ package ocr2
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
@@ -114,7 +113,7 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 ) {
 	configDigest, epoch, _, _, _, err = c.reader.LatestTransmissionDetails(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "couldn't fetch latest transmission details")
+		err = fmt.Errorf("couldn't fetch latest transmission details: %w", err)
 	}
 
 	return

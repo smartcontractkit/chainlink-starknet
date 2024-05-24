@@ -16,7 +16,6 @@ var (
 
 func TestPadBytes(t *testing.T) {
 	for i, v := range lengths {
-
 		// generate random
 		in := make([]byte, v)
 		_, err := rand.Read(in)
