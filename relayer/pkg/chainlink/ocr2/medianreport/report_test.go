@@ -37,7 +37,6 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 
 	_, err = c.BuildReport(oo)
 	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (-10)")
-
 }
 
 func TestBuildReport(t *testing.T) {
@@ -161,5 +160,4 @@ func TestMedianFromReport(t *testing.T) {
 			assert.Equal(t, tc.expectedMedian.String(), med.String())
 		})
 	}
-
 }

@@ -2,11 +2,10 @@ package ocr2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
@@ -19,8 +18,7 @@ import (
 )
 
 //go:generate mockery --name OCR2Reader --output ./mocks/
-
-type OCR2Reader interface {
+type OCR2Reader interface { //nolint:revive
 	LatestConfigDetails(context.Context, *felt.Felt) (ContractConfigDetails, error)
 	LatestTransmissionDetails(context.Context, *felt.Felt) (TransmissionDetails, error)
 	LatestRoundData(context.Context, *felt.Felt) (RoundData, error)
@@ -58,7 +56,7 @@ func (c *Client) BillingDetails(ctx context.Context, address *felt.Felt) (bd Bil
 
 	res, err := c.r.CallContract(ctx, ops)
 	if err != nil {
-		return bd, errors.Wrap(err, "couldn't call the contract")
+		return bd, fmt.Errorf("couldn't call the contract: %w", err)
 	}
 
 	// [0] - observation payment, [1] - transmission payment, [2] - gas base, [3] - gas per signature
@@ -71,7 +69,7 @@ func (c *Client) BillingDetails(ctx context.Context, address *felt.Felt) (bd Bil
 
 	bd, err = NewBillingDetails(observationPayment, transmissionPayment)
 	if err != nil {
-		return bd, errors.Wrap(err, "couldn't initialize billing details")
+		return bd, fmt.Errorf("couldn't initialize billing details: %w", err)
 	}
 
 	return
@@ -85,7 +83,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address *felt.Felt) (c
 
 	res, err := c.r.CallContract(ctx, ops)
 	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't call the contract")
+		return ccd, fmt.Errorf("couldn't call the contract: %w", err)
 	}
 
 	// [0] - config count, [1] - block number, [2] - config digest
@@ -98,7 +96,7 @@ func (c *Client) LatestConfigDetails(ctx context.Context, address *felt.Felt) (c
 
 	ccd, err = NewContractConfigDetails(blockNum.BigInt(big.NewInt((0))), configDigest.Bytes())
 	if err != nil {
-		return ccd, errors.Wrap(err, "couldn't initialize config details")
+		return ccd, fmt.Errorf("couldn't initialize config details: %w", err)
 	}
 
 	return
@@ -112,7 +110,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address *felt.Fe
 
 	res, err := c.r.CallContract(ctx, ops)
 	if err != nil {
-		return td, errors.Wrap(err, "couldn't call the contract")
+		return td, fmt.Errorf("couldn't call the contract: %w", err)
 	}
 
 	// [0] - config digest, [1] - epoch and round, [2] - latest answer, [3] - latest timestamp
@@ -128,7 +126,7 @@ func (c *Client) LatestTransmissionDetails(ctx context.Context, address *felt.Fe
 
 	latestAnswer := res[2].BigInt(big.NewInt(0))
 	if err != nil {
-		return td, errors.Wrap(err, "latestAnswer invalid")
+		return td, fmt.Errorf("latestAnswer invalid: %w", err)
 	}
 
 	timestampFelt := res[3]
@@ -155,12 +153,12 @@ func (c *Client) LatestRoundData(ctx context.Context, address *felt.Felt) (round
 
 	felts, err := c.r.CallContract(ctx, ops)
 	if err != nil {
-		return round, errors.Wrap(err, "couldn't call the contract with selector latest_round_data")
+		return round, fmt.Errorf("couldn't call the contract with selector latest_round_data: %w", err)
 	}
 
 	round, err = NewRoundData(felts)
 	if err != nil {
-		return round, errors.Wrap(err, "unable to decode RoundData")
+		return round, fmt.Errorf("unable to decode RoundData: %w", err)
 	}
 	return round, nil
 }
@@ -171,10 +169,10 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt
 		Selector:        starknetutils.GetSelectorFromNameFelt("link_available_for_payment"),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to call the contract with selector 'link_available_for_payment'")
+		return nil, fmt.Errorf("failed to call the contract with selector 'link_available_for_payment': %w", err)
 	}
-	if len(results) != 2 {
-		return nil, errors.Wrap(err, "insufficient data from selector 'link_available_for_payment'")
+	if l := len(results); l != 2 {
+		return nil, fmt.Errorf("insufficient data from selector 'link_available_for_payment': need 2 results but got %d", l)
 	}
 
 	isNegative := !results[0].IsZero()
@@ -211,7 +209,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, e
 	// TODO: check events.isLastPage, query more if needed
 
 	if err != nil {
-		return events, errors.Wrap(err, "couldn't fetch events for block")
+		return events, fmt.Errorf("couldn't fetch events for block: %w", err)
 	}
 
 	if len(events) == 0 {
@@ -223,7 +221,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, e
 func (c *Client) ConfigFromEventAt(ctx context.Context, address *felt.Felt, blockNum uint64) (cc ContractConfig, err error) {
 	events, err := c.fetchEventsFromBlock(ctx, address, "ConfigSet", blockNum)
 	if err != nil {
-		return cc, errors.Wrap(err, "failed to fetch config_set events")
+		return cc, fmt.Errorf("failed to fetch config_set events: %w", err)
 	}
 	if len(events) != 1 {
 		return cc, fmt.Errorf("expected to find one config_set event in block %d for address %s but found %d", blockNum, address, len(events))
@@ -231,7 +229,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address *felt.Felt, bloc
 	configAtEvent := events[0]
 	config, err := ParseConfigSetEvent(configAtEvent)
 	if err != nil {
-		return cc, errors.Wrap(err, "couldn't parse config event")
+		return cc, fmt.Errorf("couldn't parse config event: %w", err)
 	}
 	return ContractConfig{
 		Config:      config,
@@ -243,7 +241,7 @@ func (c *Client) ConfigFromEventAt(ctx context.Context, address *felt.Felt, bloc
 func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address *felt.Felt, blockNum uint64) (events []NewTransmissionEvent, err error) {
 	rawEvents, err := c.fetchEventsFromBlock(ctx, address, "NewTransmission", blockNum)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch new_transmission events")
+		return nil, fmt.Errorf("failed to fetch new_transmission events: %w", err)
 	}
 	if len(rawEvents) == 0 {
 		return nil, fmt.Errorf("expected to find at least one new_transmission event in block %d for address %s but found %d", blockNum, address, len(rawEvents))
@@ -252,7 +250,7 @@ func (c *Client) NewTransmissionsFromEventsAt(ctx context.Context, address *felt
 	for _, rawEvent := range rawEvents {
 		event, err := ParseNewTransmissionEvent(rawEvent)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't parse new_transmission event")
+			return nil, fmt.Errorf("couldn't parse new_transmission event: %w", err)
 		}
 		events = append(events, event)
 	}

@@ -7,12 +7,14 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 //go:generate mockery --name ERC20Reader --output ./mocks/
-type ERC20Reader interface {
+type ERC20Reader interface { //nolint:revive
 	BalanceOf(context.Context, *felt.Felt) (*big.Int, error)
 	Decimals(context.Context) (*big.Int, error)
 
@@ -64,12 +66,10 @@ func (c *Client) BalanceOf(ctx context.Context, accountAddress *felt.Felt) (*big
 	total := new(big.Int).Add(low, summand)
 
 	return total, nil
-
 }
 
 func (c *Client) Decimals(ctx context.Context) (*big.Int, error) {
 	if c.decimals == nil {
-
 		ops := starknet.CallOps{
 			ContractAddress: c.tokenAddress,
 			Selector:        starknetutils.GetSelectorFromNameFelt("decimals"),

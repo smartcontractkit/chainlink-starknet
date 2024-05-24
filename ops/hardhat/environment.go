@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
+
 	"github.com/smartcontractkit/chainlink-env/client"
 	"github.com/smartcontractkit/chainlink-env/environment"
+
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
 
@@ -16,7 +18,7 @@ type Chart struct {
 type Props struct {
 	NetworkName string   `envconfig:"network_name"`
 	Simulated   bool     `envconfig:"network_simulated"`
-	HttpURLs    []string `envconfig:"http_url"`
+	HttpURLs    []string `envconfig:"http_url"` //nolint:revive
 	WsURLs      []string `envconfig:"ws_url"`
 	Values      map[string]any
 }
@@ -53,17 +55,17 @@ func (m Chart) GetValues() *map[string]any {
 }
 
 func (m Chart) ExportData(e *environment.Environment) error {
-	devnetLocalHttp, err := e.Fwd.FindPort("hardhat:0", "hardhat", "http").As(client.LocalConnection, client.HTTP)
+	devnetLocalHTTP, err := e.Fwd.FindPort("hardhat:0", "hardhat", "http").As(client.LocalConnection, client.HTTP)
 	if err != nil {
 		return err
 	}
-	devnetInternalHttp, err := e.Fwd.FindPort("hardhat:0", "hardhat", "http").As(client.RemoteConnection, client.HTTP)
+	devnetInternalHTTP, err := e.Fwd.FindPort("hardhat:0", "hardhat", "http").As(client.RemoteConnection, client.HTTP)
 	if err != nil {
 		return err
 	}
-	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetLocalHttp)
-	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetInternalHttp)
-	log.Info().Str("Name", "Devnet").Str("URLs", devnetLocalHttp).Msg("Devnet network")
+	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetLocalHTTP)
+	e.URLs[m.Props.NetworkName] = append(e.URLs[m.Props.NetworkName], devnetInternalHTTP)
+	log.Info().Str("Name", "Devnet").Str("URLs", devnetLocalHTTP).Msg("Devnet network")
 	return nil
 }
 

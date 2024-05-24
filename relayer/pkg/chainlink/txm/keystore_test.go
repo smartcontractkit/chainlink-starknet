@@ -9,6 +9,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
 
@@ -33,7 +34,6 @@ func TestKeystoreAdapterImpl(t *testing.T) {
 		_, _, err := ksa.Sign(context.Background(), "anything", big.NewInt(42))
 		require.ErrorIs(t, err, txm.ErrBadAdapterEncoding)
 	})
-
 }
 
 type testLoopKeystore struct {

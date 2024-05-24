@@ -53,17 +53,17 @@ func (m Chart) GetVersion() string {
 }
 
 func (m Chart) ExportData(e *environment.Environment) error {
-	devnetLocalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.LocalConnection, client.HTTP)
+	devnetLocalHTTP, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.LocalConnection, client.HTTP)
 	if err != nil {
 		return err
 	}
-	devnetInternalHttp, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.RemoteConnection, client.HTTP)
+	devnetInternalHTTP, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.RemoteConnection, client.HTTP)
 	if err != nil {
 		return err
 	}
-	e.URLs[NetworkName] = append(e.URLs[NetworkName], devnetLocalHttp)
-	e.URLs[NetworkName] = append(e.URLs[NetworkName], devnetInternalHttp)
-	log.Info().Str("Name", "Devnet").Str("URLs", devnetLocalHttp).Msg("Devnet network")
+	e.URLs[NetworkName] = append(e.URLs[NetworkName], devnetLocalHTTP)
+	e.URLs[NetworkName] = append(e.URLs[NetworkName], devnetInternalHTTP)
+	log.Info().Str("Name", "Devnet").Str("URLs", devnetLocalHTTP).Msg("Devnet network")
 	return nil
 }
 
@@ -89,7 +89,6 @@ func defaultProps() map[string]any {
 			"real_node": "false",
 		},
 	}
-
 }
 
 func New(props *Props) environment.ConnectedChart {
