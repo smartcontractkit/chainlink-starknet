@@ -1,9 +1,6 @@
 name: SonarQube Scan
 
 on:
-  push:
-    branches:
-      - develop
   pull_request:
 
 jobs:
