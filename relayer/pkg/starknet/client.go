@@ -2,10 +2,9 @@ package starknet
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
@@ -95,7 +94,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 
 	res, err := c.Call(ctx, tx, starknetrpc.WithBlockTag("latest"))
 	if err != nil {
-		return nil, errors.Wrap(err, "error in client.CallContract")
+		return nil, fmt.Errorf("error in client.CallContract: %w", err)
 	}
 
 	return res, nil
@@ -110,7 +109,7 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
 
 	blockNum, err := c.Provider.BlockNumber(ctx)
 	if err != nil {
-		return 0, errors.Wrap(err, "error in client.LatestBlockHeight")
+		return 0, fmt.Errorf("error in client.LatestBlockHeight: %w", err)
 	}
 
 	return blockNum, nil
@@ -127,7 +126,7 @@ func (c *Client) BlockWithTxHashes(ctx context.Context, blockID starknetrpc.Bloc
 
 	out, err := c.Provider.BlockWithTxHashes(ctx, blockID)
 	if err != nil {
-		return out.(*starknetrpc.Block), errors.Wrap(err, "error in client.BlockWithTxHashes")
+		return out.(*starknetrpc.Block), fmt.Errorf("error in client.BlockWithTxHashes: %w", err)
 	}
 	return out.(*starknetrpc.Block), nil
 }
@@ -141,13 +140,12 @@ func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, block
 
 	out, err := c.Provider.Call(ctx, calls, blockHashOrTag)
 	if err != nil {
-		return out, errors.Wrap(err, "error in client.Call")
+		return out, fmt.Errorf("error in client.Call: %w", err)
 	}
 	if out == nil {
 		return out, NilResultError("client.Call")
 	}
 	return out, nil
-
 }
 
 func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starknetrpc.Transaction, error) {
@@ -159,13 +157,12 @@ func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starkn
 
 	out, err := c.Provider.TransactionByHash(ctx, hash)
 	if err != nil {
-		return out, errors.Wrap(err, "error in client.TransactionByHash")
+		return out, fmt.Errorf("error in client.TransactionByHash: %w", err)
 	}
 	if out == nil {
 		return out, NilResultError("client.TransactionByHash")
 	}
 	return out, nil
-
 }
 
 func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (starknetrpc.TransactionReceipt, error) {
@@ -177,13 +174,12 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (stark
 
 	out, err := c.Provider.TransactionReceipt(ctx, hash)
 	if err != nil {
-		return out, errors.Wrap(err, "error in client.TransactionReceipt")
+		return out, fmt.Errorf("error in client.TransactionReceipt: %w", err)
 	}
 	if out == nil {
 		return out, NilResultError("client.TransactionReceipt")
 	}
 	return out, nil
-
 }
 
 func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
@@ -195,14 +191,14 @@ func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*st
 
 	out, err := c.Provider.Events(ctx, input)
 	if err != nil {
-		return out, errors.Wrap(err, "error in client.Events")
+		return out, fmt.Errorf("error in client.Events: %w", err)
 	}
 	if out == nil {
 		return out, NilResultError("client.Events")
 	}
 	return out, nil
-
 }
+
 func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc

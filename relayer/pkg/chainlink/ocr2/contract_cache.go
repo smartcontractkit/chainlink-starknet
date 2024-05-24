@@ -2,11 +2,10 @@ package ocr2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
@@ -49,7 +48,7 @@ func NewContractCache(cfg Config, reader Reader, lggr logger.Logger) *contractCa
 func (c *contractCache) updateConfig(ctx context.Context) error {
 	configBlock, configDigest, err := c.reader.LatestConfigDetails(ctx)
 	if err != nil {
-		return errors.Wrap(err, "couldn't fetch latest config details")
+		return fmt.Errorf("couldn't fetch latest config details: %w", err)
 	}
 
 	c.ccLock.RLock()
@@ -60,13 +59,13 @@ func (c *contractCache) updateConfig(ctx context.Context) error {
 	if !isSame {
 		newConfig, err = c.reader.LatestConfig(ctx, configBlock)
 		if err != nil {
-			return errors.Wrap(err, "couldn't fetch latest config")
+			return fmt.Errorf("couldn't fetch latest config: %w", err)
 		}
 	}
 
 	blockHeight, err := c.reader.LatestBlockHeight(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch latest block height")
+		return fmt.Errorf("failed to fetch latest block height: %w", err)
 	}
 
 	c.lggr.Debugw("contract cache update", "blockHeight", blockHeight, "configBlock", configBlock, "configDigest", configDigest)

@@ -1,19 +1,19 @@
 package medianreport
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
 	"sort"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
 	"github.com/NethermindEth/juno/core/felt"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"github.com/pkg/errors"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 var _ median.ReportCodec = (*ReportCodec)(nil)
