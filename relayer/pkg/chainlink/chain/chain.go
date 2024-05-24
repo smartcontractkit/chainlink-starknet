@@ -8,7 +8,6 @@ import (
 	"math/rand"
 
 	"github.com/pelletier/go-toml/v2"
-	"go.uber.org/multierr"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/chains"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -48,10 +47,10 @@ func (o *ChainOpts) Validate() (err error) {
 		return fmt.Errorf("%s is required", s)
 	}
 	if o.Logger == nil {
-		err = multierr.Append(err, required("Logger'"))
+		err = errors.Join(err, required("Logger"))
 	}
 	if o.KeyStore == nil {
-		err = multierr.Append(err, required("KeyStore"))
+		err = errors.Join(err, required("KeyStore"))
 	}
 	return
 }

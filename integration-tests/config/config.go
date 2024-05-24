@@ -9,7 +9,7 @@ type Config struct {
 	ChainID             string
 	StarkTokenAddress   string
 	L2RPCInternal       string
-	L2RPCInternalApiKey string
+	L2RPCInternalAPIKey string
 	TokenName           string
 	FeederURL           string
 }
