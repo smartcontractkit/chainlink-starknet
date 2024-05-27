@@ -11,12 +11,12 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/rs/zerolog v1.30.0
-	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240508083542-17d8e2bbc336
+	github.com/smartcontractkit/chainlink-common v0.1.7-0.20240524173852-a74b009c7303
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240325075535-0f7eb05ee595
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240524210559-72df72854128
 	github.com/smartcontractkit/chainlink-testing-framework v1.28.8
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240506164029-09f8c7fcd63b
-	github.com/smartcontractkit/chainlink/v2 v2.10.0-beta0.0.20240508135056-c90f6d5bdcfb
+	github.com/smartcontractkit/chainlink/v2 v2.10.0-beta0.0.20240524220010-00d58a812b46
 	github.com/smartcontractkit/seth v0.1.6-0.20240429143720-cacb8160ecec
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
@@ -356,10 +356,10 @@ require (
 	github.com/slack-go/slack v0.12.2 // indirect
 	github.com/smartcontractkit/chain-selectors v1.0.10 // indirect
 	github.com/smartcontractkit/chainlink-automation v1.0.3 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240508101745-af1ed7bc8a69 // indirect
+	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240524214833-c362c2ebbd2d // indirect
 	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20240220203239-09be0ea34540 // indirect
-	github.com/smartcontractkit/chainlink-feeds v0.0.0-20240422130241-13c17a91b2ab // indirect
-	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20240508123714-3a7c0d9d22e3 // indirect
+	github.com/smartcontractkit/chainlink-feeds v0.0.0-20240522213638-159fb2d99917 // indirect
+	github.com/smartcontractkit/chainlink-solana v1.0.3-0.20240524201401-88d0b3763b20 // indirect
 	github.com/smartcontractkit/chainlink-vrf v0.0.0-20231120191722-fef03814f868 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20240419185742-fd3cab206b2c // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
