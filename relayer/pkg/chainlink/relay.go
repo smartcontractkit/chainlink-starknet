@@ -58,6 +58,10 @@ func (r *relayer) NewContractReader(_ []byte) (relaytypes.ContractReader, error)
 	return nil, errors.New("contract reader is not supported for starknet")
 }
 
+func (r *relayer) NewContractStateReader(config []byte) (relaytypes.ContractStateReader, error) {
+	return nil, errors.New("contract state reader is not supported for starknet")
+}
+
 func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
 	var relayConfig RelayConfig
 
