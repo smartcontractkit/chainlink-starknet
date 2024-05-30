@@ -18,25 +18,39 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 	oo := []median.ParsedAttributedObservation{}
 
 	oo = append(oo, median.ParsedAttributedObservation{
-		Timestamp:       uint32(time.Now().Unix()),
-		Value:           big.NewInt(-10),
-		JuelsPerFeeCoin: big.NewInt(10),
-		Observer:        commontypes.OracleID(1),
+		Timestamp:        uint32(time.Now().Unix()),
+		Value:            big.NewInt(-10),
+		JuelsPerFeeCoin:  big.NewInt(10),
+		GasPriceSubunits: big.NewInt(10),
+		Observer:         commontypes.OracleID(1),
 	})
 
 	_, err := c.BuildReport(oo)
-	assert.ErrorContains(t, err, "starknet does not support negative values: value = (-10), fee = (10)")
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (-10), fee = (10), gas = (10)")
 
 	oo = []median.ParsedAttributedObservation{}
 	oo = append(oo, median.ParsedAttributedObservation{
-		Timestamp:       uint32(time.Now().Unix()),
-		Value:           big.NewInt(10),
-		JuelsPerFeeCoin: big.NewInt(-10),
-		Observer:        commontypes.OracleID(1),
+		Timestamp:        uint32(time.Now().Unix()),
+		Value:            big.NewInt(10),
+		JuelsPerFeeCoin:  big.NewInt(-10),
+		GasPriceSubunits: big.NewInt(10),
+		Observer:         commontypes.OracleID(1),
 	})
 
 	_, err = c.BuildReport(oo)
-	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (-10)")
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (-10), gas = (10)")
+
+	oo = []median.ParsedAttributedObservation{}
+	oo = append(oo, median.ParsedAttributedObservation{
+		Timestamp:        uint32(time.Now().Unix()),
+		Value:            big.NewInt(10),
+		JuelsPerFeeCoin:  big.NewInt(10),
+		GasPriceSubunits: big.NewInt(-10),
+		Observer:         commontypes.OracleID(1),
+	})
+
+	_, err = c.BuildReport(oo)
+	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (10), gas = (-10)")
 }
 
 func TestBuildReport(t *testing.T) {
@@ -51,10 +65,11 @@ func TestBuildReport(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		oo = append(oo, median.ParsedAttributedObservation{
-			Timestamp:       uint32(time.Now().Unix()),
-			Value:           big.NewInt(1234567890),
-			JuelsPerFeeCoin: v,
-			Observer:        commontypes.OracleID(i),
+			Timestamp:        uint32(time.Now().Unix()),
+			Value:            big.NewInt(1234567890),
+			GasPriceSubunits: big.NewInt(2),
+			JuelsPerFeeCoin:  v,
+			Observer:         commontypes.OracleID(i),
 		})
 
 		// create expected outputs
@@ -93,7 +108,7 @@ func TestBuildReport(t *testing.T) {
 
 	// validate gasPrice
 	index += juelsPerFeeCoinSizeBytes
-	expectedGasPrice := big.NewInt(1)
+	expectedGasPrice := big.NewInt(2)
 	assert.Equal(t, expectedGasPrice.FillBytes(make([]byte, gasPriceSizeBytes)), []byte(report[index:index+gasPriceSizeBytes]), "validate gasPrice")
 }
 

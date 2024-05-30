@@ -37,8 +37,8 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	}
 
 	for _, o := range oo {
-		if o.Value.Sign() == -1 || o.JuelsPerFeeCoin.Sign() == -1 {
-			return nil, fmt.Errorf("starknet does not support negative values: value = (%v), fee = (%v)", o.Value, o.JuelsPerFeeCoin)
+		if o.Value.Sign() == -1 || o.JuelsPerFeeCoin.Sign() == -1 || o.GasPriceSubunits.Sign() == -1 {
+			return nil, fmt.Errorf("starknet does not support negative values: value = (%v), fee = (%v), gas = (%v)", o.Value, o.JuelsPerFeeCoin, o.GasPriceSubunits)
 		}
 	}
 
