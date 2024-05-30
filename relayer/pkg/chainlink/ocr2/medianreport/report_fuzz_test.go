@@ -17,9 +17,10 @@ import (
 func FuzzReportCodecMedianFromReport(f *testing.F) {
 	cdc := ReportCodec{}
 	report, err := cdc.BuildReport([]median.ParsedAttributedObservation{
-		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(100000)},
-		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(200000)},
-		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(11), JuelsPerFeeCoin: big.NewInt(300000)}})
+		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(100000), GasPriceSubunits: big.NewInt(100000)},
+		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(200000), GasPriceSubunits: big.NewInt(200000)},
+		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(11), JuelsPerFeeCoin: big.NewInt(300000), GasPriceSubunits: big.NewInt(300000)},
+	})
 	require.NoError(f, err)
 
 	// Seed with valid report
