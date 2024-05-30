@@ -59,7 +59,7 @@ Gauntlet commands that send transactions to the chain require a funded Starknet 
 
 ## Funding your Wallet
 
-If you're using testnet, you can fund your wallet using a Starknet faucet - a popular option is [this](https://starknet-faucet.vercel.app/) one. You can also reach out on Slack to have the team send some funds directly to your account.
+If you're using testnet, you can fund your wallet using a Starknet faucet - a popular option is [this](https://starknet-faucet.vercel.app/) one. You can also reach out on Slack (#team-blockchain-integrations) to have the team send some funds directly to your account.
 
 If you're using mainnet, please reach out on Slack for help funding your account.
 
