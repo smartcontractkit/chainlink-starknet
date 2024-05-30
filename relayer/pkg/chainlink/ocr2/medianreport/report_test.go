@@ -160,9 +160,10 @@ func TestMedianFromReport(t *testing.T) {
 			var pos []median.ParsedAttributedObservation
 			for i, obs := range tc.obs {
 				pos = append(pos, median.ParsedAttributedObservation{
-					Value:           obs,
-					JuelsPerFeeCoin: obs,
-					Observer:        commontypes.OracleID(uint8(i))},
+					Value:            obs,
+					JuelsPerFeeCoin:  obs,
+					GasPriceSubunits: obs,
+					Observer:         commontypes.OracleID(uint8(i))},
 				)
 			}
 			report, err := cdc.BuildReport(pos)

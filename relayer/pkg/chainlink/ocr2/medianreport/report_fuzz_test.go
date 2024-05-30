@@ -28,7 +28,7 @@ func FuzzReportCodecMedianFromReport(f *testing.F) {
 		med, err := cdc.MedianFromReport(report)
 		if err == nil {
 			// Should always be able to build a report from the medians extracted
-			_, err = cdc.BuildReport([]median.ParsedAttributedObservation{{Timestamp: uint32(time.Now().Unix()), Value: med, JuelsPerFeeCoin: med}})
+			_, err = cdc.BuildReport([]median.ParsedAttributedObservation{{Timestamp: uint32(time.Now().Unix()), Value: med, JuelsPerFeeCoin: med, GasPriceSubunits: med}})
 			require.NoError(t, err)
 		}
 	})
