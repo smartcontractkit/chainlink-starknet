@@ -15,6 +15,8 @@ import {
 import { loadContract } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract, InvokeTransactionReceiptResponse, RpcProvider } from 'starknet'
+import { RDDTempFile } from './utils'
+import path from 'path'
 
 const signers = [
   'ocr2on_starknet_04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730', // ocr2on_starknet_<key>
@@ -87,58 +89,64 @@ const getNumCallsPerAddress = (txReceipt: InvokeTransactionReceiptResponse) => {
 }
 
 describe('OCR2 Contract', () => {
+  const rddTempFilePath = path.join(__dirname, 'tmp', 'rdd.json')
+  const rddTempFile = new RDDTempFile(rddTempFilePath)
   const feedAddresses = new Array<string>()
   const numFeeds = 3
 
   let owner: StarknetAccount
-  let accessController: string
 
   beforeAll(async () => {
+    // Fetches a prefunded account from the local starknet devnet node
     owner = await fetchAccount()
-  })
 
-  it(
-    'Deploy AC',
-    async () => {
-      // TODO: owner can't be 0 anymore
-      const command = await registerExecuteCommand(deployACCommand).create({}, [])
+    // Deploys an access controller
+    // TODO: owner can't be 0 anymore
+    const deployAccessControllerCmd = await registerExecuteCommand(deployACCommand).create({}, [])
+    const deployAccessControllerReport = await deployAccessControllerCmd.execute()
+    expect(deployAccessControllerReport.responses[0].tx.status).toEqual('ACCEPTED')
+    const accessController = deployAccessControllerReport.responses[0].contract
 
-      const report = await command.execute()
-      expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-      accessController = report.responses[0].contract
-    },
-    TIMEOUT,
-  )
-
-  it(
-    'Deployment',
-    async () => {
-      // Deploys one feed at a time (if we try to do this in parallel using
-      // `Promise.all` / `Promise.allSettled`, then transaction nonce errors
-      // will occur)
-      for (let i = 0; i < numFeeds; i++) {
-        const command = await registerExecuteCommand(deployCommand).create(
-          {
-            input: {
-              owner: owner.address,
-              maxAnswer: 10000,
-              minAnswer: 1,
-              decimals: 18,
-              description: `Test Feed ${i}`,
-              billingAccessController: accessController,
-              linkToken: '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
-            },
+    // Deploys one feed at a time (if we try to do this in parallel using
+    // `Promise.all` / `Promise.allSettled`, then transaction nonce errors
+    // will occur)
+    for (let i = 0; i < numFeeds; i++) {
+      const deployCmd = await registerExecuteCommand(deployCommand).create(
+        {
+          input: {
+            owner: owner.address,
+            maxAnswer: 10000,
+            minAnswer: 1,
+            decimals: 18,
+            description: `Test Feed ${i}`,
+            billingAccessController: accessController,
+            linkToken: '0x04cc1bfa99e282e434aef2815ca17337a923cd2c61cf0c7de5b326d7a8603730',
           },
-          [],
-        )
+        },
+        [],
+      )
+      const deployReport = await deployCmd.execute()
+      expect(deployReport.responses[0].tx.status).toEqual('ACCEPTED')
+      feedAddresses.push(deployReport.responses[0].contract)
+    }
 
-        const report = await command.execute()
-        expect(report.responses[0].tx.status).toEqual('ACCEPTED')
-        feedAddresses.push(report.responses[0].contract)
-      }
-    },
-    TIMEOUT,
-  )
+    // Adds dummy billing configs to the temp RDD file
+    feedAddresses.forEach((addr, i) => {
+      rddTempFile.setBilling(addr, {
+        observationPaymentGjuels: String(i),
+        transmissionPaymentGjuels: String(i),
+        gasBase: String(i),
+        gasPerSignature: String(i),
+      })
+    })
+
+    // Writes the RDD file to disk
+    await rddTempFile.writeFile()
+  }, TIMEOUT)
+
+  afterAll(async () => {
+    await rddTempFile.removeFile()
+  })
 
   it(
     'Set billing',
@@ -190,6 +198,55 @@ describe('OCR2 Contract', () => {
         // Checks that the correct number of batch calls were made
         expect(counter.get(feedAddress) ?? 0).toEqual(1)
       }
+    },
+    TIMEOUT,
+  )
+
+  it(
+    'Set billing using --rdd',
+    async () => {
+      // transfer overflow on set billing
+      const command = await registerExecuteCommand(setBillingCommand).create(
+        {
+          rdd: rddTempFile.filepath,
+        },
+        feedAddresses,
+      )
+
+      // Execute the command
+      const report = await command.execute()
+      const maybeRes = report.responses.at(0)
+      expect(maybeRes).not.toBeFalsy()
+
+      // Validate the response
+      const res = maybeRes!
+      expect(res.tx.status).toEqual('ACCEPTED')
+      expect(res.tx.hash).not.toBeNull()
+
+      // Checks that the transaction was successful
+      const provider: RpcProvider = makeProvider(LOCAL_URL).provider
+      const receipt = await provider.waitForTransaction(res.tx.hash)
+      expect(receipt.isSuccess()).toBeTruthy()
+      const txReceipt = receipt as InvokeTransactionReceiptResponse
+
+      // Loads the contract
+      const { contract } = loadContract(CONTRACT_LIST.OCR2)
+
+      // Creates a map where each key is an address and each corresponding value is
+      // the number of times the address is seen in the transaction receipt events
+      const counter = getNumCallsPerAddress(txReceipt)
+
+      // Iterates over the feeds and checks that the values were updated and that the
+      // number of batch calls is correct
+      await Promise.all(
+        feedAddresses.map(async (feedAddress, i) => {
+          const ocr2Contract = new Contract(contract.abi, feedAddress, provider)
+          const billing = await ocr2Contract.billing()
+          expect(billing.observation_payment_gjuels).toEqual(BigInt(i))
+          expect(billing.transmission_payment_gjuels).toEqual(BigInt(i))
+          expect(counter.get(feedAddress) ?? 0).toEqual(1)
+        }),
+      )
     },
     TIMEOUT,
   )
