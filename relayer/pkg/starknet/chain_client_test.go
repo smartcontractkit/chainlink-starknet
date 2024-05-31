@@ -21,6 +21,7 @@ import (
 var (
 	myTimeout     = 100 * time.Second
 	blockNumber   = 48719
+	uintBlockNum  = uint64(blockNumber)
 	blockHash, _  = new(felt.Felt).SetString("0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a")
 	blockResponse = []byte(`
 		"result": {
@@ -66,12 +67,69 @@ var (
 								]
 						}]
 			}`)
+	eventResponse = []byte(`
+		  "result": {
+			"events": [
+			  {
+				"from_address": "0x517567ac7026ce129c950e6e113e437aa3c83716cd61481c6bb8c5057e6923e",
+				"keys": [
+				  "0x297be67eb977068ccd2304c6440368d4a6114929aeb860c98b6a7e91f96e2ef",
+				  "0x496e76656e746f7279"
+				],
+				"data": [
+				  "0x2",
+				  "0x4690005",
+				  "0x2",
+				  "0xa",
+				  "0x1",
+				  "0x4a61fe0",
+				  "0xa3013f8",
+				  "0x0",
+				  "0x0",
+				  "0x2",
+				  "0xaf",
+				  "0x41f",
+				  "0x81",
+				  "0xb50a"
+				],
+				"block_number": 48719,
+				"block_hash": "0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a",
+				"transaction_hash": "0x27a9a9bc927efc37658acfb9c27b1fc56e7cfcf7a30db1ecdd9820bb2dddf0c"
+			  },
+			  {
+				"from_address": "0x517567ac7026ce129c950e6e113e437aa3c83716cd61481c6bb8c5057e6923e",
+				"keys": [
+				  "0x297be67eb977068ccd2304c6440368d4a6114929aeb860c98b6a7e91f96e2ef",
+				  "0x436f6e74726f6c"
+				],
+				"data": [
+				  "0x1",
+				  "0x116c0007",
+				  "0x1",
+				  "0x4eb"
+				],
+				"block_number": 48719,
+				"block_hash": "0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a",
+				"transaction_hash": "0x27a9a9bc927efc37658acfb9c27b1fc56e7cfcf7a30db1ecdd9820bb2dddf0c"
+			  }
+			],
+			"continuation_token": "48719-2"
+		  }`)
 	blockHashAndNumberResponse = fmt.Sprintf(`{"block_hash": "%s", "block_number": %d}`,
 		"0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a",
 		48719,
 	)
 	// hex-encoded value for "SN_SEPOLIA"
-	chainIDHex = "0x534e5f5345504f4c4941"
+	chainIDHex  = "0x534e5f5345504f4c4941"
+	eventsInput = starknetrpc.EventsInput{
+		EventFilter: starknetrpc.EventFilter{
+			FromBlock: starknetrpc.BlockID{Number: &uintBlockNum},
+			ToBlock:   starknetrpc.BlockID{Number: &uintBlockNum},
+		},
+		ResultPageRequest: starknetrpc.ResultPageRequest{
+			ChunkSize: 2,
+		},
+	}
 )
 
 func TestChainClient(t *testing.T) {
@@ -99,6 +157,8 @@ func TestChainClient(t *testing.T) {
 				out = []byte(fmt.Sprintf(`{"result": %s}`, blockHashAndNumberResponse))
 			case "starknet_chainId":
 				out = []byte(fmt.Sprintf(`{"result": "%s"}`, chainIDHex))
+			case "starknet_getEvents":
+				out = []byte(fmt.Sprintf(`{ %s }`, eventResponse))
 			default:
 				require.False(t, true, "unsupported RPC method %s", call.Method)
 			}
@@ -139,11 +199,17 @@ func TestChainClient(t *testing.T) {
 					"jsonrpc": "2.0",
 					"id": %d,
 					"result": %s
+				},
+				{
+					"jsonrpc": "2.0",
+					"id": %d,
+					%s
 				}
 			]`, batchCall[0].ID, chainIDHex,
 					batchCall[1].ID, blockResponse,
 					batchCall[2].ID, blockResponse,
 					batchCall[3].ID, blockHashAndNumberResponse,
+					batchCall[4].ID, eventResponse,
 				)
 
 				out = []byte(response)
@@ -185,25 +251,39 @@ func TestChainClient(t *testing.T) {
 		assert.Equal(t, chainIDHex, output)
 	})
 
+	t.Run("get Events", func(t *testing.T) {
+		blockNumber := uint64(blockNumber)
+		events, err := client.EventsByFilter(context.TODO(), eventsInput)
+		require.NoError(t, err)
+
+		assert.Equal(t, 2, len(events.Events))
+		assert.Equal(t, "48719-2", events.ContinuationToken)
+		for _, event := range events.Events {
+			assert.NotNil(t, event)
+			assert.Equal(t, blockNumber, event.BlockNumber)
+			assert.Equal(t, blockHash, event.BlockHash)
+		}
+	})
+
 	t.Run("get Batch", func(t *testing.T) {
 		builder := NewBatchBuilder()
 		builder.
 			RequestChainID().
 			RequestBlockByHash(blockHash).
 			RequestBlockByNumber(uint64(blockNumber)).
-			RequestLatestBlockHashAndNumber()
+			RequestLatestBlockHashAndNumber().
+			RequestEventsByFilter(eventsInput)
 
 		results, err := client.Batch(context.TODO(), builder)
 		require.NoError(t, err)
 
-		assert.Equal(t, 4, len(results))
+		assert.Equal(t, 5, len(results))
 
 		t.Run("gets ChainID in Batch", func(t *testing.T) {
 			assert.Equal(t, "starknet_chainId", results[0].Method)
 			assert.Nil(t, results[0].Error)
 			id, ok := results[0].Result.(*string)
 			assert.True(t, ok)
-			fmt.Println(id)
 			assert.Equal(t, chainIDHex, *id)
 		})
 
@@ -230,6 +310,20 @@ func TestChainClient(t *testing.T) {
 			assert.True(t, ok)
 			assert.Equal(t, blockHash, info.BlockHash)
 			assert.Equal(t, uint64(blockNumber), info.BlockNumber)
+		})
+
+		t.Run("gets EventsByFilter in Batch", func(t *testing.T) {
+			assert.Equal(t, "starknet_getEvents", results[4].Method)
+			assert.Nil(t, results[4].Error)
+			events, ok := results[4].Result.(*starknetrpc.EventChunk)
+			assert.True(t, ok)
+			assert.Equal(t, 2, len(events.Events))
+			assert.Equal(t, "48719-2", events.ContinuationToken)
+			for _, event := range events.Events {
+				assert.NotNil(t, event)
+				assert.Equal(t, uint64(blockNumber), event.BlockNumber)
+				assert.Equal(t, blockHash, event.BlockHash)
+			}
 		})
 	})
 }
