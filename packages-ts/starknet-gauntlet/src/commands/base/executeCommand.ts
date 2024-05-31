@@ -171,50 +171,39 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       c.input = await c.buildCommandInput(flags, args, env)
 
-      if (c.batchInput != null) {
-        c.beforeExecute = async () => {
-          const funcs = Array.from(c.batchInput.entries()).map(([addr, inpt]) => {
-            const ctx = overrideExecutionContext(addr)
-            return config.hooks?.beforeExecute == null
-              ? c.defaultBeforeExecute(ctx, inpt)
-              : config.hooks.beforeExecute(ctx, inpt, {
-                  logger: deps.logger,
-                  prompt: deps.prompt,
-                })
-          })
-          for (const func of funcs) {
-            await func()
-          }
-        }
+      // Map each address to its corresponding input and create an array of pairs
+      const addressToInputPairs = Array.from(
+        (c.batchInput ?? new Map([[c.contractAddress, c.input]])).entries(),
+      )
 
-        c.afterExecute = async (result) => {
-          const funcs = Array.from(c.batchInput.entries()).map(([addr, inpt]) => {
-            const ctx = overrideExecutionContext(addr)
-            return config.hooks?.afterExecute == null
-              ? c.defaultAfterExecute()
-              : config.hooks.afterExecute(ctx, inpt, {
-                  logger: deps.logger,
-                  prompt: deps.prompt,
-                })
-          })
-          for (const func of funcs) {
-            await func(result)
-          }
+      c.beforeExecute = async () => {
+        const funcs = addressToInputPairs.map(([addr, inpt]) => {
+          const ctx = overrideExecutionContext(addr)
+          return config.hooks?.beforeExecute == null
+            ? c.defaultBeforeExecute(ctx, inpt)
+            : config.hooks.beforeExecute(ctx, inpt, {
+                logger: deps.logger,
+                prompt: deps.prompt,
+              })
+        })
+        for (const func of funcs) {
+          await func()
         }
-      } else {
-        c.beforeExecute = config.hooks?.beforeExecute
-          ? config.hooks.beforeExecute(c.executionContext, c.input, {
-              logger: deps.logger,
-              prompt: deps.prompt,
-            })
-          : c.defaultBeforeExecute(c.executionContext, c.input)
+      }
 
-        c.afterExecute = config.hooks?.afterExecute
-          ? config.hooks.afterExecute(c.executionContext, c.input, {
-              logger: deps.logger,
-              prompt: deps.prompt,
-            })
-          : c.defaultAfterExecute()
+      c.afterExecute = async (result) => {
+        const funcs = addressToInputPairs.map(([addr, inpt]) => {
+          const ctx = overrideExecutionContext(addr)
+          return config.hooks?.afterExecute == null
+            ? c.defaultAfterExecute()
+            : config.hooks.afterExecute(ctx, inpt, {
+                logger: deps.logger,
+                prompt: deps.prompt,
+              })
+        })
+        for (const func of funcs) {
+          await func(result)
+        }
       }
 
       return c
