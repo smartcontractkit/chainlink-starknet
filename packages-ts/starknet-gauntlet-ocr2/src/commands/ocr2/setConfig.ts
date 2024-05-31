@@ -188,21 +188,19 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
     // config digest string must be exactly 32 bytes
     const paddedHexLastConfigDigest = hexLastConfigDigest.padStart(64, '0')
     const configDigest = `0x${paddedHexLastConfigDigest}`
-    deps.logger.info(`ℹ️ lastConfigDigest to save in RDD: ${configDigest}`)
+    deps.logger.info(`lastConfigDigest to save in RDD: ${configDigest}`)
     if (context.flags.rdd) {
-      deps.logger.info(
-        `ℹ️ RDD file ${context.flags.rdd} found! Will automatically update lastConfigDigest for you`,
-      )
       const rdd = getRDD(context.flags.rdd)
-      const newConfig = { ...rdd.config, ...{ lastConfigDigest: configDigest } }
-      const newRdd = { ...rdd, ...{ config: newConfig } }
-      fs.writeFileSync(context.flags.rdd, JSON.stringify(newRdd, null, 2))
-      deps.logger.info(
-        `✅ RDD file ${context.flags.rdd} updated. Please reformat RDD (run ./bin/generate and ./bin/degenerate) as needed`,
+      const contractAddr = context.contract.address
+      // set updated lastConfigDigest
+      rdd[CONTRACT_TYPES.AGGREGATOR][contractAddr]['config']['lastConfigDigest'] = configDigest
+      fs.writeFileSync(context.flags.rdd, JSON.stringify(rdd, null, 2))
+      deps.logger.success(
+        `RDD file ${context.flags.rdd} has been updated! You must reformat RDD by running ./bin/degenerate and ./bin/generate in that exact order`,
       )
     } else {
-      deps.logger.info(
-        `❗❗ no rdd file input, you must manually update lastConfigDigest in rdd yourself`,
+      deps.logger.warn(
+        `No RDD file was inputted, you must manually update lastConfigDigest in RDD yourself`,
       )
     }
 
