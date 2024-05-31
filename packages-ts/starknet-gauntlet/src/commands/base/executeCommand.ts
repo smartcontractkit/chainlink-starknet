@@ -63,8 +63,8 @@ export interface ExecuteCommandInstance<UI, CI> {
   executionContext: ExecutionContext
   contract: CompiledContract
   compiledContractHash?: string
-
   input: Input<UI, CI>
+  batchInput?: Map<string, Input<UI, CI>>
 
   makeMessage: () => Promise<Call[]>
   execute: () => Promise<Result<TransactionResponse>>
@@ -87,8 +87,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     executionContext: ExecutionContext
     contract: CompiledContract
     compiledContractHash?: string
-
     input: Input<UI, CI>
+    batchInput?: Map<string, Input<UI, CI>>
 
     beforeExecute: () => Promise<void>
     afterExecute: (response: Result<TransactionResponse>) => Promise<any>
@@ -104,8 +104,13 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       c.wallet = await deps.makeWallet(env)
       c.provider = deps.makeProvider(env.providerUrl, c.wallet)
-      c.contractAddress = args[0]
       c.account = env.account
+
+      // NOTE: If more than one argument is passed in, then the following assumptions will be made:
+      //  - All `args` are valid Starknet contract addresses
+      //  - All contract addresses reference contracts with the same ABI
+      //
+      c.contractAddress = args[0]
 
       const loadResult = config.loadContract()
       c.contract = loadResult.contract
@@ -124,27 +129,93 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         contract: new Contract(c.contract.abi, c.contractAddress ?? '', c.provider.provider),
       }
 
+      const overrideExecutionContext = (contractAddress: string): ExecutionContext => {
+        return {
+          ...c.executionContext,
+          contract: new Contract(c.contract.abi, contractAddress, c.provider.provider),
+          contractAddress,
+        }
+      }
+
       const rdd = flags.rdd || process.env.RDD
       if (rdd) {
         deps.logger.info(`Using RDD from ${rdd}`)
         c.executionContext.rdd = getRDD(rdd)
+
+        // If more than one argument / address is passed to the command, then we'll assume that we
+        // want to perform a batch operation where we execute multiple calls from one transaction.
+        // If the RDD flag is also specified, then we gain the flexibility to vary the inputs of each
+        // call. Instead of forwarding all args to `buildCommandInput`, we can pass each arg to the
+        // function individually:
+        //
+        //   makeBuildInput(..., [args[0]], ..., <context with contract object and contract address replaced with args[0]>)
+        //   makeBuildInput(..., [args[1]], ..., <context with contract object and contract address replaced with args[1]>)
+        //   makeBuildInput(..., [args[2]], ..., <context with contract object and contract address replaced with args[2]>)
+        //   ...
+        //
+        // Under the hood, each call will access the RDD JSON config file at key `args[i]` which will
+        // return a different set of config values. These values can be used to populate the transaction
+        // calls.
+        //
+        if (args.length > 1) {
+          c.batchInput = new Map(
+            await Promise.all(
+              args.map(async (addr: string) => [
+                addr,
+                await c.buildCommandInput(flags, [addr], env, overrideExecutionContext(addr)),
+              ]),
+            ),
+          )
+        }
       }
 
       c.input = await c.buildCommandInput(flags, args, env)
 
-      c.beforeExecute = config.hooks?.beforeExecute
-        ? config.hooks.beforeExecute(c.executionContext, c.input, {
-            logger: deps.logger,
-            prompt: deps.prompt,
+      if (c.batchInput != null) {
+        c.beforeExecute = async () => {
+          const funcs = Array.from(c.batchInput.entries()).map(([addr, inpt]) => {
+            const ctx = overrideExecutionContext(addr)
+            return config.hooks?.beforeExecute == null
+              ? c.defaultBeforeExecute(ctx, inpt)
+              : config.hooks.beforeExecute(ctx, inpt, {
+                  logger: deps.logger,
+                  prompt: deps.prompt,
+                })
           })
-        : c.defaultBeforeExecute(c.executionContext, c.input)
+          for (const func of funcs) {
+            await func()
+          }
+        }
 
-      c.afterExecute = config.hooks?.afterExecute
-        ? config.hooks.afterExecute(c.executionContext, c.input, {
-            logger: deps.logger,
-            prompt: deps.prompt,
+        c.afterExecute = async (result) => {
+          const funcs = Array.from(c.batchInput.entries()).map(([addr, inpt]) => {
+            const ctx = overrideExecutionContext(addr)
+            return config.hooks?.afterExecute == null
+              ? c.defaultAfterExecute()
+              : config.hooks.afterExecute(ctx, inpt, {
+                  logger: deps.logger,
+                  prompt: deps.prompt,
+                })
           })
-        : c.defaultAfterExecute()
+          for (const func of funcs) {
+            await func(result)
+          }
+        }
+      } else {
+        c.beforeExecute = config.hooks?.beforeExecute
+          ? config.hooks.beforeExecute(c.executionContext, c.input, {
+              logger: deps.logger,
+              prompt: deps.prompt,
+            })
+          : c.defaultBeforeExecute(c.executionContext, c.input)
+
+        c.afterExecute = config.hooks?.afterExecute
+          ? config.hooks.afterExecute(c.executionContext, c.input, {
+              logger: deps.logger,
+              prompt: deps.prompt,
+            })
+          : c.defaultAfterExecute()
+      }
 
       return c
     }
@@ -168,7 +239,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       deps.logger.info(`Execution finished at transaction: ${response.responses[0].tx.hash}`)
     }
 
-    buildCommandInput = async (flags, args, env): Promise<Input<UI, CI>> => {
+    buildCommandInput = async (flags, args, env, ctx?): Promise<Input<UI, CI>> => {
       const userInput = await config.makeUserInput(flags, args, env)
 
       // Validation
@@ -176,7 +247,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         await this.runValidations(config.validations, userInput)
       }
 
-      const contractInput = await config.makeContractInput(userInput, this.executionContext)
+      const contractInput = await config.makeContractInput(userInput, ctx ?? this.executionContext)
 
       return {
         user: userInput,
@@ -188,19 +259,32 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
-      // If more than one argument is passed in, then the following assumptions will be made:
-      //
-      //  - All `args` are valid Starknet contract addresses
-      //  - All contract addresses reference contracts with the same ABI
-      //  - All contract invocations should be populated with the same inputs
-      //
-      return this.args.map((addr) => {
+      const makeInvocation = (addr: string, input: any) => {
         const contract = new Contract(this.contract.abi, addr, this.provider.provider)
-        return contract.populate(
-          config.internalFunction || config.action,
-          this.input.contract as any,
+        return contract.populate(config.internalFunction || config.action, input)
+      }
+
+      if (this.args.length === 0) {
+        return []
+      }
+
+      if (this.args.length === 1) {
+        return [makeInvocation(this.contractAddress, this.input.contract)]
+      }
+
+      // If we have more than one argument / address and the RDD flag is set, then we'll build
+      // one transaction with multiple calls where each call has potentially different inputs.
+      const inputs = this.batchInput
+      if (inputs != null) {
+        return Array.from(inputs.entries()).map(([addr, inpt]) =>
+          makeInvocation(addr, inpt.contract),
         )
-      })
+      }
+
+      // If more than one argument / address is passed to the command, but the RDD flag is NOT
+      // specified, then we cannot vary the inputs of each call. Instead, all calls must have
+      // the same arguments. However, they will still be bundled into one transaction.
+      return this.args.map((addr) => makeInvocation(addr, this.input.contract))
     }
 
     deployContract = async (): Promise<TransactionResponse> => {
