@@ -26,7 +26,8 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
   if (flags.rdd) {
     const rdd = await getRDD(flags.rdd)
     const contractAddress = args[0]
-    return rdd[CONTRACT_TYPES.AGGREGATOR][contractAddress].payees
+    const contract = rdd[CONTRACT_TYPES.AGGREGATOR][contractAddress]
+    return contract.payees
   }
 
   const transmitters = flags.transmitters.split(',')
