@@ -8,16 +8,7 @@ set -euo pipefail
 cpu_struct="linux"
 
 # Clean up first
-devnet_down_script_loc_path="$(dirname -- "$0")/devnet-hardhat-down.sh"
-if [ -f "$devnet_down_script_loc_path" ]; then
-	bash "$devnet_down_script_loc_path"
-fi
-
-# In Nix, the file paths are slightly different
-devnet_down_script_nix_path="$(dirname -- "$0")/devnet-hardhat-down"
-if [ -f "$devnet_down_script_nix_path" ]; then
-	bash "$devnet_down_script_nix_path"
-fi
+bash "$(dirname -- "$0")/devnet-hardhat-down.sh"
 
 echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]; then
