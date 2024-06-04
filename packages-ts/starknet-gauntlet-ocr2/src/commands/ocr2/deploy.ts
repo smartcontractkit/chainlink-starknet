@@ -11,7 +11,7 @@ import { DeployOCR2, DeployOCR2Input } from '@chainlink/gauntlet-contracts-ocr2'
 import { validateClassHash } from '../../lib/utils'
 
 export interface UserInput extends DeployOCR2Input {
-  owner: string
+  owner?: string
   classHash?: string
 }
 
@@ -37,9 +37,9 @@ const makeUserInput = async (flags, args, env): Promise<UserInput> => {
       minAnswer: aggregator.minSubmissionValue,
       decimals: aggregator.decimals,
       description: aggregator.name,
-      billingAccessController: flags.billingAccessController || env.BILLING_ACCESS_CONTROLLER || '',
-      linkToken: flags.link || env.LINK || '',
-      owner: flags.owner || env.ACCOUNT,
+      billingAccessController: flags.billingAccessController || env.billingAccessController || '',
+      linkToken: flags.link || env.link || '',
+      owner: flags.owner || env.account || '',
     }
   }
 
