@@ -91,7 +91,6 @@ func TestTxStore(t *testing.T) {
 		assert.Equal(t, 0, unconfirmed[0].Nonce.Cmp(new(felt.Felt).SetUint64(0)))
 		assert.Equal(t, 0, unconfirmed[1].Nonce.Cmp(new(felt.Felt).SetUint64(1)))
 		assert.Equal(t, 0, unconfirmed[2].Nonce.Cmp(new(felt.Felt).SetUint64(2)))
-
 	})
 
 	t.Run("confirm", func(t *testing.T) {

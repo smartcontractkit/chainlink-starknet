@@ -9,6 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
+
 	pkgstarknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink"
 	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	stkcfg "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"

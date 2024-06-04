@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Collect Metrics
         id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@dea9b546553cb4ca936607c2267a09c004e4ab3f # v3.0.0
+        uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
         with:
           id: starknet-e2e-build${{ matrix.image.tag-suffix }}
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
@@ -85,7 +85,7 @@ jobs:
     steps:
       - name: Collect Metrics
         id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@dea9b546553cb4ca936607c2267a09c004e4ab3f # v3.0.0
+        uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
         with:
           id: starknet-e2e-build-test-image
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
@@ -129,7 +129,7 @@ jobs:
     steps:
       - name: Collect Metrics
         id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@dea9b546553cb4ca936607c2267a09c004e4ab3f # v3.0.0
+        uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
         with:
           id: starknet-e2e-smoke${{ matrix.image.name }}
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
@@ -141,7 +141,7 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install Nix
-        uses: cachix/install-nix-action@8887e596b4ee1134dae06b98d573bd674693f47c # v26
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Install Cairo

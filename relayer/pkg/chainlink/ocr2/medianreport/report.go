@@ -1,19 +1,19 @@
 package medianreport
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
 	"sort"
 
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
-	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/NethermindEth/juno/core/felt"
-	"github.com/pkg/errors"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 var _ median.ReportCodec = (*ReportCodec)(nil)
@@ -37,8 +37,8 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	}
 
 	for _, o := range oo {
-		if o.Value.Sign() == -1 || o.JuelsPerFeeCoin.Sign() == -1 {
-			return nil, fmt.Errorf("starknet does not support negative values: value = (%v), fee = (%v)", o.Value, o.JuelsPerFeeCoin)
+		if o.Value.Sign() == -1 || o.JuelsPerFeeCoin.Sign() == -1 || o.GasPriceSubunits.Sign() == -1 {
+			return nil, fmt.Errorf("starknet does not support negative values: value = (%v), fee = (%v), gas = (%v)", o.Value, o.JuelsPerFeeCoin, o.GasPriceSubunits)
 		}
 	}
 
@@ -60,9 +60,12 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	juelsPerFeeCoin := oo[num/2].JuelsPerFeeCoin
 	juelsPerFeeCoinFelt := starknetutils.BigIntToFelt(juelsPerFeeCoin)
 
-	// TODO: source from observations
-	gasPrice := big.NewInt(1) // := oo[num/2].GasPrice
-	gasPriceFelt := starknetutils.BigIntToFelt(gasPrice)
+	sort.Slice(oo, func(i, j int) bool {
+		return oo[i].GasPriceSubunits.Cmp(oo[j].GasPriceSubunits) < 0
+	})
+	// gas price in FRI
+	gasPriceSubunits := oo[num/2].GasPriceSubunits
+	gasPriceSubunitsFelt := starknetutils.BigIntToFelt(gasPriceSubunits)
 
 	// sort by values
 	sort.Slice(oo, func(i, j int) bool {
@@ -91,7 +94,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	}
 	buf = juelsPerFeeCoinFelt.Bytes()
 	report = append(report, buf[:]...)
-	buf = gasPriceFelt.Bytes()
+	buf = gasPriceSubunitsFelt.Bytes()
 	report = append(report, buf[:]...)
 
 	return report, nil

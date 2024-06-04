@@ -20,7 +20,9 @@ mkShell' {
     nodePackages.npm
     python3
 
+    python311Packages.ledgerwallet
     go
+
     gopls
     delve
     (golangci-lint.override { buildGoModule = buildGo121Module; })

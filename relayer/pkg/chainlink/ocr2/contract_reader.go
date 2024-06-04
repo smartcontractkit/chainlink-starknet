@@ -2,12 +2,12 @@ package ocr2
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
-	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/NethermindEth/juno/core/felt"
-	"github.com/pkg/errors"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -48,7 +48,7 @@ func (c *contractReader) Notify() <-chan struct{} {
 func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest types.ConfigDigest, err error) {
 	resp, err := c.reader.LatestConfigDetails(ctx, c.address)
 	if err != nil {
-		return changedInBlock, configDigest, errors.Wrap(err, "couldn't get latest config details")
+		return changedInBlock, configDigest, fmt.Errorf("couldn't get latest config details: %w", err)
 	}
 
 	changedInBlock = resp.Block
@@ -60,7 +60,7 @@ func (c *contractReader) LatestConfigDetails(ctx context.Context) (changedInBloc
 func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64) (config types.ContractConfig, err error) {
 	resp, err := c.reader.ConfigFromEventAt(ctx, c.address, changedInBlock)
 	if err != nil {
-		return config, errors.Wrap(err, "couldn't get latest config")
+		return config, fmt.Errorf("couldn't get latest config: %w", err)
 	}
 
 	config = resp.Config
@@ -71,7 +71,7 @@ func (c *contractReader) LatestConfig(ctx context.Context, changedInBlock uint64
 func (c *contractReader) LatestBlockHeight(ctx context.Context) (blockHeight uint64, err error) {
 	blockHeight, err = c.reader.BaseReader().LatestBlockHeight(ctx)
 	if err != nil {
-		return blockHeight, errors.Wrap(err, "couldn't get latest block height")
+		return blockHeight, fmt.Errorf("couldn't get latest block height: %w", err)
 	}
 
 	return
@@ -89,7 +89,7 @@ func (c *contractReader) LatestTransmissionDetails(
 ) {
 	transmissionDetails, err := c.reader.LatestTransmissionDetails(ctx, c.address)
 	if err != nil {
-		err = errors.Wrap(err, "couldn't get transmission details")
+		err = fmt.Errorf("couldn't get transmission details: %w", err)
 	}
 
 	configDigest = transmissionDetails.Digest
@@ -112,7 +112,7 @@ func (c *contractReader) LatestRoundRequested(
 ) {
 	transmissionDetails, err := c.reader.LatestTransmissionDetails(ctx, c.address)
 	if err != nil {
-		err = errors.Wrap(err, "couldn't get transmission details")
+		err = fmt.Errorf("couldn't get transmission details: %w", err)
 	}
 
 	configDigest = transmissionDetails.Digest
@@ -125,7 +125,7 @@ func (c *contractReader) LatestRoundRequested(
 func (c *contractReader) LatestBillingDetails(ctx context.Context) (bd BillingDetails, err error) {
 	bd, err = c.reader.BillingDetails(ctx, c.address)
 	if err != nil {
-		err = errors.Wrap(err, "couldn't get billing details")
+		err = fmt.Errorf("couldn't get billing details: %w", err)
 	}
 
 	return

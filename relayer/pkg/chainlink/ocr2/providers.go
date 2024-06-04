@@ -2,12 +2,7 @@ package ocr2
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
-
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"fmt"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -15,6 +10,10 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/medianreport"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 var _ relaytypes.ConfigProvider = (*configProvider)(nil)
@@ -33,7 +32,7 @@ func NewConfigProvider(chainID string, contractAddress string, basereader starkn
 	lggr = logger.Named(lggr, "ConfigProvider")
 	chainReader, err := NewClient(basereader, lggr)
 	if err != nil {
-		return nil, errors.Wrap(err, "err in NewConfigProvider.NewClient")
+		return nil, fmt.Errorf("err in NewConfigProvider.NewClient: %w", err)
 	}
 
 	reader := NewContractReader(contractAddress, chainReader, lggr)
@@ -91,7 +90,7 @@ func NewMedianProvider(chainID string, contractAddress string, senderAddress str
 	lggr = logger.Named(lggr, "MedianProvider")
 	configProvider, err := NewConfigProvider(chainID, contractAddress, basereader, cfg, lggr)
 	if err != nil {
-		return nil, errors.Wrap(err, "error in NewMedianProvider.NewConfigProvider")
+		return nil, fmt.Errorf("error in NewMedianProvider.NewConfigProvider: %w", err)
 	}
 
 	cache := NewTransmissionsCache(cfg, configProvider.reader, lggr)
@@ -115,7 +114,7 @@ func (p *medianProvider) Start(context.Context) error {
 		// starting both cache services here
 		// todo: find a better way
 		if err := p.configProvider.contractCache.Start(); err != nil {
-			return errors.Wrap(err, "couldn't start contractCache")
+			return fmt.Errorf("couldn't start contractCache: %w", err)
 		}
 		return p.transmissionsCache.Start()
 	})
@@ -127,7 +126,7 @@ func (p *medianProvider) Close() error {
 		// stopping both cache services here
 		// todo: find a better way
 		if err := p.configProvider.contractCache.Close(); err != nil {
-			return errors.Wrap(err, "coulnd't stop contractCache")
+			return fmt.Errorf("coulnd't stop contractCache: %w", err)
 		}
 		return p.transmissionsCache.Close()
 	})
@@ -153,7 +152,7 @@ func (p *medianProvider) OnchainConfigCodec() median.OnchainConfigCodec {
 	return medianreport.OnchainConfigCodec{}
 }
 
-func (p *medianProvider) ChainReader() relaytypes.ChainReader {
+func (p *medianProvider) ChainReader() relaytypes.ContractReader {
 	return nil
 }
 
