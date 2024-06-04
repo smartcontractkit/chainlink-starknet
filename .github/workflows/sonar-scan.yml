@@ -10,13 +10,13 @@ jobs:
     if: always()
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
 
       - name: Wait for Workflows
         id: wait
-        uses: smartcontractkit/chainlink-github-actions/utils/wait-for-workflows@e29366cdecfe6befff9ab8c3cfe4825218505d58 # v2.3.16
+        uses: smartcontractkit/chainlink-github-actions/utils/wait-for-workflows@main
         with:
           max-timeout: "1200"
           polling-interval: "30"
@@ -33,12 +33,12 @@ jobs:
     if: always()
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # fetches all history for all tags and branches to provide more metadata for sonar reports
 
       - name: Download Golangci unit tests reports
-        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        uses: dawidd6/action-download-artifact@v3.1.4
         with:
           workflow: relayer.yml
           workflow_conclusion: ""
@@ -47,7 +47,7 @@ jobs:
           if_no_artifact_found: warn
      
       - name: Download Golangci Relayer report
-        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        uses: dawidd6/action-download-artifact@v3.1.4
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -56,7 +56,7 @@ jobs:
           if_no_artifact_found: warn
 
       - name: Download Golangcio Ops report
-        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        uses: dawidd6/action-download-artifact@v3.1.4
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -65,7 +65,7 @@ jobs:
           if_no_artifact_found: warn
       
       - name: Download Golangci-lint Integration tests report
-        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        uses: dawidd6/action-download-artifact@v3.1.4
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -74,7 +74,7 @@ jobs:
           if_no_artifact_found: warn
 
       - name: Download gauntlet eslint reports
-        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        uses: dawidd6/action-download-artifact@v3.1.4
         with:
           workflow: integration_gauntlet.yml
           workflow_conclusion: ""
