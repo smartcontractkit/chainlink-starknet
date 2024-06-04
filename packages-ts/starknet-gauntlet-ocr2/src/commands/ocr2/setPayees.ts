@@ -31,22 +31,22 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
     // Get the "operators" section of the RDD file
     const operators = rdd.operators
     if (operators == null || typeof operators !== 'object') {
-      throw new Error(`expected rdd["operators"] to be an object: ${operators}`)
+      throw new Error(`expected rdd["operators"] to be an object but got: ${operators}`)
     }
 
     // Get the config that corresponds to the input contract address
     const contract = rdd?.[CONTRACT_TYPES.AGGREGATOR]?.[contractAddress]
     if (contract == null || typeof contract !== 'object') {
       throw new Error(
-        `expected rdd["${CONTRACT_TYPES.AGGREGATOR}"]["${contractAddress}"] to be an object: ${contract}`,
+        `expected rdd["${CONTRACT_TYPES.AGGREGATOR}"]["${contractAddress}"] to be an object but got: ${contract}`,
       )
     }
 
     // Get the contract's oracles
     const oracles = contract.oracles
-    if (oracles == null || !Array.isArray(oracles)) {
+    if (!Array.isArray(oracles)) {
       throw new Error(
-        `expected rdd["${CONTRACT_TYPES.AGGREGATOR}"]["${contractAddress}"]["oracles"] to be an array: ${oracles}`,
+        `expected rdd["${CONTRACT_TYPES.AGGREGATOR}"]["${contractAddress}"]["oracles"] to be an array but got: ${oracles}`,
       )
     }
 
@@ -54,21 +54,31 @@ const makeUserInput = async (flags, args): Promise<UserInput> => {
     return oracles.map((oracle, i) => {
       // Get the operator name from the oracle
       const operatorName = oracle.operator
-      if (operatorName == null || typeof operatorName !== 'string') {
+      if (typeof operatorName !== 'string') {
         throw new Error(
-          `expected rdd["${CONTRACT_TYPES.AGGREGATOR}"]["${contractAddress}"]["oracles"][${i}]["operator"] to be a string: ${operatorName}`,
+          `expected rdd["${CONTRACT_TYPES.AGGREGATOR}"]["${contractAddress}"]["oracles"][${i}]["operator"] to be a string but got: ${operatorName}`,
         )
       }
 
       // Use the operator name to get the transmitter and payee info from the "operators" section of the RDD file
       const operator = operators[operatorName]
       if (operator == null || typeof operator !== 'object') {
-        throw new Error(`expected rdd["operators"]["${operatorName}"] to be an object: ${operator}`)
+        throw new Error(
+          `expected rdd["operators"]["${operatorName}"] to be an object but got: ${operator}`,
+        )
+      }
+
+      // Validate the transmitter address
+      const nodeAddress = operator.ocrNodeAddress
+      if (!Array.isArray(nodeAddress)) {
+        throw new Error(
+          `expected rdd["operators"]["${operatorName}"]["ocrNodeAddress"] to be an array but got: ${nodeAddress}`,
+        )
       }
 
       // Return the transmitter and payee info
       return {
-        transmitter: operator.ocrNodeAddress?.[0],
+        transmitter: nodeAddress[0],
         payee: operator.payeeAddress,
       } as Payee
     })
