@@ -64,7 +64,7 @@ export interface ExecuteCommandInstance<UI, CI> {
   contract: CompiledContract
   compiledContractHash?: string
   input: Input<UI, CI>
-  batchInput?: Map<string, Input<UI, CI>>
+  batchInput?: Array<[string, Input<UI, CI>]>
 
   makeMessage: () => Promise<Call[]>
   execute: () => Promise<Result<TransactionResponse>>
@@ -88,7 +88,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     contract: CompiledContract
     compiledContractHash?: string
     input: Input<UI, CI>
-    batchInput?: Map<string, Input<UI, CI>>
+    batchInput?: Array<[string, Input<UI, CI>]>
 
     beforeExecute: () => Promise<void>
     afterExecute: (response: Result<TransactionResponse>) => Promise<any>
@@ -158,23 +158,22 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         // calls.
         //
         if (args.length > 1) {
-          c.batchInput = new Map(
-            await Promise.all(
-              args.map(async (addr: string) => [
-                addr,
-                await c.buildCommandInput(flags, [addr], env, overrideExecutionContext(addr)),
-              ]),
-            ),
+          // Maps each address to its corresponding input while preserving
+          // the order in which the addresses were passed to the command
+          c.batchInput = await Promise.all(
+            args.map(async (addr: string) => {
+              const execCtx = overrideExecutionContext(addr)
+              const cmdInpt = await c.buildCommandInput(flags, [addr], env, execCtx)
+              return [addr, cmdInpt] as const
+            }),
           )
         }
       }
 
       c.input = await c.buildCommandInput(flags, args, env)
 
-      // Map each address to its corresponding input and create an array of pairs
-      const addressToInputPairs = Array.from(
-        (c.batchInput ?? new Map([[c.contractAddress, c.input]])).entries(),
-      )
+      // Map each address to its corresponding input using an array of pairs
+      const addressToInputPairs = c.batchInput ?? ([[c.contractAddress, c.input]] as const)
 
       c.beforeExecute = async () => {
         const funcs = addressToInputPairs.map(([addr, inpt]) => {
@@ -201,9 +200,23 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
                 prompt: deps.prompt,
               })
         })
-        for (const func of funcs) {
-          await func(result)
+
+        // If there's only one function to call (bc only one address was provided to
+        // the command), then we will NOT wrap the result in an array. Instead we'll
+        // return the result as-is to maintain backwards compatibility.
+        const firstFunc = funcs.at(0)
+        if (firstFunc != null && funcs.length === 1) {
+          return await firstFunc(result)
         }
+
+        // If we need to execute multiple functions (bc multiple addresses were provided),
+        // then we will call each of them in serial and in the order in which the input
+        // addresses were provided. The outputs of each function are stored in an array.
+        const outputs = []
+        for (const func of funcs) {
+          outputs.push(await func(result))
+        }
+        return outputs
       }
 
       return c
@@ -265,9 +278,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       // one transaction with multiple calls where each call has potentially different inputs.
       const inputs = this.batchInput
       if (inputs != null) {
-        return Array.from(inputs.entries()).map(([addr, inpt]) =>
-          makeInvocation(addr, inpt.contract),
-        )
+        return inputs.map(([addr, inpt]) => makeInvocation(addr, inpt.contract))
       }
 
       // If more than one argument / address is passed to the command, but the RDD flag is NOT

@@ -9,9 +9,30 @@ on:
 
 jobs:
   relayer_run_unit_tests:
-    name: Run Unit Tests
+    name: Run Unit Tests ${{ matrix.test-type.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-type:
+          - name: test-unit-go
+            id: unit
+          - name: test-unit-go-race
+            id: race
+          - name: test-integration-go
+            id: integration
     steps:
+      - name: Collect Metrics
+        if: matrix.test-type.id != 'race'
+        id: collect-gha-metrics
+        uses: smartcontractkit/push-gha-metrics-action@dea9b546553cb4ca936607c2267a09c004e4ab3f # v3.0.0
+        with:
+          id: starknet-relay-unit-${{ matrix.test-type.id }}
+          org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+          basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
+          hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
+          this-job-name: Run Unit Tests ${{ matrix.test-type.name }}
+          test-results-file: '{"testType":"go","filePath":"/tmp/gotest.log"}'
       - name: Checkout sources
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install Nix
@@ -20,20 +41,19 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Build
-        run: nix develop -c make build-go-relayer
+        run: nix develop -c sh -c "make build-go-relayer"
 
-      - name: Unit Test
-        run: nix develop -c make test-unit-go
+      - name: Run ${{ matrix.test-type.name }}
+        run: nix develop -c sh -c "make ${{ matrix.test-type.name }} LOG_PATH=/tmp/gotest.log"
       
       - name: Upload Golangci relayer results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: go-unit-tests-results
+          name: go-unit-tests-results-${{ matrix.test-type.id }}
           path: |
+            /tmp/gotest.log
             ./relayer/output.txt
             ./relayer/coverage.txt
             ./relayer/race_coverage.txt
 
-      - name: Integration Test
-        run: nix develop -c make test-integration-go
