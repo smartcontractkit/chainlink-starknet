@@ -17,6 +17,12 @@
           inherit pkgs;
           scriptDir = toString ./.;  # This converts the flake's root directory to a string
         };
+
+        apps.starknet-devnet = {
+          type = "app";
+          program = "${devnet-hardhat}/ops/scripts/devnet-hardhat.sh";
+        };
+
         formatter = pkgs.nixpkgs-fmt;
       });
 }
