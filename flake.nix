@@ -13,10 +13,10 @@
         pkgs = import nixpkgs { inherit system; overlays = [ rust-overlay.overlays.default ]; };        
         devnet-hardhat = import ./ops/scripts { inherit pkgs; };
       in rec {
-        devShell = pkgs.callPackage ./shell.nix {};
-        apps.starknet-devnet = {
-          type = "app";
-          program = "${devnet-hardhat}/ops/scripts/devnet-hardhat.sh";
+        devShell = pkgs.callPackage ./shell.nix {
+          inherit pkgs;
+          scriptDir = toString ./.;  # This converts the flake's root directory to a string
         };
+        formatter = pkgs.nixpkgs-fmt;
       });
 }
