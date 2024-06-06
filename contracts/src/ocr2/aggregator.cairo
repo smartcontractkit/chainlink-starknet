@@ -63,6 +63,7 @@ trait IAggregator<TContractState> {
     fn round_data(self: @TContractState, round_id: u128) -> Round;
     fn description(self: @TContractState) -> felt252;
     fn decimals(self: @TContractState) -> u8;
+    fn latest_answer(self: @TContractState) -> u128;
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -373,6 +374,13 @@ mod Aggregator {
         fn decimals(self: @ContractState) -> u8 {
             self._require_read_access();
             self._decimals.read()
+        }
+
+        fn latest_answer(self: @ContractState) -> u128 {
+            self._require_read_access();
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let transmission = self._transmissions.read(latest_round_id);
+            transmission.answer
         }
     }
 

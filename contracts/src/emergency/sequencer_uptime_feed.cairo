@@ -161,6 +161,13 @@ mod SequencerUptimeFeed {
         fn decimals(self: @ContractState) -> u8 {
             0_u8
         }
+
+        fn latest_answer(self: @ContractState) -> u128 {
+            self._require_read_access();
+            let latest_round_id = self._latest_round_id.read();
+            let round_transmission = self._round_transmissions.read(latest_round_id);
+            round_transmission.answer
+        }
     }
 
     #[constructor]
