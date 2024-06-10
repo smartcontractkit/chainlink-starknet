@@ -218,12 +218,13 @@ func (m *OCRv2TestState) DeployCluster() {
 	// If we are using devnet fetch the default keys
 	if *m.Common.TestConfig.Common.Network == "localnet" {
 		// fetch predeployed account 0 to use as funder
-		fmt.Println(m.Common.RPCDetails.RPCL2External)
-		fmt.Println(m.Common.RPCDetails.RPCL2External)
-		fmt.Println(m.Common.RPCDetails.RPCL2External)
-		fmt.Println(m.Common.RPCDetails.RPCL2External)
-		fmt.Println(m.Common.RPCDetails.RPCL2External)
-		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
 		m.Clients.DevnetClient = starknetdevnet.NewDevNet(m.Common.RPCDetails.RPCL2External)
 		accounts, err := m.Clients.DevnetClient.Accounts()
 		require.NoError(m.TestConfig.T, err)
