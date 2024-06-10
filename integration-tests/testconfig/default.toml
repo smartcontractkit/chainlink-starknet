@@ -31,6 +31,7 @@ devnet_image = "shardlabs/starknet-devnet-rs:a147b4cd72f9ce9d1fa665d871231370db0
 [OCR2]
 node_count = 6
 test_duration = "30m"
+number_of_rounds = 10
 
 [OCR2.Smoke]
-number_of_rounds = 10
+enabled = true
