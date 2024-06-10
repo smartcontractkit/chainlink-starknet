@@ -133,9 +133,6 @@ func (m *OCRv2TestState) DeployCluster() {
 	// When running soak we need to use K8S
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.DeployEnv()
-		if m.Common.Env.WillUseRemoteRunner() {
-			return
-		}
 		// Setting RPC details
 		m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][0]
 		if *m.Common.TestConfig.Common.Network == "testnet" {
@@ -144,6 +141,11 @@ func (m *OCRv2TestState) DeployCluster() {
 		}
 		m.Common.RPCDetails.MockServerEndpoint = m.Common.Env.URLs["qa_mock_adapter_internal"][0]
 		m.Common.RPCDetails.MockServerURL = "five"
+
+		if m.Common.Env.WillUseRemoteRunner() {
+			return
+		}
+
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
