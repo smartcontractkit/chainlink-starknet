@@ -133,18 +133,24 @@ func (m *OCRv2TestState) DeployCluster() {
 	// When running soak we need to use K8S
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.DeployEnv()
+
+		if m.Common.Env.WillUseRemoteRunner() {
+			return
+		}
+
 		// Setting RPC details
 		m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][0]
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+
 		if *m.Common.TestConfig.Common.Network == "testnet" {
 			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
 			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
 		}
 		m.Common.RPCDetails.MockServerEndpoint = m.Common.Env.URLs["qa_mock_adapter_internal"][0]
 		m.Common.RPCDetails.MockServerURL = "five"
-
-		if m.Common.Env.WillUseRemoteRunner() {
-			return
-		}
 
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
@@ -191,12 +197,15 @@ func (m *OCRv2TestState) DeployCluster() {
 	}
 
 	m.TestConfig.Resty = resty.New().SetBaseURL(m.Common.RPCDetails.RPCL2External)
-	m.SetupClients()
+
 	if *m.Common.TestConfig.Common.InsideK8s {
+		m.ChainlinkNodesK8s, m.TestConfig.err = client.ConnectChainlinkNodes(m.Common.Env)
+		require.NoError(m.TestConfig.T, m.TestConfig.err)
 		m.Clients.ChainlinkClient.ChainlinkNodes = m.GetChainlinkNodes()
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.ChainlinkClient.ChainlinkNodes)
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	} else {
+		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.ClCluster.NodeAPIs()
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.ClCluster.NodeAPIs())
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
@@ -209,6 +218,12 @@ func (m *OCRv2TestState) DeployCluster() {
 	// If we are using devnet fetch the default keys
 	if *m.Common.TestConfig.Common.Network == "localnet" {
 		// fetch predeployed account 0 to use as funder
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
+		fmt.Println(m.Common.RPCDetails.RPCL2External)
 		m.Clients.DevnetClient = starknetdevnet.NewDevNet(m.Common.RPCDetails.RPCL2External)
 		accounts, err := m.Clients.DevnetClient.Accounts()
 		require.NoError(m.TestConfig.T, err)
@@ -225,16 +240,6 @@ func (m *OCRv2TestState) DeployCluster() {
 func (m *OCRv2TestState) DeployEnv() {
 	err := m.Common.Env.Run()
 	require.NoError(m.TestConfig.T, err)
-}
-
-// SetupClients Sets up the starknet client
-func (m *OCRv2TestState) SetupClients() {
-	if *m.Common.TestConfig.Common.InsideK8s {
-		m.ChainlinkNodesK8s, m.TestConfig.err = client.ConnectChainlinkNodes(m.Common.Env)
-		require.NoError(m.TestConfig.T, m.TestConfig.err)
-	} else {
-		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.ClCluster.NodeAPIs()
-	}
 }
 
 // LoadOCR2Config Loads and returns the default starknet gauntlet config
