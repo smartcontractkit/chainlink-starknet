@@ -27,6 +27,7 @@ network = "localnet"
 user = "satoshi"
 stateful_db = false
 devnet_image = "shardlabs/starknet-devnet-rs:a147b4cd72f9ce9d1fa665d871231370db0f51c7"
+postgres_version = "15.7"
 
 [OCR2]
 node_count = 6

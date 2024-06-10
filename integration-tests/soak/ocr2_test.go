@@ -29,7 +29,7 @@ func init() {
 	flag.BoolVar(&keepAlive, "keep-alive", false, "enable to keep the cluster alive")
 }
 
-func TestOCRBasic(t *testing.T) {
+func TestOCRBasicSoak(t *testing.T) {
 	for _, test := range []struct {
 		name string
 		env  map[string]string
@@ -40,7 +40,7 @@ func TestOCRBasic(t *testing.T) {
 			"CL_SOLANA_CMD": "chainlink-solana",
 		}},
 	} {
-		config, err := tc.GetConfig("Smoke", tc.OCR2)
+		config, err := tc.GetConfig("Soak", tc.OCR2)
 		if err != nil {
 			t.Fatal(err)
 		}
