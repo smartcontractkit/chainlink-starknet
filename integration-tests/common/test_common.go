@@ -142,6 +142,7 @@ func (m *OCRv2TestState) DeployCluster() {
 
 		// Checking whether we are running in a remote runner since the forwarding is not working there and we need the public IP
 		if m.Common.RPCDetails.RPCL2External == "127.0.0.1:0" {
+			fmt.Println("Running in remoterunner")
 			m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][1]
 		}
 
@@ -218,6 +219,9 @@ func (m *OCRv2TestState) DeployCluster() {
 
 	// If we are using devnet fetch the default keys
 	if *m.Common.TestConfig.Common.Network == "localnet" {
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
+		fmt.Println(m.Common.Env.URLs["starknet-dev"])
 		// fetch predeployed account 0 to use as funder
 		m.Clients.DevnetClient = starknetdevnet.NewDevNet(m.Common.RPCDetails.RPCL2External)
 		accounts, err := m.Clients.DevnetClient.Accounts()
