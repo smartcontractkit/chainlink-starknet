@@ -140,12 +140,12 @@ func (m *OCRv2TestState) DeployCluster() {
 
 		m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][0]
 
-		if m.Common.Env.WillUseRemoteRunner() {
+		// Checking whether we are running in a remote runner since the forwarding is not working there and we need the public IP
+		if m.Common.RPCDetails.RPCL2External == "127.0.0.1:0" {
 			m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][1]
 		}
 
 		// Setting RPC details
-
 		if *m.Common.TestConfig.Common.Network == "testnet" {
 			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
 			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
