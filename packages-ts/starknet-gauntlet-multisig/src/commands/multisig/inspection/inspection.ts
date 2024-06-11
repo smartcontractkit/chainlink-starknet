@@ -9,11 +9,11 @@ import { contractLoader } from '../../../lib/contracts'
 
 type QueryResult = {
   signers: string[]
-  threshold: number
+  threshold: string
 }
 
 const makeComparisionData = (provider: IStarknetProvider) => async (
-  results: any[],
+  results: [Array<bigint>, bigint],
   input: null,
   contractAddress: string,
 ): Promise<{
@@ -24,8 +24,8 @@ const makeComparisionData = (provider: IStarknetProvider) => async (
   return {
     toCompare: null,
     result: {
-      signers: signers.signers.map((o) => num.toHex(o)),
-      threshold: threshold.confirmations_required,
+      signers: signers.map((o) => num.toHex(o)),
+      threshold: threshold.toString(),
     },
   }
 }

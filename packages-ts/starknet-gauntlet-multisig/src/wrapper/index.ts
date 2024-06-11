@@ -75,18 +75,24 @@ export const wrapCommand = <UI, CI>(
     static create = async (flags, args) => {
       const c = new MsigCommand(flags, args)
 
-      c.contractAddress = args[0]
-      c.command = await registeredCommand.create(flags, [c.contractAddress])
-
       const env = await deps.makeEnv(flags)
-
-      const { wallet, provider, account } = c.command
-      c.wallet = wallet
-      c.provider = provider
-      c.account = account
-
       c.account = env.account
       c.multisigAddress = env.multisig
+
+      // NOTE: all multisig commands require the multisig address as an argument.
+      //
+      // There's two ways to provide this:
+      //   - set the MULTISIG environment variable to the address of the multisig contract
+      //   - explicitly pass the address to the command (this will override the MULTISIG env var)
+      //
+      c.contractAddress = args[0] ?? c.multisigAddress
+
+      const cmd = await registeredCommand.create(flags, [c.contractAddress])
+      c.command = cmd
+      c.wallet = cmd.wallet
+      c.provider = cmd.provider
+      c.account = cmd.account
+
       const loadResult = contractLoader()
       c.contract = loadResult.contract
       if (loadResult.casm) {
