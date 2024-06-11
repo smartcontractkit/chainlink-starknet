@@ -56,5 +56,10 @@ fn test_set_latest_round() {
     assert(
         MockAggregator::Aggregator::latest_round_data(@state) == expected_round, 'round not equal'
     );
+
+    assert(
+        MockAggregator::Aggregator::latest_answer(@state) == expected_round.answer,
+        'latest answer not equal'
+    );
 }
 
