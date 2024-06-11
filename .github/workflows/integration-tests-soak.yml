@@ -1,6 +1,7 @@
 name: Integration Tests - Soak
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       base64_config:
