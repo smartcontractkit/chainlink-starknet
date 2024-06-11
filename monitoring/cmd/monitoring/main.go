@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -14,8 +13,6 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-
 	log, err := logger.New()
 	if err != nil {
 		log.Fatal(err)
@@ -65,7 +62,7 @@ func main() {
 	txResultsFactory := monitoring.NewTxResultsSourceFactory(ocr2Client)
 
 	monitor, err := monitoring.NewMonitorPrometheusOnly(
-		ctx,
+		make(chan struct{}),
 		logger.With(log, "component", "monitor"),
 		starknetConfig,
 		envelopeSourceFactory,

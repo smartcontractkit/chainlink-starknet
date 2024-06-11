@@ -1,7 +1,6 @@
 package monitoring
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,12 +11,13 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	commonMonitor "github.com/smartcontractkit/chainlink-common/pkg/monitoring"
 	"github.com/smartcontractkit/chainlink-common/pkg/monitoring/config"
+	"github.com/smartcontractkit/chainlink-common/pkg/services"
 )
 
 // Builds monitor instance with only the prometheus exporter.
 // Does not contain kafka exporter.
 func NewMonitorPrometheusOnly(
-	rootCtx context.Context,
+	stopCh services.StopRChan,
 	log commonMonitor.Logger,
 	chainConfig commonMonitor.ChainConfig,
 	envelopeSourceFactory commonMonitor.SourceFactory,
@@ -62,7 +62,7 @@ func NewMonitorPrometheusOnly(
 	)
 
 	// Configure HTTP server
-	httpServer := commonMonitor.NewHTTPServer(rootCtx, cfg.HTTP.Address, logger.With(log, "component", "http-server"))
+	httpServer := commonMonitor.NewHTTPServer(stopCh, cfg.HTTP.Address, logger.With(log, "component", "http-server"))
 	httpServer.Handle("/metrics", metrics.HTTPHandler())
 	httpServer.Handle("/debug", manager.HTTPHandler())
 	// Required for k8s.
@@ -71,7 +71,7 @@ func NewMonitorPrometheusOnly(
 	}))
 
 	return &commonMonitor.Monitor{
-		RootContext: rootCtx,
+		StopCh:      stopCh,
 		ChainConfig: chainConfig,
 		Config:      cfg,
 		Log:         log,
