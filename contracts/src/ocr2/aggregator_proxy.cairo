@@ -9,6 +9,7 @@ trait IAggregatorProxy<TContractState> {
     fn round_data(self: @TContractState, round_id: felt252) -> Round;
     fn description(self: @TContractState) -> felt252;
     fn decimals(self: @TContractState) -> u8;
+    fn latest_answer(self: @TContractState) -> u128;
 }
 
 #[starknet::interface]
@@ -151,6 +152,13 @@ mod AggregatorProxy {
             let phase = self._current_phase.read();
             let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
             aggregator.decimals()
+        }
+
+        fn latest_answer(self: @ContractState) -> u128 {
+            self._require_read_access();
+            let phase = self._current_phase.read();
+            let aggregator = IAggregatorDispatcher { contract_address: phase.aggregator };
+            aggregator.latest_answer()
         }
     }
 

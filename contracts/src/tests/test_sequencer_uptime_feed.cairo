@@ -14,6 +14,12 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::emergency::sequencer_uptime_feed::SequencerUptimeFeed;
+use chainlink::libraries::access_control::{
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+};
+use chainlink::ocr2::aggregator_proxy::{
+    IAggregatorProxy, IAggregatorProxyDispatcher, IAggregatorProxyDispatcherTrait
+};
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::AggregatorProxyImpl;
 use chainlink::tests::test_ownable::should_implement_ownable;
@@ -88,20 +94,36 @@ fn test_latest_round_data_no_access() {
 
 #[test]
 #[should_panic(expected: ('user does not have read access',))]
-fn test_aggregator_proxy_response() {
+fn test_latest_answer_no_access() {
     let (owner, sequencerFeedAddr, _) = setup();
     let mut proxy = PROXY();
     AggregatorProxy::constructor(ref proxy, owner, sequencerFeedAddr);
+    AggregatorProxyImpl::latest_answer(@proxy);
+}
+
+#[test]
+fn test_aggregator_proxy_response() {
+    let (owner, sequencerFeedAddr, _) = setup();
+
+    set_contract_address(owner);
+    let contract = IAccessControllerDispatcher { contract_address: sequencerFeedAddr };
+    contract.add_access(owner);
+
+    let proxy = IAggregatorProxyDispatcher { contract_address: sequencerFeedAddr };
 
     // latest round data
-    let latest_round_data = AggregatorProxyImpl::latest_round_data(@proxy);
+    let latest_round_data = proxy.latest_round_data();
     assert(latest_round_data.answer == 0, 'latest_round_data should be 0');
 
+    // latest answer 
+    let latest_answer = proxy.latest_answer();
+    assert(latest_answer == 0, 'latest_answer should be 0');
+
     // description
-    let description = AggregatorProxyImpl::description(@proxy);
+    let description = proxy.description();
     assert(description == 'L2 Sequencer Uptime Status Feed', 'description does not match');
 
     // decimals
-    let decimals = AggregatorProxyImpl::decimals(@proxy);
+    let decimals = proxy.decimals();
     assert(decimals == 0, 'decimals should be 0');
 }

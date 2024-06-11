@@ -116,6 +116,10 @@ fn test_query_latest_round_data() {
     assert(round.block_num == 1, 'block_num should be 1');
     assert(round.started_at == 9, 'started_at should be 9');
     assert(round.updated_at == 8, 'updated_at should be 8');
+
+    // latest_answer matches up with latest_round_data 
+    let latest_answer = AggregatorProxyImpl::latest_answer(@state);
+    assert(latest_answer == 10, '(latest) answer should be 10');
 }
 
 #[test]
@@ -132,6 +136,22 @@ fn test_query_latest_round_data_without_access() {
     set_caller_address(contract_address_const::<2>());
     // query latest round
     AggregatorProxyImpl::latest_round_data(@state);
+}
+
+#[test]
+#[should_panic(expected: ('user does not have read access',))]
+fn test_query_latest_answer_without_access() {
+    let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
+    let mut state = STATE();
+    // init aggregator proxy with mock aggregator
+    AggregatorProxy::constructor(ref state, owner, mockAggregatorAddr);
+    state.add_access(owner);
+    // insert round into mock aggregator
+    mockAggregator.set_latest_round_data(10, 1, 9, 8);
+    // set caller to non-owner address with no read access
+    set_caller_address(contract_address_const::<2>());
+    // query latest round
+    AggregatorProxyImpl::latest_answer(@state);
 }
 
 #[test]
