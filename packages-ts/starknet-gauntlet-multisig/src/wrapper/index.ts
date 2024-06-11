@@ -75,11 +75,16 @@ export const wrapCommand = <UI, CI>(
     static create = async (flags, args) => {
       const c = new MsigCommand(flags, args)
 
+      c.contractAddress = args[0]
+      c.command = await registeredCommand.create(flags, [c.contractAddress])
+
       const env = await deps.makeEnv(flags)
 
-      c.wallet = await deps.makeWallet(env)
-      c.provider = deps.makeProvider(env.providerUrl, c.wallet)
-      c.contractAddress = args[0]
+      const { wallet, provider, account } = c.command
+      c.wallet = wallet
+      c.provider = provider
+      c.account = account
+
       c.account = env.account
       c.multisigAddress = env.multisig
       const loadResult = contractLoader()
@@ -105,8 +110,6 @@ export const wrapCommand = <UI, CI>(
         },
         contract: {},
       }
-
-      c.command = await registeredCommand.create(flags, [c.contractAddress])
 
       c.initialState = await c.fetchMultisigState(c.multisigAddress, c.input.user.proposalId)
 
