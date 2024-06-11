@@ -81,7 +81,7 @@ describe('Multisig', () => {
       const command = await wrapCommand(registerExecuteCommand(setThreshold))(deps).create(
         {
           threshold: 2,
-          ...myFlags
+          ...myFlags,
         },
         [multisigContractAddress],
       )
@@ -95,7 +95,7 @@ describe('Multisig', () => {
         {
           threshold: 2,
           multisigProposal: multisigProposalId,
-          ...myFlags
+          ...myFlags,
         },
         [multisigContractAddress],
       )
@@ -108,7 +108,7 @@ describe('Multisig', () => {
         {
           threshold: 2,
           multisigProposal: multisigProposalId,
-          ...myFlags
+          ...myFlags,
         },
         [multisigContractAddress],
       )
@@ -158,7 +158,7 @@ describe('Multisig', () => {
       const command = await wrapCommand(registerExecuteCommand(setSigners))(deps(0)).create(
         {
           signers: accounts,
-          ...myFlags(0)
+          ...myFlags(0),
         },
         [multisigContractAddress],
       )
@@ -172,7 +172,7 @@ describe('Multisig', () => {
         {
           signers: accounts,
           multisigProposal: multisigProposalId,
-          ...myFlags(0)
+          ...myFlags(0),
         },
         [multisigContractAddress],
       )
@@ -185,7 +185,7 @@ describe('Multisig', () => {
         {
           signers: accounts,
           multisigProposal: multisigProposalId,
-          ...myFlags(1)
+          ...myFlags(1),
         },
         [multisigContractAddress],
       )
@@ -198,7 +198,7 @@ describe('Multisig', () => {
         {
           signers: accounts,
           multisigProposal: multisigProposalId,
-          ...myFlags(0)
+          ...myFlags(0),
         },
         [multisigContractAddress],
       )
