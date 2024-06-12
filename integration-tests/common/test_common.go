@@ -153,7 +153,6 @@ func (m *OCRv2TestState) DeployCluster() {
 		}
 		m.Common.RPCDetails.MockServerEndpoint = m.Common.Env.URLs["qa_mock_adapter_internal"][0]
 		m.Common.RPCDetails.MockServerURL = "five"
-
 	} else { // Otherwise use docker
 		env, err := test_env.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)

@@ -30,7 +30,7 @@ Set `inside_k8 = true` under `[Common]`.
 
 ### On demand soak test
 
-Navigate to the [workflow](https://github.com/smartcontractkit/chainlink-solana/actions/workflows/soak.yml). The workflow takes in 3 parameters:
+Navigate to the [workflow](https://github.com/smartcontractkit/chainlink-starknet/actions/workflows/integration-tests-soak.yml). The workflow takes in 3 parameters:
 
 - Base64 string of the .toml configuration
 - Core image tag which defaults to develop

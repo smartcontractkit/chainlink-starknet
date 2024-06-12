@@ -23,19 +23,9 @@ env:
 
 jobs:
   run_tests:
-    name: Run soak Tests ${{matrix.image.name}}
+    name: Run soak Tests
     runs-on: ubuntu20.04-16cores-64GB
     environment: integration
-    # these values need to match those used to build the chainlink image
-    strategy:
-      matrix:
-        image:
-          - name: ""
-            tag-suffix: ""
-            test-name: embedded
-          - name: plugins
-            tag-suffix: -plugins
-            test-name: plugins
     env:
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
     permissions:
@@ -48,11 +38,11 @@ jobs:
         id: collect-gha-metrics
         uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
         with:
-          id: starknet-e2e-soak${{ matrix.image.name }}
+          id: starknet-e2e-soak
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
           basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          this-job-name: Run soak Tests ${{ matrix.image.name }}
+          this-job-name: Run soak Tests
           test-results-file: '{"testType":"go","filePath":"/tmp/gotest.log"}'
         continue-on-error: true
       - name: Checkout the repo
@@ -75,14 +65,14 @@ jobs:
           BASE64_CONFIG_OVERRIDE=$(jq -r '.inputs.base64_config' "$GITHUB_EVENT_PATH")
           echo "::add-mask::$BASE64_CONFIG_OVERRIDE"
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> "$GITHUB_ENV"
-      - name: Run Tests ${{ matrix.image.name }}
+      - name: Run Tests
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-soak-ci"
+          test_command_to_run: nix develop -c sh -c "make test=embedded test-integration-soak-ci"
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
-          cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          cl_image_tag: starknet.${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
