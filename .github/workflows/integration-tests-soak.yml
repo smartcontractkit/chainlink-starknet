@@ -69,7 +69,7 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: nix develop -c sh -c "make test=embedded test-integration-soak-ci"
+          test_command_to_run: cd ./integration-tests && go test -timeout 24h -count=1 -run TestOCRBasicSoak/embedded ./soak
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}
