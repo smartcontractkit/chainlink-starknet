@@ -125,6 +125,7 @@ type Common struct {
 	Stateful           *bool   `toml:"stateful_db"`
 	InternalDockerRepo *string `toml:"internal_docker_repo"`
 	DevnetImage        *string `toml:"devnet_image"`
+	PostgresVersion    *string `toml:"postgres_version"`
 }
 
 func (c *Common) Validate() error {
@@ -166,6 +167,10 @@ func (c *Common) Validate() error {
 
 	if c.Stateful == nil {
 		return fmt.Errorf("stateful_db state for db must be set")
+	}
+
+	if c.PostgresVersion == nil {
+		return fmt.Errorf("postgres_version must be set")
 	}
 
 	return nil
