@@ -1,0 +1,83 @@
+name: Integration Tests - Soak
+on:
+  workflow_dispatch:
+    inputs:
+      base64_config:
+        description: Your .toml file as base64
+        required: true
+      cl_image_tag:
+        description: Core image tag
+        required: true
+        default: develop
+        type: string
+      test_runner_tag:
+        description: Remote runner tag that will run the tests
+        default: develop
+        required: true
+        type: string
+
+env:
+  TEST_LOG_LEVEL: debug
+  CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
+  ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ inputs.test_runner_tag }}
+
+jobs:
+  run_tests:
+    name: Run soak Tests
+    runs-on: ubuntu20.04-16cores-64GB
+    environment: integration
+    env:
+      TEST_SUITE: soak
+      DETACH_RUNNER: true
+      INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
+    permissions:
+      checks: write
+      pull-requests: write
+      id-token: write
+      contents: read
+    steps:
+      - name: Collect Metrics
+        id: collect-gha-metrics
+        uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
+        with:
+          id: starknet-e2e-soak
+          org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+          basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
+          hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
+          this-job-name: Run soak Tests
+          test-results-file: '{"testType":"go","filePath":"/tmp/gotest.log"}'
+        continue-on-error: true
+      - name: Checkout the repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Install Nix
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Install Cairo
+        uses: ./.github/actions/install-cairo
+      - name: Build contracts
+        run: |
+          cd contracts && scarb --profile release build
+      - name: Build gauntlet
+        run: |
+          yarn install && yarn build
+      - name: Mask base64 config
+        # shellcheck disable=SC2086
+        run: |
+          BASE64_CONFIG_OVERRIDE=$(jq -r '.inputs.base64_config' "$GITHUB_EVENT_PATH")
+          echo "::add-mask::$BASE64_CONFIG_OVERRIDE"
+          echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> "$GITHUB_ENV"
+      - name: Run Tests
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        with:
+          aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
+          test_command_to_run: cd ./integration-tests && go test -timeout 24h -count=1 -run TestOCRBasicSoak/embedded ./soak
+          test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
+          cl_repo: ${{ env.CL_ECR }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          go_mod_path: ./integration-tests/go.mod
+          QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
+          QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+          QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
+          artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/soak/logs
+

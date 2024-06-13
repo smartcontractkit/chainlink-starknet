@@ -133,11 +133,20 @@ func (m *OCRv2TestState) DeployCluster() {
 	// When running soak we need to use K8S
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.DeployEnv()
+
 		if m.Common.Env.WillUseRemoteRunner() {
 			return
 		}
-		// Setting RPC details
+
 		m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][0]
+
+		// Checking whether we are running in a remote runner since the forwarding is not working there and we need the public IP
+		// In that case it is http://127.0.0.1:0 so we do a check and get the public IP
+		if m.Common.RPCDetails.RPCL2External == "http://127.0.0.1:0" {
+			m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][1]
+		}
+
+		// Setting RPC details
 		if *m.Common.TestConfig.Common.Network == "testnet" {
 			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
 			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
@@ -189,12 +198,15 @@ func (m *OCRv2TestState) DeployCluster() {
 	}
 
 	m.TestConfig.Resty = resty.New().SetBaseURL(m.Common.RPCDetails.RPCL2External)
-	m.SetupClients()
+
 	if *m.Common.TestConfig.Common.InsideK8s {
+		m.ChainlinkNodesK8s, m.TestConfig.err = client.ConnectChainlinkNodes(m.Common.Env)
+		require.NoError(m.TestConfig.T, m.TestConfig.err)
 		m.Clients.ChainlinkClient.ChainlinkNodes = m.GetChainlinkNodes()
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.ChainlinkClient.ChainlinkNodes)
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	} else {
+		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.ClCluster.NodeAPIs()
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.ClCluster.NodeAPIs())
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
@@ -223,16 +235,6 @@ func (m *OCRv2TestState) DeployCluster() {
 func (m *OCRv2TestState) DeployEnv() {
 	err := m.Common.Env.Run()
 	require.NoError(m.TestConfig.T, err)
-}
-
-// SetupClients Sets up the starknet client
-func (m *OCRv2TestState) SetupClients() {
-	if *m.Common.TestConfig.Common.InsideK8s {
-		m.ChainlinkNodesK8s, m.TestConfig.err = client.ConnectChainlinkNodes(m.Common.Env)
-		require.NoError(m.TestConfig.T, m.TestConfig.err)
-	} else {
-		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.ClCluster.NodeAPIs()
-	}
 }
 
 // LoadOCR2Config Loads and returns the default starknet gauntlet config
