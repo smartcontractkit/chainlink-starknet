@@ -82,7 +82,7 @@ func TestOCRBasic(t *testing.T) {
 
 			state.SetUpNodes()
 
-			err = state.ValidateRounds(*config.OCR2.Smoke.NumberOfRounds, false)
+			err = state.ValidateRounds(*config.OCR2.NumberOfRounds, false)
 			require.NoError(t, err, "Validating round should not fail")
 		})
 	}
