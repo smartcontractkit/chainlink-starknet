@@ -28,7 +28,7 @@ jobs:
     environment: integration
     env:
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
-      TEST_SUITE=soak
+      TEST_SUITE: soak
     permissions:
       checks: write
       pull-requests: write
