@@ -4,11 +4,11 @@ description: A composite action that installs cairo and scarb binaries
 inputs:
   cairo_version:
     description: Cairo release version
-    default: "v2.6.3"
+    default: "v2.6.4"
     required: false
   scarb_version:
     description: Scarb release version
-    default: "v2.6.3"
+    default: "v2.6.5"
     required: false
 
 runs:
