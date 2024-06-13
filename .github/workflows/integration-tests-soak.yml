@@ -28,6 +28,7 @@ jobs:
     environment: integration
     env:
       TEST_SUITE: soak
+      DETACH_RUNNER: true
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
     permissions:
       checks: write
