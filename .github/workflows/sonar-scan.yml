@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0 # fetches all history for all tags and branches to provide more metadata for sonar reports
 
       - name: Download Golangci unit tests reports
-        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
+        uses: dawidd6/action-download-artifact@3ecf4024886f219d9290351234889bfb45d1b9da # v5
         with:
           workflow: relayer.yml
           workflow_conclusion: ""
@@ -47,7 +47,7 @@ jobs:
           if_no_artifact_found: warn
      
       - name: Download Golangci Relayer report
-        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
+        uses: dawidd6/action-download-artifact@3ecf4024886f219d9290351234889bfb45d1b9da # v5
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -56,7 +56,7 @@ jobs:
           if_no_artifact_found: warn
 
       - name: Download Golangcio Ops report
-        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
+        uses: dawidd6/action-download-artifact@3ecf4024886f219d9290351234889bfb45d1b9da # v5
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -65,7 +65,7 @@ jobs:
           if_no_artifact_found: warn
       
       - name: Download Golangci-lint Integration tests report
-        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
+        uses: dawidd6/action-download-artifact@3ecf4024886f219d9290351234889bfb45d1b9da # v5
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -74,7 +74,7 @@ jobs:
           if_no_artifact_found: warn
 
       - name: Download gauntlet eslint reports
-        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
+        uses: dawidd6/action-download-artifact@3ecf4024886f219d9290351234889bfb45d1b9da # v5
         with:
           workflow: integration_gauntlet.yml
           workflow_conclusion: ""
