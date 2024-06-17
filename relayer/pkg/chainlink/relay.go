@@ -54,10 +54,6 @@ func (r *relayer) HealthReport() map[string]error {
 	return map[string]error{r.Name(): r.Healthy()}
 }
 
-func (r *relayer) NewContractReader(_ []byte) (relaytypes.ContractReader, error) {
-	return nil, errors.New("contract reader is not supported for starknet")
-}
-
 func (r *relayer) NewConfigProvider(args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {
 	var relayConfig RelayConfig
 
@@ -121,8 +117,4 @@ func (r *relayer) NewAutomationProvider(rargs relaytypes.RelayArgs, pargs relayt
 
 func (r *relayer) NewPluginProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.PluginProvider, error) {
 	return nil, errors.New("plugin provider is not supported for starknet")
-}
-
-func (r *relayer) NewOCR3CapabilityProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.OCR3CapabilityProvider, error) {
-	return nil, errors.New("ocr3 capability provider is not supported for starknet")
 }
