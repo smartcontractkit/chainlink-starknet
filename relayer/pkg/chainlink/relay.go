@@ -126,3 +126,11 @@ func (r *relayer) NewPluginProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 func (r *relayer) NewOCR3CapabilityProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.OCR3CapabilityProvider, error) {
 	return nil, errors.New("ocr3 capability provider is not supported for starknet")
 }
+
+func (r *relayer) NewCCIPCommitProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.CCIPCommitProvider, error) {
+	return nil, errors.New("ccip.commit is not supported for starknet")
+}
+
+func (r *relayer) NewCCIPExecProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.CCIPExecProvider, error) {
+	return nil, errors.New("ccip.exec is not supported for starknet")
+}
