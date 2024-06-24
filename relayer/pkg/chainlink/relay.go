@@ -9,6 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
 	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
@@ -23,7 +24,7 @@ type relayer struct {
 	lggr logger.Logger
 }
 
-func NewRelayer(lggr logger.Logger, chain starkchain.Chain) *relayer {
+func NewRelayer(lggr logger.Logger, chain starkchain.Chain, capRegistry core.CapabilitiesRegistry) *relayer {
 	return &relayer{
 		chain:  chain,
 		stopCh: make(chan struct{}),
