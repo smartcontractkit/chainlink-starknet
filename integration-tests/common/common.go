@@ -133,7 +133,7 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 			},
 			"db": map[string]any{
 				"image": map[string]any{
-					"version": "15.5",
+					"version": *c.TestConfig.Common.PostgresVersion,
 				},
 				"stateful": c.TestConfig.Common.Stateful,
 			},

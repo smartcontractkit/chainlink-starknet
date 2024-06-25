@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0 # fetches all history for all tags and branches to provide more metadata for sonar reports
 
       - name: Download Golangci unit tests reports
-        uses: dawidd6/action-download-artifact@v3.1.4
+        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
         with:
           workflow: relayer.yml
           workflow_conclusion: ""
@@ -47,7 +47,7 @@ jobs:
           if_no_artifact_found: warn
      
       - name: Download Golangci Relayer report
-        uses: dawidd6/action-download-artifact@v3.1.4
+        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -56,7 +56,7 @@ jobs:
           if_no_artifact_found: warn
 
       - name: Download Golangcio Ops report
-        uses: dawidd6/action-download-artifact@v3.1.4
+        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -65,7 +65,7 @@ jobs:
           if_no_artifact_found: warn
       
       - name: Download Golangci-lint Integration tests report
-        uses: dawidd6/action-download-artifact@v3.1.4
+        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
         with:
           workflow: golangci-lint.yml
           workflow_conclusion: ""
@@ -74,7 +74,7 @@ jobs:
           if_no_artifact_found: warn
 
       - name: Download gauntlet eslint reports
-        uses: dawidd6/action-download-artifact@v3.1.4
+        uses: dawidd6/action-download-artifact@93c629661111aae296c04004b30ae3ba22ed46f3 # v5
         with:
           workflow: integration_gauntlet.yml
           workflow_conclusion: ""
@@ -98,7 +98,7 @@ jobs:
         run: sed -i 's+/home/runner/work/feeds-manager/feeds-manager/+/github/workspace/+g' ${{ steps.sonarqube_report_paths.outputs.sonarqube_eslint_report_paths }}
 
       - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@53c3e3207fe4b8d52e2f1ac9d6eb1d2506f626c0 # v2.0.2
+        uses: sonarsource/sonarqube-scan-action@86fe81775628f1c6349c28baab87881a2170f495 # v2.1.0
         with:
           args: >
             -Dsonar.go.tests.reportPaths=${{ steps.sonarqube_report_paths.outputs.sonarqube_tests_report_paths }}

@@ -1,37 +1,24 @@
 import { IStarknetWallet, Env } from '@chainlink/starknet-gauntlet'
-import {
-  SignerInterface,
-  encode,
-  DeployAccountSignerDetails,
-  DeclareSignerDetails,
-  typedData,
-  hash,
-  transaction,
-  Abi,
-  Signature,
-  Call,
-  InvocationsSignerDetails,
-  ec,
-} from 'starknet'
-import { Stark, LedgerError } from '@ledgerhq/hw-app-starknet'
+import { encode, Signature, ec, Signer } from 'starknet'
+import { StarknetClient as LedgerClient, LedgerError } from '@ledgerhq/hw-app-starknet'
 
 // EIP-2645 path
 //  2645 - EIP number
 //  579218131 - layer - 31 lowest bits of sha256("starkex")
 //  894929996 - application - 31 lowest bits of sha256("chainlink")
-export const DEFAULT_LEDGER_PATH = "m/2645'/579218131'/894929996'/0'"
+// export const DEFAULT_LEDGER_PATH = "m/2645'/579218131'/0'/0'"
+export const DEFAULT_LEDGER_PATH = "m/2645'/1195502025'/1148870696'/0'/0'/0"
 export const LEDGER_PATH_REGEX = /^\s*m\s*\/\s*2645\s*\'\s*\/\s*579218131\s*\'\s*\/\s*(\d+)\s*\'\s*\/\s*(\d+)\s*\'$/
 
-// TODO: why are we copying this rather than using https://github.com/yogh333/starknetjs-signer-ledger/blob/main/src/ledger-signer.ts
-class LedgerSigner implements SignerInterface {
-  client: Stark
+export class LedgerSigner extends Signer {
+  client: LedgerClient
   path: string
   publicKey: string
 
-  private constructor(client: Stark, path: string, publicKey: string) {
+  private constructor(client: LedgerClient, path: string) {
+    super()
     this.client = client
     this.path = path
-    this.publicKey = publicKey
   }
 
   static create = async (path?: string): Promise<LedgerSigner> => {
@@ -50,74 +37,40 @@ class LedgerSigner implements SignerInterface {
     // package is only allowed to be imported once
     const Transport = (await import('@ledgerhq/hw-transport-node-hid')).default
     const transport = await Transport.create()
-    const ledgerConnector = new Stark(transport)
+    const ledgerConnector = new LedgerClient(transport)
 
-    const response = await ledgerConnector.getPubKey(path)
-    if (response.returnCode != LedgerError.NoErrors) {
-      throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
-    }
-
-    const publicKey = encode.addHexPrefix(encode.buf2hex(response.publicKey).slice(2, 2 + 64))
-    const signer = new LedgerSigner(ledgerConnector, path, publicKey)
+    const signer = new LedgerSigner(ledgerConnector, path)
 
     return signer
   }
 
-  async getPubKey(): Promise<string> {
+  public async getPubKey(): Promise<string> {
+    // memoize to avoid redundant calls
+    if (this.publicKey) return this.publicKey
+
+    const response = await this.client.getStarkKey(this.path, false)
+    if (response.returnCode != LedgerError.NoErrors) {
+      throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
+    }
+
+    this.publicKey = encode.buf2hex(response.starkKey)
+
     return this.publicKey
   }
 
-  async signTransaction(
-    transactions: Call[],
-    transactionsDetail: InvocationsSignerDetails,
-    abis?: Abi[],
-  ): Promise<Signature> {
-    // TODO: match https://github.com/starknet-io/starknet.js/blob/0f8b266da6709ddb897860575e09578e547d185c/src/signer/default.ts#L46-L77
-
-    const calldata = transaction.fromCallsToExecuteCalldataWithNonce(
-      transactions,
-      transactionsDetail.nonce,
-    )
-
-    // const msgHash = hash.calculateTransactionHash(
-    //   transactionsDetail.walletAddress,
-    //   transactionsDetail.version,
-    //   calldata,
-    //   transactionsDetail.maxFee,
-    //   transactionsDetail.chainId,
-    //   transactionsDetail.nonce,
-    // )
-
-    // return this.sign(msgHash)
-
-    throw 'unimplemented'
-  }
-
-  async signDeployAccountTransaction(transaction: DeployAccountSignerDetails): Promise<Signature> {
-    // TODO: implement this
-    return new ec.starkCurve.Signature(BigInt(0), BigInt(0))
-  }
-
-  async signDeclareTransaction(transaction: DeclareSignerDetails): Promise<Signature> {
-    // TODO: implement this
-    return new ec.starkCurve.Signature(BigInt(0), BigInt(0))
-  }
-
-  async signMessage(data: typedData.TypedData, accountAddress: string): Promise<Signature> {
-    const msgHash = typedData.getMessageHash(data, accountAddress)
-    return this.sign(msgHash)
-  }
-
-  async sign(hash: string): Promise<Signature> {
-    const response = await this.client.sign(this.path, hash, true)
+  async signRaw(hash: string): Promise<Signature> {
+    const response = await this.client.signHash(this.path, hash, false)
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to sign the message: ${response.errorMessage}`)
     }
 
-    return new ec.starkCurve.Signature(
-      BigInt(encode.addHexPrefix(encode.buf2hex(response.r))),
-      BigInt(encode.addHexPrefix(encode.buf2hex(response.s))),
-    )
+    // TODO: console log the hash so user can verify on ledger
+
+    return ec.starkCurve.Signature.fromCompact(new Uint8Array([...response.r, ...response.s]))
+    // return new ec.starkCurve.Signature(
+    //   BigInt(encode.addHexPrefix(encode.buf2hex(response.r))),
+    //   BigInt(encode.addHexPrefix(encode.buf2hex(response.s))),
+    // )
   }
 }
 
