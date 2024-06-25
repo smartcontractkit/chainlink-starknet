@@ -19,7 +19,7 @@ type BatchBuilder interface {
 	RequestChainID() BatchBuilder
 	// RequestLatestPendingBlock() (BatchBuilder)
 	RequestLatestBlockHashAndNumber() BatchBuilder
-	// RequestEventsByFilter(f starknetrpc.EventFilter) (BatchBuilder)
+	RequestEventsByFilter(f starknetrpc.EventsInput) BatchBuilder
 	// RequestTxReceiptByHash(h *felt.Felt) (BatchBuilder)
 	Build() []gethrpc.BatchElem
 }
@@ -28,6 +28,15 @@ var _ BatchBuilder = (*batchBuilder)(nil)
 
 type batchBuilder struct {
 	args []gethrpc.BatchElem
+}
+
+func (b *batchBuilder) RequestEventsByFilter(e starknetrpc.EventsInput) BatchBuilder {
+	b.args = append(b.args, gethrpc.BatchElem{
+		Method: "starknet_getEvents",
+		Args:   []interface{}{e},
+		Result: &starknetrpc.EventChunk{},
+	})
+	return b
 }
 
 func NewBatchBuilder() BatchBuilder {
@@ -91,7 +100,7 @@ type ChainClient interface {
 	// returns block number and block has of latest finalized block
 	LatestBlockHashAndNumber(ctx context.Context) (starknetrpc.BlockHashAndNumberOutput, error)
 	// get block logs, event logs, etc.
-	// EventsByFilter(ctx context.Context, f starknetrpc.EventFilter) ([]starknetrpc.EmittedEvent, error)
+	EventsByFilter(ctx context.Context, f starknetrpc.EventsInput) (starknetrpc.EventChunk, error)
 	// TxReceiptByHash(ctx context.Context, h *felt.Felt) (starknetrpc.TransactionReceipt, error)
 	Batch(ctx context.Context, builder BatchBuilder) ([]gethrpc.BatchElem, error)
 }
@@ -182,6 +191,22 @@ func (c *Client) LatestBlockHashAndNumber(ctx context.Context) (starknetrpc.Bloc
 	}
 
 	return *info, nil
+}
+
+func (c *Client) EventsByFilter(ctx context.Context, f starknetrpc.EventsInput) (starknetrpc.EventChunk, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	chunk, err := c.Provider.Events(ctx, f)
+
+	if err != nil {
+		return starknetrpc.EventChunk{}, fmt.Errorf("error in EventsByFilter: %w", err)
+	}
+
+	return *chunk, nil
 }
 
 func (c *Client) Batch(ctx context.Context, builder BatchBuilder) ([]gethrpc.BatchElem, error) {

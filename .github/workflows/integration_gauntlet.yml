@@ -16,12 +16,12 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install Nix
-        uses: cachix/install-nix-action@8887e596b4ee1134dae06b98d573bd674693f47c # v26
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           nix_path: nixpkgs=channel:nixos-unstable
           extra_nix_config: "sandbox = false"
       - name: Cache Nix
-        uses: cachix/cachix-action@v14
+        uses: cachix/cachix-action@v15
         with:
           name: chainlink-cosmos
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -35,14 +35,23 @@ jobs:
           path: ./eslint-report.json
 
   integration_gauntlet_run_tests:
-    name: Run Tests
+    name: Run Integration Gauntlet Tests
     runs-on: ubuntu-latest
     steps:
+      - name: Collect Metrics
+        id: collect-gha-metrics
+        uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
+        with:
+          id: starknet-integration-gauntlet
+          org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+          basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
+          hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
+          this-job-name: Run Integration Gauntlet Tests
       - name: Checkout sources
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Install Nix
-        uses: cachix/install-nix-action@8887e596b4ee1134dae06b98d573bd674693f47c # v26
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 

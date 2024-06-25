@@ -117,5 +117,11 @@ mod MockAggregator {
         fn description(self: @ContractState) -> felt252 {
             'mock'
         }
+
+        fn latest_answer(self: @ContractState) -> u128 {
+            let latest_round_id = self._latest_aggregator_round_id.read();
+            let transmission = self._transmissions.read(latest_round_id);
+            transmission.answer
+        }
     }
 }
