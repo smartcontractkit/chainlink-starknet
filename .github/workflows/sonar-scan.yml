@@ -35,5 +35,6 @@ jobs:
       - name: ci-sonarqube
         uses: smartcontractkit/.github/actions/ci-sonarqube-ts@7878f06999495f9e736183f8805a4909379acf52 # ci-sonarqube-ts@0.0.0
         with:
+          include-lint: "true"
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
