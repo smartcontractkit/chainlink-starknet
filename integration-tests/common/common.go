@@ -16,7 +16,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
-	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
@@ -27,6 +26,7 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
 	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
+	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 
 	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
@@ -274,8 +274,6 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	oracleSpec := job.OCR2OracleSpec{
 		ContractID:                  ocrControllerAddress,
-		Relay:                       types.NetworkStarkNet,
-		RelayConfig:                 bootstrapRelayConfig,
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	// Setting up bootstrap node
@@ -283,6 +281,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		Name:           fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.New().String()),
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
+		Relay:          relay.NetworkStarkNet,
+		RelayConfig:    bootstrapRelayConfig,
 	}
 	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
@@ -317,8 +317,6 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 		oracleSpec = job.OCR2OracleSpec{
 			ContractID:                  ocrControllerAddress,
-			Relay:                       types.NetworkStarkNet,
-			RelayConfig:                 relayConfig,
 			PluginType:                  "median",
 			OCRKeyBundleID:              null.StringFrom(cc.NKeys[nIdx].OCR2Key.Data.ID),
 			TransmitterID:               null.StringFrom(cc.NKeys[nIdx].TXKey.Data.ID),
@@ -334,6 +332,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 			JobType:           "offchainreporting2",
 			OCR2OracleSpec:    oracleSpec,
 			ObservationSource: observationSource,
+			Relay:             relay.NetworkStarkNet,
+			RelayConfig:       relayConfig,
 		}
 		_, err = n.MustCreateJob(jobSpec)
 		if err != nil {
