@@ -23,6 +23,11 @@
           program = "${devnet-hardhat}/ops/scripts/devnet-hardhat.sh";
         };
 
+        apps.starknet-devnet-down = {
+          type = "app";
+          program = "${devnet-hardhat}/ops/scripts/devnet-hardhat-down.sh";
+        };
+
         formatter = pkgs.nixpkgs-fmt;
       });
 }
