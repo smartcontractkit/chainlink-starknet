@@ -55,7 +55,7 @@ func (r *relayer) HealthReport() map[string]error {
 	return map[string]error{r.Name(): r.Healthy()}
 }
 
-func (r *relayer) NewChainWriter(_ []byte) (relaytypes.ChainWriter, error) {
+func (r *relayer) NewChainWriter(_ context.Context, _ []byte) (relaytypes.ChainWriter, error) {
 	return nil, errors.New("chain writer is not supported for starknet")
 }
 
