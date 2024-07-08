@@ -16,6 +16,6 @@ export const executeCommands = [
   ConfirmAggregator,
   TransferOwnership,
   AcceptOwnership,
-  DisableAccessCheck
+  DisableAccessCheck,
 ]
 export const inspectionCommands = [Inspect]
