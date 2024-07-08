@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/barkimedes/go-deepcopy"
 	"github.com/google/uuid"
@@ -16,12 +18,18 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
+
+	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
+
 	ctf_config "github.com/smartcontractkit/chainlink-testing-framework/config"
 	k8s_config "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/osutil"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
 
 	ocr2_config "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 )
 
 type TestConfig struct {
@@ -32,6 +40,9 @@ type TestConfig struct {
 	Common                *Common                          `toml:"Common"`
 	OCR2                  *ocr2_config.Config              `toml:"OCR2"`
 	ConfigurationName     string                           `toml:"-"`
+
+	// getter funcs for passing parameters
+	GetChainID, GetFeederURL, GetRPCL2Internal, GetRPCL2InternalAPIKey func() string
 }
 
 func (c *TestConfig) GetLoggingConfig() *ctf_config.LoggingConfig {
@@ -94,6 +105,60 @@ func (c TestConfig) GetChainlinkImageConfig() *ctf_config.ChainlinkImageConfig {
 
 func (c TestConfig) GetCommonConfig() *Common {
 	return c.Common
+}
+
+func (c *TestConfig) GetNodeConfig() *ctf_config.NodeConfig {
+	cfgTOML, err := c.GetNodeConfigTOML()
+	if err != nil {
+		log.Fatalf("failed to parse TOML config: %s", err)
+		return nil
+	}
+
+	return &ctf_config.NodeConfig{
+		BaseConfigTOML: cfgTOML,
+	}
+}
+
+func (c TestConfig) GetNodeConfigTOML() (string, error) {
+	var chainID, feederURL, RPCL2Internal, RPCL2InternalAPIKey string
+	if c.GetChainID != nil {
+		chainID = c.GetChainID()
+	}
+	if c.GetFeederURL != nil {
+		feederURL = c.GetFeederURL()
+	}
+	if c.GetRPCL2Internal != nil {
+		RPCL2Internal = c.GetRPCL2Internal()
+	}
+	if c.GetRPCL2InternalAPIKey != nil {
+		RPCL2InternalAPIKey = c.GetRPCL2InternalAPIKey()
+	}
+
+	starkConfig := config.TOMLConfig{
+		Enabled:   ptr.Ptr(true),
+		ChainID:   ptr.Ptr(chainID),
+		FeederURL: common_cfg.MustParseURL(feederURL),
+		Nodes: []*config.Node{
+			{
+				Name:   ptr.Ptr("primary"),
+				URL:    common_cfg.MustParseURL(RPCL2Internal),
+				APIKey: ptr.Ptr(RPCL2InternalAPIKey),
+			},
+		},
+	}
+	baseConfig := node.NewBaseConfig()
+	baseConfig.Starknet = config.TOMLConfigs{
+		&starkConfig,
+	}
+	baseConfig.OCR2.Enabled = ptr.Ptr(true)
+	baseConfig.P2P.V2.Enabled = ptr.Ptr(true)
+	fiveSecondDuration := common_cfg.MustNewDuration(5 * time.Second)
+
+	baseConfig.P2P.V2.DeltaDial = fiveSecondDuration
+	baseConfig.P2P.V2.DeltaReconcile = fiveSecondDuration
+	baseConfig.P2P.V2.ListenAddresses = &[]string{"0.0.0.0:6690"}
+
+	return baseConfig.TOMLString()
 }
 
 func (c TestConfig) GetChainlinkUpgradeImageConfig() *ctf_config.ChainlinkImageConfig {
