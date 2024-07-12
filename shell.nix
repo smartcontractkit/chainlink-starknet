@@ -12,7 +12,7 @@ in
 mkShell' {
   nativeBuildInputs = [
     stdenv.cc.cc.lib
-    (rust-bin.stable.latest.default.override { extensions = ["rust-src"]; })
+    (rust-bin.stable.latest.default.override { extensions = [ "rust-src" ]; })
     nodejs-18_x
     (yarn.override { nodejs = nodejs-18_x; })
     nodePackages.typescript
@@ -39,7 +39,7 @@ mkShell' {
     libusb1
   ];
 
-  LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.zlib stdenv.cc.cc.lib]; # lib64
+  LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.zlib stdenv.cc.cc.lib ]; # lib64
 
   GOROOT = "${go}/share/go";
   CGO_ENABLED = 0;
