@@ -68,7 +68,7 @@ jobs:
           echo "::add-mask::$BASE64_CONFIG_OVERRIDE"
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> "$GITHUB_ENV"
       - name: Run Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@d38226be720c5ccc1ff4d3cee40608ebf264cd59 # v2.3.26
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: cd ./integration-tests && go test -timeout 24h -count=1 -run TestOCRBasicSoak/embedded ./soak
