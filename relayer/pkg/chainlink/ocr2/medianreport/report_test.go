@@ -13,15 +13,6 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
 
-func TestTrial(t *testing.T) {
-	val := "4077890116503514227502940569025930714369419670386493876774642852321317355520"
-	x, err := big.NewInt(0).SetString(val, 10)
-	assert.False(t, err)
-
-	res1 := x.Cmp(big.NewInt(0))
-	assert.Equal(t, -1, res1)
-}
-
 func TestBuildReportWithNegativeValues(t *testing.T) {
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
