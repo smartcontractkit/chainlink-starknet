@@ -80,7 +80,7 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 		// encoding scheme is offset by 1 byte to avoid felt overflow
 		// [0x0, <1_ID>, <2_ID>, ..., <N_ID>, 0x0, 0x0, ..., 0x0]
 		// note: this does not alter Starknet's MAX_ORACLES (31)
-		// to differentiate this encoding scheme from the original encoding scheme is to check if, within the first N + 1 bytes, 0 occurs twice
+		// to differentiate this encoding scheme from the original encoding scheme, check if, within the first N + 1 bytes, 0 occurs twice
 		// where N is the number of oracles in the DON
 		observers[i+1] = byte(o.Observer)
 
