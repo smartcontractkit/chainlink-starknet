@@ -63,6 +63,8 @@ func TestBuildReport(t *testing.T) {
 	v := big.NewInt(0)
 	v.SetString("1000000000000000000", 10)
 
+	// 0x01 pad the first byte
+	observers[0] = uint8(1)
 	for i := 0; i < n; i++ {
 		oo = append(oo, median.ParsedAttributedObservation{
 			Timestamp:        uint32(time.Now().Unix()),

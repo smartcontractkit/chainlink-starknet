@@ -76,12 +76,12 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 	var observers = make([]byte, starknet.FeltLength)
 	var observations []*felt.Felt
 
+	observers[0] = uint8(1)
 	for i, o := range oo {
-		// encoding scheme is offset by 1 byte to avoid felt overflow
-		// [0x0, <1_ID>, <2_ID>, ..., <N_ID>, 0x0, 0x0, ..., 0x0]
+		// encoding scheme is offset by 0x01-padded to avoid felt overflow
+		// [0x01, <1_ID>, <2_ID>, ..., <N_ID>, 0x0, 0x0, ..., 0x0]
 		// note: this does not alter Starknet's MAX_ORACLES (31)
-		// to differentiate this encoding scheme from the original encoding scheme, check if, within the first N + 1 bytes, 0 occurs twice
-		// where N is the number of oracles in the DON
+		// where N is the length of the observations array
 		observers[i+1] = byte(o.Observer)
 
 		f := starknetutils.BigIntToFelt(o.Value)
