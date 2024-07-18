@@ -81,7 +81,7 @@ func TestBuildReportNoObserversOverflow(t *testing.T) {
 	observersBig := starknetutils.BytesToBig(observersBytes)
 
 	// encoded observers felt is less than max felt
-	assert.Equal(t, -1, observersBig.Cmp(curve.Curve.P))
+	assert.Equal(t, -1, observersBig.Cmp(curve.Curve.P), "observers should be less than max felt")
 }
 
 func TestBuildReport(t *testing.T) {
