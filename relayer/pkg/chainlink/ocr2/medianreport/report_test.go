@@ -53,6 +53,28 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (10), gas = (-10)")
 }
 
+func TestBuildReportNoObserversOverflow(t *testing.T) {
+	c := ReportCodec{}
+	oo := []median.ParsedAttributedObservation{}
+	fmt.Println("hello")
+	v := big.NewInt(0)
+	v.SetString("1000000000000000000", 10)
+
+	// test largest possible encoded observers byte array
+	for i := 30; i >= 0; i-- {
+		oo = append(oo, median.ParsedAttributedObservation{
+			Timestamp:        uint32(time.Now().Unix()),
+			Value:            big.NewInt(1234567890),
+			GasPriceSubunits: big.NewInt(2),
+			JuelsPerFeeCoin:  v,
+			Observer:         commontypes.OracleID(i),
+		})
+	}
+
+	_, err := c.BuildReport(oo)
+	assert.Nil(t, err)
+}
+
 func TestBuildReport(t *testing.T) {
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
