@@ -50,7 +50,7 @@ jobs:
         continue-on-error: true
       - name: Check if image exists
         id: check-image
-        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@aa8eea635029ab8d95abd3c206f56dae1e22e623 # v2.3.28
         with:
           repository: chainlink
           tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
@@ -58,7 +58,7 @@ jobs:
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
       - name: Build Image ${{ matrix.image.name }}
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@aa8eea635029ab8d95abd3c206f56dae1e22e623 # v2.3.28
         with:
           cl_repo: smartcontractkit/chainlink
           cl_ref: ${{ github.event.inputs.cl_branch_ref }}
@@ -171,7 +171,7 @@ jobs:
           # shellcheck disable=SC2086
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> $GITHUB_ENV
       - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@aa8eea635029ab8d95abd3c206f56dae1e22e623 # v2.3.28
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
