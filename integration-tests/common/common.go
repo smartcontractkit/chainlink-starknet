@@ -22,6 +22,7 @@ import (
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
+	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 
 	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
@@ -253,6 +254,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		Name:           fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.New().String()),
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
+		Relay:          relay.NetworkStarkNet,
+		RelayConfig:    bootstrapRelayConfig,
 	}
 	_, _, err := cc.ChainlinkNodes[0].CreateJob(jobSpec)
 	if err != nil {
@@ -304,6 +307,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 			JobType:           "offchainreporting2",
 			OCR2OracleSpec:    oracleSpec,
 			ObservationSource: observationSource,
+			Relay:             relay.NetworkStarkNet,
+			RelayConfig:       relayConfig,
 		}
 		_, err = n.MustCreateJob(jobSpec)
 		if err != nil {
