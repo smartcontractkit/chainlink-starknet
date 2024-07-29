@@ -15,23 +15,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v4"
 
-	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/environment"
 	"github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/chainlink"
 	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/k8s/pkg/helm/mock-adapter"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
 	"github.com/smartcontractkit/chainlink/integration-tests/client"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
-	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
-	cl "github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
 	"github.com/smartcontractkit/chainlink/v2/core/services/relay"
 
 	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 	"github.com/smartcontractkit/chainlink-starknet/ops/devnet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
@@ -96,6 +91,11 @@ func New(testConfig *testconfig.TestConfig) *Common {
 			RPCL2InternalAPIKey: chainDetails.L2RPCInternalAPIKey,
 		},
 	}
+	// provide getters for TestConfig (pointers to chain + rpc details)
+	c.TestConfig.GetChainID = func() string { return c.ChainDetails.ChainID }
+	c.TestConfig.GetFeederURL = func() string { return c.ChainDetails.FeederURL }
+	c.TestConfig.GetRPCL2Internal = func() string { return c.RPCDetails.RPCL2Internal }
+	c.TestConfig.GetRPCL2InternalAPIKey = func() string { return c.RPCDetails.RPCL2InternalAPIKey }
 
 	return c
 }
@@ -108,8 +108,7 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 	}
 
 	if *c.TestConfig.Common.InsideK8s {
-		toml := c.DefaultNodeConfig()
-		tomlString, err := toml.TOMLString()
+		tomlString, err := c.TestConfig.GetNodeConfigTOML()
 		if err != nil {
 			return nil, err
 		}
@@ -145,34 +144,6 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 	}
 
 	return c, nil
-}
-
-func (c *Common) DefaultNodeConfig() *cl.Config {
-	starkConfig := config.TOMLConfig{
-		Enabled:   ptr.Ptr(true),
-		ChainID:   ptr.Ptr(c.ChainDetails.ChainID),
-		FeederURL: common_cfg.MustParseURL(c.ChainDetails.FeederURL),
-		Nodes: []*config.Node{
-			{
-				Name:   ptr.Ptr("primary"),
-				URL:    common_cfg.MustParseURL(c.RPCDetails.RPCL2Internal),
-				APIKey: ptr.Ptr(c.RPCDetails.RPCL2InternalAPIKey),
-			},
-		},
-	}
-	baseConfig := node.NewBaseConfig()
-	baseConfig.Starknet = config.TOMLConfigs{
-		&starkConfig,
-	}
-	baseConfig.OCR2.Enabled = ptr.Ptr(true)
-	baseConfig.P2P.V2.Enabled = ptr.Ptr(true)
-	fiveSecondDuration := common_cfg.MustNewDuration(5 * time.Second)
-
-	baseConfig.P2P.V2.DeltaDial = fiveSecondDuration
-	baseConfig.P2P.V2.DeltaReconcile = fiveSecondDuration
-	baseConfig.P2P.V2.ListenAddresses = &[]string{"0.0.0.0:6690"}
-
-	return baseConfig
 }
 
 func (c *Common) SetLocalEnvironment(t *testing.T) {
@@ -274,6 +245,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 	oracleSpec := job.OCR2OracleSpec{
 		ContractID:                  ocrControllerAddress,
+		Relay:                       c.ChainDetails.ChainName,
+		RelayConfig:                 bootstrapRelayConfig,
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	// Setting up bootstrap node
@@ -317,6 +290,8 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 
 		oracleSpec = job.OCR2OracleSpec{
 			ContractID:                  ocrControllerAddress,
+			Relay:                       c.ChainDetails.ChainName,
+			RelayConfig:                 relayConfig,
 			PluginType:                  "median",
 			OCRKeyBundleID:              null.StringFrom(cc.NKeys[nIdx].OCR2Key.Data.ID),
 			TransmitterID:               null.StringFrom(cc.NKeys[nIdx].TXKey.Data.ID),
