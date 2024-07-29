@@ -59,7 +59,7 @@ func TestOCRBasic(t *testing.T) {
 			// K8s specific config and cleanup
 			if *config.Common.InsideK8s {
 				t.Cleanup(func() {
-					if err = actions.TeardownSuite(t, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
+					if err = actions.TeardownSuite(t, nil, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
 						state.TestConfig.L.Error().Err(err).Msg("Error tearing down environment")
 					}
 				})
