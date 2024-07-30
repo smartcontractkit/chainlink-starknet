@@ -13,9 +13,12 @@ import (
 
 	"github.com/smartcontractkit/libocr/commontypes"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
 func TestBuildReportWithNegativeValues(t *testing.T) {
+	ctx := tests.Context(t)
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
 
@@ -27,7 +30,7 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 		Observer:         commontypes.OracleID(1),
 	})
 
-	_, err := c.BuildReport(oo)
+	_, err := c.BuildReport(ctx, oo)
 	assert.ErrorContains(t, err, "starknet does not support negative values: value = (-10), fee = (10), gas = (10)")
 
 	oo = []median.ParsedAttributedObservation{}
@@ -39,7 +42,7 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 		Observer:         commontypes.OracleID(1),
 	})
 
-	_, err = c.BuildReport(oo)
+	_, err = c.BuildReport(ctx, oo)
 	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (-10), gas = (10)")
 
 	oo = []median.ParsedAttributedObservation{}
@@ -51,11 +54,12 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 		Observer:         commontypes.OracleID(1),
 	})
 
-	_, err = c.BuildReport(oo)
+	_, err = c.BuildReport(ctx, oo)
 	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (10), gas = (-10)")
 }
 
 func TestBuildReportNoObserversOverflow(t *testing.T) {
+	ctx := tests.Context(t)
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
 	fmt.Println("hello")
@@ -73,7 +77,7 @@ func TestBuildReportNoObserversOverflow(t *testing.T) {
 		})
 	}
 
-	report, err := c.BuildReport(oo)
+	report, err := c.BuildReport(ctx, oo)
 	assert.Nil(t, err)
 
 	index := timestampSizeBytes
@@ -85,6 +89,7 @@ func TestBuildReportNoObserversOverflow(t *testing.T) {
 }
 
 func TestBuildReport(t *testing.T) {
+	ctx := tests.Context(t)
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
 
@@ -110,7 +115,7 @@ func TestBuildReport(t *testing.T) {
 		observers[i+1] = uint8(i)
 	}
 
-	report, err := c.BuildReport(oo)
+	report, err := c.BuildReport(ctx, oo)
 	assert.NoError(t, err)
 
 	// validate length
@@ -153,9 +158,10 @@ type medianTest struct {
 }
 
 func TestMedianFromReport(t *testing.T) {
+	ctx := tests.Context(t)
 	cdc := ReportCodec{}
 	// Requires at least one obs
-	_, err := cdc.BuildReport(nil)
+	_, err := cdc.BuildReport(ctx, nil)
 	require.Error(t, err)
 	var tt = []medianTest{
 		{
@@ -191,6 +197,7 @@ func TestMedianFromReport(t *testing.T) {
 	for _, tc := range tt {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := tests.Context(t)
 			var pos []median.ParsedAttributedObservation
 			for i, obs := range tc.obs {
 				pos = append(pos, median.ParsedAttributedObservation{
@@ -200,12 +207,12 @@ func TestMedianFromReport(t *testing.T) {
 					Observer:         commontypes.OracleID(uint8(i))},
 				)
 			}
-			report, err := cdc.BuildReport(pos)
+			report, err := cdc.BuildReport(ctx, pos)
 			require.NoError(t, err)
-			max, err := cdc.MaxReportLength(len(tc.obs))
+			max, err := cdc.MaxReportLength(ctx, len(tc.obs))
 			require.NoError(t, err)
 			assert.Equal(t, len(report), max)
-			med, err := cdc.MedianFromReport(report)
+			med, err := cdc.MedianFromReport(ctx, report)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedMedian.String(), med.String())
 		})

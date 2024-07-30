@@ -29,7 +29,7 @@ in
 
         gopls
         delve
-        (golangci-lint.override {buildGoModule = buildGo122Module;})
+        golangci-lint
         gotools
 
         kubectl
