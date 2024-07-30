@@ -1,6 +1,7 @@
 package ocr2
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"math/big"
@@ -32,7 +33,7 @@ func NewOffchainConfigDigester(chainID, contract string) offchainConfigDigester 
 }
 
 // TODO: ConfigDigest is byte[32] but what we really want here is a felt
-func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.ConfigDigest, error) {
+func (d offchainConfigDigester) ConfigDigest(ctx context.Context, cfg types.ContractConfig) (types.ConfigDigest, error) {
 	configDigest := types.ConfigDigest{}
 
 	contractAddress, valid := new(big.Int).SetString(strings.TrimPrefix(d.contract, "0x"), 16)
@@ -97,7 +98,7 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	digest.FillBytes(configDigest[:])
 
 	// set first two bytes to the digest prefix
-	pre, err := d.ConfigDigestPrefix()
+	pre, err := d.ConfigDigestPrefix(ctx)
 	if err != nil {
 		return configDigest, err
 	}
@@ -106,6 +107,6 @@ func (d offchainConfigDigester) ConfigDigest(cfg types.ContractConfig) (types.Co
 	return configDigest, nil
 }
 
-func (offchainConfigDigester) ConfigDigestPrefix() (types.ConfigDigestPrefix, error) {
+func (offchainConfigDigester) ConfigDigestPrefix(ctx context.Context) (types.ConfigDigestPrefix, error) {
 	return ConfigDigestPrefixStarknet, nil
 }
