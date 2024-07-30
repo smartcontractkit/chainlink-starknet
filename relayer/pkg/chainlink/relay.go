@@ -9,6 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
 	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
@@ -23,7 +24,7 @@ type relayer struct {
 	lggr logger.Logger
 }
 
-func NewRelayer(lggr logger.Logger, chain starkchain.Chain) *relayer {
+func NewRelayer(lggr logger.Logger, chain starkchain.Chain, capRegistry core.CapabilitiesRegistry) *relayer {
 	return &relayer{
 		chain:  chain,
 		stopCh: make(chan struct{}),
@@ -52,6 +53,10 @@ func (r *relayer) Healthy() error { return nil }
 
 func (r *relayer) HealthReport() map[string]error {
 	return map[string]error{r.Name(): r.Healthy()}
+}
+
+func (r *relayer) NewChainWriter(_ context.Context, _ []byte) (relaytypes.ChainWriter, error) {
+	return nil, errors.New("chain writer is not supported for starknet")
 }
 
 func (r *relayer) NewContractReader(_ []byte) (relaytypes.ContractReader, error) {
@@ -125,4 +130,12 @@ func (r *relayer) NewPluginProvider(rargs relaytypes.RelayArgs, pargs relaytypes
 
 func (r *relayer) NewOCR3CapabilityProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.OCR3CapabilityProvider, error) {
 	return nil, errors.New("ocr3 capability provider is not supported for starknet")
+}
+
+func (r *relayer) NewCCIPCommitProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.CCIPCommitProvider, error) {
+	return nil, errors.New("ccip.commit is not supported for starknet")
+}
+
+func (r *relayer) NewCCIPExecProvider(rargs relaytypes.RelayArgs, pargs relaytypes.PluginArgs) (relaytypes.CCIPExecProvider, error) {
+	return nil, errors.New("ccip.exec is not supported for starknet")
 }

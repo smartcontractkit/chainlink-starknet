@@ -179,8 +179,5 @@ func (s *envelopeSource) fetchLinkBalance(ctx context.Context, linkTokenAddress,
 		return nil, fmt.Errorf("insufficient data from balance_of '%v': %w", results, err)
 	}
 	linkBalance := results[0].BigInt(big.NewInt(0))
-	if linkBalance.Cmp(zeroBigInt) == 0 {
-		return nil, fmt.Errorf("contract's LINK balance should not be zero")
-	}
 	return linkBalance, nil
 }

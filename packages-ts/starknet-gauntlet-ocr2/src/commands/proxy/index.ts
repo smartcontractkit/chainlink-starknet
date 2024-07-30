@@ -6,6 +6,7 @@ import ProposeAggregator from './proposeAggregator'
 import ConfirmAggregator from './confirmAggregator'
 import TransferOwnership from './transferOwnership'
 import AcceptOwnership from './acceptOwnership'
+import DisableAccessCheck from './disableAccessCheck'
 
 export const executeCommands = [
   Deploy,
@@ -15,5 +16,6 @@ export const executeCommands = [
   ConfirmAggregator,
   TransferOwnership,
   AcceptOwnership,
+  DisableAccessCheck,
 ]
 export const inspectionCommands = [Inspect]

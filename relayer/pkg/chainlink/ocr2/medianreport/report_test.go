@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/starknet.go/curve"
+	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -53,6 +55,35 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 	assert.ErrorContains(t, err, "starknet does not support negative values: value = (10), fee = (10), gas = (-10)")
 }
 
+func TestBuildReportNoObserversOverflow(t *testing.T) {
+	c := ReportCodec{}
+	oo := []median.ParsedAttributedObservation{}
+	fmt.Println("hello")
+	v := big.NewInt(0)
+	v.SetString("1000000000000000000", 10)
+
+	// test largest possible encoded observers byte array
+	for i := 30; i >= 0; i-- {
+		oo = append(oo, median.ParsedAttributedObservation{
+			Timestamp:        uint32(time.Now().Unix()),
+			Value:            big.NewInt(1234567890),
+			GasPriceSubunits: big.NewInt(2),
+			JuelsPerFeeCoin:  v,
+			Observer:         commontypes.OracleID(i),
+		})
+	}
+
+	report, err := c.BuildReport(oo)
+	assert.Nil(t, err)
+
+	index := timestampSizeBytes
+	observersBytes := []byte(report[index : index+observersSizeBytes])
+	observersBig := starknetutils.BytesToBig(observersBytes)
+
+	// encoded observers felt is less than max felt
+	assert.Equal(t, -1, observersBig.Cmp(curve.Curve.P), "observers should be less than max felt")
+}
+
 func TestBuildReport(t *testing.T) {
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
@@ -63,6 +94,8 @@ func TestBuildReport(t *testing.T) {
 	v := big.NewInt(0)
 	v.SetString("1000000000000000000", 10)
 
+	// 0x01 pad the first byte
+	observers[0] = uint8(1)
 	for i := 0; i < n; i++ {
 		oo = append(oo, median.ParsedAttributedObservation{
 			Timestamp:        uint32(time.Now().Unix()),
@@ -73,7 +106,8 @@ func TestBuildReport(t *testing.T) {
 		})
 
 		// create expected outputs
-		observers[i] = uint8(i)
+		// remember to add 1 byte offset to avoid felt overflow
+		observers[i+1] = uint8(i)
 	}
 
 	report, err := c.BuildReport(oo)

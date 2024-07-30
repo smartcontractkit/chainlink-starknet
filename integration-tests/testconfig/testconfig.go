@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/barkimedes/go-deepcopy"
 	"github.com/google/uuid"
@@ -16,12 +18,18 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
+
+	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
+
 	ctf_config "github.com/smartcontractkit/chainlink-testing-framework/config"
 	k8s_config "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/logging"
 	"github.com/smartcontractkit/chainlink-testing-framework/utils/osutil"
+	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
 
 	ocr2_config "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig/ocr2"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 )
 
 type TestConfig struct {
@@ -32,6 +40,9 @@ type TestConfig struct {
 	Common                *Common                          `toml:"Common"`
 	OCR2                  *ocr2_config.Config              `toml:"OCR2"`
 	ConfigurationName     string                           `toml:"-"`
+
+	// getter funcs for passing parameters
+	GetChainID, GetFeederURL, GetRPCL2Internal, GetRPCL2InternalAPIKey func() string
 }
 
 func (c *TestConfig) GetLoggingConfig() *ctf_config.LoggingConfig {
@@ -94,6 +105,60 @@ func (c TestConfig) GetChainlinkImageConfig() *ctf_config.ChainlinkImageConfig {
 
 func (c TestConfig) GetCommonConfig() *Common {
 	return c.Common
+}
+
+func (c *TestConfig) GetNodeConfig() *ctf_config.NodeConfig {
+	cfgTOML, err := c.GetNodeConfigTOML()
+	if err != nil {
+		log.Fatalf("failed to parse TOML config: %s", err)
+		return nil
+	}
+
+	return &ctf_config.NodeConfig{
+		BaseConfigTOML: cfgTOML,
+	}
+}
+
+func (c TestConfig) GetNodeConfigTOML() (string, error) {
+	var chainID, feederURL, RPCL2Internal, RPCL2InternalAPIKey string
+	if c.GetChainID != nil {
+		chainID = c.GetChainID()
+	}
+	if c.GetFeederURL != nil {
+		feederURL = c.GetFeederURL()
+	}
+	if c.GetRPCL2Internal != nil {
+		RPCL2Internal = c.GetRPCL2Internal()
+	}
+	if c.GetRPCL2InternalAPIKey != nil {
+		RPCL2InternalAPIKey = c.GetRPCL2InternalAPIKey()
+	}
+
+	starkConfig := config.TOMLConfig{
+		Enabled:   ptr.Ptr(true),
+		ChainID:   ptr.Ptr(chainID),
+		FeederURL: common_cfg.MustParseURL(feederURL),
+		Nodes: []*config.Node{
+			{
+				Name:   ptr.Ptr("primary"),
+				URL:    common_cfg.MustParseURL(RPCL2Internal),
+				APIKey: ptr.Ptr(RPCL2InternalAPIKey),
+			},
+		},
+	}
+	baseConfig := node.NewBaseConfig()
+	baseConfig.Starknet = config.TOMLConfigs{
+		&starkConfig,
+	}
+	baseConfig.OCR2.Enabled = ptr.Ptr(true)
+	baseConfig.P2P.V2.Enabled = ptr.Ptr(true)
+	fiveSecondDuration := common_cfg.MustNewDuration(5 * time.Second)
+
+	baseConfig.P2P.V2.DeltaDial = fiveSecondDuration
+	baseConfig.P2P.V2.DeltaReconcile = fiveSecondDuration
+	baseConfig.P2P.V2.ListenAddresses = &[]string{"0.0.0.0:6690"}
+
+	return baseConfig.TOMLString()
 }
 
 func (c TestConfig) GetChainlinkUpgradeImageConfig() *ctf_config.ChainlinkImageConfig {
@@ -208,7 +273,7 @@ func GetConfig(configurationName string, product Product) (TestConfig, error) {
 	var handleSpecialOverrides = func(logger zerolog.Logger, filename, configurationName string, target *TestConfig, content []byte, product Product) error {
 		switch product {
 		default:
-			err := ctf_config.BytesToAnyTomlStruct(logger, filename, configurationName, &testConfig, content)
+			err := ctf_config.BytesToAnyTomlStruct(logger, filename, configurationName, target, content)
 			if err != nil {
 				return fmt.Errorf("error reading file %s: %w", filename, err)
 			}
@@ -231,7 +296,7 @@ func GetConfig(configurationName string, product Product) (TestConfig, error) {
 				return TestConfig{}, fmt.Errorf("error reading embedded config: %w", err)
 			}
 
-			err = handleSpecialOverrides(logger, fileName, configurationName, &testConfig, file, product)
+			err = handleSpecialOverrides(logger, fileName, "", &testConfig, file, product) // use empty configurationName to read default config
 			if err != nil {
 				return TestConfig{}, fmt.Errorf("error unmarshalling embedded config: %w", err)
 			}
@@ -256,7 +321,7 @@ func GetConfig(configurationName string, product Product) (TestConfig, error) {
 			return TestConfig{}, fmt.Errorf("error reading file %s: %w", filePath, err)
 		}
 
-		err = handleSpecialOverrides(logger, fileName, configurationName, &testConfig, content, product)
+		err = handleSpecialOverrides(logger, fileName, "", &testConfig, content, product) // use empty configurationName to read default config
 		if err != nil {
 			return TestConfig{}, fmt.Errorf("error reading file %s: %w", filePath, err)
 		}
@@ -271,7 +336,7 @@ func GetConfig(configurationName string, product Product) (TestConfig, error) {
 			return TestConfig{}, err
 		}
 
-		err = handleSpecialOverrides(logger, Base64OverrideEnvVarName, configurationName, &testConfig, decoded, product)
+		err = handleSpecialOverrides(logger, Base64OverrideEnvVarName, "", &testConfig, decoded, product) // use empty configurationName to read default config
 		if err != nil {
 			return TestConfig{}, fmt.Errorf("error unmarshaling base64 config: %w", err)
 		}

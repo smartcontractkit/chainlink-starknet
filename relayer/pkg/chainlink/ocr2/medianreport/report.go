@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/NethermindEth/juno/core/felt"
+	"github.com/NethermindEth/starknet.go/curve"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
@@ -74,11 +75,22 @@ func (c ReportCodec) BuildReport(oo []median.ParsedAttributedObservation) (types
 
 	var observers = make([]byte, starknet.FeltLength)
 	var observations []*felt.Felt
+
+	observers[0] = uint8(1)
 	for i, o := range oo {
-		observers[i] = byte(o.Observer)
+		// encoding scheme is offset by 0x01-padded to avoid felt overflow
+		// [0x01, <1_ID>, <2_ID>, ..., <N_ID>, 0x0, 0x0, ..., 0x0]
+		// note: this does not alter Starknet's MAX_ORACLES (31)
+		// where N is the length of the observations array
+		observers[i+1] = byte(o.Observer)
 
 		f := starknetutils.BigIntToFelt(o.Value)
 		observations = append(observations, f)
+	}
+
+	observersBig := starknetutils.BytesToBig(observers)
+	if observersBig.Cmp(curve.Curve.P) != -1 {
+		return nil, fmt.Errorf("invalid observers value: %v is larger than size of finite field", observersBig)
 	}
 
 	var report []byte
