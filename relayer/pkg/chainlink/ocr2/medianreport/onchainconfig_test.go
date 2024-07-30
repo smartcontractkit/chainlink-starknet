@@ -7,6 +7,8 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
 func TestOnchainConfigCodec(t *testing.T) {
@@ -46,15 +48,16 @@ func TestOnchainConfigCodec(t *testing.T) {
 
 	for _, p := range params {
 		t.Run(p.name, func(t *testing.T) {
+			ctx := tests.Context(t)
 			cfg := median.OnchainConfig{
 				Min: p.val[0],
 				Max: p.val[1],
 			}
 
-			configBytes, err := codec.Encode(cfg)
+			configBytes, err := codec.Encode(ctx, cfg)
 			require.NoError(t, err)
 
-			newCfg, err := codec.Decode(configBytes)
+			newCfg, err := codec.Decode(ctx, configBytes)
 			if p.expectErr {
 				assert.Error(t, err)
 				return // exit func if error is verified
@@ -67,15 +70,17 @@ func TestOnchainConfigCodec(t *testing.T) {
 	}
 
 	t.Run("incorrect length", func(t *testing.T) {
+		ctx := tests.Context(t)
 		b := make([]byte, length-1)
-		_, err := codec.Decode(b)
+		_, err := codec.Decode(ctx, b)
 		assert.Error(t, err)
 	})
 
 	t.Run("incorrect version", func(t *testing.T) {
+		ctx := tests.Context(t)
 		b := make([]byte, length)
 		b[0] = 1
-		_, err := codec.Decode(b)
+		_, err := codec.Decode(ctx, b)
 		assert.Error(t, err)
 	})
 }

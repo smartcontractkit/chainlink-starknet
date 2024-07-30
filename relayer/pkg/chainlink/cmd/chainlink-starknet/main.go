@@ -75,9 +75,9 @@ func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs lo
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chain: %w", err)
 	}
-	ra := &loop.RelayerAdapter{Relayer: pkgstarknet.NewRelayer(c.Logger, chain, capRegistry), RelayerExt: chain}
+	r := pkgstarknet.NewRelayer(c.Logger, chain, capRegistry)
 
-	c.SubService(ra)
+	c.SubService(r)
 
-	return ra, nil
+	return r, nil
 }
