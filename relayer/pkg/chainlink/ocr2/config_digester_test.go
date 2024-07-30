@@ -4,9 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -37,23 +40,25 @@ var testConfig = types.ContractConfig{
 }
 
 func TestConfigDigester(t *testing.T) {
+	ctx := tests.Context(t)
 	d := ocr2.NewOffchainConfigDigester(
 		"SN_GOERLI", // DEFAULT_CHAIN_ID = StarknetChainId.TESTNET
 		"01dfac180005c5a5efc88d2c37f880320e1764b83dd3a35006690e1ed7da68d7",
 	)
 
-	digest, err := d.ConfigDigest(testConfig)
+	digest, err := d.ConfigDigest(ctx, testConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, "00047843e1622a4462e1209c9f8559ba43cbf43bf238da490f3b9c8e33f3419e", digest.Hex())
 }
 
 func TestConfigDigester_InvalidChainID(t *testing.T) {
+	ctx := tests.Context(t)
 	d := ocr2.NewOffchainConfigDigester(
 		strings.Repeat("a", 256), // chain ID is too long
 		"42c59a00fd21bdc27c7be3e9cc272a9b684037e4a37417c2d5a920081e6e87c",
 	)
 
-	_, err := d.ConfigDigest(testConfig)
+	_, err := d.ConfigDigest(ctx, testConfig)
 	assert.Error(t, err, "chainID")
 }
 
