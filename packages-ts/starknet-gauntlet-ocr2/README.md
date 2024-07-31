@@ -69,6 +69,8 @@ Run the following command substituting <OCR_CONTRACT_ADDRESS> with the OCR2 cont
 yarn gauntlet ocr2:set_config --network=<NETWORK> --address=<ADDRESS> --f=<NUMBER> --signers=[<ACCOUNTS>] --transmitters=[<ACCOUNTS>] --onchainConfig=<CONFIG> --offchainConfig=<CONFIG> --offchainConfigVersion=<NUMBER> <OCR_CONTRACT_ADDRESS>
 ```
 
+Note: You need to include both a secret and a random secret to deterministically run the set config (2 different secrets). They can be provided as environment variables or flags
+
 This Should set the config for this feed on contract address.
 
 
