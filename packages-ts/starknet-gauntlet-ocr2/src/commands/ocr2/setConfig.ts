@@ -8,6 +8,7 @@ import {
   bytesToFelts,
   BeforeExecute,
   getRDD,
+  tryToWriteLastConfigDigestToRDD,
 } from '@chainlink/starknet-gauntlet'
 import { time, diff } from '@chainlink/gauntlet-core/dist/utils'
 import { ocr2ContractLoader } from '../../lib/contracts'
@@ -80,7 +81,7 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
       offchainConfig,
       offchainConfigVersion: 2,
       secret: flags.secret || env.secret,
-      randomSecret: flags.randomSecret || undefined,
+      randomSecret: flags.randomSecret || env.randomSecret,
     }
   }
 
@@ -92,8 +93,22 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
     offchainConfig: flags.offchainConfig,
     offchainConfigVersion: parseInt(flags.offchainConfigVersion),
     secret: flags.secret || env.secret,
-    randomSecret: flags.randomSecret || undefined,
+    randomSecret: flags.randomSecret || env.randomSecret,
   }
+}
+
+export const validateSecretsNotEmpty = async (input) => {
+  if (input.randomSecret === undefined) {
+    throw new Error(
+      `A random secret must be provided (--randomSecret flag or RANDOM_SECRET environment variable)`,
+    )
+  }
+
+  if (input.secret === undefined) {
+    throw new Error(`A secret must be provided (--secret flag or SECRET environment variable)`)
+  }
+
+  return true
 }
 
 const makeContractInput = async (
@@ -122,6 +137,7 @@ const makeContractInput = async (
   const { offchainConfig } = await encoding.serializeOffchainConfig(
     input.offchainConfig,
     input.secret,
+    input.randomSecret,
   )
   const onchainConfig = [] // onchain config should be empty array for input (generate onchain)
   return [oracles, input.f, onchainConfig, 2, bytesToFelts(offchainConfig)]
@@ -188,21 +204,13 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
     // config digest string must be exactly 32 bytes
     const paddedHexLastConfigDigest = hexLastConfigDigest.padStart(64, '0')
     const configDigest = `0x${paddedHexLastConfigDigest}`
-    deps.logger.info(`lastConfigDigest to save in RDD: ${configDigest}`)
-    if (context.flags.rdd) {
-      const rdd = getRDD(context.flags.rdd)
-      const contractAddr = context.contract.address
-      // set updated lastConfigDigest
-      rdd[CONTRACT_TYPES.AGGREGATOR][contractAddr]['config']['lastConfigDigest'] = configDigest
-      fs.writeFileSync(context.flags.rdd, JSON.stringify(rdd, null, 2))
-      deps.logger.success(
-        `RDD file ${context.flags.rdd} has been updated! You must reformat RDD by running ./bin/degenerate and ./bin/generate in that exact order`,
-      )
-    } else {
-      deps.logger.warn(
-        `No RDD file was inputted, you must manually update lastConfigDigest in RDD yourself`,
-      )
-    }
+
+    await tryToWriteLastConfigDigestToRDD(
+      deps,
+      context.flags.rdd,
+      context.contract.address,
+      configDigest,
+    )
 
     return { successfulConfiguration: true }
   } catch (e) {
@@ -214,6 +222,7 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
 
 const commandConfig: ExecuteCommandConfig<SetConfigInput, ContractInput> = {
   ...SetConfig,
+  validations: [...SetConfig.validations, validateSecretsNotEmpty],
   makeUserInput: makeUserInput,
   makeContractInput: makeContractInput,
   loadContract: ocr2ContractLoader,
