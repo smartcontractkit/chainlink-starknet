@@ -185,7 +185,18 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt
 }
 
 func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (events []starknetrpc.EmittedEvent, err error) {
-	block := starknetrpc.WithBlockNumber(blockNum)
+	latestBlockHeight, err := c.r.LatestBlockHeight(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't fetch latest block height: %w", err)
+	}
+
+	var block starknetrpc.BlockID
+	// "blockNum" may be available on-chain, but unqueryable via the RPC because the block is pending
+	if blockNum > latestBlockHeight {
+		block = starknetrpc.WithBlockTag("pending")
+	} else {
+		block = starknetrpc.WithBlockNumber(blockNum)
+	}
 
 	eventKey := starknetutils.GetSelectorFromNameFelt(eventType)
 
