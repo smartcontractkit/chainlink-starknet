@@ -98,7 +98,6 @@ const makeUserInput = async (flags, args, env): Promise<SetConfigInput> => {
 }
 
 export const validateSecretsNotEmpty = async (input) => {
-
   if (input.secret === undefined) {
     throw new Error(`A secret must be provided (--secret flag or SECRET environment variable)`)
   }
