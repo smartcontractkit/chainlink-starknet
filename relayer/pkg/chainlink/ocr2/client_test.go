@@ -47,6 +47,8 @@ func TestOCR2Client(t *testing.T) {
 			require.NoError(t, json.Unmarshal(req, &call))
 
 			switch call.Method {
+			case "starknet_blockNumber":
+				out = []byte(`{"result":777}`)
 			case "starknet_chainId":
 				out = []byte(`{"result":"0x534e5f4d41494e"}`)
 			case "starknet_call":
