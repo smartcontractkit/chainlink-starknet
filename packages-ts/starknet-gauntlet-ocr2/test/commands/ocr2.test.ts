@@ -73,6 +73,7 @@ const validInput = {
   },
   offchainConfigVersion: 2,
   secret: 'awe accuse polygon tonic depart acuity onyx inform bound gilbert expire',
+  randomSecret: 'awe accuse polygon tonic depart acuity onyx inform bound gilbert expire',
 }
 
 const getNumCallsPerAddress = (txReceipt: InvokeTransactionReceiptResponse) => {
