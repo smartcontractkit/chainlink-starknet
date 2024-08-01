@@ -8,6 +8,7 @@ import {
   Input,
   IStarknetProvider,
   IStarknetWallet,
+  tryToWriteLastConfigDigestToRDD,
 } from '@chainlink/starknet-gauntlet'
 import { TransactionResponse } from '@chainlink/starknet-gauntlet/dist/transaction'
 import {
@@ -242,11 +243,40 @@ export const wrapCommand = <UI, CI>(
       const messages = {
         [Action.EXECUTE]: `The multisig proposal reached the threshold and can be executed. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
         [Action.APPROVE]: `The multisig proposal needs ${approvalsLeft} more approvals. Run the same command with the flag --multisigProposal=${state.proposal.id}`,
-        [Action.NONE]: `The multisig proposal has been executed. No more actions needed`,
+        [Action.NONE]: `The multisig proposal has been executed. No more actions needed on-chain`,
       }
       deps.logger.line()
       deps.logger.info(`${messages[state.proposal.nextAction]}`)
       deps.logger.line()
+
+      if (state.proposal.nextAction === Action.NONE) {
+        // check if the proposal has the config set event
+
+        const txHash = result.responses[0].tx.hash
+        const txInfo = await this.executionContext.provider.provider.getTransactionReceipt(txHash)
+
+        if (txInfo.isSuccess()) {
+          const contractEvents = this.command.executionContext.contract.parseEvents(txInfo)
+          const event = contractEvents[contractEvents.length - 1]['ConfigSet']
+
+          // this was a set config multisig command
+          if (event) {
+            // write lastConfigDigest back to RDD
+            const hexLastConfigDigest = `${(event.latest_config_digest as bigint).toString(16)}`
+            // config digest string must be exactly 32 bytes
+            const paddedHexLastConfigDigest = hexLastConfigDigest.padStart(64, '0')
+            const configDigest = `0x${paddedHexLastConfigDigest}`
+
+            await tryToWriteLastConfigDigestToRDD(
+              deps,
+              this.executionContext.flags.rdd,
+              this.contractAddress,
+              configDigest,
+            )
+          }
+        }
+      }
+
       return { proposalId }
     }
 
