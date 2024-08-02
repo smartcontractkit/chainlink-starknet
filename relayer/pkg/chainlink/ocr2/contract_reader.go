@@ -116,8 +116,8 @@ func (c *contractReader) LatestRoundRequested(
 	}
 
 	configDigest = transmissionDetails.Digest
-	epoch = transmissionDetails.Epoch
-	round = transmissionDetails.Round
+	epoch = 0
+	round = 0
 
 	return
 }
