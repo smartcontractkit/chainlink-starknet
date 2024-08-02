@@ -92,7 +92,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 		Calldata:           ops.Calldata,
 	}
 
-	res, err := c.Call(ctx, tx, starknetrpc.WithBlockTag("latest"))
+	res, err := c.Call(ctx, tx, starknetrpc.WithBlockTag("pending"))
 	if err != nil {
 		return nil, fmt.Errorf("error in client.CallContract: %w", err)
 	}
