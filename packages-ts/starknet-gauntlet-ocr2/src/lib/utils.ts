@@ -1,8 +1,4 @@
-import {
-  ExecuteCommandConfig,
-  makeExecuteCommand,
-  isValidAddress,
-} from '@chainlink/starknet-gauntlet'
+import { isValidAddress } from '@chainlink/starknet-gauntlet'
 
 export const validateClassHash = async (input) => {
   if (isValidAddress(input.classHash) || input.classHash === undefined) {
