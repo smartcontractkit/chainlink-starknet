@@ -101,7 +101,7 @@ func (c *contractReader) LatestTransmissionDetails(
 	return
 }
 
-// round will never be requested on Starknet
+// round will never be requested on Starknet so we return 0 values
 func (c *contractReader) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,

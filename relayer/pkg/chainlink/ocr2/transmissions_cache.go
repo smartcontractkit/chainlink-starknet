@@ -121,7 +121,6 @@ func (c *transmissionsCache) LatestTransmissionDetails(
 	return
 }
 
-// round will never be requested on Starknet
 func (c *transmissionsCache) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,
@@ -131,10 +130,7 @@ func (c *transmissionsCache) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	configDigest = types.ConfigDigest{}
-	epoch = 0
-	round = 0
-	return
+	return c.reader.LatestRoundRequested(ctx, lookback)
 }
 
 func (c *transmissionsCache) assertTransmissionsNotStale() error {
