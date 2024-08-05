@@ -101,6 +101,7 @@ func (c *contractReader) LatestTransmissionDetails(
 	return
 }
 
+// round will never be requested on Starknet
 func (c *contractReader) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,

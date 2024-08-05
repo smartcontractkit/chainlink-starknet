@@ -121,6 +121,7 @@ func (c *transmissionsCache) LatestTransmissionDetails(
 	return
 }
 
+// round will never be requested on Starknet
 func (c *transmissionsCache) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,
@@ -133,9 +134,8 @@ func (c *transmissionsCache) LatestRoundRequested(
 	c.tdLock.RLock()
 	defer c.tdLock.RUnlock()
 	configDigest = c.transmissionDetails.Digest
-	epoch = c.transmissionDetails.Epoch
-	round = c.transmissionDetails.Round
-	err = c.assertTransmissionsNotStale()
+	epoch = 0
+	round = 0
 	return
 }
 
