@@ -131,9 +131,7 @@ func (c *transmissionsCache) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	c.tdLock.RLock()
-	defer c.tdLock.RUnlock()
-	configDigest = c.transmissionDetails.Digest
+	configDigest = types.ConfigDigest{}
 	epoch = 0
 	round = 0
 	return
