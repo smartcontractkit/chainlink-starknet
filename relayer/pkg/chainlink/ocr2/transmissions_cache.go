@@ -130,13 +130,7 @@ func (c *transmissionsCache) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	c.tdLock.RLock()
-	defer c.tdLock.RUnlock()
-	configDigest = c.transmissionDetails.Digest
-	epoch = c.transmissionDetails.Epoch
-	round = c.transmissionDetails.Round
-	err = c.assertTransmissionsNotStale()
-	return
+	return c.reader.LatestRoundRequested(ctx, lookback)
 }
 
 func (c *transmissionsCache) assertTransmissionsNotStale() error {
