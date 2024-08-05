@@ -101,6 +101,7 @@ func (c *contractReader) LatestTransmissionDetails(
 	return
 }
 
+// round will never be requested on Starknet so we return 0 values
 func (c *contractReader) LatestRoundRequested(
 	ctx context.Context,
 	lookback time.Duration,
@@ -110,15 +111,9 @@ func (c *contractReader) LatestRoundRequested(
 	round uint8,
 	err error,
 ) {
-	transmissionDetails, err := c.reader.LatestTransmissionDetails(ctx, c.address)
-	if err != nil {
-		err = fmt.Errorf("couldn't get transmission details: %w", err)
-	}
-
-	configDigest = transmissionDetails.Digest
+	configDigest = types.ConfigDigest{}
 	epoch = 0
 	round = 0
-
 	return
 }
 
