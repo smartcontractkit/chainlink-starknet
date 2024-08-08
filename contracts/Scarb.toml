@@ -14,6 +14,9 @@ sierra = "cairo-compile . -r"
 [dependencies]
 starknet = ">=2.6.3"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.10.0" }
+alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "bcdca70afdf59c9976148e95cebad5cf63d75a7f" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "bcdca70afdf59c9976148e95cebad5cf63d75a7f" }
+
 
 [lib]
 
