@@ -55,12 +55,14 @@ struct RootMetadata {
 }
 
 // todo: maybe use copy
+// todo: figure out how this works off-chain with MCMS since we have a new selector field here
 #[derive(Drop, Serde, starknet::Store)]
 struct Op {
     chain_id: u256,
     multisig: ContractAddress,
     nonce: u64,
     to: ContractAddress,
+    selector: felt252,
     data: ByteArray
 }
 
@@ -128,7 +130,7 @@ mod ManyChainMultiSig {
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
         to_u256, verify_merkle_proof
     };
-    use starknet::{EthAddress, EthAddressZeroable, EthAddressIntoFelt252};
+    use starknet::{EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress};
     use starknet::eth_signature::is_eth_signature_valid;
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
@@ -137,7 +139,7 @@ mod ManyChainMultiSig {
     const NUM_GROUPS: u8 = 32;
     const MAX_NUM_SIGNERS: u8 = 200;
     // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP")
-    const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPERATOR_OP: u256 =
+    const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
         0x08d275622006c4ca82d03f498e90163cafd53c663a48470c3b52ac8bfbd9f52c;
     // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA")
     const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
@@ -166,10 +168,20 @@ mod ManyChainMultiSig {
         metadata: RootMetadata,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct OpExecuted {
+        #[key]
+        nonce: u64,
+        to: ContractAddress,
+        data: ByteArray
+    // no value because value is sent through ERC20 tokens, even the native STRK token
+    }
+
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        NewRoot: NewRoot
+        NewRoot: NewRoot,
+        OpExecuted: OpExecuted,
     }
 
 
@@ -299,13 +311,57 @@ mod ManyChainMultiSig {
                 'post-operation count reached'
             );
 
-            assert(starknet::info::get_tx_info().unbox().chain_id.into() == op.chain_id, 'wrong chain id');
-            
             assert(
-                starknet::info::get_contract_address() == op.multisig,
-                'wrong multisig address'
+                starknet::info::get_tx_info().unbox().chain_id.into() == op.chain_id,
+                'wrong chain id'
             );
+
+            assert(starknet::info::get_contract_address() == op.multisig, 'wrong multisig address');
+
+            assert(
+                current_expiring_root_and_op_count
+                    .valid_until
+                    .into() >= starknet::info::get_block_timestamp(),
+                'root has expired'
+            );
+
+            assert(op.nonce == current_expiring_root_and_op_count.op_count, 'wrong nonce');
+
+            // verify op exists in merkle tree
+            let encoded_leaf: Bytes = BytesTrait::new_empty()
+                .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP)
+                .encode(op.chain_id)
+                .encode(op.multisig)
+                .encode(op.nonce)
+                .encode(op.to)
+                .encode(op.selector) // todo: selector doesn't currently exist 
+                .encode(op.data.clone());
+
+            let hashed_leaf = encoded_leaf.keccak();
+
+            assert(
+                verify_merkle_proof(proof, current_expiring_root_and_op_count.root, hashed_leaf),
+                'proof verification failed'
+            );
+
+            let mut new_expiring_root_and_op_count = current_expiring_root_and_op_count;
+            new_expiring_root_and_op_count.op_count += 1;
+
+            self.s_expiring_root_and_op_count.write(new_expiring_root_and_op_count);
+            // todo: execute
+
+            self
+                .emit(
+                    Event::OpExecuted(
+                        OpExecuted { nonce: op.nonce, to: op.to, data: op.data.clone() }
+                    )
+                );
         }
+    }
+
+    #[generate_trait]
+    impl InternalFunctions of InternalFunctionsTrait {
+        fn _execute(target: ContractAddress, )
     }
 }
 
