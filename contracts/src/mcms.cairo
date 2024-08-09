@@ -298,6 +298,13 @@ mod ManyChainMultiSig {
                     .op_count,
                 'post-operation count reached'
             );
+
+            assert(starknet::info::get_tx_info().unbox().chain_id.into() == op.chain_id, 'wrong chain id');
+            
+            assert(
+                starknet::info::get_contract_address() == op.multisig,
+                'wrong multisig address'
+            );
         }
     }
 }
