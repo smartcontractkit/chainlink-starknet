@@ -43,13 +43,14 @@ jobs:
           workflow: relayer.yml
           workflow_conclusion: ""
           name_is_regexp: true
-          name: go-unit-tests-results
+          name: go-unit-tests-results-${{ matrix.test-type.id }}
           if_no_artifact_found: warn
      
       - name: Download Golangci Relayer report
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # v6
         with:
           workflow: golangci-lint.yml
+          path: ./relayer/
           workflow_conclusion: ""
           name_is_regexp: true
           name: golangci-lint-relayer-report
@@ -59,6 +60,7 @@ jobs:
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # v6
         with:
           workflow: golangci-lint.yml
+          path: ./ops/
           workflow_conclusion: ""
           name_is_regexp: true
           name: golangci-lint-ops-report
@@ -68,6 +70,7 @@ jobs:
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # v6
         with:
           workflow: golangci-lint.yml
+          path: ./integration-tests/
           workflow_conclusion: ""
           name_is_regexp: true
           name: golangci-lint-integration-tests-report
