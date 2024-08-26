@@ -23,15 +23,15 @@ trait IManyChainMultiSig<TContractState> {
         signatures: Array<Signature>
     );
     fn execute(ref self: TContractState, op: Op, proof: Span<u256>);
-// // todo: check length of group_quorums and group_parents
-// fn set_config(
-//     ref self: TContractState,
-//     signer_addresses: Span<EthAddress>,
-//     signer_groups: Span<u8>,
-//     group_quorums: Span<u8>,
-//     group_parents: Span<u8>,
-//     clear_root: bool
-// );
+    // // todo: check length of group_quorums and group_parents
+    fn set_config(
+        ref self: TContractState,
+        signer_addresses: Span<EthAddress>,
+        signer_groups: Span<u8>,
+        group_quorums: Span<u8>,
+        group_parents: Span<u8>,
+        clear_root: bool
+    );
 // fn get_config(self: @TContractState) -> Config;
 // fn get_op_count(self: @TContractState) -> u64;
 // fn get_root(self: @TContractState) -> (u256, u32);
@@ -56,14 +56,14 @@ struct RootMetadata {
 
 // todo: maybe use copy
 // todo: figure out how this works off-chain with MCMS since we have a new selector field here
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Copy, Drop, Serde)]
 struct Op {
     chain_id: u256,
     multisig: ContractAddress,
     nonce: u64,
     to: ContractAddress,
     selector: felt252,
-    data: ByteArray
+    data: Span<felt252>
 }
 
 // does not implement Storage trait because structs cannot support arrays or maps
@@ -124,13 +124,18 @@ fn hash_pair(a: u256, b: u256) -> u256 {
 
 #[starknet::contract]
 mod ManyChainMultiSig {
+    use core::starknet::SyscallResultTrait;
+    use core::array::SpanTrait;
     use core::dict::Felt252Dict;
     use core::traits::PanicDestruct;
     use super::{
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
         to_u256, verify_merkle_proof
     };
-    use starknet::{EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress};
+    use starknet::{
+        EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress,
+        call_contract_syscall
+    };
     use starknet::eth_signature::is_eth_signature_valid;
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
@@ -173,7 +178,8 @@ mod ManyChainMultiSig {
         #[key]
         nonce: u64,
         to: ContractAddress,
-        data: ByteArray
+        selector: felt252,
+        data: Span<felt252>
     // no value because value is sent through ERC20 tokens, even the native STRK token
     }
 
@@ -328,15 +334,19 @@ mod ManyChainMultiSig {
             assert(op.nonce == current_expiring_root_and_op_count.op_count, 'wrong nonce');
 
             // verify op exists in merkle tree
-            let encoded_leaf: Bytes = BytesTrait::new_empty()
+            let mut encoded_leaf: Bytes = BytesTrait::new_empty()
                 .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP)
                 .encode(op.chain_id)
                 .encode(op.multisig)
                 .encode(op.nonce)
                 .encode(op.to)
-                .encode(op.selector) // todo: selector doesn't currently exist 
-                .encode(op.data.clone());
-
+                .encode(op.selector);
+            // encode the data field by looping through
+            let mut i = 0;
+            while i < op.data.len() {
+                encoded_leaf = encoded_leaf.encode(*op.data.at(i));
+                i += 1;
+            };
             let hashed_leaf = encoded_leaf.keccak();
 
             assert(
@@ -349,19 +359,50 @@ mod ManyChainMultiSig {
 
             self.s_expiring_root_and_op_count.write(new_expiring_root_and_op_count);
             // todo: execute
+            self._execute(op.to, op.selector, op.data);
 
             self
                 .emit(
                     Event::OpExecuted(
-                        OpExecuted { nonce: op.nonce, to: op.to, data: op.data.clone() }
+                        OpExecuted {
+                            nonce: op.nonce, to: op.to, selector: op.selector, data: op.data
+                        }
                     )
                 );
+        }
+
+        // todo: make onlyOwner
+        fn set_config(
+            ref self: ContractState,
+            signer_addresses: Span<EthAddress>,
+            signer_groups: Span<u8>,
+            group_quorums: Span<u8>,
+            group_parents: Span<u8>,
+            clear_root: bool
+        ) {
+            assert(
+                signer_addresses.len() != 0 && signer_addresses.len() <= MAX_NUM_SIGNERS.into(),
+                'out of bound signers len'
+            );
+
+            assert(signer_addresses.len() == signer_groups.len(), 'signer groups len mismatch');
+
+            assert(
+                group_quorums.len() == NUM_GROUPS.into()
+                    && group_quorums.len() == group_parents.len(),
+                'group quorums/parents mismatch'
+            );
+        // let mut group_children_counts = 
         }
     }
 
     #[generate_trait]
     impl InternalFunctions of InternalFunctionsTrait {
-        fn _execute(target: ContractAddress, )
+        fn _execute(
+            ref self: ContractState, target: ContractAddress, selector: felt252, data: Span<felt252>
+        ) {
+            let _response = call_contract_syscall(target, selector, data).unwrap_syscall();
+        }
     }
 }
 
