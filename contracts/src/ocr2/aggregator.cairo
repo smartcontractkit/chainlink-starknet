@@ -196,6 +196,7 @@ mod Aggregator {
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
+    use starknet::storage::Map;
 
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -306,20 +307,20 @@ mod Aggregator {
         _latest_config_digest: felt252,
         // _oracles: Array<Oracle>, // NOTE: array can't be used in storage
         _oracles_len: usize,
-        _transmitters: LegacyMap<ContractAddress, Oracle>, // <pkey, Oracle>
-        _signers: LegacyMap<felt252, usize>, // <pkey, index>
-        _signers_list: LegacyMap<usize, felt252>,
-        _transmitters_list: LegacyMap<usize, ContractAddress>,
-        _reward_from_aggregator_round_id: LegacyMap<usize, u128>, // <index, round_id>
-        _transmissions: LegacyMap<u128, Transmission>,
+        _transmitters: Map<ContractAddress, Oracle>, // <pkey, Oracle>
+        _signers: Map<felt252, usize>, // <pkey, index>
+        _signers_list: Map<usize, felt252>,
+        _transmitters_list: Map<usize, ContractAddress>,
+        _reward_from_aggregator_round_id: Map<usize, u128>, // <index, round_id>
+        _transmissions: Map<u128, Transmission>,
         // link token
         _link_token: ContractAddress,
         // billing
         _billing_access_controller: ContractAddress,
         _billing: BillingConfig,
         // payee management
-        _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
-        _proposed_payees: LegacyMap<
+        _payees: Map<ContractAddress, ContractAddress>, // <transmitter, payment_address>
+        _proposed_payees: Map<
             ContractAddress, ContractAddress
         > // <transmitter, payment_address>
     }

@@ -14,6 +14,7 @@ trait IAccessController<TContractState> {
 mod AccessControlComponent {
     use starknet::ContractAddress;
     use starknet::class_hash::ClassHash;
+    use starknet::storage::Map;
     use zeroable::Zeroable;
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -23,7 +24,7 @@ mod AccessControlComponent {
     #[storage]
     struct Storage {
         _check_enabled: bool,
-        _access_list: LegacyMap<ContractAddress, bool>,
+        _access_list: Map<ContractAddress, bool>,
     }
 
     #[event]
