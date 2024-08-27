@@ -1,24 +1,30 @@
 # This is the default configuration so OCR2 tests can run without issues
 [ChainlinkImage]
-image="public.ecr.aws/chainlink/chainlink"
-version="2.9.0"
+image = "public.ecr.aws/chainlink/chainlink"
+version = "2.9.0"
 
 [Logging]
-test_log_collect=false
+test_log_collect = false
 
 [Logging.LogStream]
-log_targets=["file"]
-log_producer_timeout="10s"
-log_producer_retry_limit=10
+log_targets = ["file"]
+log_producer_timeout = "10s"
+log_producer_retry_limit = 10
 
 [Network]
-selected_networks=["SIMULATED"] # Not needed for Starknet but mandatory from CTF (do not change)
+selected_networks = [
+  "SIMULATED",
+] # Not needed for Starknet but mandatory from CTF (do not change)
 
 [Network.RpcHttpUrls]
-simulated = ["http://127.0.0.1"] # Not needed for Starknet but mandatory from CTF (do not change)
+simulated = [
+  "http://127.0.0.1",
+] # Not needed for Starknet but mandatory from CTF (do not change)
 
 [Network.RpcWsUrls]
-simulated = ["wss://127.0.0.1"] # Not needed for Starknet but mandatory from CTF (do not change)
+simulated = [
+  "wss://127.0.0.1",
+] # Not needed for Starknet but mandatory from CTF (do not change)
 
 [Common]
 internal_docker_repo = "public.ecr.aws/chainlink"
@@ -26,7 +32,7 @@ inside_k8 = false
 network = "localnet"
 user = "satoshi"
 stateful_db = false
-devnet_image = "shardlabs/starknet-devnet-rs:a147b4cd72f9ce9d1fa665d871231370db0f51c7"
+devnet_image = "shardlabs/starknet-devnet-rs:438da575b2a514c44d8a70ca6169f9dd7e585b2c"
 postgres_version = "15.7"
 
 [OCR2]
