@@ -90,6 +90,7 @@ mod Multisig {
     use starknet::storage_read_syscall;
     use starknet::storage_write_syscall;
     use starknet::class_hash::ClassHash;
+    use starknet::storage::Map;
 
     use chainlink::libraries::type_and_version::ITypeAndVersion;
     use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
@@ -154,14 +155,14 @@ mod Multisig {
     #[storage]
     struct Storage {
         _threshold: usize,
-        _signers: LegacyMap<usize, ContractAddress>,
-        _is_signer: LegacyMap<ContractAddress, bool>,
+        _signers: Map<usize, ContractAddress>,
+        _is_signer: Map<ContractAddress, bool>,
         _signers_len: usize,
         _tx_valid_since: u128,
         _next_nonce: u128,
-        _transactions: LegacyMap<u128, Transaction>,
-        _transaction_calldata: LegacyMap<(u128, usize), felt252>,
-        _is_confirmed: LegacyMap<(u128, ContractAddress), bool>,
+        _transactions: Map<u128, Transaction>,
+        _transaction_calldata: Map<(u128, usize), felt252>,
+        _is_confirmed: Map<(u128, ContractAddress), bool>,
     }
 
     #[constructor]
