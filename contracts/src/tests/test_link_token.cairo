@@ -98,7 +98,7 @@ fn test_permissioned_mint_from_nonminter() {
 }
 
 #[test]
-#[should_panic(expected: ('u256_sub Overflow',))]
+#[should_panic(expected: ('ERC20: insufficient balance',))]
 fn test_permissioned_burn_from_minter() {
     let zero = 0;
     let sender = setup();
