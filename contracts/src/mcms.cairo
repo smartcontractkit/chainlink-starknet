@@ -32,10 +32,10 @@ trait IManyChainMultiSig<TContractState> {
         group_parents: Span<u8>,
         clear_root: bool
     );
-// fn get_config(self: @TContractState) -> Config;
-// fn get_op_count(self: @TContractState) -> u64;
-// fn get_root(self: @TContractState) -> (u256, u32);
-// fn get_root_metadata(self: @TContractState) -> RootMetadata;
+    fn get_config(self: @TContractState) -> Config;
+    fn get_op_count(self: @TContractState) -> u64;
+    fn get_root(self: @TContractState) -> (u256, u32);
+    fn get_root_metadata(self: @TContractState) -> RootMetadata;
 }
 
 #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -124,6 +124,7 @@ fn hash_pair(a: u256, b: u256) -> u256 {
 
 #[starknet::contract]
 mod ManyChainMultiSig {
+    use core::array::ArrayTrait;
     use core::starknet::SyscallResultTrait;
     use core::array::SpanTrait;
     use core::dict::Felt252Dict;
@@ -142,6 +143,7 @@ mod ManyChainMultiSig {
     use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
 
     const NUM_GROUPS: u8 = 32;
+
     const MAX_NUM_SIGNERS: u8 = 200;
     // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP")
     const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
@@ -149,7 +151,6 @@ mod ManyChainMultiSig {
     // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA")
     const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
         0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
-    const S_CONFIG_GROUP_LEN: u8 = NUM_GROUPS;
 
     #[storage]
     struct Storage {
@@ -443,12 +444,11 @@ mod ManyChainMultiSig {
                 }
                 j += 1;
             };
-            // SDFSDF:Kj
+
             // remove any old signer addresses
             let mut i: u8 = 0;
             let signers_len = self._s_config_signers_len.read();
 
-            // create signers array (for event e)
             while i < signers_len {
                 let mut old_signer = self._s_config_signers.read(i);
                 let empty_signer = Signer {
@@ -469,6 +469,8 @@ mod ManyChainMultiSig {
                 i += 1;
             };
 
+            // create signers array (for event logs)
+            let mut signers = ArrayTrait::<Signer>::new();
             let mut prev_signer_address = EthAddressZeroable::zero();
             let mut i: u8 = 0;
             while i
@@ -486,6 +488,8 @@ mod ManyChainMultiSig {
 
                     self.s_signers.write(signer_address, signer);
                     self._s_config_signers.write(i.into(), signer);
+
+                    signers.append(signer);
 
                     prev_signer_address = signer_address;
                     i += 1;
@@ -509,15 +513,59 @@ mod ManyChainMultiSig {
                     );
             }
 
-            // self
-            //     .emit(
-            //         Event::ConfigSet(
-            //             ConfigSet { config: Config {
-            //                 signers: 
-            //             }, is_root_cleared: clear_root }
-            //         )
-            //     );
+            self
+                .emit(
+                    Event::ConfigSet(
+                        ConfigSet {
+                            config: Config {
+                                signers: signers.span(),
+                                group_quorums: group_quorums,
+                                group_parents: group_parents,
+                            },
+                            is_root_cleared: clear_root
+                        }
+                    )
+                );
+        }
 
+        fn get_config(self: @ContractState) -> Config {
+            let mut signers = ArrayTrait::<Signer>::new();
+
+            let mut i = 0;
+            let signers_len = self._s_config_signers_len.read();
+            while i < signers_len {
+                let signer = self._s_config_signers.read(i);
+                signers.append(signer);
+                i += 1
+            };
+
+            let mut group_quorums = ArrayTrait::<u8>::new();
+            let mut group_parents = ArrayTrait::<u8>::new();
+
+            let mut i = 0;
+            while i < NUM_GROUPS {
+                group_quorums.append(self._s_config_group_quorums.read(i));
+                group_parents.append(self._s_config_group_parents.read(i));
+            };
+
+            Config {
+                signers: signers.span(),
+                group_quorums: group_quorums.span(),
+                group_parents: group_parents.span()
+            }
+        }
+
+        fn get_op_count(self: @ContractState) -> u64 {
+            self.s_expiring_root_and_op_count.read().op_count
+        }
+
+        fn get_root(self: @ContractState) -> (u256, u32) {
+            let current = self.s_expiring_root_and_op_count.read();
+            (current.root, current.valid_until)
+        }
+
+        fn get_root_metadata(self: @ContractState) -> RootMetadata {
+            self.s_root_metadata.read()
         }
     }
 
