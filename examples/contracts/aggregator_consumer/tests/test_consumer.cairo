@@ -13,13 +13,23 @@ use starknet::ContractAddress;
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
-    return declare("MockAggregator").deploy(@calldata).unwrap();
+
+    let contract = declare("MockAggregator").unwrap();
+
+    let (contract_address, _) = contract.deploy(@calldata).unwrap();
+
+    contract_address
 }
 
 fn deploy_consumer(aggregator_address: ContractAddress) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(aggregator_address.into());
-    return declare("AggregatorConsumer").deploy(@calldata).unwrap();
+
+    let contract = declare("AggregatorConsumer").unwrap();
+
+    let (contract_address, _) = contract.deploy(@calldata).unwrap();
+
+    contract_address
 }
 
 #[test]
@@ -79,7 +89,9 @@ fn test_set_and_read_answer() {
     let consumer_dispatcher = IAggregatorConsumerDispatcher { contract_address: consumer_address };
 
     // Let's make sure the AggregatorConsumer was initialized correctly
-    assert(consumer_dispatcher.read_ocr_address() == mock_aggregator_address, 'Invalid OCR address');
+    assert(
+        consumer_dispatcher.read_ocr_address() == mock_aggregator_address, 'Invalid OCR address'
+    );
     assert(consumer_dispatcher.read_answer() == 0, 'Invalid initial answer');
 
     // No round data has been initialized, so reading the latest round should return no data

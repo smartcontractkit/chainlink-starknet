@@ -25,6 +25,8 @@ use chainlink::token::link_token::LinkToken;
 use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
+use snforge_std::{declare, ContractClassTrait};
+
 #[test]
 fn test_pow_2_0() {
     assert(pow(2, 0) == 0x1, 'expected 0x1');
