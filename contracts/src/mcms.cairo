@@ -149,9 +149,11 @@ mod ManyChainMultiSig {
     // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA")
     const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
         0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
+    const S_CONFIG_GROUP_LEN: u8 = NUM_GROUPS;
 
     #[storage]
     struct Storage {
+        // s_signers is used to easily validate the existence of the signer by its address.
         s_signers: LegacyMap<EthAddress, Signer>,
         // begin s_config (defined in storage bc Config struct cannot support maps) 
         _s_config_signers_len: u8,
@@ -179,8 +181,14 @@ mod ManyChainMultiSig {
         nonce: u64,
         to: ContractAddress,
         selector: felt252,
-        data: Span<felt252>
+        data: Span<felt252>,
     // no value because value is sent through ERC20 tokens, even the native STRK token
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct ConfigSet {
+        config: Config,
+        is_root_cleared: bool,
     }
 
     #[event]
@@ -188,6 +196,7 @@ mod ManyChainMultiSig {
     enum Event {
         NewRoot: NewRoot,
         OpExecuted: OpExecuted,
+        ConfigSet: ConfigSet,
     }
 
 
@@ -392,7 +401,123 @@ mod ManyChainMultiSig {
                     && group_quorums.len() == group_parents.len(),
                 'group quorums/parents mismatch'
             );
-        // let mut group_children_counts = 
+
+            let mut group_children_counts: Felt252Dict<u8> = Default::default();
+            let mut i = 0;
+            while i < signer_groups
+                .len() {
+                    let group = *signer_groups.at(i);
+                    assert(group < NUM_GROUPS, 'out of bounds group');
+                    // increment count for each group
+                    group_children_counts
+                        .insert(group.into(), group_children_counts.get(group.into()) + 1);
+                    i += 1;
+                };
+
+            let mut j = 0;
+            while j < NUM_GROUPS {
+                // iterate backwards: i is the group #
+                let i = NUM_GROUPS - 1 - j;
+                let group_parent = (*group_parents.at(i.into()));
+
+                assert(
+                    (i == 0 || group_parent < i) && (i != 0 || group_parent == 0),
+                    'group tree malformed'
+                );
+
+                let disabled = *group_quorums.at(i.into()) == 0;
+
+                if disabled {
+                    assert(group_children_counts.get(i.into()) == 0, 'signer in disabled group');
+                } else {
+                    assert(
+                        group_children_counts.get(i.into()) >= *group_quorums.at(i.into()),
+                        'quorum impossible'
+                    );
+
+                    group_children_counts
+                        .insert(
+                            group_parent.into(), group_children_counts.get(group_parent.into()) + 1
+                        );
+                // the above line clobbers group_children_counts[0] in last iteration, don't use it after the loop ends
+                }
+                j += 1;
+            };
+            // SDFSDF:Kj
+            // remove any old signer addresses
+            let mut i: u8 = 0;
+            let signers_len = self._s_config_signers_len.read();
+
+            // create signers array (for event e)
+            while i < signers_len {
+                let mut old_signer = self._s_config_signers.read(i);
+                let empty_signer = Signer {
+                    address: EthAddressZeroable::zero(), index: 0, group: 0
+                };
+                // reset s_signers
+                self.s_signers.write(old_signer.address, empty_signer);
+                // reset _s_config_signers 
+                self._s_config_signers.write(i.into(), empty_signer);
+            };
+            // reset _s_config_signers_len
+            self._s_config_signers_len.write(0);
+
+            let mut i: u8 = 0;
+            while i < NUM_GROUPS {
+                self._s_config_group_quorums.write(i, *group_quorums.at(i.into()));
+                self._s_config_group_parents.write(i, *group_parents.at(i.into()));
+                i += 1;
+            };
+
+            let mut prev_signer_address = EthAddressZeroable::zero();
+            let mut i: u8 = 0;
+            while i
+                .into() < signer_addresses
+                .len() {
+                    let signer_address = *signer_addresses.at(i.into());
+                    assert(
+                        to_u256(prev_signer_address) < to_u256(signer_address),
+                        'addresses not sorted'
+                    );
+
+                    let signer = Signer {
+                        address: signer_address, index: i, group: *signer_groups.at(i.into())
+                    };
+
+                    self.s_signers.write(signer_address, signer);
+                    self._s_config_signers.write(i.into(), signer);
+
+                    prev_signer_address = signer_address;
+                    i += 1;
+                };
+
+            if clear_root {
+                let op_count = self.s_expiring_root_and_op_count.read().op_count;
+                self
+                    .s_expiring_root_and_op_count
+                    .write(ExpiringRootAndOpCount { root: 0, valid_until: 0, op_count: op_count });
+                self
+                    .s_root_metadata
+                    .write(
+                        RootMetadata {
+                            chain_id: starknet::info::get_tx_info().unbox().chain_id.into(),
+                            multisig: starknet::info::get_contract_address(),
+                            pre_op_count: op_count,
+                            post_op_count: op_count,
+                            override_previous_root: true
+                        }
+                    );
+            }
+
+            // self
+            //     .emit(
+            //         Event::ConfigSet(
+            //             ConfigSet { config: Config {
+            //                 signers: 
+            //             }, is_root_cleared: clear_root }
+            //         )
+            //     );
+
         }
     }
 
