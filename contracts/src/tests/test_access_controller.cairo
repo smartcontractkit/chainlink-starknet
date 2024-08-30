@@ -31,7 +31,6 @@ fn STATE() -> AccessController::ContractState {
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
     start_cheat_caller_address_global(account);
-    // set_caller_address(account);
     account
 }
 
@@ -53,11 +52,6 @@ fn test_access_control() {
 
     let (accessControllerAddr, _) = declare("AccessController").unwrap().deploy(@calldata).unwrap();
 
-    // let (accessControllerAddr, _) = deploy_syscall(
-    //     AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
-
     should_implement_access_control(accessControllerAddr, owner);
 }
 
@@ -72,7 +66,6 @@ fn should_implement_access_control(contract_addr: ContractAddress, owner: Contra
     let acc2: ContractAddress = contract_address_const::<2222987765>();
 
     start_cheat_caller_address_global(owner);
-    // set_contract_address(owner); // required to call contract as owner
 
     // access check is enabled by default
     assert(!contract.has_access(acc2, array![]), 'should not have access');

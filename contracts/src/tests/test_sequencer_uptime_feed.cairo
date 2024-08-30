@@ -46,7 +46,6 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
     let account: ContractAddress = contract_address_const::<777>();
 
     start_cheat_caller_address_global(account);
-    // set_caller_address(account);
 
     // Deploy seqeuencer uptime feed
     let calldata = array![0, // initial status
@@ -55,10 +54,6 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
 
     let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed").unwrap().deploy(@calldata).unwrap();
 
-    // let (sequencerFeedAddr, _) = deploy_syscall(
-    //     SequencerUptimeFeed::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
     let sequencerUptimeFeed = ISequencerUptimeFeedDispatcher {
         contract_address: sequencerFeedAddr
     };
@@ -90,7 +85,6 @@ fn test_set_l1_sender_not_owner() {
 fn test_set_l1_sender() {
     let (owner, _, sequencerUptimeFeed) = setup();
     start_cheat_caller_address_global(owner);
-    // set_contract_address(owner);
     sequencerUptimeFeed.set_l1_sender(EthAddress { address: 789 });
     assert(sequencerUptimeFeed.l1_sender().address == 789, 'l1_sender should be set to 789');
 }
@@ -117,7 +111,6 @@ fn test_latest_answer_no_access() {
 fn test_aggregator_proxy_response() {
     let (owner, sequencerFeedAddr, _) = setup();
     start_cheat_caller_address_global(owner);
-    // set_contract_address(owner);
     let contract = IAccessControllerDispatcher { contract_address: sequencerFeedAddr };
     contract.add_access(owner);
 

@@ -24,7 +24,6 @@ use snforge_std::{
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
     start_cheat_caller_address_global(account);
-    // set_caller_address(account);
     account
 }
 
@@ -36,10 +35,6 @@ fn test_upgrade_and_call() {
 
     let (contractAddr, _) = declare("MockUpgradeable").unwrap().deploy(@calldata).unwrap();
 
-    // let (contractAddr, _) = deploy_syscall(
-    //     MockUpgradeable::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
     let mockUpgradeable = IMockUpgradeableDispatcher { contract_address: contractAddr };
     assert(mockUpgradeable.foo() == true, 'should call foo');
 

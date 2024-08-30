@@ -84,8 +84,6 @@ fn setup() -> (
     // set acc1 as default caller
     start_cheat_caller_address_global(acc1);
 
-    // set_caller_address(acc1);
-
     // deploy billing access controller
     let calldata = array![acc1.into(), // owner = acc1;
     ];
@@ -95,10 +93,6 @@ fn setup() -> (
         .deploy(@calldata)
         .unwrap();
 
-    // let (billingAccessControllerAddr, _) = deploy_syscall(
-    //     AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
     let billingAccessController = IAccessControllerDispatcher {
         contract_address: billingAccessControllerAddr
     };
@@ -110,10 +104,6 @@ fn setup() -> (
 
     let (linkTokenAddr, _) = declare("LinkToken").unwrap().deploy(@calldata).unwrap();
 
-    // let (linkTokenAddr, _) = deploy_syscall(
-    //     LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
     let linkToken = ILinkTokenDispatcher { contract_address: linkTokenAddr };
 
     // return accounts, billing access controller, link token
@@ -135,11 +125,6 @@ fn test_ownable() {
     ];
 
     let (aggregatorAddr, _) = declare("Aggregator").unwrap().deploy(@calldata).unwrap();
-
-    // let (aggregatorAddr, _) = deploy_syscall(
-    //     Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
 
     should_implement_ownable(aggregatorAddr, account);
 }
@@ -191,7 +176,6 @@ fn test_set_billing_access_controller_not_owner() {
 
     // set billing access controller should revert if caller is not owner
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     BillingImpl::set_billing_access_controller(ref state, billingAccessController.contract_address);
 }
 
@@ -219,7 +203,6 @@ fn test_set_billing_config_no_access() {
         gas_per_signature: 1,
     };
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     BillingImpl::set_billing(ref state, config);
 }
 
@@ -261,7 +244,6 @@ fn test_set_billing_config_as_acc_with_access() {
     let mut state = STATE();
     // grant acc2 access on access controller
     start_cheat_caller_address_global(owner);
-    // set_contract_address(owner);
     billingAccessController.add_access(acc2);
 
     Aggregator::constructor(
@@ -283,7 +265,6 @@ fn test_set_billing_config_as_acc_with_access() {
         gas_per_signature: 1,
     };
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     BillingImpl::set_billing(ref state, config);
 
     // check billing config
@@ -308,7 +289,6 @@ fn test_set_payees_caller_not_owner() {
     let payees = array![PayeeConfig { transmitter: acc2, payee: acc2, },];
     // set payee should revert if caller is not owner
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     PayeeManagementImpl::set_payees(ref state, payees);
 }
 
@@ -322,7 +302,6 @@ fn test_set_single_payee() {
 
     let payees = array![PayeeConfig { transmitter: acc2, payee: acc2, },];
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
 }
 
@@ -339,7 +318,6 @@ fn test_set_multiple_payees() {
         PayeeConfig { transmitter: owner, payee: owner, },
     ];
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
 }
 
@@ -356,7 +334,6 @@ fn test_transfer_payeeship_caller_not_payee() {
     let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
     PayeeManagementImpl::transfer_payeeship(ref state, transmitter, owner);
 }
@@ -374,10 +351,8 @@ fn test_transfer_payeeship_to_self() {
     let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     PayeeManagementImpl::transfer_payeeship(ref state, transmitter, acc2);
 }
 
@@ -394,10 +369,8 @@ fn test_accept_payeeship_caller_not_proposed_payee() {
     let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     PayeeManagementImpl::transfer_payeeship(ref state, transmitter, owner);
     PayeeManagementImpl::accept_payeeship(ref state, transmitter);
 }
@@ -414,13 +387,10 @@ fn test_transfer_and_accept_payeeship() {
     let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
     start_cheat_caller_address_global(acc2);
-    // set_caller_address(acc2);
     PayeeManagementImpl::transfer_payeeship(ref state, transmitter, owner);
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::accept_payeeship(ref state, transmitter);
 }
 // --- Payments and Withdrawals Tests ---
@@ -442,7 +412,6 @@ fn test_owed_payment_no_rounds() {
     let mut payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
 
     start_cheat_caller_address_global(owner);
-    // set_caller_address(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
 
     let owed = BillingImpl::owed_payment(@state, transmitter);

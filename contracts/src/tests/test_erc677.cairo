@@ -35,7 +35,6 @@ fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<1>();
     // Set account as default caller
     start_cheat_caller_address_global(account);
-    // set_caller_address(account);
     account
 }
 
@@ -44,10 +43,6 @@ fn setup_valid_receiver() -> (ContractAddress, MockValidReceiverDispatcher) {
 
     let (address, _) = declare("ValidReceiver").unwrap().deploy(@calldata).unwrap();
 
-    // let (address, _) = deploy_syscall(
-    //     ValidReceiver::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
     let contract = MockValidReceiverDispatcher { contract_address: address };
     (address, contract)
 }
@@ -58,10 +53,6 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
 
     let (address, _) = declare("InvalidReceiver").unwrap().deploy(@calldata).unwrap();
 
-    // let (address, _) = deploy_syscall(
-    //     InvalidReceiver::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
     let contract = MockInvalidReceiverDispatcher { contract_address: address };
     (address, contract)
 }

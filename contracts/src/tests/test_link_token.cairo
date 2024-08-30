@@ -33,7 +33,6 @@ fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<1>();
     // Set account as default caller
     start_cheat_caller_address_global(account);
-    // set_caller_address(account);
     account
 }
 
@@ -46,11 +45,6 @@ fn test_ownable() {
     calldata.append(account.into()); // owner
 
     let (linkAddr, _) = declare("LinkToken").unwrap().deploy(@calldata).unwrap();
-
-    // let (linkAddr, _) = deploy_syscall(
-    //     LinkToken::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
 
     should_implement_ownable(linkAddr, account);
 }

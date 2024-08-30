@@ -16,7 +16,6 @@ fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
     // Set account as default caller
     start_cheat_caller_address_global(account);
-    // set_caller_address(account);
     account
 }
 

@@ -25,14 +25,12 @@ fn should_implement_ownable(contract_addr: ContractAddress, owner: ContractAddre
 
     // transfer ownership - check owner unchanged and proposed owner set correctly
     start_cheat_caller_address_global(owner);
-    // set_contract_address(owner); // required to call contract as owner
     contract.transfer_ownership(acc2);
     assert(owner == contract.owner(), 'owner should remain unchanged');
     assert(acc2 == contract.pending_owner(), 'acc2 should be proposed owner');
 
     // accept ownership - check owner changed and proposed owner set to zero
     start_cheat_caller_address_global(acc2);
-    // set_contract_address(acc2); // required to call function as acc2
     contract.accept_ownership();
     assert(contract.owner() == acc2, 'failed to change ownership');
     assert(contract.pending_owner().is_zero(), 'proposed owner should be zero');
