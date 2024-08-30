@@ -4,6 +4,10 @@ use chainlink::ocr2::mocks::mock_aggregator::MockAggregator;
 use starknet::contract_address_const;
 use chainlink::ocr2::aggregator::Round;
 
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+};
+
 fn STATE() -> MockAggregator::ContractState {
     MockAggregator::contract_state_for_testing()
 }
@@ -11,7 +15,8 @@ fn STATE() -> MockAggregator::ContractState {
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
     // Set account as default caller
-    set_caller_address(account);
+    start_cheat_caller_address_global(account);
+    // set_caller_address(account);
     account
 }
 

@@ -1,7 +1,3 @@
-use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
-};
-
 use chainlink::emergency::sequencer_uptime_feed::ISequencerUptimeFeedDispatcherTrait;
 use chainlink::emergency::sequencer_uptime_feed::ISequencerUptimeFeedDispatcher;
 use chainlink::libraries::access_control::IAccessControllerDispatcherTrait;
@@ -15,6 +11,10 @@ use aggregator_consumer::ocr2::price_consumer::IAggregatorPriceConsumerDispatche
 use starknet::contract_address_const;
 use starknet::get_caller_address;
 use starknet::ContractAddress;
+
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+};
 
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();

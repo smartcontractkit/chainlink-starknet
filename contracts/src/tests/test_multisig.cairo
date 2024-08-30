@@ -17,23 +17,10 @@ use chainlink::multisig::Multisig;
 use chainlink::multisig::Multisig::{MultisigImpl, UpgradeableImpl};
 use chainlink::multisig::{IMultisigDispatcher};
 
-#[starknet::contract]
-mod MultisigTest {
-    use array::ArrayTrait;
-
-    #[storage]
-    struct Storage {}
-
-    #[abi(per_item)]
-    #[generate_trait]
-    impl HelperImpl of HelperTrait {
-        #[external(v0)]
-        fn increment(ref self: ContractState, val1: felt252, val2: felt252) -> Array<felt252> {
-            array![val1 + 1, val2 + 1]
-        }
-    }
-}
-
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, cheat_caller_address, CheatSpan
+};
 
 fn STATE() -> Multisig::ContractState {
     Multisig::contract_state_for_testing()
@@ -123,7 +110,8 @@ fn test_submit_transaction() {
     let signers = array![signer];
     Multisig::constructor(ref state, :signers, threshold: 1);
 
-    set_caller_address(signer);
+    start_cheat_caller_address_global(signer);
+    // set_caller_address(signer);
     let to = contract_address_const::<42>();
     let function_selector = 10;
     MultisigImpl::submit_transaction(
@@ -147,7 +135,8 @@ fn test_submit_transaction_not_signer() {
     let signers = array![signer];
     Multisig::constructor(ref state, :signers, threshold: 1);
 
-    set_caller_address(contract_address_const::<3>());
+    start_cheat_caller_address_global(contract_address_const::<3>());
+    // set_caller_address(contract_address_const::<3>());
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
@@ -164,7 +153,8 @@ fn test_confirm_transaction() {
     let signers = array![signer1, signer2];
     Multisig::constructor(ref state, :signers, threshold: 2);
 
-    set_caller_address(signer1);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
@@ -189,15 +179,16 @@ fn test_confirm_transaction_not_signer() {
     let not_signer = contract_address_const::<2>();
     let signers = array![signer];
     Multisig::constructor(ref state, :signers, threshold: 1);
-    set_caller_address(signer);
+    start_cheat_caller_address_global(signer);
+    // set_caller_address(signer);
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
         function_selector: 10,
         calldata: sample_calldata(),
     );
-
-    set_caller_address(not_signer);
+    start_cheat_caller_address_global(not_signer);
+    // set_caller_address(not_signer);
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
 }
 
@@ -208,7 +199,8 @@ fn test_revoke_confirmation() {
     let signer2 = contract_address_const::<2>();
     let signers = array![signer1, signer2];
     Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer1);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
@@ -237,7 +229,8 @@ fn test_revoke_confirmation_not_signer() {
     let not_signer = contract_address_const::<2>();
     let mut signers = array![signer];
     Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer);
+    start_cheat_caller_address_global(signer);
+    // set_caller_address(signer);
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
@@ -245,8 +238,8 @@ fn test_revoke_confirmation_not_signer() {
         calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
-
-    set_caller_address(not_signer);
+    start_cheat_caller_address_global(not_signer);
+    // set_caller_address(not_signer);
     MultisigImpl::revoke_confirmation(ref state, nonce: 0);
 }
 
@@ -257,8 +250,10 @@ fn test_execute_confirmation_below_threshold() {
     let signer1 = contract_address_const::<1>();
     let signer2 = contract_address_const::<2>();
     let signers = array![signer1, signer2];
+
     Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer1);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
@@ -274,7 +269,8 @@ fn test_execute_confirmation_below_threshold() {
 fn test_upgrade_not_multisig() {
     let mut state = STATE();
     let account = contract_address_const::<777>();
-    set_caller_address(account);
+    start_cheat_caller_address_global(account);
+    // set_caller_address(account);
 
     UpgradeableImpl::upgrade(ref state, class_hash_const::<1>())
 }
@@ -286,11 +282,18 @@ fn test_execute() {
     let signer2 = contract_address_const::<2>();
     let signers = array![signer1, signer2];
     Multisig::constructor(ref state, :signers, threshold: 2);
-    let (test_address, _) = deploy_syscall(
-        MultisigTest::TEST_CLASS_HASH.try_into().unwrap(), 0, ArrayTrait::new().span(), false
-    )
-        .unwrap();
-    set_caller_address(signer1);
+
+    let calldata = ArrayTrait::new();
+
+    let (test_address, _) = declare("MockMultisigTarget").unwrap().deploy(@calldata).unwrap();
+
+    // let (test_address, _) = deploy_syscall(
+    //     MultisigTest::TEST_CLASS_HASH.try_into().unwrap(), 0, ArrayTrait::new().span(), false
+    // )
+    //     .unwrap();
+
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
     let increment_calldata = array![42, 100];
     MultisigImpl::submit_transaction(
         ref state,
@@ -300,7 +303,8 @@ fn test_execute() {
         calldata: increment_calldata,
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(signer2);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
 
     let response = MultisigImpl::execute_transaction(ref state, nonce: 0);
@@ -318,7 +322,8 @@ fn test_execute_not_signer() {
     let signer2 = contract_address_const::<2>();
     let signers = array![signer1, signer2];
     Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer1);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
     MultisigImpl::submit_transaction(
         ref state,
         to: contract_address_const::<42>(),
@@ -326,96 +331,122 @@ fn test_execute_not_signer() {
         calldata: sample_calldata(),
     );
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(signer2);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
     MultisigImpl::confirm_transaction(ref state, nonce: 0);
 
-    set_caller_address(contract_address_const::<3>());
+    start_cheat_caller_address_global(contract_address_const::<3>());
+    // set_caller_address(contract_address_const::<3>());
     MultisigImpl::execute_transaction(ref state, nonce: 0);
 }
 
 #[test]
 #[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_signers() {
-    let mut state = STATE();
-    let contract_address = contract_address_const::<100>();
-    set_contract_address(contract_address);
     let signer1 = contract_address_const::<1>();
     let signer2 = contract_address_const::<2>();
     let signer3 = contract_address_const::<3>();
     let signers = array![signer1, signer2];
-    Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer1);
-    MultisigImpl::submit_transaction(
-        ref state,
-        to: contract_address_const::<42>(),
-        function_selector: 10,
-        calldata: sample_calldata(),
-    );
-    MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(signer2);
-    MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(contract_address);
-    let new_signers = array![signer2, signer3];
-    MultisigImpl::set_signers(ref state, new_signers);
+    let init_threshold: usize = 2;
 
-    set_caller_address(signer2);
-    MultisigImpl::execute_transaction(ref state, nonce: 0);
+    let mut deploy_calldata = ArrayTrait::new();
+    Serde::serialize(@signers, ref deploy_calldata);
+    Serde::serialize(@init_threshold, ref deploy_calldata);
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    let multisig = IMultisigDispatcher { contract_address: multisig_address };
+
+    // Multisig::constructor(ref state, :signers, threshold: 2);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
+    multisig
+        .submit_transaction(
+            to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(),
+        );
+    multisig.confirm_transaction(nonce: 0);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
+    multisig.confirm_transaction(nonce: 0);
+    start_cheat_caller_address_global(multisig_address);
+    // set_caller_address(contract_address);
+    let new_signers = array![signer2, signer3];
+    multisig.set_signers(new_signers);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
+    multisig.execute_transaction(nonce: 0);
 }
 
 #[test]
 #[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_signers_and_threshold() {
-    let mut state = STATE();
-    let contract_address = contract_address_const::<100>();
-    set_contract_address(contract_address);
+    // set_contract_address(contract_address);
     let signer1 = contract_address_const::<1>();
     let signer2 = contract_address_const::<2>();
     let signer3 = contract_address_const::<3>();
     let signers = array![signer1, signer2];
-    Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer1);
-    MultisigImpl::submit_transaction(
-        ref state,
-        to: contract_address_const::<42>(),
-        function_selector: 10,
-        calldata: sample_calldata(),
-    );
-    MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(signer2);
-    MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(contract_address);
-    let new_signers = array![signer2, signer3];
-    MultisigImpl::set_signers_and_threshold(ref state, new_signers, 1);
+    let init_threshold: usize = 2;
 
-    set_caller_address(signer2);
-    MultisigImpl::execute_transaction(ref state, nonce: 0);
+    let mut deploy_calldata = ArrayTrait::new();
+    Serde::serialize(@signers, ref deploy_calldata);
+    Serde::serialize(@init_threshold, ref deploy_calldata);
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    let multisig = IMultisigDispatcher { contract_address: multisig_address };
+
+    // Multisig::constructor(ref state, :signers, threshold: 2);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
+    multisig
+        .submit_transaction(
+            to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(),
+        );
+    multisig.confirm_transaction(nonce: 0);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
+    multisig.confirm_transaction(nonce: 0);
+    start_cheat_caller_address_global(multisig_address);
+    // set_caller_address(contract_address);
+    let new_signers = array![signer2, signer3];
+    multisig.set_signers_and_threshold(new_signers, 1);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
+    multisig.execute_transaction(nonce: 0);
 }
 
 #[test]
 #[should_panic(expected: ('transaction invalid',))]
 fn test_execute_after_set_threshold() {
-    let mut state = STATE();
-    let contract_address = contract_address_const::<100>();
-    set_contract_address(contract_address);
     let signer1 = contract_address_const::<1>();
     let signer2 = contract_address_const::<2>();
     let signers = array![signer1, signer2];
-    Multisig::constructor(ref state, :signers, threshold: 2);
-    set_caller_address(signer1);
-    MultisigImpl::submit_transaction(
-        ref state,
-        to: contract_address_const::<42>(),
-        function_selector: 10,
-        calldata: sample_calldata(),
-    );
-    MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(signer2);
-    MultisigImpl::confirm_transaction(ref state, nonce: 0);
-    set_caller_address(contract_address);
-    MultisigImpl::set_threshold(ref state, 1);
+    let init_threshold: usize = 2;
 
-    set_caller_address(signer1);
-    MultisigImpl::execute_transaction(ref state, nonce: 0);
+    let mut deploy_calldata = ArrayTrait::new();
+    Serde::serialize(@signers, ref deploy_calldata);
+    Serde::serialize(@init_threshold, ref deploy_calldata);
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    let multisig = IMultisigDispatcher { contract_address: multisig_address };
+
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
+    multisig
+        .submit_transaction(
+            to: contract_address_const::<42>(), function_selector: 10, calldata: sample_calldata(),
+        );
+    multisig.confirm_transaction(nonce: 0);
+    start_cheat_caller_address_global(signer2);
+    // set_caller_address(signer2);
+    multisig.confirm_transaction(nonce: 0);
+    start_cheat_caller_address_global(multisig_address);
+    // set_caller_address(contract_address);
+    multisig.set_threshold(1);
+    start_cheat_caller_address_global(signer1);
+    // set_caller_address(signer1);
+    multisig.execute_transaction(nonce: 0);
 }
 
 // test set_threshold (non-recursive)
@@ -431,14 +462,18 @@ fn test_set_threshold() {
     let mut deploy_calldata = ArrayTrait::new();
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
-    let (multisig_address, _) = deploy_syscall(
-        Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
-    )
-        .unwrap();
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    // let (multisig_address, _) = deploy_syscall(
+    //     Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
+    // )
+    //     .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
     assert(multisig.get_threshold() == init_threshold, 'invalid init threshold');
-    set_contract_address(multisig_address);
+    start_cheat_caller_address_global(multisig_address);
+    // set_contract_address(multisig_address);
     multisig.set_threshold(new_threshold);
     assert(multisig.get_threshold() == new_threshold, 'threshold was not updated');
 }
@@ -457,10 +492,13 @@ fn test_recursive_set_threshold() {
     let mut deploy_calldata = ArrayTrait::new();
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
-    let (multisig_address, _) = deploy_syscall(
-        Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
-    )
-        .unwrap();
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    // let (multisig_address, _) = deploy_syscall(
+    //     Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
+    // )
+    //     .unwrap();
 
     // Gets a dispatcher (so we can call methods on the deployed contract)
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
@@ -472,19 +510,26 @@ fn test_recursive_set_threshold() {
     // contract. 
     let mut set_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_threshold, ref set_threshold_calldata);
-    set_contract_address(s1);
+    start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
     multisig
         .submit_transaction(multisig_address, selector!("set_threshold"), set_threshold_calldata);
     // Signer 1 confirms the transaction
-    set_contract_address(s1);
+    start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
     multisig.confirm_transaction(0);
 
     // Signer 2 confirms the transaction
-    set_contract_address(s2);
+    start_cheat_caller_address_global(s2);
+    // set_contract_address(s2);
     multisig.confirm_transaction(0);
 
     // Once we have enough confirmations, we execute the transaction
-    set_contract_address(s1);
+    // cheat only once because we want the multisig to execute the recursive tx
+    cheat_caller_address(multisig_address, s1, CheatSpan::TargetCalls(1));
+    // start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
+
     multisig.execute_transaction(0);
 
     // Now we check that the threshold was actually updated
@@ -503,10 +548,13 @@ fn test_set_signers() {
     let mut deploy_calldata = ArrayTrait::new();
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@threshold, ref deploy_calldata);
-    let (multisig_address, _) = deploy_syscall(
-        Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
-    )
-        .unwrap();
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    // let (multisig_address, _) = deploy_syscall(
+    //     Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
+    // )
+    //     .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -516,7 +564,8 @@ fn test_set_signers() {
     assert(*returned_signers.at(1) == s2, 'should match signer 2');
     assert(multisig.get_threshold() == 2, 'wrong init threshold');
 
-    set_contract_address(multisig_address);
+    start_cheat_caller_address_global(multisig_address);
+    // set_contract_address(multisig_address);
     multisig.set_signers(new_signers);
 
     let updated_signers = multisig.get_signers();
@@ -539,10 +588,13 @@ fn test_recursive_set_signers() {
     let mut deploy_calldata = ArrayTrait::new();
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
-    let (multisig_address, _) = deploy_syscall(
-        Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
-    )
-        .unwrap();
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    // let (multisig_address, _) = deploy_syscall(
+    //     Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
+    // )
+    //     .unwrap();
 
     // Gets a dispatcher (so we can call methods on the deployed contract)
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
@@ -559,19 +611,23 @@ fn test_recursive_set_signers() {
     // contract. 
     let mut set_signers_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_calldata);
-    set_contract_address(s1);
+    start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
     multisig.submit_transaction(multisig_address, selector!("set_signers"), set_signers_calldata);
 
     // Signer 1 confirms the transaction
-    set_contract_address(s1);
+    start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
     multisig.confirm_transaction(0);
 
     // Signer 2 confirms the transaction
-    set_contract_address(s2);
+    start_cheat_caller_address_global(s2);
+    // set_contract_address(s2);
     multisig.confirm_transaction(0);
 
     // Once we have enough confirmations, we execute the transaction
-    set_contract_address(s1);
+    cheat_caller_address(multisig_address, s1, CheatSpan::TargetCalls(1));
+    // set_contract_address(s1);
     multisig.execute_transaction(0);
 
     // Now we check that the signers were actually updated
@@ -595,10 +651,13 @@ fn test_set_signers_and_threshold() {
     let mut deploy_calldata = ArrayTrait::new();
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
-    let (multisig_address, _) = deploy_syscall(
-        Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
-    )
-        .unwrap();
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    // let (multisig_address, _) = deploy_syscall(
+    //     Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
+    // )
+    //     .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -609,7 +668,8 @@ fn test_set_signers_and_threshold() {
     assert(*returned_signers.at(2) == s3, 'should match signer 3');
     assert(multisig.get_threshold() == init_threshold, 'wrong init threshold');
 
-    set_contract_address(multisig_address);
+    start_cheat_caller_address_global(multisig_address);
+    // set_contract_address(multisig_address);
     multisig.set_signers_and_threshold(new_signers, new_threshold);
 
     let updated_signers = multisig.get_signers();
@@ -635,10 +695,13 @@ fn test_recursive_set_signers_and_threshold() {
     let mut deploy_calldata = ArrayTrait::new();
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
-    let (multisig_address, _) = deploy_syscall(
-        Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
-    )
-        .unwrap();
+
+    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+
+    // let (multisig_address, _) = deploy_syscall(
+    //     Multisig::TEST_CLASS_HASH.try_into().unwrap(), 0, deploy_calldata.span(), false
+    // )
+    //     .unwrap();
 
     // Gets a dispatcher (so we can call methods on the deployed contract)
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
@@ -657,7 +720,8 @@ fn test_recursive_set_signers_and_threshold() {
     let mut set_signers_and_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_and_threshold_calldata);
     Serde::serialize(@new_threshold, ref set_signers_and_threshold_calldata);
-    set_contract_address(s1);
+    start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
     multisig
         .submit_transaction(
             multisig_address,
@@ -666,19 +730,23 @@ fn test_recursive_set_signers_and_threshold() {
         );
 
     // Signer 1 confirms the transaction
-    set_contract_address(s1);
+    start_cheat_caller_address_global(s1);
+    // set_contract_address(s1);
     multisig.confirm_transaction(0);
 
     // Signer 2 confirms the transaction
-    set_contract_address(s2);
+    start_cheat_caller_address_global(s2);
+    // set_contract_address(s2);
     multisig.confirm_transaction(0);
 
     // Signer 3 confirms the transaction
-    set_contract_address(s3);
+    start_cheat_caller_address_global(s3);
+    // set_contract_address(s3);
     multisig.confirm_transaction(0);
 
     // Once we have enough confirmations, we execute the transaction
-    set_contract_address(s1);
+    cheat_caller_address(multisig_address, s1, CheatSpan::TargetCalls(1));
+    // set_contract_address(s1);
     multisig.execute_transaction(0);
 
     // Now we check that the signers were actually updated
