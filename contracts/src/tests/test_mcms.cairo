@@ -378,46 +378,8 @@ fn test_set_config_signer_in_disabled_group() {
     // 9. test if there is a signer in a group where group_quorum[i] == 0 => revert
     let (_, _, mcms_safe) = setup();
 
-    let mut signer_addresses = ArrayTrait::new();
-    let mut i = 0;
-    while i < 32_usize {
-        signer_addresses.append(EthAddressZeroable::zero());
-        i += 1;
-    };
-    let signer_groups = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
+    let mut signer_addresses = array![EthAddressZeroable::zero()];
+    let signer_groups = array![0];
     let mut group_quorums = array![
         0,
         0,
@@ -505,5 +467,4 @@ fn test_set_config_signer_in_disabled_group() {
     }
 }
 // 10. test if there are not enough signers to meet a quorum => revert
-
 
