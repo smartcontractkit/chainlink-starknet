@@ -41,5 +41,8 @@ jobs:
       - name: Install Cairo
         uses: ./.github/actions/install-cairo
 
+      - name: Install Starknet Foundry
+        uses: ./.github/actions/install-starknet-foundry
+
       - name: Test
         run: nix develop -c make test-cairo-contracts

@@ -4,7 +4,7 @@ description: A composite action that installs the snforge and sncast binaries
 inputs:
   starknet_foundry_version:
     description: Starknet Foundry release version
-    default: "0.21.0"
+    default: "0.27.0"
     required: false
 
 runs:
@@ -16,4 +16,3 @@ runs:
       run: |
         curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh 
         snfoundryup -v ${{ inputs.starknet_foundry_version }}
-

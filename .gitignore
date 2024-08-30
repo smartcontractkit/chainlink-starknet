@@ -1,3 +1,4 @@
+.snfoundry_cache
 .direnv
 artifacts/
 vendor/
