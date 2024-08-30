@@ -10,10 +10,65 @@ dependencies = [
 ]
 
 [[package]]
+name = "alexandria_bytes"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70afdf59c9976148e95cebad5cf63d75a7f#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
+dependencies = [
+ "alexandria_data_structures",
+ "alexandria_math",
+]
+
+[[package]]
+name = "alexandria_data_structures"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70afdf59c9976148e95cebad5cf63d75a7f#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
+dependencies = [
+ "alexandria_encoding",
+]
+
+[[package]]
+name = "alexandria_encoding"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70afdf59c9976148e95cebad5cf63d75a7f#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
+dependencies = [
+ "alexandria_bytes",
+ "alexandria_math",
+ "alexandria_numeric",
+]
+
+[[package]]
+name = "alexandria_math"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70afdf59c9976148e95cebad5cf63d75a7f#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
+name = "alexandria_numeric"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70afdf59c9976148e95cebad5cf63d75a7f#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
+dependencies = [
+ "alexandria_math",
+ "alexandria_searching",
+]
+
+[[package]]
+name = "alexandria_searching"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70afdf59c9976148e95cebad5cf63d75a7f#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
 name = "chainlink"
 version = "0.1.0"
 dependencies = [
+ "alexandria_bytes",
+ "alexandria_encoding",
  "openzeppelin",
+ "snforge_std",
 ]
 
 [[package]]
@@ -23,5 +78,5 @@ source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.10.0#d7
 
 [[package]]
 name = "snforge_std"
-version = "0.21.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.21.0#2996b8c1dd66b2715fc67e69578089f278a46790"
+version = "0.27.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.27.0#2d99b7c00678ef0363881ee0273550c44a9263de"
