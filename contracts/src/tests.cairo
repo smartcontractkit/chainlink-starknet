@@ -10,3 +10,4 @@ mod test_upgradeable;
 mod test_access_controller;
 mod test_mock_aggregator;
 mod test_sequencer_uptime_feed;
+mod test_mcms;

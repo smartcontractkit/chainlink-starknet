@@ -138,9 +138,17 @@ mod ManyChainMultiSig {
         call_contract_syscall
     };
     use starknet::eth_signature::is_eth_signature_valid;
+
+    use openzeppelin::access::ownable::OwnableComponent;
+
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
     use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     const NUM_GROUPS: u8 = 32;
 
@@ -154,6 +162,8 @@ mod ManyChainMultiSig {
 
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
         // s_signers is used to easily validate the existence of the signer by its address.
         s_signers: LegacyMap<EthAddress, Signer>,
         // begin s_config (defined in storage bc Config struct cannot support maps) 
@@ -195,9 +205,17 @@ mod ManyChainMultiSig {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
         NewRoot: NewRoot,
         OpExecuted: OpExecuted,
         ConfigSet: ConfigSet,
+    }
+
+    #[constructor]
+    fn constructor(ref self: ContractState) {
+        let caller = starknet::info::get_caller_address();
+        self.ownable.initializer(caller);
     }
 
 
@@ -390,6 +408,8 @@ mod ManyChainMultiSig {
             group_parents: Span<u8>,
             clear_root: bool
         ) {
+            self.ownable.assert_only_owner();
+
             assert(
                 signer_addresses.len() != 0 && signer_addresses.len() <= MAX_NUM_SIGNERS.into(),
                 'out of bound signers len'
