@@ -25,6 +25,7 @@ use snforge_std::{
 
 // 9. test if there is a signer in a group where group_quorum[i] == 0 => revert
 // 10. test if there are not enough signers to meet a quorum => revert
+
 // 11. test if signer addresses are not in ascending order
 // 12. successful => test without clearing root. test the state of storage variables and that event was emitted
 
@@ -466,5 +467,197 @@ fn test_set_config_signer_in_disabled_group() {
         }
     }
 }
+
 // 10. test if there are not enough signers to meet a quorum => revert
+#[test]
+#[feature("safe_dispatcher")]
+fn test_set_config_quorum_impossible() {
+    let (_, _, mcms_safe) = setup();
+
+    let mut signer_addresses = array![EthAddressZeroable::zero()];
+    let signer_groups = array![0];
+    let mut group_quorums = array![
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ];
+    let mut group_parents = array![
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ];
+    let clear_root = false;
+
+    let result = mcms_safe
+        .set_config(
+            signer_addresses.span(),
+            signer_groups.span(),
+            group_quorums.span(),
+            group_parents.span(),
+            clear_root
+        );
+
+    match result {
+        Result::Ok(_) => panic!("expect 'quorum impossible'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'quorum impossible', *panic_data.at(0));
+        }
+    }
+}
+
+// 11. test if signer addresses are not in ascending order
+#[test]
+#[feature("safe_dispatcher")]
+fn test_set_config_signer_addresses_not_sorted() {
+    let (_, _, mcms_safe) = setup();
+
+    let mut signer_addresses: Array<EthAddress> = array![
+        // 0x1 address
+        u256 { high: 0, low: 1 }.into(), EthAddressZeroable::zero()
+    ];
+    let signer_groups = array![0, 0];
+    let mut group_quorums = array![
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ];
+    let mut group_parents = array![
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ];
+    let clear_root = false;
+
+    let result = mcms_safe
+        .set_config(
+            signer_addresses.span(),
+            signer_groups.span(),
+            group_quorums.span(),
+            group_parents.span(),
+            clear_root
+        );
+
+    match result {
+        Result::Ok(_) => panic!("expect 'signer addresses not sorted'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'signer addresses not sorted', *panic_data.at(0));
+        }
+    }
+}
 

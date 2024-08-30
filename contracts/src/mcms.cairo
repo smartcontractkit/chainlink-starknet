@@ -499,7 +499,7 @@ mod ManyChainMultiSig {
                     let signer_address = *signer_addresses.at(i.into());
                     assert(
                         to_u256(prev_signer_address) < to_u256(signer_address),
-                        'addresses not sorted'
+                        'signer addresses not sorted'
                     );
 
                     let signer = Signer {
