@@ -184,6 +184,42 @@ func (c *Client) LinkAvailableForPayment(ctx context.Context, address *felt.Felt
 	return ans, nil
 }
 
+func (c *Client) collectAllEvents(ctx context.Context, block starknetrpc.BlockID, address *felt.Felt, eventKey *felt.Felt, pageSize int) (events []starknetrpc.EmittedEvent, err error) {
+	input := starknetrpc.EventsInput{
+		EventFilter: starknetrpc.EventFilter{
+			FromBlock: block,
+			ToBlock:   block,
+			Address:   address,
+			Keys:      [][]*felt.Felt{{eventKey}}, // skip other event types
+		},
+		ResultPageRequest: starknetrpc.ResultPageRequest{
+			ChunkSize: pageSize,
+		},
+	}
+
+	chunk, err := c.r.Events(ctx, input)
+
+	if err != nil {
+		return nil, err
+	}
+
+	events = chunk.Events
+
+	for chunk.ContinuationToken != "" {
+		input.ResultPageRequest.ContinuationToken = chunk.ContinuationToken
+
+		chunk, err = c.r.Events(ctx, input)
+
+		if err != nil {
+			return nil, err
+		}
+
+		events = append(events, chunk.Events...)
+	}
+
+	return events, nil
+}
+
 func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, eventType string, blockNum uint64) (events []starknetrpc.EmittedEvent, err error) {
 	latestBlockHeight, err := c.r.LatestBlockHeight(ctx)
 	if err != nil {
@@ -200,24 +236,7 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, e
 
 	eventKey := starknetutils.GetSelectorFromNameFelt(eventType)
 
-	input := starknetrpc.EventsInput{
-		EventFilter: starknetrpc.EventFilter{
-			FromBlock: block,
-			ToBlock:   block,
-			Address:   address,
-			Keys:      [][]*felt.Felt{{eventKey}}, // skip other event types
-			// PageSize:   0,
-			// PageNumber: 0,
-		},
-		ResultPageRequest: starknetrpc.ResultPageRequest{
-			// ContinuationToken: ,
-			ChunkSize: 10,
-		},
-	}
-	chunk, err := c.r.Events(ctx, input)
-	events = chunk.Events
-
-	// TODO: check events.isLastPage, query more if needed
+	events, err = c.collectAllEvents(ctx, block, address, eventKey, 10)
 
 	if err != nil {
 		return events, fmt.Errorf("couldn't fetch events for block: %w", err)
