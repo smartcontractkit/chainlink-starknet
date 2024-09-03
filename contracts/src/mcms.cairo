@@ -38,14 +38,14 @@ trait IManyChainMultiSig<TContractState> {
     fn get_root_metadata(self: @TContractState) -> RootMetadata;
 }
 
-#[derive(Copy, Drop, Serde, starknet::Store)]
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq, Debug)]
 struct Signer {
     address: EthAddress,
     index: u8,
     group: u8
 }
 
-#[derive(Copy, Drop, Serde, starknet::Store)]
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 struct RootMetadata {
     chain_id: u256,
     multisig: ContractAddress,
@@ -67,14 +67,14 @@ struct Op {
 }
 
 // does not implement Storage trait because structs cannot support arrays or maps
-#[derive(Copy, Drop, Serde)]
+#[derive(Copy, Drop, Serde, PartialEq)]
 struct Config {
     signers: Span<Signer>,
     group_quorums: Span<u8>,
     group_parents: Span<u8>
 }
 
-#[derive(Copy, Drop, Serde, starknet::Store)]
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 struct ExpiringRootAndOpCount {
     root: u256,
     valid_until: u32,
@@ -249,11 +249,11 @@ mod ManyChainMultiSig {
                     };
 
                     assert(
-                        to_u256(prev_address) < to_u256(signer_address),
+                        to_u256(prev_address) < to_u256(signer_address.clone()),
                         'signer address must increase'
                     );
 
-                    let signer = self.s_signers.read(signer_address);
+                    let signer = self.get_signer_by_address(signer_address);
                     assert(signer.address == signer_address, 'invalid signer');
 
                     let mut group = signer.group;
@@ -478,6 +478,7 @@ mod ManyChainMultiSig {
                 self.s_signers.write(old_signer.address, empty_signer);
                 // reset _s_config_signers 
                 self._s_config_signers.write(i.into(), empty_signer);
+                i += 1;
             };
             // reset _s_config_signers_len
             self._s_config_signers_len.write(0);
@@ -514,6 +515,9 @@ mod ManyChainMultiSig {
                     prev_signer_address = signer_address;
                     i += 1;
                 };
+
+            // length will always be less than MAX_NUM_SIGNERS so try_into will never panic
+            self._s_config_signers_len.write(signer_addresses.len().try_into().unwrap());
 
             if clear_root {
                 let op_count = self.s_expiring_root_and_op_count.read().op_count;
@@ -566,6 +570,7 @@ mod ManyChainMultiSig {
             while i < NUM_GROUPS {
                 group_quorums.append(self._s_config_group_quorums.read(i));
                 group_parents.append(self._s_config_group_parents.read(i));
+                i += 1;
             };
 
             Config {
@@ -595,6 +600,10 @@ mod ManyChainMultiSig {
             ref self: ContractState, target: ContractAddress, selector: felt252, data: Span<felt252>
         ) {
             let _response = call_contract_syscall(target, selector, data).unwrap_syscall();
+        }
+
+        fn get_signer_by_address(ref self: ContractState, signer_address: EthAddress) -> Signer {
+            self.s_signers.read(signer_address)
         }
     }
 }
