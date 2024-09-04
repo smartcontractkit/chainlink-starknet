@@ -20,8 +20,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install Cairo
-        uses: ./.github/actions/install-cairo
+      # - name: Install Cairo
+      #   uses: ./.github/actions/install-cairo
 
       - name: Test
         run: nix develop -c make test-ts-contracts
@@ -38,8 +38,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install Cairo
-        uses: ./.github/actions/install-cairo
+      # - name: Install Cairo
+      #   uses: ./.github/actions/install-cairo
 
       - name: Install Starknet Foundry
         uses: ./.github/actions/install-starknet-foundry
