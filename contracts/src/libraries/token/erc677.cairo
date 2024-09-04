@@ -12,7 +12,8 @@ trait IERC677Receiver<TContractState> {
     fn on_token_transfer(
         ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>
     );
-    // implements EIP-165, where function selectors are defined by Ethereum ABI using the ethereum function signatures
+    // implements EIP-165, where function selectors are defined by Ethereum ABI using the ethereum
+    // function signatures
     fn supports_interface(ref self: TContractState, interface_id: u32) -> bool;
 }
 

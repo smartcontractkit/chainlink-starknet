@@ -125,7 +125,7 @@ fn test_aggregator_proxy_response() {
     let latest_round_data = proxy.latest_round_data();
     assert(latest_round_data.answer == 0, 'latest_round_data should be 0');
 
-    // latest answer 
+    // latest answer
     let latest_answer = proxy.latest_answer();
     assert(latest_answer == 0, 'latest_answer should be 0');
 

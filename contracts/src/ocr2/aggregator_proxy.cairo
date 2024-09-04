@@ -179,7 +179,7 @@ mod AggregatorProxy {
         self._set_aggregator(address);
     }
 
-    // -- Upgradeable -- 
+    // -- Upgradeable --
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {

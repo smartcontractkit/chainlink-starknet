@@ -43,9 +43,6 @@ fn test_upgrade_and_call() {
     let mockUpgradeable = IMockUpgradeableDispatcher { contract_address: contractAddr };
     assert(mockUpgradeable.foo() == true, 'should call foo');
 
-    // error: Type "snforge_std::cheatcodes::contract_class::DeclareResult" has no member
-    // "contract_class"
-
     let contract = declare("MockNonUpgradeable").unwrap().contract_class();
 
     mockUpgradeable.upgrade(*(contract.class_hash));

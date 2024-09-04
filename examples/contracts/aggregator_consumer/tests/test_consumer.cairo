@@ -119,7 +119,7 @@ fn test_set_and_read_answer() {
     assert(latest_round.started_at == observation_timestamp, 'bad started_at');
     assert(latest_round.updated_at == transmission_timestamp, 'bad updated_at');
 
-    // Now let's test that we can set the answer 
+    // Now let's test that we can set the answer
     consumer_dispatcher.set_answer(latest_round.answer);
     assert(answer == consumer_dispatcher.read_answer(), 'Invalid answer');
 }

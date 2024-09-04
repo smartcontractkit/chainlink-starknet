@@ -30,7 +30,8 @@ use chainlink::token::mock::valid_erc667_receiver::{
     MockValidReceiver, MockValidReceiverDispatcher, MockValidReceiverDispatcherTrait
 };
 
-// Ignored tests are dependent on upgrading our version of cairo to include this PR https://github.com/starkware-libs/cairo/pull/2912/files
+// Ignored tests are dependent on upgrading our version of cairo to include this PR
+// https://github.com/starkware-libs/cairo/pull/2912/files
 
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<1>();
@@ -71,7 +72,8 @@ type ComponentState =
 
 fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();
-    // have to send 0 because ERC20 is not initialized with starting supply when using this library by itself
+    // have to send 0 because ERC20 is not initialized with starting supply when using this library
+    // by itself
     let mut state: ComponentState = ERC677Component::component_state_for_testing();
     state.transfer_and_call(receiver, u256 { high: 0, low: 0 }, data);
 }

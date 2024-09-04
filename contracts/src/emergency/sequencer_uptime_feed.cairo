@@ -178,7 +178,8 @@ mod SequencerUptimeFeed {
 
     #[l1_handler]
     fn update_status(ref self: ContractState, from_address: felt252, status: u128, timestamp: u64) {
-        //  Cairo enforces from_address to be a felt252 on the method signature, but we can cast it right after
+        //  Cairo enforces from_address to be a felt252 on the method signature, but we can cast it
+        //  right after
         let from_address: EthAddress = from_address.try_into().unwrap();
         assert(self._l1_sender.read() == from_address, 'EXPECTED_FROM_BRIDGE_ONLY');
 

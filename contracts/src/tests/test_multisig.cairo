@@ -123,7 +123,7 @@ fn test_submit_transaction() {
     assert(transaction.calldata_len == sample_calldata().len(), 'should match calldata length');
     assert(!transaction.executed, 'should not be executed');
     assert(transaction.confirmations == 0, 'should not have confirmations');
-// TODO: compare calldata when loops are supported
+    // TODO: compare calldata when loops are supported
 }
 
 #[test]
@@ -482,9 +482,9 @@ fn test_recursive_set_threshold() {
 
     // Checks that the threshold was correctly initialized on deployment
     assert(multisig.get_threshold() == init_threshold, 'invalid init threshold');
-    // Recursive call occurs here - this code proposes a transaction to the 
-    // multisig contract that calls the set_threshold function on the multisig 
-    // contract. 
+    // Recursive call occurs here - this code proposes a transaction to the
+    // multisig contract that calls the set_threshold function on the multisig
+    // contract.
     let mut set_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_threshold, ref set_threshold_calldata);
     start_cheat_caller_address_global(s1);
@@ -575,9 +575,9 @@ fn test_recursive_set_signers() {
     assert(*returned_signers.at(1) == s2, 'should match signer 2');
     assert(multisig.get_threshold() == 2, 'wrong init threshold');
 
-    // Recursive call occurs here - this code proposes a transaction to the 
-    // multisig contract that calls the set_signers function on the multisig 
-    // contract. 
+    // Recursive call occurs here - this code proposes a transaction to the
+    // multisig contract that calls the set_signers function on the multisig
+    // contract.
     let mut set_signers_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_calldata);
     start_cheat_caller_address_global(s1);
@@ -676,8 +676,8 @@ fn test_recursive_set_signers_and_threshold() {
     assert(*returned_signers.at(2) == s3, 'should match signer 3');
     assert(multisig.get_threshold() == 3, 'wrong init threshold');
 
-    // Recursive call occurs here - this code proposes a transaction to the 
-    // multisig contract that calls the set_signers_and_threshold function 
+    // Recursive call occurs here - this code proposes a transaction to the
+    // multisig contract that calls the set_signers_and_threshold function
     // on the multisig contract.
     let mut set_signers_and_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_and_threshold_calldata);

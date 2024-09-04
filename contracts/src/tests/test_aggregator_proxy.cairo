@@ -58,7 +58,8 @@ fn setup() -> (
 
     // Deploy mock aggregator 2
     // note: deployment address is deterministic based on deploy_syscall parameters
-    // so we need to change the decimals parameter to avoid an address conflict with mock aggregator 1
+    // so we need to change the decimals parameter to avoid an address conflict with mock aggregator
+    // 1
     let mut calldata2 = ArrayTrait::new();
     calldata2.append(10); // decimals = 10
 
@@ -127,7 +128,7 @@ fn test_query_latest_round_data() {
     assert(round.started_at == 9, 'started_at should be 9');
     assert(round.updated_at == 8, 'updated_at should be 8');
 
-    // latest_answer matches up with latest_round_data 
+    // latest_answer matches up with latest_round_data
     let latest_answer = AggregatorProxyImpl::latest_answer(@state);
     assert(latest_answer == 10, '(latest) answer should be 10');
 }

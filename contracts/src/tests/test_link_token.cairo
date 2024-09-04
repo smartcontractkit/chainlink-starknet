@@ -23,7 +23,7 @@ use snforge_std::{
 };
 
 
-// only tests link token specific functionality 
+// only tests link token specific functionality
 // erc20 and erc677 functionality is already tested elsewhere
 
 fn STATE() -> LinkToken::ContractState {
