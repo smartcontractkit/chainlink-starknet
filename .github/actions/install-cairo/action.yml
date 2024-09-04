@@ -14,14 +14,14 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup Cairo for Linux
-      id: install-cairo
-      shell: bash
-      run: |
-        wget https://github.com/starkware-libs/cairo/releases/download/${{ inputs.cairo_version }}/release-x86_64-unknown-linux-musl.tar.gz
-        tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
-        mv -vf cairo cairo-build
-        echo "$GITHUB_WORKSPACE/cairo-build/bin" >> $GITHUB_PATH
+    # - name: Setup Cairo for Linux
+    #   id: install-cairo
+    #   shell: bash
+    #   run: |
+    #     wget https://github.com/starkware-libs/cairo/releases/download/${{ inputs.cairo_version }}/release-x86_64-unknown-linux-musl.tar.gz
+    #     tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
+    #     mv -vf cairo cairo-build
+    #     echo "$GITHUB_WORKSPACE/cairo-build/bin" >> $GITHUB_PATH
 
     - name: Setup Scarb for Linux
       id: install-scarb
