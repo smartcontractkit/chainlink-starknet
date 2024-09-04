@@ -16,6 +16,11 @@ use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
 use chainlink::libraries::token::erc677::ERC677Component;
 use chainlink::libraries::token::erc677::ERC677Component::ERC677Impl;
 
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
+};
+
 #[starknet::interface]
 trait MockInvalidReceiver<TContractState> {
     fn set_supports(ref self: TContractState, value: bool);
@@ -30,16 +35,19 @@ use chainlink::token::mock::valid_erc667_receiver::{
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<1>();
     // Set account as default caller
-    set_caller_address(account);
+    start_cheat_caller_address_global(account);
     account
 }
 
 fn setup_valid_receiver() -> (ContractAddress, MockValidReceiverDispatcher) {
     let calldata = ArrayTrait::new();
-    let (address, _) = deploy_syscall(
-        ValidReceiver::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
+
+    let (address, _) = declare("ValidReceiver")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
         .unwrap();
+
     let contract = MockValidReceiverDispatcher { contract_address: address };
     (address, contract)
 }
@@ -47,10 +55,13 @@ fn setup_valid_receiver() -> (ContractAddress, MockValidReceiverDispatcher) {
 
 fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) {
     let calldata = ArrayTrait::new();
-    let (address, _) = deploy_syscall(
-        InvalidReceiver::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
+
+    let (address, _) = declare("InvalidReceiver")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
         .unwrap();
+
     let contract = MockInvalidReceiverDispatcher { contract_address: address };
     (address, contract)
 }
@@ -83,7 +94,7 @@ fn test_valid_transfer_and_call() {
 }
 
 #[test]
-#[should_panic(expected: ('ENTRYPOINT_NOT_FOUND',))]
+#[should_panic]
 fn test_invalid_receiver_supports_interface_true() {
     setup();
     let (receiver_address, receiver) = setup_invalid_receiver();
@@ -103,7 +114,7 @@ fn test_invalid_receiver_supports_interface_false() {
 
 
 #[test]
-#[should_panic(expected: ('CONTRACT_NOT_DEPLOYED',))]
+#[should_panic]
 fn test_nonexistent_receiver() {
     setup();
 

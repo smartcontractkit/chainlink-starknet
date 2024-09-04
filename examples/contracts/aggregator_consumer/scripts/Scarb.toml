@@ -6,10 +6,10 @@ cairo-version = "2.7.1"
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
 [dependencies]
-sncast_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.21.0" }
+sncast_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.28.0" }
 chainlink = { path = "../../../../contracts" }
 aggregator_consumer = { path = "../" }
-starknet = ">=2.7.1"
+starknet = "2.7.1"
 
 [lib]
 casm = true

@@ -7,14 +7,19 @@ homepage = "https://github.com/smartcontractkit/chainlink-starknet"
 
 [scripts]
 sierra = "cairo-compile . -r"
+test = "snforge test"
 # Add your own custom commands and run them with scarb run <command>
 
 # Uncomment if you want to use dependencies
 # Note: currently testing doesn't work with dependencies
 [dependencies]
-starknet = ">=2.7.1"
+starknet = "2.7.1"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.1" }
-cairo_test = "2.7.1"
+alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b080577aaa6889116fc8be5dde72b2fd21e397" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b080577aaa6889116fc8be5dde72b2fd21e397" }
+
+[dev-dependencies]
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.28.0" }
 
 [lib]
 

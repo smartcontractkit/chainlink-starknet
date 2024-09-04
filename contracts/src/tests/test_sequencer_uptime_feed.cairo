@@ -29,6 +29,12 @@ use chainlink::emergency::sequencer_uptime_feed::{
     ISequencerUptimeFeed, ISequencerUptimeFeedDispatcher, ISequencerUptimeFeedDispatcherTrait
 };
 
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
+};
+
+
 fn PROXY() -> AggregatorProxy::ContractState {
     AggregatorProxy::contract_state_for_testing()
 }
@@ -39,16 +45,20 @@ fn STATE() -> SequencerUptimeFeed::ContractState {
 
 fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher) {
     let account: ContractAddress = contract_address_const::<777>();
-    set_caller_address(account);
+
+    start_cheat_caller_address_global(account);
 
     // Deploy seqeuencer uptime feed
     let calldata = array![0, // initial status
      account.into() // owner
     ];
-    let (sequencerFeedAddr, _) = deploy_syscall(
-        SequencerUptimeFeed::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
+
+    let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
         .unwrap();
+
     let sequencerUptimeFeed = ISequencerUptimeFeedDispatcher {
         contract_address: sequencerFeedAddr
     };
@@ -69,16 +79,17 @@ fn test_access_control() {
 }
 
 #[test]
-#[should_panic()]
+#[should_panic]
 fn test_set_l1_sender_not_owner() {
     let (_, _, sequencerUptimeFeed) = setup();
+    start_cheat_caller_address_global(contract_address_const::<111>());
     sequencerUptimeFeed.set_l1_sender(EthAddress { address: 789 });
 }
 
 #[test]
 fn test_set_l1_sender() {
     let (owner, _, sequencerUptimeFeed) = setup();
-    set_contract_address(owner);
+    start_cheat_caller_address_global(owner);
     sequencerUptimeFeed.set_l1_sender(EthAddress { address: 789 });
     assert(sequencerUptimeFeed.l1_sender().address == 789, 'l1_sender should be set to 789');
 }
@@ -104,8 +115,7 @@ fn test_latest_answer_no_access() {
 #[test]
 fn test_aggregator_proxy_response() {
     let (owner, sequencerFeedAddr, _) = setup();
-
-    set_contract_address(owner);
+    start_cheat_caller_address_global(owner);
     let contract = IAccessControllerDispatcher { contract_address: sequencerFeedAddr };
     contract.add_access(owner);
 

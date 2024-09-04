@@ -19,13 +19,19 @@ use chainlink::libraries::access_control::{
     IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
 };
 
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
+};
+
+
 fn STATE() -> AccessController::ContractState {
     AccessController::contract_state_for_testing()
 }
 
 fn setup() -> ContractAddress {
     let account: ContractAddress = contract_address_const::<777>();
-    set_caller_address(account);
+    start_cheat_caller_address_global(account);
     account
 }
 
@@ -44,10 +50,10 @@ fn test_access_control() {
     // Deploy access controller
     let calldata = array![owner.into(), // owner
     ];
-    let (accessControllerAddr, _) = deploy_syscall(
-        AccessController::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
-        .unwrap();
+
+    let contract = declare("AccessController").unwrap().contract_class();
+
+    let (accessControllerAddr, _) = contract.deploy(@calldata).unwrap();
 
     should_implement_access_control(accessControllerAddr, owner);
 }
@@ -62,7 +68,7 @@ fn should_implement_access_control(contract_addr: ContractAddress, owner: Contra
     let contract = IAccessControllerDispatcher { contract_address: contract_addr };
     let acc2: ContractAddress = contract_address_const::<2222987765>();
 
-    set_contract_address(owner); // required to call contract as owner
+    start_cheat_caller_address_global(owner);
 
     // access check is enabled by default
     assert(!contract.has_access(acc2, array![]), 'should not have access');

@@ -24,6 +24,12 @@ use chainlink::utils::split_felt;
 use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
+use snforge_std::{
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
+};
+
+
 fn STATE() -> AggregatorProxy::ContractState {
     AggregatorProxy::contract_state_for_testing()
 }
@@ -37,15 +43,17 @@ fn setup() -> (
 ) {
     // Set account as default caller
     let account: ContractAddress = contract_address_const::<1>();
-    set_caller_address(account);
+
+    start_cheat_caller_address_global(account);
 
     // Deploy mock aggregator 1
     let mut calldata = ArrayTrait::new();
     calldata.append(8); // decimals = 8
-    let (mockAggregatorAddr1, _) = deploy_syscall(
-        MockAggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
-        .unwrap();
+
+    let contract = declare("MockAggregator").unwrap().contract_class();
+
+    let (mockAggregatorAddr1, _) = contract.deploy(@calldata).unwrap();
+
     let mockAggregator1 = IMockAggregatorDispatcher { contract_address: mockAggregatorAddr1 };
 
     // Deploy mock aggregator 2
@@ -53,10 +61,9 @@ fn setup() -> (
     // so we need to change the decimals parameter to avoid an address conflict with mock aggregator 1
     let mut calldata2 = ArrayTrait::new();
     calldata2.append(10); // decimals = 10
-    let (mockAggregatorAddr2, _) = deploy_syscall(
-        MockAggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata2.span(), false
-    )
-        .unwrap();
+
+    let (mockAggregatorAddr2, _) = contract.deploy(@calldata).unwrap();
+
     let mockAggregator2 = IMockAggregatorDispatcher { contract_address: mockAggregatorAddr2 };
 
     // Return account, mock aggregator address and mock aggregator contract
@@ -69,9 +76,10 @@ fn test_ownable() {
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
      mockAggregatorAddr.into(),];
-    let (aggregatorProxyAddr, _) = deploy_syscall(
-        AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
+    let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
         .unwrap();
 
     should_implement_ownable(aggregatorProxyAddr, account);
@@ -83,9 +91,11 @@ fn test_access_control() {
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
      mockAggregatorAddr.into(),];
-    let (aggregatorProxyAddr, _) = deploy_syscall(
-        AggregatorProxy::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    )
+
+    let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
         .unwrap();
 
     should_implement_access_control(aggregatorProxyAddr, account);
@@ -133,7 +143,7 @@ fn test_query_latest_round_data_without_access() {
     // insert round into mock aggregator
     mockAggregator.set_latest_round_data(10, 1, 9, 8);
     // set caller to non-owner address with no read access
-    set_caller_address(contract_address_const::<2>());
+    start_cheat_caller_address_global(contract_address_const::<2>());
     // query latest round
     AggregatorProxyImpl::latest_round_data(@state);
 }
@@ -149,7 +159,7 @@ fn test_query_latest_answer_without_access() {
     // insert round into mock aggregator
     mockAggregator.set_latest_round_data(10, 1, 9, 8);
     // set caller to non-owner address with no read access
-    set_caller_address(contract_address_const::<2>());
+    start_cheat_caller_address_global(contract_address_const::<2>());
     // query latest round
     AggregatorProxyImpl::latest_answer(@state);
 }
