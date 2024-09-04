@@ -233,7 +233,7 @@ test-integration-soak-ci:
 .PHONY: test-examples
 test-examples:
 	cd ./examples/contracts/aggregator_consumer && \
-		snforge test
+		scarb test
 
 .PHONY: test-integration-gauntlet
 # TODO: fix example
