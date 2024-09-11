@@ -32,8 +32,6 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
-// lint test
-
 var (
 	rpcRequestTimeout = time.Second * 300
 )
