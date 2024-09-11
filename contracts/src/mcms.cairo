@@ -122,6 +122,89 @@ fn hash_pair(a: u256, b: u256) -> u256 {
     BytesTrait::new_empty().encode(lower).encode(higher).keccak()
 }
 
+fn hash_op(op: Op) -> u256 {
+    let mut encoded_leaf: Bytes = BytesTrait::new_empty()
+        .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP)
+        .encode(op.chain_id)
+        .encode(op.multisig)
+        .encode(op.nonce)
+        .encode(op.to)
+        .encode(op.selector);
+    // encode the data field by looping through
+    let mut i = 0;
+    while i < op.data.len() {
+        encoded_leaf = encoded_leaf.encode(*op.data.at(i));
+        i += 1;
+    };
+    encoded_leaf.keccak()
+}
+
+// keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP")
+const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
+    0x08d275622006c4ca82d03f498e90163cafd53c663a48470c3b52ac8bfbd9f52c;
+// keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA")
+const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
+    0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
+
+// todo: make sure this is the right way to encode the struct
+fn hash_metadata(metadata: RootMetadata, valid_until: u32) -> u256 {
+    let encoded_metadata: Bytes = BytesTrait::new_empty()
+        .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA)
+        .encode(valid_until)
+        .encode(metadata.chain_id)
+        .encode(metadata.multisig)
+        .encode(metadata.pre_op_count)
+        .encode(metadata.post_op_count)
+        .encode(metadata.override_previous_root);
+
+    encoded_metadata.keccak()
+}
+
+fn eip_191_message_hash(msg: u256) -> u256 {
+    let mut eip_191_msg: Bytes = BytesTrait::new_empty();
+
+    // '\x19Ethereum Signed Message:\n32' in byte array
+    let prefix = array![
+        0x19,
+        0x45,
+        0x74,
+        0x68,
+        0x65,
+        0x72,
+        0x65,
+        0x75,
+        0x6d,
+        0x20,
+        0x53,
+        0x69,
+        0x67,
+        0x6e,
+        0x65,
+        0x64,
+        0x20,
+        0x4d,
+        0x65,
+        0x73,
+        0x73,
+        0x61,
+        0x67,
+        0x65,
+        0x3a,
+        0x0a,
+        0x33,
+        0x32
+    ];
+
+    let mut i = 0;
+    while i < prefix.len() {
+        eip_191_msg.append_u8(*prefix.at(i));
+        i += 1;
+    };
+    eip_191_msg.append_u256(msg);
+
+    eip_191_msg.keccak()
+}
+
 #[starknet::contract]
 mod ManyChainMultiSig {
     use core::array::ArrayTrait;
@@ -131,13 +214,12 @@ mod ManyChainMultiSig {
     use core::traits::PanicDestruct;
     use super::{
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
-        to_u256, verify_merkle_proof
+        to_u256, verify_merkle_proof, hash_op, hash_metadata, eip_191_message_hash
     };
     use starknet::{
         EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress,
         call_contract_syscall
     };
-    use starknet::eth_signature::is_eth_signature_valid;
 
     use openzeppelin::access::ownable::OwnableComponent;
 
@@ -232,14 +314,11 @@ mod ManyChainMultiSig {
         ) {
             let encoded_root: Bytes = BytesTrait::new_empty().encode(root).encode(valid_until);
 
-            let mut eip_191_msg: Bytes = BytesTrait::new_empty();
-            eip_191_msg.append_felt252('\x19Ethereum Signed Message:\n32');
-            eip_191_msg.append_u256(encoded_root.keccak());
-            let msg_hash = eip_191_msg.keccak();
+            let msg_hash = eip_191_message_hash(encoded_root.keccak());
 
             assert(!self.s_seen_signed_hashes.read(msg_hash), 'signed hash already seen');
 
-            let prev_address = EthAddressZeroable::zero();
+            let mut prev_address = EthAddressZeroable::zero();
             let mut group_vote_counts: Felt252Dict<u8> = Default::default();
             while let Option::Some(signature) = signatures
                 .pop_front() {
@@ -252,6 +331,7 @@ mod ManyChainMultiSig {
                         to_u256(prev_address) < to_u256(signer_address.clone()),
                         'signer address must increase'
                     );
+                    prev_address = signer_address;
 
                     let signer = self.get_signer_by_address(signer_address);
                     assert(signer.address == signer_address, 'invalid signer');
@@ -280,20 +360,12 @@ mod ManyChainMultiSig {
                 valid_until.into() >= starknet::info::get_block_timestamp(),
                 'valid until has passed'
             );
-            // verify metadataProof
-            // todo: make sure this is the right way to encode the struct
-            let encoded_metadata: Bytes = BytesTrait::new_empty()
-                .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA)
-                .encode(valid_until)
-                .encode(metadata.chain_id)
-                .encode(metadata.multisig)
-                .encode(metadata.pre_op_count)
-                .encode(metadata.post_op_count)
-                .encode(metadata.override_previous_root);
 
-            let hashed_leaf = encoded_metadata.keccak();
+            // verify metadataProof
+            let hashed_metadata_leaf = hash_metadata(metadata, valid_until);
             assert(
-                verify_merkle_proof(metadata_proof, root, hashed_leaf), 'proof verification failed'
+                verify_merkle_proof(metadata_proof, root, hashed_metadata_leaf),
+                'proof verification failed'
             );
 
             // maybe move to beginning of function
@@ -308,10 +380,12 @@ mod ManyChainMultiSig {
 
             let op_count = self.s_expiring_root_and_op_count.read().op_count;
             let current_root_metadata = self.s_root_metadata.read();
+
+            // new root can be set only if the current op_count is the expected post op count (unless an override is requested)
             assert(
                 op_count == current_root_metadata.post_op_count
                     || current_root_metadata.override_previous_root,
-                'expect pending operations'
+                'pending operations remain'
             );
             assert(op_count == metadata.pre_op_count, 'wrong pre-operation count');
             assert(metadata.pre_op_count <= metadata.post_op_count, 'wrong post-operation count');
@@ -362,23 +436,10 @@ mod ManyChainMultiSig {
             assert(op.nonce == current_expiring_root_and_op_count.op_count, 'wrong nonce');
 
             // verify op exists in merkle tree
-            let mut encoded_leaf: Bytes = BytesTrait::new_empty()
-                .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP)
-                .encode(op.chain_id)
-                .encode(op.multisig)
-                .encode(op.nonce)
-                .encode(op.to)
-                .encode(op.selector);
-            // encode the data field by looping through
-            let mut i = 0;
-            while i < op.data.len() {
-                encoded_leaf = encoded_leaf.encode(*op.data.at(i));
-                i += 1;
-            };
-            let hashed_leaf = encoded_leaf.keccak();
+            let hashed_op_leaf = hash_op(op);
 
             assert(
-                verify_merkle_proof(proof, current_expiring_root_and_op_count.root, hashed_leaf),
+                verify_merkle_proof(proof, current_expiring_root_and_op_count.root, hashed_op_leaf),
                 'proof verification failed'
             );
 

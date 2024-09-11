@@ -1,5 +1,8 @@
 use core::array::{SpanTrait, ArrayTrait};
-use starknet::{ContractAddress, EthAddress, EthAddressZeroable, contract_address_const};
+use starknet::{
+    ContractAddress, EthAddress, Felt252TryIntoEthAddress, EthAddressIntoFelt252,
+    EthAddressZeroable, contract_address_const
+};
 use chainlink::mcms::{
     ExpiringRootAndOpCount, RootMetadata, Config, Signer, ManyChainMultiSig,
     ManyChainMultiSig::{
@@ -17,7 +20,8 @@ use snforge_std::{
     stop_cheat_caller_address, stop_cheat_caller_address_global, spy_events,
     EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
-     start_cheat_chain_id
+     start_cheat_chain_id,
+    cheatcodes::{events::{EventSpy}}
 };
 
 // set_config tests
@@ -672,23 +676,25 @@ fn test_set_config_signer_addresses_not_sorted() {
     }
 }
 
-// test success, root not cleared, event emitted
-// 12. successful => test without clearing root. test the state of storage variables and that event was emitted
-//
-//                    ┌──────┐
-//                 ┌─►│2-of-2│
-//                 │  └──────┘        
-//                 │        ▲         
-//                 │        │         
-//              ┌──┴───┐ ┌──┴───┐ 
-//              signer 1 signer 2 
-//              └──────┘ └──────┘ 
-#[test]
-fn test_set_config_success_dont_clear_root() {
-    let (mcms_address, mcms, _) = setup();
 
-    let signer_address_1: EthAddress = u256 { high: 0, low: 1 }.into();
-    let signer_address_2: EthAddress = u256 { high: 0, low: 2 }.into();
+fn setup_2_of_2_mcms_no_root(
+    signer_address_1: EthAddress, signer_address_2: EthAddress
+) -> (
+    EventSpy,
+    ContractAddress,
+    IManyChainMultiSigDispatcher,
+    IManyChainMultiSigSafeDispatcher,
+    Config,
+    Array<EthAddress>,
+    Array<u8>,
+    Array<u8>,
+    Array<u8>,
+    bool
+) {
+    let (mcms_address, mcms, safe_mcms) = setup();
+
+    // let signer_address_1: EthAddress = u256 { high: 0, low: 1 }.into();
+    // let signer_address_2: EthAddress = u256 { high: 0, low: 2 }.into();
     let signer_addresses: Array<EthAddress> = array![signer_address_1, signer_address_2];
     let signer_groups = array![0, 0];
     let group_quorums = array![
@@ -771,6 +777,53 @@ fn test_set_config_success_dont_clear_root() {
             group_parents.span(),
             clear_root
         );
+
+    let config = mcms.get_config();
+
+    (
+        spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root
+    )
+}
+
+// test success, root not cleared, event emitted
+// 12. successful => test without clearing root. test the state of storage variables and that event was emitted
+//
+//                    ┌──────┐
+//                 ┌─►│2-of-2│
+//                 │  └──────┘        
+//                 │        ▲         
+//                 │        │         
+//              ┌──┴───┐ ┌──┴───┐ 
+//              signer 1 signer 2 
+//              └──────┘ └──────┘ 
+#[test]
+fn test_set_config_success_dont_clear_root() {
+    let signer_address_1: EthAddress = (0x141).try_into().unwrap();
+    let signer_address_2: EthAddress = (0x2412).try_into().unwrap();
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        _,
+        _,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root
+    ) =
+        setup_2_of_2_mcms_no_root(
+        signer_address_1, signer_address_2
+    );
 
     let expected_signer_1 = Signer { address: signer_address_1, index: 0, group: 0 };
     let expected_signer_2 = Signer { address: signer_address_2, index: 1, group: 0 };

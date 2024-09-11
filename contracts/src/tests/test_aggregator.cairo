@@ -145,11 +145,6 @@ fn test_access_control() {
 
     let (aggregatorAddr, _) = declare("Aggregator").unwrap().deploy(@calldata).unwrap();
 
-    // let (aggregatorAddr, _) = deploy_syscall(
-    //     Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-    // )
-    //     .unwrap();
-
     should_implement_access_control(aggregatorAddr, account);
 }
 

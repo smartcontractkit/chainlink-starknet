@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "./contracts"
+    },
+    {
       "path": "./packages-ts/starknet-gauntlet"
     },
     {

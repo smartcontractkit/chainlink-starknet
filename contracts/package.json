@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "compile:solidity": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "generate:signature": "ts-node ./mcms-generate-signature"
   },
   "author": "",
   "license": "MIT",
