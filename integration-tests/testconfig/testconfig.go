@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/rs/zerolog"
-	"github.com/smartcontractkit/seth"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -22,11 +21,12 @@ import (
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 
-	ctf_config "github.com/smartcontractkit/chainlink-testing-framework/config"
-	k8s_config "github.com/smartcontractkit/chainlink-testing-framework/k8s/config"
-	"github.com/smartcontractkit/chainlink-testing-framework/logging"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils/osutil"
-	"github.com/smartcontractkit/chainlink-testing-framework/utils/ptr"
+	ctf_config "github.com/smartcontractkit/chainlink-testing-framework/lib/config"
+	k8s_config "github.com/smartcontractkit/chainlink-testing-framework/lib/k8s/config"
+	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
+	"github.com/smartcontractkit/chainlink-testing-framework/lib/utils/osutil"
+	"github.com/smartcontractkit/chainlink-testing-framework/lib/utils/ptr"
+	"github.com/smartcontractkit/chainlink-testing-framework/seth"
 
 	ocr2_config "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
@@ -366,16 +366,10 @@ func GetConfig(configurationName string, product Product) (TestConfig, error) {
 
 func (c *TestConfig) readNetworkConfiguration() error {
 	// currently we need to read that kind of secrets only for network configuration
-	if c == nil {
+	if c.Network == nil {
 		c.Network = &ctf_config.NetworkConfig{}
 	}
-
 	c.Network.UpperCaseNetworkNames()
-	err := c.Network.Default()
-	if err != nil {
-		return fmt.Errorf("error reading default network config: %w", err)
-	}
-
 	return nil
 }
 
