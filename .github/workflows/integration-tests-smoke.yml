@@ -24,6 +24,8 @@ jobs:
   build_chainlink_image:
     name: Build Chainlink Image ${{matrix.image.name}}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     environment: integration
     permissions:
       id-token: write
@@ -48,7 +50,7 @@ jobs:
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           this-job-name: Build Chainlink Image${{matrix.image.name}}
         continue-on-error: true
-      - name: Check if image exists
+      - name: Check if chainlink-starknet image exists
         id: check-image
         uses: smartcontractkit/chainlink-github-actions/docker/image-exists@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
@@ -56,12 +58,26 @@ jobs:
           tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+      - name: Get core ref from PR body
+        if: steps.check-image.outputs.exists == 'false' && github.event_name == 'pull_request'
+        run: |
+          comment=$(gh pr view https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }} --json body -q '.body')
+          core_ref=$(echo $comment | grep -oP 'core ref: \K\S+' || true)
+          if [ ! -z "$core_ref" ]; then
+            echo "CUSTOM_CORE_REF=${core_ref}" >> "${GITHUB_ENV}"
+          else
+            echo "CUSTOM_CORE_REF=develop" >> "${GITHUB_ENV}"
+          fi
+      - name: Set core reference if workflow dispatch
+        if: steps.check-image.outputs.exists == 'false' && github.event_name == 'workflow_dispatch'
+        run: |
+          echo "CUSTOM_CORE_REF=${{ github.event.inputs.cl_branch_ref }}" >> "${GITHUB_ENV}"
       - name: Build Image ${{ matrix.image.name }}
         if: steps.check-image.outputs.exists == 'false'
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
           cl_repo: smartcontractkit/chainlink
-          cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          cl_ref: ${{ env.CUSTOM_CORE_REF }}
           should_checkout: true
           cl_dockerfile: ${{ matrix.image.dockerfile }}
           # commit of the caller branch
