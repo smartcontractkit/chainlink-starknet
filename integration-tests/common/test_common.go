@@ -32,6 +32,8 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
+// lint test
+
 var (
 	rpcRequestTimeout = time.Second * 300
 )
@@ -205,8 +207,8 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.ChainlinkClient.ChainlinkNodes)
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	} else {
-		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.ClCluster.NodeAPIs()
-		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.ClCluster.NodeAPIs())
+		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs()
+		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs())
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
 	lggr := logger.Nop()
