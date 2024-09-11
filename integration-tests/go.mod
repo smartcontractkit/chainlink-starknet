@@ -10,18 +10,18 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/pelletier/go-toml/v2 v2.2.2
-	github.com/rs/zerolog v1.31.0
-	github.com/smartcontractkit/chainlink-common v0.2.2-0.20240910154010-ed9f50de7322
+	github.com/rs/zerolog v1.32.0
+	github.com/smartcontractkit/chainlink-common v0.2.2-0.20240911152814-4836d1d7f16b
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240910152019-348323f9539c
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240911160128-83c49f033146
 	github.com/smartcontractkit/chainlink-testing-framework v1.33.0
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240708135824-bf9122a8cee6
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20240910161911-7396b75f31ea
+	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20240911170808-18cc10abf094
 	github.com/smartcontractkit/seth v1.0.12
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/text v0.17.0
+	golang.org/x/text v0.18.0
 	gopkg.in/guregu/null.v4 v4.0.0
 )
 
@@ -30,8 +30,8 @@ require (
 	cosmossdk.io/api v0.3.1 // indirect
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
-	cosmossdk.io/errors v1.0.0 // indirect
-	cosmossdk.io/math v1.1.2 // indirect
+	cosmossdk.io/errors v1.0.1 // indirect
+	cosmossdk.io/math v1.3.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -42,7 +42,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
-	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
+	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
 	github.com/CosmWasm/wasmd v0.40.1 // indirect
 	github.com/CosmWasm/wasmvm v1.2.4 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
-	github.com/cometbft/cometbft v0.37.2 // indirect
+	github.com/cometbft/cometbft v0.37.5 // indirect
 	github.com/cometbft/cometbft-db v0.8.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
@@ -98,14 +98,14 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cosmos/cosmos-proto v1.0.0-beta.2 // indirect
-	github.com/cosmos/cosmos-sdk v0.47.5 // indirect
+	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
+	github.com/cosmos/cosmos-sdk v0.47.11 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11 // indirect
-	github.com/cosmos/iavl v0.20.0 // indirect
+	github.com/cosmos/iavl v0.20.1 // indirect
 	github.com/cosmos/ibc-go/v7 v7.3.1 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/crate-crypto/go-ipa v0.0.0-20231025140028-3c0104f4b233 // indirect
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
@@ -139,9 +139,9 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fvbommel/sortorder v1.1.0 // indirect
-	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gagliardetto/binary v0.7.7 // indirect
 	github.com/gagliardetto/solana-go v1.8.4 // indirect
@@ -196,7 +196,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/go-tpm v0.9.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20231023181126-ff6d637d2a7b // indirect
+	github.com/google/pprof v0.0.0-20240424215950-a892ee059fd6 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
@@ -266,7 +266,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/klauspost/compress v1.17.8 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -283,7 +283,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/miekg/dns v1.1.56 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20210601165009-122bf33a46e0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -328,18 +327,20 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/alertmanager v0.26.0 // indirect
-	github.com/prometheus/client_golang v1.17.0 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.45.0 // indirect
+	github.com/prometheus/client_golang v1.20.0 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.59.1 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.10.1-0.20230714054209-2f4150c63f97 // indirect
-	github.com/prometheus/procfs v0.12.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/prometheus v0.48.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/sagikazarmark/locafero v0.4.0 // indirect
+	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
@@ -352,32 +353,32 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slack-go/slack v0.12.2 // indirect
-	github.com/smartcontractkit/chain-selectors v1.0.21 // indirect
+	github.com/smartcontractkit/chain-selectors v1.0.23 // indirect
 	github.com/smartcontractkit/chainlink-automation v1.0.4 // indirect
-	github.com/smartcontractkit/chainlink-ccip v0.0.0-20240910072312-810030689426 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240910130914-fd4a45b0a3f5 // indirect
-	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20240904093355-e40169857652 // indirect
+	github.com/smartcontractkit/chainlink-ccip v0.0.0-20240911145028-d346e3ace978 // indirect
+	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240911160024-c1da28250122 // indirect
+	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20240906125718-9f0a98d32fbc // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.0.0-20240910155501-42f20443189f // indirect
-	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20240910161529-a7050b5193cd // indirect
+	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20240911160840-cde14abca28e // indirect
 	github.com/smartcontractkit/chainlink-testing-framework/grafana v0.0.0-20240405215812-5a72bc9af239 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20240717100443-f6226e09bee7 // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20230906073235-9e478e5e19f1 // indirect
 	github.com/smartcontractkit/tdh2/go/tdh2 v0.0.0-20230906073235-9e478e5e19f1 // indirect
 	github.com/smartcontractkit/wasp v0.4.7 // indirect
-	github.com/smartcontractkit/wsrpc v0.8.1 // indirect
+	github.com/smartcontractkit/wsrpc v0.8.2 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
-	github.com/spf13/afero v1.9.5 // indirect
+	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
-	github.com/spf13/cobra v1.8.0 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.16.0 // indirect
+	github.com/spf13/viper v1.18.2 // indirect
 	github.com/status-im/keycard-go v0.2.0 // indirect
 	github.com/streamingfast/logging v0.0.0-20220405224725-2755dab2ce75 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/subosito/gotenv v1.4.2 // indirect
+	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
@@ -402,14 +403,14 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zondax/hid v0.9.1 // indirect
-	github.com/zondax/ledger-go v0.14.1 // indirect
+	github.com/zondax/hid v0.9.2 // indirect
+	github.com/zondax/ledger-go v0.14.3 // indirect
 	go.dedis.ch/fixbuf v1.0.3 // indirect
 	go.dedis.ch/kyber/v3 v3.1.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.9 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.9 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.9 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.10 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.10 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.10 // indirect
 	go.mongodb.org/mongo-driver v1.15.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0016 // indirect
@@ -438,15 +439,15 @@ require (
 	go.uber.org/ratelimit v0.3.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
+	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/term v0.23.0 // indirect
-	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/term v0.24.0 // indirect
+	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	gonum.org/v1/gonum v0.15.0 // indirect
@@ -469,9 +470,9 @@ require (
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	k8s.io/kubectl v0.28.2 // indirect
-	k8s.io/utils v0.0.0-20230711102312-30195339c3c7 // indirect
+	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	nhooyr.io/websocket v1.8.10 // indirect
-	pgregory.net/rapid v0.5.5 // indirect
+	pgregory.net/rapid v1.1.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.16.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
