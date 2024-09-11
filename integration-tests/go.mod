@@ -13,10 +13,10 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/smartcontractkit/chainlink-common v0.2.2-0.20240911135847-27a338bd3e60
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240910230636-fdf60b9cfb45
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20240911132924-1accbe13d837
 	github.com/smartcontractkit/chainlink-testing-framework v1.33.0
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20240708135824-bf9122a8cee6
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20240911092053-fddbd3753dc2
+	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20240911145320-5b3da71c238c
 	github.com/smartcontractkit/seth v1.0.12
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
@@ -356,10 +356,10 @@ require (
 	github.com/smartcontractkit/chain-selectors v1.0.21 // indirect
 	github.com/smartcontractkit/chainlink-automation v1.0.4 // indirect
 	github.com/smartcontractkit/chainlink-ccip v0.0.0-20240910072312-810030689426 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240910230036-9e48b12488c1 // indirect
+	github.com/smartcontractkit/chainlink-cosmos v0.4.1-0.20240911133420-20943dd66e92 // indirect
 	github.com/smartcontractkit/chainlink-data-streams v0.0.0-20240904093355-e40169857652 // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.0.0-20240910155501-42f20443189f // indirect
-	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20240910224829-0afcd5532038 // indirect
+	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20240911141055-ff34f07390f5 // indirect
 	github.com/smartcontractkit/chainlink-testing-framework/grafana v0.0.0-20240405215812-5a72bc9af239 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20240717100443-f6226e09bee7 // indirect
