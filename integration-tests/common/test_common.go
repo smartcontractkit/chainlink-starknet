@@ -173,7 +173,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		b, err := test_env_integrations.NewCLTestEnvBuilder().
 			WithNonEVM().
 			WithTestInstance(m.TestConfig.T).
-			//WithTestConfig(m.TestConfig.TestConfig).
+			WithTestConfig(m.TestConfig.TestConfig).
 			WithMockAdapter().
 			WithCLNodes(*m.Common.TestConfig.OCR2.NodeCount).
 			WithCLNodeOptions(m.Common.TestEnvDetails.NodeOpts...).

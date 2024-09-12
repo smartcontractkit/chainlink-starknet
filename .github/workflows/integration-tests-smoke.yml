@@ -200,4 +200,5 @@ jobs:
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
         env:
-          E2E_TEST_CHAINLINK_IMAGE: ${{ env.CL_ECR }}
+          CHAINLINK_IMAGE: ${{ env.CL_ECR }}
+          CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
