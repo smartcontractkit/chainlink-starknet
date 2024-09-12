@@ -6,6 +6,7 @@ import (
 	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
 	"math/big"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -182,6 +183,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		require.NoError(m.TestConfig.T, err)
 		env, err = b.Build()
 		require.NoError(m.TestConfig.T, err)
+		env.MockAdapter.ContainerName = os.Getenv("KILLGRAVE_INTERNAL_IMAGE")
 		m.Clients.DockerEnv = &StarknetClusterTestEnv{
 			CLClusterTestEnv: env,
 			Starknet:         stark,
