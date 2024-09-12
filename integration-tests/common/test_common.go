@@ -3,12 +3,13 @@ package common
 import (
 	"context"
 	"fmt"
-	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
 	"math/big"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
