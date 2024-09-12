@@ -171,8 +171,6 @@ jobs:
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
-          [ChainlinkImage]
-          version="starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}"
           [Network]
           selected_networks=["SIMULATED"]
           [Common]
