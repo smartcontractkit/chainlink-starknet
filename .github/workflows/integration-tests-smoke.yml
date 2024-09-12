@@ -200,5 +200,6 @@ jobs:
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
         env:
+          KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
           CHAINLINK_IMAGE: ${{ env.CL_ECR }}
           CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}

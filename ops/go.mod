@@ -5,7 +5,7 @@ go 1.22.5
 require (
 	github.com/rs/zerolog v1.30.0
 	github.com/smartcontractkit/chainlink-env v0.3.29
-	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.2
+	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.5
 )
 
 require (
@@ -116,12 +116,12 @@ require (
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/term v0.24.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
