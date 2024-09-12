@@ -3,11 +3,12 @@ package smoke_test
 import (
 	"flag"
 	"fmt"
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
-	"go.uber.org/zap/zapcore"
 	"maps"
 	"os"
 	"testing"
+
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
