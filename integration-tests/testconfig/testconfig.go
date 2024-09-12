@@ -349,6 +349,7 @@ func GetConfig(configurationName string, product Product) (TestConfig, error) {
 	if err != nil {
 		return TestConfig{}, fmt.Errorf("error reading network config: %w", err)
 	}
+	testConfig.ReadEnvVars()
 
 	logger.Debug().Msg("Validating test config")
 	err = testConfig.Validate()
@@ -371,6 +372,13 @@ func (c *TestConfig) readNetworkConfiguration() error {
 	}
 	c.Network.UpperCaseNetworkNames()
 	return nil
+}
+
+func (c *TestConfig) ReadEnvVars() {
+	image := ctf_config.MustReadEnvVar_String("CHAINLINK_IMAGE")
+	c.ChainlinkImage.Image = &image
+	version := ctf_config.MustReadEnvVar_String("CHAINLINK_VERSION")
+	c.ChainlinkImage.Version = &version
 }
 
 func (c *TestConfig) Validate() error {
