@@ -24,7 +24,7 @@ use chainlink::mcms::{
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
 };
-use chainlink::tests::test_mcms::test_set_config::setup_2_of_2_mcms_no_root;
+use chainlink::tests::test_mcms::test_set_config::{setup_2_of_2_mcms_no_root, setup};
 use chainlink::tests::test_mcms::utils::{insecure_sign};
 
 use snforge_std::{
@@ -33,7 +33,9 @@ use snforge_std::{
     spy_events, EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
      start_cheat_chain_id,
-    cheatcodes::{events::{EventSpy}}, start_cheat_block_timestamp_global
+    cheatcodes::{events::{EventSpy}}, start_cheat_block_timestamp_global,
+    start_cheat_block_timestamp, start_cheat_account_contract_address_global,
+    start_cheat_account_contract_address
 };
 
 // test to add root
@@ -93,57 +95,21 @@ fn merkle_root(leafs: Array<u256>) -> (u256, Span<u256>) {
     (root, array![metadata_proof].span())
 }
 
-// sets up root
-fn setup_2_of_2_mcms() -> (
-    EventSpy,
-    ContractAddress,
-    IManyChainMultiSigDispatcher,
-    IManyChainMultiSigSafeDispatcher,
-    Config,
-    Array<EthAddress>,
-    Array<u8>,
-    Array<u8>,
-    Array<u8>,
-    bool, // clear root
-    u256,
-    u32,
-    RootMetadata,
-    Span<u256>,
-    Array<Signature>,
-    Array<Op>
-) {
-    let signer_address_1: EthAddress = (0x13Cf92228941e27eBce80634Eba36F992eCB148A)
-        .try_into()
-        .unwrap();
+#[derive(Copy, Drop, Serde)]
+struct SignerMetadata {
+    address: EthAddress,
+    private_key: u256
+}
 
-    let signer_address_2: EthAddress = (0xDa09C953823E1F60916E85faD44bF99A7DACa267)
-        .try_into()
-        .unwrap();
-    let (
-        mut spy,
-        mcms_address,
-        mcms,
-        safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root
-    ) =
-        setup_2_of_2_mcms_no_root(
-        signer_address_1, signer_address_2
-    );
 
-    let calldata = ArrayTrait::new();
-    let mock_target_contract = declare("MockMultisigTarget").unwrap();
-    let (target_address, _) = mock_target_contract.deploy(@calldata).unwrap();
-
-    // mock chain id & timestamp
+fn generate_set_root_params_custom_op_count(
+    mcms_address: ContractAddress,
+    target_address: ContractAddress,
+    mut signers_metadata: Array<SignerMetadata>,
+    pre_op_count: u64,
+    post_op_count: u64
+) -> (u256, u32, RootMetadata, Span<u256>, Array<Signature>, Array<Op>) {
     let mock_chain_id = 732;
-    start_cheat_chain_id_global(mock_chain_id);
-
-    start_cheat_block_timestamp_global(3);
 
     // first operation
     let selector1 = selector!("set_value");
@@ -158,7 +124,77 @@ fn setup_2_of_2_mcms() -> (
     };
 
     // second operation
-    // todo update
+    let selector2 = selector!("toggle");
+    let calldata2 = array![];
+    let op2 = Op {
+        chain_id: mock_chain_id.into(),
+        multisig: mcms_address,
+        nonce: 1,
+        to: target_address,
+        selector: selector2,
+        data: calldata2.span()
+    };
+
+    let metadata = RootMetadata {
+        chain_id: mock_chain_id.into(),
+        multisig: mcms_address,
+        pre_op_count: pre_op_count,
+        post_op_count: post_op_count,
+        override_previous_root: false,
+    };
+    let valid_until = 9;
+
+    let op1_hash = hash_op(op1);
+    let op2_hash = hash_op(op2);
+
+    let metadata_hash = hash_metadata(metadata, valid_until);
+
+    // create merkle tree
+    let (root, metadata_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
+
+    let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
+    let message_hash = eip_191_message_hash(encoded_root.keccak());
+
+    let mut signatures: Array<Signature> = ArrayTrait::new();
+
+    while let Option::Some(signer_metadata) = signers_metadata
+        .pop_front() {
+            let (r, s, y_parity) = insecure_sign(message_hash, signer_metadata.private_key);
+            let signature = Signature { r: r, s: s, y_parity: y_parity };
+            let address = recover_eth_ecdsa(message_hash, signature).unwrap();
+
+            // sanity check
+            assert(address == signer_metadata.address, 'signer not equal');
+
+            signatures.append(signature);
+        };
+
+    let ops = array![op1.clone(), op2.clone()];
+
+    (root, valid_until, metadata, metadata_proof, signatures, ops)
+}
+
+
+fn generate_set_root_params_1(
+    mcms_address: ContractAddress,
+    target_address: ContractAddress,
+    mut signers_metadata: Array<SignerMetadata>
+) -> (u256, u32, RootMetadata, Span<u256>, Array<Signature>, Array<Op>) {
+    let mock_chain_id = 732;
+
+    // first operation
+    let selector1 = selector!("set_value");
+    let calldata1: Array<felt252> = array![1234123];
+    let op1 = Op {
+        chain_id: mock_chain_id.into(),
+        multisig: mcms_address,
+        nonce: 0,
+        to: target_address,
+        selector: selector1,
+        data: calldata1.span()
+    };
+
+    // second operation
     let selector2 = selector!("toggle");
     let calldata2 = array![];
     let op2 = Op {
@@ -188,51 +224,90 @@ fn setup_2_of_2_mcms() -> (
     let (root, metadata_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
     let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
+    let message_hash = eip_191_message_hash(encoded_root.keccak());
 
-    // abi.encode(root, valid_until) 
-    // output: `sign this msg hash: 80900408832728789228986457074438699885219690940027717206734875544162448258660``
-    println!("sign this msg hash: {:?}", encoded_root.keccak());
+    let mut signatures: Array<Signature> = ArrayTrait::new();
 
-    // run `yarn ts-node test/mcms-generate-signature.ts <msg_hash>
+    while let Option::Some(signer_metadata) = signers_metadata
+        .pop_front() {
+            let (r, s, y_parity) = insecure_sign(message_hash, signer_metadata.private_key);
+            let signature = Signature { r: r, s: s, y_parity: y_parity };
+            let address = recover_eth_ecdsa(message_hash, signature).unwrap();
 
-    // signature 1: 
-    // r: 
-    //   high: 0x547a06aecfe75c9bca6d20fb0571ca37, low: 0x1ba523139c3c00145f74f997b224c0ae
-    // s:
-    //   high: 0x00696f026d9371e3009588d81391174f, low: 0xb85561559edf82cbebf145a8d77681a9
-    // v:
-    //   27
-    // signature 2: 
-    // r: 
-    //     high: 0x73b0625d2623d18af2cbc023511386c7, low: 0x9d04510e392300e7a69dea2b89d83dd6
-    // s:
-    //     high: 0x55ce476d61b1cecdad20854760996cc7, low: 0x12754fc6e8ac845779e3d22d5a443957
-    // v:
-    //     28
+            // sanity check
+            assert(address == signer_metadata.address, 'signer not equal');
 
-    let signature1 = signature_from_vrs(
-        v: 27,
-        r: u256 {
-            high: 0x547a06aecfe75c9bca6d20fb0571ca37, low: 0x1ba523139c3c00145f74f997b224c0ae,
-        },
-        s: u256 {
-            high: 0x00696f026d9371e3009588d81391174f, low: 0xb85561559edf82cbebf145a8d77681a9
-        },
-    );
-
-    let signature2 = signature_from_vrs(
-        v: 28,
-        r: u256 {
-            high: 0x73b0625d2623d18af2cbc023511386c7, low: 0x9d04510e392300e7a69dea2b89d83dd6,
-        },
-        s: u256 {
-            high: 0x55ce476d61b1cecdad20854760996cc7, low: 0x12754fc6e8ac845779e3d22d5a443957
-        },
-    );
-
-    let signatures = array![signature1, signature2];
+            signatures.append(signature);
+        };
 
     let ops = array![op1.clone(), op2.clone()];
+
+    (root, valid_until, metadata, metadata_proof, signatures, ops)
+}
+
+// sets up root
+fn new_setup_2_of_2_mcms() -> (
+    EventSpy,
+    ContractAddress,
+    IManyChainMultiSigDispatcher,
+    IManyChainMultiSigSafeDispatcher,
+    Config,
+    Array<EthAddress>,
+    Array<u8>,
+    Array<u8>,
+    Array<u8>,
+    bool, // clear root
+    u256,
+    u32,
+    RootMetadata,
+    Span<u256>,
+    Array<Signature>,
+    Array<Op>
+) {
+    let signer_address_1: EthAddress = (0x13Cf92228941e27eBce80634Eba36F992eCB148A)
+        .try_into()
+        .unwrap();
+    let private_key_1: u256 = 0xf366414c9042ec470a8d92e43418cbf62caabc2bbc67e82bd530958e7fcaa688;
+
+    let signer_address_2: EthAddress = (0xDa09C953823E1F60916E85faD44bF99A7DACa267)
+        .try_into()
+        .unwrap();
+    let private_key_2: u256 = 0xed10b7a09dd0418ab35b752caffb70ee50bbe1fe25a2ebe8bba8363201d48527;
+
+    let signer_metadata = array![
+        SignerMetadata { address: signer_address_1, private_key: private_key_1 },
+        SignerMetadata { address: signer_address_2, private_key: private_key_2 }
+    ];
+
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root
+    ) =
+        setup_2_of_2_mcms_no_root(
+        signer_address_1, signer_address_2
+    );
+
+    let calldata = ArrayTrait::new();
+    let mock_target_contract = declare("MockMultisigTarget").unwrap();
+    let (target_address, _) = mock_target_contract.deploy(@calldata).unwrap();
+
+    let (root, valid_until, metadata, metadata_proof, signatures, ops) = generate_set_root_params_1(
+        mcms_address, target_address, signer_metadata
+    );
+
+    // mock chain id & timestamp
+    start_cheat_chain_id_global(metadata.chain_id.try_into().unwrap());
+
+    let mock_timestamp = 3;
+    start_cheat_block_timestamp_global(mock_timestamp);
 
     (
         spy,
@@ -254,9 +329,8 @@ fn setup_2_of_2_mcms() -> (
     )
 }
 
-
 // sets up root
-fn new_setup_2_of_2_mcms() -> (
+fn new_setup_2_of_2_mcms_wrong_multisig() -> (
     EventSpy,
     ContractAddress,
     IManyChainMultiSigDispatcher,
@@ -337,7 +411,7 @@ fn new_setup_2_of_2_mcms() -> (
 
     let metadata = RootMetadata {
         chain_id: mock_chain_id.into(),
-        multisig: mcms_address,
+        multisig: contract_address_const::<123123>(), // choose wrong multisig address
         pre_op_count: 0,
         post_op_count: 2,
         override_previous_root: false,
@@ -419,6 +493,9 @@ fn test_set_root_success() {
 
     assert(actual_root == root, 'root returned not equal');
     assert(actual_valid_until == valid_until, 'valid until not equal');
+
+    let actual_root_metadata = mcms.get_root_metadata();
+    assert(actual_root_metadata == metadata, 'root metadata not equal');
 
     spy
         .assert_emitted(
@@ -560,4 +637,364 @@ fn test_set_root_signatures_invalid_signer() {
     }
 }
 
+#[test]
+#[feature("safe_dispatcher")]
+fn test_insufficient_signers() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms();
+
+    let missing_1_signature = array![*signatures.at(0)];
+
+    let result = safe_mcms
+        .set_root(root, valid_until, metadata, metadata_proof, missing_1_signature);
+
+    match result {
+        Result::Ok(_) => panic!("expect 'insufficient signers'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'insufficient signers', *panic_data.at(0));
+        }
+    }
+}
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_valid_until_expired() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms();
+
+    // cheat block timestamp
+    start_cheat_block_timestamp_global(valid_until.into() + 1);
+
+    let result = safe_mcms.set_root(root, valid_until, metadata, metadata_proof, signatures);
+
+    match result {
+        Result::Ok(_) => panic!("expect 'valid until has passed'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'valid until has passed', *panic_data.at(0));
+        }
+    }
+}
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_invalid_metadata_proof() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms();
+
+    let invalid_metadata_proof = array![*metadata_proof.at(0), *metadata_proof.at(0)];
+
+    let result = safe_mcms
+        .set_root(root, valid_until, metadata, invalid_metadata_proof.span(), signatures);
+
+    match result {
+        Result::Ok(_) => panic!("expect 'proof verification failed'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'proof verification failed', *panic_data.at(0));
+        }
+    }
+}
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_invalid_chain_id() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms();
+
+    start_cheat_chain_id_global(123123);
+
+    let result = safe_mcms.set_root(root, valid_until, metadata, metadata_proof, signatures);
+
+    match result {
+        Result::Ok(_) => panic!("expect 'wrong chain id'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'wrong chain id', *panic_data.at(0));
+        }
+    }
+}
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_invalid_multisig_address() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms_wrong_multisig();
+
+    let result = safe_mcms.set_root(root, valid_until, metadata, metadata_proof, signatures);
+
+    match result {
+        Result::Ok(_) => panic!("expect 'wrong multisig address'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'wrong multisig address', *panic_data.at(0));
+        }
+    }
+}
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_pending_ops_remain() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms();
+
+    // first time passes
+    mcms.set_root(root, valid_until, metadata, metadata_proof, signatures.clone());
+
+    // sign a different set of operations with same signers
+    let signer_address_1: EthAddress = (0x13Cf92228941e27eBce80634Eba36F992eCB148A)
+        .try_into()
+        .unwrap();
+    let private_key_1: u256 = 0xf366414c9042ec470a8d92e43418cbf62caabc2bbc67e82bd530958e7fcaa688;
+
+    let signer_address_2: EthAddress = (0xDa09C953823E1F60916E85faD44bF99A7DACa267)
+        .try_into()
+        .unwrap();
+    let private_key_2: u256 = 0xed10b7a09dd0418ab35b752caffb70ee50bbe1fe25a2ebe8bba8363201d48527;
+
+    let mut signer_metadata = array![
+        SignerMetadata { address: signer_address_1, private_key: private_key_1 },
+        SignerMetadata { address: signer_address_2, private_key: private_key_2 }
+    ];
+
+    let (root, valid_until, metadata, metadata_proof, signatures, ops) = generate_set_root_params_1(
+        mcms_address, contract_address_const::<123123>(), signer_metadata
+    );
+
+    // second time fails
+    let result = safe_mcms.set_root(root, valid_until, metadata, metadata_proof, signatures);
+
+    match result {
+        Result::Ok(_) => panic!("expect 'pending operations remain'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'pending operations remain', *panic_data.at(0));
+        }
+    }
+}
+
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_wrong_pre_op_count() {
+    let (
+        mut spy,
+        mcms_address,
+        mcms,
+        safe_mcms,
+        config,
+        signer_addresses,
+        signer_groups,
+        group_quorums,
+        group_parents,
+        clear_root,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        ops
+    ) =
+        new_setup_2_of_2_mcms();
+
+    // sign a different set of operations with same signers
+    let signer_address_1: EthAddress = (0x13Cf92228941e27eBce80634Eba36F992eCB148A)
+        .try_into()
+        .unwrap();
+    let private_key_1: u256 = 0xf366414c9042ec470a8d92e43418cbf62caabc2bbc67e82bd530958e7fcaa688;
+
+    let signer_address_2: EthAddress = (0xDa09C953823E1F60916E85faD44bF99A7DACa267)
+        .try_into()
+        .unwrap();
+    let private_key_2: u256 = 0xed10b7a09dd0418ab35b752caffb70ee50bbe1fe25a2ebe8bba8363201d48527;
+
+    let mut signer_metadata = array![
+        SignerMetadata { address: signer_address_1, private_key: private_key_1 },
+        SignerMetadata { address: signer_address_2, private_key: private_key_2 }
+    ];
+
+    let wrong_pre_op_count = 1;
+
+    let (root, valid_until, metadata, metadata_proof, signatures, ops) =
+        generate_set_root_params_custom_op_count(
+        mcms_address,
+        contract_address_const::<123123>(),
+        signer_metadata,
+        wrong_pre_op_count,
+        wrong_pre_op_count + 2
+    );
+
+    // first time passes
+    let result = safe_mcms
+        .set_root(root, valid_until, metadata, metadata_proof, signatures.clone());
+
+    match result {
+        Result::Ok(_) => panic!("expect 'wrong pre-operation count'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'wrong pre-operation count', *panic_data.at(0));
+        }
+    }
+}
+// todo: make signer metadata a constant so you don't need to repeat yourself
+
+// todo: do two executes in between and then set the wrong root
+
+// #[test]
+// #[feature("safe_dispatcher")]
+// fn test_wrong_post_op_count() {
+//     let (
+//         mut spy,
+//         mcms_address,
+//         mcms,
+//         safe_mcms,
+//         config,
+//         signer_addresses,
+//         signer_groups,
+//         group_quorums,
+//         group_parents,
+//         clear_root,
+//         root,
+//         valid_until,
+//         metadata,
+//         metadata_proof,
+//         signatures,
+//         ops
+//     ) =
+//         new_setup_2_of_2_mcms();
+
+//     // sign a different set of operations with same signers
+//     let signer_address_1: EthAddress = (0x13Cf92228941e27eBce80634Eba36F992eCB148A)
+//         .try_into()
+//         .unwrap();
+//     let private_key_1: u256 = 0xf366414c9042ec470a8d92e43418cbf62caabc2bbc67e82bd530958e7fcaa688;
+
+//     let signer_address_2: EthAddress = (0xDa09C953823E1F60916E85faD44bF99A7DACa267)
+//         .try_into()
+//         .unwrap();
+//     let private_key_2: u256 = 0xed10b7a09dd0418ab35b752caffb70ee50bbe1fe25a2ebe8bba8363201d48527;
+
+//     let mut signer_metadata = array![
+//         SignerMetadata { address: signer_address_1, private_key: private_key_1 },
+//         SignerMetadata { address: signer_address_2, private_key: private_key_2 }
+//     ];
+
+//     let wrong_pre_op_count = 1;
+
+//     let (root, valid_until, metadata, metadata_proof, signatures, ops) =
+//         generate_set_root_params_custom_op_count(
+//         mcms_address,
+//         contract_address_const::<123123>(),
+//         signer_metadata,
+//         wrong_pre_op_count,
+//         wrong_pre_op_count + 2
+//     );
+
+//     // first time passes
+//     let result = safe_mcms
+//         .set_root(root, valid_until, metadata, metadata_proof, signatures.clone());
+
+//     match result {
+//         Result::Ok(_) => panic!("expect 'wrong pre-operation count'"),
+//         Result::Err(panic_data) => {
+//             assert(*panic_data.at(0) == 'wrong pre-operation count', *panic_data.at(0));
+//         }
+//     }
+// }
 

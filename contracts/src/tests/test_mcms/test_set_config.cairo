@@ -676,7 +676,6 @@ fn test_set_config_signer_addresses_not_sorted() {
     }
 }
 
-
 fn setup_2_of_2_mcms_no_root(
     signer_address_1: EthAddress, signer_address_2: EthAddress
 ) -> (
@@ -693,8 +692,6 @@ fn setup_2_of_2_mcms_no_root(
 ) {
     let (mcms_address, mcms, safe_mcms) = setup();
 
-    // let signer_address_1: EthAddress = u256 { high: 0, low: 1 }.into();
-    // let signer_address_2: EthAddress = u256 { high: 0, low: 2 }.into();
     let signer_addresses: Array<EthAddress> = array![signer_address_1, signer_address_2];
     let signer_groups = array![0, 0];
     let group_quorums = array![
@@ -848,10 +845,6 @@ fn test_set_config_success_dont_clear_root() {
             ]
         );
     let config = mcms.get_config();
-    // assert(config.signers == expected_config.signers, 'signers not equal');
-    // assert(config.group_quorums == expected_config.group_quorums, 'group quorums not equal');
-    // assert(config.group_parents == expected_config.group_parents, 'group parents not equal');
-    // test the members
     assert(config == expected_config, 'config should be same');
 
     // mock the contract state
@@ -873,11 +866,11 @@ fn test_set_config_success_dont_clear_root() {
     let signer_1 = state.get_signer_by_address(signer_address_1);
     let signer_2 = state.get_signer_by_address(signer_address_2);
 
-    println!("expected signer 1 {:?}", expected_signer_1);
-    println!("signer 1 {:?}", signer_1);
+    // println!("expected signer 1 {:?}", expected_signer_1);
+    // println!("signer 1 {:?}", signer_1);
 
-    println!("expected signer 2 {:?}", expected_signer_2);
-    println!("signer 2 {:?}", signer_2);
+    // println!("expected signer 2 {:?}", expected_signer_2);
+    // println!("signer 2 {:?}", signer_2);
 
     assert(signer_1 == expected_signer_1, 'signer 1 not equal');
     assert(signer_2 == expected_signer_2, 'signer 2 not equal');
@@ -921,11 +914,11 @@ fn test_set_config_success_dont_clear_root() {
     let new_signer_1 = state.get_signer_by_address(new_signer_address_1);
     let new_signer_2 = state.get_signer_by_address(new_signer_address_2);
 
-    println!("new expected signer 1 {:?}", new_expected_signer_1);
-    println!("new signer 1 {:?}", new_signer_1);
+    // println!("new expected signer 1 {:?}", new_expected_signer_1);
+    // println!("new signer 1 {:?}", new_signer_1);
 
-    println!("new expected signer 2 {:?}", new_expected_signer_2);
-    println!("new signer 2 {:?}", new_signer_2);
+    // println!("new expected signer 2 {:?}", new_expected_signer_2);
+    // println!("new signer 2 {:?}", new_signer_2);
 
     assert(new_signer_1 == new_expected_signer_1, 'new signer 1 not equal');
     assert(new_signer_2 == new_expected_signer_2, 'new signer 2 not equal');
@@ -1073,4 +1066,3 @@ fn test_set_config_success_and_clear_root() {
     let s_root_metadata = state.s_root_metadata.read();
     assert(expected_s_root_metadata == s_root_metadata, 's_root_metadata not equal');
 }
-

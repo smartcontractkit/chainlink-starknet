@@ -214,7 +214,8 @@ mod ManyChainMultiSig {
     use core::traits::PanicDestruct;
     use super::{
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
-        to_u256, verify_merkle_proof, hash_op, hash_metadata, eip_191_message_hash
+        to_u256, verify_merkle_proof, hash_op, hash_metadata, eip_191_message_hash,
+        MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA
     };
     use starknet::{
         EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress,
@@ -233,14 +234,7 @@ mod ManyChainMultiSig {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     const NUM_GROUPS: u8 = 32;
-
     const MAX_NUM_SIGNERS: u8 = 200;
-    // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP")
-    const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
-        0x08d275622006c4ca82d03f498e90163cafd53c663a48470c3b52ac8bfbd9f52c;
-    // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA")
-    const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
-        0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
 
     #[storage]
     struct Storage {
@@ -338,8 +332,6 @@ mod ManyChainMultiSig {
 
                     let mut group = signer.group;
                     loop {
-                        // todo: may be unnecessary assert
-                        assert(group < NUM_GROUPS, 'invalid group number');
                         let counts = group_vote_counts.get(group.into());
                         group_vote_counts.insert(group.into(), counts + 1);
                         if counts + 1 != self._s_config_group_quorums.read(group) {
@@ -354,7 +346,7 @@ mod ManyChainMultiSig {
                 };
 
             let root_group_quorum = self._s_config_group_quorums.read(0);
-            assert(root_group_quorum > 0, 'missing config');
+            assert(root_group_quorum > 0, 'root group missing quorum');
             assert(group_vote_counts.get(0) >= root_group_quorum, 'insufficient signers');
             assert(
                 valid_until.into() >= starknet::info::get_block_timestamp(),
@@ -398,7 +390,8 @@ mod ManyChainMultiSig {
                         root: root, valid_until: valid_until, op_count: metadata.pre_op_count
                     }
                 );
-
+            // todo: add set root metadata
+            self.s_root_metadata.write(metadata);
             self
                 .emit(
                     Event::NewRoot(
@@ -460,7 +453,7 @@ mod ManyChainMultiSig {
                 );
         }
 
-        // todo: make onlyOwner
+        // todo: test not onlyOwner
         fn set_config(
             ref self: ContractState,
             signer_addresses: Span<EthAddress>,
@@ -502,10 +495,9 @@ mod ManyChainMultiSig {
                 let i = NUM_GROUPS - 1 - j;
                 let group_parent = (*group_parents.at(i.into()));
 
-                assert(
-                    (i == 0 || group_parent < i) && (i != 0 || group_parent == 0),
-                    'group tree malformed'
-                );
+                let group_malformed = (i != 0 && group_parent >= i)
+                    || (i == 0 && group_parent != 0);
+                assert(!group_malformed, 'group tree malformed');
 
                 let disabled = *group_quorums.at(i.into()) == 0;
 
