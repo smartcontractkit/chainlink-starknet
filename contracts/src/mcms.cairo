@@ -453,7 +453,6 @@ mod ManyChainMultiSig {
                 );
         }
 
-        // todo: test not onlyOwner
         fn set_config(
             ref self: ContractState,
             signer_addresses: Span<EthAddress>,

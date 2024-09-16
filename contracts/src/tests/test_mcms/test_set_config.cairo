@@ -58,6 +58,37 @@ fn setup() -> (ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSig
 
 #[test]
 #[feature("safe_dispatcher")]
+fn test_not_owner() {
+    let (_, _, mcms_safe) = setup();
+
+    let signer_addresses = array![];
+    let signer_groups = array![];
+    let group_quorums = array![];
+    let group_parents = array![];
+    let clear_root = false;
+
+    // so that caller is not owner
+    start_cheat_caller_address_global(contract_address_const::<123123>());
+
+    let result = mcms_safe
+        .set_config(
+            signer_addresses.span(),
+            signer_groups.span(),
+            group_quorums.span(),
+            group_parents.span(),
+            clear_root
+        );
+
+    match result {
+        Result::Ok(_) => panic!("expect 'Caller is not the owner'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'Caller is not the owner', *panic_data.at(0));
+        }
+    }
+}
+
+#[test]
+#[feature("safe_dispatcher")]
 fn test_set_config_out_of_bound_signers() {
     // 1. test if len(signer_address) = 0 => revert 
     let (_, _, mcms_safe) = setup();
