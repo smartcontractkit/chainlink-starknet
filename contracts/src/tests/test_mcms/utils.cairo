@@ -184,7 +184,9 @@ fn merkle_root(leafs: Array<u256>) -> (u256, Span<u256>, Span<Span<u256>>) {
 fn set_root_args(
     mcms_address: ContractAddress,
     target_address: ContractAddress,
-    mut signers_metadata: Array<SignerMetadata>
+    mut signers_metadata: Array<SignerMetadata>,
+    pre_op_count: u64,
+    post_op_count: u64
 ) -> (u256, u32, RootMetadata, Span<u256>, Array<Signature>, Array<Op>, Span<Span<u256>>) {
     let mock_chain_id = 732;
 
@@ -215,8 +217,8 @@ fn set_root_args(
     let metadata = RootMetadata {
         chain_id: mock_chain_id.into(),
         multisig: mcms_address,
-        pre_op_count: 0,
-        post_op_count: 2,
+        pre_op_count: pre_op_count,
+        post_op_count: post_op_count,
         override_previous_root: false,
     };
     let valid_until = 9;
@@ -428,7 +430,7 @@ fn setup_mcms_deploy_set_config_and_set_root() -> (
     let (target_address, _) = mock_target_contract.deploy(@calldata).unwrap();
 
     let (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof) = set_root_args(
-        mcms_address, target_address, signer_metadata
+        mcms_address, target_address, signer_metadata, 0, 2
     );
 
     // mock chain id & timestamp
