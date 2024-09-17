@@ -12,7 +12,6 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
 
 #[starknet::interface]
 trait IManyChainMultiSig<TContractState> {
-    // todo: check length of byte array is 32
     fn set_root(
         ref self: TContractState,
         root: u256,
@@ -23,7 +22,6 @@ trait IManyChainMultiSig<TContractState> {
         signatures: Array<Signature>
     );
     fn execute(ref self: TContractState, op: Op, proof: Span<u256>);
-    // // todo: check length of group_quorums and group_parents
     fn set_config(
         ref self: TContractState,
         signer_addresses: Span<EthAddress>,

@@ -51,25 +51,24 @@ use snforge_std::{
 // https://www.npmjs.com/package/merkletreejs
 // the proof does not include the root or the leaf
 
-// metadata should be the last leaf
-// will only work with an even number of ops
-fn merkle_root(leafs: Array<u256>) -> (u256, Span<u256>) {
+// simplified logic will only work when len(ops) = 2
+// metadata nodes is the last leaf so that len(leafs) = 3
+fn merkle_root(leafs: Array<u256>) -> (u256, Span<u256>, Span<u256>, Span<u256>) {
     let mut level: Array<u256> = ArrayTrait::new();
-    let odd = leafs.len() % 2 == 1;
-    let mut metadata: Option<u256> = Option::None;
 
-    if odd {
-        metadata = Option::Some(*leafs.at(leafs.len() - 1));
-        let mut i = 0;
+    let metadata = *leafs.at(leafs.len() - 1);
+    let mut i = 0;
 
-        // we assume metadata is last leaf so we exclude for now
-        while i < leafs.len() - 1 {
-            level.append(*leafs.at(i));
-            i += 1;
-        }
-    }
+    // we assume metadata is last leaf so we exclude for now
+    while i < leafs.len() - 1 {
+        level.append(*leafs.at(i));
+        i += 1;
+    };
 
-    let mut level = level.span();
+    let mut level = level.span(); // [leaf1, leaf2]
+
+    let proof1 = array![*level.at(1), metadata];
+    let proof2 = array![*level.at(0), metadata];
 
     // level length is always even (except when it's 1)
     while level
@@ -87,12 +86,9 @@ fn merkle_root(leafs: Array<u256>) -> (u256, Span<u256>) {
     let mut metadata_proof = *level.at(0);
 
     // based on merkletree.js lib we use, the odd leaf out is not hashed until the very end
-    let root = match metadata {
-        Option::Some(m) => hash_pair(*level.at(0), m),
-        Option::None => (*level.at(0)),
-    };
+    let root = hash_pair(*level.at(0), metadata);
 
-    (root, array![metadata_proof].span())
+    (root, array![metadata_proof].span(), proof1.span(), proof2.span())
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -150,7 +146,7 @@ fn generate_set_root_params_custom_op_count(
     let metadata_hash = hash_metadata(metadata, valid_until);
 
     // create merkle tree
-    let (root, metadata_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
+    let (root, metadata_proof, _, _) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
     let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
     let message_hash = eip_191_message_hash(encoded_root.keccak());
@@ -221,7 +217,7 @@ fn generate_set_root_params_1(
     let metadata_hash = hash_metadata(metadata, valid_until);
 
     // create merkle tree
-    let (root, metadata_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
+    let (root, metadata_proof, _, _) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
     let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
     let message_hash = eip_191_message_hash(encoded_root.keccak());
@@ -424,7 +420,7 @@ fn new_setup_2_of_2_mcms_wrong_multisig() -> (
     let metadata_hash = hash_metadata(metadata, valid_until);
 
     // create merkle tree
-    let (root, metadata_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
+    let (root, metadata_proof, _, _) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
     let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
     let message_hash = eip_191_message_hash(encoded_root.keccak());
@@ -997,4 +993,5 @@ fn test_wrong_pre_op_count() {
 //         }
 //     }
 // }
+
 
