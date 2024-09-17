@@ -14,7 +14,6 @@ use chainlink::mcms::{
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
 };
-
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global, start_cheat_caller_address,
     stop_cheat_caller_address, stop_cheat_caller_address_global, spy_events,
@@ -23,43 +22,14 @@ use snforge_std::{
      start_cheat_chain_id,
     cheatcodes::{events::{EventSpy}}
 };
-
-// set_config tests
-
-// 1. test if lena(signer_address) = 0 => revert 
-// 2. test if lena(signer_address) > MAX_NUM_SIGNERS => revert
-
-// 3. test if signer addresses and signer groups not same size
-
-// 4. test if group_quorum and group_parents not same size
-
-// 6. test if one of signer_group #'s is out of bounds NUM_GROUPS
-
-// 7. test if group_parents[i] is greater than or equal to i (when not 0) there is revert
-// 8. test if i is 0 and group_parents[i] != 0 and revert
-
-// 9. test if there is a signer in a group where group_quorum[i] == 0 => revert
-// 10. test if there are not enough signers to meet a quorum => revert
-
-// 11. test if signer addresses are not in ascending order
-// 12. successful => test without clearing root. test the state of storage variables and that event was emitted
-
-fn setup() -> (ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSigSafeDispatcher) {
-    let calldata = array![];
-
-    let (mcms_address, _) = declare("ManyChainMultiSig").unwrap().deploy(@calldata).unwrap();
-
-    (
-        mcms_address,
-        IManyChainMultiSigDispatcher { contract_address: mcms_address },
-        IManyChainMultiSigSafeDispatcher { contract_address: mcms_address }
-    )
-}
+use chainlink::tests::test_mcms::utils::{
+    setup_mcms_deploy, setup_mcms_deploy_and_set_config_2_of_2
+};
 
 #[test]
 #[feature("safe_dispatcher")]
 fn test_not_owner() {
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![];
     let signer_groups = array![];
@@ -91,7 +61,7 @@ fn test_not_owner() {
 #[feature("safe_dispatcher")]
 fn test_set_config_out_of_bound_signers() {
     // 1. test if len(signer_address) = 0 => revert 
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![];
     let signer_groups = array![];
@@ -148,7 +118,7 @@ fn test_set_config_out_of_bound_signers() {
 #[feature("safe_dispatcher")]
 fn test_set_config_signer_groups_len_mismatch() {
     // 3. test if signer addresses and signer groups not same size
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![];
@@ -177,7 +147,7 @@ fn test_set_config_signer_groups_len_mismatch() {
 #[feature("safe_dispatcher")]
 fn test_set_config_group_quorums_parents_mismatch() {
     // 4. test if group_quorum and group_parents not length 32
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
@@ -232,7 +202,7 @@ fn test_set_config_group_quorums_parents_mismatch() {
 #[feature("safe_dispatcher")]
 fn test_set_config_signers_group_out_of_bounds() {
     // 6. test if one of signer_group #'s is out of bounds NUM_GROUPS
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![33];
@@ -274,7 +244,7 @@ fn test_set_config_signers_group_out_of_bounds() {
 #[feature("safe_dispatcher")]
 fn test_set_config_group_tree_malformed() {
     // 7. test if group_parents[i] is greater than or equal to i (when not 0) there is revert
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
@@ -423,7 +393,7 @@ fn test_set_config_group_tree_malformed() {
 #[feature("safe_dispatcher")]
 fn test_set_config_signer_in_disabled_group() {
     // 9. test if there is a signer in a group where group_quorum[i] == 0 => revert
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let mut signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
@@ -518,7 +488,7 @@ fn test_set_config_signer_in_disabled_group() {
 #[test]
 #[feature("safe_dispatcher")]
 fn test_set_config_quorum_impossible() {
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let mut signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
@@ -613,7 +583,7 @@ fn test_set_config_quorum_impossible() {
 #[test]
 #[feature("safe_dispatcher")]
 fn test_set_config_signer_addresses_not_sorted() {
-    let (_, _, mcms_safe) = setup();
+    let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let mut signer_addresses: Array<EthAddress> = array![
         // 0x1 address
@@ -707,121 +677,6 @@ fn test_set_config_signer_addresses_not_sorted() {
     }
 }
 
-fn setup_2_of_2_mcms_no_root(
-    signer_address_1: EthAddress, signer_address_2: EthAddress
-) -> (
-    EventSpy,
-    ContractAddress,
-    IManyChainMultiSigDispatcher,
-    IManyChainMultiSigSafeDispatcher,
-    Config,
-    Array<EthAddress>,
-    Array<u8>,
-    Array<u8>,
-    Array<u8>,
-    bool
-) {
-    let (mcms_address, mcms, safe_mcms) = setup();
-
-    let signer_addresses: Array<EthAddress> = array![signer_address_1, signer_address_2];
-    let signer_groups = array![0, 0];
-    let group_quorums = array![
-        2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let clear_root = false;
-
-    let mut spy = spy_events();
-
-    mcms
-        .set_config(
-            signer_addresses.span(),
-            signer_groups.span(),
-            group_quorums.span(),
-            group_parents.span(),
-            clear_root
-        );
-
-    let config = mcms.get_config();
-
-    (
-        spy,
-        mcms_address,
-        mcms,
-        safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root
-    )
-}
-
 // test success, root not cleared, event emitted
 // 12. successful => test without clearing root. test the state of storage variables and that event was emitted
 //
@@ -849,7 +704,7 @@ fn test_set_config_success_dont_clear_root() {
         group_parents,
         clear_root
     ) =
-        setup_2_of_2_mcms_no_root(
+        setup_mcms_deploy_and_set_config_2_of_2(
         signer_address_1, signer_address_2
     );
 
@@ -897,12 +752,6 @@ fn test_set_config_success_dont_clear_root() {
     let signer_1 = state.get_signer_by_address(signer_address_1);
     let signer_2 = state.get_signer_by_address(signer_address_2);
 
-    // println!("expected signer 1 {:?}", expected_signer_1);
-    // println!("signer 1 {:?}", signer_1);
-
-    // println!("expected signer 2 {:?}", expected_signer_2);
-    // println!("signer 2 {:?}", signer_2);
-
     assert(signer_1 == expected_signer_1, 'signer 1 not equal');
     assert(signer_2 == expected_signer_2, 'signer 2 not equal');
 
@@ -944,12 +793,6 @@ fn test_set_config_success_dont_clear_root() {
 
     let new_signer_1 = state.get_signer_by_address(new_signer_address_1);
     let new_signer_2 = state.get_signer_by_address(new_signer_address_2);
-
-    // println!("new expected signer 1 {:?}", new_expected_signer_1);
-    // println!("new signer 1 {:?}", new_signer_1);
-
-    // println!("new expected signer 2 {:?}", new_expected_signer_2);
-    // println!("new signer 2 {:?}", new_signer_2);
 
     assert(new_signer_1 == new_expected_signer_1, 'new signer 1 not equal');
     assert(new_signer_2 == new_expected_signer_2, 'new signer 2 not equal');

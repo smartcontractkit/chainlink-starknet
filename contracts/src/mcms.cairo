@@ -388,7 +388,6 @@ mod ManyChainMultiSig {
                         root: root, valid_until: valid_until, op_count: metadata.pre_op_count
                     }
                 );
-            // todo: add set root metadata
             self.s_root_metadata.write(metadata);
             self
                 .emit(
@@ -438,7 +437,6 @@ mod ManyChainMultiSig {
             new_expiring_root_and_op_count.op_count += 1;
 
             self.s_expiring_root_and_op_count.write(new_expiring_root_and_op_count);
-            // todo: execute
             self._execute(op.to, op.selector, op.data);
 
             self
