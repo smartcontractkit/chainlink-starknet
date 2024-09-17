@@ -735,12 +735,6 @@ fn test_wrong_pre_op_count() {
         }
     }
 }
-// todo: make signer metadata a constant so you don't need to repeat yourself
-
-// todo: do two executes in between and then set the wrong root
-
-// pre - 2
-// post - 1
 
 #[test]
 #[feature("safe_dispatcher")]

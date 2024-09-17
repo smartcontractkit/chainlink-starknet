@@ -52,8 +52,6 @@ struct RootMetadata {
     override_previous_root: bool
 }
 
-// todo: maybe use copy
-// todo: figure out how this works off-chain with MCMS since we have a new selector field here
 #[derive(Copy, Drop, Serde)]
 struct Op {
     chain_id: u256,
@@ -144,7 +142,6 @@ const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
 const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
     0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
 
-// todo: make sure this is the right way to encode the struct
 fn hash_metadata(metadata: RootMetadata, valid_until: u32) -> u256 {
     let encoded_metadata: Bytes = BytesTrait::new_empty()
         .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA)
