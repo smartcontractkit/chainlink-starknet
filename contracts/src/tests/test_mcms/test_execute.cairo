@@ -210,13 +210,12 @@ fn test_wrong_multisig_address() {
     op1.multisig = contract_address_const::<119922>();
     let op1_proof = *ops_proof.at(0);
 
-    start_cheat_chain_id_global(1231);
     let result = safe_mcms.execute(op1, op1_proof);
 
     match result {
-        Result::Ok(_) => panic!("expect 'wrong chain id'"),
+        Result::Ok(_) => panic!("expect 'wrong multisig address'"),
         Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'wrong chain id', *panic_data.at(0));
+            assert(*panic_data.at(0) == 'wrong multisig address', *panic_data.at(0));
         }
     }
 }

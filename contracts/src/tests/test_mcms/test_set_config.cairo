@@ -23,7 +23,7 @@ use snforge_std::{
     cheatcodes::{events::{EventSpy}}
 };
 use chainlink::tests::test_mcms::utils::{
-    setup_mcms_deploy, setup_mcms_deploy_and_set_config_2_of_2
+    setup_mcms_deploy, setup_mcms_deploy_and_set_config_2_of_2, ZERO_ARRAY, fill_array
 };
 
 #[test]
@@ -165,21 +165,15 @@ fn test_set_config_group_quorums_parents_mismatch() {
         );
 
     match result {
-        Result::Ok(_) => panic!("expect 'group quorums/parents mismatch'"),
+        Result::Ok(_) => panic!("expect 'wrong group quorums/parents len'"),
         Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'group quorums/parents mismatch', *panic_data.at(0));
+            assert(*panic_data.at(0) == 'wrong group quorums/parents len', *panic_data.at(0));
         }
     }
 
     // 5. test if group_quorum and group_parents not equal in length
 
-    // todo: replace with [0_u8; 32] in cairo 2.7.0
-    let mut group_quorums = ArrayTrait::new();
-    let mut i = 0;
-    while i < 32_usize {
-        group_quorums.append(0);
-        i += 1;
-    };
+    let mut group_quorums = ZERO_ARRAY();
 
     let result = mcms_safe
         .set_config(
@@ -191,9 +185,9 @@ fn test_set_config_group_quorums_parents_mismatch() {
         );
 
     match result {
-        Result::Ok(_) => panic!("expect 'group quorums/parents mismatch'"),
+        Result::Ok(_) => panic!("expect 'wrong group quorums/parents len'"),
         Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'group quorums/parents mismatch', *panic_data.at(0));
+            assert(*panic_data.at(0) == 'wrong group quorums/parents len', *panic_data.at(0));
         }
     }
 }
@@ -249,75 +243,8 @@ fn test_set_config_group_tree_malformed() {
     let signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
 
-    let mut group_quorums = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-
-    let mut group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        31
-    ];
+    let mut group_quorums = ZERO_ARRAY();
+    let mut group_parents = fill_array(array![(31, 31)]);
 
     let clear_root = false;
 
@@ -397,74 +324,8 @@ fn test_set_config_signer_in_disabled_group() {
 
     let mut signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
-    let mut group_quorums = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let mut group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
+    let mut group_quorums = ZERO_ARRAY();
+    let mut group_parents = ZERO_ARRAY();
     let clear_root = false;
 
     let result = mcms_safe
@@ -492,74 +353,8 @@ fn test_set_config_quorum_impossible() {
 
     let mut signer_addresses = array![EthAddressZeroable::zero()];
     let signer_groups = array![0];
-    let mut group_quorums = array![
-        2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let mut group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
+    let mut group_quorums = fill_array(array![(0, 2)]);
+    let mut group_parents = ZERO_ARRAY();
     let clear_root = false;
 
     let result = mcms_safe
@@ -590,74 +385,8 @@ fn test_set_config_signer_addresses_not_sorted() {
         u256 { high: 0, low: 1 }.into(), EthAddressZeroable::zero()
     ];
     let signer_groups = array![0, 0];
-    let mut group_quorums = array![
-        2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let mut group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
+    let mut group_quorums = fill_array(array![(0, 2)]);
+    let mut group_parents = ZERO_ARRAY();
     let clear_root = false;
 
     let result = mcms_safe
@@ -842,74 +571,8 @@ fn test_set_config_success_and_clear_root() {
     let signer_address_2: EthAddress = u256 { high: 0, low: 2 }.into();
     let signer_addresses: Array<EthAddress> = array![signer_address_1, signer_address_2];
     let signer_groups = array![0, 0];
-    let group_quorums = array![
-        2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
+    let group_quorums = fill_array(array![(0, 2)]);
+    let group_parents = ZERO_ARRAY();
     let clear_root = true;
 
     state

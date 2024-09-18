@@ -466,7 +466,7 @@ mod ManyChainMultiSig {
             assert(
                 group_quorums.len() == NUM_GROUPS.into()
                     && group_quorums.len() == group_parents.len(),
-                'group quorums/parents mismatch'
+                'wrong group quorums/parents len'
             );
 
             let mut group_children_counts: Felt252Dict<u8> = Default::default();

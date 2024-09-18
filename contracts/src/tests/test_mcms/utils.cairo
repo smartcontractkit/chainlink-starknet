@@ -41,6 +41,44 @@ use snforge_std::{
 // setup helpers
 //
 
+// returns a length 32 array
+// give (index, value) tuples to fill array with
+// 
+// ex: fill_array(array!(0, 1)) will fill the 0th index with value 1
+// 
+// assumes that values array is sorted in ascending order of the index
+fn fill_array(mut values: Array<(u32, u8)>) -> Array<u8> {
+    let mut result: Array<u8> = ArrayTrait::new();
+
+    let mut maybe_next = values.pop_front();
+
+    let mut i = 0;
+    while i < 32_u32 {
+        match maybe_next {
+            Option::Some(next) => {
+                let (next_index, next_value) = next;
+
+                if i == next_index {
+                    result.append(next_value);
+                    maybe_next = values.pop_front();
+                } else {
+                    result.append(0);
+                }
+            },
+            Option::None(_) => { result.append(0); },
+        }
+
+        i += 1;
+    };
+
+    result
+}
+
+fn ZERO_ARRAY() -> Array<u8> {
+    // todo: replace with [0_u8; 32] in cairo 2.7.0+
+    fill_array(array![])
+}
+
 #[derive(Copy, Drop, Serde)]
 struct SignerMetadata {
     address: EthAddress,
@@ -289,74 +327,9 @@ fn setup_mcms_deploy_and_set_config_2_of_2(
 
     let signer_addresses: Array<EthAddress> = array![signer_address_1, signer_address_2];
     let signer_groups = array![0, 0];
-    let group_quorums = array![
-        2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
-    let group_parents = array![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ];
+    let group_quorums = fill_array(array![(0, 2)]);
+    let group_parents = ZERO_ARRAY();
+
     let clear_root = false;
 
     let mut spy = spy_events();
