@@ -59,6 +59,7 @@ version = "0.1.0"
 dependencies = [
  "alexandria_bytes",
  "alexandria_encoding",
+ "alexandria_math",
  "openzeppelin",
  "snforge_std",
 ]
