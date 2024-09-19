@@ -7,4 +7,3 @@ fn split_felt(felt: felt252) -> (u128, u128) {
         U128sFromFelt252Result::Wide((high, low)) => (high, low),
     }
 }
-

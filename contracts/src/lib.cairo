@@ -8,6 +8,7 @@ mod emergency;
 mod multisig;
 mod token;
 mod access_control;
+mod mcms;
 
 #[cfg(test)]
 mod tests;
