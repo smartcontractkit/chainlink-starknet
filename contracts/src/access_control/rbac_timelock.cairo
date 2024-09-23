@@ -37,8 +37,8 @@ trait IRBACTimelock<TContractState> {
     );
     fn cancel(ref self: TContractState, id: u256);
     fn execute_batch(ref self: TContractState, calls: Span<Call>, predecessor: u256, salt: u256);
-    fn update_delay(ref self: TContractState, new_delay: u256);
     fn bypasser_execute_batch(ref self: TContractState, calls: Span<Call>);
+    fn update_delay(ref self: TContractState, new_delay: u256);
     fn block_function_selector(ref self: TContractState, selector: felt252);
     fn unblock_function_selector(ref self: TContractState, selector: felt252);
     fn get_blocked_function_selector_count(self: @TContractState) -> u256;
@@ -219,15 +219,14 @@ mod RBACTimelock {
         ref self: ContractState,
         min_delay: u256,
         admin: ContractAddress,
-        proposers: Span<ContractAddress>,
-        executors: Span<ContractAddress>,
-        cancellers: Span<ContractAddress>,
-        bypassers: Span<ContractAddress>
+        proposers: Array<ContractAddress>,
+        executors: Array<ContractAddress>,
+        cancellers: Array<ContractAddress>,
+        bypassers: Array<ContractAddress>
     ) {
         self.access_control.initializer();
         self.erc1155_receiver.initializer();
         self.erc721_receiver.initializer();
-
         self.access_control._set_role_admin(ADMIN_ROLE, ADMIN_ROLE);
         self.access_control._set_role_admin(PROPOSER_ROLE, ADMIN_ROLE);
         self.access_control._set_role_admin(EXECUTOR_ROLE, ADMIN_ROLE);
@@ -352,20 +351,6 @@ mod RBACTimelock {
             self._after_call(id);
         }
 
-        fn update_delay(ref self: ContractState, new_delay: u256) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
-
-            self
-                .emit(
-                    Event::MinDelayChange(
-                        MinDelayChange {
-                            old_duration: self._min_delay.read(), new_duration: new_delay,
-                        }
-                    )
-                );
-            self._min_delay.write(new_delay);
-        }
-
         fn bypasser_execute_batch(ref self: ContractState, calls: Span<Call>) {
             self._assert_only_role_or_admin_role(BYPASSER_ROLE);
 
@@ -389,6 +374,24 @@ mod RBACTimelock {
                     i += 1;
                 }
         }
+
+        fn update_delay(ref self: ContractState, new_delay: u256) {
+            self.access_control.assert_only_role(ADMIN_ROLE);
+
+            self
+                .emit(
+                    Event::MinDelayChange(
+                        MinDelayChange {
+                            old_duration: self._min_delay.read(), new_duration: new_delay,
+                        }
+                    )
+                );
+            self._min_delay.write(new_delay);
+        }
+
+        //
+        // ONLY ADMIN
+        //
 
         fn block_function_selector(ref self: ContractState, selector: felt252) {
             self.access_control.assert_only_role(ADMIN_ROLE);
@@ -416,6 +419,10 @@ mod RBACTimelock {
                     );
             }
         }
+
+        //
+        // VIEW ONLY
+        //
 
         fn get_blocked_function_selector_count(self: @ContractState) -> u256 {
             self.set.length(BLOCKED_FUNCTIONS)
