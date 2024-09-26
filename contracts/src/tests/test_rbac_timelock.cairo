@@ -26,31 +26,6 @@ use snforge_std::{
     declare, ContractClassTrait, spy_events, EventSpyAssertionsTrait,
     start_cheat_caller_address_global, start_cheat_block_timestamp_global
 };
-// 1. test supports access controller, erc1155 receiver, and erc721 receiver
-// 2. test has_roles after constructor is called + min delay + event emitted
-// 3. test schedule_batch, cancel, execute_batch, update_delay, bypasser_execute_batch , block, unblock with wrong roles
-// 4. test schedule with too small of a delay
-// 5. test schedule with blocked selector
-// 6. test schedule_batch + get operation is true
-
-// 7. test can't cancel operation that isn't scheduled 
-// 8. test can't cancel operation that was already executed
-// test cancel is successful
-
-// 9. test execute call that isn't ready yet
-// 10. test execute call which predecessor is not executed
-// 11. test execute call successful + assert it's done
-
-// 12. test update delay is true. 
-// 13. test scheduled batch and then updated delay changes the return of is_operation_ready
-// 14. test bypasser execute batch works 
-// 15. test bypasser execute batch fails
-// 16. test block function selector once and then twice
-// 17. test unblock fx selector unsuccessful and then successful
-// 18. test get block fx selector count
-// 19. test get blocked fx selector index throughout a bunch of add and removals
-// 20. test is_operation, pending, ready, done throughout life cycle of id
-// 21. test block and unblock the max felt size
 
 fn deploy_args() -> (
     u256, ContractAddress, ContractAddress, ContractAddress, ContractAddress, ContractAddress
@@ -161,7 +136,7 @@ fn test_deploy() {
 #[test]
 #[feature("safe_dispatcher")]
 fn test_funcs_fail_wrong_role() {
-    let (min_delay, _, _, _, _, _) = deploy_args();
+    let (_, _, _, _, _, _) = deploy_args();
     let (_, _, safe_timelock) = setup_timelock();
 
     start_cheat_caller_address_global(contract_address_const::<123123>());
@@ -185,12 +160,14 @@ fn expect_missing_role(result: Result<(), Array<felt252>>) {
     }
 }
 
-// schedule
-
-// 4. test schedule with too small of a delay [x]
-// 5. test schedule with blocked selector [x]
-// 6. test schedule_batch + get operation is true [x]
-// 7 . test schedule fails when id scheduled already [x]
+fn expect_operation_not_ready(result: Result<(), Array<felt252>>) {
+    match result {
+        Result::Ok(_) => panic!("expect 'rbact: operation not ready'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'rbact: operation not ready', *panic_data.at(0));
+        }
+    }
+}
 
 #[test]
 #[feature("safe_dispatcher")]
@@ -332,14 +309,27 @@ fn test_schedule_blocked() {
     }
 }
 
-// 7. test can't cancel operation that isn't scheduled [x]
-// 8. test can't cancel operation that was already executed
-// test cancel is successful
 #[test]
 #[feature("safe_dispatcher")]
 fn test_cancel_id_not_pending() {
-    let (_, _, _, _, canceller, _) = deploy_args();
-    let (_, _, safe_timelock) = setup_timelock();
+    let (target_address, _) = setup_mock_target();
+    let (min_delay, _, proposer, executor, canceller, _) = deploy_args();
+    let (_, timelock, safe_timelock) = setup_timelock();
+
+    let mock_time = 3;
+    let mock_ready_time = mock_time + min_delay.try_into().unwrap();
+
+    let call_1 = Call {
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+    };
+
+    let call_2 = Call {
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+    };
+
+    let calls = array![call_1, call_2].span();
+    let predecessor = 0;
+    let salt = 1;
 
     start_cheat_caller_address_global(canceller);
 
@@ -352,9 +342,32 @@ fn test_cancel_id_not_pending() {
             assert(*panic_data.at(0) == 'rbact: cant cancel operation', *panic_data.at(0));
         }
     }
-// executed id
 
-// todo: add case where it was already executed here
+    // test that after a batch has been executed, you can't cancel it
+
+    let id = timelock.hash_operation_batch(calls, predecessor, salt);
+
+    start_cheat_caller_address_global(proposer);
+    start_cheat_block_timestamp_global(mock_time);
+
+    timelock.schedule_batch(calls, predecessor, salt, min_delay);
+
+    assert(timelock.is_operation_pending(id), 'id is now pending');
+
+    start_cheat_caller_address_global(executor);
+    start_cheat_block_timestamp_global(mock_ready_time);
+
+    timelock.execute_batch(calls, predecessor, salt);
+
+    start_cheat_caller_address_global(canceller);
+
+    let result = safe_timelock.cancel(id);
+    match result {
+        Result::Ok(_) => panic!("expect 'rbact: cant cancel operation'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'rbact: cant cancel operation', *panic_data.at(0));
+        }
+    }
 }
 
 #[test]
@@ -399,39 +412,33 @@ fn test_cancel_success() {
     assert(timelock.get_timestamp(id) == 0, 'matches 0');
 }
 
-// 9. test execute call that isn't ready yet [x]
-// 10. test execute call which predecessor is not executed [x]
-// 11. test execute call successful + assert it's done
-// 12. test the invocation fails for some reason [x]
-
 #[test]
 #[feature("safe_dispatcher")]
 fn test_execute_op_not_ready() {
+    let (target_address, _) = setup_mock_target();
     let (min_delay, _, proposer, executor, _, _) = deploy_args();
-    let (timelock_address, timelock, safe_timelock) = setup_timelock();
+    let (_, timelock, safe_timelock) = setup_timelock();
 
     let mock_time = 3;
+    let mock_ready_time = mock_time + min_delay.try_into().unwrap();
     start_cheat_block_timestamp_global(mock_time);
 
-    let call = Call {
-        target: contract_address_const::<100>(),
-        selector: selector!("doesnt_exist"),
-        data: array![0x123].span()
+    let call_1 = Call {
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
     };
-    let calls = array![call].span();
+
+    let call_2 = Call {
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+    };
+
+    let calls = array![call_1, call_2].span();
     let predecessor = 0;
     let salt = 1;
 
     start_cheat_caller_address_global(executor);
 
     // test not scheduled
-    let result = safe_timelock.execute_batch(calls, predecessor, salt);
-    match result {
-        Result::Ok(_) => panic!("expect 'rbact: operation not ready'"),
-        Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'rbact: operation not ready', *panic_data.at(0));
-        }
-    }
+    expect_operation_not_ready(safe_timelock.execute_batch(calls, predecessor, salt));
 
     // test not ready
 
@@ -439,27 +446,23 @@ fn test_execute_op_not_ready() {
     start_cheat_caller_address_global(proposer);
     timelock.schedule_batch(calls, predecessor, salt, min_delay);
 
-    // then, execute
-    start_cheat_block_timestamp_global(
-        mock_time + min_delay.try_into().unwrap() - 1
-    ); // still not ready
+    // then, execute at a block that is NOT ready
+    start_cheat_block_timestamp_global(mock_ready_time - 1);
     start_cheat_caller_address_global(executor);
-    let result = safe_timelock.execute_batch(calls, predecessor, salt);
-    match result {
-        Result::Ok(_) => panic!("expect 'rbact: operation not ready'"),
-        Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'rbact: operation not ready', *panic_data.at(0));
-        }
-    }
-// todo:
-// test executed
+    expect_operation_not_ready(safe_timelock.execute_batch(calls, predecessor, salt));
+
+    // execute, then test it can't be executed after it's done already
+    start_cheat_block_timestamp_global(mock_ready_time);
+    timelock.execute_batch(calls, predecessor, salt);
+
+    expect_operation_not_ready(safe_timelock.execute_batch(calls, predecessor, salt));
 }
 
 #[test]
 #[feature("safe_dispatcher")]
 fn test_execute_predecessor_invalid() {
     let (min_delay, _, proposer, executor, _, _) = deploy_args();
-    let (timelock_address, timelock, safe_timelock) = setup_timelock();
+    let (_, timelock, safe_timelock) = setup_timelock();
 
     let mock_time = 3;
     let mock_ready_time = mock_time + min_delay.try_into().unwrap();
@@ -487,6 +490,7 @@ fn test_execute_predecessor_invalid() {
         }
     }
 }
+
 // snforge does not treat contract invocation failures as a panic (yet)
 // #[test]
 // #[feature("safe_dispatcher")]
@@ -584,11 +588,9 @@ fn test_execute_successful() {
     let (actual_value, actual_toggle) = target.read();
     assert(actual_value == 0x56162, 'value equal');
     assert(actual_toggle, 'toggle true');
+
+    assert(timelock.is_operation_done(id), 'operation is done');
 }
-
-
-// 12. test update delay is true. 
-// 13. test scheduled batch and then updated delay changes the return of is_operation_ready *not
 
 #[test]
 fn test_update_delay_success() {
@@ -651,14 +653,213 @@ fn test_update_delay_no_affect_op_readiness() {
     assert(timelock.is_operation_ready(id), 'op still ready');
 }
 
-// 14. test bypasser execute batch works 
-// 15. test bypasser execute batch fails
-// 16. test block function selector once and then twice
-// 17. test unblock fx selector unsuccessful and then successful
-// 18. test get block fx selector count
-// 19. test get blocked fx selector index throughout a bunch of add and removals
-// 20. test is_operation, pending, ready, done throughout life cycle of id
-// 21. test block and unblock the max felt size
+fn test_bypasser_execute_success() {
+    let (target_address, target) = setup_mock_target();
+    let (_, _, _, _, _, bypasser) = deploy_args();
+    let (timelock_address, timelock, _) = setup_timelock();
 
-fn test_bypasser_execute_success() {}
+    let mock_time = 3;
+
+    let call_1 = Call {
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+    };
+
+    let call_2 = Call {
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+    };
+
+    let calls = array![call_1, call_2].span();
+
+    start_cheat_caller_address_global(bypasser);
+    start_cheat_block_timestamp_global(mock_time);
+
+    let mut spy = spy_events();
+
+    timelock.bypasser_execute_batch(calls);
+
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    timelock_address,
+                    RBACTimelock::Event::BypasserCallExecuted(
+                        RBACTimelock::BypasserCallExecuted {
+                            index: 0,
+                            target: call_1.target,
+                            selector: call_1.selector,
+                            data: call_1.data
+                        }
+                    )
+                ),
+                (
+                    timelock_address,
+                    RBACTimelock::Event::BypasserCallExecuted(
+                        RBACTimelock::BypasserCallExecuted {
+                            index: 1,
+                            target: call_2.target,
+                            selector: call_2.selector,
+                            data: call_2.data
+                        }
+                    )
+                )
+            ]
+        );
+
+    let (actual_value, actual_toggle) = target.read();
+    assert(actual_value == 0x56162, 'value equal');
+    assert(actual_toggle, 'toggle true');
+}
+
+#[test]
+fn test_unblock_selector() {
+    let (_, admin, _, _, _, _) = deploy_args();
+    let (timelock_address, timelock, _) = setup_timelock();
+
+    start_cheat_caller_address_global(admin);
+
+    let mut spy = spy_events();
+
+    let selector = 'test';
+
+    // unblock should do nothing
+    timelock.unblock_function_selector(selector);
+
+    spy
+        .assert_not_emitted(
+            @array![
+                (
+                    timelock_address,
+                    RBACTimelock::Event::FunctionSelectorUnblocked(
+                        RBACTimelock::FunctionSelectorUnblocked { selector: selector, }
+                    )
+                )
+            ]
+        );
+
+    assert(timelock.get_blocked_function_selector_count() == 0, 'count is 0');
+
+    timelock.block_function_selector(selector);
+
+    let mut spy = spy_events();
+
+    // unblock should succeed
+    timelock.unblock_function_selector(selector);
+
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    timelock_address,
+                    RBACTimelock::Event::FunctionSelectorUnblocked(
+                        RBACTimelock::FunctionSelectorUnblocked { selector: selector, }
+                    )
+                )
+            ]
+        );
+
+    assert(timelock.get_blocked_function_selector_count() == 0, 'count is 0');
+}
+
+#[test]
+fn test_blocked_selector_indexes() {
+    let (_, admin, _, _, _, _) = deploy_args();
+    let (_, timelock, _) = setup_timelock();
+
+    start_cheat_caller_address_global(admin);
+
+    let selector1: felt252 = 'test';
+    let selector2: felt252 = 'brick';
+    let selector3: felt252 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+
+    timelock.block_function_selector(selector1);
+    timelock.block_function_selector(selector2);
+    timelock.block_function_selector(selector3);
+
+    // [selector1, selector2, selector3]
+    assert(timelock.get_blocked_function_selector_count() == 3, 'count is 3');
+    assert(timelock.get_blocked_function_selector_at(1) == selector1, 'selector 1');
+    assert(timelock.get_blocked_function_selector_at(2) == selector2, 'selector 2');
+    assert(timelock.get_blocked_function_selector_at(3) == selector3, 'selector 3');
+    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+
+    timelock.unblock_function_selector(selector1);
+
+    // [selector3, selector2]
+    assert(timelock.get_blocked_function_selector_count() == 2, 'count is 2');
+    assert(timelock.get_blocked_function_selector_at(1) == selector3, 'selector 3');
+    assert(timelock.get_blocked_function_selector_at(2) == selector2, 'selector 2');
+    assert(timelock.get_blocked_function_selector_at(3) == 0, 'selector 3');
+    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+
+    timelock.unblock_function_selector(selector2);
+
+    // [selector3]
+    assert(timelock.get_blocked_function_selector_count() == 1, 'count is 1');
+    assert(timelock.get_blocked_function_selector_at(1) == selector3, 'selector 3');
+    assert(timelock.get_blocked_function_selector_at(2) == 0, 'no selector');
+    assert(timelock.get_blocked_function_selector_at(3) == 0, 'no selector');
+    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+
+    timelock.unblock_function_selector(selector3);
+
+    assert(timelock.get_blocked_function_selector_count() == 0, 'count is 0');
+    assert(timelock.get_blocked_function_selector_at(1) == 0, 'no selector');
+    assert(timelock.get_blocked_function_selector_at(2) == 0, 'no selector');
+    assert(timelock.get_blocked_function_selector_at(3) == 0, 'no selector');
+    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+}
+
+#[test]
+fn test_lifecycle_of_id() {
+    let (target_address, _) = setup_mock_target();
+    let (min_delay, _, proposer, executor, _, _) = deploy_args();
+    let (_, timelock, _) = setup_timelock();
+
+    let mock_time = 3;
+    let mock_ready_time = mock_time + min_delay.try_into().unwrap();
+
+    let call_1 = Call {
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+    };
+
+    let call_2 = Call {
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+    };
+
+    let calls = array![call_1, call_2].span();
+    let predecessor = 0;
+    let salt = 1;
+
+    let id = timelock.hash_operation_batch(calls, predecessor, salt);
+
+    assert(!timelock.is_operation(id), 'does not exist yet');
+    assert(!timelock.is_operation_pending(id), 'does not exist yet');
+    assert(!timelock.is_operation_ready(id), 'does not exist yet');
+    assert(!timelock.is_operation_done(id), 'does not exist yet');
+
+    start_cheat_caller_address_global(proposer);
+    start_cheat_block_timestamp_global(mock_time);
+
+    timelock.schedule_batch(calls, predecessor, salt, min_delay);
+
+    assert(timelock.is_operation(id), 'is operation');
+    assert(timelock.is_operation_pending(id), 'is pending');
+    assert(!timelock.is_operation_ready(id), 'not ready');
+    assert(!timelock.is_operation_done(id), 'not done');
+
+    start_cheat_caller_address_global(executor);
+    start_cheat_block_timestamp_global(mock_ready_time);
+
+    assert(timelock.is_operation(id), 'is operation');
+    assert(timelock.is_operation_pending(id), 'is pending');
+    assert(timelock.is_operation_ready(id), 'is ready');
+    assert(!timelock.is_operation_done(id), 'not done');
+
+    timelock.execute_batch(calls, predecessor, salt);
+
+    assert(timelock.is_operation(id), 'is operation');
+    assert(!timelock.is_operation_pending(id), 'is not pending');
+    assert(!timelock.is_operation_ready(id), 'is not ready');
+    assert(timelock.is_operation_done(id), 'is done');
+}
 
