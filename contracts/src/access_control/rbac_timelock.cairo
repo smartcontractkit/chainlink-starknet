@@ -54,8 +54,6 @@ trait IRBACTimelock<TContractState> {
     ) -> u256;
 }
 
-// todo: add the erc receiver stuff + supports interface (register it for coin safe transfers)
-
 #[starknet::contract]
 mod RBACTimelock {
     use core::traits::TryInto;
