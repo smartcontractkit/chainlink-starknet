@@ -55,8 +55,11 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install Cairo
-        uses: ./.github/actions/install-cairo
+      # - name: Install Cairo
+      #   uses: ./.github/actions/install-cairo
+
+      - name: Install asdf
+        uses: asdf-vm/actions/install@v3
 
       - name: Test
         run: nix develop -c make test-integration-gauntlet
