@@ -19,8 +19,6 @@ test = "snforge test"
 [dependencies]
 chainlink = { path = "../../../contracts" }
 starknet = "2.8.0"
-
-[dev-dependencies]
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
 
 [lib]
