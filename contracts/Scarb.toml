@@ -1,7 +1,7 @@
 [package]
 name = "chainlink"
 version = "0.1.0"
-cairo-version = "2.8.0"
+cairo-version = "2.7.1"
 description = "Chainlink contracts for Starknet"
 homepage = "https://github.com/smartcontractkit/chainlink-starknet"
 
@@ -13,7 +13,7 @@ test = "snforge test"
 # Uncomment if you want to use dependencies
 # Note: currently testing doesn't work with dependencies
 [dependencies]
-starknet = "2.8.0"
+starknet = "2.7.1"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.1" }
 alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
