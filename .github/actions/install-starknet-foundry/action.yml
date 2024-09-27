@@ -16,6 +16,7 @@ runs:
       run: |
         asdf plugin add starknet-foundry
         asdf install starknet-foundry ${{ inputs.starknet_foundry_version }}
+        snforge clean-cache
         echo "/home/runner/.local/bin" >> $GITHUB_PATH
         # curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh 
         # snfoundryup -v ${{ inputs.starknet_foundry_version }}
