@@ -13,18 +13,13 @@ use starknet::get_caller_address;
 use starknet::ContractAddress;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
 };
 
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
-    let (contract_address, _) = declare("MockAggregator")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (contract_address, _) = declare("MockAggregator").unwrap().deploy(@calldata).unwrap();
     contract_address
 }
 
@@ -32,11 +27,7 @@ fn deploy_uptime_feed(initial_status: u128, owner_address: ContractAddress) -> C
     let mut calldata = ArrayTrait::new();
     calldata.append(initial_status.into());
     calldata.append(owner_address.into());
-    let (contract_address, _) = declare("SequencerUptimeFeed")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (contract_address, _) = declare("SequencerUptimeFeed").unwrap().deploy(@calldata).unwrap();
     contract_address
 }
 
@@ -48,7 +39,6 @@ fn deploy_price_consumer(
     calldata.append(aggregator_address.into());
     let (contract_address, _) = declare("AggregatorPriceConsumer")
         .unwrap()
-        .contract_class()
         .deploy(@calldata)
         .unwrap();
     contract_address

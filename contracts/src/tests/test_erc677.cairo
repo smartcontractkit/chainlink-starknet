@@ -17,8 +17,7 @@ use chainlink::libraries::token::erc677::ERC677Component;
 use chainlink::libraries::token::erc677::ERC677Component::ERC677Impl;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
 };
 
 #[starknet::interface]
@@ -43,11 +42,7 @@ fn setup() -> ContractAddress {
 fn setup_valid_receiver() -> (ContractAddress, MockValidReceiverDispatcher) {
     let calldata = ArrayTrait::new();
 
-    let (address, _) = declare("ValidReceiver")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (address, _) = declare("ValidReceiver").unwrap().deploy(@calldata).unwrap();
 
     let contract = MockValidReceiverDispatcher { contract_address: address };
     (address, contract)
@@ -57,11 +52,7 @@ fn setup_valid_receiver() -> (ContractAddress, MockValidReceiverDispatcher) {
 fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) {
     let calldata = ArrayTrait::new();
 
-    let (address, _) = declare("InvalidReceiver")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (address, _) = declare("InvalidReceiver").unwrap().deploy(@calldata).unwrap();
 
     let contract = MockInvalidReceiverDispatcher { contract_address: address };
     (address, contract)

@@ -27,8 +27,7 @@ use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
 };
 
 #[test]
@@ -92,7 +91,6 @@ fn setup() -> (
 
     let (billingAccessControllerAddr, _) = declare("AccessController")
         .unwrap()
-        .contract_class()
         .deploy(@calldata)
         .unwrap();
 
@@ -105,11 +103,7 @@ fn setup() -> (
      acc1.into(), // owner = acc1;
     ];
 
-    let (linkTokenAddr, _) = declare("LinkToken")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (linkTokenAddr, _) = declare("LinkToken").unwrap().deploy(@calldata).unwrap();
 
     let linkToken = ILinkTokenDispatcher { contract_address: linkTokenAddr };
 
@@ -131,11 +125,7 @@ fn test_ownable() {
         123, // description
     ];
 
-    let (aggregatorAddr, _) = declare("Aggregator")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (aggregatorAddr, _) = declare("Aggregator").unwrap().deploy(@calldata).unwrap();
 
     should_implement_ownable(aggregatorAddr, account);
 }
@@ -154,11 +144,7 @@ fn test_access_control() {
         123, // description
     ];
 
-    let (aggregatorAddr, _) = declare("Aggregator")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (aggregatorAddr, _) = declare("Aggregator").unwrap().deploy(@calldata).unwrap();
 
     // let (aggregatorAddr, _) = deploy_syscall(
     //     Aggregator::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false

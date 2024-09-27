@@ -25,8 +25,7 @@ use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
 };
 
 
@@ -50,7 +49,7 @@ fn setup() -> (
     let mut calldata = ArrayTrait::new();
     calldata.append(8); // decimals = 8
 
-    let contract = declare("MockAggregator").unwrap().contract_class();
+    let contract = declare("MockAggregator").unwrap();
 
     let (mockAggregatorAddr1, _) = contract.deploy(@calldata).unwrap();
 
@@ -77,11 +76,7 @@ fn test_ownable() {
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
      mockAggregatorAddr.into(),];
-    let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (aggregatorProxyAddr, _) = declare("AggregatorProxy").unwrap().deploy(@calldata).unwrap();
 
     should_implement_ownable(aggregatorProxyAddr, account);
 }
@@ -93,11 +88,7 @@ fn test_access_control() {
     let calldata = array![account.into(), // owner = account
      mockAggregatorAddr.into(),];
 
-    let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (aggregatorProxyAddr, _) = declare("AggregatorProxy").unwrap().deploy(@calldata).unwrap();
 
     should_implement_access_control(aggregatorProxyAddr, account);
 }

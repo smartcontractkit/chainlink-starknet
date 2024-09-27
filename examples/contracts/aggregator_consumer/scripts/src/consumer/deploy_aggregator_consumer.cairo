@@ -1,6 +1,5 @@
 use sncast_std::{
-    declare, deploy, DeclareResult, DeployResult, get_nonce, DisplayContractAddress,
-    DisplayClassHash
+    declare, deploy, DeployResult, get_nonce, DisplayContractAddress, DisplayClassHash
 };
 
 use starknet::{ContractAddress, ClassHash};

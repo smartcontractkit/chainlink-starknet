@@ -30,8 +30,7 @@ use chainlink::emergency::sequencer_uptime_feed::{
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
 };
 
 
@@ -53,11 +52,7 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
      account.into() // owner
     ];
 
-    let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed")
-        .unwrap()
-        .contract_class()
-        .deploy(@calldata)
-        .unwrap();
+    let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed").unwrap().deploy(@calldata).unwrap();
 
     let sequencerUptimeFeed = ISequencerUptimeFeedDispatcher {
         contract_address: sequencerFeedAddr

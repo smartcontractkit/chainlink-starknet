@@ -8,14 +8,14 @@ use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcher;
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcherTrait;
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcher;
 
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+use snforge_std::{declare, ContractClassTrait};
 
 
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
 
-    let contract = declare("MockAggregator").unwrap().contract_class();
+    let contract = declare("MockAggregator").unwrap();
 
     let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
@@ -26,7 +26,7 @@ fn deploy_consumer(aggregator_address: ContractAddress) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(aggregator_address.into());
 
-    let contract = declare("AggregatorConsumer").unwrap().contract_class();
+    let contract = declare("AggregatorConsumer").unwrap();
 
     let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
