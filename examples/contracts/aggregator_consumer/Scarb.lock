@@ -12,7 +12,7 @@ dependencies = [
 [[package]]
 name = "alexandria_bytes"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b080577aaa6889116fc8be5dde72b2fd21e397#e1b080577aaa6889116fc8be5dde72b2fd21e397"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#82088715b454d8cf197b9c54c31525ca0cb57a05"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -21,7 +21,7 @@ dependencies = [
 [[package]]
 name = "alexandria_data_structures"
 version = "0.2.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b080577aaa6889116fc8be5dde72b2fd21e397#e1b080577aaa6889116fc8be5dde72b2fd21e397"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#82088715b454d8cf197b9c54c31525ca0cb57a05"
 dependencies = [
  "alexandria_encoding",
 ]
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "alexandria_encoding"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b080577aaa6889116fc8be5dde72b2fd21e397#e1b080577aaa6889116fc8be5dde72b2fd21e397"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#82088715b454d8cf197b9c54c31525ca0cb57a05"
 dependencies = [
  "alexandria_bytes",
  "alexandria_math",
@@ -38,16 +38,13 @@ dependencies = [
 
 [[package]]
 name = "alexandria_math"
-version = "0.2.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b080577aaa6889116fc8be5dde72b2fd21e397#e1b080577aaa6889116fc8be5dde72b2fd21e397"
-dependencies = [
- "alexandria_data_structures",
-]
+version = "0.2.1"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#82088715b454d8cf197b9c54c31525ca0cb57a05"
 
 [[package]]
 name = "alexandria_numeric"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b080577aaa6889116fc8be5dde72b2fd21e397#e1b080577aaa6889116fc8be5dde72b2fd21e397"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#82088715b454d8cf197b9c54c31525ca0cb57a05"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -56,7 +53,7 @@ dependencies = [
 [[package]]
 name = "alexandria_searching"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=e1b080577aaa6889116fc8be5dde72b2fd21e397#e1b080577aaa6889116fc8be5dde72b2fd21e397"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#82088715b454d8cf197b9c54c31525ca0cb57a05"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -68,6 +65,7 @@ dependencies = [
  "alexandria_bytes",
  "alexandria_encoding",
  "openzeppelin",
+ "snforge_std",
 ]
 
 [[package]]
@@ -156,14 +154,6 @@ version = "0.15.1"
 source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.1#2f8a93d762858714095a1d391afffa9e21df6983"
 
 [[package]]
-name = "snforge_scarb_plugin"
-version = "0.1.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.28.0#4dfe39d96690ed6b3d56971512700de3f58288ea"
-
-[[package]]
 name = "snforge_std"
-version = "0.28.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.28.0#4dfe39d96690ed6b3d56971512700de3f58288ea"
-dependencies = [
- "snforge_scarb_plugin",
-]
+version = "0.27.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.27.0#2d99b7c00678ef0363881ee0273550c44a9263de"
