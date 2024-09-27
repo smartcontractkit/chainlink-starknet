@@ -8,7 +8,7 @@ inputs:
     required: false
   scarb_version:
     description: Scarb release version
-    default: "v2.8.0"
+    default: "2.8.0"
     required: false
 
 runs:
