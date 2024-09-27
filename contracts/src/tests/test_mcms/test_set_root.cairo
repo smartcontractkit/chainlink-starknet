@@ -15,11 +15,7 @@ use starknet::{
 use chainlink::mcms::{
     recover_eth_ecdsa, hash_pair, hash_op, hash_metadata, ExpiringRootAndOpCount, RootMetadata,
     Config, Signer, eip_191_message_hash, ManyChainMultiSig, Op,
-    ManyChainMultiSig::{
-        NewRoot, InternalFunctionsTrait, contract_state_for_testing,
-        s_signersContractMemberStateTrait, s_expiring_root_and_op_countContractMemberStateTrait,
-        s_root_metadataContractMemberStateTrait
-    },
+    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing},
     IManyChainMultiSigDispatcher, IManyChainMultiSigDispatcherTrait,
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
@@ -30,9 +26,10 @@ use chainlink::tests::test_mcms::utils::{
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, start_cheat_caller_address,
-    stop_cheat_caller_address, stop_cheat_caller_address_global, start_cheat_chain_id_global,
-    spy_events, EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
+    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address_global,
+    start_cheat_caller_address, stop_cheat_caller_address, stop_cheat_caller_address_global,
+    start_cheat_chain_id_global, spy_events,
+    EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
      start_cheat_chain_id,
     cheatcodes::{events::{EventSpy}}, start_cheat_block_timestamp_global,
@@ -80,7 +77,7 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
     );
 
     let calldata = ArrayTrait::new();
-    let mock_target_contract = declare("MockMultisigTarget").unwrap();
+    let mock_target_contract = declare("MockMultisigTarget").unwrap().contract_class();
     let (target_address, _) = mock_target_contract.deploy(@calldata).unwrap();
 
     // mock chain id & timestamp

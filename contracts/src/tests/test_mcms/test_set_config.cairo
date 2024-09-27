@@ -1,15 +1,12 @@
 use core::array::{SpanTrait, ArrayTrait};
+use core::starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 use starknet::{
     ContractAddress, EthAddress, Felt252TryIntoEthAddress, EthAddressIntoFelt252,
     EthAddressZeroable, contract_address_const
 };
 use chainlink::mcms::{
     ExpiringRootAndOpCount, RootMetadata, Config, Signer, ManyChainMultiSig,
-    ManyChainMultiSig::{
-        InternalFunctionsTrait, contract_state_for_testing, s_signersContractMemberStateTrait,
-        s_expiring_root_and_op_countContractMemberStateTrait,
-        s_root_metadataContractMemberStateTrait
-    },
+    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing},
     IManyChainMultiSigDispatcher, IManyChainMultiSigDispatcherTrait,
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
