@@ -19,6 +19,9 @@ alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b080577aaa6889116fc8be5dde72b2fd21e397" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.28.0" }
 
+[dev-dependencies]
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "bcdca70afdf59c9976148e95cebad5cf63d75a7f" }
+
 [lib]
 
 [[target.starknet-contract]]
