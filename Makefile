@@ -233,7 +233,7 @@ test-integration-soak-ci:
 .PHONY: test-examples
 test-examples:
 	cd ./examples/contracts/aggregator_consumer && \
-		snforge test
+		snforge clean-cache && snforge test
 
 .PHONY: test-integration-gauntlet
 # TODO: fix example
@@ -271,7 +271,7 @@ build-cairo-contracts:
 
 .PHONY: test-cairo-contracts
 test-cairo-contracts:
-	cd contracts && snforge test
+	cd contracts && snforge clean-cache && snforge test
 
 # TODO: this script needs to be replaced with a predefined K8s enviroment
 .PHONY: env-devnet-hardhat
