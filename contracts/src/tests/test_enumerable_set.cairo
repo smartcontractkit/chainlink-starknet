@@ -9,6 +9,24 @@ use snforge_std::{declare, ContractClassTrait};
 const MOCK_SET_ID: u256 = 'adfasdf';
 const OTHER_SET_ID: u256 = 'fakeasdf';
 
+fn expect_out_of_bounds<T, impl TDrop: Drop<T>>(result: Result<T, Array<felt252>>) {
+    match result {
+        Result::Ok(_) => panic!("expect 'index out of bounds'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'index out of bounds', *panic_data.at(0));
+        }
+    }
+}
+
+fn expect_set_is_1_indexed<T, impl TDrop: Drop<T>>(result: Result<T, Array<felt252>>) {
+    match result {
+        Result::Ok(_) => panic!("expect 'set is 1-indexed'"),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'set is 1-indexed', *panic_data.at(0));
+        }
+    }
+}
+
 fn setup_mock() -> (
     ContractAddress, IMockEnumerableSetDispatcher, IMockEnumerableSetSafeDispatcher
 ) {
@@ -56,8 +74,9 @@ fn test_add() {
 }
 
 #[test]
+#[feature("safe_dispatcher")]
 fn test_remove() {
-    let (_, mock, _) = setup_mock();
+    let (_, mock, safe_mock) = setup_mock();
     let first_value = 12;
 
     // ensure that removing other sets do not interfere with current set
@@ -90,7 +109,7 @@ fn test_remove() {
         mock.contains(MOCK_SET_ID, 100) && mock.contains(MOCK_SET_ID, 200), 'contains 100 & 200'
     );
     assert(mock.at(MOCK_SET_ID, 1) == 100 && mock.at(MOCK_SET_ID, 2) == 200, 'indexes match');
-    assert(mock.at(MOCK_SET_ID, 3) == 0, 'no entry at 3rd index');
+    expect_out_of_bounds(safe_mock.at(MOCK_SET_ID, 3));
     assert(mock.values(MOCK_SET_ID) == array![100, 200], 'values should match');
 
     // [100, 200, 300]
@@ -104,7 +123,7 @@ fn test_remove() {
         mock.contains(MOCK_SET_ID, 300) && mock.contains(MOCK_SET_ID, 200), 'contains 300 & 200'
     );
     assert(mock.at(MOCK_SET_ID, 1) == 300 && mock.at(MOCK_SET_ID, 2) == 200, 'indexes match');
-    assert(mock.at(MOCK_SET_ID, 3) == 0, 'no entry at 3rd index');
+    expect_out_of_bounds(safe_mock.at(MOCK_SET_ID, 3));
     assert(mock.values(MOCK_SET_ID) == array![300, 200], 'values should match');
 
     // [200]
@@ -113,7 +132,7 @@ fn test_remove() {
     assert(!mock.contains(MOCK_SET_ID, 300), 'does not contain 300');
     assert(mock.contains(MOCK_SET_ID, 200), 'contains 200');
     assert(mock.at(MOCK_SET_ID, 1) == 200, 'indexes match');
-    assert(mock.at(MOCK_SET_ID, 2) == 0, 'no entry at 2nd index');
+    expect_out_of_bounds(safe_mock.at(MOCK_SET_ID, 2));
     assert(mock.values(MOCK_SET_ID) == array![200], 'values should match');
 
     // []
@@ -147,5 +166,49 @@ fn test_length() {
     assert(mock.length(MOCK_SET_ID) == 1, 'should be 1');
 
     assert(mock.length(OTHER_SET_ID) == 0, 'should be 0');
+}
+
+#[test]
+#[feature("safe_dispatcher")]
+fn test_zero() {
+    let (_, mock, safe_mock) = setup_mock();
+
+    expect_set_is_1_indexed(safe_mock.at(MOCK_SET_ID, 0));
+
+    // [0]
+    assert(mock.add(MOCK_SET_ID, 0), 'should add 0');
+    assert(mock.contains(MOCK_SET_ID, 0), 'contains 0');
+
+    assert(mock.length(MOCK_SET_ID) == 1, 'should be 1');
+
+    // [0, 1]
+    assert(mock.add(MOCK_SET_ID, 1), 'should add 1');
+    assert(!mock.add(MOCK_SET_ID, 1), 'shouldnt add 1');
+
+    assert(mock.length(MOCK_SET_ID) == 2, 'should be 2');
+
+    assert(mock.at(MOCK_SET_ID, 1) == 0, 'set[1] = 0');
+    assert(mock.at(MOCK_SET_ID, 2) == 1, 'set[2] = 0');
+
+    // [1]
+    assert(mock.remove(MOCK_SET_ID, 0), 'should remove 0');
+    assert(!mock.remove(MOCK_SET_ID, 0), 'shouldnt remove 0');
+
+    assert(mock.at(MOCK_SET_ID, 1) == 1, 'set[1] = 1');
+    assert(!mock.contains(MOCK_SET_ID, 0), '0 is gone');
+    assert(mock.length(MOCK_SET_ID) == 1, 'length 1');
+
+    // []
+    assert(mock.remove(MOCK_SET_ID, 1), '1 removed');
+
+    // [0]
+    mock.add(MOCK_SET_ID, 0);
+
+    assert(mock.at(MOCK_SET_ID, 1) == 0, 'set[1] = 0');
+
+    // []
+    mock.remove(MOCK_SET_ID, 0);
+
+    expect_out_of_bounds(safe_mock.at(MOCK_SET_ID, 1));
 }
 

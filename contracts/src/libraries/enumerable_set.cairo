@@ -2,6 +2,7 @@
 mod EnumerableSetComponent {
     use core::array::ArrayTrait;
 
+    // set is 1-indexed, not 0-indexed
     #[storage]
     pub struct Storage {
         // access index by value
@@ -11,6 +12,7 @@ mod EnumerableSetComponent {
         // access value by index
         // set_id -> item_id -> item_value
         // note: item_index is +1 because 0 means item is not in set
+        // note: _values.read(set_id, item_id) == 0, is only valid iff item_id <= _length.read(set_id)
         pub _values: LegacyMap::<(u256, u256), u256>,
         // set_id -> size of set
         pub _length: LegacyMap<u256, u256>
@@ -77,6 +79,8 @@ mod EnumerableSetComponent {
         }
 
         fn at(self: @ComponentState<TContractState>, set_id: u256, index: u256) -> u256 {
+            assert(index != 0, 'set is 1-indexed');
+            assert(index <= self._length.read(set_id), 'index out of bounds');
             self._values.read((set_id, index))
         }
 

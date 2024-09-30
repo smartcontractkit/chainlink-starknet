@@ -373,6 +373,10 @@ mod RBACTimelock {
                 }
         }
 
+        //
+        // ONLY ADMIN
+        //
+
         fn update_delay(ref self: ContractState, new_delay: u256) {
             self.access_control.assert_only_role(ADMIN_ROLE);
 
@@ -386,10 +390,6 @@ mod RBACTimelock {
                 );
             self._min_delay.write(new_delay);
         }
-
-        //
-        // ONLY ADMIN
-        //
 
         fn block_function_selector(ref self: ContractState, selector: felt252) {
             self.access_control.assert_only_role(ADMIN_ROLE);
@@ -493,8 +493,7 @@ mod RBACTimelock {
         }
 
         fn _execute(ref self: ContractState, call: Call) {
-            let _response = call_contract_syscall(call.target, call.selector, call.data)
-                .unwrap_syscall();
+            call_contract_syscall(call.target, call.selector, call.data).unwrap_syscall();
         }
     }
 }

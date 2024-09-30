@@ -10,7 +10,6 @@ use chainlink::{
         IMockMultisigTarget, IMockMultisigTargetDispatcherTrait, IMockMultisigTargetDispatcher
     }
 };
-
 use openzeppelin::{
     introspection::interface::{ISRC5, ISRC5Dispatcher, ISRC5DispatcherTrait, ISRC5_ID},
     access::accesscontrol::{
@@ -22,6 +21,7 @@ use openzeppelin::{
     },
     token::{erc1155::interface::{IERC1155_RECEIVER_ID}, erc721::interface::{IERC721_RECEIVER_ID}}
 };
+use chainlink::tests::test_enumerable_set::{expect_out_of_bounds, expect_set_is_1_indexed};
 use snforge_std::{
     declare, ContractClassTrait, spy_events, EventSpyAssertionsTrait,
     start_cheat_caller_address_global, start_cheat_block_timestamp_global
@@ -590,6 +590,55 @@ fn test_execute_successful() {
     assert(actual_toggle, 'toggle true');
 
     assert(timelock.is_operation_done(id), 'operation is done');
+
+    // let's try to schedule another batch of operations using the predecessor
+
+    let mock_time = 3000;
+    let mock_ready_time = mock_time + min_delay.try_into().unwrap();
+
+    let call_3 = Call {
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+    };
+    let calls = array![call_3].span();
+    let predecessor = id;
+    let salt = 2;
+
+    start_cheat_caller_address_global(proposer);
+    start_cheat_block_timestamp_global(mock_time);
+
+    timelock.schedule_batch(calls, predecessor, salt, min_delay);
+
+    let id = timelock.hash_operation_batch(calls, predecessor, salt);
+
+    start_cheat_caller_address_global(executor);
+    start_cheat_block_timestamp_global(mock_ready_time);
+
+    let mut spy = spy_events();
+
+    timelock.execute_batch(calls, predecessor, salt);
+
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    timelock_address,
+                    RBACTimelock::Event::CallExecuted(
+                        RBACTimelock::CallExecuted {
+                            id: id,
+                            index: 0,
+                            target: call_3.target,
+                            selector: call_3.selector,
+                            data: call_3.data
+                        }
+                    )
+                )
+            ]
+        );
+
+    let (_, actual_toggle) = target.read();
+    assert(!actual_toggle, 'toggle went to false again');
+
+    assert(timelock.is_operation_done(id), 'operation is done');
 }
 
 #[test]
@@ -761,9 +810,10 @@ fn test_unblock_selector() {
 }
 
 #[test]
+#[feature("safe_dispatcher")]
 fn test_blocked_selector_indexes() {
     let (_, admin, _, _, _, _) = deploy_args();
-    let (_, timelock, _) = setup_timelock();
+    let (_, timelock, safe_timelock) = setup_timelock();
 
     start_cheat_caller_address_global(admin);
 
@@ -775,12 +825,14 @@ fn test_blocked_selector_indexes() {
     timelock.block_function_selector(selector2);
     timelock.block_function_selector(selector3);
 
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(5));
+    expect_set_is_1_indexed(safe_timelock.get_blocked_function_selector_at(0));
+
     // [selector1, selector2, selector3]
     assert(timelock.get_blocked_function_selector_count() == 3, 'count is 3');
     assert(timelock.get_blocked_function_selector_at(1) == selector1, 'selector 1');
     assert(timelock.get_blocked_function_selector_at(2) == selector2, 'selector 2');
     assert(timelock.get_blocked_function_selector_at(3) == selector3, 'selector 3');
-    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
 
     timelock.unblock_function_selector(selector1);
 
@@ -788,25 +840,22 @@ fn test_blocked_selector_indexes() {
     assert(timelock.get_blocked_function_selector_count() == 2, 'count is 2');
     assert(timelock.get_blocked_function_selector_at(1) == selector3, 'selector 3');
     assert(timelock.get_blocked_function_selector_at(2) == selector2, 'selector 2');
-    assert(timelock.get_blocked_function_selector_at(3) == 0, 'selector 3');
-    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(3));
 
     timelock.unblock_function_selector(selector2);
 
     // [selector3]
     assert(timelock.get_blocked_function_selector_count() == 1, 'count is 1');
     assert(timelock.get_blocked_function_selector_at(1) == selector3, 'selector 3');
-    assert(timelock.get_blocked_function_selector_at(2) == 0, 'no selector');
-    assert(timelock.get_blocked_function_selector_at(3) == 0, 'no selector');
-    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(2));
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(3));
 
     timelock.unblock_function_selector(selector3);
 
     assert(timelock.get_blocked_function_selector_count() == 0, 'count is 0');
-    assert(timelock.get_blocked_function_selector_at(1) == 0, 'no selector');
-    assert(timelock.get_blocked_function_selector_at(2) == 0, 'no selector');
-    assert(timelock.get_blocked_function_selector_at(3) == 0, 'no selector');
-    assert(timelock.get_blocked_function_selector_at(0) == 0, 'no selector');
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(1));
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(2));
+    expect_out_of_bounds(safe_timelock.get_blocked_function_selector_at(3));
 }
 
 #[test]
