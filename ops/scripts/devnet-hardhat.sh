@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# TODO: this script needs to be replaced with a predefined K8s enviroment
+# TODO: this script needs to be replaced with a predefined K8s enviroments
 
 set -euo pipefail
 
