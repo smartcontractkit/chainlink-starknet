@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/smartcontractkit/chainlink-testing-framework/gauntlet"
+	"github.com/smartcontractkit/chainlink-testing-framework/lib/gauntlet"
 )
 
 var (

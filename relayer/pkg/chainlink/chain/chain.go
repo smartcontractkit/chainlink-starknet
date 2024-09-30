@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
+	"strconv"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -183,6 +184,29 @@ func (c *chain) HealthReport() map[string]error {
 
 func (c *chain) ID() string {
 	return c.id
+}
+
+func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
+	sc, err := c.getClient()
+	if err != nil {
+		return types.Head{}, err
+	}
+
+	bhAndNum, err := sc.LatestBlockHashAndNumber(ctx)
+	if err != nil {
+		return types.Head{}, err
+	}
+
+	block, err := sc.BlockByNumber(ctx, bhAndNum.BlockNumber)
+	if err != nil {
+		return types.Head{}, err
+	}
+
+	return types.Head{
+		Height:    strconv.FormatUint(bhAndNum.BlockNumber, 10),
+		Hash:      bhAndNum.BlockHash.Marshal(),
+		Timestamp: block.Timestamp,
+	}, err
 }
 
 // ChainService interface
