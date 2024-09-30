@@ -24,6 +24,8 @@ jobs:
   build_chainlink_image:
     name: Build Chainlink Image ${{matrix.image.name}}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     environment: integration
     permissions:
       id-token: write
@@ -48,7 +50,7 @@ jobs:
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           this-job-name: Build Chainlink Image${{matrix.image.name}}
         continue-on-error: true
-      - name: Check if image exists
+      - name: Check if chainlink-starknet image exists
         id: check-image
         uses: smartcontractkit/chainlink-github-actions/docker/image-exists@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
@@ -56,12 +58,26 @@ jobs:
           tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+      - name: Get core ref from PR body
+        if: steps.check-image.outputs.exists == 'false' && github.event_name == 'pull_request'
+        run: |
+          comment=$(gh pr view https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }} --json body -q '.body')
+          core_ref=$(echo $comment | grep -oP 'core ref: \K\S+' || true)
+          if [ ! -z "$core_ref" ]; then
+            echo "CUSTOM_CORE_REF=${core_ref}" >> "${GITHUB_ENV}"
+          else
+            echo "CUSTOM_CORE_REF=develop" >> "${GITHUB_ENV}"
+          fi
+      - name: Set core reference if workflow dispatch
+        if: steps.check-image.outputs.exists == 'false' && github.event_name == 'workflow_dispatch'
+        run: |
+          echo "CUSTOM_CORE_REF=${{ github.event.inputs.cl_branch_ref }}" >> "${GITHUB_ENV}"
       - name: Build Image ${{ matrix.image.name }}
         if: steps.check-image.outputs.exists == 'false'
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
           cl_repo: smartcontractkit/chainlink
-          cl_ref: ${{ github.event.inputs.cl_branch_ref }}
+          cl_ref: ${{ env.CUSTOM_CORE_REF }}
           should_checkout: true
           cl_dockerfile: ${{ matrix.image.dockerfile }}
           # commit of the caller branch
@@ -141,7 +157,7 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install Nix
-        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Install Cairo
@@ -155,9 +171,6 @@ jobs:
       - name: Generate config overrides
         run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
-          [ChainlinkImage]
-          image="${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink"
-          version="starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}"
           [Network]
           selected_networks=["SIMULATED"]
           [Common]
@@ -171,7 +184,7 @@ jobs:
           # shellcheck disable=SC2086
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> $GITHUB_ENV
       - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@00c164251be2a7c5b2b23a6e5f7014982f232c14 # v2.3.31
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
@@ -184,3 +197,7 @@ jobs:
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
+        env:
+          KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
+          CHAINLINK_IMAGE: ${{ env.CL_ECR }}
+          CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}

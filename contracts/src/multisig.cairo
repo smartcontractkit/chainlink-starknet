@@ -343,10 +343,11 @@ mod Multisig {
             )
                 .unwrap_syscall();
 
-            // TODO: this shouldn't be necessary. call_contract_syscall returns a Span<felt252>, which
-            // is a serialized result, but returning a Span<felt252> results in an error:
+            // TODO: this shouldn't be necessary. call_contract_syscall returns a Span<felt252>,
+            // which is a serialized result, but returning a Span<felt252> results in an error:
             //
-            // Trait has no implementation in context: core::serde::Serde::<core::array::Span::<core::felt252>>
+            // Trait has no implementation in context:
+            // core::serde::Serde::<core::array::Span::<core::felt252>>
             //
             // Cairo docs also have an example that returns a Span<felt252>:
             // https://github.com/starkware-libs/cairo/blob/fe425d0893ff93a936bb3e8bbbac771033074bdb/docs/reference/src/components/cairo/modules/language_constructs/pages/contracts.adoc#L226
