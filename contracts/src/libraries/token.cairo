@@ -1,1 +1,2 @@
-mod erc677;
+mod v1;
+mod v2;

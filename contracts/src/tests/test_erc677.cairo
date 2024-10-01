@@ -13,8 +13,8 @@ use core::result::ResultTrait;
 
 use chainlink::token::mock::valid_erc667_receiver::ValidReceiver;
 use chainlink::token::mock::invalid_erc667_receiver::InvalidReceiver;
-use chainlink::libraries::token::erc677::ERC677Component;
-use chainlink::libraries::token::erc677::ERC677Component::ERC677Impl;
+use chainlink::libraries::token::v2::erc677::ERC677Component;
+use chainlink::libraries::token::v2::erc677::ERC677Component::ERC677Impl;
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
@@ -58,7 +58,7 @@ fn setup_invalid_receiver() -> (ContractAddress, MockInvalidReceiverDispatcher) 
 }
 
 type ComponentState =
-    ERC677Component::ComponentState<chainlink::token::link_token::LinkToken::ContractState>;
+    ERC677Component::ComponentState<chainlink::token::v2::link_token::LinkToken::ContractState>;
 
 fn transfer_and_call(receiver: ContractAddress) {
     let data = ArrayTrait::<felt252>::new();
