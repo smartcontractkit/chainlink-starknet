@@ -284,11 +284,9 @@ mod ManyChainMultiSig {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState) {
-        let caller = starknet::info::get_caller_address();
-        self.ownable.initializer(caller);
+    fn constructor(ref self: ContractState, owner: ContractAddress) {
+        self.ownable.initializer(owner);
     }
-
 
     #[abi(embed_v0)]
     impl ManyChainMultiSigImpl of super::IManyChainMultiSig<ContractState> {
