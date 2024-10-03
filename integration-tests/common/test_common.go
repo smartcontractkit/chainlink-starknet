@@ -26,12 +26,15 @@ import (
 	test_env_integrations "github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv"
+	test_env_gauntlet_plus_plus "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
+	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
 )
 
 var (
@@ -63,6 +66,7 @@ type Clients struct {
 	ChainlinkClient *ChainlinkClient
 	GauntletClient  *gauntlet.StarknetGauntlet
 	DockerEnv       *StarknetClusterTestEnv
+	gPPClient       *g.
 }
 
 // Contracts to store current deployed contract state
@@ -159,6 +163,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		env, err := test_env_integrations.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
 		stark := test_env_starknet.NewStarknet([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.DevnetImage)
+		gauntlet_plus_plus := test_env_gauntlet_plus_plus.NewGauntletPlusPlus([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
 
