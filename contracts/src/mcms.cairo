@@ -77,7 +77,7 @@ struct ExpiringRootAndOpCount {
     op_count: u64
 }
 
-// based of
+// based off
 // https://github.com/starkware-libs/cairo/blob/1b747da1ec7e43a6fd0c0a4cbce302616408bc72/corelib/src/starknet/eth_signature.cairo#L25
 pub fn recover_eth_ecdsa(msg_hash: u256, signature: Signature) -> Result<EthAddress, felt252> {
     if !is_signature_entry_valid::<Secp256k1Point>(signature.r) {
@@ -215,7 +215,12 @@ mod ManyChainMultiSig {
     };
     use starknet::{
         EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress,
-        call_contract_syscall
+        call_contract_syscall,
+        storage::{
+            Map, StoragePointerReadAccess, StoragePointerWriteAccess, StorageMapReadAccess,
+            StorageMapWriteAccess, StoragePathEntry
+        },
+        StorageAddress
     };
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -237,15 +242,15 @@ mod ManyChainMultiSig {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         // s_signers is used to easily validate the existence of the signer by its address.
-        s_signers: LegacyMap<EthAddress, Signer>,
+        s_signers: Map<EthAddress, Signer>,
         // begin s_config (defined in storage bc Config struct cannot support maps)
         _s_config_signers_len: u8,
-        _s_config_signers: LegacyMap<u8, Signer>,
+        _s_config_signers: Map<u8, Signer>,
         // no _s_config_group_len because there are always 32 groups
-        _s_config_group_quorums: LegacyMap<u8, u8>,
-        _s_config_group_parents: LegacyMap<u8, u8>,
+        _s_config_group_quorums: Map<u8, u8>,
+        _s_config_group_parents: Map<u8, u8>,
         // end s_config
-        s_seen_signed_hashes: LegacyMap<u256, bool>,
+        s_seen_signed_hashes: Map<u256, bool>,
         s_expiring_root_and_op_count: ExpiringRootAndOpCount,
         s_root_metadata: RootMetadata
     }
@@ -265,7 +270,7 @@ mod ManyChainMultiSig {
         to: ContractAddress,
         selector: felt252,
         data: Span<felt252>,
-        // no value because value is sent through ERC20 tokens, even the native STRK token
+        // no "value" field because native STRK token is an ERC-20 token
     }
 
     #[derive(Drop, starknet::Event)]
@@ -285,11 +290,9 @@ mod ManyChainMultiSig {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState) {
-        let caller = starknet::info::get_caller_address();
-        self.ownable.initializer(caller);
+    fn constructor(ref self: ContractState, owner: ContractAddress) {
+        self.ownable.initializer(owner);
     }
-
 
     #[abi(embed_v0)]
     impl ManyChainMultiSigImpl of super::IManyChainMultiSig<ContractState> {

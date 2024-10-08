@@ -1,12 +1,11 @@
 use core::array::{SpanTrait, ArrayTrait};
-use core::starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 use starknet::{
     ContractAddress, EthAddress, Felt252TryIntoEthAddress, EthAddressIntoFelt252,
     EthAddressZeroable, contract_address_const
 };
 use chainlink::mcms::{
     ExpiringRootAndOpCount, RootMetadata, Config, Signer, ManyChainMultiSig,
-    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing},
+    ManyChainMultiSig::{InternalFunctionsTrait, contract_state_for_testing},
     IManyChainMultiSigDispatcher, IManyChainMultiSigDispatcherTrait,
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
@@ -462,11 +461,13 @@ fn test_set_config_success_dont_clear_root() {
 
     // mock the contract state
     let test_address = test_address();
-    start_cheat_caller_address(test_address, contract_address_const::<777>());
+
+    let owner = contract_address_const::<1231231111>();
+    start_cheat_caller_address(test_address, owner);
 
     // test internal function state
     let mut state = contract_state_for_testing();
-    ManyChainMultiSig::constructor(ref state);
+    ManyChainMultiSig::constructor(ref state, owner);
     state
         .set_config(
             signer_addresses.span(),
@@ -538,11 +539,14 @@ fn test_set_config_success_and_clear_root() {
     // mock the contract state
     let test_address = test_address();
     let mock_chain_id = 990;
-    start_cheat_caller_address(test_address, contract_address_const::<777>());
+
+    let owner = contract_address_const::<1231231111>();
+    start_cheat_caller_address(test_address, owner);
     start_cheat_chain_id(test_address, mock_chain_id);
 
     let mut state = contract_state_for_testing();
-    ManyChainMultiSig::constructor(ref state);
+
+    ManyChainMultiSig::constructor(ref state, owner);
 
     // initialize s_expiring_root_and_op_count & s_root_metadata
     state

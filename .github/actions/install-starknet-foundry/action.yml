@@ -16,4 +16,3 @@ runs:
       run: |
         curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh 
         snfoundryup -v ${{ inputs.starknet_foundry_version }}
-        echo "/home/runner/.local/bin" >> $GITHUB_PATH
