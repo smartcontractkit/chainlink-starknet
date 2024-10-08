@@ -4,10 +4,10 @@ use chainlink::libraries::mocks::mock_enumerable_set::{
     IMockEnumerableSetDispatcherTrait, IMockEnumerableSetSafeDispatcher,
     IMockEnumerableSetSafeDispatcherTrait
 };
-use snforge_std::{declare, ContractClassTrait};
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
 
-const MOCK_SET_ID: u256 = 'adfasdf';
-const OTHER_SET_ID: u256 = 'fakeasdf';
+const MOCK_SET_ID: felt252 = 'adfasdf';
+const OTHER_SET_ID: felt252 = 'fakeasdf';
 
 fn expect_out_of_bounds<T, impl TDrop: Drop<T>>(result: Result<T, Array<felt252>>) {
     match result {
@@ -31,7 +31,11 @@ fn setup_mock() -> (
     ContractAddress, IMockEnumerableSetDispatcher, IMockEnumerableSetSafeDispatcher
 ) {
     let calldata = array![];
-    let (mock_address, _) = declare("MockEnumerableSet").unwrap().deploy(@calldata).unwrap();
+    let (mock_address, _) = declare("MockEnumerableSet")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     (
         mock_address,

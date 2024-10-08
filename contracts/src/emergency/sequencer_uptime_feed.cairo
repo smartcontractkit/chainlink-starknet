@@ -20,6 +20,7 @@ mod SequencerUptimeFeed {
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
+    use starknet::storage::Map;
 
     use box::BoxTrait;
     use traits::Into;
@@ -58,7 +59,7 @@ mod SequencerUptimeFeed {
         // l1 sender is an starknet validator ethereum address
         _l1_sender: EthAddress,
         // maps round id to round transmission
-        _round_transmissions: LegacyMap<u128, Transmission>,
+        _round_transmissions: Map<u128, Transmission>,
         _latest_round_id: u128,
     }
 
@@ -177,7 +178,8 @@ mod SequencerUptimeFeed {
 
     #[l1_handler]
     fn update_status(ref self: ContractState, from_address: felt252, status: u128, timestamp: u64) {
-        //  Cairo enforces from_address to be a felt252 on the method signature, but we can cast it right after
+        //  Cairo enforces from_address to be a felt252 on the method signature, but we can cast it
+        //  right after
         let from_address: EthAddress = from_address.try_into().unwrap();
         assert(self._l1_sender.read() == from_address, 'EXPECTED_FROM_BRIDGE_ONLY');
 

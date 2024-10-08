@@ -14,17 +14,16 @@ fn _hash_operation_batch(calls: Span<Call>, predecessor: u256, salt: u256) -> u2
     let mut encoded: Bytes = BytesTrait::new_empty();
 
     let mut i = 0;
-    while i < calls
-        .len() {
-            let call = *calls.at(i);
-            encoded = encoded.encode(call.target).encode(call.selector);
-            let mut j = 0;
-            while j < call.data.len() {
-                encoded = encoded.encode(*call.data.at(j));
-                j += 1;
-            };
-            i += 1;
+    while i < calls.len() {
+        let call = *calls.at(i);
+        encoded = encoded.encode(call.target).encode(call.selector);
+        let mut j = 0;
+        while j < call.data.len() {
+            encoded = encoded.encode(*call.data.at(j));
+            j += 1;
         };
+        i += 1;
+    };
 
     encoded = encoded.encode(predecessor).encode(salt);
     encoded.keccak()
@@ -41,8 +40,8 @@ trait IRBACTimelock<TContractState> {
     fn update_delay(ref self: TContractState, new_delay: u256);
     fn block_function_selector(ref self: TContractState, selector: felt252);
     fn unblock_function_selector(ref self: TContractState, selector: felt252);
-    fn get_blocked_function_selector_count(self: @TContractState) -> u256;
-    fn get_blocked_function_selector_at(self: @TContractState, index: u256) -> felt252;
+    fn get_blocked_function_selector_count(self: @TContractState) -> usize;
+    fn get_blocked_function_selector_at(self: @TContractState, index: usize) -> felt252;
     fn is_operation(self: @TContractState, id: u256) -> bool;
     fn is_operation_pending(self: @TContractState, id: u256) -> bool;
     fn is_operation_ready(self: @TContractState, id: u256) -> bool;
@@ -58,7 +57,13 @@ trait IRBACTimelock<TContractState> {
 mod RBACTimelock {
     use core::traits::TryInto;
     use core::starknet::SyscallResultTrait;
-    use starknet::{ContractAddress, call_contract_syscall};
+    use starknet::{
+        ContractAddress, call_contract_syscall, StorageAddress,
+        storage::{
+            Map, StoragePointerReadAccess, StoragePointerWriteAccess, StorageMapReadAccess,
+            StorageMapWriteAccess, StoragePathEntry
+        }
+    };
     use openzeppelin::{
         access::accesscontrol::AccessControlComponent, introspection::src5::SRC5Component,
         token::erc1155::erc1155_receiver::ERC1155ReceiverComponent,
@@ -112,7 +117,7 @@ mod RBACTimelock {
     const BYPASSER_ROLE: felt252 = selector!("BYPASSER_ROLE");
     const _DONE_TIMESTAMP: u256 = 0x1;
 
-    const BLOCKED_FUNCTIONS: u256 = 'BLOCKED_FUNCTION_SELECTORS';
+    const BLOCKED_FUNCTIONS: felt252 = 'BLOCKED_FUNCTION_SELECTORS';
 
     #[storage]
     struct Storage {
@@ -127,7 +132,7 @@ mod RBACTimelock {
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
         // id -> timestamp
-        _timestamps: LegacyMap<u256, u256>, // timestamp at which operation is ready to be executed
+        _timestamps: Map<u256, u256>, // timestamp at which operation is ready to be executed
         _min_delay: u256
     }
 
@@ -225,40 +230,36 @@ mod RBACTimelock {
         self.access_control.initializer();
         self.erc1155_receiver.initializer();
         self.erc721_receiver.initializer();
-        self.access_control._set_role_admin(ADMIN_ROLE, ADMIN_ROLE);
-        self.access_control._set_role_admin(PROPOSER_ROLE, ADMIN_ROLE);
-        self.access_control._set_role_admin(EXECUTOR_ROLE, ADMIN_ROLE);
-        self.access_control._set_role_admin(CANCELLER_ROLE, ADMIN_ROLE);
-        self.access_control._set_role_admin(BYPASSER_ROLE, ADMIN_ROLE);
+        self.access_control.set_role_admin(ADMIN_ROLE, ADMIN_ROLE);
+        self.access_control.set_role_admin(PROPOSER_ROLE, ADMIN_ROLE);
+        self.access_control.set_role_admin(EXECUTOR_ROLE, ADMIN_ROLE);
+        self.access_control.set_role_admin(CANCELLER_ROLE, ADMIN_ROLE);
+        self.access_control.set_role_admin(BYPASSER_ROLE, ADMIN_ROLE);
         self.access_control._grant_role(ADMIN_ROLE, admin);
 
         let mut i = 0;
-        while i < proposers
-            .len() {
-                self.access_control._grant_role(PROPOSER_ROLE, *proposers.at(i));
-                i += 1;
-            };
+        while i < proposers.len() {
+            self.access_control._grant_role(PROPOSER_ROLE, *proposers.at(i));
+            i += 1;
+        };
 
         let mut i = 0;
-        while i < executors
-            .len() {
-                self.access_control._grant_role(EXECUTOR_ROLE, *executors.at(i));
-                i += 1;
-            };
+        while i < executors.len() {
+            self.access_control._grant_role(EXECUTOR_ROLE, *executors.at(i));
+            i += 1;
+        };
 
         let mut i = 0;
-        while i < cancellers
-            .len() {
-                self.access_control._grant_role(CANCELLER_ROLE, *cancellers.at(i));
-                i += 1
-            };
+        while i < cancellers.len() {
+            self.access_control._grant_role(CANCELLER_ROLE, *cancellers.at(i));
+            i += 1
+        };
 
         let mut i = 0;
-        while i < bypassers
-            .len() {
-                self.access_control._grant_role(BYPASSER_ROLE, *bypassers.at(i));
-                i += 1
-            };
+        while i < bypassers.len() {
+            self.access_control._grant_role(BYPASSER_ROLE, *bypassers.at(i));
+            i += 1
+        };
 
         self._min_delay.write(min_delay);
 
@@ -279,32 +280,28 @@ mod RBACTimelock {
             self._schedule(id, delay);
 
             let mut i = 0;
-            while i < calls
-                .len() {
-                    let call = *calls.at(i);
-                    assert(
-                        !self.set.contains(BLOCKED_FUNCTIONS, call.selector.into()),
-                        'selector is blocked'
+            while i < calls.len() {
+                let call = *calls.at(i);
+                assert(!self.set.contains(BLOCKED_FUNCTIONS, call.selector), 'selector is blocked');
+
+                self
+                    .emit(
+                        Event::CallScheduled(
+                            CallScheduled {
+                                id: id,
+                                index: i.into(),
+                                target: call.target,
+                                selector: call.selector,
+                                data: call.data,
+                                predecessor: predecessor,
+                                salt: salt,
+                                delay: delay
+                            }
+                        )
                     );
 
-                    self
-                        .emit(
-                            Event::CallScheduled(
-                                CallScheduled {
-                                    id: id,
-                                    index: i.into(),
-                                    target: call.target,
-                                    selector: call.selector,
-                                    data: call.data,
-                                    predecessor: predecessor,
-                                    salt: salt,
-                                    delay: delay
-                                }
-                            )
-                        );
-
-                    i += 1;
-                }
+                i += 1;
+            }
         }
 
         fn cancel(ref self: ContractState, id: u256) {
@@ -327,24 +324,23 @@ mod RBACTimelock {
             self._before_call(id, predecessor);
 
             let mut i = 0;
-            while i < calls
-                .len() {
-                    let call = *(calls.at(i));
-                    self._execute(call);
-                    self
-                        .emit(
-                            Event::CallExecuted(
-                                CallExecuted {
-                                    id: id,
-                                    index: i.into(),
-                                    target: call.target,
-                                    selector: call.selector,
-                                    data: call.data
-                                }
-                            )
-                        );
-                    i += 1;
-                };
+            while i < calls.len() {
+                let call = *(calls.at(i));
+                self._execute(call);
+                self
+                    .emit(
+                        Event::CallExecuted(
+                            CallExecuted {
+                                id: id,
+                                index: i.into(),
+                                target: call.target,
+                                selector: call.selector,
+                                data: call.data
+                            }
+                        )
+                    );
+                i += 1;
+            };
 
             self._after_call(id);
         }
@@ -353,24 +349,23 @@ mod RBACTimelock {
             self._assert_only_role_or_admin_role(BYPASSER_ROLE);
 
             let mut i = 0;
-            while i < calls
-                .len() {
-                    let call = *calls.at(i);
-                    self._execute(call);
-                    self
-                        .emit(
-                            Event::BypasserCallExecuted(
-                                BypasserCallExecuted {
-                                    index: i.into(),
-                                    target: call.target,
-                                    selector: call.selector,
-                                    data: call.data
-                                }
-                            )
-                        );
+            while i < calls.len() {
+                let call = *calls.at(i);
+                self._execute(call);
+                self
+                    .emit(
+                        Event::BypasserCallExecuted(
+                            BypasserCallExecuted {
+                                index: i.into(),
+                                target: call.target,
+                                selector: call.selector,
+                                data: call.data
+                            }
+                        )
+                    );
 
-                    i += 1;
-                }
+                i += 1;
+            }
         }
 
         //
@@ -394,8 +389,8 @@ mod RBACTimelock {
         fn block_function_selector(ref self: ContractState, selector: felt252) {
             self.access_control.assert_only_role(ADMIN_ROLE);
 
-            // cast to u256 because that's what set stores 
-            if self.set.add(BLOCKED_FUNCTIONS, selector.into()) {
+            // cast to u256 because that's what set stores
+            if self.set.add(BLOCKED_FUNCTIONS, selector) {
                 self
                     .emit(
                         Event::FunctionSelectorBlocked(
@@ -408,7 +403,7 @@ mod RBACTimelock {
         fn unblock_function_selector(ref self: ContractState, selector: felt252) {
             self.access_control.assert_only_role(ADMIN_ROLE);
 
-            if self.set.remove(BLOCKED_FUNCTIONS, selector.into()) {
+            if self.set.remove(BLOCKED_FUNCTIONS, selector) {
                 self
                     .emit(
                         Event::FunctionSelectorUnblocked(
@@ -422,13 +417,13 @@ mod RBACTimelock {
         // VIEW ONLY
         //
 
-        fn get_blocked_function_selector_count(self: @ContractState) -> u256 {
+        fn get_blocked_function_selector_count(self: @ContractState) -> usize {
             self.set.length(BLOCKED_FUNCTIONS)
         }
 
-        fn get_blocked_function_selector_at(self: @ContractState, index: u256) -> felt252 {
+        fn get_blocked_function_selector_at(self: @ContractState, index: usize) -> felt252 {
             // cast from u256 to felt252 should never error
-            self.set.at(BLOCKED_FUNCTIONS, index).try_into().unwrap()
+            self.set.at(BLOCKED_FUNCTIONS, index)
         }
 
         fn is_operation(self: @ContractState, id: u256) -> bool {

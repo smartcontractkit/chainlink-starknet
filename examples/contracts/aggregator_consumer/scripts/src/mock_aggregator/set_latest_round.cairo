@@ -9,7 +9,7 @@ fn main() {
         .try_into()
         .unwrap();
 
-    // Feel free to modify these 
+    // Feel free to modify these
     let answer = 1;
     let block_num = 12345;
     let observation_timestamp = 1711716556;

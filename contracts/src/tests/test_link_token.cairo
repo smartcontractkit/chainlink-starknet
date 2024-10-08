@@ -18,11 +18,12 @@ use openzeppelin::token::erc20::ERC20Component::{ERC20Impl, ERC20MetadataImpl};
 use chainlink::tests::test_ownable::should_implement_ownable;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
 };
 
 
-// only tests link token specific functionality 
+// only tests link token specific functionality
 // erc20 and erc677 functionality is already tested elsewhere
 
 fn STATE() -> LinkToken::ContractState {
@@ -44,7 +45,7 @@ fn test_ownable() {
     calldata.append(class_hash_const::<123>().into()); // minter
     calldata.append(account.into()); // owner
 
-    let (linkAddr, _) = declare("LinkToken").unwrap().deploy(@calldata).unwrap();
+    let (linkAddr, _) = declare("LinkToken").unwrap().contract_class().deploy(@calldata).unwrap();
 
     should_implement_ownable(linkAddr, account);
 }
@@ -101,7 +102,7 @@ fn test_permissioned_mint_from_nonminter() {
 }
 
 #[test]
-#[should_panic(expected: ('u256_sub Overflow',))]
+#[should_panic(expected: ('ERC20: insufficient balance',))]
 fn test_permissioned_burn_from_minter() {
     let zero = 0;
     let sender = setup();

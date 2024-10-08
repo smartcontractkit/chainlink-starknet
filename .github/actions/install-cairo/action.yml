@@ -2,32 +2,43 @@ name: Install Cairo and Scarb
 description: A composite action that installs cairo and scarb binaries
 
 inputs:
-  cairo_version:
-    description: Cairo release version
-    default: "v2.6.4"
-    required: false
+  # cairo_version:
+  #   description: Cairo release version
+  #   default: "v2.8.2"
+  #   required: false
   scarb_version:
     description: Scarb release version
-    default: "v2.6.5"
+    default: "v2.8.2"
+    required: false
+  use_musl_libc:
+    description: "C library implementation"
+    default: "false"
     required: false
 
 runs:
   using: composite
   steps:
-    - name: Setup Cairo for Linux
-      id: install-cairo
-      shell: bash
-      run: |
-        wget https://github.com/starkware-libs/cairo/releases/download/${{ inputs.cairo_version }}/release-x86_64-unknown-linux-musl.tar.gz
-        tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
-        mv -vf cairo cairo-build
-        echo "$GITHUB_WORKSPACE/cairo-build/bin" >> $GITHUB_PATH
+    # - name: Setup Cairo for Linux
+    #   id: install-cairo
+    #   shell: bash
+    #   run: |
+    #     wget https://github.com/starkware-libs/cairo/releases/download/${{ inputs.cairo_version }}/release-x86_64-unknown-linux-musl.tar.gz
+    #     tar -xvzf release-x86_64-unknown-linux-musl.tar.gz
+    #     mv -vf cairo cairo-build
+    #     echo "$GITHUB_WORKSPACE/cairo-build/bin" >> $GITHUB_PATH
+    #     echo "$GITHUB_WORKSPACE"
+    #     echo "this is the github workspace"
 
     - name: Setup Scarb for Linux
       id: install-scarb
       shell: bash
       run: |
-        wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
-        tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl.tar.gz
-        mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-musl scarb-build
+        if [ "${{ inputs.use_musl_libc }}" = "true" ]; then
+              libc_version="musl"
+            else
+              libc_version="gnu"
+        fi
+        wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-${libc_version}.tar.gz
+        tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-${libc_version}.tar.gz
+        mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-${libc_version} scarb-build
         echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH

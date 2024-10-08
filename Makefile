@@ -152,13 +152,13 @@ generate: mockery gomods
 
 .PHONY: format-cairo
 format-cairo:
-	cairo-format -i ./contracts/src/**/*.cairo
-	cairo-format -i ./examples/**/*.cairo
+	cd contracts && scarb fmt
+	cd examples/contracts/aggregator_consumer && scarb fmt
 
 .PHONY: format-cairo-check
 format-cairo-check:
-	cairo-format -c ./contracts/src/**/*.cairo
-	cairo-format -c ./examples/**/*.cairo
+	cd contracts && scarb fmt -c
+	cd examples/contracts/aggregator_consumer && scarb fmt -c
 
 .PHONY: format-ts
 format-ts:
@@ -233,7 +233,7 @@ test-integration-soak-ci:
 .PHONY: test-examples
 test-examples:
 	cd ./examples/contracts/aggregator_consumer && \
-		snforge test
+		scarb test
 
 .PHONY: test-integration-gauntlet
 # TODO: fix example

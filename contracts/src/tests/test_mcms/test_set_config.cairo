@@ -5,11 +5,7 @@ use starknet::{
 };
 use chainlink::mcms::{
     ExpiringRootAndOpCount, RootMetadata, Config, Signer, ManyChainMultiSig,
-    ManyChainMultiSig::{
-        InternalFunctionsTrait, contract_state_for_testing, s_signersContractMemberStateTrait,
-        s_expiring_root_and_op_countContractMemberStateTrait,
-        s_root_metadataContractMemberStateTrait
-    },
+    ManyChainMultiSig::{InternalFunctionsTrait, contract_state_for_testing},
     IManyChainMultiSigDispatcher, IManyChainMultiSigDispatcherTrait,
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
@@ -60,7 +56,7 @@ fn test_not_owner() {
 #[test]
 #[feature("safe_dispatcher")]
 fn test_set_config_out_of_bound_signers() {
-    // 1. test if len(signer_address) = 0 => revert 
+    // 1. test if len(signer_address) = 0 => revert
     let (_, _, mcms_safe) = setup_mcms_deploy();
 
     let signer_addresses = array![];
@@ -407,16 +403,17 @@ fn test_set_config_signer_addresses_not_sorted() {
 }
 
 // test success, root not cleared, event emitted
-// 12. successful => test without clearing root. test the state of storage variables and that event was emitted
+// 12. successful => test without clearing root. test the state of storage variables and that event
+// was emitted
 //
 //                    ┌──────┐
 //                 ┌─►│2-of-2│
-//                 │  └──────┘        
-//                 │        ▲         
-//                 │        │         
-//              ┌──┴───┐ ┌──┴───┐ 
-//              signer 1 signer 2 
-//              └──────┘ └──────┘ 
+//                 │  └──────┘
+//                 │        ▲
+//                 │        │
+//              ┌──┴───┐ ┌──┴───┐
+//              signer 1 signer 2
+//              └──────┘ └──────┘
 #[test]
 fn test_set_config_success_dont_clear_root() {
     let signer_address_1: EthAddress = (0x141).try_into().unwrap();
@@ -536,7 +533,7 @@ fn test_set_config_success_dont_clear_root() {
 }
 
 
-// test that the config was reset 
+// test that the config was reset
 #[test]
 fn test_set_config_success_and_clear_root() {
     // mock the contract state

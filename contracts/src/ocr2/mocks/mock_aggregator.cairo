@@ -13,6 +13,7 @@ trait IMockAggregator<TContractState> {
 mod MockAggregator {
     use array::ArrayTrait;
     use starknet::contract_address_const;
+    use starknet::storage::Map;
     use traits::Into;
 
     use chainlink::ocr2::aggregator::IAggregator;
@@ -25,7 +26,7 @@ mod MockAggregator {
 
     #[storage]
     struct Storage {
-        _transmissions: LegacyMap<u128, Transmission>,
+        _transmissions: Map<u128, Transmission>,
         _latest_aggregator_round_id: u128,
         _decimals: u8
     }

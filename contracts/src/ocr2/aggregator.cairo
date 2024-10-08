@@ -196,6 +196,7 @@ mod Aggregator {
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
+    use starknet::storage::Map;
 
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -306,22 +307,20 @@ mod Aggregator {
         _latest_config_digest: felt252,
         // _oracles: Array<Oracle>, // NOTE: array can't be used in storage
         _oracles_len: usize,
-        _transmitters: LegacyMap<ContractAddress, Oracle>, // <pkey, Oracle>
-        _signers: LegacyMap<felt252, usize>, // <pkey, index>
-        _signers_list: LegacyMap<usize, felt252>,
-        _transmitters_list: LegacyMap<usize, ContractAddress>,
-        _reward_from_aggregator_round_id: LegacyMap<usize, u128>, // <index, round_id>
-        _transmissions: LegacyMap<u128, Transmission>,
+        _transmitters: Map<ContractAddress, Oracle>, // <pkey, Oracle>
+        _signers: Map<felt252, usize>, // <pkey, index>
+        _signers_list: Map<usize, felt252>,
+        _transmitters_list: Map<usize, ContractAddress>,
+        _reward_from_aggregator_round_id: Map<usize, u128>, // <index, round_id>
+        _transmissions: Map<u128, Transmission>,
         // link token
         _link_token: ContractAddress,
         // billing
         _billing_access_controller: ContractAddress,
         _billing: BillingConfig,
         // payee management
-        _payees: LegacyMap<ContractAddress, ContractAddress>, // <transmitter, payment_address>
-        _proposed_payees: LegacyMap<
-            ContractAddress, ContractAddress
-        > // <transmitter, payment_address>
+        _payees: Map<ContractAddress, ContractAddress>, // <transmitter, payment_address>
+        _proposed_payees: Map<ContractAddress, ContractAddress> // <transmitter, payment_address>
     }
 
     #[generate_trait]
@@ -615,30 +614,29 @@ mod Aggregator {
         ) {
             let mut index = 0;
             let mut span = oracles.span();
-            while let Option::Some(oracle) = span
-                .pop_front() {
-                    // NOTE: index should start with 1 here because storage is 0-initialized.
-                    // That way signers(pkey) => 0 indicates "not present"
-                    // This is why we increment first, before using the index
-                    index += 1;
+            while let Option::Some(oracle) = span.pop_front() {
+                // NOTE: index should start with 1 here because storage is 0-initialized.
+                // That way signers(pkey) => 0 indicates "not present"
+                // This is why we increment first, before using the index
+                index += 1;
 
-                    // check for duplicates
-                    let existing_signer = self._signers.read(*oracle.signer);
-                    assert(existing_signer == 0_usize, 'repeated signer');
+                // check for duplicates
+                let existing_signer = self._signers.read(*oracle.signer);
+                assert(existing_signer == 0_usize, 'repeated signer');
 
-                    let existing_transmitter = self._transmitters.read(*oracle.transmitter);
-                    assert(existing_transmitter.index == 0_usize, 'repeated transmitter');
+                let existing_transmitter = self._transmitters.read(*oracle.transmitter);
+                assert(existing_transmitter.index == 0_usize, 'repeated transmitter');
 
-                    self._signers.write(*oracle.signer, index);
-                    self._signers_list.write(index, *oracle.signer);
+                self._signers.write(*oracle.signer, index);
+                self._signers_list.write(index, *oracle.signer);
 
-                    self
-                        ._transmitters
-                        .write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
-                    self._transmitters_list.write(index, *oracle.transmitter);
+                self
+                    ._transmitters
+                    .write(*oracle.transmitter, Oracle { index, payment_juels: 0_u128 });
+                self._transmitters_list.write(index, *oracle.transmitter);
 
-                    self._reward_from_aggregator_round_id.write(index, latest_round_id);
-                };
+                self._reward_from_aggregator_round_id.write(index, latest_round_id);
+            };
             self._oracles_len.write(index);
         }
     }
@@ -739,12 +737,12 @@ mod Aggregator {
                 );
 
             // Check all signatures are unique (we only saw each pubkey once)
-            // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10) which
-            // ensures we have enough bits to store a count for each oracle. Whenever the MAX_ORACLES
-            // is updated, the signed_count parameter should be reconsidered.
+            // NOTE: This relies on protocol-level design constraints (MAX_ORACLES = 31, f = 10)
+            // which ensures we have enough bits to store a count for each oracle. Whenever the
+            // MAX_ORACLES is updated, the signed_count parameter should be reconsidered.
             //
-            // Although 31 bits is enough, we use a u128 here for simplicity because BitAnd and BitOr
-            // operators are defined only for u128 and u256.
+            // Although 31 bits is enough, we use a u128 here for simplicity because BitAnd and
+            // BitOr operators are defined only for u128 and u256.
             assert(MAX_ORACLES == 31_u32, '');
             self.verify_signatures(msg, ref signatures, 0_u128);
 
@@ -827,22 +825,21 @@ mod Aggregator {
             mut signed_count: u128
         ) {
             let mut span = signatures.span();
-            while let Option::Some(signature) = span
-                .pop_front() {
-                    let index = self._signers.read(*signature.public_key);
-                    assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
+            while let Option::Some(signature) = span.pop_front() {
+                let index = self._signers.read(*signature.public_key);
+                assert(index != 0_usize, 'invalid signer'); // 0 index == uninitialized
 
-                    let indexed_bit = pow(2_u128, index.into() - 1_u128);
-                    let prev_signed_count = signed_count;
-                    signed_count = signed_count | indexed_bit;
-                    assert(prev_signed_count != signed_count, 'duplicate signer');
+                let indexed_bit = pow(2_u128, index.into() - 1_u128);
+                let prev_signed_count = signed_count;
+                signed_count = signed_count | indexed_bit;
+                assert(prev_signed_count != signed_count, 'duplicate signer');
 
-                    let is_valid = ecdsa::check_ecdsa_signature(
-                        msg, *signature.public_key, *signature.r, *signature.s
-                    );
+                let is_valid = ecdsa::check_ecdsa_signature(
+                    msg, *signature.public_key, *signature.r, *signature.s
+                );
 
-                    assert(is_valid, '');
-                };
+                assert(is_valid, '');
+            };
         }
     }
 
@@ -1189,26 +1186,25 @@ mod Aggregator {
     impl PayeeManagementImpl of super::PayeeManagement<ContractState> {
         fn set_payees(ref self: ContractState, mut payees: Array<PayeeConfig>) {
             self.ownable.assert_only_owner();
-            while let Option::Some(payee) = payees
-                .pop_front() {
-                    let current_payee = self._payees.read(payee.transmitter);
-                    let is_unset = current_payee.is_zero();
-                    let is_same = current_payee == payee.payee;
-                    assert(is_unset | is_same, 'payee already set');
+            while let Option::Some(payee) = payees.pop_front() {
+                let current_payee = self._payees.read(payee.transmitter);
+                let is_unset = current_payee.is_zero();
+                let is_same = current_payee == payee.payee;
+                assert(is_unset | is_same, 'payee already set');
 
-                    self._payees.write(payee.transmitter, payee.payee);
+                self._payees.write(payee.transmitter, payee.payee);
 
-                    self
-                        .emit(
-                            Event::PayeeshipTransferred(
-                                PayeeshipTransferred {
-                                    transmitter: payee.transmitter,
-                                    previous: current_payee,
-                                    current: payee.payee
-                                }
-                            )
-                        );
-                }
+                self
+                    .emit(
+                        Event::PayeeshipTransferred(
+                            PayeeshipTransferred {
+                                transmitter: payee.transmitter,
+                                previous: current_payee,
+                                current: payee.payee
+                            }
+                        )
+                    );
+            }
         }
 
         fn transfer_payeeship(

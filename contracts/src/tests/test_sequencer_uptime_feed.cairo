@@ -30,7 +30,8 @@ use chainlink::emergency::sequencer_uptime_feed::{
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
 };
 
 
@@ -52,7 +53,11 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
      account.into() // owner
     ];
 
-    let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed").unwrap().deploy(@calldata).unwrap();
+    let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     let sequencerUptimeFeed = ISequencerUptimeFeedDispatcher {
         contract_address: sequencerFeedAddr
@@ -74,7 +79,7 @@ fn test_access_control() {
 }
 
 #[test]
-#[should_panic()]
+#[should_panic]
 fn test_set_l1_sender_not_owner() {
     let (_, _, sequencerUptimeFeed) = setup();
     start_cheat_caller_address_global(contract_address_const::<111>());
@@ -120,7 +125,7 @@ fn test_aggregator_proxy_response() {
     let latest_round_data = proxy.latest_round_data();
     assert(latest_round_data.answer == 0, 'latest_round_data should be 0');
 
-    // latest answer 
+    // latest answer
     let latest_answer = proxy.latest_answer();
     assert(latest_answer == 0, 'latest_answer should be 0');
 
