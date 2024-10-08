@@ -15,7 +15,7 @@ use starknet::{
 use chainlink::mcms::{
     recover_eth_ecdsa, hash_pair, hash_op, hash_metadata, ExpiringRootAndOpCount, RootMetadata,
     Config, Signer, eip_191_message_hash, ManyChainMultiSig, Op,
-    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing},
+    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing,},
     IManyChainMultiSigDispatcher, IManyChainMultiSigDispatcherTrait,
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
@@ -26,15 +26,14 @@ use chainlink::tests::test_mcms::utils::{
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address_global,
-    start_cheat_caller_address, stop_cheat_caller_address, stop_cheat_caller_address_global,
-    start_cheat_chain_id_global, spy_events,
-    EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
+    declare, ContractClassTrait, start_cheat_caller_address_global, start_cheat_caller_address,
+    stop_cheat_caller_address, stop_cheat_caller_address_global, start_cheat_chain_id_global,
+    spy_events, EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
      start_cheat_chain_id,
     cheatcodes::{events::{EventSpy}}, start_cheat_block_timestamp_global,
     start_cheat_block_timestamp, start_cheat_account_contract_address_global,
-    start_cheat_account_contract_address
+    start_cheat_account_contract_address, DeclareResultTrait
 };
 
 // sets up root but with wrong multisig address in metadata

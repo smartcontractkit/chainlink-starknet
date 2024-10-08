@@ -5,7 +5,6 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
 use alexandria_math::u512_arithmetics;
 use core::math::{u256_mul_mod_n, u256_div_mod_n};
 use core::zeroable::{IsZeroResult, NonZero, zero_based};
-use core::starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 use alexandria_math::u512_arithmetics::{u512_add, u512_sub, U512Intou256X2,};
 
 use starknet::{
@@ -26,7 +25,7 @@ use chainlink::mcms::{
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
 };
 use snforge_std::{
-    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address_global,
+    DeclareResultTrait, declare, ContractClassTrait, start_cheat_caller_address_global,
     start_cheat_caller_address, stop_cheat_caller_address, stop_cheat_caller_address_global,
     spy_events, EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
@@ -292,7 +291,10 @@ fn set_root_args(
 fn setup_mcms_deploy() -> (
     ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSigSafeDispatcher
 ) {
-    let calldata = array![];
+    let owner = contract_address_const::<213123123>();
+    start_cheat_caller_address_global(owner);
+
+    let calldata = array![owner.into()];
 
     let (mcms_address, _) = declare("ManyChainMultiSig")
         .unwrap()
