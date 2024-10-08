@@ -298,7 +298,10 @@ fn set_root_args(
 fn setup_mcms_deploy() -> (
     ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSigSafeDispatcher
 ) {
-    let calldata = array![];
+    let owner = contract_address_const::<213123123>();
+    start_cheat_caller_address_global(owner);
+
+    let calldata = array![owner.into()];
 
     let (mcms_address, _) = declare("ManyChainMultiSig").unwrap().deploy(@calldata).unwrap();
 
