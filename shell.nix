@@ -57,6 +57,7 @@ in
       mkdir -p $GOBIN
       export PATH=$GOBIN:$PATH
       # install gotestloghelper
-      go install github.com/smartcontractkit/chainlink-testing-framework/tools/gotestloghelper@v1.50.9
+      # TODO restore latest after versioning is fixed
+      go install github.com/smartcontractkit/chainlink-testing-framework/tools/gotestloghelper@bb160ff1069a807693b2c76691c55cb17959fbb5
     '';
   }
