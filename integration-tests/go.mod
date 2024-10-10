@@ -2,7 +2,7 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 
 go 1.22.7
 
-toolchain go1.23.2
+toolchain go1.22.2
 
 require (
 	github.com/NethermindEth/juno v0.3.1
