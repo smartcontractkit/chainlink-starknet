@@ -73,7 +73,7 @@ jobs:
 
   golang_lint_integration_tests:
     name: Golang Lint Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu22.04-8cores-32GB
     timeout-minutes: 20 # DEBUG: Telemetry
     permissions: # DEBUG: Telemetry
       pull-requests: write
