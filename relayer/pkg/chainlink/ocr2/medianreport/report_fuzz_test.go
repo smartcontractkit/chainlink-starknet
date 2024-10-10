@@ -4,6 +4,7 @@
 package medianreport
 
 import (
+	"math"
 	"math/big"
 	"testing"
 	"time"
@@ -19,10 +20,15 @@ import (
 func FuzzReportCodecMedianFromReport(f *testing.F) {
 	ctx := tests.Context(f)
 	cdc := ReportCodec{}
+	now := time.Now().Unix()
+	if now > math.MaxUint32 || now < 0 {
+		f.Fatalf("unix timestamp overflows uint32: %d", now)
+	}
+	ts := uint32(now)
 	report, err := cdc.BuildReport(ctx, []median.ParsedAttributedObservation{
-		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(100000), GasPriceSubunits: big.NewInt(100000)},
-		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(200000), GasPriceSubunits: big.NewInt(200000)},
-		{Timestamp: uint32(time.Now().Unix()), Value: big.NewInt(11), JuelsPerFeeCoin: big.NewInt(300000), GasPriceSubunits: big.NewInt(300000)},
+		{Timestamp: ts, Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(100000), GasPriceSubunits: big.NewInt(100000)},
+		{Timestamp: ts, Value: big.NewInt(10), JuelsPerFeeCoin: big.NewInt(200000), GasPriceSubunits: big.NewInt(200000)},
+		{Timestamp: ts, Value: big.NewInt(11), JuelsPerFeeCoin: big.NewInt(300000), GasPriceSubunits: big.NewInt(300000)},
 	})
 	require.NoError(f, err)
 
@@ -33,7 +39,7 @@ func FuzzReportCodecMedianFromReport(f *testing.F) {
 		med, err := cdc.MedianFromReport(ctx, report)
 		if err == nil {
 			// Should always be able to build a report from the medians extracted
-			_, err = cdc.BuildReport(ctx, []median.ParsedAttributedObservation{{Timestamp: uint32(time.Now().Unix()), Value: med, JuelsPerFeeCoin: med, GasPriceSubunits: med}})
+			_, err = cdc.BuildReport(ctx, []median.ParsedAttributedObservation{{Timestamp: ts, Value: med, JuelsPerFeeCoin: med, GasPriceSubunits: med}})
 			require.NoError(t, err)
 		}
 	})
