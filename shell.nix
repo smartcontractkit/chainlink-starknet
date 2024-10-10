@@ -5,7 +5,7 @@
   scriptDir,
 }:
 with pkgs; let
-  go = pkgs.go_1_21;
+  go = pkgs.go_1_22;
 
   mkShell' = mkShell.override {
     # juno requires building with clang, not gcc
@@ -57,7 +57,11 @@ in
       mkdir -p $GOBIN
       export PATH=$GOBIN:$PATH
       # install gotestloghelper
+<<<<<<< Updated upstream
       # TODO restore latest after versioning is fixed
       go install github.com/smartcontractkit/chainlink-testing-framework/tools/gotestloghelper@bb160ff1069a807693b2c76691c55cb17959fbb5
+=======
+      go install github.com/smartcontractkit/chainlink-testing-framework/tools/gotestloghelper@latest
+>>>>>>> Stashed changes
     '';
   }
