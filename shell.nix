@@ -5,7 +5,7 @@
   scriptDir,
 }:
 with pkgs; let
-  go = pkgs.go_1_21;
+  go = pkgs.go_1_23;
 
   mkShell' = mkShell.override {
     # juno requires building with clang, not gcc
@@ -17,8 +17,8 @@ in
       [
         stdenv.cc.cc.lib
         (rust-bin.stable.latest.default.override {extensions = ["rust-src"];})
-        nodejs-18_x
-        (yarn.override {nodejs = nodejs-18_x;})
+        nodejs_20
+        (yarn.override {nodejs = nodejs_20;})
         nodePackages.typescript
         nodePackages.typescript-language-server
         nodePackages.npm
@@ -29,7 +29,7 @@ in
 
         gopls
         delve
-        (golangci-lint.override {buildGoModule = buildGo122Module;})
+        golangci-lint
         gotools
 
         kubectl
