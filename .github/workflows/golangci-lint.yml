@@ -74,11 +74,13 @@ jobs:
   golang_lint_integration_tests:
     name: Golang Lint Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20 # DEBUG: Telemetry
     permissions: # DEBUG: Telemetry
       pull-requests: write
     needs: [golangci-lint-version]
     steps:
       - name: Collect Workflow Telemetry # DEBUG: Checking resources
+        if: always()
         uses: catchpoint/workflow-telemetry-action@v2
       - name: Checkout sources
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
