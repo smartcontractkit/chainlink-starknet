@@ -1,8 +1,9 @@
 # Languages
 nodejs 18.6.0
 yarn 1.22.19
-golang 1.21.5
+golang 1.22.7
 python 3.9.13
+
 
 # Tools
 mockery 2.22.1
