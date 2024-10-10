@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/chainlink-starknet/integration-tests
 
-go 1.22.7
+go 1.22.8
 
 require (
 	github.com/NethermindEth/juno v0.3.1
@@ -16,8 +16,8 @@ require (
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.1-beta-test.0.20241009122052-5e3515805bca
 	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.9
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.1
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20241010184507-aadf78ecc5f7
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20241010184507-aadf78ecc5f7
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20241011113521-7a311a7bf77d
+	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20241011113521-7a311a7bf77d
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
 	go.uber.org/zap v1.27.0

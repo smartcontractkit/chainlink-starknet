@@ -8,6 +8,7 @@ import (
 	"math/big"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
@@ -34,12 +35,12 @@ func (r *relayer) Name() string {
 	return r.lggr.Name()
 }
 
-func (r *relayer) Start(context.Context) error {
-	return nil
+func (r *relayer) Start(ctx context.Context) error {
+	return r.chain.Start(ctx)
 }
 
 func (r *relayer) Close() error {
-	return nil
+	return r.chain.Close()
 }
 
 func (r *relayer) Ready() error {
@@ -49,7 +50,9 @@ func (r *relayer) Ready() error {
 func (r *relayer) Healthy() error { return nil }
 
 func (r *relayer) HealthReport() map[string]error {
-	return map[string]error{r.Name(): r.Healthy()}
+	hp := map[string]error{r.Name(): r.Healthy()}
+	services.CopyHealth(hp, r.chain.HealthReport())
+	return hp
 }
 
 func (r *relayer) NewChainWriter(_ context.Context, _ []byte) (relaytypes.ChainWriter, error) {
