@@ -105,7 +105,7 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 
 	require.Equal(t, e.Observers, []uint8{0, 1, 2, 3})
 	require.Equal(t, e.ObservationsLen, uint32(4))
-	require.Equal(t, e.ObservationsLen, uint32(len(e.Observers)))
+	require.Equal(t, int(e.ObservationsLen), len(e.Observers))
 
 	configDigest := XXXMustBytesToConfigDigest(starknet.XXXMustHexDecodeString("000485341c18461d70eac6ded4b8b17147f173308ddd56216a86f9ec4d994453"))
 	require.Equal(t, len(configDigest), 32) // padded to 32 bytes
