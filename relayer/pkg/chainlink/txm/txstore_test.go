@@ -105,8 +105,8 @@ func TestTxStore(t *testing.T) {
 
 		// init store
 		s := NewTxStore(new(felt.Felt).SetUint64(0))
-		for i := 0; i < 6; i++ {
-			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i), call, publicKey))
+		for i := uint64(0); i < 6; i++ {
+			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(i), "0x"+fmt.Sprintf("%d", i), call, publicKey))
 		}
 
 		// confirm in order
@@ -152,32 +152,32 @@ func TestTxStore(t *testing.T) {
 		}
 
 		publicKey := new(felt.Felt).SetUint64(7)
-		txCount := 6
+		txCount := uint64(6)
 
 		// init store
 		s := NewTxStore(new(felt.Felt).SetUint64(0))
-		for i := 0; i < txCount; i++ {
-			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i), call, publicKey))
+		for i := uint64(0); i < txCount; i++ {
+			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(i), "0x"+fmt.Sprintf("%d", i), call, publicKey))
 		}
-		assert.Equal(t, s.InflightCount(), txCount)
+		assert.Equal(t, s.InflightCount(), 6)
 
 		staleTxs := s.SetNextNonce(new(felt.Felt).SetUint64(0))
 
-		assert.Equal(t, len(staleTxs), txCount)
-		for i := 0; i < txCount; i++ {
+		assert.Equal(t, uint64(len(staleTxs)), txCount)
+		for i := uint64(0); i < txCount; i++ {
 			staleTx := staleTxs[i]
-			assert.Equal(t, staleTx.Nonce.Cmp(new(felt.Felt).SetUint64(uint64(i))), 0)
+			assert.Equal(t, staleTx.Nonce.Cmp(new(felt.Felt).SetUint64(i)), 0)
 			assert.Equal(t, staleTx.Call, call)
 			assert.Equal(t, staleTx.PublicKey.Cmp(publicKey), 0)
 			assert.Equal(t, staleTx.Hash, "0x"+fmt.Sprintf("%d", i))
 		}
 		assert.Equal(t, s.InflightCount(), 0)
 
-		for i := 0; i < txCount; i++ {
-			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(uint64(i)), "0x"+fmt.Sprintf("%d", i), call, publicKey))
+		for i := uint64(0); i < txCount; i++ {
+			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(i), "0x"+fmt.Sprintf("%d", i), call, publicKey))
 		}
 
-		newNextNonce := uint64(txCount - 1)
+		newNextNonce := txCount - 1
 		staleTxs = s.SetNextNonce(new(felt.Felt).SetUint64(newNextNonce))
 		assert.Equal(t, len(staleTxs), 1)
 		assert.Equal(t, staleTxs[0].Nonce.Cmp(new(felt.Felt).SetUint64(newNextNonce)), 0)
