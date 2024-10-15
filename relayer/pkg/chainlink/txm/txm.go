@@ -27,7 +27,7 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(accountAddress *felt.Felt, publicKey *felt.Felt, txFn starknetrpc.FunctionCall) error
+	Enqueue(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt, txFn starknetrpc.FunctionCall) error
 	InflightCount() (int, int)
 }
 
@@ -483,12 +483,12 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrpc.FunctionCall) error {
+func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *felt.Felt, tx starknetrpc.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test
 	// existence of a key
-	if _, err := txm.ks.Loopp().Sign(context.Background(), publicKey.String(), nil); err != nil {
+	if _, err := txm.ks.Loopp().Sign(ctx, publicKey.String(), nil); err != nil {
 		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}
 
