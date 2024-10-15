@@ -18,7 +18,7 @@ mod InvalidReceiver {
         }
 
         #[external(v0)]
-        fn supports_interface(self: @ContractState, interface_id: u32) -> bool {
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
             self._supports.read()
         }
     }

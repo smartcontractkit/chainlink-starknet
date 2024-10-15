@@ -1,19 +1,17 @@
-use starknet::ContractAddress;
-use starknet::testing::set_caller_address;
-use starknet::contract_address_const;
-use starknet::class_hash::class_hash_const;
-use starknet::class_hash::Felt252TryIntoClassHash;
-use starknet::syscalls::deploy_syscall;
+use starknet::{
+    syscalls::deploy_syscall, ContractAddress, testing::set_caller_address, contract_address_const,
+    class_hash::{class_hash_const, Felt252TryIntoClassHash}
+};
 
 use array::ArrayTrait;
-use traits::Into;
-use traits::TryInto;
+use traits::{Into, TryInto};
 use zeroable::Zeroable;
 use option::OptionTrait;
 use core::result::ResultTrait;
 
-use chainlink::token::link_token::LinkToken;
-use chainlink::token::link_token::LinkToken::{MintableToken, UpgradeableImpl};
+use chainlink::token::v2::link_token::{
+    LinkToken, LinkToken::{MintableToken, UpgradeableImpl, Minter}
+};
 use openzeppelin::token::erc20::ERC20Component::{ERC20Impl, ERC20MetadataImpl};
 use chainlink::tests::test_ownable::should_implement_ownable;
 
@@ -36,13 +34,33 @@ fn setup() -> ContractAddress {
     account
 }
 
+fn link_deploy_args(minter: ContractAddress, owner: ContractAddress) -> Array<felt252> {
+    let mut calldata = ArrayTrait::new();
+    let _name_ignore: felt252 = 0;
+    let _symbol_ignore: felt252 = 0;
+    let _decimals_ignore: u8 = 0;
+    let _initial_supply_ignore: u256 = 0;
+    let _initial_recipient_ignore: ContractAddress = Zeroable::zero();
+    let _upgrade_delay_ignore: u64 = 0;
+    Serde::serialize(@_name_ignore, ref calldata);
+    Serde::serialize(@_symbol_ignore, ref calldata);
+    Serde::serialize(@_decimals_ignore, ref calldata);
+    Serde::serialize(@_initial_supply_ignore, ref calldata);
+    Serde::serialize(@_initial_recipient_ignore, ref calldata);
+    Serde::serialize(@minter, ref calldata);
+    Serde::serialize(@owner, ref calldata);
+    Serde::serialize(@_upgrade_delay_ignore, ref calldata);
+
+    calldata
+}
+
 #[test]
 fn test_ownable() {
     let account = setup();
     // Deploy LINK token
-    let mut calldata = ArrayTrait::new();
-    calldata.append(class_hash_const::<123>().into()); // minter
-    calldata.append(account.into()); // owner
+    let calldata = link_deploy_args(contract_address_const::<123>(), // minter
+     account // owner
+    );
 
     let (linkAddr, _) = declare("LinkToken").unwrap().deploy(@calldata).unwrap();
 
@@ -55,16 +73,16 @@ fn test_constructor_zero_address() {
     let sender = setup();
     let mut state = STATE();
 
-    LinkToken::constructor(ref state, Zeroable::zero(), sender);
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), Zeroable::zero(), sender, 0);
 }
 
 #[test]
 fn test_constructor() {
     let sender = setup();
     let mut state = STATE();
-    LinkToken::constructor(ref state, sender, sender);
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), sender, sender, 0);
 
-    assert(LinkToken::minter(@state) == sender, 'minter valid');
+    assert(Minter::minter(@state) == sender, 'minter valid');
     assert(state.erc20.name() == "ChainLink Token", 'name valid');
     assert(state.erc20.symbol() == "LINK", 'symbol valid');
 }
@@ -73,7 +91,7 @@ fn test_constructor() {
 fn test_permissioned_mint_from_minter() {
     let sender = setup();
     let mut state = STATE();
-    LinkToken::constructor(ref state, sender, sender);
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), sender, sender, 0);
     let to = contract_address_const::<908>();
 
     let zero: felt252 = 0;
@@ -93,7 +111,7 @@ fn test_permissioned_mint_from_nonminter() {
     let sender = setup();
     let mut state = STATE();
     let minter = contract_address_const::<111>();
-    LinkToken::constructor(ref state, minter, sender);
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), minter, sender, 0);
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
@@ -106,7 +124,7 @@ fn test_permissioned_burn_from_minter() {
     let zero = 0;
     let sender = setup();
     let mut state = STATE();
-    LinkToken::constructor(ref state, sender, sender);
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), sender, sender, 0);
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
@@ -134,7 +152,7 @@ fn test_permissioned_burn_from_nonminter() {
     let sender = setup();
     let mut state = STATE();
     let minter = contract_address_const::<111>();
-    LinkToken::constructor(ref state, minter, sender);
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), minter, sender, 0);
     let to = contract_address_const::<908>();
 
     let amount: felt252 = 3000;
@@ -146,8 +164,48 @@ fn test_permissioned_burn_from_nonminter() {
 fn test_upgrade_non_owner() {
     let sender = setup();
     let mut state = STATE();
-    LinkToken::constructor(ref state, sender, contract_address_const::<111>());
+    LinkToken::constructor(
+        ref state, 0, 0, 0, 0, Zeroable::zero(), sender, contract_address_const::<111>(), 0
+    );
 
     UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
+}
+
+#[test]
+#[should_panic(expected: ('Caller is not the owner',))]
+fn test_set_minter_non_owner() {
+    let sender = setup();
+    let mut state = STATE();
+    LinkToken::constructor(
+        ref state, 0, 0, 0, 0, Zeroable::zero(), sender, contract_address_const::<111>(), 0
+    );
+
+    Minter::set_minter(ref state, contract_address_const::<123>())
+}
+
+#[test]
+#[should_panic(expected: ('is minter already',))]
+fn test_set_minter_already() {
+    let sender = setup();
+    let mut state = STATE();
+
+    let minter = contract_address_const::<111>();
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), minter, sender, 0);
+
+    Minter::set_minter(ref state, minter);
+}
+
+#[test]
+fn test_set_minter_success() {
+    let sender = setup();
+    let mut state = STATE();
+
+    let minter = contract_address_const::<111>();
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), minter, sender, 0);
+
+    let new_minter = contract_address_const::<222>();
+    Minter::set_minter(ref state, new_minter);
+
+    assert(new_minter == Minter::minter(@state), 'new minter should be 222');
 }
 
