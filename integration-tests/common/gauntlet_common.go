@@ -109,7 +109,17 @@ func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionV
 		return err
 	}
 
-	err = m.deployLinkToken()
+	// done. Need to test
+	// err = m.deployLinkToken()
+	// if err != nil {
+	// 	return err
+	// }
+	err = m.declareLinkToken()
+	if err != nil {
+		return err
+	}
+
+	err = m.deployLinkTokenWithGpp()
 	if err != nil {
 		return err
 	}
