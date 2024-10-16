@@ -26,15 +26,12 @@ import (
 	test_env_integrations "github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv"
-	test_env_gauntlet_plus_plus "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-
-	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
 )
 
 var (
@@ -66,7 +63,7 @@ type Clients struct {
 	ChainlinkClient *ChainlinkClient
 	GauntletClient  *gauntlet.StarknetGauntlet
 	DockerEnv       *StarknetClusterTestEnv
-	gPPClient       *g.
+	GauntletPPClient *gauntlet.StarknetGauntletPlusPlus
 }
 
 // Contracts to store current deployed contract state
@@ -163,7 +160,6 @@ func (m *OCRv2TestState) DeployCluster() {
 		env, err := test_env_integrations.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
 		stark := test_env_starknet.NewStarknet([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.DevnetImage)
-		gauntlet_plus_plus := test_env_gauntlet_plus_plus.NewGauntletPlusPlus([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
 
@@ -217,6 +213,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs())
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
+
 	lggr := logger.Nop()
 	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, m.Common.RPCDetails.RPCL2InternalAPIKey, lggr, &rpcRequestTimeout)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating starknet client should not fail")
