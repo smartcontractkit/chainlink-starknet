@@ -192,6 +192,7 @@ type Common struct {
 	DevnetImage        *string `toml:"devnet_image"`
 	GauntletPlusPlusImage *string `toml:"gauntlet_plus_plus_image"`
 	PostgresVersion    *string `toml:"postgres_version"`
+	GauntletPlusPlusPort *string `toml:"gauntlet_plus_plus_port"`
 }
 
 func (c *Common) Validate() error {

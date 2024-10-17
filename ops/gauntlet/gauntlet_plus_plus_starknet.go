@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"context"
+	"time"
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
 )
 
@@ -75,6 +76,7 @@ func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcUrl string, addre
 		providers: sgpp.BuildProviders(address, rpcUrl, privateKey),
 	}
 
+
 	return sgpp, nil
 }
 
@@ -85,22 +87,11 @@ func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() (error) {
 		Input: inputMap,
 	}
 
-	var body g.PostExecuteJSONRequestBody
 	var headers *g.PostExecuteParams
 
-	body = *sgpp.BuildRequestBody(request)
+	body := sgpp.BuildRequestBody(request)
 
-	tmp,_ := json.Marshal(body)
-	err := json.Unmarshal(tmp, &body)
-	if err != nil {
-		return err
-	}
-
-	// Show request body
-	fmt.Println("Request body:" + string(tmp))
-
-	// PostOperationWithResponse returns an already parsed Post Operation
-	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, body)
+	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
 	if err != nil {
 		return err
 	}
@@ -160,18 +151,18 @@ func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (s
 }
 
 func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) (*g.PostExecuteJSONRequestBody) {
+	var args any = request.Input
+
 	body := g.PostExecuteJSONRequestBody{
 		Config: &g.Config{
 			Providers: *sgpp.providers,
 			Datasources: []g.Datasource{},
 		},
 		Operation: g.Operation{
-			Args: new(interface{}),
+			Args: &args,
 			Name: request.Command,
 		},
 	}
-
-	*body.Operation.Args = request.Input
 
 	return &body
 }
