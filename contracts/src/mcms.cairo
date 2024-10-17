@@ -121,11 +121,18 @@ fn hash_pair(a: u256, b: u256) -> u256 {
 fn hash_op(op: Op) -> u256 {
     let mut encoded_leaf: Bytes = BytesTrait::new_empty()
         .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP)
+        .encode(0x40) // dynamic byte offset of the op struct
         .encode(op.chain_id)
         .encode(op.multisig)
         .encode(op.nonce)
         .encode(op.to)
-        .encode(op.selector);
+        .encode(op.selector)
+        // dynamic byte offset of data array (relative to beginning of op struct)
+        // (note: domain seperator not part of the op struct)
+        .encode(0xc0)
+        // length prefix
+        .encode(op.data.len());
+
     // encode the data field by looping through
     let mut i = 0;
     while i < op.data.len() {
