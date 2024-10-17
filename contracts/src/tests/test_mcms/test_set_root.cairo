@@ -126,7 +126,7 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
     let op1_hash = hash_op(op1);
     let op2_hash = hash_op(op2);
 
-    let metadata_hash = hash_metadata(metadata, valid_until);
+    let metadata_hash = hash_metadata(metadata);
 
     // create merkle tree
     let (root, metadata_proof, ops_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);

@@ -142,10 +142,9 @@ const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
 const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
     0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
 
-fn hash_metadata(metadata: RootMetadata, valid_until: u32) -> u256 {
+fn hash_metadata(metadata: RootMetadata) -> u256 {
     let encoded_metadata: Bytes = BytesTrait::new_empty()
         .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA)
-        .encode(valid_until)
         .encode(metadata.chain_id)
         .encode(metadata.multisig)
         .encode(metadata.pre_op_count)
@@ -347,7 +346,7 @@ mod ManyChainMultiSig {
             );
 
             // verify metadataProof
-            let hashed_metadata_leaf = hash_metadata(metadata, valid_until);
+            let hashed_metadata_leaf = hash_metadata(metadata);
             assert(
                 verify_merkle_proof(metadata_proof, root, hashed_metadata_leaf),
                 'proof verification failed'
