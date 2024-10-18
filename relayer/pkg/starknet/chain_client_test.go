@@ -20,8 +20,8 @@ import (
 
 var (
 	myTimeout     = 100 * time.Second
-	blockNumber   = 48719
-	uintBlockNum  = uint64(blockNumber)
+	blockNumber   = uint64(48719)
+	uintBlockNum  = blockNumber
 	blockHash, _  = new(felt.Felt).SetString("0x725407fcc3bd43e50884f50f1e0ef32aa9f814af3da475411934a7dbd4b41a")
 	blockResponse = []byte(`
 		"result": {
@@ -233,16 +233,16 @@ func TestChainClient(t *testing.T) {
 	})
 
 	t.Run("get BlockByNumber", func(t *testing.T) {
-		block, err := client.BlockByNumber(context.TODO(), uint64(blockNumber))
+		block, err := client.BlockByNumber(context.TODO(), blockNumber)
 		require.NoError(t, err)
-		assert.Equal(t, uint64(blockNumber), block.BlockNumber)
+		assert.Equal(t, blockNumber, block.BlockNumber)
 	})
 
 	t.Run("get LatestBlockHashAndNumber", func(t *testing.T) {
 		output, err := client.LatestBlockHashAndNumber(context.TODO())
 		require.NoError(t, err)
 		assert.Equal(t, blockHash, output.BlockHash)
-		assert.Equal(t, uint64(blockNumber), output.BlockNumber)
+		assert.Equal(t, blockNumber, output.BlockNumber)
 	})
 
 	t.Run("get ChainID", func(t *testing.T) {
@@ -252,7 +252,7 @@ func TestChainClient(t *testing.T) {
 	})
 
 	t.Run("get Events", func(t *testing.T) {
-		blockNumber := uint64(blockNumber)
+		blockNumber := blockNumber
 		events, err := client.EventsByFilter(context.TODO(), eventsInput)
 		require.NoError(t, err)
 
@@ -270,7 +270,7 @@ func TestChainClient(t *testing.T) {
 		builder.
 			RequestChainID().
 			RequestBlockByHash(blockHash).
-			RequestBlockByNumber(uint64(blockNumber)).
+			RequestBlockByNumber(blockNumber).
 			RequestLatestBlockHashAndNumber().
 			RequestEventsByFilter(eventsInput)
 
@@ -300,7 +300,7 @@ func TestChainClient(t *testing.T) {
 			assert.Nil(t, results[2].Error)
 			block, ok := results[2].Result.(*FinalizedBlock)
 			assert.True(t, ok)
-			assert.Equal(t, uint64(blockNumber), block.BlockNumber)
+			assert.Equal(t, blockNumber, block.BlockNumber)
 		})
 
 		t.Run("gets LatestBlockHashAndNumber in Batch", func(t *testing.T) {
@@ -309,7 +309,7 @@ func TestChainClient(t *testing.T) {
 			info, ok := results[3].Result.(*starknetrpc.BlockHashAndNumberOutput)
 			assert.True(t, ok)
 			assert.Equal(t, blockHash, info.BlockHash)
-			assert.Equal(t, uint64(blockNumber), info.BlockNumber)
+			assert.Equal(t, blockNumber, info.BlockNumber)
 		})
 
 		t.Run("gets EventsByFilter in Batch", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestChainClient(t *testing.T) {
 			assert.Equal(t, "48719-2", events.ContinuationToken)
 			for _, event := range events.Events {
 				assert.NotNil(t, event)
-				assert.Equal(t, uint64(blockNumber), event.BlockNumber)
+				assert.Equal(t, blockNumber, event.BlockNumber)
 				assert.Equal(t, blockHash, event.BlockHash)
 			}
 		})

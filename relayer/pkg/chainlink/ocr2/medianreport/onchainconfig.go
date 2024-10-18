@@ -1,6 +1,7 @@
 package medianreport
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -42,7 +43,7 @@ func (codec OnchainConfigCodec) DecodeToFelts(b []byte) ([]*big.Int, error) {
 }
 
 // Decode converts the onchainconfig via the outputs of DecodeToFelts into unsigned big.Ints that libocr expects
-func (codec OnchainConfigCodec) Decode(b []byte) (median.OnchainConfig, error) {
+func (codec OnchainConfigCodec) Decode(ctx context.Context, b []byte) (median.OnchainConfig, error) {
 	felts, err := codec.DecodeToFelts(b)
 	if err != nil {
 		return median.OnchainConfig{}, err
@@ -81,6 +82,6 @@ func (codec OnchainConfigCodec) EncodeFromFelt(version, min, max *big.Int) ([]by
 }
 
 // Encode takes the interface that libocr uses (big.Ints) and serializes it into 3 felts
-func (codec OnchainConfigCodec) Encode(c median.OnchainConfig) ([]byte, error) {
+func (codec OnchainConfigCodec) Encode(ctx context.Context, c median.OnchainConfig) ([]byte, error) {
 	return codec.EncodeFromFelt(big.NewInt(OnchainConfigVersion), c.Min, c.Max)
 }

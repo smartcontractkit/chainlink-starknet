@@ -264,7 +264,7 @@ fn set_root_args(
     let op1_hash = hash_op(op1);
     let op2_hash = hash_op(op2);
 
-    let metadata_hash = hash_metadata(metadata, valid_until);
+    let metadata_hash = hash_metadata(metadata);
 
     // create merkle tree
     let (root, metadata_proof, ops_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
@@ -298,7 +298,10 @@ fn set_root_args(
 fn setup_mcms_deploy() -> (
     ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSigSafeDispatcher
 ) {
-    let calldata = array![];
+    let owner = contract_address_const::<213123123>();
+    start_cheat_caller_address_global(owner);
+
+    let calldata = array![owner.into()];
 
     let (mcms_address, _) = declare("ManyChainMultiSig").unwrap().deploy(@calldata).unwrap();
 

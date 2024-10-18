@@ -95,7 +95,7 @@ func (c *contractTransmitter) Transmit(
 		return err
 	}
 
-	err = c.txm.Enqueue(c.accountAddress, c.senderAddress, starknetrpc.FunctionCall{
+	err = c.txm.Enqueue(ctx, c.accountAddress, c.senderAddress, starknetrpc.FunctionCall{
 		ContractAddress:    c.contractAddress,
 		EntryPointSelector: starknetutils.GetSelectorFromNameFelt("transmit"),
 		Calldata:           calldata,
@@ -119,6 +119,6 @@ func (c *contractTransmitter) LatestConfigDigestAndEpoch(
 	return
 }
 
-func (c *contractTransmitter) FromAccount() (types.Account, error) {
+func (c *contractTransmitter) FromAccount(ctx context.Context) (types.Account, error) {
 	return types.Account(c.accountAddress.String()), nil
 }

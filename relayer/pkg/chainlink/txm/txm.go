@@ -27,7 +27,7 @@ const (
 )
 
 type TxManager interface {
-	Enqueue(accountAddress *felt.Felt, publicKey *felt.Felt, txFn starknetrpc.FunctionCall) error
+	Enqueue(ctx context.Context, accountAddress *felt.Felt, publicKey *felt.Felt, txFn starknetrpc.FunctionCall) error
 	InflightCount() (int, int)
 }
 
@@ -59,7 +59,7 @@ type starktxm struct {
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
-		lggr:         logger.Named(lggr, "StarknetTxm"),
+		lggr:         logger.Named(lggr, "Txm"),
 		queue:        make(chan Tx, MaxQueueLen),
 		stop:         make(chan struct{}),
 		client:       utils.NewLazyLoad(getClient),
@@ -77,7 +77,7 @@ func (txm *starktxm) Name() string {
 }
 
 func (txm *starktxm) Start(ctx context.Context) error {
-	return txm.starter.StartOnce("starktxm", func() error {
+	return txm.starter.StartOnce("Txm", func() error {
 		txm.done.Add(2) // waitgroup: broadcast loop and confirm loop
 		go txm.broadcastLoop()
 		go txm.confirmLoop()
@@ -464,7 +464,7 @@ func (txm *starktxm) resyncNonce(ctx context.Context, client *starknet.Client, a
 }
 
 func (txm *starktxm) Close() error {
-	return txm.starter.StopOnce("starktxm", func() error {
+	return txm.starter.StopOnce("Txm", func() error {
 		close(txm.stop)
 		txm.done.Wait()
 		return nil
@@ -483,12 +483,12 @@ func (txm *starktxm) HealthReport() map[string]error {
 	return map[string]error{txm.Name(): txm.Healthy()}
 }
 
-func (txm *starktxm) Enqueue(accountAddress, publicKey *felt.Felt, tx starknetrpc.FunctionCall) error {
+func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *felt.Felt, tx starknetrpc.FunctionCall) error {
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test
 	// existence of a key
-	if _, err := txm.ks.Loopp().Sign(context.Background(), publicKey.String(), nil); err != nil {
+	if _, err := txm.ks.Loopp().Sign(ctx, publicKey.String(), nil); err != nil {
 		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}
 

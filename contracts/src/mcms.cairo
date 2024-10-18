@@ -121,11 +121,18 @@ fn hash_pair(a: u256, b: u256) -> u256 {
 fn hash_op(op: Op) -> u256 {
     let mut encoded_leaf: Bytes = BytesTrait::new_empty()
         .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP)
+        .encode(0x40) // dynamic byte offset of the op struct
         .encode(op.chain_id)
         .encode(op.multisig)
         .encode(op.nonce)
         .encode(op.to)
-        .encode(op.selector);
+        .encode(op.selector)
+        // dynamic byte offset of data array (relative to beginning of op struct)
+        // (note: domain seperator not part of the op struct)
+        .encode(0xc0)
+        // length prefix
+        .encode(op.data.len());
+
     // encode the data field by looping through
     let mut i = 0;
     while i < op.data.len() {
@@ -142,10 +149,9 @@ const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP: u256 =
 const MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA: u256 =
     0xe6b82be989101b4eb519770114b997b97b3c8707515286748a871717f0e4ea1c;
 
-fn hash_metadata(metadata: RootMetadata, valid_until: u32) -> u256 {
+fn hash_metadata(metadata: RootMetadata) -> u256 {
     let encoded_metadata: Bytes = BytesTrait::new_empty()
         .encode(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA)
-        .encode(valid_until)
         .encode(metadata.chain_id)
         .encode(metadata.multisig)
         .encode(metadata.pre_op_count)
@@ -284,11 +290,9 @@ mod ManyChainMultiSig {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState) {
-        let caller = starknet::info::get_caller_address();
-        self.ownable.initializer(caller);
+    fn constructor(ref self: ContractState, owner: ContractAddress) {
+        self.ownable.initializer(owner);
     }
-
 
     #[abi(embed_v0)]
     impl ManyChainMultiSigImpl of super::IManyChainMultiSig<ContractState> {
@@ -349,7 +353,7 @@ mod ManyChainMultiSig {
             );
 
             // verify metadataProof
-            let hashed_metadata_leaf = hash_metadata(metadata, valid_until);
+            let hashed_metadata_leaf = hash_metadata(metadata);
             assert(
                 verify_merkle_proof(metadata_proof, root, hashed_metadata_leaf),
                 'proof verification failed'

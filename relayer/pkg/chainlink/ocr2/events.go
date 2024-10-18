@@ -3,6 +3,7 @@ package ocr2
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -57,7 +58,7 @@ func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionE
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
 
-		observationsLen := eventData[observationsLenIndex].BigInt(big.NewInt(0)).Uint64()
+		observationsLen := eventData[observationsLenIndex].BigInt(big.NewInt(0)).Int64()
 		if len(eventData) != constNumOfElements+int(observationsLen) {
 			return NewTransmissionEvent{}, errors.New("invalid: event data")
 		}
@@ -65,7 +66,11 @@ func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionE
 
 	// keys[0] == event_id
 	// round_id
-	roundID := uint32(event.Keys[1].BigInt(big.NewInt(0)).Uint64())
+	roundID64 := event.Keys[1].BigInt(big.NewInt(0)).Uint64()
+	if roundID64 > math.MaxUint32 {
+		return NewTransmissionEvent{}, fmt.Errorf("round overflows uint32: %d", roundID64)
+	}
+	roundID := uint32(roundID64)
 	// transmitter
 	transmitter := event.Keys[2]
 
@@ -85,7 +90,11 @@ func ParseNewTransmissionEvent(event starknetrpc.EmittedEvent) (NewTransmissionE
 
 	// observation_len
 	index++
-	observationsLen := uint32(eventData[index].BigInt(big.NewInt(0)).Uint64())
+	observationsLen64 := eventData[index].BigInt(big.NewInt(0)).Uint64()
+	if observationsLen64 > math.MaxUint32 {
+		return NewTransmissionEvent{}, fmt.Errorf("observation count overflows uint32: %d", observationsLen64)
+	}
+	observationsLen := uint32(observationsLen64)
 
 	// observers (based on observationsLen)
 	var observers []uint8
@@ -178,7 +187,7 @@ func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, 
 
 	// oracles_len
 	index++
-	oraclesLen := eventData[index].BigInt(big.NewInt(0)).Uint64()
+	oraclesLen := eventData[index].BigInt(big.NewInt(0)).Int64()
 
 	// oracles
 	index++
@@ -196,11 +205,15 @@ func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, 
 
 	// f
 	index = index + int(oraclesLen)*2
-	f := eventData[index].BigInt(big.NewInt(0)).Uint64()
+	f64 := eventData[index].BigInt(big.NewInt(0)).Uint64()
+	if f64 > math.MaxUint8 {
+		return types.ContractConfig{}, fmt.Errorf("f overflows uint8: %d", f64)
+	}
+	f := uint8(f64)
 
 	// onchain_config length
 	index++
-	onchainConfigLen := eventData[index].BigInt(big.NewInt(0)).Uint64()
+	onchainConfigLen := eventData[index].BigInt(big.NewInt(0)).Int64()
 
 	// onchain_config (version=1, min, max)
 	index++
@@ -220,7 +233,7 @@ func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, 
 
 	// offchain_config_len
 	index++
-	offchainConfigLen := eventData[index].BigInt(big.NewInt(0)).Uint64()
+	offchainConfigLen := eventData[index].BigInt(big.NewInt(0)).Int64()
 
 	// offchain_config
 	index++
@@ -235,7 +248,7 @@ func ParseConfigSetEvent(event starknetrpc.EmittedEvent) (types.ContractConfig, 
 		ConfigCount:           configCount,
 		Signers:               signers,
 		Transmitters:          transmitters,
-		F:                     uint8(f),
+		F:                     f,
 		OnchainConfig:         onchainConfig,
 		OffchainConfigVersion: offchainConfigVersion,
 		OffchainConfig:        offchainConfig,
