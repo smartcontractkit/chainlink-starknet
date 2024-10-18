@@ -54,7 +54,7 @@ describe('Aggregator', function () {
 
     // Declares and deploys the LINK token contract
     const ddToken = await owner.declareAndDeploy({
-      ...getStarknetContractArtifacts('LinkToken'),
+      ...getStarknetContractArtifacts('chainlink_token_v1_link_token_LinkToken'),
       constructorCalldata: CallData.compile({
         minter: owner.address,
         owner: owner.address,
