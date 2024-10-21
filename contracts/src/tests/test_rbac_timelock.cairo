@@ -24,7 +24,7 @@ use openzeppelin::{
 use chainlink::tests::test_enumerable_set::{expect_out_of_bounds, expect_set_is_1_indexed};
 use snforge_std::{
     declare, ContractClassTrait, spy_events, EventSpyAssertionsTrait,
-    start_cheat_caller_address_global, start_cheat_block_timestamp_global
+    start_cheat_caller_address_global, start_cheat_block_timestamp_global, DeclareResultTrait
 };
 
 fn deploy_args() -> (
@@ -41,7 +41,7 @@ fn deploy_args() -> (
 
 fn setup_mock_target() -> (ContractAddress, IMockMultisigTargetDispatcher) {
     let calldata = ArrayTrait::new();
-    let mock_target_contract = declare("MockMultisigTarget").unwrap();
+    let mock_target_contract = declare("MockMultisigTarget").unwrap().contract_class();
     let (target_address, _) = mock_target_contract.deploy(@calldata).unwrap();
     (target_address, IMockMultisigTargetDispatcher { contract_address: target_address })
 }
@@ -61,7 +61,11 @@ fn setup_timelock() -> (ContractAddress, IRBACTimelockDispatcher, IRBACTimelockS
     Serde::serialize(@cancellers, ref calldata);
     Serde::serialize(@bypassers, ref calldata);
 
-    let (timelock_address, _) = declare("RBACTimelock").unwrap().deploy(@calldata).unwrap();
+    let (timelock_address, _) = declare("RBACTimelock")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     (
         timelock_address,

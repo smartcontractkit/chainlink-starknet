@@ -20,7 +20,8 @@ use chainlink::libraries::access_control::{
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
 };
 
 
@@ -50,7 +51,9 @@ fn test_access_control() {
     let calldata = array![owner.into(), // owner
     ];
 
-    let (accessControllerAddr, _) = declare("AccessController").unwrap().deploy(@calldata).unwrap();
+    let contract = declare("AccessController").unwrap().contract_class();
+
+    let (accessControllerAddr, _) = contract.deploy(@calldata).unwrap();
 
     should_implement_access_control(accessControllerAddr, owner);
 }

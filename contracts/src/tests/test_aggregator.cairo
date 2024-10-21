@@ -12,6 +12,7 @@ use traits::Into;
 use traits::TryInto;
 use option::OptionTrait;
 use core::result::ResultTrait;
+use core::panic_with_felt252;
 
 use chainlink::ocr2::aggregator::pow;
 use chainlink::ocr2::aggregator::Aggregator;
@@ -26,7 +27,8 @@ use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
 };
 
 #[test]
@@ -90,6 +92,7 @@ fn setup() -> (
 
     let (billingAccessControllerAddr, _) = declare("AccessController")
         .unwrap()
+        .contract_class()
         .deploy(@calldata)
         .unwrap();
 
@@ -102,7 +105,11 @@ fn setup() -> (
      acc1.into(), // owner = acc1;
     ];
 
-    let (linkTokenAddr, _) = declare("LinkToken").unwrap().deploy(@calldata).unwrap();
+    let (linkTokenAddr, _) = declare("LinkToken")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     let linkToken = ILinkTokenDispatcher { contract_address: linkTokenAddr };
 
@@ -124,7 +131,11 @@ fn test_ownable() {
         123, // description
     ];
 
-    let (aggregatorAddr, _) = declare("Aggregator").unwrap().deploy(@calldata).unwrap();
+    let (aggregatorAddr, _) = declare("Aggregator")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     should_implement_ownable(aggregatorAddr, account);
 }
@@ -143,11 +154,14 @@ fn test_access_control() {
         123, // description
     ];
 
-    let (aggregatorAddr, _) = declare("Aggregator").unwrap().deploy(@calldata).unwrap();
+    let (aggregatorAddr, _) = declare("Aggregator")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     should_implement_access_control(aggregatorAddr, account);
 }
-
 
 #[test]
 #[should_panic(expected: ('Caller is not the owner',))]

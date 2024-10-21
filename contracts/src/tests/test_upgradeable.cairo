@@ -17,7 +17,8 @@ use chainlink::libraries::mocks::mock_non_upgradeable::{
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
 };
 
 
@@ -33,14 +34,18 @@ fn test_upgrade_and_call() {
 
     let calldata = array![];
 
-    let (contractAddr, _) = declare("MockUpgradeable").unwrap().deploy(@calldata).unwrap();
+    let (contractAddr, _) = declare("MockUpgradeable")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     let mockUpgradeable = IMockUpgradeableDispatcher { contract_address: contractAddr };
     assert(mockUpgradeable.foo() == true, 'should call foo');
 
-    let contract_class = declare("MockNonUpgradeable").unwrap();
+    let contract = declare("MockNonUpgradeable").unwrap().contract_class();
 
-    mockUpgradeable.upgrade(contract_class.class_hash);
+    mockUpgradeable.upgrade(*(contract.class_hash));
 
     // now, contract should be different
     let mockNonUpgradeable = IMockNonUpgradeableDispatcher { contract_address: contractAddr };

@@ -46,6 +46,7 @@ mod AggregatorProxy {
     use starknet::storage_write_syscall;
     use starknet::storage_address_from_base_and_offset;
     use starknet::class_hash::ClassHash;
+    use starknet::storage::Map;
 
     use openzeppelin::access::ownable::OwnableComponent;
 
@@ -88,7 +89,7 @@ mod AggregatorProxy {
         access_control: AccessControlComponent::Storage,
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
-        _phases: LegacyMap<u128, ContractAddress>
+        _phases: Map<u128, ContractAddress>
     }
 
     #[event]
@@ -178,7 +179,7 @@ mod AggregatorProxy {
         self._set_aggregator(address);
     }
 
-    // -- Upgradeable -- 
+    // -- Upgradeable --
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {

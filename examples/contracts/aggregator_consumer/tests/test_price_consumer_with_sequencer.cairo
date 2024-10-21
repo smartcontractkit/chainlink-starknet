@@ -13,13 +13,18 @@ use starknet::get_caller_address;
 use starknet::ContractAddress;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global, DeclareResultTrait
 };
 
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
-    let (contract_address, _) = declare("MockAggregator").unwrap().deploy(@calldata).unwrap();
+    let (contract_address, _) = declare("MockAggregator")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
     contract_address
 }
 
@@ -27,7 +32,11 @@ fn deploy_uptime_feed(initial_status: u128, owner_address: ContractAddress) -> C
     let mut calldata = ArrayTrait::new();
     calldata.append(initial_status.into());
     calldata.append(owner_address.into());
-    let (contract_address, _) = declare("SequencerUptimeFeed").unwrap().deploy(@calldata).unwrap();
+    let (contract_address, _) = declare("SequencerUptimeFeed")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
     contract_address
 }
 
@@ -39,6 +48,7 @@ fn deploy_price_consumer(
     calldata.append(aggregator_address.into());
     let (contract_address, _) = declare("AggregatorPriceConsumer")
         .unwrap()
+        .contract_class()
         .deploy(@calldata)
         .unwrap();
     contract_address
@@ -65,11 +75,11 @@ fn test_get_latest_price() {
     IAccessControllerDispatcher { contract_address: uptime_feed_address }
         .add_access(price_consumer_address);
 
-    // The get_latest_price function returns the mock aggregator's latest round answer. At  
-    // this point in the test, there is only one round that is initialized and that is the 
-    // one that the sequencer uptime feed creates when it is deployed. In its constructor, 
-    // a new round is initialized using its initial status as the round's answer, so the 
-    // latest price should be the initial status that was passed into the sequencer uptime 
+    // The get_latest_price function returns the mock aggregator's latest round answer. At
+    // this point in the test, there is only one round that is initialized and that is the
+    // one that the sequencer uptime feed creates when it is deployed. In its constructor,
+    // a new round is initialized using its initial status as the round's answer, so the
+    // latest price should be the initial status that was passed into the sequencer uptime
     // feed's constructor.
     start_cheat_caller_address_global(price_consumer_address);
     // start_prank(CheatTarget::All, price_consumer_address);

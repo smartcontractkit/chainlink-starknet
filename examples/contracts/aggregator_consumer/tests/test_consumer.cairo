@@ -1,4 +1,4 @@
-use snforge_std::{declare, ContractClassTrait};
+use starknet::ContractAddress;
 
 use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcherTrait;
 use chainlink::ocr2::mocks::mock_aggregator::IMockAggregatorDispatcher;
@@ -8,13 +8,14 @@ use chainlink::ocr2::aggregator_proxy::IAggregatorDispatcher;
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcherTrait;
 use aggregator_consumer::ocr2::consumer::IAggregatorConsumerDispatcher;
 
-use starknet::ContractAddress;
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+
 
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(decimals.into());
 
-    let contract = declare("MockAggregator").unwrap();
+    let contract = declare("MockAggregator").unwrap().contract_class();
 
     let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
@@ -25,7 +26,7 @@ fn deploy_consumer(aggregator_address: ContractAddress) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(aggregator_address.into());
 
-    let contract = declare("AggregatorConsumer").unwrap();
+    let contract = declare("AggregatorConsumer").unwrap().contract_class();
 
     let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
@@ -118,7 +119,7 @@ fn test_set_and_read_answer() {
     assert(latest_round.started_at == observation_timestamp, 'bad started_at');
     assert(latest_round.updated_at == transmission_timestamp, 'bad updated_at');
 
-    // Now let's test that we can set the answer 
+    // Now let's test that we can set the answer
     consumer_dispatcher.set_answer(latest_round.answer);
     assert(answer == consumer_dispatcher.read_answer(), 'Invalid answer');
 }

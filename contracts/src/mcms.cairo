@@ -77,7 +77,8 @@ struct ExpiringRootAndOpCount {
     op_count: u64
 }
 
-// based of https://github.com/starkware-libs/cairo/blob/1b747da1ec7e43a6fd0c0a4cbce302616408bc72/corelib/src/starknet/eth_signature.cairo#L25
+// based off
+// https://github.com/starkware-libs/cairo/blob/1b747da1ec7e43a6fd0c0a4cbce302616408bc72/corelib/src/starknet/eth_signature.cairo#L25
 pub fn recover_eth_ecdsa(msg_hash: u256, signature: Signature) -> Result<EthAddress, felt252> {
     if !is_signature_entry_valid::<Secp256k1Point>(signature.r) {
         return Result::Err('Signature out of range');
@@ -220,7 +221,12 @@ mod ManyChainMultiSig {
     };
     use starknet::{
         EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress,
-        call_contract_syscall
+        call_contract_syscall,
+        storage::{
+            Map, StoragePointerReadAccess, StoragePointerWriteAccess, StorageMapReadAccess,
+            StorageMapWriteAccess, StoragePathEntry
+        },
+        StorageAddress
     };
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -242,15 +248,15 @@ mod ManyChainMultiSig {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         // s_signers is used to easily validate the existence of the signer by its address.
-        s_signers: LegacyMap<EthAddress, Signer>,
-        // begin s_config (defined in storage bc Config struct cannot support maps) 
+        s_signers: Map<EthAddress, Signer>,
+        // begin s_config (defined in storage bc Config struct cannot support maps)
         _s_config_signers_len: u8,
-        _s_config_signers: LegacyMap<u8, Signer>,
+        _s_config_signers: Map<u8, Signer>,
         // no _s_config_group_len because there are always 32 groups
-        _s_config_group_quorums: LegacyMap<u8, u8>,
-        _s_config_group_parents: LegacyMap<u8, u8>,
+        _s_config_group_quorums: Map<u8, u8>,
+        _s_config_group_parents: Map<u8, u8>,
         // end s_config
-        s_seen_signed_hashes: LegacyMap<u256, bool>,
+        s_seen_signed_hashes: Map<u256, bool>,
         s_expiring_root_and_op_count: ExpiringRootAndOpCount,
         s_root_metadata: RootMetadata
     }
@@ -270,7 +276,7 @@ mod ManyChainMultiSig {
         to: ContractAddress,
         selector: felt252,
         data: Span<felt252>,
-    // no value because value is sent through ERC20 tokens, even the native STRK token
+        // no "value" field because native STRK token is an ERC-20 token
     }
 
     #[derive(Drop, starknet::Event)]
@@ -313,36 +319,35 @@ mod ManyChainMultiSig {
 
             let mut prev_address = EthAddressZeroable::zero();
             let mut group_vote_counts: Felt252Dict<u8> = Default::default();
-            while let Option::Some(signature) = signatures
-                .pop_front() {
-                    let signer_address = match recover_eth_ecdsa(msg_hash, signature) {
-                        Result::Ok(signer_address) => signer_address,
-                        Result::Err(e) => panic_with_felt252(e),
-                    };
-
-                    assert(
-                        to_u256(prev_address) < to_u256(signer_address.clone()),
-                        'signer address must increase'
-                    );
-                    prev_address = signer_address;
-
-                    let signer = self.get_signer_by_address(signer_address);
-                    assert(signer.address == signer_address, 'invalid signer');
-
-                    let mut group = signer.group;
-                    loop {
-                        let counts = group_vote_counts.get(group.into());
-                        group_vote_counts.insert(group.into(), counts + 1);
-                        if counts + 1 != self._s_config_group_quorums.read(group) {
-                            break;
-                        }
-                        if group == 0 {
-                            // reached root
-                            break;
-                        }
-                        group = self._s_config_group_parents.read(group)
-                    };
+            while let Option::Some(signature) = signatures.pop_front() {
+                let signer_address = match recover_eth_ecdsa(msg_hash, signature) {
+                    Result::Ok(signer_address) => signer_address,
+                    Result::Err(e) => panic_with_felt252(e),
                 };
+
+                assert(
+                    to_u256(prev_address) < to_u256(signer_address.clone()),
+                    'signer address must increase'
+                );
+                prev_address = signer_address;
+
+                let signer = self.get_signer_by_address(signer_address);
+                assert(signer.address == signer_address, 'invalid signer');
+
+                let mut group = signer.group;
+                loop {
+                    let counts = group_vote_counts.get(group.into());
+                    group_vote_counts.insert(group.into(), counts + 1);
+                    if counts + 1 != self._s_config_group_quorums.read(group) {
+                        break;
+                    }
+                    if group == 0 {
+                        // reached root
+                        break;
+                    }
+                    group = self._s_config_group_parents.read(group)
+                };
+            };
 
             let root_group_quorum = self._s_config_group_quorums.read(0);
             assert(root_group_quorum > 0, 'root group missing quorum');
@@ -372,7 +377,8 @@ mod ManyChainMultiSig {
             let op_count = self.s_expiring_root_and_op_count.read().op_count;
             let current_root_metadata = self.s_root_metadata.read();
 
-            // new root can be set only if the current op_count is the expected post op count (unless an override is requested)
+            // new root can be set only if the current op_count is the expected post op count
+            // (unless an override is requested)
             assert(
                 op_count == current_root_metadata.post_op_count
                     || current_root_metadata.override_previous_root,
@@ -475,15 +481,14 @@ mod ManyChainMultiSig {
 
             let mut group_children_counts: Felt252Dict<u8> = Default::default();
             let mut i = 0;
-            while i < signer_groups
-                .len() {
-                    let group = *signer_groups.at(i);
-                    assert(group < NUM_GROUPS, 'out of bounds group');
-                    // increment count for each group
-                    group_children_counts
-                        .insert(group.into(), group_children_counts.get(group.into()) + 1);
-                    i += 1;
-                };
+            while i < signer_groups.len() {
+                let group = *signer_groups.at(i);
+                assert(group < NUM_GROUPS, 'out of bounds group');
+                // increment count for each group
+                group_children_counts
+                    .insert(group.into(), group_children_counts.get(group.into()) + 1);
+                i += 1;
+            };
 
             let mut j = 0;
             while j < NUM_GROUPS {
@@ -509,7 +514,8 @@ mod ManyChainMultiSig {
                         .insert(
                             group_parent.into(), group_children_counts.get(group_parent.into()) + 1
                         );
-                // the above line clobbers group_children_counts[0] in last iteration, don't use it after the loop ends
+                    // the above line clobbers group_children_counts[0] in last iteration, don't use
+                // it after the loop ends
                 }
                 j += 1;
             };
@@ -525,7 +531,7 @@ mod ManyChainMultiSig {
                 };
                 // reset s_signers
                 self.s_signers.write(old_signer.address, empty_signer);
-                // reset _s_config_signers 
+                // reset _s_config_signers
                 self._s_config_signers.write(i.into(), empty_signer);
                 i += 1;
             };
@@ -543,27 +549,25 @@ mod ManyChainMultiSig {
             let mut signers = ArrayTrait::<Signer>::new();
             let mut prev_signer_address = EthAddressZeroable::zero();
             let mut i: u8 = 0;
-            while i
-                .into() < signer_addresses
-                .len() {
-                    let signer_address = *signer_addresses.at(i.into());
-                    assert(
-                        to_u256(prev_signer_address) < to_u256(signer_address),
-                        'signer addresses not sorted'
-                    );
+            while i.into() < signer_addresses.len() {
+                let signer_address = *signer_addresses.at(i.into());
+                assert(
+                    to_u256(prev_signer_address) < to_u256(signer_address),
+                    'signer addresses not sorted'
+                );
 
-                    let signer = Signer {
-                        address: signer_address, index: i, group: *signer_groups.at(i.into())
-                    };
-
-                    self.s_signers.write(signer_address, signer);
-                    self._s_config_signers.write(i.into(), signer);
-
-                    signers.append(signer);
-
-                    prev_signer_address = signer_address;
-                    i += 1;
+                let signer = Signer {
+                    address: signer_address, index: i, group: *signer_groups.at(i.into())
                 };
+
+                self.s_signers.write(signer_address, signer);
+                self._s_config_signers.write(i.into(), signer);
+
+                signers.append(signer);
+
+                prev_signer_address = signer_address;
+                i += 1;
+            };
 
             // length will always be less than MAX_NUM_SIGNERS so try_into will never panic
             self._s_config_signers_len.write(signer_addresses.len().try_into().unwrap());

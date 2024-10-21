@@ -19,7 +19,7 @@ use chainlink::multisig::{IMultisigDispatcher};
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, cheat_caller_address, CheatSpan
+    stop_cheat_caller_address_global, cheat_caller_address, CheatSpan, DeclareResultTrait
 };
 
 fn STATE() -> Multisig::ContractState {
@@ -123,7 +123,7 @@ fn test_submit_transaction() {
     assert(transaction.calldata_len == sample_calldata().len(), 'should match calldata length');
     assert(!transaction.executed, 'should not be executed');
     assert(transaction.confirmations == 0, 'should not have confirmations');
-// TODO: compare calldata when loops are supported
+    // TODO: compare calldata when loops are supported
 }
 
 #[test]
@@ -274,7 +274,11 @@ fn test_execute() {
 
     let calldata = ArrayTrait::new();
 
-    let (test_address, _) = declare("MockMultisigTarget").unwrap().deploy(@calldata).unwrap();
+    let (test_address, _) = declare("MockMultisigTarget")
+        .unwrap()
+        .contract_class()
+        .deploy(@calldata)
+        .unwrap();
 
     start_cheat_caller_address_global(signer1);
     let increment_calldata = array![42, 100];
@@ -331,7 +335,11 @@ fn test_execute_after_set_signers() {
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -363,7 +371,11 @@ fn test_execute_after_set_signers_and_threshold() {
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -395,7 +407,11 @@ fn test_execute_after_set_threshold() {
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -427,7 +443,11 @@ fn test_set_threshold() {
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
     assert(multisig.get_threshold() == init_threshold, 'invalid init threshold');
@@ -451,16 +471,20 @@ fn test_recursive_set_threshold() {
     Serde::serialize(@signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     // Gets a dispatcher (so we can call methods on the deployed contract)
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
     // Checks that the threshold was correctly initialized on deployment
     assert(multisig.get_threshold() == init_threshold, 'invalid init threshold');
-    // Recursive call occurs here - this code proposes a transaction to the 
-    // multisig contract that calls the set_threshold function on the multisig 
-    // contract. 
+    // Recursive call occurs here - this code proposes a transaction to the
+    // multisig contract that calls the set_threshold function on the multisig
+    // contract.
     let mut set_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_threshold, ref set_threshold_calldata);
     start_cheat_caller_address_global(s1);
@@ -497,7 +521,11 @@ fn test_set_signers() {
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -531,7 +559,11 @@ fn test_recursive_set_signers() {
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     // Gets a dispatcher (so we can call methods on the deployed contract)
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
@@ -543,9 +575,9 @@ fn test_recursive_set_signers() {
     assert(*returned_signers.at(1) == s2, 'should match signer 2');
     assert(multisig.get_threshold() == 2, 'wrong init threshold');
 
-    // Recursive call occurs here - this code proposes a transaction to the 
-    // multisig contract that calls the set_signers function on the multisig 
-    // contract. 
+    // Recursive call occurs here - this code proposes a transaction to the
+    // multisig contract that calls the set_signers function on the multisig
+    // contract.
     let mut set_signers_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_calldata);
     start_cheat_caller_address_global(s1);
@@ -585,7 +617,11 @@ fn test_set_signers_and_threshold() {
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
 
@@ -623,7 +659,11 @@ fn test_recursive_set_signers_and_threshold() {
     Serde::serialize(@init_signers, ref deploy_calldata);
     Serde::serialize(@init_threshold, ref deploy_calldata);
 
-    let (multisig_address, _) = declare("Multisig").unwrap().deploy(@deploy_calldata).unwrap();
+    let (multisig_address, _) = declare("Multisig")
+        .unwrap()
+        .contract_class()
+        .deploy(@deploy_calldata)
+        .unwrap();
 
     // Gets a dispatcher (so we can call methods on the deployed contract)
     let multisig = IMultisigDispatcher { contract_address: multisig_address };
@@ -636,8 +676,8 @@ fn test_recursive_set_signers_and_threshold() {
     assert(*returned_signers.at(2) == s3, 'should match signer 3');
     assert(multisig.get_threshold() == 3, 'wrong init threshold');
 
-    // Recursive call occurs here - this code proposes a transaction to the 
-    // multisig contract that calls the set_signers_and_threshold function 
+    // Recursive call occurs here - this code proposes a transaction to the
+    // multisig contract that calls the set_signers_and_threshold function
     // on the multisig contract.
     let mut set_signers_and_threshold_calldata = ArrayTrait::new();
     Serde::serialize(@new_signers, ref set_signers_and_threshold_calldata);

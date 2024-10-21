@@ -69,13 +69,29 @@ mod LinkToken {
     impl MintableToken of IMintableToken<ContractState> {
         fn permissioned_mint(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
-            self.erc20._mint(account, amount);
+            self.erc20.mint(account, amount);
         }
 
         fn permissioned_burn(ref self: ContractState, account: ContractAddress, amount: u256) {
             only_minter(@self);
-            self.erc20._burn(account, amount);
+            self.erc20.burn(account, amount);
         }
+    }
+
+    impl HooksImpl of ERC20Component::ERC20HooksTrait<ContractState> {
+        fn before_update(
+            ref self: ERC20Component::ComponentState::<ContractState>,
+            from: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) {}
+
+        fn after_update(
+            ref self: ERC20Component::ComponentState::<ContractState>,
+            from: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) {}
     }
 
 
@@ -109,12 +125,14 @@ mod LinkToken {
         }
     }
 
-    // fn increase_allowance(ref self: ContractState, spender: ContractAddress, added_value: u256) -> bool {
+    // fn increase_allowance(ref self: ContractState, spender: ContractAddress, added_value: u256)
+    // -> bool {
     //     let mut state = ERC20::unsafe_new_contract_state();
     //     ERC20::ERC20Impl::increase_allowance(ref state, spender, added_value)
     // }
 
-    // fn decrease_allowance(ref self: ContractState, spender: ContractAddress, subtracted_value: u256) -> bool {
+    // fn decrease_allowance(ref self: ContractState, spender: ContractAddress, subtracted_value:
+    // u256) -> bool {
     //     let mut state = ERC20::unsafe_new_contract_state();
     //     ERC20::ERC20Impl::decrease_allowance(ref state, spender, subtracted_value)
     // }
