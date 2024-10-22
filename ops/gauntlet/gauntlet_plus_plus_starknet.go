@@ -48,7 +48,9 @@ func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl stri
 
 	input = make(map[string]*interface{})
 	rpcUrlValue := interface{}(rpcUrl)
+	checkStatusValue := interface{}(true)
 	input["url"] = &rpcUrlValue
+	input["checkStatus"] = &checkStatusValue
 	RpcProvider := g.Provider{
 		Name: "basic-url",
 		Type: "@chainlink/gauntlet-starknet/lib/starknet.js/provider",
@@ -80,6 +82,99 @@ func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcUrl string, addre
 	return sgpp, nil
 }
 
+func (sgpp *StarknetGauntletPlusPlus) TransferToken(tokenAddress string, to string, from string) (error) {
+	inputMap := make(map[string]interface{})
+	input := make(map[string]interface{})
+	input["to"] = &to
+	input["from"] = &from
+	input["address"] = &tokenAddress
+	request := Request{
+		Command: "starknet/token/erc20:transfer",
+		Input: inputMap,
+	}
+
+	var headers *g.PostExecuteParams
+
+	body := sgpp.BuildRequestBody(request)
+
+	tmp, _ := json.Marshal(body)
+
+	// Show request body
+	fmt.Println(string(tmp))
+
+	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Response Body: " + string(response.Body))
+	return nil
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeclareAccessControllerContract() (error) {
+	inputMap := make(map[string]interface{})
+	request := Request{
+		Command: "starknet/data-feeds/access-controller@1.0.0:declare",
+		Input: inputMap,
+	}
+
+	var headers *g.PostExecuteParams
+
+	body := sgpp.BuildRequestBody(request)
+
+	tmp, _ := json.Marshal(body)
+
+	// Show request body
+	fmt.Println(string(tmp))
+
+	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Response Body: " + string(response.Body))
+	return nil
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address string) (string, error) {
+	var contractAddress string
+	input := make(map[string]interface{})
+	constructorCalldata := make(map[string]interface{})
+	ownerValue := interface{}(address)
+	constructorCalldata["owner"] = &ownerValue
+	input["constructorCalldata"] = &constructorCalldata
+	request := Request{
+		Command: "starknet/token/link:declare",
+		Input: input,
+	}
+
+	var body g.PostExecuteJSONRequestBody
+	var headers *g.PostExecuteParams
+
+	body = *sgpp.BuildRequestBody(request)
+
+	tmp,_ := json.Marshal(body)
+	err := json.Unmarshal(tmp, &body)
+	if err != nil {
+		return "", nil
+	}
+
+	// Show request body
+	fmt.Println(string(tmp))
+
+	// PostOperationWithResponse returns an already parsed Post Operation
+	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, body)
+	if err != nil {
+		return "", nil
+	}
+
+	report := response.JSON200
+	contractAddress = sgpp.ExtractValueFromResponseBody(report, "contractAddress")
+
+	return contractAddress, nil
+
+}
+
 func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() (error) {
 	inputMap := make(map[string]interface{})
 	request := Request{
@@ -91,13 +186,19 @@ func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() (error) {
 
 	body := sgpp.BuildRequestBody(request)
 
+	tmp, _ := json.Marshal(body)
+
+	// Show request body
+	fmt.Println(string(tmp))
+
 	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Response Body: " + string(response.Body))
-	return err
+	time.Sleep(503024 * time.Minute)
+	return nil
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (string, error) {
@@ -133,13 +234,23 @@ func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (s
 	}
 
 	report := response.JSON200
+	contractAddress = sgpp.ExtractValueFromResponseBody(report, "contractAddress")
 
-	fmt.Println(string(response.StatusCode()))
+	return contractAddress, nil
+}
+
+func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report *g.Report, key string) string {
 	if report.Output != nil {
 		// Attempt to assert the Output as a map
 		if outputMap, ok := (*report.Output).(map[string]interface{}); ok {
-			if address, exists := outputMap["contractAddress"]; exists {
-				fmt.Println("Address:", address)
+			if value, exists := outputMap[key]; exists {
+				// Assert value to a string
+				if strValue, ok := value.(string); ok {
+					fmt.Println("Value:", strValue)
+					return strValue
+				} else {
+					fmt.Println("Value is not of type string")
+				}
 			}
 		} else {
 			fmt.Println("Output is not of type map[string]interface{}")
@@ -147,7 +258,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (s
 	} else {
 		fmt.Println("Output is nil")
 	}
-	return contractAddress, nil
+	return ""
 }
 
 func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) (*g.PostExecuteJSONRequestBody) {
