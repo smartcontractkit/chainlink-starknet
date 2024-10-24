@@ -18,7 +18,10 @@ use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
     AggregatorProxyImpl, AggregatorProxyInternal, UpgradeableImpl
 };
-use chainlink::libraries::access_control::AccessControlComponent::AccessControlImpl;
+use chainlink::libraries::access_control::{
+    IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
+    AccessControlComponent::AccessControlImpl
+};
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
 use chainlink::tests::test_ownable::should_implement_ownable;
@@ -89,6 +92,9 @@ fn test_access_control() {
 
     let (aggregatorProxyAddr, _) = declare("AggregatorProxy").unwrap().deploy(@calldata).unwrap();
 
+    // proxy by default disables the access check, so we re-enable for testing purposes
+    IAccessControllerDispatcher { contract_address: aggregatorProxyAddr }.enable_access_check();
+
     should_implement_access_control(aggregatorProxyAddr, account);
 }
 
@@ -124,7 +130,6 @@ fn test_query_latest_round_data() {
 }
 
 #[test]
-#[should_panic(expected: ('user does not have read access',))]
 fn test_query_latest_round_data_without_access() {
     let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
     let mut state = STATE();
@@ -140,7 +145,6 @@ fn test_query_latest_round_data_without_access() {
 }
 
 #[test]
-#[should_panic(expected: ('user does not have read access',))]
 fn test_query_latest_answer_without_access() {
     let (owner, mockAggregatorAddr, mockAggregator, _, _) = setup();
     let mut state = STATE();

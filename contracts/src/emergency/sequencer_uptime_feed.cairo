@@ -258,7 +258,7 @@ mod SequencerUptimeFeed {
             ref self: ContractState, initial_status: u128, owner_address: ContractAddress
         ) {
             self.ownable.initializer(owner_address);
-            self.access_control.initializer();
+            self.access_control.initializer(true);
             let round_id = 1_u128;
             let timestamp = starknet::info::get_block_timestamp();
             let from_address = EthAddress {

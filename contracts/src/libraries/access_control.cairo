@@ -136,8 +136,8 @@ mod AccessControlComponent {
         impl Ownable: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>,
     > of InternalTrait<TContractState> {
-        fn initializer(ref self: ComponentState<TContractState>) {
-            self._check_enabled.write(true);
+        fn initializer(ref self: ComponentState<TContractState>, check_enabled: bool) {
+            self._check_enabled.write(check_enabled);
             self.emit(Event::AccessControlEnabled(AccessControlEnabled {}));
         }
 
