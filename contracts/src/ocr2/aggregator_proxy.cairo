@@ -174,7 +174,8 @@ mod AggregatorProxy {
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress, address: ContractAddress) {
         self.ownable.initializer(owner);
-        self.access_control.initializer();
+        self.access_control.initializer(false);
+        self.access_control.disable_access_check();
         self._set_aggregator(address);
     }
 

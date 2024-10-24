@@ -398,7 +398,7 @@ mod Aggregator {
         description: felt252
     ) {
         self.ownable.initializer(owner);
-        self.access_control.initializer();
+        self.access_control.initializer(true);
         self._link_token.write(link);
         self._billing_access_controller.write(billing_access_controller);
 
