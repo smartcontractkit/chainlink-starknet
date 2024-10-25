@@ -109,22 +109,7 @@ func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionV
 		return err
 	}
 
-	// done. Need to test
-	// err = m.deployLinkToken()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// Sleep
-  fmt.Println("RPC URL" + m.Common.RPCDetails.RPCL2External)
-	fmt.Println("Account: " +  m.Account.Account)
-	fmt.Println("PrivateKEy: " + m.Account.PrivateKey)
-	err = m.declareLinkToken()
-	if err != nil {
-		return err
-	}
-
-	err = m.deployLinkTokenWithGpp()
+	err = m.deployLinkToken()
 	if err != nil {
 		return err
 	}
