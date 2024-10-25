@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"os"
 )
 
@@ -18,8 +19,7 @@ func (m *OCRv2TestState) deployAccessControllerWithGpp() error {
 }
 
 func (m *OCRv2TestState) declareLinkToken() error {
-	var err error
-	err = m.Clients.GauntletPPClient.DeclareLinkTokenContract()
+	err := m.Clients.GauntletPPClient.DeclareLinkTokenContract()
 	if err != nil {
 		return err
 	}
@@ -40,4 +40,18 @@ func (m *OCRv2TestState) deployLinkTokenWithGpp() error {
 		return err
 	}
 	return nil
+}
+
+func (m *OCRv2TestState) setConfigDetailsWithGpp(ocrAddress string) error {
+	cfg, err := m.LoadOCR2Config()
+	if err != nil {
+		return err
+	}
+	var parsedConfig []byte
+	parsedConfig, err = json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	_, err = m.Clients.GauntletPPClient.SetConfigDetails(string(parsedConfig), ocrAddress)
+	return err
 }
