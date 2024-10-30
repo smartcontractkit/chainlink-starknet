@@ -1,12 +1,12 @@
 package gauntlet
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"context"
 	"github.com/rs/zerolog/log"
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
+	"net/http"
 )
 
 var (
@@ -14,47 +14,52 @@ var (
 )
 
 type Request struct {
-	Input map[string]any 		 `json:"input"`
-	Command string					 `json:"command"`
+	Input   map[string]any `json:"input"`
+	Command string         `json:"command"`
 }
 
 type StarknetGauntletPlusPlus struct {
-	client				*g.ClientWithResponses
-	gr      			*http.Response
-	providers 		*[]g.Provider
+	client    *g.ClientWithResponses
+	gr        *http.Response
+	providers *[]g.Provider
 }
 
-func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl string, privateKey string) (*[]g.Provider) {
-	var input map[string]*interface{}
-	input = make(map[string]*interface{})
-	addressValue := interface{}(address)
-	input["address"] = &addressValue
+func toPointerMap(input map[string]interface{}) map[string]*interface{} {
+	result := make(map[string]*interface{})
+	for k, v := range input {
+		result[k] = &v
+	}
+	return result
+}
+
+func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl string, privateKey string) *[]g.Provider {
+	accountProviderInput := map[string]interface{}{
+		"address": address,
+	}
 	AccountProvider := g.Provider{
-		Name: "basic-address",
-		Type: "@chainlink/gauntlet-starknet/lib/starknet.js/account",
-		Input: input,
+		Name:  "basic-address",
+		Type:  "@chainlink/gauntlet-starknet/lib/starknet.js/account",
+		Input: toPointerMap(accountProviderInput),
 	}
 
-	input = make(map[string]*interface{})
-	privateKeyValue := interface{}(privateKey)
-	debugValue := interface{}(true)
-	input["privateKey"] = &privateKeyValue
-	input["debug"] = &debugValue
+	signerProviderInput := map[string]interface{}{
+		"privateKey": privateKey,
+		"debug":      true,
+	}
 	SignerProvider := g.Provider{
-		Name: "basic-pk",
-		Type: "@chainlink/gauntlet-starknet/lib/starknet.js/signer",
-		Input: input,
+		Name:  "basic-pk",
+		Type:  "@chainlink/gauntlet-starknet/lib/starknet.js/signer",
+		Input: toPointerMap(signerProviderInput),
 	}
 
-	input = make(map[string]*interface{})
-	rpcUrlValue := interface{}(rpcUrl)
-	checkStatusValue := interface{}(true)
-	input["url"] = &rpcUrlValue
-	input["checkStatus"] = &checkStatusValue
+	providerInput := map[string]interface{}{
+		"url":         rpcUrl,
+		"checkStatus": false,
+	}
 	RpcProvider := g.Provider{
-		Name: "basic-url",
-		Type: "@chainlink/gauntlet-starknet/lib/starknet.js/provider",
-		Input: input,
+		Name:  "basic-url",
+		Type:  "@chainlink/gauntlet-starknet/lib/starknet.js/provider",
+		Input: toPointerMap(providerInput),
 	}
 
 	providers := []g.Provider{AccountProvider, SignerProvider, RpcProvider}
@@ -64,8 +69,8 @@ func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl stri
 
 // New StarknetGauntletPlusPlus creates a default g++ client with responses
 func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcUrl string, address string, privateKey string) (*StarknetGauntletPlusPlus, error) {
-	fmt.Println("rpcUrl: " + rpcUrl)
-	fmt.Println("GPP URL: " + gauntletPPEndpoint)
+	log.Info().Str("Creating G++ Client with Endpoint: ", string(gauntletPPEndpoint)).Msg("Gauntlet++")
+	log.Info().Str("Connecting G++ Client to RPC URL: ", string(rpcUrl)).Msg("Gauntlet++")
 	newClient, err := g.NewClientWithResponses(gauntletPPEndpoint)
 
 	if err != nil {
@@ -73,43 +78,44 @@ func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcUrl string, addre
 	}
 
 	sgpp = &StarknetGauntletPlusPlus{
-		client: newClient,
-		gr: &http.Response{},
+		client:    newClient,
+		gr:        &http.Response{},
 		providers: sgpp.BuildProviders(address, rpcUrl, privateKey),
 	}
-
 
 	return sgpp, nil
 }
 
-func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Report, key string) string {
+func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Report, key string) (string, error) {
 	if report.Output != nil {
 		// Attempt to assert the Output as a map
 		if outputMap, ok := (*report.Output).(map[string]interface{}); ok {
 			if value, exists := outputMap[key]; exists {
 				// Assert value to a string
 				if strValue, ok := value.(string); ok {
-					fmt.Println("Value:", strValue)
-					return strValue
+					return strValue, nil
 				} else {
-					fmt.Println("Value is not of type string")
+					err := fmt.Errorf("parsed Value is not of type string")
+					return "", err
 				}
 			}
 		} else {
-			fmt.Println("Output is not of type map[string]interface{}")
+			err := fmt.Errorf("output is not of type map[string]interface{}")
+			return "", err
 		}
 	} else {
-		fmt.Println("Output is nil")
+		err := fmt.Errorf("output is nil")
+		return "", err
 	}
-	return ""
+	return "", nil
 }
 
-func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) (*g.PostExecuteJSONRequestBody) {
+func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) *g.PostExecuteJSONRequestBody {
 	var args any = request.Input
 
 	body := g.PostExecuteJSONRequestBody{
 		Config: &g.Config{
-			Providers: *sgpp.providers,
+			Providers:   *sgpp.providers,
 			Datasources: []g.Datasource{},
 		},
 		Operation: g.Operation{
@@ -121,13 +127,9 @@ func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) (*g.Post
 	return &body
 }
 
-func (sgpp *StarknetGauntletPlusPlus) executeRequest(command string, inputMap map[string]interface{}) error {
-	request := Request{
-		Command: command,
-		Input:   inputMap,
-	}
+func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 
-	body := sgpp.BuildRequestBody(request)
+	body := sgpp.BuildRequestBody(*request)
 
 	tmp, err := json.Marshal(body)
 	if err != nil {
@@ -148,13 +150,9 @@ func (sgpp *StarknetGauntletPlusPlus) executeRequest(command string, inputMap ma
 	return nil
 }
 
-func (sgpp *StarknetGauntletPlusPlus) executeRequestReturnsReport(command string, inputMap map[string]interface{}) (g.Report, error) {
-	request := Request{
-		Command: command,
-		Input:   inputMap,
-	}
+func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.Report, error) {
 
-	body := sgpp.BuildRequestBody(request)
+	body := sgpp.BuildRequestBody(*request)
 
 	tmp, err := json.Marshal(body)
 	if err != nil {
@@ -173,112 +171,158 @@ func (sgpp *StarknetGauntletPlusPlus) executeRequestReturnsReport(command string
 	return *response.JSON200, nil
 }
 
-func (sgpp *StarknetGauntletPlusPlus) executeDeployRequest(command string, inputMap map[string]interface{}) (string, error) {
-	report, err := sgpp.executeRequestReturnsReport(command, inputMap)
+func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, error) {
+	report, err := sgpp.executeReturnsReport(request)
 
 	if err != nil {
 		return "", err // Handle post execution error
 	}
-	contractAddress := sgpp.ExtractValueFromResponseBody(report, "contractAddress")
+	contractAddress, err := sgpp.ExtractValueFromResponseBody(report, "contractAddress")
+	if err != nil {
+		log.Err(err).Str("G++ Request returned with err", string(err.Error())).Msg("Gauntlet++")
+		return "", err
+	}
 
 	return contractAddress, nil
 }
 
-func (sgpp *StarknetGauntletPlusPlus) TransferToken(tokenAddress string, to string, from string) (error) {
+func (sgpp *StarknetGauntletPlusPlus) TransferToken(tokenAddress string, to string, from string) error {
 	inputMap := map[string]interface{}{
-		"to":     to,
-		"from": from,
+		"to":      to,
+		"from":    from,
 		"address": tokenAddress,
 	}
 
-	return sgpp.executeRequest("starknet/token/erc20:transfer", inputMap)
-}
-
-func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, 
-	linkTokenAddress string, address string, accessControllerAddress string) (string, error) {		
-		constructorCalldata := map[string]interface{}{
-			"owner": address,
-			"link": linkTokenAddress,
-			"minAnswer": minSubmissionValue,
-			"maxAnswer": maxSubmissionValue,
-			"billingAccessController": accessControllerAddress,
-			"decimals": decimals,
-			"description": "USDT/LINK",
-
-		}
-		input := map[string]interface{}{
-			"constructorCalldata": &constructorCalldata,
-		}
-	
-		return sgpp.executeDeployRequest("starknet/data-feeds/aggregator@1.0.0:deploy", input)
-}
-
-func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2Controllercontract() (error) {
-	inputMap := make(map[string]interface{})
-
-	return sgpp.executeRequest("starknet/data-feeds/aggregator@1.0.0:declare", inputMap)
-}
-
-func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2ControllerProxyContract() (error) {
-	inputMap := make(map[string]interface{})
-	
-	return sgpp.executeRequest("starknet/data-feeds/aggregator-proxy@1.0.0:declare", inputMap)
-}
-
-func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerProxyContract(address string, controllerContractAddress string) (string, error) {		
-		constructorCalldata := map[string]interface{}{
-			"owner": address,
-			"address": controllerContractAddress,
-		}
-		input := map[string]interface{} {
-			"constructorCalldata": &constructorCalldata,
-		}
-	
-		return sgpp.executeDeployRequest("starknet/data-feeds/aggregator-proxy@1.0.0:deploy", input)
-}
-
-func (sgpp *StarknetGauntletPlusPlus) AddAccess(aggregatorAddress string, grantAddress string)  (error) {
-	inputMap := map[string]interface{} {
-		"address": aggregatorAddress,
-		"grantAddress": grantAddress,
+	request := Request{
+		Command: "starknet/token/erc20:transfer",
+		Input:   inputMap,
 	}
 
-	return sgpp.executeRequest("starknet/data-feeds/access-controller@1.0.0:add-access", inputMap)
+	return sgpp.execute(&request)
 }
 
-
-
-func (sgpp *StarknetGauntletPlusPlus) DeclareAccessControllerContract() (error) {
-	inputMap := make(map[string]interface{})
-
-	return sgpp.executeRequest("starknet/data-feeds/access-controller@1.0.0:declare", inputMap)
-}
-
-func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address string) (string, error) {	
-	constructorCalldata := map[string]interface{} {
-		"owner": address,
+func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string,
+	linkTokenAddress string, address string, accessControllerAddress string) (string, error) {
+	constructorCalldata := map[string]interface{}{
+		"owner":                   address,
+		"link":                    linkTokenAddress,
+		"minAnswer":               minSubmissionValue,
+		"maxAnswer":               maxSubmissionValue,
+		"billingAccessController": accessControllerAddress,
+		"decimals":                decimals,
+		"description":             "USDT/LINK",
 	}
-	input := map[string]interface{}{
+	inputMap := map[string]interface{}{
 		"constructorCalldata": &constructorCalldata,
 	}
 
-	return sgpp.executeDeployRequest("starknet/token/link:declare", input)
+	request := Request{
+		Command: "starknet/data-feeds/aggregator@1.0.0:deploy",
+		Input:   inputMap,
+	}
+
+	return sgpp.executeDeploy(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2Controllercontract() error {
+	inputMap := make(map[string]interface{})
+	request := Request{
+		Command: "starknet/data-feeds/aggregator@1.0.0:declare",
+		Input:   inputMap,
+	}
+
+	return sgpp.execute(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2ControllerProxyContract() error {
+	inputMap := make(map[string]interface{})
+	request := Request{
+		Command: "starknet/data-feeds/aggregator-proxy@1.0.0:declare",
+		Input:   inputMap,
+	}
+	return sgpp.execute(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerProxyContract(address string, controllerContractAddress string) (string, error) {
+	constructorCalldata := map[string]interface{}{
+		"owner":   address,
+		"address": controllerContractAddress,
+	}
+	inputMap := map[string]interface{}{
+		"constructorCalldata": &constructorCalldata,
+	}
+
+	request := Request{
+		Command: "starknet/data-feeds/aggregator-proxy@1.0.0:deploy",
+		Input:   inputMap,
+	}
+
+	return sgpp.executeDeploy(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) AddAccess(aggregatorAddress string, grantAddress string) error {
+	inputMap := map[string]interface{}{
+		"address":      aggregatorAddress,
+		"grantAddress": grantAddress,
+	}
+
+	request := Request{
+		Command: "starknet/data-feeds/access-controller@1.0.0:add-access",
+		Input:   inputMap,
+	}
+
+	return sgpp.execute(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeclareAccessControllerContract() error {
+	inputMap := make(map[string]interface{})
+	request := Request{
+		Command: "starknet/data-feeds/access-controller@1.0.0:declare",
+		Input:   inputMap,
+	}
+
+	return sgpp.execute(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address string) (string, error) {
+	constructorCalldata := map[string]interface{}{
+		"owner": address,
+	}
+	inputMap := map[string]interface{}{
+		"constructorCalldata": &constructorCalldata,
+	}
+
+	request := Request{
+		Command: "starknet/token/link:declare",
+		Input:   inputMap,
+	}
+	return sgpp.executeDeploy(&request)
 
 }
 
-func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() (error) {
+func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() error {
 	inputMap := make(map[string]interface{})
 
-	return sgpp.executeRequest("starknet/token/link:declare", inputMap)
+	request := Request{
+		Command: "starknet/token/link:declare",
+		Input:   inputMap,
+	}
+
+	return sgpp.execute(&request)
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (string, error) {
-	input := map[string]interface{}{
+	inputMap := map[string]interface{}{
 		"minter": address,
-		"owner": address,
+		"owner":  address,
 	}
 
-	return sgpp.executeDeployRequest("starknet/token/link:deploy", input)
+	request := Request{
+		Command: "starknet/token/link:deploy",
+		Input:   inputMap,
+	}
+
+	return sgpp.executeDeploy(&request)
 }
 
 func (sgpp *StarknetGauntletPlusPlus) SetConfigDetails(cfg string, ocrAddress string) (g.Report, error) {
@@ -286,28 +330,37 @@ func (sgpp *StarknetGauntletPlusPlus) SetConfigDetails(cfg string, ocrAddress st
 	err := json.Unmarshal([]byte(cfg), &txArgs)
 	if err != nil {
 		// Handle the error appropriately (return, log, etc.)
-		return g.Report{}, nil 
+		return g.Report{}, nil
 	}
-	input := map[string]interface{}{
+	inputMap := map[string]interface{}{
 		"address": ocrAddress,
-		"txArgs": &txArgs,
+		"txArgs":  &txArgs,
 	}
 
-	return sgpp.executeRequestReturnsReport("starknet/data-feeds/aggregator@1.0.0:set-config", input)
+	request := Request{
+		Command: "starknet/data-feeds/aggregator@1.0.0:set-config",
+		Input:   inputMap,
+	}
+	return sgpp.executeReturnsReport(&request)
 
 }
 
 func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int64, transmissionPaymentGjuels int64, ocrAddress string) (g.Report, error) {
-	txArgs := map[string]interface{} {
+	txArgs := map[string]interface{}{
 		"transmissionPaymentGjuels": transmissionPaymentGjuels,
-		"observationPaymentGjuels": observationPaymentGjuels,
-		"gasPerSignature": "0",
-		"gasBase": "0",
+		"observationPaymentGjuels":  observationPaymentGjuels,
+		"gasPerSignature":           "0",
+		"gasBase":                   "0",
 	}
-	input := map[string]interface{} {
+	inputMap := map[string]interface{}{
 		"address": ocrAddress,
-		"txArgs": &txArgs,
+		"txArgs":  &txArgs,
 	}
 
-	return sgpp.executeRequestReturnsReport("starknet/data-feeds/aggregator@1.0.0:set-billing", input)
+	request := Request{
+		Command: "starknet/data-feeds/aggregator@1.0.0:set-billing",
+		Input:   inputMap,
+	}
+
+	return sgpp.executeReturnsReport(&request)
 }
