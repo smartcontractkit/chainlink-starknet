@@ -66,8 +66,13 @@ jobs:
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
         with:
           go-version-file: "relayer/go.mod"
-      - name: Set Go private environment variable
-        run: echo "GOPRIVATE=github.com/smartcontractkit/gauntlet-plus-plus" >> $GITHUB_ENV
+      - name: Setup Go with private repo access
+        shell: bash
+        run: |
+          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          go env -w GOPRIVATE=github.com/smartcontractkit/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Ensure "make gomodtidy" has been run
         run: |
           make gomodtidy
