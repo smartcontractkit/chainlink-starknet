@@ -201,8 +201,25 @@ func (sgpp *StarknetGauntletPlusPlus) TransferToken(tokenAddress string, to stri
 	return sgpp.execute(&request)
 }
 
+func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2Controllercontract() error {
+	inputMap := make(map[string]interface{})
+	request := Request{
+		Command: "starknet/data-feeds/aggregator@1.0.0:declare",
+		Input:   inputMap,
+	}
+
+	return sgpp.execute(&request)
+}
+
 func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string,
 	linkTokenAddress string, address string, accessControllerAddress string) (string, error) {
+	// Delare Contract First
+	err := sgpp.DeclareOCR2Controllercontract()
+	if err != nil {
+		return "", err
+	}
+	
+	
 	constructorCalldata := map[string]interface{}{
 		"owner":                   address,
 		"link":                    linkTokenAddress,
@@ -224,16 +241,6 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmission
 	return sgpp.executeDeploy(&request)
 }
 
-func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2Controllercontract() error {
-	inputMap := make(map[string]interface{})
-	request := Request{
-		Command: "starknet/data-feeds/aggregator@1.0.0:declare",
-		Input:   inputMap,
-	}
-
-	return sgpp.execute(&request)
-}
-
 func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2ControllerProxyContract() error {
 	inputMap := make(map[string]interface{})
 	request := Request{
@@ -244,6 +251,12 @@ func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2ControllerProxyContract() error
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerProxyContract(address string, controllerContractAddress string) (string, error) {
+	// Declare Contract First
+	err := sgpp.DeclareOCR2ControllerProxyContract()
+	if err != nil {
+		return "", err
+	}
+	
 	constructorCalldata := map[string]interface{}{
 		"owner":   address,
 		"address": controllerContractAddress,
@@ -285,6 +298,12 @@ func (sgpp *StarknetGauntletPlusPlus) DeclareAccessControllerContract() error {
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address string) (string, error) {
+	// Declare Contract first
+	err := sgpp.DeclareAccessControllerContract()
+	if err != nil {
+		return "", err
+	}
+
 	constructorCalldata := map[string]interface{}{
 		"owner": address,
 	}
@@ -312,6 +331,13 @@ func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() error {
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (string, error) {
+	// Declare token first
+	err := sgpp.DeclareLinkTokenContract()
+
+	if err != nil {
+		return "", err
+	}
+
 	inputMap := map[string]interface{}{
 		"minter": address,
 		"owner":  address,
@@ -363,4 +389,35 @@ func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int
 	}
 
 	return sgpp.executeReturnsReport(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeclareOzAccount() (error) {
+	inputMap := make(map[string]interface{})
+	request := Request{
+		Command: "starknet/chain/open-zeppelin:declare",
+		Input:   inputMap,
+	}
+
+	return sgpp.execute(&request)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) DeployOzAccount(publicKey string) (string, error) {
+	err := sgpp.DeclareOzAccount()
+	if err != nil {
+		return "", err
+	}
+
+	constructorCalldata := map[string]interface{}{
+		"publicKey":                   publicKey,
+	}
+	inputMap := map[string]interface{}{
+		"constructorCalldata": &constructorCalldata,
+	}
+
+	request := Request{
+		Command: "starknet/chain/open-zeppelin:deploy",
+		Input:   inputMap,
+	}
+
+	return sgpp.executeDeploy(&request)
 }
