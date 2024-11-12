@@ -26,6 +26,7 @@ import (
 	test_env_integrations "github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv"
+	test_env_gauntlet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
@@ -136,7 +137,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	// When running soak we need to use K8S
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.DeployEnv()
-
+		m.StartGppWithoutNetwork()
 		if m.Common.Env.WillUseRemoteRunner() {
 			return
 		}
@@ -159,6 +160,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	} else { // Otherwise use docker
 		env, err := test_env_integrations.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
+		m.StartGppWithNetwork(env.DockerNetwork.Name)
 		stark := test_env_starknet.NewStarknet([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.DevnetImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
@@ -233,6 +235,20 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Account.Account = *m.TestConfig.TestConfig.Common.Account
 		m.Account.PrivateKey = *m.TestConfig.TestConfig.Common.PrivateKey
 	}
+}
+
+// Starts GauntletPP Without a network
+func (m *OCRv2TestState) StartGppWithoutNetwork() {
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	err := gpp.StartContainer()
+	require.NoError(m.TestConfig.T, err)
+}
+
+// Starts GauntletPP with a network
+func (m *OCRv2TestState) StartGppWithNetwork(networkName string) {
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	err := gpp.StartContainer()
+	require.NoError(m.TestConfig.T, err)
 }
 
 // DeployEnv Deploys the environment
