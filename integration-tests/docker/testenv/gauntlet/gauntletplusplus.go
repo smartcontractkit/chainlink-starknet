@@ -1,4 +1,5 @@
 package testenv
+
 import (
 	"fmt"
 	"testing"
@@ -13,20 +14,19 @@ import (
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/utils/testcontext"
-
 )
+
 const (
 	GauntletPlusPlusPort = "7530"
-	GauntletPlusPlusInternalPort = "4444"
 )
 
 type GauntletPlusPlus struct {
 	test_env.EnvComponent
 	ExternalHTTPURL string
 	InternalHTTPURL string
-	t *testing.T
-	l zerolog.Logger
-	Image string
+	t               *testing.T
+	l               zerolog.Logger
+	Image           string
 }
 
 func NewGauntletPlusPlus(networks []string, image string, opts ...test_env.EnvComponentOption) *GauntletPlusPlus {
@@ -34,7 +34,7 @@ func NewGauntletPlusPlus(networks []string, image string, opts ...test_env.EnvCo
 		Image: image,
 		EnvComponent: test_env.EnvComponent{
 			ContainerName: "gauntlet-plus-plus",
-			Networks: 		networks,
+			Networks:      networks,
 		},
 
 		l: log.Logger,
@@ -61,12 +61,10 @@ func (g *GauntletPlusPlus) StartContainer() error {
 			L: g.l,
 		}
 	}
-	l.Printf("Testing reached")
 	cReq, err := g.getContainerRequest()
 	if err != nil {
 		return err
 	}
-	l.Printf("Testing reached 2")
 	c, err := tc.GenericContainer(testcontext.Get(g.t), tc.GenericContainerRequest{
 		ContainerRequest: *cReq,
 		Reuse:            true,
@@ -76,20 +74,20 @@ func (g *GauntletPlusPlus) StartContainer() error {
 	if err != nil {
 		return fmt.Errorf("cannot start GauntletPlusPlus container: %w", err)
 	}
-	l.Printf("Testing reached  3")
 
 	g.Container = c
 	host, err := test_env.GetHost(testcontext.Get(g.t), c)
 	if err != nil {
 		return err
 	}
+
 	httpPort, err := c.MappedPort(testcontext.Get(g.t), test_env.NatPort(GauntletPlusPlusPort))
 	if err != nil {
 		return err
 	}
 
 	g.ExternalHTTPURL = fmt.Sprintf("http://%s:%s", host, httpPort.Port())
-	g.InternalHTTPURL = fmt.Sprintf("http://%s:%s", g.ContainerName, GauntletPlusPlusInternalPort)
+	g.InternalHTTPURL = fmt.Sprintf("http://%s:%s", g.ContainerName, GauntletPlusPlusPort)
 
 	g.l.Info().
 		Any("ExternalHTTPURL", g.ExternalHTTPURL).
@@ -104,7 +102,7 @@ func (g *GauntletPlusPlus) getContainerRequest() (*tc.ContainerRequest, error) {
 	return &tc.ContainerRequest{
 		Name:         g.ContainerName,
 		Image:        g.Image,
-		ExposedPorts: []string{test_env.NatPortFormat(GauntletPlusPlusInternalPort)},
+		ExposedPorts: []string{test_env.NatPortFormat(GauntletPlusPlusPort)},
 		Networks:     g.Networks,
 		WaitingFor: tcwait.ForLog("Server listening at ").
 			WithStartupTimeout(30 * time.Second).
