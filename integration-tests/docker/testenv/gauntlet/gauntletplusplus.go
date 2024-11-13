@@ -44,7 +44,6 @@ func NewGauntletPlusPlus(networks []string, image string, opts ...test_env.EnvCo
 		opt(&ms.EnvComponent)
 	}
 	return ms
-
 }
 
 func (g *GauntletPlusPlus) WithTestLogger(t *testing.T) *GauntletPlusPlus {
