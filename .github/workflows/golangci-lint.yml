@@ -51,6 +51,9 @@ jobs:
   golang_lint_ops:
     name: Golang Lint Ops
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     needs: [golangci-lint-version]
     steps:
       - name: Checkout sources
@@ -86,6 +89,9 @@ jobs:
   golang_lint_integration_tests:
     name: Golang Lint Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     needs: [golangci-lint-version]
     steps:
       - name: Checkout sources
