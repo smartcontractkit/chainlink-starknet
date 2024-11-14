@@ -30,7 +30,7 @@ runs:
     - name: Setup Go with private repo access
       shell: bash
       run: |
-        git config --global url."https://x-access-token:${{ GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        git config --global url."https://x-access-token:${{ inputs.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
         go env -w GOPRIVATE=github.com/smartcontractkit/*
     - name: Check if image exists
       id: check-image
