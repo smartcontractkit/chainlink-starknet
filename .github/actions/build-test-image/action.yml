@@ -27,11 +27,6 @@ runs:
   steps:
     - name: Install Cairo
       uses: ./.github/actions/install-cairo
-    - name: Setup Go with private repo access
-      shell: bash
-      run: |
-        git config --global url."https://x-access-token:${{ inputs.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        go env -w GOPRIVATE=github.com/smartcontractkit/*
     - name: Check if image exists
       id: check-image
       uses: smartcontractkit/chainlink-github-actions/docker/image-exists@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
@@ -40,6 +35,11 @@ runs:
         tag: ${{ inputs.tag }}
         AWS_REGION: ${{ inputs.QA_AWS_REGION }}
         AWS_ROLE_TO_ASSUME: ${{ inputs.QA_AWS_ROLE_TO_ASSUME }}
+    - name: Setup Go with private repo access
+      shell: bash
+      run: |
+        git config --global url."https://x-access-token:${{ inputs.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        go env -w GOPRIVATE=github.com/smartcontractkit/*
     - name: Build and Publish Test Runner
       if: steps.check-image.outputs.exists == 'false'
       uses: smartcontractkit/chainlink-github-actions/docker/build-push@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
@@ -50,6 +50,7 @@ runs:
         file: ./integration-tests/test.Dockerfile
         build-args: |
           SUITES="smoke soak"
+          GITHUB_TOKEN=${{ inputs.GITHUB_TOKEN }}
         AWS_REGION: ${{ inputs.QA_AWS_REGION }}
         AWS_ROLE_TO_ASSUME: ${{ inputs.QA_AWS_ROLE_TO_ASSUME }}
     - name: Print Image Built
