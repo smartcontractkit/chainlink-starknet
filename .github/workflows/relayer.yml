@@ -83,7 +83,7 @@ jobs:
           echo "https://${GITHUB_TOKEN}:x-oauth-basic@github.com" > ~/.git-credentials
       
           # Configure GOPRIVATE
-          go env -w GOPRIVATE=github.com/smartcontractkit/*
+          go env -w GOPRIVATE=github.com/smartcontractkit/gauntlet-plus-plus
         env:
           GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Ensure "make gomodtidy" has been run
