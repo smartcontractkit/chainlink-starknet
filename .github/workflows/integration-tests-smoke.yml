@@ -116,11 +116,6 @@ jobs:
           aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
-      - name: Setup Go with private repo access
-        shell: bash
-        run: |
-          git config --global url."https://x-access-token:${{ steps.setup-github-token.outputs.access-token }}@github.com/".insteadOf "https://github.com/"
-          go env -w GOPRIVATE=github.com/smartcontractkit/*
       - name: Checkout the repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -131,6 +126,7 @@ jobs:
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
+          GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
 
   run_tests:
     name: Run Smoke Tests ${{matrix.image.name}}
