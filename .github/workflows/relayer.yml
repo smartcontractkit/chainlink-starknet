@@ -76,6 +76,13 @@ jobs:
           aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
+      - name: Setup Go with private repo access
+        shell: bash
+        run: |
+          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          go env -w GOPRIVATE=github.com/smartcontractkit/*
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
       - name: Ensure "make gomodtidy" has been run
         run: |
           make gomodtidy
