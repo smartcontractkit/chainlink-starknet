@@ -56,13 +56,13 @@ type AccountDetails struct {
 
 // Clients to access internal methods
 type Clients struct {
-	StarknetClient  *starknet.Client
-	DevnetClient    *starknetdevnet.DevNet
-	KillgraveClient *test_env_ctf.Killgrave
-	OCR2Client      *ocr2.Client
-	ChainlinkClient *ChainlinkClient
-	GauntletClient  *gauntlet.StarknetGauntlet
-	DockerEnv       *StarknetClusterTestEnv
+	StarknetClient   *starknet.Client
+	DevnetClient     *starknetdevnet.DevNet
+	KillgraveClient  *test_env_ctf.Killgrave
+	OCR2Client       *ocr2.Client
+	ChainlinkClient  *ChainlinkClient
+	GauntletClient   *gauntlet.StarknetGauntlet
+	DockerEnv        *StarknetClusterTestEnv
 	GauntletPPClient *gauntlet.StarknetGauntletPlusPlus
 }
 

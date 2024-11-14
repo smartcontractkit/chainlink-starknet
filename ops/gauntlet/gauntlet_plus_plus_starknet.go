@@ -218,8 +218,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmission
 	if err != nil {
 		return "", err
 	}
-	
-	
+
 	constructorCalldata := map[string]interface{}{
 		"owner":                   address,
 		"link":                    linkTokenAddress,
@@ -256,7 +255,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerProxyContract(address 
 	if err != nil {
 		return "", err
 	}
-	
+
 	constructorCalldata := map[string]interface{}{
 		"owner":   address,
 		"address": controllerContractAddress,
@@ -391,7 +390,7 @@ func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int
 	return sgpp.executeReturnsReport(&request)
 }
 
-func (sgpp *StarknetGauntletPlusPlus) DeclareOzAccount() (error) {
+func (sgpp *StarknetGauntletPlusPlus) DeclareOzAccount() error {
 	inputMap := make(map[string]interface{})
 	request := Request{
 		Command: "starknet/chain/open-zeppelin:declare",
@@ -408,7 +407,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOzAccount(publicKey string) (string,
 	}
 
 	constructorCalldata := map[string]interface{}{
-		"publicKey":                   publicKey,
+		"publicKey": publicKey,
 	}
 	inputMap := map[string]interface{}{
 		"constructorCalldata": &constructorCalldata,

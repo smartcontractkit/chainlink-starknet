@@ -75,7 +75,7 @@ func TestOCRBasic(t *testing.T) {
 			state.DeployCluster()
 			// Setting up G++ Client
 			rpcUrl := state.Common.RPCDetails.RPCL2External
-			gppPort := "http://localhost:"+ *state.TestConfig.TestConfig.Common.GauntletPlusPlusPort
+			gppPort := "http://localhost:" + *state.TestConfig.TestConfig.Common.GauntletPlusPlusPort
 			state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppPort, rpcUrl, state.Account.Account, state.Account.PrivateKey)
 			require.NoError(t, err, "Setting up gauntlet ++ should not fail")
 
