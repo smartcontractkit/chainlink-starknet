@@ -8,8 +8,8 @@ name = "aggregator_consumer"
 version = "0.1.0"
 cairo-version = "2.6.3"
 
-# [scripts]
-# test = "snforge test"
+[scripts]
+test = "snforge test"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
