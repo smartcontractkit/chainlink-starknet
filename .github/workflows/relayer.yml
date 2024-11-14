@@ -82,7 +82,7 @@ jobs:
           git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           go env -w GOPRIVATE=github.com/smartcontractkit/*
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Ensure "make gomodtidy" has been run
         run: |
           make gomodtidy
