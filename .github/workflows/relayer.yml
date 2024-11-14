@@ -80,7 +80,7 @@ jobs:
         shell: bash
         run: |
           git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-          go env -w GOPRIVATE=github.com/smartcontractkit/*
+          go env -w GOPRIVATE=github.com/smartcontractkit/gauntlet-plus-plus
         env:
           GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Ensure "make gomodtidy" has been run
