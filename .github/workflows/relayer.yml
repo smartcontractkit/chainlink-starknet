@@ -76,6 +76,8 @@ jobs:
           aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
+      - name: Debug GITHUB_TOKEN
+        run: echo "GITHUB_TOKEN=${{ steps.setup-github-token.outputs.access-token }}"
       - name: Setup Go with private repo access
         shell: bash
         run: |
