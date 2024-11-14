@@ -134,7 +134,7 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 	}
 
 	// Show request body
-	log.Info().Str("Request Body: ", tmp).Msg("Gauntlet++")
+	log.Info().Str("Request Body: ", string(tmp)).Msg("Gauntlet++")
 
 	headers := &g.PostExecuteParams{}
 	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
