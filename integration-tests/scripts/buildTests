@@ -15,7 +15,7 @@ if [ -n "$2" ]; then
   github_token="${temp2#\"}"
 fi
 
-git config --global url."https://x-access-token:${{ github_token }}@github.com/".insteadOf "https://github.com/"
+git config --global url."https://x-access-token:${github_token}@github.com/".insteadOf "https://github.com/"
 go env -w GOPRIVATE=github.com/smartcontractkit/*
 
 cd "$SCRIPT_DIR"/../../ || exit 1
