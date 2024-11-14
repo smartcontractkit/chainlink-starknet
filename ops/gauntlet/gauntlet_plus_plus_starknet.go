@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/rs/zerolog/log"
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
-	"net/http"
 )
 
 var (
@@ -56,21 +57,21 @@ func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl stri
 		"url":         rpcUrl,
 		"checkStatus": false,
 	}
-	RpcProvider := g.Provider{
+	RPCProvider := g.Provider{
 		Name:  "basic-url",
 		Type:  "@chainlink/gauntlet-starknet/lib/starknet.js/provider",
 		Input: toPointerMap(providerInput),
 	}
 
-	providers := []g.Provider{AccountProvider, SignerProvider, RpcProvider}
+	providers := []g.Provider{AccountProvider, SignerProvider, RPCProvider}
 
 	return &providers
 }
 
 // New StarknetGauntletPlusPlus creates a default g++ client with responses
-func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcUrl string, address string, privateKey string) (*StarknetGauntletPlusPlus, error) {
-	log.Info().Str("Creating G++ Client with Endpoint: ", string(gauntletPPEndpoint)).Msg("Gauntlet++")
-	log.Info().Str("Connecting G++ Client to RPC URL: ", string(rpcUrl)).Msg("Gauntlet++")
+func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcURL string, address string, privateKey string) (*StarknetGauntletPlusPlus, error) {
+	log.Info().Str("Creating G++ Client with Endpoint: ", gauntletPPEndpoint).Msg("Gauntlet++")
+	log.Info().Str("Connecting G++ Client to RPC URL: ", rpcURL).Msg("Gauntlet++")
 	newClient, err := g.NewClientWithResponses(gauntletPPEndpoint)
 
 	if err != nil {
@@ -80,7 +81,7 @@ func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcUrl string, addre
 	sgpp = &StarknetGauntletPlusPlus{
 		client:    newClient,
 		gr:        &http.Response{},
-		providers: sgpp.BuildProviders(address, rpcUrl, privateKey),
+		providers: sgpp.BuildProviders(address, rpcURL, privateKey),
 	}
 
 	return sgpp, nil
@@ -94,18 +95,14 @@ func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Repo
 				// Assert value to a string
 				if strValue, ok := value.(string); ok {
 					return strValue, nil
-				} else {
-					err := fmt.Errorf("parsed Value is not of type string")
-					return "", err
 				}
+				err := fmt.Errorf("parsed Value is not of type string")
+				return "", err
 			}
 		} else {
 			err := fmt.Errorf("output is not of type map[string]interface{}")
 			return "", err
 		}
-	} else {
-		err := fmt.Errorf("output is nil")
-		return "", err
 	}
 	return "", nil
 }
@@ -137,7 +134,7 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 	}
 
 	// Show request body
-	log.Info().Str("Request Body: ", string(tmp)).Msg("Gauntlet++")
+	log.Info().Str("Request Body: ", tmp).Msg("Gauntlet++")
 
 	headers := &g.PostExecuteParams{}
 	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
