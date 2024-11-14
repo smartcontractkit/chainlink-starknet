@@ -77,10 +77,13 @@ jobs:
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Setup Go with private repo access
-        shell: bash
         run: |
-          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-          go env -w GOPRIVATE=github.com/smartcontractkit/gauntlet-plus-plus
+          # Set up Git to use GitHub token for authentication
+          git config --global credential.helper store
+          echo "https://${GITHUB_TOKEN}:x-oauth-basic@github.com" > ~/.git-credentials
+      
+          # Configure GOPRIVATE
+          go env -w GOPRIVATE=github.com/smartcontractkit/*
         env:
           GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Ensure "make gomodtidy" has been run
