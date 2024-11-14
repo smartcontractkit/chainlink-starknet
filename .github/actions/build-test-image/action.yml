@@ -18,6 +18,9 @@ inputs:
   QA_AWS_ACCOUNT_NUMBER:
     description: The AWS region the ECR repository is located in, should only be needed for public ECR repositories, used in configuring docker/login-action
     required: true
+  GITHUB_TOKEN:
+    description: The GATI Token that we can use to pull private repos
+    required: true
 
 runs:
   using: composite
@@ -32,6 +35,11 @@ runs:
         tag: ${{ inputs.tag }}
         AWS_REGION: ${{ inputs.QA_AWS_REGION }}
         AWS_ROLE_TO_ASSUME: ${{ inputs.QA_AWS_ROLE_TO_ASSUME }}
+    - name: Setup Go with private repo access
+      shell: bash
+      run: |
+        git config --global url."https://x-access-token:${{ inputs.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        go env -w GOPRIVATE=github.com/smartcontractkit/*
     - name: Build and Publish Test Runner
       if: steps.check-image.outputs.exists == 'false'
       uses: smartcontractkit/chainlink-github-actions/docker/build-push@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
