@@ -310,7 +310,6 @@ func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address str
 		Input:   inputMap,
 	}
 	return sgpp.executeDeploy(&request)
-
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() error {
