@@ -28,12 +28,15 @@ type StarknetGauntletPlusPlus struct {
 func toPointerMap(input map[string]interface{}) map[string]*interface{} {
 	result := make(map[string]*interface{})
 	for k, v := range input {
-		result[k] = &v
+		// Create a new variable to hold the value
+		valueCopy := v
+		// Store the pointer to the new variable
+		result[k] = &valueCopy
 	}
 	return result
 }
 
-func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl string, privateKey string) *[]g.Provider {
+func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcURL string, privateKey string) *[]g.Provider {
 	accountProviderInput := map[string]interface{}{
 		"address": address,
 	}
@@ -54,7 +57,7 @@ func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcUrl stri
 	}
 
 	providerInput := map[string]interface{}{
-		"url":         rpcUrl,
+		"url":         rpcURL,
 		"checkStatus": false,
 	}
 	RPCProvider := g.Provider{
@@ -99,9 +102,6 @@ func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Repo
 				err := fmt.Errorf("parsed Value is not of type string")
 				return "", err
 			}
-		} else {
-			err := fmt.Errorf("output is not of type map[string]interface{}")
-			return "", err
 		}
 	}
 	return "", nil
@@ -125,7 +125,6 @@ func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) *g.PostE
 }
 
 func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
-
 	body := sgpp.BuildRequestBody(*request)
 
 	tmp, err := json.Marshal(body)
@@ -143,12 +142,11 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 	}
 
 	// Show Response Status
-	log.Info().Str("Response Status:", string(response.Status())).Msg("Gauntlet++")
+	log.Info().Str("Response Status:", response.Status()).Msg("Gauntlet++")
 	return nil
 }
 
 func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.Report, error) {
-
 	body := sgpp.BuildRequestBody(*request)
 
 	tmp, err := json.Marshal(body)
@@ -176,7 +174,7 @@ func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, e
 	}
 	contractAddress, err := sgpp.ExtractValueFromResponseBody(report, "contractAddress")
 	if err != nil {
-		log.Err(err).Str("G++ Request returned with err", string(err.Error())).Msg("Gauntlet++")
+		log.Err(err).Str("G++ Request returned with err", err.Error()).Msg("Gauntlet++")
 		return "", err
 	}
 
@@ -317,7 +315,6 @@ func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address str
 
 func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() error {
 	inputMap := make(map[string]interface{})
-
 	request := Request{
 		Command: "starknet/token/link:declare",
 		Input:   inputMap,
@@ -358,13 +355,11 @@ func (sgpp *StarknetGauntletPlusPlus) SetConfigDetails(cfg string, ocrAddress st
 		"address": ocrAddress,
 		"txArgs":  &txArgs,
 	}
-
 	request := Request{
 		Command: "starknet/data-feeds/aggregator@1.0.0:set-config",
 		Input:   inputMap,
 	}
 	return sgpp.executeReturnsReport(&request)
-
 }
 
 func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int64, transmissionPaymentGjuels int64, ocrAddress string) (g.Report, error) {
