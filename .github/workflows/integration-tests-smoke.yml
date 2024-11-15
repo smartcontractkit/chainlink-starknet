@@ -203,8 +203,7 @@ jobs:
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
-          test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download && \
-            git config --global url."https://x-access-token:${{ steps.setup-github-token.outputs.access-token }}@github.com/".insteadOf "https://github.com/" && \
+          test_download_vendor_packages_command: git config --global url."https://x-access-token:${{ steps.setup-github-token.outputs.access-token }}@github.com/".insteadOf "https://github.com/" && \
             go env -w GOPRIVATE=github.com/smartcontractkit/*
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
