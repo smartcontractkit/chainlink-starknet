@@ -152,4 +152,4 @@ issues:
     - path: "common/gauntlet_plus_plus_common.go"
       text: ".*"
       linters:
-        - gosec
+        - unused
