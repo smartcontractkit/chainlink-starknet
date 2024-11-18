@@ -202,9 +202,7 @@ jobs:
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@d1fce734a6210acb41a8bbbb0cc81301e47aee89 # v2.3.32
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci" && \ 
-            git config --global url."https://x-access-token:${{ steps.setup-github-token.outputs.access-token }}@github.com/".insteadOf "https://github.com/" && \
-            go env -w GOPRIVATE=github.com/smartcontractkit/* 
+          test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
           cl_repo: ${{ env.CL_ECR }}
           cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           token: ${{ secrets.GITHUB_TOKEN }}
