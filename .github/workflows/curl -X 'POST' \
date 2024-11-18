@@ -1,6 +1,0 @@
-curl -X 'POST' \
-  'http://localhost:5234/execute' \
-  -H 'accept: application/json' \
-  -H 'traceId: 00-d451a2b705c7a3a735c9dcb405685f1e-a6931ab1e18fc164-01' \
-  -H 'Content-Type: application/json' \
-  -d '{"config":{"datasources":[],"providers":[{"input":{"address":"0x37e5bde04b268efda93097e0f253dccf9e0c6d4ecc15bcc46a9630ced80cbf2"},"name":"basic-address","type":"@chainlink/gauntlet-starknet/lib/starknet.js/account"},{"input":{"debug":true,"privateKey":"0x00000000000000000000000000000000ce8ec2d32b89f7210c739879a31b0e9e"},"name":"basic-pk","type":"@chainlink/gauntlet-starknet/lib/starknet.js/signer"},{"input":{"checkStatus":true,"url":"http://devnet:5050"},"name":"basic-url","type":"@chainlink/gauntlet-starknet/lib/starknet.js/provider"}]},"operation":{"args":{},"name":"starknet/data-feeds/aggregator-proxy@1.0.0:declare"},"plan":null,"snapshot":null}'
