@@ -66,10 +66,9 @@ jobs:
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Setup Go with private repo access
-        shell: bash
-        run: |
-          git config --global url."https://x-access-token:${{ steps.setup-github-token.outputs.access-token }}@github.com/".insteadOf "https://github.com/"
-          go env -w GOPRIVATE=github.com/smartcontractkit/*
+        uses: ./.github/actions/setup-github-private-access
+        with:
+          gati_token: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Install Nix
         uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
@@ -104,10 +103,9 @@ jobs:
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Setup Go with private repo access
-        shell: bash
-        run: |
-          git config --global url."https://x-access-token:${{ steps.setup-github-token.outputs.access-token }}@github.com/".insteadOf "https://github.com/"
-          go env -w GOPRIVATE=github.com/smartcontractkit/*
+        uses: ./.github/actions/setup-github-private-access
+        with:
+          gati_token: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Install Nix
         uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
