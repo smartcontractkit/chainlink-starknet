@@ -3,11 +3,11 @@ description: Uses a GATI Token to be able to pull from private repos
 
 inputs:
   gati_token:
-    description: GATI Token used to pull private repos
-      required: true
+    description: 'GATI Token used to pull private repos'
+    required: true
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Setup Go with private repo access
       shell: bash
