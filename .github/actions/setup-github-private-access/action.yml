@@ -1,0 +1,16 @@
+name: Setup GitHub Private Repo Access
+description: Uses a GATI Token to be able to pull from private repos
+
+inputs:
+  gati_token:
+    description: 'GATI Token used to pull private repos'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go with private repo access
+      shell: bash
+      run: |
+        git config --global url."https://x-access-token:${{ inputs.gati_token }}@github.com/".insteadOf "https://github.com/"
+        go env -w GOPRIVATE=github.com/smartcontractkit/*

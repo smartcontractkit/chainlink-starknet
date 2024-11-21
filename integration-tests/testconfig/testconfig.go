@@ -183,14 +183,16 @@ type Common struct {
 	InsideK8s *bool   `toml:"inside_k8"`
 	User      *string `toml:"user"`
 	// if rpc requires api key to be passed as an HTTP header
-	L2RPCApiKey        *string `toml:"l2_rpc_url_api_key"`
-	L2RPCUrl           *string `toml:"l2_rpc_url"`
-	PrivateKey         *string `toml:"private_key"`
-	Account            *string `toml:"account"`
-	Stateful           *bool   `toml:"stateful_db"`
-	InternalDockerRepo *string `toml:"internal_docker_repo"`
-	DevnetImage        *string `toml:"devnet_image"`
-	PostgresVersion    *string `toml:"postgres_version"`
+	L2RPCApiKey           *string `toml:"l2_rpc_url_api_key"`
+	L2RPCUrl              *string `toml:"l2_rpc_url"`
+	PrivateKey            *string `toml:"private_key"`
+	Account               *string `toml:"account"`
+	Stateful              *bool   `toml:"stateful_db"`
+	InternalDockerRepo    *string `toml:"internal_docker_repo"`
+	DevnetImage           *string `toml:"devnet_image"`
+	GauntletPlusPlusImage *string `toml:"gauntlet_plus_plus_image"`
+	PostgresVersion       *string `toml:"postgres_version"`
+	GauntletPlusPlusPort  *string `toml:"gauntlet_plus_plus_port"`
 }
 
 func (c *Common) Validate() error {
@@ -202,6 +204,9 @@ func (c *Common) Validate() error {
 	case "localnet":
 		if c.DevnetImage == nil {
 			return fmt.Errorf("devnet_image must be set")
+		}
+		if c.GauntletPlusPlusImage == nil {
+			return fmt.Errorf("gauntlet_plus_plus_image must be set")
 		}
 	case "testnet":
 		if c.PrivateKey == nil {
