@@ -19,6 +19,7 @@ env:
   TEST_LOG_LEVEL: debug
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
+  GAUNTLET_PP_IMAGE: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
 
 jobs:
   build_chainlink_image:
@@ -211,7 +212,11 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
+          QA_PROD_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_IAM_ROLE_ARN }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
+          QA_PROD_REGION: ${{ secrets.PROD_AWS_REGION}}
+          PROD_AWS_ACCOUNT_NUMBER: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}
+          gauntlet_plus_plus_image: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
         env:
           KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
