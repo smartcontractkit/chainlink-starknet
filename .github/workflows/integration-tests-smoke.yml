@@ -200,7 +200,7 @@ jobs:
           # shellcheck disable=SC2086
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> $GITHUB_ENV
       - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/.github/actions/ctf-run-tests@1b944d8f6aaa2c69755b6165fd4427af43271804 # 0.2.1
+        uses: smartcontractkit/.github/actions/ctf-run-tests@4229fea727f6eb36b4559c6eefbbf9f3825fa677 # 0.2.1
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
