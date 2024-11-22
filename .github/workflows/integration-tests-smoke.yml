@@ -212,7 +212,7 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
-          PROD_AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_IAM_ROLE_ARN }}
+          PROD_AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_IAM_PROD_INTEGRATION_ROLE_ARN }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
           PROD_AWS_REGION: ${{ secrets.PROD_AWS_REGION}}
           PROD_AWS_ACCOUNT_NUMBER: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}
