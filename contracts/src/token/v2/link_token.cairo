@@ -110,17 +110,32 @@ mod LinkToken {
             );
     }
 
+    impl HooksImpl of ERC20Component::ERC20HooksTrait<ContractState> {
+        fn before_update(
+            ref self: ERC20Component::ComponentState::<ContractState>,
+            from: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) {}
+
+        fn after_update(
+            ref self: ERC20Component::ComponentState::<ContractState>,
+            from: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) {}
+    }
 
     #[abi(embed_v0)]
     impl MintableToken of IMintableToken<ContractState> {
         fn permissioned_mint(ref self: ContractState, account: ContractAddress, amount: u256) {
             self._only_minter();
-            self.erc20._mint(account, amount);
+            self.erc20.mint(account, amount);
         }
 
         fn permissioned_burn(ref self: ContractState, account: ContractAddress, amount: u256) {
             self._only_minter();
-            self.erc20._burn(account, amount);
+            self.erc20.burn(account, amount);
         }
     }
 
