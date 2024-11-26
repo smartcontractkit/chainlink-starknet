@@ -1,5 +1,5 @@
 run:
-  timeout: 10m0s
+  timeout: 15m0s
 linters:
   enable:
     - exhaustive
@@ -148,3 +148,8 @@ issues:
       text: "^G404:"
       linters:
         - gosec
+    # TODO: re-add gpp op file once we integrate into workflows
+    - path: "common/gauntlet_plus_plus_common.go"
+      text: ".*"
+      linters:
+        - unused

@@ -7,12 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	tc "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
@@ -73,6 +73,12 @@ func TestOCRBasic(t *testing.T) {
 				})
 			}
 			state.DeployCluster()
+			// Setting up G++ Client
+			rpcURL := state.Common.RPCDetails.RPCL2External
+			gppPort := "http://localhost:" + *state.TestConfig.TestConfig.Common.GauntletPlusPlusPort
+			state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppPort, rpcURL, state.Account.Account, state.Account.PrivateKey)
+			require.NoError(t, err, "Setting up gauntlet ++ should not fail")
+
 			state.Clients.GauntletClient, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
 			require.NoError(t, err, "Setting up gauntlet should not fail")
 			err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)

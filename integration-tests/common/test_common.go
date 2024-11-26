@@ -56,13 +56,14 @@ type AccountDetails struct {
 
 // Clients to access internal methods
 type Clients struct {
-	StarknetClient  *starknet.Client
-	DevnetClient    *starknetdevnet.DevNet
-	KillgraveClient *test_env_ctf.Killgrave
-	OCR2Client      *ocr2.Client
-	ChainlinkClient *ChainlinkClient
-	GauntletClient  *gauntlet.StarknetGauntlet
-	DockerEnv       *StarknetClusterTestEnv
+	StarknetClient   *starknet.Client
+	DevnetClient     *starknetdevnet.DevNet
+	KillgraveClient  *test_env_ctf.Killgrave
+	OCR2Client       *ocr2.Client
+	ChainlinkClient  *ChainlinkClient
+	GauntletClient   *gauntlet.StarknetGauntlet
+	DockerEnv        *StarknetClusterTestEnv
+	GauntletPPClient *gauntlet.StarknetGauntletPlusPlus
 }
 
 // Contracts to store current deployed contract state
@@ -212,6 +213,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs())
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
+
 	lggr := logger.Nop()
 	m.Clients.StarknetClient, m.TestConfig.err = starknet.NewClient(m.Common.ChainDetails.ChainID, m.Common.RPCDetails.RPCL2External, m.Common.RPCDetails.RPCL2InternalAPIKey, lggr, &rpcRequestTimeout)
 	require.NoError(m.TestConfig.T, m.TestConfig.err, "Creating starknet client should not fail")

@@ -10,6 +10,14 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 helm repo update
 
+if [ -n "$2" ]; then
+  temp2="${2%\"}"
+  github_token="${temp2#\"}"
+fi
+
+git config --global url."https://x-access-token:${github_token}@github.com/".insteadOf "https://github.com/"
+go env -w GOPRIVATE=github.com/smartcontractkit/*
+
 cd "$SCRIPT_DIR"/../../ || exit 1
 
 # integration prep
