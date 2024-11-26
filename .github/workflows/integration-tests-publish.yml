@@ -30,6 +30,13 @@ jobs:
         continue-on-error: true
       - name: Checkout the repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Setup GitHub Token
+        id: setup-github-token
+        uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
+        with:
+          aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
+          aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
+          aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Build Image
         uses: ./.github/actions/build-test-image
         with:
@@ -37,6 +44,7 @@ jobs:
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ACCOUNT_NUMBER: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
+          GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Notify Slack
         # Only run this notification for merge to develop failures
         if: failure() && github.event_name != 'workflow_dispatch'

@@ -28,6 +28,8 @@ user = "satoshi"
 stateful_db = false
 devnet_image = "shardlabs/starknet-devnet-rs:a147b4cd72f9ce9d1fa665d871231370db0f51c7"
 postgres_version = "15.7"
+gauntlet_plus_plus_port = "5234"
+gauntlet_plus_plus_image = "gauntlet-plus-plus:latest"
 
 [OCR2]
 node_count = 6

@@ -59,6 +59,9 @@ jobs:
 
   check-tidy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
@@ -66,6 +69,17 @@ jobs:
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
         with:
           go-version-file: "relayer/go.mod"
+      - name: Setup GitHub Token
+        id: setup-github-token
+        uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
+        with:
+          aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
+          aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
+          aws-region: ${{ secrets.QA_AWS_REGION }}
+      - name: Setup Go with private repo access
+        uses: ./.github/actions/setup-github-private-access
+        with:
+          gati_token: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Ensure "make gomodtidy" has been run
         run: |
           make gomodtidy
