@@ -41,7 +41,7 @@ mod AccessController {
     #[constructor]
     fn constructor(ref self: ContractState, owner_address: ContractAddress) {
         self.ownable.initializer(owner_address);
-        self.access_control.initializer();
+        self.access_control.initializer(true);
     }
 
     #[abi(embed_v0)]
