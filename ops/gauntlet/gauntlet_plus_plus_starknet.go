@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	
 	"github.com/rs/zerolog/log"
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
 )
@@ -202,7 +203,7 @@ func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, e
 		return "", err
 	}
 
-	log.Info().Str("Contract Address Response: ", string(contractAddress)).Msg("Gauntlet++")
+	log.Info().Str("Contract Address Response: ", contractAddress).Msg("Gauntlet++")
 	return contractAddress, nil
 }
 
