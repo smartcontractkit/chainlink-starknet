@@ -389,8 +389,8 @@ func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int
 	txArgs := map[string]interface{}{
 		"transmissionPaymentGjuels": transmissionPaymentGjuels,
 		"observationPaymentGjuels":  observationPaymentGjuels,
-		"gasPerSignature":           "0",
-		"gasBase":                   "0",
+		"gasPerSignature":           0,
+		"gasBase":                   0,
 	}
 	inputMap := map[string]interface{}{
 		"address": ocrAddress,
