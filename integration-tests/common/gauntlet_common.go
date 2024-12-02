@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
+	"os"
 )
 
 func (m *OCRv2TestState) fundNodes() ([]string, error) {
@@ -114,7 +114,7 @@ func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionV
 	if err != nil {
 		return err
 	}
-	
+
 	err = m.deployAccessControllerWithGpp()
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionV
 	// }
 
 	m.Contracts.OCRAddr, err = m.Clients.GauntletPPClient.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name,
-		 m.Contracts.LinkTokenAddr, m.Account.Account, m.Contracts.AccessControllerAddr)
+		m.Contracts.LinkTokenAddr, m.Account.Account, m.Contracts.AccessControllerAddr)
 	if err != nil {
 		return err
 	}

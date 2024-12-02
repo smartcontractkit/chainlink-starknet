@@ -164,7 +164,7 @@ func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.
 
 	tmp, err := json.Marshal(body)
 	if err != nil {
-			return g.Report{}, err // Handle marshaling error
+		return g.Report{}, err // Handle marshaling error
 	}
 
 	// Show request body
@@ -175,16 +175,16 @@ func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.
 
 	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
 	if err != nil {
-			return g.Report{}, err // Handle post execution error
+		return g.Report{}, err // Handle post execution error
 	}
 
 	// Log the response body
 	responseJSON, err := json.Marshal(response.JSON200) // Marshal the JSON200 field to JSON string
 	if err != nil {
-			log.Error().Err(err).Msg("Failed to marshal response body")
-			return g.Report{}, err
+		log.Error().Err(err).Msg("Failed to marshal response body")
+		return g.Report{}, err
 	}
-	
+
 	// Log the full response JSON
 	log.Info().Str("Response Body:", string(responseJSON)).Msg("Gauntlet++")
 	// Return the report from the response
@@ -212,7 +212,7 @@ func (sgpp *StarknetGauntletPlusPlus) TransferToken(tokenAddress string, to stri
 	inputMap := map[string]interface{}{
 		"address": tokenAddress,
 		"to":      to,
-		"amount":    amount,
+		"amount":  amount,
 	}
 
 	request := Request{
