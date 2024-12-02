@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	
+
 	"github.com/rs/zerolog/log"
+
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
 )
 
