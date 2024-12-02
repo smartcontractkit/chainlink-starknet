@@ -60,7 +60,10 @@ func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 }
 
 func (m *OCRv2TestState) deployAccessControllerWithGpp() error {
-	var err error
+	err := m.Clients.GauntletClient.InstallDependencies()
+	if err != nil {
+		return err
+	}
 	err = m.Clients.GauntletPPClient.DeclareAccessControllerContract()
 	if err != nil {
 		return err
@@ -152,19 +155,20 @@ func (m *OCRv2TestState) DeployGauntletPP(minSubmissionValue int64, maxSubmissio
 		return err
 	}
 
-	// _, err = m.Clients.GauntletClient.MintLinkToken(m.Contracts.LinkTokenAddr, m.Contracts.OCRAddr, "100000000000000000000")
-	// if err != nil {
-	// 	return err
-	// }
-
-	// Gauntlet PP does not have a mint op. We will use devnet endpoint
-	_, err = m.TestConfig.Resty.R().SetBody(map[string]any{
-		"address": m.Contracts.LinkTokenAddr,
-		"amount":  100000000000000000,
-	}).Post("/mint")
+	_, err = m.Clients.GauntletClient.MintLinkToken(m.Contracts.LinkTokenAddr, m.Contracts.OCRAddr, "100000000000000000000")
 	if err != nil {
 		return err
 	}
+
+	// Gauntlet PP does not have a mint op. We will use devnet endpoint
+	// _, err = m.TestConfig.Resty.R().SetBody(map[string]any{
+	// 	"address": m.Contracts.OCRAddr,
+	// 	"amount":  100000000000000000,
+	// 	"unit": "LINK",
+	// }).Post("/mint")
+	// if err != nil {
+	// 	return err
+	// }
 
 	_, err = m.Clients.GauntletPPClient.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, m.Contracts.OCRAddr)
 	if err != nil {
