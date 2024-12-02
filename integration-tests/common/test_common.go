@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -267,13 +268,14 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var txKeys []string
 	var cfgKeys []string
 	for i, key := range m.Clients.ChainlinkClient.NKeys {
-		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
+		// need to remove the prefix since legacy gauntlet did it pre op
+		// https://github.com/smartcontractkit/chainlink-starknet/blob/develop/packages-ts/starknet-gauntlet-ocr2/src/commands/ocr2/setConfig.ts#L124
+		offChaiNKeys = append(offChaiNKeys, m.removeOCR2PrefixAndAddPrefix(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", ""))
 		peerIDs = append(peerIDs, key.PeerID)
 		txKeys = append(txKeys, m.Clients.ChainlinkClient.AccountAddresses[i])
-		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
+		onChaiNKeys = append(onChaiNKeys, m.removeOCR2PrefixAndAddPrefix(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "0x"))
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
-
 	var payload = ops.TestOCR2Config
 	payload.Signers = onChaiNKeys
 	payload.Transmitters = txKeys
@@ -282,6 +284,16 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	payload.OffchainConfig.ConfigPublicKeys = cfgKeys
 
 	return &payload, nil
+}
+
+func (m *OCRv2TestState) removeOCR2PrefixAndAddPrefix(k string, prefix string, newPrefix string) string {
+	// Print k for debugging before the modification
+	if strings.HasPrefix(k, prefix) {
+		fmt.Println("After:", newPrefix+k[len(prefix):])
+		return newPrefix + k[len(prefix):]
+	}
+
+	return k
 }
 
 func (m *OCRv2TestState) SetUpNodes() {
@@ -345,6 +357,7 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 	if err != nil {
 		return err
 	}
+
 	resLINK, errLINK := m.Clients.StarknetClient.CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkContractAddress,
 		Selector:        starknetutils.GetSelectorFromNameFelt("balance_of"),

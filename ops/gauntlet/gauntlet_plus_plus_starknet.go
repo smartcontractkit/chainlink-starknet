@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
+	"time"
 	"github.com/rs/zerolog/log"
 
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
@@ -184,10 +184,13 @@ func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.
 		log.Error().Err(err).Msg("Failed to marshal response body")
 		return g.Report{}, err
 	}
+	if (response.JSON200 == nil || response.JSON200.Id == "" || response == nil) {
+		time.Sleep(20*time.Minute)
+	}
 
 	// Log the full response JSON
 	log.Info().Str("Response Body:", string(responseJSON)).Msg("Gauntlet++")
-	// Return the report from the response
+
 	return *response.JSON200, nil
 }
 
@@ -382,7 +385,8 @@ func (sgpp *StarknetGauntletPlusPlus) SetConfigDetails(cfg string, ocrAddress st
 		Command: "starknet/data-feeds/aggregator@1.0.0:set-config",
 		Input:   inputMap,
 	}
-	return sgpp.executeReturnsReport(&request)
+	test, testerr := sgpp.executeReturnsReport(&request)
+	return test, testerr
 }
 
 func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int64, transmissionPaymentGjuels int64, ocrAddress string) (g.Report, error) {
