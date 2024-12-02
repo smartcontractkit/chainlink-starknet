@@ -74,16 +74,16 @@ func TestOCRBasic(t *testing.T) {
 			}
 			state.DeployCluster()
 			// Setting up G++ Client
-			rpcURL := state.Common.RPCDetails.RPCL2External
-			gppPort := "http://localhost:" + *state.TestConfig.TestConfig.Common.GauntletPlusPlusPort
-			state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppPort, rpcURL, state.Account.Account, state.Account.PrivateKey)
-			require.NoError(t, err, "Setting up gauntlet ++ should not fail")
+			rpcURL := state.Common.RPCDetails.RPCL2Internal
+			gppUrl := state.TestConfig.TestConfig.Common.GauntletPlusPlusUrl
+			state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppUrl, rpcURL, state.Account.Account, state.Account.PrivateKey)
+			require.NoError(t, err, "Setting up gauntlet++ should not fail")
 
 			state.Clients.GauntletClient, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
 			require.NoError(t, err, "Setting up gauntlet should not fail")
 			err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)
 			require.NoError(t, err, "Setting up gauntlet network should not fail")
-			err = state.DeployGauntlet(0, 100000000000, decimals, "auto", 1, 1)
+			err = state.DeployGauntletPP(0, 100000000000, decimals, "auto", 1, 1)
 			require.NoError(t, err, "Deploying contracts should not fail")
 
 			state.SetUpNodes()

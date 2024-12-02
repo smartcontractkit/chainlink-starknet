@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	GauntletPlusPlusPort = "7530"
+	GauntletPlusPlusPort = "4444"
 )
 
 type GauntletPlusPlus struct {
@@ -52,7 +52,7 @@ func (g *GauntletPlusPlus) WithTestLogger(t *testing.T) *GauntletPlusPlus {
 	return g
 }
 
-func (g *GauntletPlusPlus) StartContainer() error {
+func (g *GauntletPlusPlus) StartContainer() (string, error) {
 	l := tc.Logger
 	if g.t != nil {
 		l = logging.CustomT{
@@ -62,7 +62,7 @@ func (g *GauntletPlusPlus) StartContainer() error {
 	}
 	cReq, err := g.getContainerRequest()
 	if err != nil {
-		return err
+		return "", err
 	}
 	c, err := tc.GenericContainer(testcontext.Get(g.t), tc.GenericContainerRequest{
 		ContainerRequest: *cReq,
@@ -71,18 +71,18 @@ func (g *GauntletPlusPlus) StartContainer() error {
 		Logger:           l,
 	})
 	if err != nil {
-		return fmt.Errorf("cannot start GauntletPlusPlus container: %w", err)
+		return "", fmt.Errorf("cannot start GauntletPlusPlus container: %w", err)
 	}
 
 	g.Container = c
 	host, err := test_env.GetHost(testcontext.Get(g.t), c)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	httpPort, err := c.MappedPort(testcontext.Get(g.t), test_env.NatPort(GauntletPlusPlusPort))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	g.ExternalHTTPURL = fmt.Sprintf("http://%s:%s", host, httpPort.Port())
@@ -90,11 +90,11 @@ func (g *GauntletPlusPlus) StartContainer() error {
 
 	g.l.Info().
 		Any("ExternalHTTPURL", g.ExternalHTTPURL).
-		Any("ExternalHTTPURL", g.ExternalHTTPURL).
+		Any("InternalHTTPURL", g.InternalHTTPURL).
 		Str("containerName", g.ContainerName).
-		Msgf("Started Starknet container")
+		Msgf("Started Gauntlet Plus Plus container")
 
-	return nil
+	return g.ExternalHTTPURL, nil
 }
 
 func (g *GauntletPlusPlus) getContainerRequest() (*tc.ContainerRequest, error) {

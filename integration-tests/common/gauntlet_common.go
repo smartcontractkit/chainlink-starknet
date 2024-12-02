@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
 
@@ -16,7 +15,8 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return nil, errors.New("stark key can't be empty")
 		}
-		nAccount, err := m.Clients.GauntletClient.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		//nAccount, err := m.Clients.GauntletClient.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
+		nAccount, err := m.Clients.GauntletPPClient.DeployOzAccount(key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
 			return nil, err
 		}
@@ -27,7 +27,8 @@ func (m *OCRv2TestState) fundNodes() ([]string, error) {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "10000000000000000000") // Transferring 10 STRK to each node
+			//_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "10000000000000000000") // Transferring 10 STRK to each node
+			err := m.Clients.GauntletPPClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "10000000000000000000")
 			if err != nil {
 				return nil, err
 			}
@@ -109,26 +110,42 @@ func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionV
 		return err
 	}
 
-	err = m.deployLinkToken()
+	err = m.deployLinkTokenWithGpp()
+	if err != nil {
+		return err
+	}
+	
+	err = m.deployAccessControllerWithGpp()
+	if err != nil {
+		return err
+	}
+	// m.Contracts.OCRAddr, err = m.Clients.GauntletClient.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, m.Contracts.LinkTokenAddr)
+	// if err != nil {
+	// 	return err
+	// }
+
+	m.Contracts.OCRAddr, err = m.Clients.GauntletPPClient.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name,
+		 m.Contracts.LinkTokenAddr, m.Account.Account, m.Contracts.AccessControllerAddr)
 	if err != nil {
 		return err
 	}
 
-	err = m.deployAccessController()
+	// m.Contracts.ProxyAddr, err = m.Clients.GauntletClient.DeployOCR2ProxyContract(m.Contracts.OCRAddr)
+	// if err != nil {
+	// 	return err
+	// }
+
+	m.Contracts.ProxyAddr, err = m.Clients.GauntletPPClient.DeployOCR2ControllerProxyContract(m.Account.Account, m.Contracts.OCRAddr)
 	if err != nil {
 		return err
 	}
 
-	m.Contracts.OCRAddr, err = m.Clients.GauntletClient.DeployOCR2ControllerContract(minSubmissionValue, maxSubmissionValue, decimals, name, m.Contracts.LinkTokenAddr)
-	if err != nil {
-		return err
-	}
+	// _, err = m.Clients.GauntletClient.AddAccess(m.Contracts.OCRAddr, m.Contracts.ProxyAddr)
+	// if err != nil {
+	// 	return err
+	// }
 
-	m.Contracts.ProxyAddr, err = m.Clients.GauntletClient.DeployOCR2ProxyContract(m.Contracts.OCRAddr)
-	if err != nil {
-		return err
-	}
-	_, err = m.Clients.GauntletClient.AddAccess(m.Contracts.OCRAddr, m.Contracts.ProxyAddr)
+	err = m.Clients.GauntletPPClient.AddAccess(m.Contracts.OCRAddr, m.Contracts.ProxyAddr)
 	if err != nil {
 		return err
 	}
@@ -137,7 +154,8 @@ func (m *OCRv2TestState) DeployGauntlet(minSubmissionValue int64, maxSubmissionV
 	if err != nil {
 		return err
 	}
-	_, err = m.Clients.GauntletClient.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, m.Contracts.OCRAddr)
+
+	_, err = m.Clients.GauntletPPClient.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, m.Contracts.OCRAddr)
 	if err != nil {
 		return err
 	}
