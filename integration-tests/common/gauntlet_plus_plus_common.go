@@ -155,20 +155,11 @@ func (m *OCRv2TestState) DeployGauntletPP(minSubmissionValue int64, maxSubmissio
 		return err
 	}
 
+	// Gauntlet PP does not have a mint op. We will use legacy gauntlet until we implement one
 	_, err = m.Clients.GauntletClient.MintLinkToken(m.Contracts.LinkTokenAddr, m.Contracts.OCRAddr, "100000000000000000000")
 	if err != nil {
 		return err
 	}
-
-	// Gauntlet PP does not have a mint op. We will use devnet endpoint
-	// _, err = m.TestConfig.Resty.R().SetBody(map[string]any{
-	// 	"address": m.Contracts.OCRAddr,
-	// 	"amount":  100000000000000000,
-	// 	"unit": "LINK",
-	// }).Post("/mint")
-	// if err != nil {
-	// 	return err
-	// }
 
 	_, err = m.Clients.GauntletPPClient.SetOCRBilling(observationPaymentGjuels, transmissionPaymentGjuels, m.Contracts.OCRAddr)
 	if err != nil {
