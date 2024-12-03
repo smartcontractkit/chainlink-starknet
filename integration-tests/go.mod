@@ -16,9 +16,9 @@ require (
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20241202202529-2033490e77b8
 	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.17
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.9
-	github.com/smartcontractkit/chainlink/deployment v0.0.0-20241202214607-fa346afd62ef
+	github.com/smartcontractkit/chainlink/deployment v0.0.0-20241203233234-baf88355a2d3
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20241202214607-fa346afd62ef
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20241202214607-fa346afd62ef
+	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20241203233234-baf88355a2d3
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	go.uber.org/zap v1.27.0
@@ -397,7 +397,7 @@ require (
 	github.com/slack-go/slack v0.15.0 // indirect
 	github.com/smartcontractkit/chain-selectors v1.0.31 // indirect
 	github.com/smartcontractkit/chainlink-automation v0.8.1 // indirect
-	github.com/smartcontractkit/chainlink-ccip v0.0.0-20241128080738-06bef8620ac6 // indirect
+	github.com/smartcontractkit/chainlink-ccip v0.0.0-20241203195251-42088b33c826 // indirect
 	github.com/smartcontractkit/chainlink-cosmos v0.5.2-0.20241202195413-82468150ac1e // indirect
 	github.com/smartcontractkit/chainlink-data-streams v0.1.1-0.20241202141438-a90db35252db // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.1.1 // indirect
