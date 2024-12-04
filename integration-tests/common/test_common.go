@@ -380,6 +380,7 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 
 	for start := time.Now(); time.Since(start) < m.Common.TestEnvDetails.TestDuration; {
 		m.TestConfig.L.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), m.Common.TestEnvDetails.TestDuration))
+		m.TestConfig.L.Info().Msg(fmt.Sprintf("fetching Latest Transmission Details from: %s", contractAddress))
 		res, err2 := m.Clients.OCR2Client.LatestTransmissionDetails(ctx, contractAddress)
 		require.NoError(m.TestConfig.T, err2, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
