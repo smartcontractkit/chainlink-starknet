@@ -95,12 +95,11 @@ func NewStarknetGauntletPlusPlus(gauntletPPEndpoint string, rpcURL string, addre
 func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Report, key string) (string, error) {
 	if report.Output != nil {
 		// Log the raw content of Output
-		outputJSON, err := json.Marshal(report.Output)
+		_, err := json.Marshal(report.Output)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to marshal report.Output")
 			return "", err
 		}
-		log.Info().Str("Report.Output", string(outputJSON)).Msg("Gauntlet++")
 
 		// Attempt to assert the Output as a map
 		if outputMap, ok := (*report.Output).(map[string]interface{}); ok {
@@ -110,9 +109,10 @@ func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Repo
 				// Assert value to a string
 				if strValue, ok := value.(string); ok {
 					return strValue, nil
-				}
+				} else {
 				err := fmt.Errorf("parsed Value is not of type string")
 				return "", err
+				}
 			}
 		} else {
 			// Log a message if it’s not a map
@@ -140,23 +140,48 @@ func (sgpp *StarknetGauntletPlusPlus) BuildRequestBody(request Request) *g.PostE
 }
 
 func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
-	body := sgpp.BuildRequestBody(*request)
+	report, err := sgpp.executeReturnsReport(request)
 
-	tmp, err := json.Marshal(body)
-	if err != nil {
-		return err // Handle marshaling error
-	}
-
-	// Show request body
-	log.Info().Str("Request Body: ", string(tmp)).Msg("Gauntlet++")
-	headers := &g.PostExecuteParams{}
-	response, err := sgpp.client.PostExecuteWithResponse(context.Background(), headers, *body)
 	if err != nil {
 		return err // Handle post execution error
 	}
 
-	// Show Response Status
-	log.Info().Str("Response Status:", response.Status()).Msg("Gauntlet++")
+	if report.Output != nil {
+		_, err := json.Marshal(report.Output)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to marshal report.Output")
+			return err
+		}
+
+		// Attempt to assert the Output as a map
+		if outputMap, ok := (*report.Output).(map[string]interface{}); ok {
+			log.Info().Interface("Report Response: ", outputMap).Msg("Gauntlet++")
+
+			// Access the 'output' field and then the 'receipt' field
+			if output, exists := outputMap["receipt"]; exists {
+				if receiptMap, ok := output.(map[string]interface{}); ok {
+					log.Info().Interface("Receipt Map: ", receiptMap).Msg("Gauntlet++")
+					// Access 'execution_status' inside the 'receipt' field
+					if executionStatus, exists := receiptMap["execution_status"]; exists {
+						
+						// Assert value to a string
+						if strExecutionStatus, ok := executionStatus.(string); ok {
+							if strExecutionStatus != "SUCCEEDED" {
+								err := fmt.Errorf("Op was not successful")
+								return err
+							}
+						} else {
+							err := fmt.Errorf("execution_status is not of type string")
+							return err
+						}
+					}
+				}
+			}
+		} else {
+			// Log a message if it’s not a map
+			log.Warn().Msg("Report.Output is not a map[string]interface{}")
+		}
+	}
 	return nil
 }
 
@@ -205,6 +230,11 @@ func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, e
 	contractAddress, err := sgpp.ExtractValueFromResponseBody(report, "contractAddress")
 	if err != nil {
 		log.Err(err).Str("G++ Request returned with err", err.Error()).Msg("Gauntlet++")
+		return "", err
+	}
+
+	if contractAddress == "" {
+		log.Err(err).Str("G++ Deploy Requets returned with empty contractAddress", err.Error()).Msg("Gauntlet++")
 		return "", err
 	}
 

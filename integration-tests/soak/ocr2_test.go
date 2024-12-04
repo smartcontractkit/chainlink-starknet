@@ -80,7 +80,7 @@ func TestOCRBasicSoak(t *testing.T) {
 
 			// Setting up G++ Client
 			rpcURL := state.Common.RPCDetails.RPCL2Internal
-			gppURL := state.TestConfig.TestConfig.Common.GauntletPlusPlusUrl
+			gppURL := state.TestConfig.TestConfig.Common.GauntletPlusPlusURL
 			state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppURL, rpcURL, state.Account.Account, state.Account.PrivateKey)
 			require.NoError(t, err, "Setting up gauntlet++ should not fail")
 

@@ -242,7 +242,7 @@ func (m *OCRv2TestState) DeployCluster() {
 func (m *OCRv2TestState) StartGppWithoutNetwork() {
 	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
 	url, err := gpp.StartContainer()
-	m.TestConfig.TestConfig.Common.GauntletPlusPlusUrl = url
+	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
 	require.NoError(m.TestConfig.T, err)
 }
 
@@ -250,7 +250,7 @@ func (m *OCRv2TestState) StartGppWithoutNetwork() {
 func (m *OCRv2TestState) StartGppWithNetwork(networkName string) {
 	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
 	url, err := gpp.StartContainer()
-	m.TestConfig.TestConfig.Common.GauntletPlusPlusUrl = url
+	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
 	require.NoError(m.TestConfig.T, err)
 }
 
@@ -289,7 +289,6 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 func (m *OCRv2TestState) removeOCR2PrefixAndAddPrefix(k string, prefix string, newPrefix string) string {
 	// Print k for debugging before the modification
 	if strings.HasPrefix(k, prefix) {
-		fmt.Println("After:", newPrefix+k[len(prefix):])
 		return newPrefix + k[len(prefix):]
 	}
 
