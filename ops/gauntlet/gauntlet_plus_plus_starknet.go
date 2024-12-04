@@ -27,17 +27,6 @@ type StarknetGauntletPlusPlus struct {
 	providers *[]g.Provider
 }
 
-func toPointerMap(input map[string]interface{}) map[string]*interface{} {
-	result := make(map[string]*interface{})
-	for k, v := range input {
-		// Create a new variable to hold the value
-		valueCopy := v
-		// Store the pointer to the new variable
-		result[k] = &valueCopy
-	}
-	return result
-}
-
 func (sgpp *StarknetGauntletPlusPlus) BuildProviders(address string, rpcURL string, privateKey string) *[]g.Provider {
 	accountProviderInput := map[string]interface{}{
 		"address": address,
@@ -151,35 +140,10 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 			log.Error().Err(err).Msg("Failed to marshal report.Output")
 			return err
 		}
-
-		// Attempt to assert the Output as a map
-		if outputMap, ok := (*report.Output).(map[string]interface{}); ok {
-			log.Info().Interface("Report Response: ", outputMap).Msg("Gauntlet++")
-
-			// Access the 'output' field and then the 'receipt' field
-			if output, exists := outputMap["receipt"]; exists {
-				if receiptMap, ok := output.(map[string]interface{}); ok {
-					log.Info().Interface("Receipt Map: ", receiptMap).Msg("Gauntlet++")
-					// Access 'execution_status' inside the 'receipt' field
-					if executionStatus, exists := receiptMap["execution_status"]; !exists {
-						err := fmt.Errorf("execution_status does not exist")
-						return err
-					} else {
-						if strExecutionStatus, ok := executionStatus.(string); ok {
-							if strExecutionStatus != "SUCCEEDED" {
-								err := fmt.Errorf("Op was not successful")
-								return err
-							}
-						} else {
-							err := fmt.Errorf("execution_status is not successfuly")
-							return err
-						}
-					}
-				}
-			}
-		} else {
-			// Log a message if it’s not a map
-			log.Warn().Msg("Report.Output is not a map[string]interface{}")
+		err = processReport(&report)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to process Op report")
+			return err
 		}
 	}
 	return nil
@@ -469,4 +433,70 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOzAccount(publicKey string) (string,
 	}
 
 	return sgpp.executeDeploy(&request)
+}
+
+func toPointerMap(input map[string]interface{}) map[string]*interface{} {
+	result := make(map[string]*interface{})
+	for k, v := range input {
+		// Create a new variable to hold the value
+		valueCopy := v
+		// Store the pointer to the new variable
+		result[k] = &valueCopy
+	}
+	return result
+}
+
+func processReport(report *g.Report) error {
+	// Ensure Output is a map
+	outputMap, ok := (*report.Output).(map[string]interface{})
+	if !ok {
+		log.Warn().Msg("Report.Output is not a map[string]interface{}")
+		return fmt.Errorf("Report.Output is not a map")
+	}
+
+	log.Info().Interface("Report Response: ", outputMap).Msg("Gauntlet++")
+
+	// Access the 'receipt' field
+	receiptMap, err := getReceiptMap(outputMap)
+	if err != nil {
+		return err
+	}
+
+	// Check 'execution_status' inside the 'receipt' field
+	return checkExecutionStatus(receiptMap)
+}
+
+// Helper function to extract the receipt map
+func getReceiptMap(outputMap map[string]interface{}) (map[string]interface{}, error) {
+	output, exists := outputMap["receipt"]
+	if !exists {
+		return nil, fmt.Errorf("receipt does not exist")
+	}
+
+	receiptMap, ok := output.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("receipt is not a map")
+	}
+
+	log.Info().Interface("Receipt Map: ", receiptMap).Msg("Gauntlet++")
+	return receiptMap, nil
+}
+
+// Helper function to check the execution status
+func checkExecutionStatus(receiptMap map[string]interface{}) error {
+	executionStatus, exists := receiptMap["execution_status"]
+	if !exists {
+		return fmt.Errorf("execution_status does not exist")
+	}
+
+	strExecutionStatus, ok := executionStatus.(string)
+	if !ok {
+		return fmt.Errorf("execution_status is not a string")
+	}
+
+	if strExecutionStatus != "SUCCEEDED" {
+		return fmt.Errorf("Op was not successful")
+	}
+
+	return nil
 }
