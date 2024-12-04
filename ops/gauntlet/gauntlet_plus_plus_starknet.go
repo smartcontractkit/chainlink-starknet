@@ -109,10 +109,9 @@ func (sgpp *StarknetGauntletPlusPlus) ExtractValueFromResponseBody(report g.Repo
 				// Assert value to a string
 				if strValue, ok := value.(string); ok {
 					return strValue, nil
-				} else {
+				}
 				err := fmt.Errorf("parsed Value is not of type string")
 				return "", err
-				}
 			}
 		} else {
 			// Log a message if it’s not a map
@@ -162,16 +161,17 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 				if receiptMap, ok := output.(map[string]interface{}); ok {
 					log.Info().Interface("Receipt Map: ", receiptMap).Msg("Gauntlet++")
 					// Access 'execution_status' inside the 'receipt' field
-					if executionStatus, exists := receiptMap["execution_status"]; exists {
-						
-						// Assert value to a string
+					if executionStatus, exists := receiptMap["execution_status"]; !exists {
+						err := fmt.Errorf("execution_status does not exist")
+						return err
+					} else {
 						if strExecutionStatus, ok := executionStatus.(string); ok {
 							if strExecutionStatus != "SUCCEEDED" {
 								err := fmt.Errorf("Op was not successful")
 								return err
 							}
 						} else {
-							err := fmt.Errorf("execution_status is not of type string")
+							err := fmt.Errorf("execution_status is not successfuly")
 							return err
 						}
 					}
