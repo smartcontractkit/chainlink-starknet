@@ -16,9 +16,9 @@ require (
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20241202202529-2033490e77b8
 	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.17
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.9
-	github.com/smartcontractkit/chainlink/deployment v0.0.0-20241204025900-395f27a676a0
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20241204025900-395f27a676a0
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20241204025900-395f27a676a0
+	github.com/smartcontractkit/chainlink/deployment v0.0.0-20241204195725-03207929cc9f
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20241204195725-03207929cc9f
+	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20241204195725-03207929cc9f
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	go.uber.org/zap v1.27.0
@@ -402,7 +402,7 @@ require (
 	github.com/smartcontractkit/chainlink-data-streams v0.1.1-0.20241202141438-a90db35252db // indirect
 	github.com/smartcontractkit/chainlink-feeds v0.1.1 // indirect
 	github.com/smartcontractkit/chainlink-protos/orchestrator v0.3.2 // indirect
-	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20241127210503-88cca3779525 // indirect
+	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20241204153209-c3a71b0eef99 // indirect
 	github.com/smartcontractkit/chainlink-testing-framework/lib/grafana v1.50.0 // indirect
 	github.com/smartcontractkit/chainlink-testing-framework/wasp v1.50.2 // indirect
 	github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet v1.1.3 // indirect
