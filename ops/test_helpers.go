@@ -32,11 +32,14 @@ type OffchainConfig struct {
 }
 
 type ReportingPluginConfig struct {
-	AlphaReportInfinite bool `json:"alphaReportInfinite"`
-	AlphaReportPpb      int  `json:"alphaReportPpb"`
-	AlphaAcceptInfinite bool `json:"alphaAcceptInfinite"`
-	AlphaAcceptPpb      int  `json:"alphaAcceptPpb"`
-	DeltaCNanoseconds   int  `json:"deltaCNanoseconds"`
+	SourceFinalityDepth         int    `json:"sourceFinalityDepth"`
+	DestFinalityDepth           int    `json:"destFinalityDepth"`
+	MaxGasPrice                 string `json:"maxGasPrice"`
+	RelativeBoostPerWaitHour    string `json:"relativeBoostPerWaitHour"`
+	InflightCacheExpiry         string `json:"inflightCacheExpiry"`
+	RootSnoozeTime              string `json:"rootSnoozeTime"`
+	DestOptimisticConfirmations int    `json:"DestOptimisticConfirmations"`
+	BatchGasLimit               int    `json:"batchGasLimit"`
 }
 
 var TestOCR2Config = OCR2Config{
@@ -44,29 +47,33 @@ var TestOCR2Config = OCR2Config{
 	// Signers:       onChainKeys, // user defined
 	// Transmitters:  txKeys, // user defined
 	OnchainConfig: "",
+	// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/main/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts
 	OffchainConfig: &OffchainConfig{
 		// todo: increase delta round but decrease delta stage
-		DeltaProgress: "120s", // 120s
-		DeltaResend:   "150s", // 150s
-		DeltaRound:    "90s",  // 90s
-		DeltaGrace:    "5s",   // 5s
-		DeltaStage:    "20s",  // 20s
+		DeltaProgress: "120000000000ns", // 120s
+		DeltaResend:   "5000000000ns",   // 150s
+		DeltaRound:    "60000000000ns",  // 90s
+		DeltaGrace:    "5000000000ns",   // 5s
+		DeltaStage:    "180000000000ns", // 20s
 		RMax:          5,
 		S:             []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
 		// PeerIDs:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
-			AlphaReportInfinite: false,
-			AlphaReportPpb:      0,
-			AlphaAcceptInfinite: false,
-			AlphaAcceptPpb:      0,
-			DeltaCNanoseconds:   1000000000,
+			SourceFinalityDepth:         5,
+			DestFinalityDepth:           15,
+			MaxGasPrice:                 "300000000000",
+			RelativeBoostPerWaitHour:    "300000000000",
+			InflightCacheExpiry:         "3m0s",
+			RootSnoozeTime:              "3m0s",
+			DestOptimisticConfirmations: 1,
+			BatchGasLimit:               1,
 		},
-		MaxDurationQuery:                        "20s",
-		MaxDurationObservation:                  "10s",
-		MaxDurationReport:                       "20s",
-		MaxDurationShouldAcceptFinalizedReport:  "20s",
-		MaxDurationShouldTransmitAcceptedReport: "20s",
+		MaxDurationQuery:                        "100000000ns",
+		MaxDurationObservation:                  "35000000000ns",
+		MaxDurationReport:                       "10000000000ns",
+		MaxDurationShouldAcceptFinalizedReport:  "5000000000ns",
+		MaxDurationShouldTransmitAcceptedReport: "10000000000ns",
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/5faf35e1d372e3ae5388c295554aa4f87bc0ece0/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts#L23
 		ConfigEncodingSecret: "abandon ability able about above absent absorb abstract absurd abuse access accident",

@@ -269,8 +269,9 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var cfgKeys []string
 	for i, key := range m.Clients.ChainlinkClient.NKeys {
 		// need to remove the prefix since legacy gauntlet did it pre op
-		// https://github.com/smartcontractkit/chainlink-starknet/blob/develop/packages-ts/starknet-gauntlet-ocr2/src/commands/ocr2/setConfig.ts#L124
-		offChaiNKeys = append(offChaiNKeys, m.removeOCR2PrefixAndAddPrefix(key.OCR2Key.Data.Attributes.OffChainPublicKey, "ocr2off_starknet_", ""))
+		// In G++ only signers have prefix removed
+		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/main/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts
+		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIDs = append(peerIDs, key.PeerID)
 		txKeys = append(txKeys, m.Clients.ChainlinkClient.AccountAddresses[i])
 		onChaiNKeys = append(onChaiNKeys, m.removeOCR2PrefixAndAddPrefix(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "0x"))
@@ -287,7 +288,6 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 }
 
 func (m *OCRv2TestState) removeOCR2PrefixAndAddPrefix(k string, prefix string, newPrefix string) string {
-	// Print k for debugging before the modification
 	if strings.HasPrefix(k, prefix) {
 		return newPrefix + k[len(prefix):]
 	}

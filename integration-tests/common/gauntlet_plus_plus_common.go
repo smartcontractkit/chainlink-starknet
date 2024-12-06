@@ -61,11 +61,7 @@ func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 }
 
 func (m *OCRv2TestState) deployAccessControllerWithGpp() error {
-	err := m.Clients.GauntletClient.InstallDependencies()
-	if err != nil {
-		return err
-	}
-	err = m.Clients.GauntletPPClient.DeclareAccessControllerContract()
+	err := m.Clients.GauntletPPClient.DeclareAccessControllerContract()
 	if err != nil {
 		return err
 	}
@@ -78,15 +74,6 @@ func (m *OCRv2TestState) deployAccessControllerWithGpp() error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func (m *OCRv2TestState) declareLinkToken() error {
-	err := m.Clients.GauntletPPClient.DeclareLinkTokenContract()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
