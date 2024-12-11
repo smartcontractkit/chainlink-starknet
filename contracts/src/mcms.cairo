@@ -134,7 +134,7 @@ fn hash_op(op: Op) -> u256 {
         .encode(op.to)
         .encode(op.selector)
         // dynamic byte offset of data array (relative to beginning of op struct)
-        // (note: domain seperator not part of the op struct)
+        // (note: domain separator not part of the op struct)
         .encode(0xc0)
         // length prefix
         .encode(op.data.len());

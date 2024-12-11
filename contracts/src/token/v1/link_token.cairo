@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 
-// https://github.com/starknet-io/starkgate-contracts/blob/v2.0/src/cairo/mintable_token_interface.cairo
+// https://github.com/starknet-io/starkgate-contracts/blob/eedee8304e8c407c2e0e03c83187dbc5dcc6787e/src/cairo/mintable_token_interface.cairo
 #[starknet::interface]
 trait IMintableToken<TContractState> {
     fn permissioned_mint(ref self: TContractState, account: ContractAddress, amount: u256);

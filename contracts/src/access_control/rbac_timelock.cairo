@@ -111,7 +111,7 @@ mod RBACTimelock {
     // EnumerableSet
     impl EnumerableSetInternalImpl = EnumerableSetComponent::InternalImpl<ContractState>;
 
-    // we use sn_keccak intead of keccak256
+    // we use sn_keccak instead of keccak256
     const ADMIN_ROLE: felt252 = selector!("ADMIN_ROLE");
     const PROPOSER_ROLE: felt252 = selector!("PROPOSER_ROLE");
     const EXECUTOR_ROLE: felt252 = selector!("EXECUTOR_ROLE");
