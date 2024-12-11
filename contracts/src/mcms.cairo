@@ -9,6 +9,9 @@ use starknet::{
 use alexandria_bytes::{Bytes, BytesTrait};
 use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
 use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+use core::byte_array::ByteArrayTrait;
+use core::traits::{Into, TryInto};
+use chainlink::utils::{keccak, ByteArrayUtil};
 
 #[starknet::interface]
 trait IManyChainMultiSig<TContractState> {
@@ -97,6 +100,7 @@ pub fn to_u256(address: EthAddress) -> u256 {
     temp.into()
 }
 
+
 pub fn verify_merkle_proof(proof: Span<u256>, root: u256, leaf: u256) -> bool {
     let mut computed_hash = leaf;
 
@@ -116,7 +120,8 @@ fn hash_pair(a: u256, b: u256) -> u256 {
     } else {
         (b, a)
     };
-    BytesTrait::new_empty().encode(lower).encode(higher).keccak()
+    let encoded = ByteArrayUtil::into(BytesTrait::new_empty().encode(lower).encode(higher));
+    keccak(@encoded)
 }
 
 fn hash_op(op: Op) -> u256 {
@@ -140,7 +145,8 @@ fn hash_op(op: Op) -> u256 {
         encoded_leaf = encoded_leaf.encode(*op.data.at(i));
         i += 1;
     };
-    encoded_leaf.keccak()
+    let encoded_leaf = ByteArrayUtil::into(encoded_leaf);
+    keccak(@encoded_leaf)
 }
 
 // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP")
@@ -159,52 +165,17 @@ fn hash_metadata(metadata: RootMetadata) -> u256 {
         .encode(metadata.post_op_count)
         .encode(metadata.override_previous_root);
 
-    encoded_metadata.keccak()
+    let encoded_metadata = ByteArrayUtil::into(encoded_metadata);
+
+    keccak(@encoded_metadata)
 }
 
 fn eip_191_message_hash(msg: u256) -> u256 {
-    let mut eip_191_msg: Bytes = BytesTrait::new_empty();
+    let mut eip_191_msg: ByteArray = "\x19Ethereum Signed Message:\n32";
+    eip_191_msg.append_word(msg.high.into(), 16);
+    eip_191_msg.append_word(msg.low.into(), 16);
 
-    // '\x19Ethereum Signed Message:\n32' in byte array
-    let prefix = array![
-        0x19,
-        0x45,
-        0x74,
-        0x68,
-        0x65,
-        0x72,
-        0x65,
-        0x75,
-        0x6d,
-        0x20,
-        0x53,
-        0x69,
-        0x67,
-        0x6e,
-        0x65,
-        0x64,
-        0x20,
-        0x4d,
-        0x65,
-        0x73,
-        0x73,
-        0x61,
-        0x67,
-        0x65,
-        0x3a,
-        0x0a,
-        0x33,
-        0x32
-    ];
-
-    let mut i = 0;
-    while i < prefix.len() {
-        eip_191_msg.append_u8(*prefix.at(i));
-        i += 1;
-    };
-    eip_191_msg.append_u256(msg);
-
-    eip_191_msg.keccak()
+    keccak(@eip_191_msg)
 }
 
 #[starknet::contract]
@@ -214,6 +185,7 @@ mod ManyChainMultiSig {
     use core::array::SpanTrait;
     use core::dict::Felt252Dict;
     use core::traits::PanicDestruct;
+    use chainlink::utils::{keccak, ByteArrayUtil};
     use super::{
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
         to_u256, verify_merkle_proof, hash_op, hash_metadata, eip_191_message_hash,
@@ -311,9 +283,11 @@ mod ManyChainMultiSig {
             // note: v is a boolean and not uint8
             mut signatures: Array<Signature>
         ) {
-            let encoded_root: Bytes = BytesTrait::new_empty().encode(root).encode(valid_until);
+            let encoded_root = ByteArrayUtil::into(
+                BytesTrait::new_empty().encode(root).encode(valid_until)
+            );
 
-            let msg_hash = eip_191_message_hash(encoded_root.keccak());
+            let msg_hash = eip_191_message_hash(keccak(@encoded_root));
 
             assert(!self.s_seen_signed_hashes.read(msg_hash), 'signed hash already seen');
 
@@ -324,7 +298,6 @@ mod ManyChainMultiSig {
                     Result::Ok(signer_address) => signer_address,
                     Result::Err(e) => panic_with_felt252(e),
                 };
-
                 assert(
                     to_u256(prev_address) < to_u256(signer_address.clone()),
                     'signer address must increase'

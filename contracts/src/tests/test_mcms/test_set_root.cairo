@@ -24,7 +24,7 @@ use chainlink::tests::test_mcms::utils::{
     insecure_sign, setup_signers, SignerMetadata, setup_mcms_deploy_and_set_config_2_of_2,
     setup_mcms_deploy_set_config_and_set_root, set_root_args, merkle_root
 };
-
+use chainlink::utils::{keccak, ByteArrayUtil};
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global, start_cheat_caller_address,
     stop_cheat_caller_address, stop_cheat_caller_address_global, start_cheat_chain_id_global,
@@ -56,8 +56,7 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
     Array<Op>,
     Span<Span<u256>>,
 ) {
-    let (signer_address_1, private_key_1, signer_address_2, private_key_2, signer_metadata) =
-        setup_signers();
+    let (signer_address_1, private_key_1, signer_address_2, private_key_2, _) = setup_signers();
 
     let (
         mut spy,
@@ -127,8 +126,10 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
     // create merkle tree
     let (root, metadata_proof, ops_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
-    let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
-    let message_hash = eip_191_message_hash(encoded_root.keccak());
+    let encoded_root = ByteArrayUtil::into(
+        BytesTrait::new_empty().encode(root).encode(valid_until)
+    );
+    let message_hash = eip_191_message_hash(keccak(@encoded_root));
 
     let (r_1, s_1, y_parity_1) = insecure_sign(message_hash, private_key_1);
     let (r_2, s_2, y_parity_2) = insecure_sign(message_hash, private_key_2);
@@ -168,25 +169,38 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
 }
 
 #[test]
+fn test_eip_191_message_hash() {
+    let mut msg: ByteArray = Default::default();
+    msg.append_byte(0x11);
+
+    let msg_hash = eip_191_message_hash(keccak(@msg));
+
+    let expected_msg_hash: u256 =
+        0x01f83f8506ac29b9cbd12376cf298e9b02961776e960e7f768933386c75f5d02;
+
+    assert(msg_hash == expected_msg_hash, 'invalid msg hash')
+}
+
+#[test]
 fn test_set_root_success() {
     let (
         mut spy,
         mcms_address,
         mcms,
-        safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -214,27 +228,28 @@ fn test_set_root_success() {
             ]
         );
 }
+
 #[test]
 #[feature("safe_dispatcher")]
 fn test_set_root_hash_seen() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -254,23 +269,23 @@ fn test_set_root_hash_seen() {
 #[feature("safe_dispatcher")]
 fn test_set_root_signatures_wrong_order() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
+        _,
+        _,
+        _,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -291,23 +306,7 @@ fn test_set_root_signatures_wrong_order() {
 #[feature("safe_dispatcher")]
 fn test_set_root_signatures_invalid_signer() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
-        safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
-        root,
-        valid_until,
-        metadata,
-        metadata_proof,
-        signatures,
-        ops,
-        ops_proof
+        _, _, _, safe_mcms, _, _, _, _, _, _, root, valid_until, metadata, metadata_proof, _, _, _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -347,23 +346,23 @@ fn test_set_root_signatures_invalid_signer() {
 #[feature("safe_dispatcher")]
 fn test_insufficient_signers() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
+        _,
+        _,
+        _,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -384,23 +383,23 @@ fn test_insufficient_signers() {
 #[feature("safe_dispatcher")]
 fn test_valid_until_expired() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
+        _,
+        _,
+        _,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -421,23 +420,23 @@ fn test_valid_until_expired() {
 #[feature("safe_dispatcher")]
 fn test_invalid_metadata_proof() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
+        _,
+        _,
+        _,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -458,23 +457,23 @@ fn test_invalid_metadata_proof() {
 #[feature("safe_dispatcher")]
 fn test_invalid_chain_id() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
+        _,
+        _,
+        _,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -494,23 +493,23 @@ fn test_invalid_chain_id() {
 #[feature("safe_dispatcher")]
 fn test_invalid_multisig_address() {
     let (
-        mut spy,
-        mcms_address,
-        mcms,
+        _,
+        _,
+        _,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG();
 
@@ -528,23 +527,23 @@ fn test_invalid_multisig_address() {
 #[feature("safe_dispatcher")]
 fn test_pending_ops_remain() {
     let (
-        mut spy,
+        _,
         mcms_address,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
-        ops,
-        ops_proof
+        _,
+        _
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -552,8 +551,7 @@ fn test_pending_ops_remain() {
     mcms.set_root(root, valid_until, metadata, metadata_proof, signatures.clone());
 
     // sign a different set of operations with same signers
-    let (signer_address_1, private_key_1, signer_address_2, private_key_2, signer_metadata) =
-        setup_signers();
+    let (_, _, _, _, signer_metadata) = setup_signers();
     let (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof) = set_root_args(
         mcms_address, contract_address_const::<123123>(), signer_metadata, 0, 2
     );
@@ -573,30 +571,11 @@ fn test_pending_ops_remain() {
 #[test]
 #[feature("safe_dispatcher")]
 fn test_wrong_pre_op_count() {
-    let (
-        mut spy,
-        mcms_address,
-        mcms,
-        safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
-        root,
-        valid_until,
-        metadata,
-        metadata_proof,
-        signatures,
-        ops,
-        _
-    ) =
+    let (_, mcms_address, _, safe_mcms, _, _, _, _, _, _, _, _, _, _, _, _, _) =
         setup_mcms_deploy_set_config_and_set_root();
 
     // sign a different set of operations with same signers
-    let (signer_address_1, private_key_1, signer_address_2, private_key_2, signer_metadata) =
-        setup_signers();
+    let (_, _, _, _, signer_metadata) = setup_signers();
     let wrong_pre_op_count = 1;
     let (root, valid_until, metadata, metadata_proof, signatures, _, _) = set_root_args(
         mcms_address,
@@ -622,16 +601,16 @@ fn test_wrong_pre_op_count() {
 #[feature("safe_dispatcher")]
 fn test_wrong_post_ops_count() {
     let (
-        mut spy,
+        _,
         mcms_address,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
@@ -646,8 +625,7 @@ fn test_wrong_post_ops_count() {
 
     // sign a different set of operations with same signers
 
-    let (signer_address_1, private_key_1, signer_address_2, private_key_2, signer_metadata) =
-        setup_signers();
+    let (_, _, _, _, signer_metadata) = setup_signers();
 
     let op1 = *ops.at(0);
     let op1_proof = *ops_proof.at(0);
@@ -658,7 +636,7 @@ fn test_wrong_post_ops_count() {
     mcms.execute(op1, op1_proof);
     mcms.execute(op2, op2_proof);
 
-    let (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof) = set_root_args(
+    let (root, valid_until, metadata, metadata_proof, signatures, _, _) = set_root_args(
         mcms_address,
         contract_address_const::<123123>(),
         signer_metadata,

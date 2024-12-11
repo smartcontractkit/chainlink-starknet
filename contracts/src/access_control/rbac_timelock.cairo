@@ -2,6 +2,7 @@ use starknet::ContractAddress;
 use alexandria_bytes::{Bytes, BytesTrait};
 use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
 use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+use chainlink::utils::{keccak, ByteArrayUtil};
 
 #[derive(Copy, Drop, Serde)]
 struct Call {
@@ -26,7 +27,8 @@ fn _hash_operation_batch(calls: Span<Call>, predecessor: u256, salt: u256) -> u2
     };
 
     encoded = encoded.encode(predecessor).encode(salt);
-    encoded.keccak()
+
+    keccak(@ByteArrayUtil::into(encoded))
 }
 
 #[starknet::interface]

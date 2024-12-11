@@ -5,8 +5,8 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
 use alexandria_math::u512_arithmetics;
 use core::math::{u256_mul_mod_n, u256_div_mod_n};
 use core::zeroable::{IsZeroResult, NonZero, zero_based};
-use alexandria_math::u512_arithmetics::{u512_add, u512_sub, U512Intou256X2,};
-
+use alexandria_math::u512_arithmetics::{u512_add, u512_sub, U512Intou256X2};
+use chainlink::utils::{keccak, ByteArrayUtil};
 use starknet::{
     ContractAddress, EthAddress, EthAddressIntoFelt252, EthAddressZeroable, contract_address_const,
     eth_signature::public_key_point_to_eth_address,
@@ -263,8 +263,10 @@ fn set_root_args(
     // create merkle tree
     let (root, metadata_proof, ops_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
-    let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
-    let message_hash = eip_191_message_hash(encoded_root.keccak());
+    let encoded_root = ByteArrayUtil::into(
+        BytesTrait::new_empty().encode(root).encode(valid_until)
+    );
+    let message_hash = eip_191_message_hash(keccak(@encoded_root));
 
     let mut signatures: Array<Signature> = ArrayTrait::new();
 
@@ -379,8 +381,7 @@ fn setup_mcms_deploy_set_config_and_set_root() -> (
     Array<Op>,
     Span<Span<u256>>
 ) {
-    let (signer_address_1, private_key_1, signer_address_2, private_key_2, signer_metadata) =
-        setup_signers();
+    let (signer_address_1, _, signer_address_2, _, signer_metadata) = setup_signers();
 
     let (
         mut spy,
