@@ -146,6 +146,7 @@ mod LinkToken {
 
             let prev_minter = self.LinkTokenV2_minter.read();
             assert(new_minter != prev_minter, 'is minter already');
+            assert(!new_minter.is_zero(), 'minter is 0');
 
             self.LinkTokenV2_minter.write(new_minter);
 
