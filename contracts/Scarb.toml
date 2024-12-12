@@ -15,11 +15,11 @@ test = "snforge test"
 [dependencies]
 starknet = "2.8.2"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.17.0" }
-alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b080577aaa6889116fc8be5dde72b2fd21e397" }
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b080577aaa6889116fc8be5dde72b2fd21e397" }
+alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "6a989d636243494a0529fc3af06a924493499564" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "6a989d636243494a0529fc3af06a924493499564" }
 
 [dev-dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "e1b080577aaa6889116fc8be5dde72b2fd21e397" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "6a989d636243494a0529fc3af06a924493499564" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.31.0" }
 
 [lib]

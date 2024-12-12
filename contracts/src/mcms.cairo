@@ -11,7 +11,7 @@ use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
 use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
 use core::byte_array::ByteArrayTrait;
 use core::traits::{Into, TryInto};
-use chainlink::utils::{keccak, ByteArrayUtil};
+use chainlink::utils::{keccak};
 
 #[starknet::interface]
 trait IManyChainMultiSig<TContractState> {
@@ -120,8 +120,8 @@ fn hash_pair(a: u256, b: u256) -> u256 {
     } else {
         (b, a)
     };
-    let encoded = ByteArrayUtil::into(BytesTrait::new_empty().encode(lower).encode(higher));
-    keccak(@encoded)
+    let encoded = BytesTrait::new_empty().encode(lower).encode(higher);
+    keccak(@encoded.into())
 }
 
 fn hash_op(op: Op) -> u256 {
@@ -145,8 +145,7 @@ fn hash_op(op: Op) -> u256 {
         encoded_leaf = encoded_leaf.encode(*op.data.at(i));
         i += 1;
     };
-    let encoded_leaf = ByteArrayUtil::into(encoded_leaf);
-    keccak(@encoded_leaf)
+    keccak(@encoded_leaf.into())
 }
 
 // keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP")
@@ -165,9 +164,7 @@ fn hash_metadata(metadata: RootMetadata) -> u256 {
         .encode(metadata.post_op_count)
         .encode(metadata.override_previous_root);
 
-    let encoded_metadata = ByteArrayUtil::into(encoded_metadata);
-
-    keccak(@encoded_metadata)
+    keccak(@encoded_metadata.into())
 }
 
 fn eip_191_message_hash(msg: u256) -> u256 {
@@ -185,7 +182,7 @@ mod ManyChainMultiSig {
     use core::array::SpanTrait;
     use core::dict::Felt252Dict;
     use core::traits::PanicDestruct;
-    use chainlink::utils::{keccak, ByteArrayUtil};
+    use chainlink::utils::{keccak};
     use super::{
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
         to_u256, verify_merkle_proof, hash_op, hash_metadata, eip_191_message_hash,
@@ -283,11 +280,9 @@ mod ManyChainMultiSig {
             // note: v is a boolean and not uint8
             mut signatures: Array<Signature>
         ) {
-            let encoded_root = ByteArrayUtil::into(
-                BytesTrait::new_empty().encode(root).encode(valid_until)
-            );
+            let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
 
-            let msg_hash = eip_191_message_hash(keccak(@encoded_root));
+            let msg_hash = eip_191_message_hash(keccak(@encoded_root.into()));
 
             assert(!self.s_seen_signed_hashes.read(msg_hash), 'signed hash already seen');
 

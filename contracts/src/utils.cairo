@@ -12,24 +12,6 @@ fn split_felt(felt: felt252) -> (u128, u128) {
     }
 }
 
-pub impl ByteArrayUtil of Into<Bytes, ByteArray> {
-    fn into(self: Bytes) -> ByteArray {
-        let mut res: ByteArray = Default::default();
-        let mut offset = 0;
-        while offset < self.size() {
-            if offset + 16 <= self.size() {
-                let (new_offset, value) = self.read_u128(offset);
-                res.append_word(value.into(), 16);
-                offset = new_offset;
-            } else {
-                let (new_offset, value) = self.read_u8(offset);
-                res.append_byte(value);
-                offset = new_offset;
-            }
-        };
-        res
-    }
-}
 
 pub fn u256_reverse_endian(input: u256) -> u256 {
     let low = u128_byte_reverse(input.high);

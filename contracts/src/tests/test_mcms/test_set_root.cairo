@@ -24,7 +24,7 @@ use chainlink::tests::test_mcms::utils::{
     insecure_sign, setup_signers, SignerMetadata, setup_mcms_deploy_and_set_config_2_of_2,
     setup_mcms_deploy_set_config_and_set_root, set_root_args, merkle_root
 };
-use chainlink::utils::{keccak, ByteArrayUtil};
+use chainlink::utils::{keccak};
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global, start_cheat_caller_address,
     stop_cheat_caller_address, stop_cheat_caller_address_global, start_cheat_chain_id_global,
@@ -126,10 +126,8 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
     // create merkle tree
     let (root, metadata_proof, ops_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
 
-    let encoded_root = ByteArrayUtil::into(
-        BytesTrait::new_empty().encode(root).encode(valid_until)
-    );
-    let message_hash = eip_191_message_hash(keccak(@encoded_root));
+    let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
+    let message_hash = eip_191_message_hash(keccak(@encoded_root.into()));
 
     let (r_1, s_1, y_parity_1) = insecure_sign(message_hash, private_key_1);
     let (r_2, s_2, y_parity_2) = insecure_sign(message_hash, private_key_2);
