@@ -24,21 +24,26 @@ mod LinkToken {
         token::erc20::{
             ERC20Component, interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait}
         },
-        access::ownable::OwnableComponent
+        access::ownable::OwnableComponent, upgrades::UpgradeableComponent,
     };
     use super::{IMintableToken, IMinter};
     use chainlink::libraries::{
         token::v2::erc677::ERC677Component, type_and_version::ITypeAndVersion,
-        upgradeable::{Upgradeable, IUpgradeable}
+        upgrades::v1::upgradeable::{Upgradeable, IUpgradeable},
+        upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: ERC677Component, storage: erc677, event: ERC677Event);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent
+    );
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
-    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
@@ -49,6 +54,12 @@ mod LinkToken {
     #[abi(embed_v0)]
     impl ERC677Impl = ERC677Component::ERC677Impl<ContractState>;
 
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl OwnerUpgradeableImpl =
+        OwnerUpgradeableComponent::OwnerUpgradeableImpl<ContractState>;
+
     #[storage]
     struct Storage {
         LinkTokenV2_minter: ContractAddress,
@@ -58,6 +69,10 @@ mod LinkToken {
         erc20: ERC20Component::Storage,
         #[substorage(v0)]
         erc677: ERC677Component::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        owner_upgradeable: OwnerUpgradeableComponent::Storage
     }
 
     #[derive(Drop, starknet::Event)]
@@ -65,7 +80,6 @@ mod LinkToken {
         old_minter: ContractAddress,
         new_minter: ContractAddress
     }
-
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -76,7 +90,11 @@ mod LinkToken {
         #[flat]
         ERC20Event: ERC20Component::Event,
         #[flat]
-        ERC677Event: ERC677Component::Event
+        ERC677Event: ERC677Component::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event
     }
 
     #[constructor]
@@ -167,14 +185,6 @@ mod LinkToken {
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
             'LinkToken 2.0.0'
-        }
-    }
-
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            self.ownable.assert_only_owner();
-            Upgradeable::upgrade(new_impl)
         }
     }
 

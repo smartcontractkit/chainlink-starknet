@@ -36,7 +36,7 @@ mod SequencerUptimeFeed {
     use chainlink::ocr2::aggregator::Round;
     use chainlink::ocr2::aggregator::IAggregator;
     use chainlink::ocr2::aggregator::{Transmission};
-    use chainlink::libraries::upgradeable::Upgradeable;
+    use chainlink::libraries::upgrades::v1::upgradeable::Upgradeable;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);

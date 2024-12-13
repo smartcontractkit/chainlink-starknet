@@ -6,7 +6,7 @@ use starknet::contract_address_const;
 use starknet::class_hash::class_hash_const;
 use starknet::syscalls::deploy_syscall;
 
-use chainlink::libraries::upgradeable::Upgradeable;
+use chainlink::libraries::upgrades::v1::upgradeable::Upgradeable;
 use chainlink::libraries::mocks::mock_upgradeable::{
     MockUpgradeable, IMockUpgradeableDispatcher, IMockUpgradeableDispatcherTrait,
     IMockUpgradeableDispatcherImpl

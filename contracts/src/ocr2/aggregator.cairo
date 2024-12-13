@@ -170,42 +170,32 @@ impl SpanLegacyHash<T, impl THash: LegacyHash<T>, impl TCopy: Copy<T>> of Legacy
 
 #[starknet::contract]
 mod Aggregator {
-    use super::Round;
-    use super::{Transmission};
-    use super::SpanLegacyHash;
-    use super::pow;
+    use super::{Round, Transmission, SpanLegacyHash, pow};
 
-    use array::ArrayTrait;
-    use array::SpanTrait;
+    use array::{ArrayTrait, SpanTrait};
     use box::BoxTrait;
     use hash::LegacyHash;
-    use integer::U128IntoFelt252;
-    use integer::u128s_from_felt252;
-    use integer::U128sFromFelt252Result;
+    use integer::{U128IntoFelt252, u128s_from_felt252, U128sFromFelt252Result};
     use zeroable::Zeroable;
-    use traits::Into;
-    use traits::TryInto;
+    use traits::{Into, TryInto};
     use option::OptionTrait;
 
-    use starknet::ContractAddress;
-    use starknet::get_caller_address;
-    use starknet::contract_address_const;
-    use starknet::StorageBaseAddress;
-    use starknet::SyscallResult;
-    use starknet::storage_read_syscall;
-    use starknet::storage_write_syscall;
-    use starknet::storage_address_from_base_and_offset;
-    use starknet::class_hash::ClassHash;
-    use starknet::storage::Map;
+    use starknet::{
+        ContractAddress, get_caller_address, contract_address_const, StorageBaseAddress,
+        SyscallResult, storage_read_syscall, storage_write_syscall,
+        storage_address_from_base_and_offset, class_hash::ClassHash, storage::Map
+    };
 
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
     use chainlink::utils::split_felt;
-    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
-    use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
-
+    use chainlink::libraries::access_control::{
+        AccessControlComponent, IAccessController,
+        AccessControlComponent::InternalTrait as AccessControlInternalTrait
+    };
+    use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent;
     use chainlink::libraries::access_control::{
         IAccessControllerDispatcher, IAccessControllerDispatcherTrait
     };
@@ -213,6 +203,10 @@ mod Aggregator {
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent
+    );
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
@@ -222,6 +216,12 @@ mod Aggregator {
     impl AccessControlImpl =
         AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
+
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl OwnerUpgradeableImpl =
+        OwnerUpgradeableComponent::OwnerUpgradeableImpl<ContractState>;
 
     const GIGA: u128 = 1000000000_u128;
 
@@ -234,6 +234,10 @@ mod Aggregator {
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         AccessControlEvent: AccessControlComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event,
         NewTransmission: NewTransmission,
         ConfigSet: ConfigSet,
         LinkTokenSet: LinkTokenSet,
@@ -294,6 +298,10 @@ mod Aggregator {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        owner_upgradeable: OwnerUpgradeableComponent::Storage,
         /// Maximum number of faulty oracles
         _f: u8,
         _latest_epoch_and_round: u64, // (u32, u32)
@@ -407,16 +415,6 @@ mod Aggregator {
 
         self._decimals.write(decimals);
         self._description.write(description);
-    }
-
-    // --- Upgradeable ---
-
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            self.ownable.assert_only_owner();
-            Upgradeable::upgrade(new_impl)
-        }
     }
 
     // --- Validation ---

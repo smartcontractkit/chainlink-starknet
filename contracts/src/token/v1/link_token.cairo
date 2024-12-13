@@ -21,7 +21,7 @@ mod LinkToken {
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::v1::erc677::ERC677Component;
     use chainlink::libraries::type_and_version::ITypeAndVersion;
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+    use chainlink::libraries::upgrades::v1::upgradeable::{Upgradeable, IUpgradeable};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);

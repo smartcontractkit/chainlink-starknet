@@ -93,7 +93,7 @@ mod Multisig {
     use starknet::storage::Map;
 
     use chainlink::libraries::type_and_version::ITypeAndVersion;
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+    use chainlink::libraries::upgrades::v1::upgradeable::{Upgradeable, IUpgradeable};
 
     #[event]
     #[derive(Drop, starknet::Event)]

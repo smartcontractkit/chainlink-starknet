@@ -9,9 +9,8 @@ use zeroable::Zeroable;
 use option::OptionTrait;
 use core::result::ResultTrait;
 
-use chainlink::token::v2::link_token::{
-    LinkToken, LinkToken::{MintableToken, UpgradeableImpl, Minter}
-};
+use chainlink::token::v2::link_token::{LinkToken, LinkToken::{MintableToken, Minter}};
+use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use openzeppelin::token::erc20::ERC20Component::{ERC20Impl, ERC20MetadataImpl};
 use chainlink::tests::test_ownable::should_implement_ownable;
 
@@ -169,7 +168,7 @@ fn test_upgrade_non_owner() {
         ref state, 0, 0, 0, 0, Zeroable::zero(), sender, contract_address_const::<111>(), 0
     );
 
-    UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
+    OwnerUpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
 }
 
 #[test]

@@ -1,33 +1,25 @@
-use starknet::testing::set_caller_address;
-use starknet::testing::set_contract_address;
-use starknet::ContractAddress;
-use starknet::contract_address_const;
-use starknet::class_hash::class_hash_const;
-use starknet::class_hash::Felt252TryIntoClassHash;
-use starknet::syscalls::deploy_syscall;
+use starknet::{
+    ContractAddress, contract_address_const, testing::{set_caller_address, set_contract_address},
+    class_hash::{class_hash_const, Felt252TryIntoClassHash}, syscalls::deploy_syscall
+};
 
 use array::ArrayTrait;
 use clone::Clone;
-use traits::Into;
-use traits::TryInto;
+use traits::{Into, TryInto};
 use option::OptionTrait;
-use core::result::ResultTrait;
-use core::panic_with_felt252;
+use core::{result::ResultTrait, panic_with_felt252};
 
-use chainlink::ocr2::aggregator::pow;
-use chainlink::ocr2::aggregator::Aggregator;
-use chainlink::ocr2::aggregator::Aggregator::{
-    AggregatorImpl, BillingImpl, PayeeManagementImpl, UpgradeableImpl
+use chainlink::ocr2::aggregator::{
+    pow, Aggregator,
+    Aggregator::{BillingConfig, PayeeConfig, AggregatorImpl, BillingImpl, PayeeManagementImpl}
 };
-use chainlink::ocr2::aggregator::Aggregator::BillingConfig;
-use chainlink::ocr2::aggregator::Aggregator::PayeeConfig;
+use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::access_control::access_controller::AccessController;
 use chainlink::token::v2::link_token::LinkToken;
 use chainlink::tests::{
     test_ownable::should_implement_ownable, test_access_controller::should_implement_access_control,
     test_link_token::link_deploy_args
 };
-
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
@@ -169,7 +161,7 @@ fn test_upgrade_non_owner() {
     let _ = setup();
     let mut state = STATE();
 
-    UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
+    OwnerUpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
 }
 
 // --- Billing tests ---
