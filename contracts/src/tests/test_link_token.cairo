@@ -196,6 +196,18 @@ fn test_set_minter_already() {
 }
 
 #[test]
+#[should_panic(expected: ('minter is 0',))]
+fn test_set_minter_zero() {
+    let sender = setup();
+    let mut state = STATE();
+
+    let minter = contract_address_const::<111>();
+    LinkToken::constructor(ref state, 0, 0, 0, 0, Zeroable::zero(), minter, sender, 0);
+
+    Minter::set_minter(ref state, Zeroable::zero());
+}
+
+#[test]
 fn test_set_minter_success() {
     let sender = setup();
     let mut state = STATE();
