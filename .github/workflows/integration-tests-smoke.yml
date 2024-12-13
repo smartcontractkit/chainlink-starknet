@@ -9,6 +9,10 @@ on:
         required: true
         default: develop
         type: string
+      team:
+        description: Team to run the tests for (e.g. BIX, CCIP)
+        required: true
+        type: string          
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -217,3 +221,4 @@ jobs:
           KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
           CHAINLINK_IMAGE: ${{ env.CL_ECR }}
           CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          CHAINLINK_USER_TEAM: ${{ github.event.inputs.team || 'BIX' }}

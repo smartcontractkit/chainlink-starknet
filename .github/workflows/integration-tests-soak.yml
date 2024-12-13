@@ -15,6 +15,10 @@ on:
         default: develop
         required: true
         type: string
+      team:
+        description: Team to run the tests for (e.g. BIX, CCIP)
+        required: true
+        type: string          
 
 env:
   TEST_LOG_LEVEL: debug
@@ -84,4 +88,5 @@ jobs:
           KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
           CHAINLINK_IMAGE: ${{ env.CL_ECR }}
           CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          CHAINLINK_USER_TEAM: ${{ github.event.inputs.team || 'BIX' }}
 

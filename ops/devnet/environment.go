@@ -52,6 +52,12 @@ func (m Chart) GetVersion() string {
 	return m.HelmProps.Version
 }
 
+func (m Chart) GetLabels() map[string]string {
+	return map[string]string{
+		"chain.link/component": "starknet-validator",
+	}
+}
+
 func (m Chart) ExportData(e *environment.Environment) error {
 	devnetLocalHTTP, err := e.Fwd.FindPort("starknet-dev:0", "starknetdev", "http").As(client.LocalConnection, client.HTTP)
 	if err != nil {

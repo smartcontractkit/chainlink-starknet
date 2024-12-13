@@ -12,16 +12,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
-	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v4"
 
 	ctfconfig "github.com/smartcontractkit/chainlink-testing-framework/lib/config"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/k8s/environment"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/k8s/pkg/helm/chainlink"
 	mock_adapter "github.com/smartcontractkit/chainlink-testing-framework/lib/k8s/pkg/helm/mock-adapter"
-	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink/deployment/environment/nodeclient"
 	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 	"github.com/smartcontractkit/chainlink/v2/core/services/job"
+	"github.com/stretchr/testify/require"
 
 	chainconfig "github.com/smartcontractkit/chainlink-starknet/integration-tests/config"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
@@ -100,10 +100,24 @@ func New(testConfig *testconfig.TestConfig) *Common {
 }
 
 func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) {
+	productName := "data-feedsv2.0"
+	nsLabels, err := environment.GetRequiredChainLinkNamespaceLabels(productName, "soak")
+	if err != nil {
+		return nil, err
+	}
+
+	workloadPodLabels, err := environment.GetRequiredChainLinkWorkloadAndPodLabels(productName, "soak")
+	if err != nil {
+		return nil, err
+	}
+
 	c.TestEnvDetails.K8Config = &environment.Config{
 		NamespacePrefix: fmt.Sprintf("starknet-%s", namespacePrefix),
 		TTL:             c.TestEnvDetails.TestDuration,
 		Test:            t,
+		Labels:          nsLabels,
+		WorkloadLabels:  workloadPodLabels,
+		PodLabels:       workloadPodLabels,
 	}
 
 	if *c.TestConfig.Common.InsideK8s {
@@ -197,8 +211,8 @@ func (c *Common) TearDownLocalEnvironment(t *testing.T) {
 	log.Info().Msg("Tear down local stack complete.")
 }
 
-func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client.NodeKeysBundle, error) {
-	nkb := make([]client.NodeKeysBundle, 0)
+func (c *Common) CreateNodeKeysBundle(nodes []*nodeclient.ChainlinkClient) ([]nodeclient.NodeKeysBundle, error) {
+	nkb := make([]nodeclient.NodeKeysBundle, 0)
 	for _, n := range nodes {
 		p2pkeys, err := n.MustReadP2PKeys()
 		if err != nil {
@@ -215,7 +229,7 @@ func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client
 			return nil, err
 		}
 
-		nkb = append(nkb, client.NodeKeysBundle{
+		nkb = append(nkb, nodeclient.NodeKeysBundle{
 			PeerID:  peerID,
 			OCR2Key: *ocrKey,
 			TXKey:   *txKey,
@@ -227,7 +241,7 @@ func (c *Common) CreateNodeKeysBundle(nodes []*client.ChainlinkClient) ([]client
 // CreateJobsForContract Creates and sets up the boostrap jobs as well as OCR jobs
 func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource string, juelsPerFeeCoinSource string, ocrControllerAddress string, accountAddresses []string) error {
 	// Define node[0] as bootstrap node
-	cc.bootstrapPeers = []client.P2PData{
+	cc.bootstrapPeers = []nodeclient.P2PData{
 		{
 			InternalIP:   cc.ChainlinkNodes[0].InternalIP(),
 			InternalPort: c.RPCDetails.P2PPort,
@@ -249,7 +263,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		ContractConfigConfirmations: 1, // don't wait for confirmation on devnet
 	}
 	// Setting up bootstrap node
-	jobSpec := &client.OCR2TaskJobSpec{
+	jobSpec := &nodeclient.OCR2TaskJobSpec{
 		Name:           fmt.Sprintf("starknet-OCRv2-%s-%s", "bootstrap", uuid.New().String()),
 		JobType:        "bootstrap",
 		OCR2OracleSpec: oracleSpec,
@@ -265,7 +279,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 		p2pBootstrappers = append(p2pBootstrappers, cc.bootstrapPeers[i].P2PV2Bootstrapper())
 	}
 
-	sourceValueBridge := &client.BridgeTypeAttributes{
+	sourceValueBridge := &nodeclient.BridgeTypeAttributes{
 		Name: "mockserver-bridge",
 		URL:  c.RPCDetails.MockServerEndpoint + "/" + strings.TrimPrefix(c.RPCDetails.MockServerURL, "/"),
 	}
@@ -299,7 +313,7 @@ func (c *Common) CreateJobsForContract(cc *ChainlinkClient, observationSource st
 			},
 		}
 
-		jobSpec = &client.OCR2TaskJobSpec{
+		jobSpec = &nodeclient.OCR2TaskJobSpec{
 			Name:              fmt.Sprintf("starknet-OCRv2-%d-%s", nIdx, uuid.New().String()),
 			JobType:           "offchainreporting2",
 			OCR2OracleSpec:    oracleSpec,

@@ -22,7 +22,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
-	"github.com/smartcontractkit/chainlink/integration-tests/client"
+	"github.com/smartcontractkit/chainlink/deployment/environment/nodeclient"
 	test_env_integrations "github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv"
@@ -42,7 +42,7 @@ var (
 type OCRv2TestState struct {
 	Account           *AccountDetails
 	Clients           *Clients
-	ChainlinkNodesK8s []*client.ChainlinkK8sClient
+	ChainlinkNodesK8s []*nodeclient.ChainlinkK8sClient
 	Common            *Common
 	TestConfig        *TestConfig
 	Contracts         *Contracts
@@ -78,10 +78,10 @@ type Contracts struct {
 
 // ChainlinkClient core node configs
 type ChainlinkClient struct {
-	NKeys            []client.NodeKeysBundle
-	ChainlinkNodes   []*client.ChainlinkClient
-	bTypeAttr        *client.BridgeTypeAttributes
-	bootstrapPeers   []client.P2PData
+	NKeys            []nodeclient.NodeKeysBundle
+	ChainlinkNodes   []*nodeclient.ChainlinkClient
+	bTypeAttr        *nodeclient.BridgeTypeAttributes
+	bootstrapPeers   []nodeclient.P2PData
 	AccountAddresses []string
 }
 
@@ -203,7 +203,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	m.TestConfig.Resty = resty.New().SetBaseURL(m.Common.RPCDetails.RPCL2External)
 
 	if *m.Common.TestConfig.Common.InsideK8s {
-		m.ChainlinkNodesK8s, m.TestConfig.err = client.ConnectChainlinkNodes(m.Common.Env)
+		m.ChainlinkNodesK8s, m.TestConfig.err = nodeclient.ConnectChainlinkNodes(m.Common.Env)
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 		m.Clients.ChainlinkClient.ChainlinkNodes = m.GetChainlinkNodes()
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.ChainlinkClient.ChainlinkNodes)
@@ -272,13 +272,13 @@ func (m *OCRv2TestState) SetUpNodes() {
 }
 
 // GetNodeKeys Returns the node key bundles
-func (m *OCRv2TestState) GetNodeKeys() []client.NodeKeysBundle {
+func (m *OCRv2TestState) GetNodeKeys() []nodeclient.NodeKeysBundle {
 	return m.Clients.ChainlinkClient.NKeys
 }
 
-func (m *OCRv2TestState) GetChainlinkNodes() []*client.ChainlinkClient {
+func (m *OCRv2TestState) GetChainlinkNodes() []*nodeclient.ChainlinkClient {
 	// retrieve client from K8s client
-	var chainlinkNodes []*client.ChainlinkClient
+	var chainlinkNodes []*nodeclient.ChainlinkClient
 	for i := range m.ChainlinkNodesK8s {
 		chainlinkNodes = append(chainlinkNodes, m.ChainlinkNodesK8s[i].ChainlinkClient)
 	}
@@ -289,7 +289,7 @@ func (m *OCRv2TestState) GetChainlinkClient() *ChainlinkClient {
 	return m.Clients.ChainlinkClient
 }
 
-func (m *OCRv2TestState) SetBridgeTypeAttrs(attr *client.BridgeTypeAttributes) {
+func (m *OCRv2TestState) SetBridgeTypeAttrs(attr *nodeclient.BridgeTypeAttributes) {
 	m.Clients.ChainlinkClient.bTypeAttr = attr
 }
 
