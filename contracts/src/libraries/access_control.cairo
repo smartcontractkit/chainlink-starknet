@@ -139,7 +139,9 @@ mod AccessControlComponent {
     > of InternalTrait<TContractState> {
         fn initializer(ref self: ComponentState<TContractState>, check_enabled: bool) {
             self._check_enabled.write(check_enabled);
-            self.emit(Event::AccessControlEnabled(AccessControlEnabled {}));
+            if check_enabled {
+                self.emit(Event::AccessControlEnabled(AccessControlEnabled {}));
+            }
         }
 
         fn check_access(self: @ComponentState<TContractState>, user: ContractAddress) {
