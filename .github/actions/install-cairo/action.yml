@@ -8,7 +8,7 @@ inputs:
   #   required: false
   scarb_version:
     description: Scarb release version
-    default: "v2.8.2"
+    default: "v2.9.2"
     required: false
   use_musl_libc:
     description: "C library implementation"
