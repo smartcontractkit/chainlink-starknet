@@ -21,7 +21,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
           extra_nix_config: "sandbox = false"
       - name: Cache Nix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc
         with:
           name: chainlink-cosmos
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
