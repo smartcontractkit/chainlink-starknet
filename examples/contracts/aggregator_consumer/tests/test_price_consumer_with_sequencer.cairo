@@ -14,7 +14,7 @@ use starknet::ContractAddress;
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 fn deploy_mock_aggregator(decimals: u8) -> ContractAddress {
@@ -41,7 +41,7 @@ fn deploy_uptime_feed(initial_status: u128, owner_address: ContractAddress) -> C
 }
 
 fn deploy_price_consumer(
-    uptime_feed_address: ContractAddress, aggregator_address: ContractAddress
+    uptime_feed_address: ContractAddress, aggregator_address: ContractAddress,
 ) -> ContractAddress {
     let mut calldata = ArrayTrait::new();
     calldata.append(uptime_feed_address.into());
@@ -65,7 +65,7 @@ fn test_get_latest_price() {
     let mock_aggregator_address = deploy_mock_aggregator(decimals);
     let uptime_feed_address = deploy_uptime_feed(init_status, owner);
     let price_consumer_address = deploy_price_consumer(
-        uptime_feed_address, mock_aggregator_address
+        uptime_feed_address, mock_aggregator_address,
     );
 
     // Adds the price consumer contract to the sequencer uptime feed access control list
@@ -84,7 +84,7 @@ fn test_get_latest_price() {
     start_cheat_caller_address_global(price_consumer_address);
     // start_prank(CheatTarget::All, price_consumer_address);
     let latest_price = IAggregatorPriceConsumerDispatcher {
-        contract_address: price_consumer_address
+        contract_address: price_consumer_address,
     }
         .get_latest_price();
     assert(latest_price == init_status, 'latest price is incorrect');
@@ -101,7 +101,7 @@ fn test_get_latest_price() {
     // This should now return the updated answer
     start_cheat_caller_address_global(price_consumer_address);
     let updated_latest_price = IAggregatorPriceConsumerDispatcher {
-        contract_address: price_consumer_address
+        contract_address: price_consumer_address,
     }
         .get_latest_price();
     assert(updated_latest_price == answer, 'updated price is incorrect');

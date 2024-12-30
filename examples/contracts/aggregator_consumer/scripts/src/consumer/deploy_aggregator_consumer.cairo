@@ -1,12 +1,12 @@
 use sncast_std::{
     declare, deploy, DeclareResult, DeployResult, get_nonce, DisplayContractAddress,
-    DisplayClassHash
+    DisplayClassHash,
 };
 
 use starknet::{ContractAddress, ClassHash};
 
 fn declare_and_deploy(
-    contract_name: ByteArray, constructor_calldata: Array<felt252>
+    contract_name: ByteArray, constructor_calldata: Array<felt252>,
 ) -> DeployResult {
     let mut class_hash: ClassHash =
         0x6d1dd0e5fa4e0284dcf341997f1d781bc2fb7d76ada684da7a2a33c38031df5
@@ -31,7 +31,7 @@ fn declare_and_deploy(
         Option::Some(salt),
         true,
         Option::None,
-        Option::Some(nonce)
+        Option::Some(nonce),
     );
     if deploy_result.is_err() {
         println!("{:?}", deploy_result.unwrap_err());

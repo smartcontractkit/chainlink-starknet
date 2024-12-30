@@ -28,7 +28,7 @@ mod AggregatorPriceConsumer {
     fn constructor(
         ref self: ContractState,
         uptime_feed_address: ContractAddress,
-        aggregator_address: ContractAddress
+        aggregator_address: ContractAddress,
     ) {
         assert(!uptime_feed_address.is_zero(), 'uptime feed is 0');
         assert(!aggregator_address.is_zero(), 'aggregator is 0');
@@ -61,7 +61,7 @@ mod AggregatorPriceConsumer {
             _ => {
                 assert(!report_stale, 'L2 seq down & report stale');
                 assert(false, 'L2 seq down & report ok');
-            }
+            },
         }
     }
 }
