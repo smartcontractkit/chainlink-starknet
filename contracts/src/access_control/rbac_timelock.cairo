@@ -31,6 +31,8 @@ fn _hash_operation_batch(calls: Span<Call>, predecessor: u256, salt: u256) -> u2
     keccak(@encoded.into())
 }
 
+// refer to documentation at
+// https://github.com/smartcontractkit/ccip-owner-contracts/blob/4af63f531ee5c3a79f1d070292d848c63b3e4ef9/src/RBACTimelock.sol
 #[starknet::interface]
 trait IRBACTimelock<TContractState> {
     fn schedule_batch(

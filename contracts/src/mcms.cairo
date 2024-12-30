@@ -175,6 +175,8 @@ fn eip_191_message_hash(msg: u256) -> u256 {
     keccak(@eip_191_msg)
 }
 
+// refer to docmentation at
+// https://github.com/smartcontractkit/ccip-owner-contracts/blob/4af63f531ee5c3a79f1d070292d848c63b3e4ef9/src/ManyChainMultiSig.sol
 #[starknet::contract]
 mod ManyChainMultiSig {
     use core::array::ArrayTrait;
