@@ -15,17 +15,16 @@ fn _hash_operation_batch(calls: Span<Call>, predecessor: u256, salt: u256) -> u2
     let mut encoded: Bytes = BytesTrait::new_empty();
 
     let mut i = 0;
-    while i < calls
-        .len() {
-            let call = *calls.at(i);
-            encoded = encoded.encode(call.target).encode(call.selector);
-            let mut j = 0;
-            while j < call.data.len() {
-                encoded = encoded.encode(*call.data.at(j));
-                j += 1;
-            };
-            i += 1;
+    while i < calls.len() {
+        let call = *calls.at(i);
+        encoded = encoded.encode(call.target).encode(call.selector);
+        let mut j = 0;
+        while j < call.data.len() {
+            encoded = encoded.encode(*call.data.at(j));
+            j += 1;
         };
+        i += 1;
+    };
 
     encoded = encoded.encode(predecessor).encode(salt);
 
@@ -243,32 +242,28 @@ mod RBACTimelock {
         self.access_control._grant_role(ADMIN_ROLE, admin);
 
         let mut i = 0;
-        while i < proposers
-            .len() {
-                self.access_control._grant_role(PROPOSER_ROLE, *proposers.at(i));
-                i += 1;
-            };
+        while i < proposers.len() {
+            self.access_control._grant_role(PROPOSER_ROLE, *proposers.at(i));
+            i += 1;
+        };
 
         let mut i = 0;
-        while i < executors
-            .len() {
-                self.access_control._grant_role(EXECUTOR_ROLE, *executors.at(i));
-                i += 1;
-            };
+        while i < executors.len() {
+            self.access_control._grant_role(EXECUTOR_ROLE, *executors.at(i));
+            i += 1;
+        };
 
         let mut i = 0;
-        while i < cancellers
-            .len() {
-                self.access_control._grant_role(CANCELLER_ROLE, *cancellers.at(i));
-                i += 1
-            };
+        while i < cancellers.len() {
+            self.access_control._grant_role(CANCELLER_ROLE, *cancellers.at(i));
+            i += 1
+        };
 
         let mut i = 0;
-        while i < bypassers
-            .len() {
-                self.access_control._grant_role(BYPASSER_ROLE, *bypassers.at(i));
-                i += 1
-            };
+        while i < bypassers.len() {
+            self.access_control._grant_role(BYPASSER_ROLE, *bypassers.at(i));
+            i += 1
+        };
 
         self._min_delay.write(min_delay);
 
@@ -289,31 +284,28 @@ mod RBACTimelock {
             self._schedule(id, delay);
 
             let mut i = 0;
-            while i < calls
-                .len() {
-                    let call = *calls.at(i);
-                    assert(
-                        !self.set.contains(BLOCKED_FUNCTIONS, call.selector), 'selector is blocked'
+            while i < calls.len() {
+                let call = *calls.at(i);
+                assert(!self.set.contains(BLOCKED_FUNCTIONS, call.selector), 'selector is blocked');
+
+                self
+                    .emit(
+                        Event::CallScheduled(
+                            CallScheduled {
+                                id: id,
+                                index: i.into(),
+                                target: call.target,
+                                selector: call.selector,
+                                data: call.data,
+                                predecessor: predecessor,
+                                salt: salt,
+                                delay: delay,
+                            },
+                        ),
                     );
 
-                    self
-                        .emit(
-                            Event::CallScheduled(
-                                CallScheduled {
-                                    id: id,
-                                    index: i.into(),
-                                    target: call.target,
-                                    selector: call.selector,
-                                    data: call.data,
-                                    predecessor: predecessor,
-                                    salt: salt,
-                                    delay: delay,
-                                },
-                            ),
-                        );
-
-                    i += 1;
-                }
+                i += 1;
+            }
         }
 
         fn cancel(ref self: ContractState, id: u256) {
@@ -336,24 +328,23 @@ mod RBACTimelock {
             self._before_call(id, predecessor);
 
             let mut i = 0;
-            while i < calls
-                .len() {
-                    let call = *(calls.at(i));
-                    self._execute(call);
-                    self
-                        .emit(
-                            Event::CallExecuted(
-                                CallExecuted {
-                                    id: id,
-                                    index: i.into(),
-                                    target: call.target,
-                                    selector: call.selector,
-                                    data: call.data,
-                                },
-                            ),
-                        );
-                    i += 1;
-                };
+            while i < calls.len() {
+                let call = *(calls.at(i));
+                self._execute(call);
+                self
+                    .emit(
+                        Event::CallExecuted(
+                            CallExecuted {
+                                id: id,
+                                index: i.into(),
+                                target: call.target,
+                                selector: call.selector,
+                                data: call.data,
+                            },
+                        ),
+                    );
+                i += 1;
+            };
 
             self._after_call(id);
         }
@@ -362,24 +353,23 @@ mod RBACTimelock {
             self._assert_only_role_or_admin_role(BYPASSER_ROLE);
 
             let mut i = 0;
-            while i < calls
-                .len() {
-                    let call = *calls.at(i);
-                    self._execute(call);
-                    self
-                        .emit(
-                            Event::BypasserCallExecuted(
-                                BypasserCallExecuted {
-                                    index: i.into(),
-                                    target: call.target,
-                                    selector: call.selector,
-                                    data: call.data,
-                                },
-                            ),
-                        );
+            while i < calls.len() {
+                let call = *calls.at(i);
+                self._execute(call);
+                self
+                    .emit(
+                        Event::BypasserCallExecuted(
+                            BypasserCallExecuted {
+                                index: i.into(),
+                                target: call.target,
+                                selector: call.selector,
+                                data: call.data,
+                            },
+                        ),
+                    );
 
-                    i += 1;
-                }
+                i += 1;
+            }
         }
 
         //
