@@ -2,7 +2,7 @@ use starknet::ContractAddress;
 use chainlink::libraries::mocks::mock_enumerable_set::{
     MockEnumerableSet, IMockEnumerableSet, IMockEnumerableSetDispatcher,
     IMockEnumerableSetDispatcherTrait, IMockEnumerableSetSafeDispatcher,
-    IMockEnumerableSetSafeDispatcherTrait
+    IMockEnumerableSetSafeDispatcherTrait,
 };
 use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
 
@@ -14,7 +14,7 @@ fn expect_out_of_bounds<T, impl TDrop: Drop<T>>(result: Result<T, Array<felt252>
         Result::Ok(_) => panic!("expect 'index out of bounds'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'index out of bounds', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -23,12 +23,12 @@ fn expect_set_is_1_indexed<T, impl TDrop: Drop<T>>(result: Result<T, Array<felt2
         Result::Ok(_) => panic!("expect 'set is 1-indexed'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'set is 1-indexed', *panic_data.at(0));
-        }
+        },
     }
 }
 
 fn setup_mock() -> (
-    ContractAddress, IMockEnumerableSetDispatcher, IMockEnumerableSetSafeDispatcher
+    ContractAddress, IMockEnumerableSetDispatcher, IMockEnumerableSetSafeDispatcher,
 ) {
     let calldata = array![];
     let (mock_address, _) = declare("MockEnumerableSet")
@@ -40,7 +40,7 @@ fn setup_mock() -> (
     (
         mock_address,
         IMockEnumerableSetDispatcher { contract_address: mock_address },
-        IMockEnumerableSetSafeDispatcher { contract_address: mock_address }
+        IMockEnumerableSetSafeDispatcher { contract_address: mock_address },
     )
 }
 
@@ -67,12 +67,12 @@ fn test_add() {
     assert(mock.add(MOCK_SET_ID, second_value), 'should add');
     assert(
         mock.contains(MOCK_SET_ID, first_value) && mock.contains(MOCK_SET_ID, second_value),
-        'should contain'
+        'should contain',
     );
     assert(mock.length(MOCK_SET_ID) == 2, 'should equal 2');
     assert(
         mock.at(MOCK_SET_ID, 1) == first_value && mock.at(MOCK_SET_ID, 2) == second_value,
-        'should return val'
+        'should return val',
     );
     assert(mock.values(MOCK_SET_ID) == array![first_value, second_value], 'arrays should equal');
 }
@@ -110,7 +110,7 @@ fn test_remove() {
     assert(mock.length(MOCK_SET_ID) == 2, 'length should equal 2');
     assert(!mock.contains(MOCK_SET_ID, 300), 'does not contain 300');
     assert(
-        mock.contains(MOCK_SET_ID, 100) && mock.contains(MOCK_SET_ID, 200), 'contains 100 & 200'
+        mock.contains(MOCK_SET_ID, 100) && mock.contains(MOCK_SET_ID, 200), 'contains 100 & 200',
     );
     assert(mock.at(MOCK_SET_ID, 1) == 100 && mock.at(MOCK_SET_ID, 2) == 200, 'indexes match');
     expect_out_of_bounds(safe_mock.at(MOCK_SET_ID, 3));
@@ -124,7 +124,7 @@ fn test_remove() {
     assert(mock.length(MOCK_SET_ID) == 2, 'length should equal 2');
     assert(!mock.contains(MOCK_SET_ID, 100), 'does not contain 100');
     assert(
-        mock.contains(MOCK_SET_ID, 300) && mock.contains(MOCK_SET_ID, 200), 'contains 300 & 200'
+        mock.contains(MOCK_SET_ID, 300) && mock.contains(MOCK_SET_ID, 200), 'contains 300 & 200',
     );
     assert(mock.at(MOCK_SET_ID, 1) == 300 && mock.at(MOCK_SET_ID, 2) == 200, 'indexes match');
     expect_out_of_bounds(safe_mock.at(MOCK_SET_ID, 3));

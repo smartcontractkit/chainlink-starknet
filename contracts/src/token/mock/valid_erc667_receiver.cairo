@@ -10,7 +10,7 @@ mod ValidReceiver {
     use array::ArrayTrait;
     use openzeppelin::introspection::src5::SRC5Component;
     use chainlink::libraries::token::v2::erc677_receiver::{
-        ERC677ReceiverComponent, IERC677Receiver
+        ERC677ReceiverComponent, IERC677Receiver,
     };
 
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -29,7 +29,7 @@ mod ValidReceiver {
         #[substorage(v0)]
         src5: SRC5Component::Storage,
         #[substorage(v0)]
-        erc677_receiver: ERC677ReceiverComponent::Storage
+        erc677_receiver: ERC677ReceiverComponent::Storage,
     }
 
     #[event]
@@ -38,7 +38,7 @@ mod ValidReceiver {
         #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
-        ERC677ReceiverEvent: ERC677ReceiverComponent::Event
+        ERC677ReceiverEvent: ERC677ReceiverComponent::Event,
     }
 
     #[constructor]
@@ -49,7 +49,7 @@ mod ValidReceiver {
     #[abi(embed_v0)]
     impl ERC677ReceiverImpl of IERC677Receiver<ContractState> {
         fn on_token_transfer(
-            ref self: ContractState, sender: ContractAddress, value: u256, data: Array<felt252>
+            ref self: ContractState, sender: ContractAddress, value: u256, data: Array<felt252>,
         ) {
             self._sender.write(sender);
         }

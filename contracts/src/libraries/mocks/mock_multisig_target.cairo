@@ -16,7 +16,7 @@ mod MockMultisigTarget {
     #[storage]
     struct Storage {
         value: felt252,
-        toggle: bool
+        toggle: bool,
     }
 
     #[abi(embed_v0)]

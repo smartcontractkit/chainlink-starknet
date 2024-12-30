@@ -2,9 +2,9 @@ use starknet::ContractAddress;
 use starknet::{
     eth_signature::public_key_point_to_eth_address, EthAddress,
     secp256_trait::{
-        Secp256Trait, Secp256PointTrait, recover_public_key, is_signature_entry_valid, Signature
+        Secp256Trait, Secp256PointTrait, recover_public_key, is_signature_entry_valid, Signature,
     },
-    secp256k1::Secp256k1Point, SyscallResult, SyscallResultTrait
+    secp256k1::Secp256k1Point, SyscallResult, SyscallResultTrait,
 };
 use alexandria_bytes::{Bytes, BytesTrait};
 use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
@@ -22,7 +22,7 @@ trait IManyChainMultiSig<TContractState> {
         metadata: RootMetadata,
         metadata_proof: Span<u256>,
         // note: v is a boolean and not uint8
-        signatures: Array<Signature>
+        signatures: Array<Signature>,
     );
     fn execute(ref self: TContractState, op: Op, proof: Span<u256>);
     fn set_config(
@@ -31,7 +31,7 @@ trait IManyChainMultiSig<TContractState> {
         signer_groups: Span<u8>,
         group_quorums: Span<u8>,
         group_parents: Span<u8>,
-        clear_root: bool
+        clear_root: bool,
     );
     fn get_config(self: @TContractState) -> Config;
     fn get_op_count(self: @TContractState) -> u64;
@@ -43,7 +43,7 @@ trait IManyChainMultiSig<TContractState> {
 struct Signer {
     address: EthAddress,
     index: u8,
-    group: u8
+    group: u8,
 }
 
 #[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
@@ -52,7 +52,7 @@ struct RootMetadata {
     multisig: ContractAddress,
     pre_op_count: u64,
     post_op_count: u64,
-    override_previous_root: bool
+    override_previous_root: bool,
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -62,7 +62,7 @@ struct Op {
     nonce: u64,
     to: ContractAddress,
     selector: felt252,
-    data: Span<felt252>
+    data: Span<felt252>,
 }
 
 // does not implement Storage trait because structs cannot support arrays or maps
@@ -70,14 +70,14 @@ struct Op {
 struct Config {
     signers: Span<Signer>,
     group_quorums: Span<u8>,
-    group_parents: Span<u8>
+    group_parents: Span<u8>,
 }
 
 #[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 struct ExpiringRootAndOpCount {
     root: u256,
     valid_until: u32,
-    op_count: u64
+    op_count: u64,
 }
 
 // based off
@@ -186,16 +186,16 @@ mod ManyChainMultiSig {
     use super::{
         ExpiringRootAndOpCount, Config, Signer, RootMetadata, Op, Signature, recover_eth_ecdsa,
         to_u256, verify_merkle_proof, hash_op, hash_metadata, eip_191_message_hash,
-        MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA
+        MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA,
     };
     use starknet::{
         EthAddress, EthAddressZeroable, EthAddressIntoFelt252, ContractAddress,
         call_contract_syscall,
         storage::{
             Map, StoragePointerReadAccess, StoragePointerWriteAccess, StorageMapReadAccess,
-            StorageMapWriteAccess, StoragePathEntry
+            StorageMapWriteAccess, StoragePathEntry,
         },
-        StorageAddress
+        StorageAddress,
     };
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -227,7 +227,7 @@ mod ManyChainMultiSig {
         // end s_config
         s_seen_signed_hashes: Map<u256, bool>,
         s_expiring_root_and_op_count: ExpiringRootAndOpCount,
-        s_root_metadata: RootMetadata
+        s_root_metadata: RootMetadata,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -278,7 +278,7 @@ mod ManyChainMultiSig {
             metadata: RootMetadata,
             metadata_proof: Span<u256>,
             // note: v is a boolean and not uint8
-            mut signatures: Array<Signature>
+            mut signatures: Array<Signature>,
         ) {
             let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
 
@@ -295,7 +295,7 @@ mod ManyChainMultiSig {
                 };
                 assert(
                     to_u256(prev_address) < to_u256(signer_address.clone()),
-                    'signer address must increase'
+                    'signer address must increase',
                 );
                 prev_address = signer_address;
 
@@ -322,24 +322,24 @@ mod ManyChainMultiSig {
             assert(group_vote_counts.get(0) >= root_group_quorum, 'insufficient signers');
             assert(
                 valid_until.into() >= starknet::info::get_block_timestamp(),
-                'valid until has passed'
+                'valid until has passed',
             );
 
             // verify metadataProof
             let hashed_metadata_leaf = hash_metadata(metadata);
             assert(
                 verify_merkle_proof(metadata_proof, root, hashed_metadata_leaf),
-                'proof verification failed'
+                'proof verification failed',
             );
 
             // maybe move to beginning of function
             assert(
                 starknet::info::get_tx_info().unbox().chain_id.into() == metadata.chain_id,
-                'wrong chain id'
+                'wrong chain id',
             );
             assert(
                 starknet::info::get_contract_address() == metadata.multisig,
-                'wrong multisig address'
+                'wrong multisig address',
             );
 
             let op_count = self.s_expiring_root_and_op_count.read().op_count;
@@ -350,7 +350,7 @@ mod ManyChainMultiSig {
             assert(
                 op_count == current_root_metadata.post_op_count
                     || current_root_metadata.override_previous_root,
-                'pending operations remain'
+                'pending operations remain',
             );
             assert(op_count == metadata.pre_op_count, 'wrong pre-operation count');
             assert(metadata.pre_op_count <= metadata.post_op_count, 'wrong post-operation count');
@@ -360,15 +360,15 @@ mod ManyChainMultiSig {
                 .s_expiring_root_and_op_count
                 .write(
                     ExpiringRootAndOpCount {
-                        root: root, valid_until: valid_until, op_count: metadata.pre_op_count
-                    }
+                        root: root, valid_until: valid_until, op_count: metadata.pre_op_count,
+                    },
                 );
             self.s_root_metadata.write(metadata);
             self
                 .emit(
                     Event::NewRoot(
-                        NewRoot { root: root, valid_until: valid_until, metadata: metadata, }
-                    )
+                        NewRoot { root: root, valid_until: valid_until, metadata: metadata },
+                    ),
                 );
         }
 
@@ -381,12 +381,12 @@ mod ManyChainMultiSig {
                     .read()
                     .post_op_count > current_expiring_root_and_op_count
                     .op_count,
-                'post-operation count reached'
+                'post-operation count reached',
             );
 
             assert(
                 starknet::info::get_tx_info().unbox().chain_id.into() == op.chain_id,
-                'wrong chain id'
+                'wrong chain id',
             );
 
             assert(starknet::info::get_contract_address() == op.multisig, 'wrong multisig address');
@@ -395,7 +395,7 @@ mod ManyChainMultiSig {
                 current_expiring_root_and_op_count
                     .valid_until
                     .into() >= starknet::info::get_block_timestamp(),
-                'root has expired'
+                'root has expired',
             );
 
             assert(op.nonce == current_expiring_root_and_op_count.op_count, 'wrong nonce');
@@ -405,7 +405,7 @@ mod ManyChainMultiSig {
 
             assert(
                 verify_merkle_proof(proof, current_expiring_root_and_op_count.root, hashed_op_leaf),
-                'proof verification failed'
+                'proof verification failed',
             );
 
             let mut new_expiring_root_and_op_count = current_expiring_root_and_op_count;
@@ -418,9 +418,9 @@ mod ManyChainMultiSig {
                 .emit(
                     Event::OpExecuted(
                         OpExecuted {
-                            nonce: op.nonce, to: op.to, selector: op.selector, data: op.data
-                        }
-                    )
+                            nonce: op.nonce, to: op.to, selector: op.selector, data: op.data,
+                        },
+                    ),
                 );
         }
 
@@ -430,13 +430,13 @@ mod ManyChainMultiSig {
             signer_groups: Span<u8>,
             group_quorums: Span<u8>,
             group_parents: Span<u8>,
-            clear_root: bool
+            clear_root: bool,
         ) {
             self.ownable.assert_only_owner();
 
             assert(
                 signer_addresses.len() != 0 && signer_addresses.len() <= MAX_NUM_SIGNERS.into(),
-                'out of bound signers len'
+                'out of bound signers len',
             );
 
             assert(signer_addresses.len() == signer_groups.len(), 'signer groups len mismatch');
@@ -444,7 +444,7 @@ mod ManyChainMultiSig {
             assert(
                 group_quorums.len() == NUM_GROUPS.into()
                     && group_quorums.len() == group_parents.len(),
-                'wrong group quorums/parents len'
+                'wrong group quorums/parents len',
             );
 
             let mut group_children_counts: Felt252Dict<u8> = Default::default();
@@ -475,12 +475,12 @@ mod ManyChainMultiSig {
                 } else {
                     assert(
                         group_children_counts.get(i.into()) >= *group_quorums.at(i.into()),
-                        'quorum impossible'
+                        'quorum impossible',
                     );
 
                     group_children_counts
                         .insert(
-                            group_parent.into(), group_children_counts.get(group_parent.into()) + 1
+                            group_parent.into(), group_children_counts.get(group_parent.into()) + 1,
                         );
                     // the above line clobbers group_children_counts[0] in last iteration, don't use
                 // it after the loop ends
@@ -495,7 +495,7 @@ mod ManyChainMultiSig {
             while i < signers_len {
                 let mut old_signer = self._s_config_signers.read(i);
                 let empty_signer = Signer {
-                    address: EthAddressZeroable::zero(), index: 0, group: 0
+                    address: EthAddressZeroable::zero(), index: 0, group: 0,
                 };
                 // reset s_signers
                 self.s_signers.write(old_signer.address, empty_signer);
@@ -521,11 +521,11 @@ mod ManyChainMultiSig {
                 let signer_address = *signer_addresses.at(i.into());
                 assert(
                     to_u256(prev_signer_address) < to_u256(signer_address),
-                    'signer addresses not sorted'
+                    'signer addresses not sorted',
                 );
 
                 let signer = Signer {
-                    address: signer_address, index: i, group: *signer_groups.at(i.into())
+                    address: signer_address, index: i, group: *signer_groups.at(i.into()),
                 };
 
                 self.s_signers.write(signer_address, signer);
@@ -553,8 +553,8 @@ mod ManyChainMultiSig {
                             multisig: starknet::info::get_contract_address(),
                             pre_op_count: op_count,
                             post_op_count: op_count,
-                            override_previous_root: true
-                        }
+                            override_previous_root: true,
+                        },
                     );
             }
 
@@ -567,9 +567,9 @@ mod ManyChainMultiSig {
                                 group_quorums: group_quorums,
                                 group_parents: group_parents,
                             },
-                            is_root_cleared: clear_root
-                        }
-                    )
+                            is_root_cleared: clear_root,
+                        },
+                    ),
                 );
         }
 
@@ -597,7 +597,7 @@ mod ManyChainMultiSig {
             Config {
                 signers: signers.span(),
                 group_quorums: group_quorums.span(),
-                group_parents: group_parents.span()
+                group_parents: group_parents.span(),
             }
         }
 
@@ -618,7 +618,10 @@ mod ManyChainMultiSig {
     #[generate_trait]
     impl InternalFunctions of InternalFunctionsTrait {
         fn _execute(
-            ref self: ContractState, target: ContractAddress, selector: felt252, data: Span<felt252>
+            ref self: ContractState,
+            target: ContractAddress,
+            selector: felt252,
+            data: Span<felt252>,
         ) {
             let _response = call_contract_syscall(target, selector, data).unwrap_syscall();
         }

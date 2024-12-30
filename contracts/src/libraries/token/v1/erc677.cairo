@@ -3,14 +3,14 @@ use starknet::ContractAddress;
 #[starknet::interface]
 trait IERC677<TContractState> {
     fn transfer_and_call(
-        ref self: TContractState, to: ContractAddress, value: u256, data: Array<felt252>
+        ref self: TContractState, to: ContractAddress, value: u256, data: Array<felt252>,
     ) -> bool;
 }
 
 #[starknet::interface]
 trait IERC677Receiver<TContractState> {
     fn on_token_transfer(
-        ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>
+        ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>,
     );
     // implements EIP-165, where function selectors are defined by Ethereum ABI using the ethereum
     // function signatures
@@ -48,7 +48,7 @@ mod ERC677Component {
         #[key]
         to: ContractAddress,
         value: u256,
-        data: Array<felt252>
+        data: Array<felt252>,
     }
 
     #[embeddable_as(ERC677Impl)]
@@ -62,7 +62,7 @@ mod ERC677Component {
             ref self: ComponentState<TContractState>,
             to: ContractAddress,
             value: u256,
-            data: Array<felt252>
+            data: Array<felt252>,
         ) -> bool {
             let sender = starknet::info::get_caller_address();
 
@@ -71,8 +71,8 @@ mod ERC677Component {
             self
                 .emit(
                     Event::TransferAndCall(
-                        TransferAndCall { from: sender, to: to, value: value, data: data.clone(), }
-                    )
+                        TransferAndCall { from: sender, to: to, value: value, data: data.clone() },
+                    ),
                 );
 
             let receiver = IERC677ReceiverDispatcher { contract_address: to };

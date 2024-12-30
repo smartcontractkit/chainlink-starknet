@@ -13,9 +13,9 @@ use starknet::{
     eth_signature::public_key_point_to_eth_address,
     secp256_trait::{
         Secp256Trait, Secp256PointTrait, recover_public_key, is_signature_entry_valid, Signature,
-        signature_from_vrs
+        signature_from_vrs,
     },
-    secp256k1::{Secp256k1Point, Secp256k1Impl}, SyscallResult, SyscallResultTrait
+    secp256k1::{Secp256k1Point, Secp256k1Impl}, SyscallResult, SyscallResultTrait,
 };
 use chainlink::mcms::{
     recover_eth_ecdsa, hash_pair, hash_op, hash_metadata, ExpiringRootAndOpCount, RootMetadata,
@@ -30,8 +30,8 @@ use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, stop_cheat_caller_address_global,
     spy_events, EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
-     start_cheat_chain_id, start_cheat_chain_id_global,
-    start_cheat_block_timestamp_global, cheatcodes::{events::{EventSpy}}
+    start_cheat_chain_id, start_cheat_chain_id_global,
+    start_cheat_block_timestamp_global, cheatcodes::{events::{EventSpy}},
 };
 
 //
@@ -79,7 +79,7 @@ fn ZERO_ARRAY() -> Array<u8> {
 #[derive(Copy, Drop, Serde)]
 struct SignerMetadata {
     address: EthAddress,
-    private_key: u256
+    private_key: u256,
 }
 
 fn setup_signers() -> (EthAddress, u256, EthAddress, u256, Array<SignerMetadata>) {
@@ -95,7 +95,7 @@ fn setup_signers() -> (EthAddress, u256, EthAddress, u256, Array<SignerMetadata>
 
     let signer_metadata = array![
         SignerMetadata { address: signer_address_1, private_key: private_key_1 },
-        SignerMetadata { address: signer_address_2, private_key: private_key_2 }
+        SignerMetadata { address: signer_address_2, private_key: private_key_2 },
     ];
     (signer_address_1, private_key_1, signer_address_2, private_key_2, signer_metadata)
 }
@@ -219,7 +219,7 @@ fn set_root_args(
     target_address: ContractAddress,
     mut signers_metadata: Array<SignerMetadata>,
     pre_op_count: u64,
-    post_op_count: u64
+    post_op_count: u64,
 ) -> (u256, u32, RootMetadata, Span<u256>, Array<Signature>, Array<Op>, Span<Span<u256>>) {
     let mock_chain_id = 732;
 
@@ -232,7 +232,7 @@ fn set_root_args(
         nonce: 0,
         to: target_address,
         selector: selector1,
-        data: calldata1.span()
+        data: calldata1.span(),
     };
 
     // second operation
@@ -244,7 +244,7 @@ fn set_root_args(
         nonce: 1,
         to: target_address,
         selector: selector2,
-        data: calldata2.span()
+        data: calldata2.span(),
     };
 
     let metadata = RootMetadata {
@@ -290,7 +290,7 @@ fn set_root_args(
 //
 
 fn setup_mcms_deploy() -> (
-    ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSigSafeDispatcher
+    ContractAddress, IManyChainMultiSigDispatcher, IManyChainMultiSigSafeDispatcher,
 ) {
     let owner = contract_address_const::<213123123>();
     start_cheat_caller_address_global(owner);
@@ -306,12 +306,12 @@ fn setup_mcms_deploy() -> (
     (
         mcms_address,
         IManyChainMultiSigDispatcher { contract_address: mcms_address },
-        IManyChainMultiSigSafeDispatcher { contract_address: mcms_address }
+        IManyChainMultiSigSafeDispatcher { contract_address: mcms_address },
     )
 }
 
 fn setup_mcms_deploy_and_set_config_2_of_2(
-    signer_address_1: EthAddress, signer_address_2: EthAddress
+    signer_address_1: EthAddress, signer_address_2: EthAddress,
 ) -> (
     EventSpy,
     ContractAddress,
@@ -322,7 +322,7 @@ fn setup_mcms_deploy_and_set_config_2_of_2(
     Array<u8>,
     Array<u8>,
     Array<u8>,
-    bool
+    bool,
 ) {
     let (mcms_address, mcms, safe_mcms) = setup_mcms_deploy();
 
@@ -341,7 +341,7 @@ fn setup_mcms_deploy_and_set_config_2_of_2(
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     let config = mcms.get_config();
@@ -356,7 +356,7 @@ fn setup_mcms_deploy_and_set_config_2_of_2(
         signer_groups,
         group_quorums,
         group_parents,
-        clear_root
+        clear_root,
     )
 }
 
@@ -378,7 +378,7 @@ fn setup_mcms_deploy_set_config_and_set_root() -> (
     Span<u256>,
     Array<Signature>,
     Array<Op>,
-    Span<Span<u256>>
+    Span<Span<u256>>,
 ) {
     let (signer_address_1, _, signer_address_2, _, signer_metadata) = setup_signers();
 
@@ -392,10 +392,10 @@ fn setup_mcms_deploy_set_config_and_set_root() -> (
         signer_groups,
         group_quorums,
         group_parents,
-        clear_root
+        clear_root,
     ) =
         setup_mcms_deploy_and_set_config_2_of_2(
-        signer_address_1, signer_address_2
+        signer_address_1, signer_address_2,
     );
 
     let calldata = ArrayTrait::new();
@@ -403,7 +403,7 @@ fn setup_mcms_deploy_set_config_and_set_root() -> (
     let (target_address, _) = mock_target_contract.deploy(@calldata).unwrap();
 
     let (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof) = set_root_args(
-        mcms_address, target_address, signer_metadata, 0, 2
+        mcms_address, target_address, signer_metadata, 0, 2,
     );
 
     // mock chain id & timestamp
@@ -429,6 +429,6 @@ fn setup_mcms_deploy_set_config_and_set_root() -> (
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     )
 }

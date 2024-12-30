@@ -1,7 +1,7 @@
 use core::array::{SpanTrait, ArrayTrait};
 use starknet::{
     ContractAddress, EthAddress, Felt252TryIntoEthAddress, EthAddressIntoFelt252,
-    EthAddressZeroable, contract_address_const
+    EthAddressZeroable, contract_address_const,
 };
 use chainlink::mcms::{
     ExpiringRootAndOpCount, RootMetadata, Config, Signer, ManyChainMultiSig,
@@ -15,11 +15,11 @@ use snforge_std::{
     stop_cheat_caller_address, stop_cheat_caller_address_global, spy_events,
     EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
-     start_cheat_chain_id,
-    cheatcodes::{events::{EventSpy}}
+    start_cheat_chain_id,
+    cheatcodes::{events::{EventSpy}},
 };
 use chainlink::tests::test_mcms::utils::{
-    setup_mcms_deploy, setup_mcms_deploy_and_set_config_2_of_2, ZERO_ARRAY, fill_array
+    setup_mcms_deploy, setup_mcms_deploy_and_set_config_2_of_2, ZERO_ARRAY, fill_array,
 };
 
 #[test]
@@ -42,14 +42,14 @@ fn test_not_owner() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'Caller is not the owner'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'Caller is not the owner', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -71,14 +71,14 @@ fn test_set_config_out_of_bound_signers() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'out of bound signers len'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'out of bound signers len', *panic_data.at(0));
-        }
+        },
     }
 
     // 2. test if lena(signer_address) > MAX_NUM_SIGNERS => revert
@@ -99,14 +99,14 @@ fn test_set_config_out_of_bound_signers() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'out of bound signers len'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'out of bound signers len', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -128,14 +128,14 @@ fn test_set_config_signer_groups_len_mismatch() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'signer groups len mismatch'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'signer groups len mismatch', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -157,14 +157,14 @@ fn test_set_config_group_quorums_parents_mismatch() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'wrong group quorums/parents len'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong group quorums/parents len', *panic_data.at(0));
-        }
+        },
     }
 
     // 5. test if group_quorum and group_parents not equal in length
@@ -177,14 +177,14 @@ fn test_set_config_group_quorums_parents_mismatch() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'wrong group quorums/parents len'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong group quorums/parents len', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -219,14 +219,14 @@ fn test_set_config_signers_group_out_of_bounds() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'out of bounds group'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'out of bounds group', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -250,14 +250,14 @@ fn test_set_config_group_tree_malformed() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'group tree malformed'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'group tree malformed', *panic_data.at(0));
-        }
+        },
     }
 
     let mut group_parents = array![
@@ -292,7 +292,7 @@ fn test_set_config_group_tree_malformed() {
         0,
         0,
         0,
-        0
+        0,
     ];
 
     let result = mcms_safe
@@ -301,14 +301,14 @@ fn test_set_config_group_tree_malformed() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'group tree malformed'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'group tree malformed', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -330,14 +330,14 @@ fn test_set_config_signer_in_disabled_group() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'signer in disabled group'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'signer in disabled group', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -359,14 +359,14 @@ fn test_set_config_quorum_impossible() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'quorum impossible'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'quorum impossible', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -378,7 +378,7 @@ fn test_set_config_signer_addresses_not_sorted() {
 
     let mut signer_addresses: Array<EthAddress> = array![
         // 0x1 address
-        u256 { high: 0, low: 1 }.into(), EthAddressZeroable::zero()
+        u256 { high: 0, low: 1 }.into(), EthAddressZeroable::zero(),
     ];
     let signer_groups = array![0, 0];
     let mut group_quorums = fill_array(array![(0, 2)]);
@@ -391,14 +391,14 @@ fn test_set_config_signer_addresses_not_sorted() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     match result {
         Result::Ok(_) => panic!("expect 'signer addresses not sorted'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'signer addresses not sorted', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -428,10 +428,10 @@ fn test_set_config_success_dont_clear_root() {
         signer_groups,
         group_quorums,
         group_parents,
-        clear_root
+        clear_root,
     ) =
         setup_mcms_deploy_and_set_config_2_of_2(
-        signer_address_1, signer_address_2
+        signer_address_1, signer_address_2,
     );
 
     let expected_signer_1 = Signer { address: signer_address_1, index: 0, group: 0 };
@@ -450,11 +450,11 @@ fn test_set_config_success_dont_clear_root() {
                     mcms_address,
                     ManyChainMultiSig::Event::ConfigSet(
                         ManyChainMultiSig::ConfigSet {
-                            config: expected_config, is_root_cleared: false
-                        }
-                    )
-                )
-            ]
+                            config: expected_config, is_root_cleared: false,
+                        },
+                    ),
+                ),
+            ],
         );
     let config = mcms.get_config();
     assert(config == expected_config, 'config should be same');
@@ -474,7 +474,7 @@ fn test_set_config_success_dont_clear_root() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     let signer_1 = state.get_signer_by_address(signer_address_1);
@@ -494,7 +494,7 @@ fn test_set_config_success_dont_clear_root() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     let new_config = mcms.get_config();
@@ -516,7 +516,7 @@ fn test_set_config_success_dont_clear_root() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     let new_signer_1 = state.get_signer_by_address(new_signer_address_1);
@@ -553,8 +553,8 @@ fn test_set_config_success_and_clear_root() {
         .s_expiring_root_and_op_count
         .write(
             ExpiringRootAndOpCount {
-                root: u256 { high: 777, low: 777 }, valid_until: 102934894, op_count: 134
-            }
+                root: u256 { high: 777, low: 777 }, valid_until: 102934894, op_count: 134,
+            },
         );
 
     state
@@ -565,8 +565,8 @@ fn test_set_config_success_and_clear_root() {
                 multisig: contract_address_const::<111>(),
                 pre_op_count: 20,
                 post_op_count: 155,
-                override_previous_root: false
-            }
+                override_previous_root: false,
+            },
         );
 
     let signer_address_1: EthAddress = u256 { high: 0, low: 1 }.into();
@@ -583,16 +583,16 @@ fn test_set_config_success_and_clear_root() {
             signer_groups.span(),
             group_quorums.span(),
             group_parents.span(),
-            clear_root
+            clear_root,
         );
 
     let expected_s_expiring_root_and_op_count = ExpiringRootAndOpCount {
-        root: u256 { high: 0, low: 0 }, valid_until: 0, op_count: 134
+        root: u256 { high: 0, low: 0 }, valid_until: 0, op_count: 134,
     };
     let s_expiring_root_and_op_count = state.s_expiring_root_and_op_count.read();
     assert!(
         s_expiring_root_and_op_count == expected_s_expiring_root_and_op_count,
-        "s_expiring_root_and_op_count not equal"
+        "s_expiring_root_and_op_count not equal",
     );
 
     let expected_s_root_metadata = RootMetadata {
@@ -600,7 +600,7 @@ fn test_set_config_success_and_clear_root() {
         multisig: test_address,
         pre_op_count: 134,
         post_op_count: 134,
-        override_previous_root: true
+        override_previous_root: true,
     };
     let s_root_metadata = state.s_root_metadata.read();
     assert(expected_s_root_metadata == s_root_metadata, 's_root_metadata not equal');

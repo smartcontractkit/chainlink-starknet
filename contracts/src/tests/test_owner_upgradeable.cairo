@@ -8,22 +8,22 @@ use starknet::class_hash::class_hash_const;
 use starknet::syscalls::deploy_syscall;
 
 use openzeppelin::upgrades::interface::{
-    IUpgradeable, IUpgradeableDispatcher, IUpgradeableDispatcherTrait
+    IUpgradeable, IUpgradeableDispatcher, IUpgradeableDispatcherTrait,
 };
 
 use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent;
 use chainlink::libraries::mocks::mock_owner_upgradeable::{
-    MockOwnerUpgradeable, IFoo, IFooDispatcher, IFooDispatcherTrait
+    MockOwnerUpgradeable, IFoo, IFooDispatcher, IFooDispatcherTrait,
 };
 use chainlink::libraries::mocks::mock_non_upgradeable::{
     MockNonUpgradeable, IMockNonUpgradeableDispatcher, IMockNonUpgradeableDispatcherTrait,
-    IMockNonUpgradeableDispatcherImpl
+    IMockNonUpgradeableDispatcherImpl,
 };
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 fn setup() -> ContractAddress {

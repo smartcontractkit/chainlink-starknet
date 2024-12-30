@@ -15,10 +15,10 @@ use core::result::ResultTrait;
 
 use chainlink::emergency::sequencer_uptime_feed::SequencerUptimeFeed;
 use chainlink::libraries::access_control::{
-    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
 };
 use chainlink::ocr2::aggregator_proxy::{
-    IAggregatorProxy, IAggregatorProxyDispatcher, IAggregatorProxyDispatcherTrait
+    IAggregatorProxy, IAggregatorProxyDispatcher, IAggregatorProxyDispatcherTrait,
 };
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::AggregatorProxyImpl;
@@ -26,12 +26,12 @@ use chainlink::tests::test_ownable::should_implement_ownable;
 use chainlink::tests::test_access_controller::should_implement_access_control;
 
 use chainlink::emergency::sequencer_uptime_feed::{
-    ISequencerUptimeFeed, ISequencerUptimeFeedDispatcher, ISequencerUptimeFeedDispatcherTrait
+    ISequencerUptimeFeed, ISequencerUptimeFeedDispatcher, ISequencerUptimeFeedDispatcherTrait,
 };
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 
@@ -50,7 +50,7 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
 
     // Deploy seqeuencer uptime feed
     let calldata = array![0, // initial status
-     account.into() // owner
+    account.into() // owner
     ];
 
     let (sequencerFeedAddr, _) = declare("SequencerUptimeFeed")
@@ -60,7 +60,7 @@ fn setup() -> (ContractAddress, ContractAddress, ISequencerUptimeFeedDispatcher)
         .unwrap();
 
     let sequencerUptimeFeed = ISequencerUptimeFeedDispatcher {
-        contract_address: sequencerFeedAddr
+        contract_address: sequencerFeedAddr,
     };
 
     (account, sequencerFeedAddr, sequencerUptimeFeed)

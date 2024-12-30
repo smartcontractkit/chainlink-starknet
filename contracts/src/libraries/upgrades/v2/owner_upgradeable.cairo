@@ -2,12 +2,12 @@
 mod OwnerUpgradeableComponent {
     use openzeppelin::{
         access::ownable::{
-            OwnableComponent, OwnableComponent::InternalTrait as OwnableInternalTrait
+            OwnableComponent, OwnableComponent::InternalTrait as OwnableInternalTrait,
         },
         upgrades::{
             upgradeable::{
                 UpgradeableComponent,
-                UpgradeableComponent::InternalTrait as UpgradeableInternalTrait
+                UpgradeableComponent::InternalTrait as UpgradeableInternalTrait,
             },
             interface::IUpgradeable,
         },
@@ -27,7 +27,7 @@ mod OwnerUpgradeableComponent {
         +HasComponent<TContractState>,
         impl Ownable: OwnableComponent::HasComponent<TContractState>,
         impl Upgradeable: UpgradeableComponent::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of IUpgradeable<ComponentState<TContractState>> {
         fn upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
             let mut ownable_component = get_dep_component_mut!(ref self, Ownable);

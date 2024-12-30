@@ -5,7 +5,7 @@ const IERC677_ID: felt252 = 0x3c4538abc63e0cdf912cef3d2e1389d0b2c3f24ee0c06b2173
 #[starknet::interface]
 trait IERC677<TContractState> {
     fn transfer_and_call(
-        ref self: TContractState, to: ContractAddress, value: u256, data: Array<felt252>
+        ref self: TContractState, to: ContractAddress, value: u256, data: Array<felt252>,
     ) -> bool;
 }
 
@@ -19,7 +19,7 @@ mod ERC677Component {
     use clone::Clone;
     use array::ArrayTCloneImpl;
     use chainlink::libraries::token::v2::erc677_receiver::{
-        IERC677ReceiverDispatcher, IERC677ReceiverDispatcherTrait, IERC677_RECEIVER_ID
+        IERC677ReceiverDispatcher, IERC677ReceiverDispatcherTrait, IERC677_RECEIVER_ID,
     };
 
     #[storage]
@@ -38,7 +38,7 @@ mod ERC677Component {
         #[key]
         to: ContractAddress,
         value: u256,
-        data: Array<felt252>
+        data: Array<felt252>,
     }
 
     #[embeddable_as(ERC677Impl)]
@@ -52,7 +52,7 @@ mod ERC677Component {
             ref self: ComponentState<TContractState>,
             to: ContractAddress,
             value: u256,
-            data: Array<felt252>
+            data: Array<felt252>,
         ) -> bool {
             let sender = starknet::info::get_caller_address();
 
@@ -61,8 +61,8 @@ mod ERC677Component {
             self
                 .emit(
                     Event::TransferAndCall(
-                        TransferAndCall { from: sender, to: to, value: value, data: data.clone(), }
-                    )
+                        TransferAndCall { from: sender, to: to, value: value, data: data.clone() },
+                    ),
                 );
 
             let receiver = ISRC5Dispatcher { contract_address: to };

@@ -18,7 +18,7 @@ use chainlink::libraries::token::v2::erc677::ERC677Component::ERC677Impl;
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 #[starknet::interface]
@@ -27,7 +27,7 @@ trait MockInvalidReceiver<TContractState> {
 }
 
 use chainlink::token::mock::valid_erc667_receiver::{
-    MockValidReceiver, MockValidReceiverDispatcher, MockValidReceiverDispatcherTrait
+    MockValidReceiver, MockValidReceiverDispatcher, MockValidReceiverDispatcherTrait,
 };
 
 // Ignored tests are dependent on upgrading our version of cairo to include this PR

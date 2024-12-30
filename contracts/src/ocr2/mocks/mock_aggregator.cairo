@@ -5,7 +5,7 @@ trait IMockAggregator<TContractState> {
         answer: u128,
         block_num: u64,
         observation_timestamp: u64,
-        transmission_timestamp: u64
+        transmission_timestamp: u64,
     );
 }
 
@@ -28,7 +28,7 @@ mod MockAggregator {
     struct Storage {
         _transmissions: Map<u128, Transmission>,
         _latest_aggregator_round_id: u128,
-        _decimals: u8
+        _decimals: u8,
     }
 
     #[constructor]
@@ -43,7 +43,7 @@ mod MockAggregator {
             answer: u128,
             block_num: u64,
             observation_timestamp: u64,
-            transmission_timestamp: u64
+            transmission_timestamp: u64,
         ) {
             let new_round_id = self._latest_aggregator_round_id.read() + 1_u128;
             self
@@ -54,8 +54,8 @@ mod MockAggregator {
                         answer: answer,
                         block_num: block_num,
                         observation_timestamp: observation_timestamp,
-                        transmission_timestamp: transmission_timestamp
-                    }
+                        transmission_timestamp: transmission_timestamp,
+                    },
                 );
 
             let mut observations = ArrayTrait::new();
@@ -78,9 +78,9 @@ mod MockAggregator {
                             gas_price: 1_u128,
                             config_digest: 777,
                             epoch_and_round: 20_u64,
-                            reimbursement: 100_u128
-                        }
-                    )
+                            reimbursement: 100_u128,
+                        },
+                    ),
                 );
         }
     }
@@ -107,7 +107,7 @@ mod MockAggregator {
                 answer: transmission.answer,
                 block_num: transmission.block_num,
                 started_at: transmission.observation_timestamp,
-                updated_at: transmission.transmission_timestamp
+                updated_at: transmission.transmission_timestamp,
             }
         }
 

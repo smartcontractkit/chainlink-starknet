@@ -48,7 +48,7 @@ mod LinkToken {
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
         #[substorage(v0)]
-        erc677: ERC677Component::Storage
+        erc677: ERC677Component::Storage,
     }
 
     #[event]
@@ -59,7 +59,7 @@ mod LinkToken {
         #[flat]
         ERC20Event: ERC20Component::Event,
         #[flat]
-        ERC677Event: ERC677Component::Event
+        ERC677Event: ERC677Component::Event,
     }
 
     //
@@ -83,14 +83,14 @@ mod LinkToken {
             ref self: ERC20Component::ComponentState::<ContractState>,
             from: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {}
 
         fn after_update(
             ref self: ERC20Component::ComponentState::<ContractState>,
             from: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {}
     }
 

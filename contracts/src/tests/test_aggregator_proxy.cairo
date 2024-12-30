@@ -12,15 +12,15 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::ocr2::mocks::mock_aggregator::{
-    MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait
+    MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait,
 };
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
-    AggregatorProxyImpl, AggregatorProxyInternal
+    AggregatorProxyImpl, AggregatorProxyInternal,
 };
 use chainlink::libraries::access_control::{
     IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
-    AccessControlComponent::AccessControlImpl
+    AccessControlComponent::AccessControlImpl,
 };
 use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::ocr2::aggregator::Round;
@@ -30,7 +30,7 @@ use chainlink::tests::test_access_controller::should_implement_access_control;
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 
@@ -43,7 +43,7 @@ fn setup() -> (
     ContractAddress,
     IMockAggregatorDispatcher,
     ContractAddress,
-    IMockAggregatorDispatcher
+    IMockAggregatorDispatcher,
 ) {
     // Set account as default caller
     let account: ContractAddress = contract_address_const::<1>();
@@ -80,7 +80,7 @@ fn test_ownable() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
-     mockAggregatorAddr.into(),];
+    mockAggregatorAddr.into()];
     let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
         .unwrap()
         .contract_class()
@@ -95,7 +95,7 @@ fn test_access_control() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
-     mockAggregatorAddr.into(),];
+    mockAggregatorAddr.into()];
 
     let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
         .unwrap()

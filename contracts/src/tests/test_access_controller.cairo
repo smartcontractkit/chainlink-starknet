@@ -1,6 +1,6 @@
 use starknet::{
     ContractAddress, testing::{set_caller_address, set_contract_address}, contract_address_const,
-    class_hash::{class_hash_const, Felt252TryIntoClassHash}, syscalls::deploy_syscall
+    class_hash::{class_hash_const, Felt252TryIntoClassHash}, syscalls::deploy_syscall,
 };
 
 use array::ArrayTrait;
@@ -11,12 +11,12 @@ use core::result::ResultTrait;
 use chainlink::access_control::access_controller::AccessController;
 use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::libraries::access_control::{
-    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
 };
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 fn STATE() -> AccessController::ContractState {
@@ -42,7 +42,7 @@ fn test_upgrade_not_owner() {
 fn test_access_control() {
     let owner = setup();
     // Deploy access controller
-    let calldata = array![owner.into(), // owner
+    let calldata = array![owner.into() // owner
     ];
 
     let contract = declare("AccessController").unwrap().contract_class();

@@ -18,7 +18,7 @@ mod MockOwnerUpgradeable {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(
-        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent,
     );
 
     #[abi(embed_v0)]
@@ -38,7 +38,7 @@ mod MockOwnerUpgradeable {
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
-        owner_upgradeable: OwnerUpgradeableComponent::Storage
+        owner_upgradeable: OwnerUpgradeableComponent::Storage,
     }
 
     #[event]
@@ -49,7 +49,7 @@ mod MockOwnerUpgradeable {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
-        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event,
     }
 
     #[constructor]

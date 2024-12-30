@@ -5,11 +5,12 @@ use starknet::testing::set_contract_address;
 use zeroable::Zeroable;
 
 use openzeppelin::access::ownable::interface::{
-    IOwnableTwoStep, IOwnableTwoStepDispatcher, IOwnableTwoStepDispatcherTrait
+    IOwnableTwoStep, IOwnableTwoStepDispatcher, IOwnableTwoStepDispatcherTrait,
 };
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global,
 };
 
 //

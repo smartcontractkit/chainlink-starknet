@@ -13,7 +13,7 @@ trait IUpgradeable<TContractState> {
 #[derive(Drop, starknet::Event)]
 struct Upgraded {
     #[key]
-    new_impl: ClassHash
+    new_impl: ClassHash,
 }
 
 mod Upgradeable {

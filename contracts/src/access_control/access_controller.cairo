@@ -14,7 +14,7 @@ mod AccessController {
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(
-        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent,
     );
 
     #[abi(embed_v0)]
@@ -42,7 +42,7 @@ mod AccessController {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
-        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event,
     }
 
     #[storage]
@@ -54,7 +54,7 @@ mod AccessController {
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
-        owner_upgradeable: OwnerUpgradeableComponent::Storage
+        owner_upgradeable: OwnerUpgradeableComponent::Storage,
     }
 
     #[constructor]

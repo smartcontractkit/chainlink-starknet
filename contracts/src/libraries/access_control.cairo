@@ -39,13 +39,13 @@ mod AccessControlComponent {
     #[derive(Drop, starknet::Event)]
     struct AddedAccess {
         #[key]
-        user: ContractAddress
+        user: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
     struct RemovedAccess {
         #[key]
-        user: ContractAddress
+        user: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -62,7 +62,7 @@ mod AccessControlComponent {
         +Drop<TContractState>,
     > of super::IAccessController<ComponentState<TContractState>> {
         fn has_access(
-            self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>
+            self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>,
         ) -> bool {
             let has_access = self._access_list.read(user);
             if has_access {
@@ -78,7 +78,7 @@ mod AccessControlComponent {
         }
 
         fn has_read_access(
-            self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>
+            self: @ComponentState<TContractState>, user: ContractAddress, data: Array<felt252>,
         ) -> bool {
             let _has_access = self.has_access(user, data);
             if _has_access {

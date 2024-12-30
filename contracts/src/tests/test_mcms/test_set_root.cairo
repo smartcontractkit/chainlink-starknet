@@ -7,21 +7,21 @@ use starknet::{
     EthAddressZeroable, contract_address_const, eth_signature::public_key_point_to_eth_address,
     secp256_trait::{
         Secp256Trait, Secp256PointTrait, recover_public_key, is_signature_entry_valid, Signature,
-        signature_from_vrs
+        signature_from_vrs,
     },
-    secp256k1::Secp256k1Point, SyscallResult, SyscallResultTrait
+    secp256k1::Secp256k1Point, SyscallResult, SyscallResultTrait,
 };
 use chainlink::mcms::{
     recover_eth_ecdsa, hash_pair, hash_op, hash_metadata, ExpiringRootAndOpCount, RootMetadata,
     Config, Signer, eip_191_message_hash, ManyChainMultiSig, Op,
-    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing,},
+    ManyChainMultiSig::{NewRoot, InternalFunctionsTrait, contract_state_for_testing},
     IManyChainMultiSigDispatcher, IManyChainMultiSigDispatcherTrait,
     IManyChainMultiSigSafeDispatcher, IManyChainMultiSigSafeDispatcherTrait, IManyChainMultiSig,
     ManyChainMultiSig::{MAX_NUM_SIGNERS},
 };
 use chainlink::tests::test_mcms::utils::{
     insecure_sign, setup_signers, SignerMetadata, setup_mcms_deploy_and_set_config_2_of_2,
-    setup_mcms_deploy_set_config_and_set_root, set_root_args, merkle_root
+    setup_mcms_deploy_set_config_and_set_root, set_root_args, merkle_root,
 };
 use chainlink::utils::{keccak};
 use snforge_std::{
@@ -29,10 +29,10 @@ use snforge_std::{
     stop_cheat_caller_address, stop_cheat_caller_address_global, start_cheat_chain_id_global,
     spy_events, EventSpyAssertionsTrait, // Add for assertions on the EventSpy 
     test_address, // the contract being tested,
-     start_cheat_chain_id,
+    start_cheat_chain_id,
     cheatcodes::{events::{EventSpy}}, start_cheat_block_timestamp_global,
     start_cheat_block_timestamp, start_cheat_account_contract_address_global,
-    start_cheat_account_contract_address, DeclareResultTrait
+    start_cheat_account_contract_address, DeclareResultTrait,
 };
 
 // sets up root but with wrong multisig address in metadata
@@ -67,10 +67,10 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
         signer_groups,
         group_quorums,
         group_parents,
-        clear_root
+        clear_root,
     ) =
         setup_mcms_deploy_and_set_config_2_of_2(
-        signer_address_1, signer_address_2
+        signer_address_1, signer_address_2,
     );
 
     let calldata = ArrayTrait::new();
@@ -92,7 +92,7 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
         nonce: 0,
         to: target_address,
         selector: selector1,
-        data: calldata1.span()
+        data: calldata1.span(),
     };
 
     // second operation
@@ -105,7 +105,7 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
         nonce: 1,
         to: target_address,
         selector: selector2,
-        data: calldata2.span()
+        data: calldata2.span(),
     };
 
     let metadata = RootMetadata {
@@ -161,7 +161,7 @@ fn setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG() -> (
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     )
 }
 
@@ -197,7 +197,7 @@ fn test_set_root_success() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -218,11 +218,11 @@ fn test_set_root_success() {
                     mcms_address,
                     ManyChainMultiSig::Event::NewRoot(
                         ManyChainMultiSig::NewRoot {
-                            root: root, valid_until: valid_until, metadata: metadata
-                        }
-                    )
-                )
-            ]
+                            root: root, valid_until: valid_until, metadata: metadata,
+                        },
+                    ),
+                ),
+            ],
         );
 }
 
@@ -246,7 +246,7 @@ fn test_set_root_hash_seen() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -258,7 +258,7 @@ fn test_set_root_hash_seen() {
         Result::Ok(_) => panic!("expect 'signed hash already seen'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'signed hash already seen', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -282,7 +282,7 @@ fn test_set_root_signatures_wrong_order() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -295,7 +295,7 @@ fn test_set_root_signatures_wrong_order() {
         Result::Ok(_) => panic!("expect 'signer address must increase'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'signer address must increase', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -303,7 +303,7 @@ fn test_set_root_signatures_wrong_order() {
 #[feature("safe_dispatcher")]
 fn test_set_root_signatures_invalid_signer() {
     let (
-        _, _, _, safe_mcms, _, _, _, _, _, _, root, valid_until, metadata, metadata_proof, _, _, _
+        _, _, _, safe_mcms, _, _, _, _, _, _, root, valid_until, metadata, metadata_proof, _, _, _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -314,7 +314,7 @@ fn test_set_root_signatures_invalid_signer() {
                 high: 0x9e8df5d64fb9d2ae155b435ac37519fd, low: 0x6d1ffddf225cde953f6c97f8b3a7531d,
             },
             s: u256 {
-                high: 0x21f13cc6eb1d14f6ebdc497411c57589, low: 0xea109b402fcde2cfe8f3d1b6d2bb8948
+                high: 0x21f13cc6eb1d14f6ebdc497411c57589, low: 0xea109b402fcde2cfe8f3d1b6d2bb8948,
             },
         ),
         signature_from_vrs(
@@ -323,9 +323,9 @@ fn test_set_root_signatures_invalid_signer() {
                 high: 0x7a5d64ca9b1814e15eb8df73b3c79ac2, low: 0x9b9080ac6546e07b1118b16e5651e19d,
             },
             s: u256 {
-                high: 0x62794369d5bb5f5a02d2eb6805951990, low: 0xdfcd8563639dcc6668e235e1bea93303
+                high: 0x62794369d5bb5f5a02d2eb6805951990, low: 0xdfcd8563639dcc6668e235e1bea93303,
             },
-        )
+        ),
     ];
 
     let result = safe_mcms
@@ -335,7 +335,7 @@ fn test_set_root_signatures_invalid_signer() {
         Result::Ok(_) => panic!("expect 'invalid signer'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'invalid signer', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -359,7 +359,7 @@ fn test_insufficient_signers() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -372,7 +372,7 @@ fn test_insufficient_signers() {
         Result::Ok(_) => panic!("expect 'insufficient signers'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'insufficient signers', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -396,7 +396,7 @@ fn test_valid_until_expired() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -409,7 +409,7 @@ fn test_valid_until_expired() {
         Result::Ok(_) => panic!("expect 'valid until has passed'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'valid until has passed', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -433,7 +433,7 @@ fn test_invalid_metadata_proof() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -446,7 +446,7 @@ fn test_invalid_metadata_proof() {
         Result::Ok(_) => panic!("expect 'proof verification failed'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'proof verification failed', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -470,7 +470,7 @@ fn test_invalid_chain_id() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -482,7 +482,7 @@ fn test_invalid_chain_id() {
         Result::Ok(_) => panic!("expect 'wrong chain id'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong chain id', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -506,7 +506,7 @@ fn test_invalid_multisig_address() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root_WRONG_MULTISIG();
 
@@ -516,7 +516,7 @@ fn test_invalid_multisig_address() {
         Result::Ok(_) => panic!("expect 'wrong multisig address'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong multisig address', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -540,7 +540,7 @@ fn test_pending_ops_remain() {
         metadata_proof,
         signatures,
         _,
-        _
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -550,7 +550,7 @@ fn test_pending_ops_remain() {
     // sign a different set of operations with same signers
     let (_, _, _, _, signer_metadata) = setup_signers();
     let (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof) = set_root_args(
-        mcms_address, contract_address_const::<123123>(), signer_metadata, 0, 2
+        mcms_address, contract_address_const::<123123>(), signer_metadata, 0, 2,
     );
 
     // second time fails
@@ -560,7 +560,7 @@ fn test_pending_ops_remain() {
         Result::Ok(_) => panic!("expect 'pending operations remain'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'pending operations remain', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -579,7 +579,7 @@ fn test_wrong_pre_op_count() {
         contract_address_const::<123123>(),
         signer_metadata,
         wrong_pre_op_count,
-        wrong_pre_op_count + 2
+        wrong_pre_op_count + 2,
     );
 
     // first time passes
@@ -590,7 +590,7 @@ fn test_wrong_pre_op_count() {
         Result::Ok(_) => panic!("expect 'wrong pre-operation count'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong pre-operation count', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -614,7 +614,7 @@ fn test_wrong_post_ops_count() {
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -646,6 +646,6 @@ fn test_wrong_post_ops_count() {
         Result::Ok(_) => panic!("expect 'wrong post-operation count'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong post-operation count', *panic_data.at(0));
-        }
+        },
     }
 }

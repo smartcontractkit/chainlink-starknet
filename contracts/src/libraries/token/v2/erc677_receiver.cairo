@@ -6,7 +6,7 @@ const IERC677_RECEIVER_ID: felt252 =
 #[starknet::interface]
 trait IERC677Receiver<TContractState> {
     fn on_token_transfer(
-        ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>
+        ref self: TContractState, sender: ContractAddress, value: u256, data: Array<felt252>,
     );
 }
 
@@ -31,7 +31,7 @@ mod ERC677ReceiverComponent {
         // ensure that the contract implements the IERC677Receiver interface
         +IERC677Receiver<TContractState>,
         impl SRC5: SRC5Component::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         /// Initializes the contract by registering the IERC677Receiver interface ID.
         /// This should be used inside the contract's constructor.

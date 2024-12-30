@@ -34,7 +34,7 @@ mod AggregatorProxy {
     use starknet::{
         ContractAddress, ContractAddressIntoFelt252, Felt252TryIntoContractAddress,
         StorageBaseAddress, SyscallResult, storage_read_syscall, storage_write_syscall,
-        storage_address_from_base_and_offset, class_hash::ClassHash, storage::Map
+        storage_address_from_base_and_offset, class_hash::ClassHash, storage::Map,
     };
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -43,12 +43,12 @@ mod AggregatorProxy {
     use chainlink::ocr2::aggregator::{IAggregator, Round};
     use chainlink::libraries::access_control::{
         AccessControlComponent, IAccessController,
-        AccessControlComponent::InternalTrait as AccessControlInternalTrait
+        AccessControlComponent::InternalTrait as AccessControlInternalTrait,
     };
     use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent;
     use chainlink::utils::split_felt;
     use chainlink::libraries::type_and_version::{
-        ITypeAndVersion, ITypeAndVersionDispatcher, ITypeAndVersionDispatcherTrait
+        ITypeAndVersion, ITypeAndVersionDispatcher, ITypeAndVersionDispatcherTrait,
     };
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000;
@@ -57,14 +57,14 @@ mod AggregatorProxy {
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Phase {
         id: u128,
-        aggregator: ContractAddress
+        aggregator: ContractAddress,
     }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(
-        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent,
     );
 
 
@@ -95,7 +95,7 @@ mod AggregatorProxy {
         owner_upgradeable: OwnerUpgradeableComponent::Storage,
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
-        _phases: Map<u128, ContractAddress>
+        _phases: Map<u128, ContractAddress>,
     }
 
     #[event]
@@ -108,7 +108,7 @@ mod AggregatorProxy {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
-        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event,
     }
 
     // TODO: refactor these events

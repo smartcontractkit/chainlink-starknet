@@ -1,6 +1,6 @@
 use starknet::{
     ContractAddress, contract_address_const, testing::{set_caller_address, set_contract_address},
-    class_hash::{class_hash_const, Felt252TryIntoClassHash}, syscalls::deploy_syscall
+    class_hash::{class_hash_const, Felt252TryIntoClassHash}, syscalls::deploy_syscall,
 };
 
 use array::ArrayTrait;
@@ -11,19 +11,19 @@ use core::{result::ResultTrait, panic_with_felt252};
 
 use chainlink::ocr2::aggregator::{
     pow, Aggregator,
-    Aggregator::{BillingConfig, PayeeConfig, AggregatorImpl, BillingImpl, PayeeManagementImpl}
+    Aggregator::{BillingConfig, PayeeConfig, AggregatorImpl, BillingImpl, PayeeManagementImpl},
 };
 use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::access_control::access_controller::AccessController;
 use chainlink::token::v2::link_token::LinkToken;
 use chainlink::tests::{
     test_ownable::should_implement_ownable, test_access_controller::should_implement_access_control,
-    test_link_token::link_deploy_args
+    test_link_token::link_deploy_args,
 };
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 #[test]
@@ -63,7 +63,7 @@ fn test_pow_2_0() {
 }
 
 use chainlink::libraries::access_control::{
-    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
 };
 
 #[starknet::interface]
@@ -74,7 +74,7 @@ fn STATE() -> Aggregator::ContractState {
 }
 
 fn setup() -> (
-    ContractAddress, ContractAddress, IAccessControllerDispatcher, ILinkTokenDispatcher
+    ContractAddress, ContractAddress, IAccessControllerDispatcher, ILinkTokenDispatcher,
 ) {
     let acc1: ContractAddress = contract_address_const::<777>();
     let acc2: ContractAddress = contract_address_const::<888>();
@@ -82,7 +82,7 @@ fn setup() -> (
     start_cheat_caller_address_global(acc1);
 
     // deploy billing access controller
-    let calldata = array![acc1.into(), // owner = acc1;
+    let calldata = array![acc1.into() // owner = acc1;
     ];
 
     let (billingAccessControllerAddr, _) = declare("AccessController")
@@ -92,7 +92,7 @@ fn setup() -> (
         .unwrap();
 
     let billingAccessController = IAccessControllerDispatcher {
-        contract_address: billingAccessControllerAddr
+        contract_address: billingAccessControllerAddr,
     };
 
     let calldata = link_deploy_args(acc1, acc1);
@@ -120,7 +120,7 @@ fn test_ownable() {
         100, // max_answer
         contract_address_const::<999>().into(), // billing access controller
         8, // decimals
-        123, // description
+        123 // description
     ];
 
     let (aggregatorAddr, _) = declare("Aggregator")
@@ -143,7 +143,7 @@ fn test_access_control() {
         100, // max_answer
         contract_address_const::<999>().into(), // billing access controller
         8, // decimals
-        123, // description
+        123 // description
     ];
 
     let (aggregatorAddr, _) = declare("Aggregator")
@@ -172,7 +172,7 @@ fn test_set_billing_access_controller_not_owner() {
     let (owner, acc2, billingAccessController, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     // set billing access controller should revert if caller is not owner
@@ -193,7 +193,7 @@ fn test_set_billing_config_no_access() {
         100,
         billingAccessController.contract_address,
         8,
-        123
+        123,
     );
 
     // set billing config as acc2 with no access
@@ -219,7 +219,7 @@ fn test_set_billing_config_as_owner() {
         100,
         billingAccessController.contract_address,
         8,
-        123
+        123,
     );
 
     // set billing config as owner
@@ -255,7 +255,7 @@ fn test_set_billing_config_as_acc_with_access() {
         100,
         billingAccessController.contract_address,
         8,
-        123
+        123,
     );
 
     // set billing config as acc2 with access
@@ -284,10 +284,10 @@ fn test_set_payees_caller_not_owner() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
-    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2, },];
+    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2 }];
     // set payee should revert if caller is not owner
     start_cheat_caller_address_global(acc2);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -298,10 +298,10 @@ fn test_set_single_payee() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
-    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2, },];
+    let payees = array![PayeeConfig { transmitter: acc2, payee: acc2 }];
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
 }
@@ -311,12 +311,12 @@ fn test_set_multiple_payees() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     let payees = array![
-        PayeeConfig { transmitter: acc2, payee: acc2, },
-        PayeeConfig { transmitter: owner, payee: owner, },
+        PayeeConfig { transmitter: acc2, payee: acc2 },
+        PayeeConfig { transmitter: owner, payee: owner },
     ];
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -328,11 +328,11 @@ fn test_transfer_payeeship_caller_not_payee() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2 }];
 
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -345,11 +345,11 @@ fn test_transfer_payeeship_to_self() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2 }];
 
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -363,11 +363,11 @@ fn test_accept_payeeship_caller_not_proposed_payee() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2 }];
 
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -381,11 +381,11 @@ fn test_transfer_and_accept_payeeship() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     let transmitter = contract_address_const::<123>();
-    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
+    let payees = array![PayeeConfig { transmitter: transmitter, payee: acc2 }];
 
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
@@ -406,11 +406,11 @@ fn test_owed_payment_no_rounds() {
     let (owner, acc2, _, _) = setup();
     let mut state = STATE();
     Aggregator::constructor(
-        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123
+        ref state, owner, contract_address_const::<777>(), 0, 100, acc2, 8, 123,
     );
 
     let transmitter = contract_address_const::<123>();
-    let mut payees = array![PayeeConfig { transmitter: transmitter, payee: acc2, },];
+    let mut payees = array![PayeeConfig { transmitter: transmitter, payee: acc2 }];
 
     start_cheat_caller_address_global(owner);
     PayeeManagementImpl::set_payees(ref state, payees);
