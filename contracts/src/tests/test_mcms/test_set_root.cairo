@@ -1,4 +1,3 @@
-use alexandria_data_structures::array_ext::ArrayTraitExt;
 use alexandria_bytes::{Bytes, BytesTrait};
 use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
 use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;

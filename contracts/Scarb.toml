@@ -1,7 +1,7 @@
 [package]
 name = "chainlink"
 version = "0.1.0"
-cairo-version = "2.8.2"
+cairo-version = "2.9.2"
 description = "Chainlink contracts for Starknet"
 homepage = "https://github.com/smartcontractkit/chainlink-starknet"
 
@@ -13,13 +13,13 @@ test = "snforge test"
 # Uncomment if you want to use dependencies
 # Note: currently testing doesn't work with dependencies
 [dependencies]
-starknet = "2.8.2"
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.17.0" }
-alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "6a989d636243494a0529fc3af06a924493499564" }
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "6a989d636243494a0529fc3af06a924493499564" }
+starknet = "2.9.2"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
+alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1c636d31ccaaa90ed3eb32c9eb1d5e3bd3" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1c636d31ccaaa90ed3eb32c9eb1d5e3bd3" }
 
 [dev-dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "6a989d636243494a0529fc3af06a924493499564" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1c636d31ccaaa90ed3eb32c9eb1d5e3bd3" }
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.31.0" }
 
 [lib]
