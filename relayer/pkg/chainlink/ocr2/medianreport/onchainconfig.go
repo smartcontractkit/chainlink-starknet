@@ -52,8 +52,8 @@ func (codec OnchainConfigCodec) Decode(ctx context.Context, b []byte) (median.On
 	minVal := felts[1]
 	maxVal := felts[2]
 
-	if !(min.Cmp(max) <= 0) {
-		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", min, max)
+	if !(minVal.Cmp(maxVal) <= 0) {
+		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", minVal, maxVal)
 	}
 
 	return median.OnchainConfig{Min: minVal, Max: maxVal}, nil
