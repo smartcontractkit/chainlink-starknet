@@ -75,7 +75,9 @@ jobs:
       - name: Set core reference if workflow dispatch
         if: steps.check-image.outputs.exists == 'false' && github.event_name == 'workflow_dispatch'
         run: |
-          echo "CUSTOM_CORE_REF=${{ github.event.inputs.cl_branch_ref }}" >> "${GITHUB_ENV}"
+          echo "CUSTOM_CORE_REF=${CL_REF}" >> "${GITHUB_ENV}"
+        env:
+          CL_REF: ${{ github.event.inputs.cl_branch_ref }}
       - name: Build Image ${{ matrix.image.name }}
         if: steps.check-image.outputs.exists == 'false'
         uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
@@ -193,7 +195,7 @@ jobs:
           [Network]
           selected_networks=["SIMULATED"]
           [Common]
-          internal_docker_repo = "${{ env.INTERNAL_DOCKER_REPO }}"
+          internal_docker_repo = "${INTERNAL_DOCKER_REPO}"
           stateful_db = false
           EOF
           # shellcheck disable=SC2002
@@ -205,6 +207,7 @@ jobs:
       - name: Run Tests ${{ matrix.image.name }}
         uses: smartcontractkit/.github/actions/ctf-run-tests@002596f65dc8eb807f5c8729dc1080921f7d0b24 # 0.2.1
         with:
+          cl_internal_docker_repo: ${{ env.INTERNAL_DOCKER_REPO }}
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
