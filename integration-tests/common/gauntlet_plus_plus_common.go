@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
 )
 
 func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 	l := utils.GetTestLogger(m.TestConfig.T)
 	var nAccounts []string
+	err := m.Clients.GauntletPPClient.DeclareOzAccount()
+	if err != nil {
+		return nil, err
+	}
 	for _, key := range m.GetNodeKeys() {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return nil, errors.New("stark key can't be empty")

@@ -379,6 +379,9 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 	assert.GreaterOrEqual(m.TestConfig.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
 
 	for start := time.Now(); time.Since(start) < m.Common.TestEnvDetails.TestDuration; {
+		m.TestConfig.L.Info().Msg(fmt.Sprintf("Agg Address: %s ", contractAddress))
+		m.TestConfig.L.Info().Msg(fmt.Sprintf("Link Address: %s ", linkContractAddress))
+
 		m.TestConfig.L.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), m.Common.TestEnvDetails.TestDuration))
 		m.TestConfig.L.Info().Msg(fmt.Sprintf("fetching Latest Transmission Details from: %s", contractAddress))
 		res, err2 := m.Clients.OCR2Client.LatestTransmissionDetails(ctx, contractAddress)
@@ -387,7 +390,6 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 		if !isSoak && increasing >= rounds && positive {
 			break
 		}
-
 		// end condition: rounds have been stuck
 		if stuck && stuckCount > 50 {
 			m.TestConfig.L.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
@@ -395,7 +397,7 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 		}
 
 		// try to fetch rounds
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 
 		if err != nil {
 			m.TestConfig.L.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))

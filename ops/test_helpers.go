@@ -29,6 +29,7 @@ type OffchainConfig struct {
 	MaxDurationShouldTransmitAcceptedReport string                 `json:"maxDurationShouldTransmitAcceptedReport"`
 	ConfigPublicKeys                        []string               `json:"configPublicKeys"`
 	ConfigEncodingSecret                    string                 `json:"configEncodingSecret"`
+	SignerSecret string `json:"signerSecret"`
 }
 
 type ReportingPluginConfig struct {
@@ -55,8 +56,8 @@ var TestOCR2Config = OCR2Config{
 		DeltaRound:    "60000000000ns",  // 90s
 		DeltaGrace:    "5000000000ns",   // 5s
 		DeltaStage:    "180000000000ns", // 20s
-		RMax:          5,
-		S:             []int{1, 1}, // Needs to array with length of transmitting nodes
+		RMax:          3,
+		S:             []int{1, 1, 1, 0}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
 		// PeerIDs:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
@@ -77,6 +78,7 @@ var TestOCR2Config = OCR2Config{
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/5faf35e1d372e3ae5388c295554aa4f87bc0ece0/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts#L23
 		ConfigEncodingSecret: "abandon ability able about above absent absorb abstract absurd abuse access accident",
+		SignerSecret: "glue fortune female wheat tooth network major price they merry cabin position",
 	},
 	OffchainConfigVersion: 2,
 	Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
