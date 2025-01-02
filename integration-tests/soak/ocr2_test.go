@@ -88,6 +88,9 @@ func TestOCRBasicSoak(t *testing.T) {
 			require.NoError(t, err, "Setting up gauntlet should not fail")
 			err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)
 			require.NoError(t, err, "Setting up gauntlet network should not fail")
+			fmt.Println("External URL" + state.Common.RPCDetails.RPCL2External)
+			fmt.Println("Internal URL" + state.Common.RPCDetails.RPCL2Internal)
+
 			err = state.DeployGauntletPP(0, 100000000000, decimals, "auto", 1, 1)
 			require.NoError(t, err, "Deploying contracts should not fail")
 

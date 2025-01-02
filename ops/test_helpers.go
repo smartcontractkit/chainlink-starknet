@@ -28,7 +28,6 @@ type OffchainConfig struct {
 	MaxDurationShouldAcceptFinalizedReport  string                 `json:"maxDurationShouldAcceptFinalizedReport"`
 	MaxDurationShouldTransmitAcceptedReport string                 `json:"maxDurationShouldTransmitAcceptedReport"`
 	ConfigPublicKeys                        []string               `json:"configPublicKeys"`
-	ConfigEncodingSecret                    string                 `json:"configEncodingSecret"`
 	SignerSecret string `json:"signerSecret"`
 }
 
@@ -77,8 +76,7 @@ var TestOCR2Config = OCR2Config{
 		MaxDurationShouldTransmitAcceptedReport: "10000000000ns",
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/5faf35e1d372e3ae5388c295554aa4f87bc0ece0/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts#L23
-		ConfigEncodingSecret: "abandon ability able about above absent absorb abstract absurd abuse access accident",
-		SignerSecret: "glue fortune female wheat tooth network major price they merry cabin position",
+		SignerSecret: "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
 	},
 	OffchainConfigVersion: 2,
 	Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
