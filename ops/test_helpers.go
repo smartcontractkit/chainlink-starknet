@@ -50,13 +50,13 @@ var TestOCR2Config = OCR2Config{
 	// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/main/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts
 	OffchainConfig: &OffchainConfig{
 		// todo: increase delta round but decrease delta stage
-		DeltaProgress: "120000000000ns", // 120s
-		DeltaResend:   "5000000000ns",   // 150s
-		DeltaRound:    "60000000000ns",  // 90s
+		DeltaProgress: "150000000000ns", // 150s
+		DeltaResend:   "150000000000ns",   // 150s
+		DeltaRound:    "90000000000ns",  // 90s
 		DeltaGrace:    "5000000000ns",   // 5s
-		DeltaStage:    "180000000000ns", // 20s
-		RMax:          3,
-		S:             []int{1, 1, 1, 0}, // Needs to array with length of transmitting nodes
+		DeltaStage:    "30000000000ns", // 20s
+		RMax:          5,
+		S:             []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
 		// PeerIDs:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
@@ -69,11 +69,11 @@ var TestOCR2Config = OCR2Config{
 			DestOptimisticConfirmations: 1,
 			BatchGasLimit:               1,
 		},
-		MaxDurationQuery:                        "100000000ns",
-		MaxDurationObservation:                  "35000000000ns",
-		MaxDurationReport:                       "10000000000ns",
-		MaxDurationShouldAcceptFinalizedReport:  "5000000000ns",
-		MaxDurationShouldTransmitAcceptedReport: "10000000000ns",
+		MaxDurationQuery:                        "2000000000ns",
+		MaxDurationObservation:                  "1000000000ns",
+		MaxDurationReport:                       "2000000000ns",
+		MaxDurationShouldAcceptFinalizedReport:  "2000000000ns",
+		MaxDurationShouldTransmitAcceptedReport: "2000000000ns",
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/5faf35e1d372e3ae5388c295554aa4f87bc0ece0/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts#L23
 		ConfigEncodingSecret: "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
