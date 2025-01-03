@@ -12,34 +12,30 @@ type OCR2Config struct {
 }
 
 type OffchainConfig struct {
-	DeltaProgress                           string                 `json:"deltaProgress"`
-	DeltaResend                             string                 `json:"deltaResend"`
-	DeltaRound                              string                 `json:"deltaRound"`
-	DeltaGrace                              string                 `json:"deltaGrace"`
-	DeltaStage                              string                 `json:"deltaStage"`
-	RMax                                    int                    `json:"rMax"`
-	S                                       []int                  `json:"s"`
-	OffchainPublicKeys                      []string               `json:"offchainPublicKeys"`
-	PeerIDs                                 []string               `json:"peerIds"`
-	ReportingPluginConfig                   *ReportingPluginConfig `json:"reportingPluginConfig"`
-	MaxDurationQuery                        string                 `json:"maxDurationQuery"`
-	MaxDurationObservation                  string                 `json:"maxDurationObservation"`
-	MaxDurationReport                       string                 `json:"maxDurationReport"`
-	MaxDurationShouldAcceptFinalizedReport  string                 `json:"maxDurationShouldAcceptFinalizedReport"`
-	MaxDurationShouldTransmitAcceptedReport string                 `json:"maxDurationShouldTransmitAcceptedReport"`
-	ConfigPublicKeys                        []string               `json:"configPublicKeys"`
-	ConfigEncodingSecret                    string                 `json:"configEncodingSecret"`
+	DeltaProgressNanoseconds                           int64                  `json:"deltaProgressNanoseconds"`
+	DeltaResendNanoseconds                             int64                  `json:"deltaResendNanoseconds"`
+	DeltaRoundNanoseconds                              int64                  `json:"deltaRoundNanoseconds"`
+	DeltaGraceNanoseconds                              int                    `json:"deltaGraceNanoseconds"`
+	DeltaStageNanoseconds                              int64                  `json:"deltaStageNanoseconds"`
+	RMax                                               int                    `json:"rMax"`
+	S                                                  []int                  `json:"s"`
+	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
+	PeerIDs                                            []string               `json:"peerIds"`
+	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
+	MaxDurationQueryNanoseconds                        int                    `json:"maxDurationQueryNanoseconds"`
+	MaxDurationObservationNanoseconds                  int                    `json:"maxDurationObservationNanoseconds"`
+	MaxDurationReportNanoseconds                       int                    `json:"maxDurationReportNanoseconds"`
+	MaxDurationShouldAcceptFinalizedReportNanoseconds  int                    `json:"maxDurationShouldAcceptFinalizedReportNanoseconds"`
+	MaxDurationShouldTransmitAcceptedReportNanoseconds int                    `json:"maxDurationShouldTransmitAcceptedReportNanoseconds"`
+	ConfigPublicKeys                                   []string               `json:"configPublicKeys"`
 }
 
 type ReportingPluginConfig struct {
-	SourceFinalityDepth         int    `json:"sourceFinalityDepth"`
-	DestFinalityDepth           int    `json:"destFinalityDepth"`
-	MaxGasPrice                 string `json:"maxGasPrice"`
-	RelativeBoostPerWaitHour    string `json:"relativeBoostPerWaitHour"`
-	InflightCacheExpiry         string `json:"inflightCacheExpiry"`
-	RootSnoozeTime              string `json:"rootSnoozeTime"`
-	DestOptimisticConfirmations int    `json:"DestOptimisticConfirmations"`
-	BatchGasLimit               int    `json:"batchGasLimit"`
+	AlphaReportInfinite bool `json:"alphaReportInfinite"`
+	AlphaReportPpb      int  `json:"alphaReportPpb"`
+	AlphaAcceptInfinite bool `json:"alphaAcceptInfinite"`
+	AlphaAcceptPpb      int  `json:"alphaAcceptPpb"`
+	DeltaCNanoseconds   int  `json:"deltaCNanoseconds"`
 }
 
 var TestOCR2Config = OCR2Config{
@@ -47,36 +43,30 @@ var TestOCR2Config = OCR2Config{
 	// Signers:       onChainKeys, // user defined
 	// Transmitters:  txKeys, // user defined
 	OnchainConfig: "",
-	// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/main/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts
 	OffchainConfig: &OffchainConfig{
 		// todo: increase delta round but decrease delta stage
-		DeltaProgress: "150000000000ns", // 150s
-		DeltaResend:   "150000000000ns",   // 150s
-		DeltaRound:    "90000000000ns",  // 90s
-		DeltaGrace:    "5000000000ns",   // 5s
-		DeltaStage:    "30000000000ns", // 20s
-		RMax:          5,
-		S:             []int{1, 1}, // Needs to array with length of transmitting nodes
+		DeltaProgressNanoseconds: 150000000000, // 120s
+		DeltaResendNanoseconds:   150000000000, // 150s
+		DeltaRoundNanoseconds:    90000000000,  // 90s
+		DeltaGraceNanoseconds:    5000000000,   // 5s
+		DeltaStageNanoseconds:    30000000000,  // 20s
+		RMax:                     5,
+		S:                        []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
 		// PeerIDs:                  peerIds, // user defined
 		ReportingPluginConfig: &ReportingPluginConfig{
-			SourceFinalityDepth:         5,
-			DestFinalityDepth:           15,
-			MaxGasPrice:                 "300000000000",
-			RelativeBoostPerWaitHour:    "300000000000",
-			InflightCacheExpiry:         "3m0s",
-			RootSnoozeTime:              "3m0s",
-			DestOptimisticConfirmations: 1,
-			BatchGasLimit:               1,
+			AlphaReportInfinite: false,
+			AlphaReportPpb:      0,
+			AlphaAcceptInfinite: false,
+			AlphaAcceptPpb:      0,
+			DeltaCNanoseconds:   1000000000,
 		},
-		MaxDurationQuery:                        "2000000000ns",
-		MaxDurationObservation:                  "1000000000ns",
-		MaxDurationReport:                       "2000000000ns",
-		MaxDurationShouldAcceptFinalizedReport:  "2000000000ns",
-		MaxDurationShouldTransmitAcceptedReport: "2000000000ns",
+		MaxDurationQueryNanoseconds:                        2000000000,
+		MaxDurationObservationNanoseconds:                  1000000000,
+		MaxDurationReportNanoseconds:                       2000000000,
+		MaxDurationShouldAcceptFinalizedReportNanoseconds:  2000000000,
+		MaxDurationShouldTransmitAcceptedReportNanoseconds: 2000000000,
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
-		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/5faf35e1d372e3ae5388c295554aa4f87bc0ece0/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts#L23
-		ConfigEncodingSecret: "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
 	},
 	OffchainConfigVersion: 2,
 	Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
