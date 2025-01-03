@@ -59,6 +59,13 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Install Cairo
         uses: ./.github/actions/install-cairo
+      - name: Setup GitHub Token
+        id: setup-github-token
+        uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
+        with:
+          aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
+          aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
+          aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Build contracts
         run: |
           cd contracts && scarb --profile release build
@@ -72,7 +79,7 @@ jobs:
           echo "::add-mask::$BASE64_CONFIG_OVERRIDE"
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> "$GITHUB_ENV"
       - name: Run Tests
-        uses: smartcontractkit/.github/actions/ctf-run-tests@002596f65dc8eb807f5c8729dc1080921f7d0b24 # 0.2.1
+        uses: smartcontractkit/.github/actions/ctf-run-tests@4229fea727f6eb36b4559c6eefbbf9f3825fa677 # 0.2.1
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: cd ./integration-tests && go test -timeout 24h -count=1 -run TestOCRBasicSoak/embedded ./soak
@@ -84,9 +91,12 @@ jobs:
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/soak/logs
+          PROD_AWS_REGION: ${{ secrets.PROD_AWS_REGION}}
+          PROD_AWS_ACCOUNT_NUMBER: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}
+          gauntlet_plus_plus_image: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
+          gati_token: ${{ steps.setup-github-token.outputs.access-token }}
         env:
           KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
           CHAINLINK_IMAGE: ${{ env.CL_ECR }}
           CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           CHAINLINK_USER_TEAM: ${{ github.event.inputs.team || 'BIX' }}
-

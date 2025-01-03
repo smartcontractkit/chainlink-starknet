@@ -23,6 +23,7 @@ env:
   TEST_LOG_LEVEL: debug
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
+  GAUNTLET_PP_IMAGE: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
 
 jobs:
   build_chainlink_image:
@@ -78,7 +79,7 @@ jobs:
           echo "CUSTOM_CORE_REF=${{ github.event.inputs.cl_branch_ref }}" >> "${GITHUB_ENV}"
       - name: Build Image ${{ matrix.image.name }}
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/build-image@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/.github/actions/ctf-build-image@c4705bfdbf6c8e57c080d82a3c4f013aa96a2dfb # v2.3.19
         with:
           cl_repo: smartcontractkit/chainlink
           cl_ref: ${{ env.CUSTOM_CORE_REF }}
@@ -203,7 +204,7 @@ jobs:
           # shellcheck disable=SC2086
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> $GITHUB_ENV
       - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/.github/actions/ctf-run-tests@002596f65dc8eb807f5c8729dc1080921f7d0b24 # 0.2.1
+        uses: smartcontractkit/.github/actions/ctf-run-tests@4229fea727f6eb36b4559c6eefbbf9f3825fa677 # 0.2.1
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
           test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
@@ -215,7 +216,11 @@ jobs:
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
+          PROD_AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_IAM_PROD_INTEGRATION_ROLE_ARN }}
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
+          PROD_AWS_REGION: ${{ secrets.PROD_AWS_REGION}}
+          PROD_AWS_ACCOUNT_NUMBER: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}
+          gauntlet_plus_plus_image: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
         env:
           KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
