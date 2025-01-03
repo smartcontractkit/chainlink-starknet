@@ -415,7 +415,6 @@ func (sgpp *StarknetGauntletPlusPlus) DeclareOzAccount() error {
 }
 
 func (sgpp *StarknetGauntletPlusPlus) DeployOzAccount(publicKey string) (string, error) {
-
 	constructorCalldata := map[string]interface{}{
 		"publicKey": publicKey,
 	}
