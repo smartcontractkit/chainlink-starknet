@@ -109,20 +109,6 @@ func (m *OCRv2TestState) setConfigDetailsWithGpp(ocrAddress string) error {
 	return err
 }
 
-func (m *OCRv2TestState) setConfigDetails(ocrAddress string) error {
-	cfg, err := m.LoadOCR2Config()
-	if err != nil {
-		return err
-	}
-	var parsedConfig []byte
-	parsedConfig, err = json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	_, err = m.Clients.GauntletClient.SetConfigDetails(string(parsedConfig), ocrAddress)
-	return err
-}
-
 func (m *OCRv2TestState) DeployGauntletPP(minSubmissionValue int64, maxSubmissionValue int64, decimals int, name string, observationPaymentGjuels int64, transmissionPaymentGjuels int64) error {
 	err := m.Clients.GauntletClient.InstallDependencies()
 	if err != nil {
