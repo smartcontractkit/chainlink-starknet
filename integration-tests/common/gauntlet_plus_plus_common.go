@@ -171,6 +171,6 @@ func (m *OCRv2TestState) DeployGauntletPP(minSubmissionValue int64, maxSubmissio
 		return err
 	}
 
-	err = m.setConfigDetails(m.Contracts.OCRAddr)
+	err = m.setConfigDetailsWithGpp(m.Contracts.OCRAddr)
 	return err
 }

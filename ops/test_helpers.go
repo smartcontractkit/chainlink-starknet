@@ -12,21 +12,21 @@ type OCR2Config struct {
 }
 
 type OffchainConfig struct {
-	DeltaProgressNanoseconds                           int64                  `json:"deltaProgressNanoseconds"`
-	DeltaResendNanoseconds                             int64                  `json:"deltaResendNanoseconds"`
-	DeltaRoundNanoseconds                              int64                  `json:"deltaRoundNanoseconds"`
-	DeltaGraceNanoseconds                              int                    `json:"deltaGraceNanoseconds"`
-	DeltaStageNanoseconds                              int64                  `json:"deltaStageNanoseconds"`
+	DeltaProgressNanoseconds                           string                  `json:"deltaProgress"`
+	DeltaResendNanoseconds                             string                  `json:"deltaResend"`
+	DeltaRoundNanoseconds                              string                  `json:"deltaRound"`
+	DeltaGraceNanoseconds                              string                    `json:"deltaGrace"`
+	DeltaStageNanoseconds                              string                  `json:"deltaStage"`
 	RMax                                               int                    `json:"rMax"`
 	S                                                  []int                  `json:"s"`
 	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
 	PeerIDs                                            []string               `json:"peerIds"`
 	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
-	MaxDurationQueryNanoseconds                        int                    `json:"maxDurationQueryNanoseconds"`
-	MaxDurationObservationNanoseconds                  int                    `json:"maxDurationObservationNanoseconds"`
-	MaxDurationReportNanoseconds                       int                    `json:"maxDurationReportNanoseconds"`
-	MaxDurationShouldAcceptFinalizedReportNanoseconds  int                    `json:"maxDurationShouldAcceptFinalizedReportNanoseconds"`
-	MaxDurationShouldTransmitAcceptedReportNanoseconds int                    `json:"maxDurationShouldTransmitAcceptedReportNanoseconds"`
+	MaxDurationQueryNanoseconds                        string                    `json:"maxDurationQuery"`
+	MaxDurationObservationNanoseconds                  string                    `json:"maxDurationObservation"`
+	MaxDurationReportNanoseconds                       string                    `json:"maxDurationReport"`
+	MaxDurationShouldAcceptFinalizedReportNanoseconds  string                    `json:"maxDurationShouldAcceptFinalizedReport"`
+	MaxDurationShouldTransmitAcceptedReportNanoseconds string                    `json:"maxDurationShouldTransmitAcceptedReport"`
 	ConfigPublicKeys                                   []string               `json:"configPublicKeys"`
 }
 
@@ -45,11 +45,11 @@ var TestOCR2Config = OCR2Config{
 	OnchainConfig: "",
 	OffchainConfig: &OffchainConfig{
 		// todo: increase delta round but decrease delta stage
-		DeltaProgressNanoseconds: 150000000000, // 120s
-		DeltaResendNanoseconds:   150000000000, // 150s
-		DeltaRoundNanoseconds:    90000000000,  // 90s
-		DeltaGraceNanoseconds:    5000000000,   // 5s
-		DeltaStageNanoseconds:    30000000000,  // 20s
+		DeltaProgressNanoseconds: "150000000000ns", // 120s
+		DeltaResendNanoseconds:   "150000000000ns", // 150s
+		DeltaRoundNanoseconds:    "90000000000ns",  // 90s
+		DeltaGraceNanoseconds:    "5000000000ns",   // 5s
+		DeltaStageNanoseconds:    "30000000000ns",  // 20s
 		RMax:                     5,
 		S:                        []int{1, 1}, // Needs to array with length of transmitting nodes
 		// OffchainPublicKeys:       offChainKeys, // user defined
@@ -61,11 +61,11 @@ var TestOCR2Config = OCR2Config{
 			AlphaAcceptPpb:      0,
 			DeltaCNanoseconds:   1000000000,
 		},
-		MaxDurationQueryNanoseconds:                        2000000000,
-		MaxDurationObservationNanoseconds:                  1000000000,
-		MaxDurationReportNanoseconds:                       2000000000,
-		MaxDurationShouldAcceptFinalizedReportNanoseconds:  2000000000,
-		MaxDurationShouldTransmitAcceptedReportNanoseconds: 2000000000,
+		MaxDurationQueryNanoseconds:                        "2000000000ns",
+		MaxDurationObservationNanoseconds:                  "1000000000ns",
+		MaxDurationReportNanoseconds:                       "2000000000ns",
+		MaxDurationShouldAcceptFinalizedReportNanoseconds:  "2000000000ns",
+		MaxDurationShouldTransmitAcceptedReportNanoseconds: "2000000000ns",
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 	},
 	OffchainConfigVersion: 2,
