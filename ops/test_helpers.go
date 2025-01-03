@@ -69,7 +69,7 @@ var TestOCR2Config = OCR2Config{
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 	},
 	OffchainConfigVersion: 2,
-	Secret:                "testestsetstsawe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
+	Secret:                "testestsetstssdfsdfsdawe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
 }
 
 var TestOnKeys = []string{
