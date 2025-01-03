@@ -147,7 +147,7 @@ func (m *OCRv2TestState) DeployCluster() {
 
 		// Checking whether we are running in a remote runner since the forwarding is not working there and we need the public IP
 		// In that case it is http://127.0.0.1:0 so we do a check and get the public IP
-		
+
 		if m.Common.RPCDetails.RPCL2External == "http://127.0.0.1:0" {
 			m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][1]
 		}
@@ -175,7 +175,7 @@ func (m *OCRv2TestState) DeployCluster() {
 			m.Common.RPCDetails.RPCL2External = *m.Common.TestConfig.Common.L2RPCUrl
 			m.Common.RPCDetails.RPCL2Internal = *m.Common.TestConfig.Common.L2RPCUrl
 		}
-	
+
 		// Creating docker containers
 		b, err := test_env_integrations.NewCLTestEnvBuilder().
 			WithNonEVM().

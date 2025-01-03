@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
+	"os"
 )
 
 func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {

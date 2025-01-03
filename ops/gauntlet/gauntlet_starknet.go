@@ -105,15 +105,3 @@ func (sg *StarknetGauntlet) MintLinkToken(token, to, amount string) (string, err
 	}
 	return sg.gr.Responses[0].Contract, nil
 }
-
-func (sg *StarknetGauntlet) SetConfigDetails(cfg string, ocrAddress string) (string, error) {
-	_, err := sg.G.ExecCommand([]string{"ocr2:set_config", "--input=" + cfg, ocrAddress}, *sg.options)
-	if err != nil {
-		return "", err
-	}
-	sg.gr, err = sg.FetchGauntletJSONOutput()
-	if err != nil {
-		return "", err
-	}
-	return sg.gr.Responses[0].Contract, nil
-}

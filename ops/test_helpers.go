@@ -12,23 +12,23 @@ type OCR2Config struct {
 }
 
 type OffchainConfig struct {
-	DeltaProgressNanoseconds                           string                  `json:"deltaProgress"`
-	DeltaResendNanoseconds                             string                  `json:"deltaResend"`
-	DeltaRoundNanoseconds                              string                  `json:"deltaRound"`
-	DeltaGraceNanoseconds                              string                    `json:"deltaGrace"`
-	DeltaStageNanoseconds                              string                  `json:"deltaStage"`
+	DeltaProgressNanoseconds                           string                 `json:"deltaProgress"`
+	DeltaResendNanoseconds                             string                 `json:"deltaResend"`
+	DeltaRoundNanoseconds                              string                 `json:"deltaRound"`
+	DeltaGraceNanoseconds                              string                 `json:"deltaGrace"`
+	DeltaStageNanoseconds                              string                 `json:"deltaStage"`
 	RMax                                               int                    `json:"rMax"`
 	S                                                  []int                  `json:"s"`
 	OffchainPublicKeys                                 []string               `json:"offchainPublicKeys"`
 	PeerIDs                                            []string               `json:"peerIds"`
 	ReportingPluginConfig                              *ReportingPluginConfig `json:"reportingPluginConfig"`
-	MaxDurationQueryNanoseconds                        string                    `json:"maxDurationQuery"`
-	MaxDurationObservationNanoseconds                  string                    `json:"maxDurationObservation"`
-	MaxDurationReportNanoseconds                       string                    `json:"maxDurationReport"`
-	MaxDurationShouldAcceptFinalizedReportNanoseconds  string                    `json:"maxDurationShouldAcceptFinalizedReport"`
-	MaxDurationShouldTransmitAcceptedReportNanoseconds string                    `json:"maxDurationShouldTransmitAcceptedReport"`
+	MaxDurationQueryNanoseconds                        string                 `json:"maxDurationQuery"`
+	MaxDurationObservationNanoseconds                  string                 `json:"maxDurationObservation"`
+	MaxDurationReportNanoseconds                       string                 `json:"maxDurationReport"`
+	MaxDurationShouldAcceptFinalizedReportNanoseconds  string                 `json:"maxDurationShouldAcceptFinalizedReport"`
+	MaxDurationShouldTransmitAcceptedReportNanoseconds string                 `json:"maxDurationShouldTransmitAcceptedReport"`
 	ConfigPublicKeys                                   []string               `json:"configPublicKeys"`
-	ConfigEncodingSecret                    string                 `json:"configEncodingSecret"`
+	ConfigEncodingSecret                               string                 `json:"configEncodingSecret"`
 }
 
 type ReportingPluginConfig struct {
