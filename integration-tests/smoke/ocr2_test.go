@@ -35,6 +35,10 @@ func TestOCRBasic(t *testing.T) {
 		env  map[string]string
 	}{
 		{name: "embedded"},
+		{name: "plugins", env: map[string]string{
+			"CL_MEDIAN_CMD": "chainlink-feeds",
+			"CL_SOLANA_CMD": "chainlink-solana",
+		}},
 	} {
 		config, err := tc.GetConfig("Smoke", tc.OCR2)
 		if err != nil {
