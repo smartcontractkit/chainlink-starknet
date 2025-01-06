@@ -29,6 +29,7 @@ type OffchainConfig struct {
 	MaxDurationShouldTransmitAcceptedReportNanoseconds string                 `json:"maxDurationShouldTransmitAcceptedReport"`
 	ConfigPublicKeys                                   []string               `json:"configPublicKeys"`
 	ConfigEncodingSecret                               string                 `json:"configEncodingSecret"`
+	SignerSecret                                       string                 `json:"signerSecret"`
 }
 
 type ReportingPluginConfig struct {
@@ -69,6 +70,7 @@ var TestOCR2Config = OCR2Config{
 		MaxDurationShouldTransmitAcceptedReportNanoseconds: "2000000000ns",
 		// ConfigPublicKeys:                                   cfgKeys, // user defined
 		ConfigEncodingSecret: "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
+		SignerSecret:         "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
 	},
 	OffchainConfigVersion: 2,
 	Secret:                "awe accuse polygon tonic depart acuity onyx inform bound gilbert expire",
