@@ -15,4 +15,6 @@ runs:
       shell: bash
       run: |
         curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh 
-        snfoundryup -v ${{ inputs.starknet_foundry_version }}
+        snfoundryup -v ${STARKNET_FOUNDRY_VERSION}
+      env: 
+        STARKNET_FOUNDRY_VERSION: ${{ inputs.starknet_foundry_version }}
