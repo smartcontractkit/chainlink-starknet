@@ -33,6 +33,7 @@
     "@chainlink/starknet-gauntlet-token": "*",
     "@chainlink/starknet-gauntlet-multisig": "*",
     "@chainlink/starknet-gauntlet-emergency-protocol": "*",
-    "@chainlink/starknet-gauntlet-ledger": "*"
+    "@chainlink/starknet-gauntlet-ledger": "*",
+    "@chainlink/starknet-gauntlet-bridge": "*"
   }
 }

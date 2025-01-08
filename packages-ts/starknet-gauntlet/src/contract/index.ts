@@ -18,3 +18,10 @@ export const loadContract = (name: string): LoadContractResult => {
     ),
   }
 }
+
+export const loadContractByPath = (contractPath: string, casmPath: string): LoadContractResult => {
+  return {
+    contract: json.parse(fs.readFileSync(contractPath, 'utf-8')),
+    casm: json.parse(fs.readFileSync(casmPath, 'utf-8')),
+  }
+}

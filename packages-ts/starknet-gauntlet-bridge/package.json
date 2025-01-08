@@ -1,0 +1,31 @@
+{
+  "name": "@chainlink/starknet-gauntlet-bridge",
+  "version": "0.0.1",
+  "description": "Gauntlet Starknet Starkgate Bridge",
+  "keywords": [
+    "typescript",
+    "cli"
+  ],
+  "main": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "!dist/**/*.test.js"
+  ],
+  "scripts": {
+    "gauntlet": "ts-node ./src/index.ts",
+    "lint": "tsc",
+    "format": "yarn prettier --write ./src",
+    "format:check": "yarn prettier --check ./src",
+    "clean": "rm -rf ./dist/ ./bin/",
+    "build": "yarn clean && tsc -b",
+    "bundle": "yarn build && pkg ."
+  },
+  "dependencies": {
+    "@chainlink/evm-gauntlet": "^0.4.0",
+    "@chainlink/gauntlet-core": "0.3.1",
+    "@chainlink/starknet-gauntlet": "*",
+    "@chainlink/starknet-gauntlet-oz": "*",
+    "ethers": "^5.6.9"
+  }
+}
