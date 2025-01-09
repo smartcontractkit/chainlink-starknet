@@ -36,4 +36,4 @@ yarn gauntlet -h
 yarn gauntlet ocr2:deploy -h
 ```
 
-It will show details for the specificed function with their needed parameters and their types, if any
+It will show details for the specified function with their needed parameters and their types, if any
