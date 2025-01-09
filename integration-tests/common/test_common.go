@@ -138,7 +138,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	// When running soak we need to use K8S
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.DeployEnv()
-		m.StartGppWithoutNetwork()
+		m.StartGppDefaultNetwork()
 		if m.Common.Env.WillUseRemoteRunner() {
 			return
 		}
@@ -240,7 +240,7 @@ func (m *OCRv2TestState) DeployCluster() {
 }
 
 // Starts GauntletPP Without a network
-func (m *OCRv2TestState) StartGppWithoutNetwork() {
+func (m *OCRv2TestState) StartGppDefaultNetwork() {
 	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
 	url, err := gpp.StartContainer()
 	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url

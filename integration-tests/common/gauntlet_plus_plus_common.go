@@ -20,7 +20,6 @@ func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 		if key.TXKey.Data.Attributes.StarkKey == "" {
 			return nil, errors.New("stark key can't be empty")
 		}
-		//nAccount, err := m.Clients.GauntletClient.DeployAccountContract(100, key.TXKey.Data.Attributes.StarkKey)
 		nAccount, err := m.Clients.GauntletPPClient.DeployOzAccount(key.TXKey.Data.Attributes.StarkKey)
 		if err != nil {
 			return nil, err
@@ -32,7 +31,6 @@ func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 		for _, key := range nAccounts {
 			// We are not deploying in parallel here due to testnet limitations (429 too many requests)
 			l.Debug().Msg(fmt.Sprintf("Funding node with address: %s", key))
-			//_, err := m.Clients.GauntletClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "10000000000000000000") // Transferring 10 STRK to each node
 			err := m.Clients.GauntletPPClient.TransferToken(m.Common.ChainDetails.StarkTokenAddress, key, "10000000000000000000")
 			if err != nil {
 				return nil, err
@@ -172,6 +170,8 @@ func (m *OCRv2TestState) DeployGauntletPP(minSubmissionValue int64, maxSubmissio
 		return err
 	}
 
+	// Gauntlet PP set-config op has different functionality than legacy
+	// TODO: Investigate how to set config using GPP
 	err = m.setConfigDetails(m.Contracts.OCRAddr)
 	return err
 }
