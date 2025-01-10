@@ -1,0 +1,7 @@
+rules:
+  cache-poisoning:
+    ignore:
+      - monitoring-build-push-ecr.yml:49
+  github-env:
+    ignore:
+      - action.yml:35

@@ -21,7 +21,7 @@ fn main() {
     // Queries the aggregator for the latest round data
     let mut read_ocr_address_data = read_ocr_address.unwrap().data.span();
     let aggregator_address = Serde::<
-        starknet::ContractAddress
+        starknet::ContractAddress,
     >::deserialize(ref read_ocr_address_data)
         .unwrap();
     let latest_round = call(aggregator_address, selector!("latest_round_data"), array![]);
@@ -41,7 +41,7 @@ fn main() {
         selector!("set_answer"),
         array![round.answer.into()],
         Option::None,
-        Option::Some(get_nonce('pending'))
+        Option::Some(get_nonce('pending')),
     );
     if result.is_err() {
         println!("{:?}", result.unwrap_err());

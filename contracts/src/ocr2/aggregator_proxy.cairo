@@ -24,41 +24,32 @@ trait IAggregatorProxyInternal<TContractState> {
 
 #[starknet::contract]
 mod AggregatorProxy {
-    use super::IAggregatorProxy;
-    use super::IAggregatorDispatcher;
-    use super::IAggregatorDispatcherTrait;
+    use super::{IAggregatorProxy, IAggregatorDispatcher, IAggregatorDispatcherTrait};
 
-    use integer::u128s_from_felt252;
+    use integer::{u128s_from_felt252, Felt252TryIntoU128, U128IntoFelt252, U128sFromFelt252Result};
     use option::OptionTrait;
-    use traits::Into;
-    use traits::TryInto;
+    use traits::{Into, TryInto};
     use zeroable::Zeroable;
 
-    use starknet::ContractAddress;
-    use starknet::ContractAddressIntoFelt252;
-    use starknet::Felt252TryIntoContractAddress;
-    use integer::Felt252TryIntoU128;
-    use starknet::StorageBaseAddress;
-    use starknet::SyscallResult;
-    use integer::U128IntoFelt252;
-    use integer::U128sFromFelt252Result;
-    use starknet::storage_read_syscall;
-    use starknet::storage_write_syscall;
-    use starknet::storage_address_from_base_and_offset;
-    use starknet::class_hash::ClassHash;
-    use starknet::storage::Map;
+    use starknet::{
+        ContractAddress, ContractAddressIntoFelt252, Felt252TryIntoContractAddress,
+        StorageBaseAddress, SyscallResult, storage_read_syscall, storage_write_syscall,
+        storage_address_from_base_and_offset, class_hash::ClassHash, storage::Map,
+    };
 
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::upgrades::UpgradeableComponent;
 
-    use chainlink::ocr2::aggregator::IAggregator;
-    use chainlink::ocr2::aggregator::Round;
-    use chainlink::libraries::access_control::{AccessControlComponent, IAccessController};
-    use chainlink::libraries::access_control::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use chainlink::ocr2::aggregator::{IAggregator, Round};
+    use chainlink::libraries::access_control::{
+        AccessControlComponent, IAccessController,
+        AccessControlComponent::InternalTrait as AccessControlInternalTrait,
+    };
+    use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent;
     use chainlink::utils::split_felt;
     use chainlink::libraries::type_and_version::{
-        ITypeAndVersion, ITypeAndVersionDispatcher, ITypeAndVersionDispatcherTrait
+        ITypeAndVersion, ITypeAndVersionDispatcher, ITypeAndVersionDispatcherTrait,
     };
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
 
     const SHIFT: felt252 = 0x100000000000000000000000000000000;
     const MAX_ID: felt252 = 0xffffffffffffffffffffffffffffffff;
@@ -66,11 +57,16 @@ mod AggregatorProxy {
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Phase {
         id: u128,
-        aggregator: ContractAddress
+        aggregator: ContractAddress,
     }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent,
+    );
+
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
@@ -81,15 +77,25 @@ mod AggregatorProxy {
         AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl OwnerUpgradeableImpl =
+        OwnerUpgradeableComponent::OwnerUpgradeableImpl<ContractState>;
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        owner_upgradeable: OwnerUpgradeableComponent::Storage,
         _current_phase: Phase,
         _proposed_aggregator: ContractAddress,
-        _phases: Map<u128, ContractAddress>
+        _phases: Map<u128, ContractAddress>,
     }
 
     #[event]
@@ -99,6 +105,10 @@ mod AggregatorProxy {
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         AccessControlEvent: AccessControlComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event,
     }
 
     // TODO: refactor these events
@@ -179,15 +189,6 @@ mod AggregatorProxy {
         self._set_aggregator(address);
     }
 
-    // -- Upgradeable --
-
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            self.ownable.assert_only_owner();
-            Upgradeable::upgrade(new_impl)
-        }
-    }
 
     //
 

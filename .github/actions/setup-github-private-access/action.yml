@@ -12,5 +12,7 @@ runs:
     - name: Setup Go with private repo access
       shell: bash
       run: |
-        git config --global url."https://x-access-token:${{ inputs.gati_token }}@github.com/".insteadOf "https://github.com/"
+        git config --global url."https://x-access-token:${GATI_TOKEN}@github.com/".insteadOf "https://github.com/"
         go env -w GOPRIVATE=github.com/smartcontractkit/*
+      env:
+        GATI_TOKEN: ${{ inputs.gati_token }}

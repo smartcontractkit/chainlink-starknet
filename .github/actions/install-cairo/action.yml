@@ -8,7 +8,7 @@ inputs:
   #   required: false
   scarb_version:
     description: Scarb release version
-    default: "v2.8.2"
+    default: "v2.9.2"
     required: false
   use_musl_libc:
     description: "C library implementation"
@@ -33,12 +33,15 @@ runs:
       id: install-scarb
       shell: bash
       run: |
-        if [ "${{ inputs.use_musl_libc }}" = "true" ]; then
+        if [ "${USE_MUSL_LIBC}" = "true" ]; then
               libc_version="musl"
             else
               libc_version="gnu"
         fi
-        wget https://github.com/software-mansion/scarb/releases/download/${{ inputs.scarb_version }}/scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-${libc_version}.tar.gz
-        tar -xvzf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-${libc_version}.tar.gz
-        mv -vf scarb-${{ inputs.scarb_version }}-x86_64-unknown-linux-${libc_version} scarb-build
+        wget https://github.com/software-mansion/scarb/releases/download/${SCARB_VERSION}/scarb-${SCARB_VERSION}-x86_64-unknown-linux-${libc_version}.tar.gz
+        tar -xvzf scarb-${SCARB_VERSION}-x86_64-unknown-linux-${libc_version}.tar.gz
+        mv -vf scarb-${SCARB_VERSION}-x86_64-unknown-linux-${libc_version} scarb-build
         echo "$GITHUB_WORKSPACE/scarb-build/bin" >> $GITHUB_PATH
+      env:
+        USE_MUSL_LIBC: ${{ inputs.use_musl_libc }}
+        SCARB_VERSION: ${{ inputs.scarb_version }}

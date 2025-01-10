@@ -13,6 +13,10 @@ with pkgs; let
   };
 in
   mkShell' {
+    buildInputs = [
+      zizmor
+    ];
+
     nativeBuildInputs =
       [
         stdenv.cc.cc.lib

@@ -1,29 +1,23 @@
-use starknet::ContractAddress;
-use starknet::testing::set_caller_address;
-use starknet::testing::set_contract_address;
-use starknet::contract_address_const;
-use starknet::class_hash::class_hash_const;
-use starknet::class_hash::Felt252TryIntoClassHash;
-use starknet::syscalls::deploy_syscall;
+use starknet::{
+    ContractAddress, testing::{set_caller_address, set_contract_address}, contract_address_const,
+    class_hash::{class_hash_const, Felt252TryIntoClassHash}, syscalls::deploy_syscall,
+};
 
 use array::ArrayTrait;
-use traits::Into;
-use traits::TryInto;
+use traits::{Into, TryInto};
 use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::access_control::access_controller::AccessController;
-use chainlink::access_control::access_controller::AccessController::UpgradeableImpl;
-
+use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::libraries::access_control::{
-    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait
+    IAccessController, IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
 };
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
-
 
 fn STATE() -> AccessController::ContractState {
     AccessController::contract_state_for_testing()
@@ -41,14 +35,14 @@ fn test_upgrade_not_owner() {
     let _ = setup();
     let mut state = STATE();
 
-    UpgradeableImpl::upgrade(ref state, class_hash_const::<2>());
+    OwnerUpgradeableImpl::upgrade(ref state, class_hash_const::<2>());
 }
 
 #[test]
 fn test_access_control() {
     let owner = setup();
     // Deploy access controller
-    let calldata = array![owner.into(), // owner
+    let calldata = array![owner.into() // owner
     ];
 
     let contract = declare("AccessController").unwrap().contract_class();

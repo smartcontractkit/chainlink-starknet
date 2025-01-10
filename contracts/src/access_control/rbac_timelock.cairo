@@ -2,6 +2,7 @@ use starknet::ContractAddress;
 use alexandria_bytes::{Bytes, BytesTrait};
 use alexandria_encoding::sol_abi::sol_bytes::SolBytesTrait;
 use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+use chainlink::utils::{keccak};
 
 #[derive(Copy, Drop, Serde)]
 struct Call {
@@ -26,13 +27,14 @@ fn _hash_operation_batch(calls: Span<Call>, predecessor: u256, salt: u256) -> u2
     };
 
     encoded = encoded.encode(predecessor).encode(salt);
-    encoded.keccak()
+
+    keccak(@encoded.into())
 }
 
 #[starknet::interface]
 trait IRBACTimelock<TContractState> {
     fn schedule_batch(
-        ref self: TContractState, calls: Span<Call>, predecessor: u256, salt: u256, delay: u256
+        ref self: TContractState, calls: Span<Call>, predecessor: u256, salt: u256, delay: u256,
     );
     fn cancel(ref self: TContractState, id: u256);
     fn execute_batch(ref self: TContractState, calls: Span<Call>, predecessor: u256, salt: u256);
@@ -49,10 +51,12 @@ trait IRBACTimelock<TContractState> {
     fn get_timestamp(self: @TContractState, id: u256) -> u256;
     fn get_min_delay(self: @TContractState) -> u256;
     fn hash_operation_batch(
-        self: @TContractState, calls: Span<Call>, predecessor: u256, salt: u256
+        self: @TContractState, calls: Span<Call>, predecessor: u256, salt: u256,
     ) -> u256;
 }
 
+// refer to documentation at
+// https://github.com/smartcontractkit/ccip-owner-contracts/blob/4af63f531ee5c3a79f1d070292d848c63b3e4ef9/src/RBACTimelock.sol
 #[starknet::contract]
 mod RBACTimelock {
     use core::traits::TryInto;
@@ -61,8 +65,8 @@ mod RBACTimelock {
         ContractAddress, call_contract_syscall, StorageAddress,
         storage::{
             Map, StoragePointerReadAccess, StoragePointerWriteAccess, StorageMapReadAccess,
-            StorageMapWriteAccess, StoragePathEntry
-        }
+            StorageMapWriteAccess, StoragePathEntry,
+        },
     };
     use openzeppelin::{
         access::accesscontrol::AccessControlComponent, introspection::src5::SRC5Component,
@@ -79,7 +83,7 @@ mod RBACTimelock {
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
     component!(path: EnumerableSetComponent, storage: set, event: EnumerableSetEvent);
     component!(
-        path: ERC1155ReceiverComponent, storage: erc1155_receiver, event: ERC1155ReceiverEvent
+        path: ERC1155ReceiverComponent, storage: erc1155_receiver, event: ERC1155ReceiverEvent,
     );
     component!(path: ERC721ReceiverComponent, storage: erc721_receiver, event: ERC721ReceiverEvent);
 
@@ -109,7 +113,7 @@ mod RBACTimelock {
     // EnumerableSet
     impl EnumerableSetInternalImpl = EnumerableSetComponent::InternalImpl<ContractState>;
 
-    // we use sn_keccak intead of keccak256
+    // we use sn_keccak instead of keccak256
     const ADMIN_ROLE: felt252 = selector!("ADMIN_ROLE");
     const PROPOSER_ROLE: felt252 = selector!("PROPOSER_ROLE");
     const EXECUTOR_ROLE: felt252 = selector!("EXECUTOR_ROLE");
@@ -133,13 +137,13 @@ mod RBACTimelock {
         access_control: AccessControlComponent::Storage,
         // id -> timestamp
         _timestamps: Map<u256, u256>, // timestamp at which operation is ready to be executed
-        _min_delay: u256
+        _min_delay: u256,
     }
 
     #[derive(Drop, starknet::Event)]
     struct MinDelayChange {
         old_duration: u256,
-        new_duration: u256
+        new_duration: u256,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -159,7 +163,7 @@ mod RBACTimelock {
     #[derive(Drop, starknet::Event)]
     struct Cancelled {
         #[key]
-        id: u256
+        id: u256,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -185,13 +189,13 @@ mod RBACTimelock {
     #[derive(Drop, starknet::Event)]
     struct FunctionSelectorBlocked {
         #[key]
-        selector: felt252
+        selector: felt252,
     }
 
     #[derive(Drop, starknet::Event)]
     struct FunctionSelectorUnblocked {
         #[key]
-        selector: felt252
+        selector: felt252,
     }
 
     #[event]
@@ -213,7 +217,7 @@ mod RBACTimelock {
         CallExecuted: CallExecuted,
         BypasserCallExecuted: BypasserCallExecuted,
         FunctionSelectorBlocked: FunctionSelectorBlocked,
-        FunctionSelectorUnblocked: FunctionSelectorUnblocked
+        FunctionSelectorUnblocked: FunctionSelectorUnblocked,
     }
 
 
@@ -225,7 +229,7 @@ mod RBACTimelock {
         proposers: Array<ContractAddress>,
         executors: Array<ContractAddress>,
         cancellers: Array<ContractAddress>,
-        bypassers: Array<ContractAddress>
+        bypassers: Array<ContractAddress>,
     ) {
         self.access_control.initializer();
         self.erc1155_receiver.initializer();
@@ -265,14 +269,14 @@ mod RBACTimelock {
 
         self
             .emit(
-                Event::MinDelayChange(MinDelayChange { old_duration: 0, new_duration: min_delay, })
+                Event::MinDelayChange(MinDelayChange { old_duration: 0, new_duration: min_delay }),
             )
     }
 
     #[abi(embed_v0)]
     impl RBACTimelockImpl of super::IRBACTimelock<ContractState> {
         fn schedule_batch(
-            ref self: ContractState, calls: Span<Call>, predecessor: u256, salt: u256, delay: u256
+            ref self: ContractState, calls: Span<Call>, predecessor: u256, salt: u256, delay: u256,
         ) {
             self._assert_only_role_or_admin_role(PROPOSER_ROLE);
 
@@ -295,9 +299,9 @@ mod RBACTimelock {
                                 data: call.data,
                                 predecessor: predecessor,
                                 salt: salt,
-                                delay: delay
-                            }
-                        )
+                                delay: delay,
+                            },
+                        ),
                     );
 
                 i += 1;
@@ -315,7 +319,7 @@ mod RBACTimelock {
         }
 
         fn execute_batch(
-            ref self: ContractState, calls: Span<Call>, predecessor: u256, salt: u256
+            ref self: ContractState, calls: Span<Call>, predecessor: u256, salt: u256,
         ) {
             self._assert_only_role_or_admin_role(EXECUTOR_ROLE);
 
@@ -335,9 +339,9 @@ mod RBACTimelock {
                                 index: i.into(),
                                 target: call.target,
                                 selector: call.selector,
-                                data: call.data
-                            }
-                        )
+                                data: call.data,
+                            },
+                        ),
                     );
                 i += 1;
             };
@@ -359,9 +363,9 @@ mod RBACTimelock {
                                 index: i.into(),
                                 target: call.target,
                                 selector: call.selector,
-                                data: call.data
-                            }
-                        )
+                                data: call.data,
+                            },
+                        ),
                     );
 
                 i += 1;
@@ -380,8 +384,8 @@ mod RBACTimelock {
                     Event::MinDelayChange(
                         MinDelayChange {
                             old_duration: self._min_delay.read(), new_duration: new_delay,
-                        }
-                    )
+                        },
+                    ),
                 );
             self._min_delay.write(new_delay);
         }
@@ -394,8 +398,8 @@ mod RBACTimelock {
                 self
                     .emit(
                         Event::FunctionSelectorBlocked(
-                            FunctionSelectorBlocked { selector: selector }
-                        )
+                            FunctionSelectorBlocked { selector: selector },
+                        ),
                     );
             }
         }
@@ -407,8 +411,8 @@ mod RBACTimelock {
                 self
                     .emit(
                         Event::FunctionSelectorUnblocked(
-                            FunctionSelectorUnblocked { selector: selector }
-                        )
+                            FunctionSelectorUnblocked { selector: selector },
+                        ),
                     );
             }
         }
@@ -452,7 +456,7 @@ mod RBACTimelock {
         }
 
         fn hash_operation_batch(
-            self: @ContractState, calls: Span<Call>, predecessor: u256, salt: u256
+            self: @ContractState, calls: Span<Call>, predecessor: u256, salt: u256,
         ) -> u256 {
             _hash_operation_batch(calls, predecessor, salt)
         }
@@ -478,7 +482,8 @@ mod RBACTimelock {
         fn _before_call(self: @ContractState, id: u256, predecessor: u256) {
             assert(self.is_operation_ready(id), 'rbact: operation not ready');
             assert(
-                predecessor == 0 || self.is_operation_done(predecessor), 'rbact: missing dependency'
+                predecessor == 0 || self.is_operation_done(predecessor),
+                'rbact: missing dependency',
             );
         }
 

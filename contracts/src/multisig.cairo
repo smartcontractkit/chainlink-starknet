@@ -3,10 +3,8 @@ use option::OptionTrait;
 use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
-fn assert_unique_values<
-    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>,
->(
-    a: @Array::<T>
+fn assert_unique_values<T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>>(
+    a: @Array::<T>,
 ) {
     let len = a.len();
     _assert_unique_values_loop(a, len, 0_usize, 1_usize);
@@ -15,7 +13,7 @@ fn assert_unique_values<
 fn _assert_unique_values_loop<
     T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TPartialEq: PartialEq<T>,
 >(
-    a: @Array::<T>, len: usize, j: usize, k: usize
+    a: @Array::<T>, len: usize, j: usize, k: usize,
 ) {
     if j >= len {
         return ();
@@ -53,7 +51,7 @@ trait IMultisig<TContractState> {
         ref self: TContractState,
         to: ContractAddress,
         function_selector: felt252,
-        calldata: Array<felt252>
+        calldata: Array<felt252>,
     );
     fn confirm_transaction(ref self: TContractState, nonce: u128);
     fn revoke_confirmation(ref self: TContractState, nonce: u128);
@@ -61,7 +59,7 @@ trait IMultisig<TContractState> {
     fn set_threshold(ref self: TContractState, threshold: usize);
     fn set_signers(ref self: TContractState, signers: Array<ContractAddress>);
     fn set_signers_and_threshold(
-        ref self: TContractState, signers: Array<ContractAddress>, threshold: usize
+        ref self: TContractState, signers: Array<ContractAddress>, threshold: usize,
     );
 }
 
@@ -93,7 +91,7 @@ mod Multisig {
     use starknet::storage::Map;
 
     use chainlink::libraries::type_and_version::ITypeAndVersion;
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+    use chainlink::libraries::upgrades::v1::upgradeable::{Upgradeable, IUpgradeable};
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -113,7 +111,7 @@ mod Multisig {
         #[key]
         nonce: u128,
         #[key]
-        to: ContractAddress
+        to: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -121,7 +119,7 @@ mod Multisig {
         #[key]
         signer: ContractAddress,
         #[key]
-        nonce: u128
+        nonce: u128,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -129,7 +127,7 @@ mod Multisig {
         #[key]
         signer: ContractAddress,
         #[key]
-        nonce: u128
+        nonce: u128,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -137,19 +135,19 @@ mod Multisig {
         #[key]
         executor: ContractAddress,
         #[key]
-        nonce: u128
+        nonce: u128,
     }
 
     #[derive(Drop, starknet::Event)]
     struct SignersSet {
         #[key]
-        signers: Array<ContractAddress>
+        signers: Array<ContractAddress>,
     }
 
     #[derive(Drop, starknet::Event)]
     struct ThresholdSet {
         #[key]
-        threshold: usize
+        threshold: usize,
     }
 
     #[storage]
@@ -175,7 +173,7 @@ mod Multisig {
 
     #[abi(embed_v0)]
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
-        fn type_and_version(self: @ContractState,) -> felt252 {
+        fn type_and_version(self: @ContractState) -> felt252 {
             'Multisig 1.0.0'
         }
     }
@@ -196,7 +194,7 @@ mod Multisig {
             self._is_signer.read(address)
         }
 
-        fn get_signers_len(self: @ContractState,) -> usize {
+        fn get_signers_len(self: @ContractState) -> usize {
             self._signers_len.read()
         }
 
@@ -207,11 +205,11 @@ mod Multisig {
             signers
         }
 
-        fn get_threshold(self: @ContractState,) -> usize {
+        fn get_threshold(self: @ContractState) -> usize {
             self._threshold.read()
         }
 
-        fn get_transactions_len(self: @ContractState,) -> u128 {
+        fn get_transactions_len(self: @ContractState) -> u128 {
             self._next_nonce.read()
         }
 
@@ -252,7 +250,7 @@ mod Multisig {
                 function_selector: function_selector,
                 calldata_len: calldata_len,
                 executed: false,
-                confirmations: 0_usize
+                confirmations: 0_usize,
             };
             self._transactions.write(nonce, transaction);
 
@@ -262,8 +260,8 @@ mod Multisig {
             self
                 .emit(
                     Event::TransactionSubmitted(
-                        TransactionSubmitted { signer: caller, nonce: nonce, to: to }
-                    )
+                        TransactionSubmitted { signer: caller, nonce: nonce, to: to },
+                    ),
                 );
             self._next_nonce.write(nonce + 1_u128);
         }
@@ -286,8 +284,8 @@ mod Multisig {
             self
                 .emit(
                     Event::TransactionConfirmed(
-                        TransactionConfirmed { signer: caller, nonce: nonce }
-                    )
+                        TransactionConfirmed { signer: caller, nonce: nonce },
+                    ),
                 );
         }
 
@@ -308,7 +306,9 @@ mod Multisig {
 
             self
                 .emit(
-                    Event::ConfirmationRevoked(ConfirmationRevoked { signer: caller, nonce: nonce })
+                    Event::ConfirmationRevoked(
+                        ConfirmationRevoked { signer: caller, nonce: nonce },
+                    ),
                 );
         }
 
@@ -334,12 +334,12 @@ mod Multisig {
             self
                 .emit(
                     Event::TransactionExecuted(
-                        TransactionExecuted { executor: caller, nonce: nonce }
-                    )
+                        TransactionExecuted { executor: caller, nonce: nonce },
+                    ),
                 );
 
             let response = call_contract_syscall(
-                transaction.to, transaction.function_selector, calldata.span()
+                transaction.to, transaction.function_selector, calldata.span(),
             )
                 .unwrap_syscall();
 
@@ -382,7 +382,7 @@ mod Multisig {
         }
 
         fn set_signers_and_threshold(
-            ref self: ContractState, signers: Array<ContractAddress>, threshold: usize
+            ref self: ContractState, signers: Array<ContractAddress>, threshold: usize,
         ) {
             self._require_multisig();
 
@@ -400,7 +400,7 @@ mod Multisig {
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn _set_signers(
-            ref self: ContractState, signers: Array<ContractAddress>, signers_len: usize
+            ref self: ContractState, signers: Array<ContractAddress>, signers_len: usize,
         ) {
             self._require_unique_signers(@signers);
 
@@ -426,7 +426,7 @@ mod Multisig {
         }
 
         fn _set_signers_range(
-            ref self: ContractState, index: usize, len: usize, signers: @Array<ContractAddress>
+            ref self: ContractState, index: usize, len: usize, signers: @Array<ContractAddress>,
         ) {
             if index >= len {
                 return ();
@@ -440,7 +440,7 @@ mod Multisig {
         }
 
         fn _get_signers_range(
-            self: @ContractState, index: usize, len: usize, ref signers: Array<ContractAddress>
+            self: @ContractState, index: usize, len: usize, ref signers: Array<ContractAddress>,
         ) {
             if index >= len {
                 return ();
@@ -457,7 +457,7 @@ mod Multisig {
             nonce: u128,
             index: usize,
             len: usize,
-            calldata: @Array<felt252>
+            calldata: @Array<felt252>,
         ) {
             if index >= len {
                 return ();
@@ -474,7 +474,7 @@ mod Multisig {
             nonce: u128,
             index: usize,
             len: usize,
-            ref calldata: Array<felt252>
+            ref calldata: Array<felt252>,
         ) {
             if index >= len {
                 return ();

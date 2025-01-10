@@ -4,31 +4,31 @@ use chainlink::{
         RBACTimelock, IRBACTimelock, IRBACTimelockDispatcher, IRBACTimelockDispatcherTrait,
         IRBACTimelockSafeDispatcher, IRBACTimelockSafeDispatcherTrait,
         RBACTimelock::{ADMIN_ROLE, PROPOSER_ROLE, EXECUTOR_ROLE, CANCELLER_ROLE, BYPASSER_ROLE},
-        Call
+        Call,
     },
     libraries::mocks::mock_multisig_target::{
-        IMockMultisigTarget, IMockMultisigTargetDispatcherTrait, IMockMultisigTargetDispatcher
-    }
+        IMockMultisigTarget, IMockMultisigTargetDispatcherTrait, IMockMultisigTargetDispatcher,
+    },
 };
 use openzeppelin::{
     introspection::interface::{ISRC5, ISRC5Dispatcher, ISRC5DispatcherTrait, ISRC5_ID},
     access::accesscontrol::{
         interface::{
             IACCESSCONTROL_ID, IAccessControl, IAccessControlDispatcher,
-            IAccessControlDispatcherTrait
+            IAccessControlDispatcherTrait,
         },
-        accesscontrol::AccessControlComponent::Errors
+        accesscontrol::AccessControlComponent::Errors,
     },
-    token::{erc1155::interface::{IERC1155_RECEIVER_ID}, erc721::interface::{IERC721_RECEIVER_ID}}
+    token::{erc1155::interface::{IERC1155_RECEIVER_ID}, erc721::interface::{IERC721_RECEIVER_ID}},
 };
 use chainlink::tests::test_enumerable_set::{expect_out_of_bounds, expect_set_is_1_indexed};
 use snforge_std::{
     declare, ContractClassTrait, spy_events, EventSpyAssertionsTrait,
-    start_cheat_caller_address_global, start_cheat_block_timestamp_global, DeclareResultTrait
+    start_cheat_caller_address_global, start_cheat_block_timestamp_global, DeclareResultTrait,
 };
 
 fn deploy_args() -> (
-    u256, ContractAddress, ContractAddress, ContractAddress, ContractAddress, ContractAddress
+    u256, ContractAddress, ContractAddress, ContractAddress, ContractAddress, ContractAddress,
 ) {
     let min_delay: u256 = 0x9;
     let admin = contract_address_const::<1>();
@@ -70,7 +70,7 @@ fn setup_timelock() -> (ContractAddress, IRBACTimelockDispatcher, IRBACTimelockS
     (
         timelock_address,
         IRBACTimelockDispatcher { contract_address: timelock_address },
-        IRBACTimelockSafeDispatcher { contract_address: timelock_address }
+        IRBACTimelockSafeDispatcher { contract_address: timelock_address },
     )
 }
 
@@ -105,7 +105,7 @@ fn test_roles() {
             && timelock.get_role_admin(EXECUTOR_ROLE) == ADMIN_ROLE
             && timelock.get_role_admin(CANCELLER_ROLE) == ADMIN_ROLE
             && timelock.get_role_admin(BYPASSER_ROLE) == ADMIN_ROLE,
-        'admin role controls all roles'
+        'admin role controls all roles',
     );
 
     // admin address
@@ -130,10 +130,10 @@ fn test_deploy() {
                 (
                     timelock_address,
                     RBACTimelock::Event::MinDelayChange(
-                        RBACTimelock::MinDelayChange { old_duration: 0, new_duration: min_delay }
-                    )
-                )
-            ]
+                        RBACTimelock::MinDelayChange { old_duration: 0, new_duration: min_delay },
+                    ),
+                ),
+            ],
         );
 }
 
@@ -160,7 +160,7 @@ fn expect_missing_role(result: Result<(), Array<felt252>>) {
         Result::Ok(_) => panic!("expect 'Caller is missing role'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == Errors::MISSING_ROLE, *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -169,7 +169,7 @@ fn expect_operation_not_ready(result: Result<(), Array<felt252>>) {
         Result::Ok(_) => panic!("expect 'rbact: operation not ready'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'rbact: operation not ready', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -186,7 +186,7 @@ fn test_schedule_delay_too_small() {
         Result::Ok(_) => panic!("expect 'insufficient delay'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'insufficient delay', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -204,7 +204,7 @@ fn test_schedule_success() {
     let call = Call {
         target: contract_address_const::<100>(),
         selector: selector!("doesnt_exist"),
-        data: array![0x123].span()
+        data: array![0x123].span(),
     };
     let calls = array![call].span();
     let predecessor = 0;
@@ -232,11 +232,11 @@ fn test_schedule_success() {
                             data: call.data,
                             predecessor: predecessor,
                             salt: salt,
-                            delay: min_delay
-                        }
-                    )
-                )
-            ]
+                            delay: min_delay,
+                        },
+                    ),
+                ),
+            ],
         );
 
     assert(timelock.is_operation(id), 'should exist');
@@ -262,8 +262,8 @@ fn test_schedule_twice() {
         Call {
             target: contract_address_const::<100>(),
             selector: selector!("doesnt_exist"),
-            data: array![0x123].span()
-        }
+            data: array![0x123].span(),
+        },
     ]
         .span();
     let predecessor = 0;
@@ -276,7 +276,7 @@ fn test_schedule_twice() {
         Result::Ok(_) => panic!("expect 'operation already scheduled'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'operation already scheduled', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -297,8 +297,8 @@ fn test_schedule_blocked() {
 
     let calls = array![
         Call {
-            target: contract_address_const::<100>(), selector: selector, data: array![0x123].span()
-        }
+            target: contract_address_const::<100>(), selector: selector, data: array![0x123].span(),
+        },
     ]
         .span();
     let predecessor = 0;
@@ -309,7 +309,7 @@ fn test_schedule_blocked() {
         Result::Ok(_) => panic!("expect 'selector is blocked'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'selector is blocked', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -324,11 +324,11 @@ fn test_cancel_id_not_pending() {
     let mock_ready_time = mock_time + min_delay.try_into().unwrap();
 
     let call_1 = Call {
-        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span(),
     };
 
     let call_2 = Call {
-        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span(),
     };
 
     let calls = array![call_1, call_2].span();
@@ -344,7 +344,7 @@ fn test_cancel_id_not_pending() {
         Result::Ok(_) => panic!("expect 'rbact: cant cancel operation'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'rbact: cant cancel operation', *panic_data.at(0));
-        }
+        },
     }
 
     // test that after a batch has been executed, you can't cancel it
@@ -370,7 +370,7 @@ fn test_cancel_id_not_pending() {
         Result::Ok(_) => panic!("expect 'rbact: cant cancel operation'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'rbact: cant cancel operation', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -387,7 +387,7 @@ fn test_cancel_success() {
     let call = Call {
         target: contract_address_const::<100>(),
         selector: selector!("doesnt_exist"),
-        data: array![0x123].span()
+        data: array![0x123].span(),
     };
     let calls = array![call].span();
     let predecessor = 0;
@@ -407,9 +407,9 @@ fn test_cancel_success() {
             @array![
                 (
                     timelock_address,
-                    RBACTimelock::Event::Cancelled(RBACTimelock::Cancelled { id: id })
-                )
-            ]
+                    RBACTimelock::Event::Cancelled(RBACTimelock::Cancelled { id: id }),
+                ),
+            ],
         );
 
     assert(!timelock.is_operation(id), 'not operation');
@@ -428,11 +428,11 @@ fn test_execute_op_not_ready() {
     start_cheat_block_timestamp_global(mock_time);
 
     let call_1 = Call {
-        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span(),
     };
 
     let call_2 = Call {
-        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span(),
     };
 
     let calls = array![call_1, call_2].span();
@@ -475,7 +475,7 @@ fn test_execute_predecessor_invalid() {
     let call = Call {
         target: contract_address_const::<100>(),
         selector: selector!("doesnt_exist"),
-        data: array![0x123].span()
+        data: array![0x123].span(),
     };
     let calls = array![call].span();
     let predecessor = 4;
@@ -491,7 +491,7 @@ fn test_execute_predecessor_invalid() {
         Result::Ok(_) => panic!("expect 'rbact: missing dependency'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'rbact: missing dependency', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -534,11 +534,11 @@ fn test_execute_successful() {
     let mock_ready_time = mock_time + min_delay.try_into().unwrap();
 
     let call_1 = Call {
-        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span(),
     };
 
     let call_2 = Call {
-        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span(),
     };
 
     let calls = array![call_1, call_2].span();
@@ -570,9 +570,9 @@ fn test_execute_successful() {
                             index: 0,
                             target: call_1.target,
                             selector: call_1.selector,
-                            data: call_1.data
-                        }
-                    )
+                            data: call_1.data,
+                        },
+                    ),
                 ),
                 (
                     timelock_address,
@@ -582,11 +582,11 @@ fn test_execute_successful() {
                             index: 1,
                             target: call_2.target,
                             selector: call_2.selector,
-                            data: call_2.data
-                        }
-                    )
-                )
-            ]
+                            data: call_2.data,
+                        },
+                    ),
+                ),
+            ],
         );
 
     let (actual_value, actual_toggle) = target.read();
@@ -601,7 +601,7 @@ fn test_execute_successful() {
     let mock_ready_time = mock_time + min_delay.try_into().unwrap();
 
     let call_3 = Call {
-        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span(),
     };
     let calls = array![call_3].span();
     let predecessor = id;
@@ -632,11 +632,11 @@ fn test_execute_successful() {
                             index: 0,
                             target: call_3.target,
                             selector: call_3.selector,
-                            data: call_3.data
-                        }
-                    )
-                )
-            ]
+                            data: call_3.data,
+                        },
+                    ),
+                ),
+            ],
         );
 
     let (_, actual_toggle) = target.read();
@@ -662,11 +662,11 @@ fn test_update_delay_success() {
                     timelock_address,
                     RBACTimelock::Event::MinDelayChange(
                         RBACTimelock::MinDelayChange {
-                            old_duration: min_delay, new_duration: 0x92289
-                        }
-                    )
-                )
-            ]
+                            old_duration: min_delay, new_duration: 0x92289,
+                        },
+                    ),
+                ),
+            ],
         );
 
     assert(timelock.get_min_delay() == 0x92289, 'new min delay');
@@ -684,7 +684,7 @@ fn test_update_delay_no_affect_op_readiness() {
     let call = Call {
         target: contract_address_const::<100>(),
         selector: selector!("doesnt_exist"),
-        data: array![0x123].span()
+        data: array![0x123].span(),
     };
     let calls = array![call].span();
     let predecessor = 0;
@@ -714,11 +714,11 @@ fn test_bypasser_execute_success() {
     let mock_time = 3;
 
     let call_1 = Call {
-        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span(),
     };
 
     let call_2 = Call {
-        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span(),
     };
 
     let calls = array![call_1, call_2].span();
@@ -740,9 +740,9 @@ fn test_bypasser_execute_success() {
                             index: 0,
                             target: call_1.target,
                             selector: call_1.selector,
-                            data: call_1.data
-                        }
-                    )
+                            data: call_1.data,
+                        },
+                    ),
                 ),
                 (
                     timelock_address,
@@ -751,11 +751,11 @@ fn test_bypasser_execute_success() {
                             index: 1,
                             target: call_2.target,
                             selector: call_2.selector,
-                            data: call_2.data
-                        }
-                    )
-                )
-            ]
+                            data: call_2.data,
+                        },
+                    ),
+                ),
+            ],
         );
 
     let (actual_value, actual_toggle) = target.read();
@@ -783,10 +783,10 @@ fn test_unblock_selector() {
                 (
                     timelock_address,
                     RBACTimelock::Event::FunctionSelectorUnblocked(
-                        RBACTimelock::FunctionSelectorUnblocked { selector: selector, }
-                    )
-                )
-            ]
+                        RBACTimelock::FunctionSelectorUnblocked { selector: selector },
+                    ),
+                ),
+            ],
         );
 
     assert(timelock.get_blocked_function_selector_count() == 0, 'count is 0');
@@ -804,10 +804,10 @@ fn test_unblock_selector() {
                 (
                     timelock_address,
                     RBACTimelock::Event::FunctionSelectorUnblocked(
-                        RBACTimelock::FunctionSelectorUnblocked { selector: selector, }
-                    )
-                )
-            ]
+                        RBACTimelock::FunctionSelectorUnblocked { selector: selector },
+                    ),
+                ),
+            ],
         );
 
     assert(timelock.get_blocked_function_selector_count() == 0, 'count is 0');
@@ -872,11 +872,11 @@ fn test_lifecycle_of_id() {
     let mock_ready_time = mock_time + min_delay.try_into().unwrap();
 
     let call_1 = Call {
-        target: target_address, selector: selector!("set_value"), data: array![0x56162].span()
+        target: target_address, selector: selector!("set_value"), data: array![0x56162].span(),
     };
 
     let call_2 = Call {
-        target: target_address, selector: selector!("flip_toggle"), data: array![].span()
+        target: target_address, selector: selector!("flip_toggle"), data: array![].span(),
     };
 
     let calls = array![call_1, call_2].span();

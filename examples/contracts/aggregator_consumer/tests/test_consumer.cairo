@@ -48,7 +48,7 @@ fn test_set_and_read_latest_round() {
     // Deploys the mock aggregator
     let mock_aggregator_address = deploy_mock_aggregator(16);
     let mock_aggregator_dispatcher = IMockAggregatorDispatcher {
-        contract_address: mock_aggregator_address
+        contract_address: mock_aggregator_address,
     };
     let aggregator_dispatcher = IAggregatorDispatcher { contract_address: mock_aggregator_address };
 
@@ -82,7 +82,7 @@ fn test_set_and_read_answer() {
     // Deploys the mock aggregator
     let mock_aggregator_address = deploy_mock_aggregator(16);
     let mock_aggregator_dispatcher = IMockAggregatorDispatcher {
-        contract_address: mock_aggregator_address
+        contract_address: mock_aggregator_address,
     };
 
     // Deploys the consumer
@@ -91,7 +91,7 @@ fn test_set_and_read_answer() {
 
     // Let's make sure the AggregatorConsumer was initialized correctly
     assert(
-        consumer_dispatcher.read_ocr_address() == mock_aggregator_address, 'Invalid OCR address'
+        consumer_dispatcher.read_ocr_address() == mock_aggregator_address, 'Invalid OCR address',
     );
     assert(consumer_dispatcher.read_answer() == 0, 'Invalid initial answer');
 

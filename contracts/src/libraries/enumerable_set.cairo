@@ -5,8 +5,8 @@ mod EnumerableSetComponent {
         StorageAddress,
         storage::{
             Map, StoragePointerReadAccess, StoragePointerWriteAccess, StorageMapReadAccess,
-            StorageMapWriteAccess, StoragePathEntry
-        }
+            StorageMapWriteAccess, StoragePathEntry,
+        },
     };
 
     // set is 1-indexed, not 0-indexed
@@ -23,7 +23,7 @@ mod EnumerableSetComponent {
         // _length.read(set_id)
         pub _values: Map<felt252, Map<usize, felt252>>,
         // set_id -> size of set
-        pub _length: Map<felt252, usize>
+        pub _length: Map<felt252, usize>,
     }
 
     #[event]
@@ -33,7 +33,7 @@ mod EnumerableSetComponent {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>
+        TContractState, +HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn add(ref self: ComponentState<TContractState>, set_id: felt252, value: felt252) -> bool {
             if !self.contains(set_id, value) {
@@ -50,7 +50,7 @@ mod EnumerableSetComponent {
 
         // swap target value with the last value in the set
         fn remove(
-            ref self: ComponentState<TContractState>, set_id: felt252, target_value: felt252
+            ref self: ComponentState<TContractState>, set_id: felt252, target_value: felt252,
         ) -> bool {
             let target_index = self._indexes.entry(set_id).entry(target_value).read();
             if target_index == 0 {
@@ -79,7 +79,7 @@ mod EnumerableSetComponent {
         }
 
         fn contains(
-            self: @ComponentState<TContractState>, set_id: felt252, value: felt252
+            self: @ComponentState<TContractState>, set_id: felt252, value: felt252,
         ) -> bool {
             self._indexes.entry(set_id).entry(value).read() != 0
         }

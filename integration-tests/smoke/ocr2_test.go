@@ -48,7 +48,6 @@ func TestOCRBasic(t *testing.T) {
 		require.NoError(t, err, "Could not set CHAINLINK_ENV_USER")
 		err = os.Setenv("INTERNAL_DOCKER_REPO", *config.Common.InternalDockerRepo)
 		require.NoError(t, err, "Could not set INTERNAL_DOCKER_REPO")
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			logging.Init()

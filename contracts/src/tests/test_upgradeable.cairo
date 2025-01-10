@@ -6,19 +6,19 @@ use starknet::contract_address_const;
 use starknet::class_hash::class_hash_const;
 use starknet::syscalls::deploy_syscall;
 
-use chainlink::libraries::upgradeable::Upgradeable;
+use chainlink::libraries::upgrades::v1::upgradeable::Upgradeable;
 use chainlink::libraries::mocks::mock_upgradeable::{
     MockUpgradeable, IMockUpgradeableDispatcher, IMockUpgradeableDispatcherTrait,
-    IMockUpgradeableDispatcherImpl
+    IMockUpgradeableDispatcherImpl,
 };
 use chainlink::libraries::mocks::mock_non_upgradeable::{
     MockNonUpgradeable, IMockNonUpgradeableDispatcher, IMockNonUpgradeableDispatcherTrait,
-    IMockNonUpgradeableDispatcherImpl
+    IMockNonUpgradeableDispatcherImpl,
 };
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 

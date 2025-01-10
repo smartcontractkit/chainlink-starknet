@@ -2,7 +2,7 @@ use starknet::ContractAddress;
 
 // This token is deployed by the StarkGate bridge
 
-// https://github.com/starknet-io/starkgate-contracts/blob/v2.0/src/cairo/mintable_token_interface.cairo
+// https://github.com/starknet-io/starkgate-contracts/blob/eedee8304e8c407c2e0e03c83187dbc5dcc6787e/src/cairo/mintable_token_interface.cairo
 #[starknet::interface]
 trait IMintableToken<TContractState> {
     fn permissioned_mint(ref self: TContractState, account: ContractAddress, amount: u256);
@@ -22,23 +22,28 @@ mod LinkToken {
     use zeroable::Zeroable;
     use openzeppelin::{
         token::erc20::{
-            ERC20Component, interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait}
+            ERC20Component, interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait},
         },
-        access::ownable::OwnableComponent
+        access::ownable::OwnableComponent, upgrades::UpgradeableComponent,
     };
     use super::{IMintableToken, IMinter};
     use chainlink::libraries::{
         token::v2::erc677::ERC677Component, type_and_version::ITypeAndVersion,
-        upgradeable::{Upgradeable, IUpgradeable}
+        upgrades::v1::upgradeable::{Upgradeable, IUpgradeable},
+        upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: ERC677Component, storage: erc677, event: ERC677Event);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(
+        path: OwnerUpgradeableComponent, storage: owner_upgradeable, event: OwnerUpgradeableEvent,
+    );
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
-    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
@@ -49,6 +54,12 @@ mod LinkToken {
     #[abi(embed_v0)]
     impl ERC677Impl = ERC677Component::ERC677Impl<ContractState>;
 
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl OwnerUpgradeableImpl =
+        OwnerUpgradeableComponent::OwnerUpgradeableImpl<ContractState>;
+
     #[storage]
     struct Storage {
         LinkTokenV2_minter: ContractAddress,
@@ -58,14 +69,17 @@ mod LinkToken {
         erc20: ERC20Component::Storage,
         #[substorage(v0)]
         erc677: ERC677Component::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        owner_upgradeable: OwnerUpgradeableComponent::Storage,
     }
 
     #[derive(Drop, starknet::Event)]
     struct LinkTokenV2NewMinter {
         old_minter: ContractAddress,
-        new_minter: ContractAddress
+        new_minter: ContractAddress,
     }
-
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -76,7 +90,11 @@ mod LinkToken {
         #[flat]
         ERC20Event: ERC20Component::Event,
         #[flat]
-        ERC677Event: ERC677Component::Event
+        ERC677Event: ERC677Component::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        OwnerUpgradeableEvent: OwnerUpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -89,7 +107,7 @@ mod LinkToken {
         _initial_recipient_ignore: ContractAddress,
         initial_minter: ContractAddress,
         owner: ContractAddress,
-        _upgrade_delay_ignore: u64
+        _upgrade_delay_ignore: u64,
     ) {
         let name = "ChainLink Token";
         let symbol = "LINK";
@@ -104,9 +122,9 @@ mod LinkToken {
             .emit(
                 Event::LinkTokenV2NewMinter(
                     LinkTokenV2NewMinter {
-                        old_minter: contract_address_const::<0>(), new_minter: initial_minter
-                    }
-                )
+                        old_minter: contract_address_const::<0>(), new_minter: initial_minter,
+                    },
+                ),
             );
     }
 
@@ -115,14 +133,14 @@ mod LinkToken {
             ref self: ERC20Component::ComponentState::<ContractState>,
             from: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {}
 
         fn after_update(
             ref self: ERC20Component::ComponentState::<ContractState>,
             from: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {}
     }
 
@@ -146,14 +164,15 @@ mod LinkToken {
 
             let prev_minter = self.LinkTokenV2_minter.read();
             assert(new_minter != prev_minter, 'is minter already');
+            assert(!new_minter.is_zero(), 'minter is 0');
 
             self.LinkTokenV2_minter.write(new_minter);
 
             self
                 .emit(
                     Event::LinkTokenV2NewMinter(
-                        LinkTokenV2NewMinter { old_minter: prev_minter, new_minter: new_minter }
-                    )
+                        LinkTokenV2NewMinter { old_minter: prev_minter, new_minter: new_minter },
+                    ),
                 );
         }
 
@@ -166,14 +185,6 @@ mod LinkToken {
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
             'LinkToken 2.0.0'
-        }
-    }
-
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_impl: ClassHash) {
-            self.ownable.assert_only_owner();
-            Upgradeable::upgrade(new_impl)
         }
     }
 

@@ -10,7 +10,7 @@ trait IMockUpgradeable<TContractState> {
 mod MockUpgradeable {
     use starknet::class_hash::ClassHash;
 
-    use chainlink::libraries::upgradeable::Upgradeable;
+    use chainlink::libraries::upgrades::v1::upgradeable::Upgradeable;
 
     #[storage]
     struct Storage {}

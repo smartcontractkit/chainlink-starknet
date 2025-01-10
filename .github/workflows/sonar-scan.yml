@@ -10,13 +10,14 @@ jobs:
     if: always()
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          persist-credentials: false
 
       - name: Wait for Workflows
         id: wait
-        uses: smartcontractkit/chainlink-github-actions/utils/wait-for-workflows@main
+        uses: smartcontractkit/chainlink-github-actions/utils/wait-for-workflows@fb7d3b28c16da25950f4a5d8b15d23b2491dbd8d
         with:
           max-timeout: "1200"
           polling-interval: "30"
@@ -33,10 +34,10 @@ jobs:
     if: always()
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           fetch-depth: 0 # fetches all history for all tags and branches to provide more metadata for sonar reports
-
+          persist-credentials: false
       - name: Download Golangci unit tests reports
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # v6
         with:
@@ -95,16 +96,20 @@ jobs:
 
       - name: Update ESLint report symlinks
         continue-on-error: true
-        run: sed -i 's+/home/runner/work/feeds-manager/feeds-manager/+/github/workspace/+g' ${{ steps.sonarqube_report_paths.outputs.sonarqube_eslint_report_paths }}
+        run: sed -i 's+/home/runner/work/feeds-manager/feeds-manager/+/github/workspace/+g' "${ SONAR_ESLINT_REPORT_PATHS }"
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@86fe81775628f1c6349c28baab87881a2170f495 # v2.1.0
         with:
           args: >
-            -Dsonar.go.tests.reportPaths=${{ steps.sonarqube_report_paths.outputs.sonarqube_tests_report_paths }}
-            -Dsonar.go.coverage.reportPaths=${{ steps.sonarqube_report_paths.outputs.sonarqube_coverage_report_paths }}
-            -Dsonar.go.golangci-lint.reportPaths=${{ steps.sonarqube_report_paths.outputs.sonarqube_golangci_report_paths }}
-            -Dsonar.eslint.reportPaths=${{ steps.sonarqube_report_paths.outputs.sonarqube_eslint_report_paths }}
+            -Dsonar.go.tests.reportPaths="${SONAR_TESTS_REPORT_PATHS}"
+            -Dsonar.go.coverage.reportPaths="${SONAR_COVERAGE_REPORT_PATHS}"
+            -Dsonar.go.golangci-lint.reportPaths="${SONAR_GOLANGCI_REPORT_PATHS}"
+            -Dsonar.eslint.reportPaths="${SONAR_ESLINT_REPORT_PATHS}"
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_ESLINT_REPORT_PATHS: ${{ steps.sonarqube_report_paths.outputs.sonarqube_eslint_report_paths }}
+          SONAR_GOLANGCI_REPORT_PATHS: ${{ steps.sonarqube_report_paths.outputs.sonarqube_golangci_report_paths }}
+          SONAR_COVERAGE_REPORT_PATHS: ${{ steps.sonarqube_report_paths.outputs.sonarqube_coverage_report_paths }}
+          SONAR_TESTS_REPORT_PATHS: ${{ steps.sonarqube_report_paths.outputs.sonarqube_tests_report_paths }}

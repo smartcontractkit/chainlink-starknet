@@ -12,16 +12,17 @@ use option::OptionTrait;
 use core::result::ResultTrait;
 
 use chainlink::ocr2::mocks::mock_aggregator::{
-    MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait
+    MockAggregator, IMockAggregator, IMockAggregatorDispatcher, IMockAggregatorDispatcherTrait,
 };
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy;
 use chainlink::ocr2::aggregator_proxy::AggregatorProxy::{
-    AggregatorProxyImpl, AggregatorProxyInternal, UpgradeableImpl
+    AggregatorProxyImpl, AggregatorProxyInternal,
 };
 use chainlink::libraries::access_control::{
     IAccessControllerDispatcher, IAccessControllerDispatcherTrait,
-    AccessControlComponent::AccessControlImpl
+    AccessControlComponent::AccessControlImpl,
 };
+use chainlink::libraries::upgrades::v2::owner_upgradeable::OwnerUpgradeableComponent::OwnerUpgradeableImpl;
 use chainlink::ocr2::aggregator::Round;
 use chainlink::utils::split_felt;
 use chainlink::tests::test_ownable::should_implement_ownable;
@@ -29,7 +30,7 @@ use chainlink::tests::test_access_controller::should_implement_access_control;
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, DeclareResultTrait
+    stop_cheat_caller_address_global, DeclareResultTrait,
 };
 
 
@@ -42,7 +43,7 @@ fn setup() -> (
     ContractAddress,
     IMockAggregatorDispatcher,
     ContractAddress,
-    IMockAggregatorDispatcher
+    IMockAggregatorDispatcher,
 ) {
     // Set account as default caller
     let account: ContractAddress = contract_address_const::<1>();
@@ -79,7 +80,7 @@ fn test_ownable() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
-     mockAggregatorAddr.into(),];
+    mockAggregatorAddr.into()];
     let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
         .unwrap()
         .contract_class()
@@ -94,7 +95,7 @@ fn test_access_control() {
     let (account, mockAggregatorAddr, _, _, _) = setup();
     // Deploy aggregator proxy
     let calldata = array![account.into(), // owner = account
-     mockAggregatorAddr.into(),];
+    mockAggregatorAddr.into()];
 
     let (aggregatorProxyAddr, _) = declare("AggregatorProxy")
         .unwrap()
@@ -113,7 +114,7 @@ fn test_access_control() {
 fn test_upgrade_non_owner() {
     let (_, _, _, _, _) = setup();
     let mut state = STATE();
-    UpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
+    OwnerUpgradeableImpl::upgrade(ref state, class_hash_const::<123>());
 }
 
 fn test_query_latest_round_data() {

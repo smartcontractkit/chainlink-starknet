@@ -1,4 +1,4 @@
-name: Example Contracts
+name: Static Analysis
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
   pull_request:
 
 jobs:
-  run_examples_tests:
-    name: Run Tests
+  zizmor_analyzer:
+    name: Zizmor
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -22,11 +22,5 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install Cairo
-        uses: ./.github/actions/install-cairo
-
-      - name: Install Starknet Foundry
-        uses: ./.github/actions/install-starknet-foundry
-
-      - name: Test
-        run: nix develop -c make test-examples
+      - name: Check Zizmor
+        run: nix develop -c zizmor --pedantic --config zizmor.yml .

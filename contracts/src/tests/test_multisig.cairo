@@ -19,7 +19,7 @@ use chainlink::multisig::{IMultisigDispatcher};
 
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global, cheat_caller_address, CheatSpan, DeclareResultTrait
+    stop_cheat_caller_address_global, cheat_caller_address, CheatSpan, DeclareResultTrait,
 };
 
 fn STATE() -> Multisig::ContractState {
@@ -114,7 +114,7 @@ fn test_submit_transaction() {
     let to = contract_address_const::<42>();
     let function_selector = 10;
     MultisigImpl::submit_transaction(
-        ref state, :to, :function_selector, calldata: sample_calldata()
+        ref state, :to, :function_selector, calldata: sample_calldata(),
     );
 
     let (transaction, _) = MultisigImpl::get_transaction(@state, 0);
@@ -162,7 +162,7 @@ fn test_confirm_transaction() {
 
     assert(MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer1), 'should be confirmed');
     assert(
-        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed'
+        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed',
     );
     let (transaction, _) = MultisigImpl::get_transaction(@state, 0);
     assert(transaction.confirmations == 1, 'should have confirmation');
@@ -206,10 +206,10 @@ fn test_revoke_confirmation() {
     MultisigImpl::revoke_confirmation(ref state, nonce: 0);
 
     assert(
-        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer1), 'should not be confirmed'
+        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer1), 'should not be confirmed',
     );
     assert(
-        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed'
+        !MultisigImpl::is_confirmed(@state, nonce: 0, signer: signer2), 'should not be confirmed',
     );
     let (transaction, _) = MultisigImpl::get_transaction(@state, 0);
     assert(transaction.confirmations == 0, 'should not have confirmation');
@@ -687,7 +687,7 @@ fn test_recursive_set_signers_and_threshold() {
         .submit_transaction(
             multisig_address,
             selector!("set_signers_and_threshold"),
-            set_signers_and_threshold_calldata
+            set_signers_and_threshold_calldata,
         );
 
     // Signer 1 confirms the transaction

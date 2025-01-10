@@ -2,7 +2,7 @@
 mod InvalidReceiver {
     #[storage]
     struct Storage {
-        _supports: bool
+        _supports: bool,
     }
 
     #[constructor]

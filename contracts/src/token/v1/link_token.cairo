@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 
-// https://github.com/starknet-io/starkgate-contracts/blob/v2.0/src/cairo/mintable_token_interface.cairo
+// https://github.com/starknet-io/starkgate-contracts/blob/eedee8304e8c407c2e0e03c83187dbc5dcc6787e/src/cairo/mintable_token_interface.cairo
 #[starknet::interface]
 trait IMintableToken<TContractState> {
     fn permissioned_mint(ref self: TContractState, account: ContractAddress, amount: u256);
@@ -21,7 +21,7 @@ mod LinkToken {
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use chainlink::libraries::token::v1::erc677::ERC677Component;
     use chainlink::libraries::type_and_version::ITypeAndVersion;
-    use chainlink::libraries::upgradeable::{Upgradeable, IUpgradeable};
+    use chainlink::libraries::upgrades::v1::upgradeable::{Upgradeable, IUpgradeable};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
@@ -48,7 +48,7 @@ mod LinkToken {
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
         #[substorage(v0)]
-        erc677: ERC677Component::Storage
+        erc677: ERC677Component::Storage,
     }
 
     #[event]
@@ -59,7 +59,7 @@ mod LinkToken {
         #[flat]
         ERC20Event: ERC20Component::Event,
         #[flat]
-        ERC677Event: ERC677Component::Event
+        ERC677Event: ERC677Component::Event,
     }
 
     //
@@ -83,14 +83,14 @@ mod LinkToken {
             ref self: ERC20Component::ComponentState::<ContractState>,
             from: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {}
 
         fn after_update(
             ref self: ERC20Component::ComponentState::<ContractState>,
             from: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {}
     }
 

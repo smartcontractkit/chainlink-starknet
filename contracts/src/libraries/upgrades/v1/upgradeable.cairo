@@ -1,6 +1,8 @@
 use starknet::class_hash::ClassHash;
 
-// TODO: drop for OZ upgradeable
+// DEPRECATED: Kept around for the starknet multisig.
+// Use OZ for internal upgradeability and v2/owner_upgradeable.cairo for public owner
+// upgradeablility
 
 #[starknet::interface]
 trait IUpgradeable<TContractState> {
@@ -11,7 +13,7 @@ trait IUpgradeable<TContractState> {
 #[derive(Drop, starknet::Event)]
 struct Upgraded {
     #[key]
-    new_impl: ClassHash
+    new_impl: ClassHash,
 }
 
 mod Upgradeable {

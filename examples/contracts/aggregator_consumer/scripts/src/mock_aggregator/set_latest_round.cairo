@@ -20,7 +20,7 @@ fn main() {
         selector!("set_latest_round_data"),
         array![answer, block_num, observation_timestamp, transmission_timestamp],
         Option::None,
-        Option::Some(get_nonce('pending'))
+        Option::Some(get_nonce('pending')),
     );
 
     if result.is_err() {

@@ -1,6 +1,6 @@
 use starknet::{contract_address_const, EthAddress};
 use chainlink::libraries::mocks::mock_multisig_target::{
-    IMockMultisigTarget, IMockMultisigTargetDispatcherTrait, IMockMultisigTargetDispatcher
+    IMockMultisigTarget, IMockMultisigTargetDispatcherTrait, IMockMultisigTargetDispatcher,
 };
 use chainlink::mcms::{
     ExpiringRootAndOpCount, RootMetadata, Config, Signer, ManyChainMultiSig, Op,
@@ -21,20 +21,20 @@ fn test_success() {
         mut spy,
         mcms_address,
         mcms,
-        safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -59,11 +59,11 @@ fn test_success() {
                     mcms_address,
                     ManyChainMultiSig::Event::OpExecuted(
                         ManyChainMultiSig::OpExecuted {
-                            nonce: op1.nonce, to: op1.to, selector: op1.selector, data: op1.data
-                        }
-                    )
-                )
-            ]
+                            nonce: op1.nonce, to: op1.to, selector: op1.selector, data: op1.data,
+                        },
+                    ),
+                ),
+            ],
         );
 
     assert(mcms.get_op_count() == 1, 'op count should be 1');
@@ -83,11 +83,11 @@ fn test_success() {
                     mcms_address,
                     ManyChainMultiSig::Event::OpExecuted(
                         ManyChainMultiSig::OpExecuted {
-                            nonce: op2.nonce, to: op2.to, selector: op2.selector, data: op2.data
-                        }
-                    )
-                )
-            ]
+                            nonce: op2.nonce, to: op2.to, selector: op2.selector, data: op2.data,
+                        },
+                    ),
+                ),
+            ],
         );
 
     assert(mcms.get_op_count() == 2, 'op count should be 2');
@@ -100,23 +100,23 @@ fn test_success() {
 #[feature("safe_dispatcher")]
 fn test_no_more_ops_to_execute() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -136,7 +136,7 @@ fn test_no_more_ops_to_execute() {
         Result::Ok(_) => panic!("expect 'post-operation count reached'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'post-operation count reached', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -144,23 +144,23 @@ fn test_no_more_ops_to_execute() {
 #[feature("safe_dispatcher")]
 fn test_wrong_chain_id() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -176,7 +176,7 @@ fn test_wrong_chain_id() {
         Result::Ok(_) => panic!("expect 'wrong chain id'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong chain id', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -184,23 +184,23 @@ fn test_wrong_chain_id() {
 #[feature("safe_dispatcher")]
 fn test_wrong_multisig_address() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -216,7 +216,7 @@ fn test_wrong_multisig_address() {
         Result::Ok(_) => panic!("expect 'wrong multisig address'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong multisig address', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -225,23 +225,23 @@ fn test_wrong_multisig_address() {
 #[feature("safe_dispatcher")]
 fn test_root_expired() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -257,7 +257,7 @@ fn test_root_expired() {
         Result::Ok(_) => panic!("expect 'root has expired'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'root has expired', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -265,23 +265,23 @@ fn test_root_expired() {
 #[feature("safe_dispatcher")]
 fn test_wrong_nonce() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        ops_proof,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -297,7 +297,7 @@ fn test_wrong_nonce() {
         Result::Ok(_) => panic!("expect 'wrong nonce'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'wrong nonce', *panic_data.at(0));
-        }
+        },
     }
 }
 
@@ -305,23 +305,23 @@ fn test_wrong_nonce() {
 #[feature("safe_dispatcher")]
 fn test_proof_verification_failed() {
     let (
-        mut spy,
-        mcms_address,
+        _,
+        _,
         mcms,
         safe_mcms,
-        config,
-        signer_addresses,
-        signer_groups,
-        group_quorums,
-        group_parents,
-        clear_root,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
         root,
         valid_until,
         metadata,
         metadata_proof,
         signatures,
         ops,
-        ops_proof
+        _,
     ) =
         setup_mcms_deploy_set_config_and_set_root();
 
@@ -336,7 +336,7 @@ fn test_proof_verification_failed() {
         Result::Ok(_) => panic!("expect 'proof verification failed'"),
         Result::Err(panic_data) => {
             assert(*panic_data.at(0) == 'proof verification failed', *panic_data.at(0));
-        }
+        },
     }
 }
 

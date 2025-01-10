@@ -5,7 +5,8 @@ use starknet::contract_address_const;
 use chainlink::ocr2::aggregator::Round;
 
 use snforge_std::{
-    declare, ContractClassTrait, start_cheat_caller_address_global, stop_cheat_caller_address_global
+    declare, ContractClassTrait, start_cheat_caller_address_global,
+    stop_cheat_caller_address_global,
 };
 
 fn STATE() -> MockAggregator::ContractState {
@@ -32,14 +33,14 @@ fn test_deploy() {
     let latest_round = MockAggregator::Aggregator::latest_round_data(@state);
 
     let _ = Round {
-        round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64
+        round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64,
     };
 
     assert(
         latest_round == Round {
-            round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64
+            round_id: 0, answer: 0_u128, block_num: 0_u64, started_at: 0_u64, updated_at: 0_u64,
         },
-        'rounds'
+        'rounds',
     );
 }
 
@@ -54,16 +55,16 @@ fn test_set_latest_round() {
     MockAggregator::MockImpl::set_latest_round_data(ref state, 777_u128, 777_u64, 777_u64, 777_u64);
 
     let expected_round = Round {
-        round_id: 1, answer: 777_u128, block_num: 777_u64, started_at: 777_u64, updated_at: 777_u64
+        round_id: 1, answer: 777_u128, block_num: 777_u64, started_at: 777_u64, updated_at: 777_u64,
     };
 
     assert(
-        MockAggregator::Aggregator::latest_round_data(@state) == expected_round, 'round not equal'
+        MockAggregator::Aggregator::latest_round_data(@state) == expected_round, 'round not equal',
     );
 
     assert(
         MockAggregator::Aggregator::latest_answer(@state) == expected_round.answer,
-        'latest answer not equal'
+        'latest answer not equal',
     );
 }
 
