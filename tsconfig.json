@@ -31,7 +31,10 @@
       "path": "./packages-ts/starknet-gauntlet-ledger"
     },
     {
-      "path": "./packages-ts/starknet-gauntlet-cli"
+      "path": "./packages-ts/starknet-gauntlet-bridge"
     },
+    {
+      "path": "./packages-ts/starknet-gauntlet-cli"
+    }
   ]
 }

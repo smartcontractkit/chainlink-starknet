@@ -22,6 +22,7 @@ import {
   inspectionCommands as MultisigInspectionCommands,
   wrapCommand as multisigWrapCommand,
 } from '@chainlink/starknet-gauntlet-multisig'
+import { L2Commands as BridgeCommands } from '@chainlink/starknet-gauntlet-bridge'
 
 import { executeCLI } from '@chainlink/gauntlet-core'
 import { existsSync } from 'fs'
@@ -129,6 +130,7 @@ const L2ExecuteCommands = [
   ...ArgentCommands,
   ...MultisigExecuteCommands,
   ...L2EmergencyProtocolCommands,
+  ...BridgeCommands,
 ]
 
 const msigCommands = L2ExecuteCommands.map((c) => registerExecuteCommand(c, true)).map(

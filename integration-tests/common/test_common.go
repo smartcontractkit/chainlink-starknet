@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	test_env_integrations "github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
 
 	test_env_starknet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv"
+	test_env_gauntlet "github.com/smartcontractkit/chainlink-starknet/integration-tests/docker/testenv/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops"
@@ -136,7 +138,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	// When running soak we need to use K8S
 	if *m.Common.TestConfig.Common.InsideK8s {
 		m.DeployEnv()
-
+		m.StartGppDefaultNetwork()
 		if m.Common.Env.WillUseRemoteRunner() {
 			return
 		}
@@ -145,6 +147,7 @@ func (m *OCRv2TestState) DeployCluster() {
 
 		// Checking whether we are running in a remote runner since the forwarding is not working there and we need the public IP
 		// In that case it is http://127.0.0.1:0 so we do a check and get the public IP
+
 		if m.Common.RPCDetails.RPCL2External == "http://127.0.0.1:0" {
 			m.Common.RPCDetails.RPCL2External = m.Common.Env.URLs["starknet-dev"][1]
 		}
@@ -159,6 +162,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	} else { // Otherwise use docker
 		env, err := test_env_integrations.NewTestEnv()
 		require.NoError(m.TestConfig.T, err)
+		m.StartGppWithNetwork(env.DockerNetwork.Name)
 		stark := test_env_starknet.NewStarknet([]string{env.DockerNetwork.Name}, *m.Common.TestConfig.Common.DevnetImage)
 		err = stark.StartContainer()
 		require.NoError(m.TestConfig.T, err)
@@ -235,6 +239,22 @@ func (m *OCRv2TestState) DeployCluster() {
 	}
 }
 
+// Starts GauntletPP Without a network
+func (m *OCRv2TestState) StartGppDefaultNetwork() {
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	url, err := gpp.StartContainer()
+	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
+	require.NoError(m.TestConfig.T, err)
+}
+
+// Starts GauntletPP with a network
+func (m *OCRv2TestState) StartGppWithNetwork(networkName string) {
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	url, err := gpp.StartContainer()
+	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
+	require.NoError(m.TestConfig.T, err)
+}
+
 // DeployEnv Deploys the environment
 func (m *OCRv2TestState) DeployEnv() {
 	err := m.Common.Env.Run()
@@ -249,13 +269,15 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	var txKeys []string
 	var cfgKeys []string
 	for i, key := range m.Clients.ChainlinkClient.NKeys {
+		// need to remove the prefix since legacy gauntlet did it pre op
+		// In G++ only signers have prefix removed
+		// https://github.com/smartcontractkit/gauntlet-plus-plus/blob/main/packages-starknet/operations-data-feeds/tests/fixtures/offchain-config.fixture.ts
 		offChaiNKeys = append(offChaiNKeys, key.OCR2Key.Data.Attributes.OffChainPublicKey)
 		peerIDs = append(peerIDs, key.PeerID)
 		txKeys = append(txKeys, m.Clients.ChainlinkClient.AccountAddresses[i])
-		onChaiNKeys = append(onChaiNKeys, key.OCR2Key.Data.Attributes.OnChainPublicKey)
+		onChaiNKeys = append(onChaiNKeys, m.removeOCR2PrefixAndAddPrefix(key.OCR2Key.Data.Attributes.OnChainPublicKey, "ocr2on_starknet_", "0x"))
 		cfgKeys = append(cfgKeys, key.OCR2Key.Data.Attributes.ConfigPublicKey)
 	}
-
 	var payload = ops.TestOCR2Config
 	payload.Signers = onChaiNKeys
 	payload.Transmitters = txKeys
@@ -264,6 +286,14 @@ func (m *OCRv2TestState) LoadOCR2Config() (*ops.OCR2Config, error) {
 	payload.OffchainConfig.ConfigPublicKeys = cfgKeys
 
 	return &payload, nil
+}
+
+func (m *OCRv2TestState) removeOCR2PrefixAndAddPrefix(k string, prefix string, newPrefix string) string {
+	if strings.HasPrefix(k, prefix) {
+		return newPrefix + k[len(prefix):]
+	}
+
+	return k
 }
 
 func (m *OCRv2TestState) SetUpNodes() {
@@ -327,6 +357,7 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 	if err != nil {
 		return err
 	}
+
 	resLINK, errLINK := m.Clients.StarknetClient.CallContract(ctx, starknet.CallOps{
 		ContractAddress: linkContractAddress,
 		Selector:        starknetutils.GetSelectorFromNameFelt("balance_of"),
@@ -349,14 +380,17 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 	assert.GreaterOrEqual(m.TestConfig.T, balLINK.Cmp(balAgg), 0, "Aggregator payment balance should be <= actual LINK balance")
 
 	for start := time.Now(); time.Since(start) < m.Common.TestEnvDetails.TestDuration; {
+		m.TestConfig.L.Info().Msg(fmt.Sprintf("Agg Address: %s ", contractAddress))
+		m.TestConfig.L.Info().Msg(fmt.Sprintf("Link Address: %s ", linkContractAddress))
+
 		m.TestConfig.L.Info().Msg(fmt.Sprintf("Elapsed time: %s, Round wait: %s ", time.Since(start), m.Common.TestEnvDetails.TestDuration))
+		m.TestConfig.L.Info().Msg(fmt.Sprintf("fetching Latest Transmission Details from: %s", contractAddress))
 		res, err2 := m.Clients.OCR2Client.LatestTransmissionDetails(ctx, contractAddress)
 		require.NoError(m.TestConfig.T, err2, "Failed to get latest transmission details")
 		// end condition: enough rounds have occurred
 		if !isSoak && increasing >= rounds && positive {
 			break
 		}
-
 		// end condition: rounds have been stuck
 		if stuck && stuckCount > 50 {
 			m.TestConfig.L.Debug().Msg("failing to fetch transmissions means blockchain may have stopped")
@@ -364,7 +398,7 @@ func (m *OCRv2TestState) ValidateRounds(rounds int, isSoak bool) error {
 		}
 
 		// try to fetch rounds
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 
 		if err != nil {
 			m.TestConfig.L.Error().Msg(fmt.Sprintf("Transmission Error: %+v", err))
