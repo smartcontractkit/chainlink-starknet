@@ -23,4 +23,4 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Check Zizmor
-        run: nix develop -c zizmor .
+        run: nix develop -c zizmor --pedantic --config zizmor.yml .
