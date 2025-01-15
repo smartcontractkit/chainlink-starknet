@@ -109,7 +109,7 @@ var _ ChainClient = (*Client)(nil)
 
 func (c *Client) ChainID(ctx context.Context) (string, error) {
 	// we do not use c.Provider.ChainID method because it caches
-	// the chainID after the first request
+	// the chainID after the first request - Random string change
 
 	results, err := c.Batch(ctx, NewBatchBuilder().RequestChainID())
 
