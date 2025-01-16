@@ -1,6 +1,7 @@
 .snfoundry_cache
 .direnv
 artifacts/
+!packages-ts/starknet-gauntlet-bridge/artifacts
 vendor/
 accounts.json
 node.json
