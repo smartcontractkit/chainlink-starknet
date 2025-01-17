@@ -13,12 +13,12 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/smartcontractkit/chainlink-common v0.4.2-0.20250116214855-f49c5c27db51
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20250116220926-2bc922c6ae8c
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20250117171710-b6481e9fcb34
 	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.19
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.9
-	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250117154253-e07c2dde5472
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250117154253-e07c2dde5472
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20250117154253-e07c2dde5472
+	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250117185825-874daef670f3
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250117185825-874daef670f3
+	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20250117185825-874daef670f3
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	go.uber.org/zap v1.27.0

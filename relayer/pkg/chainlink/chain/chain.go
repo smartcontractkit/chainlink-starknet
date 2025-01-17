@@ -15,7 +15,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
@@ -59,7 +58,7 @@ func (o *ChainOpts) Validate() (err error) {
 var _ Chain = (*chain)(nil)
 
 type chain struct {
-	utils.StartStopOnce
+	services.StateMachine
 	id   string
 	cfg  *config.TOMLConfig
 	lggr logger.Logger
@@ -78,23 +77,16 @@ func NewChain(cfg *config.TOMLConfig, opts ChainOpts) (Chain, error) {
 }
 
 func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logger.Logger) (*chain, error) {
+	lggr = logger.Named(lggr, "Chain")
 	lggr = logger.With(lggr, "starknetChainID", id)
 	ch := &chain{
 		id:   id,
 		cfg:  cfg,
-		lggr: logger.Named(lggr, "Chain"),
-	}
-
-	getClient := func() (*starknet.Client, error) {
-		return ch.getClient()
-	}
-
-	getFeederClient := func() (*starknet.FeederClient, error) {
-		return ch.getFeederClient(), nil
+		lggr: lggr,
 	}
 
 	var err error
-	ch.txm, err = txm.New(lggr, loopKs, cfg, getClient, getFeederClient)
+	ch.txm, err = txm.New(lggr, loopKs, cfg, ch.getClient, ch.getFeederClient)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +114,8 @@ func (c *chain) ChainID() string {
 	return c.id
 }
 
-func (c *chain) getFeederClient() *starknet.FeederClient {
-	return starknet.NewFeederClient(c.cfg.FeederURL.String())
+func (c *chain) getFeederClient() (*starknet.FeederClient, error) {
+	return starknet.NewFeederClient(c.cfg.FeederURL.String()), nil
 }
 
 // getClient returns a client, randomly selecting one from available and valid nodes
@@ -170,10 +162,6 @@ func (c *chain) Close() error {
 	return c.StopOnce("Chain", func() error {
 		return c.txm.Close()
 	})
-}
-
-func (c *chain) Ready() error {
-	return c.StartStopOnce.Ready()
 }
 
 func (c *chain) HealthReport() map[string]error {
