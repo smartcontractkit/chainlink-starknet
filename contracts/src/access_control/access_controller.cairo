@@ -66,7 +66,7 @@ mod AccessController {
     #[abi(embed_v0)]
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
-            'AccessController 1.0.0'
+            'AccessController 2.0.0'
         }
     }
 }

@@ -123,7 +123,7 @@ mod SequencerUptimeFeed {
     #[abi(embed_v0)]
     impl TypeAndVersion of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
-            'SequencerUptimeFeed 1.0.0'
+            'SequencerUptimeFeed 2.0.0'
         }
     }
 

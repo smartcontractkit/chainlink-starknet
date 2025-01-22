@@ -174,7 +174,7 @@ mod Multisig {
     #[abi(embed_v0)]
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
-            'Multisig 1.0.0'
+            'Multisig 2.0.0'
         }
     }
 

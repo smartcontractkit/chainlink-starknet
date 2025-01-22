@@ -88,7 +88,7 @@ mod MockAggregator {
     #[abi(embed_v0)]
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
-            'mock_aggregator.cairo 1.0.0'
+            'mock_aggregator.cairo 2.0.0'
         }
     }
 

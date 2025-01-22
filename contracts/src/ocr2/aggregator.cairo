@@ -342,7 +342,7 @@ mod Aggregator {
     #[abi(embed_v0)]
     impl TypeAndVersionImpl of ITypeAndVersion<ContractState> {
         fn type_and_version(self: @ContractState) -> felt252 {
-            'ocr2/aggregator.cairo 1.0.0'
+            'ocr2/aggregator.cairo 2.0.0'
         }
     }
 
