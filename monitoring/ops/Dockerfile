@@ -1,6 +1,5 @@
 # Build image
-
-FROM golang:1.21.5 as build
+FROM golang:1.23.5 as build
 
 # Copy source
 
