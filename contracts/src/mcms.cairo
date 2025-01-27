@@ -350,8 +350,7 @@ mod ManyChainMultiSig {
             // new root can be set only if the current op_count is the expected post op count
             // (unless an override is requested)
             assert(
-                op_count == current_root_metadata.post_op_count
-                    || current_root_metadata.override_previous_root,
+                op_count == current_root_metadata.post_op_count || metadata.override_previous_root,
                 'pending operations remain',
             );
             assert(op_count == metadata.pre_op_count, 'wrong pre-operation count');

@@ -214,6 +214,78 @@ fn merkle_root(leafs: Array<u256>) -> (u256, Span<u256>, Span<Span<u256>>) {
     (root, array![metadata_proof].span(), array![proof1.span(), proof2.span()].span())
 }
 
+fn set_root_args_override_root(
+    mcms_address: ContractAddress,
+    target_address: ContractAddress,
+    mut signers_metadata: Array<SignerMetadata>,
+    pre_op_count: u64,
+    post_op_count: u64,
+) -> (u256, u32, RootMetadata, Span<u256>, Array<Signature>, Array<Op>, Span<Span<u256>>) {
+    let mock_chain_id = 732;
+
+    // first operation
+    let selector1 = selector!("set_value");
+    let calldata1: Array<felt252> = array![1234123];
+    let op1 = Op {
+        chain_id: mock_chain_id.into(),
+        multisig: mcms_address,
+        nonce: 0,
+        to: target_address,
+        selector: selector1,
+        data: calldata1.span(),
+    };
+
+    // second operation
+    let selector2 = selector!("flip_toggle");
+    let calldata2 = array![];
+    let op2 = Op {
+        chain_id: mock_chain_id.into(),
+        multisig: mcms_address,
+        nonce: 1,
+        to: target_address,
+        selector: selector2,
+        data: calldata2.span(),
+    };
+
+    let metadata = RootMetadata {
+        chain_id: mock_chain_id.into(),
+        multisig: mcms_address,
+        pre_op_count: pre_op_count,
+        post_op_count: post_op_count,
+        override_previous_root: true,
+    };
+    let valid_until = 9;
+
+    let op1_hash = hash_op(op1);
+    let op2_hash = hash_op(op2);
+
+    let metadata_hash = hash_metadata(metadata);
+
+    // create merkle tree
+    let (root, metadata_proof, ops_proof) = merkle_root(array![op1_hash, op2_hash, metadata_hash]);
+
+    let encoded_root = BytesTrait::new_empty().encode(root).encode(valid_until);
+    let message_hash = eip_191_message_hash(keccak(@encoded_root.into()));
+
+    let mut signatures: Array<Signature> = ArrayTrait::new();
+
+    while let Option::Some(signer_metadata) = signers_metadata.pop_front() {
+        let (r, s, y_parity) = insecure_sign(message_hash, signer_metadata.private_key);
+        let signature = Signature { r: r, s: s, y_parity: y_parity };
+        let address = recover_eth_ecdsa(message_hash, signature).unwrap();
+
+        // sanity check
+        assert(address == signer_metadata.address, 'signer not equal');
+
+        signatures.append(signature);
+    };
+
+    let ops = array![op1.clone(), op2.clone()];
+
+    (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof)
+}
+
+
 fn set_root_args(
     mcms_address: ContractAddress,
     target_address: ContractAddress,

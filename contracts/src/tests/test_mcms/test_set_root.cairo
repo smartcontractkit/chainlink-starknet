@@ -21,7 +21,8 @@ use chainlink::mcms::{
 };
 use chainlink::tests::test_mcms::utils::{
     insecure_sign, setup_signers, SignerMetadata, setup_mcms_deploy_and_set_config_2_of_2,
-    setup_mcms_deploy_set_config_and_set_root, set_root_args, merkle_root,
+    setup_mcms_deploy_set_config_and_set_root, set_root_args, set_root_args_override_root,
+    merkle_root,
 };
 use chainlink::utils::{keccak};
 use snforge_std::{
@@ -224,6 +225,48 @@ fn test_set_root_success() {
                 ),
             ],
         );
+}
+
+#[test]
+fn test_root_sucess_and_override() {
+    let (
+        _,
+        mcms_address,
+        mcms,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        root,
+        valid_until,
+        metadata,
+        metadata_proof,
+        signatures,
+        _,
+        _,
+    ) =
+        setup_mcms_deploy_set_config_and_set_root();
+
+    mcms.set_root(root, valid_until, metadata, metadata_proof, signatures);
+
+    let actual_root_metadata = mcms.get_root_metadata();
+    assert(actual_root_metadata == metadata, 'root metadata not equal');
+    assert(!actual_root_metadata.override_previous_root, 'override false');
+
+    let (_, _, _, _, signer_metadata) = setup_signers();
+    let (new_root, new_valid_until, new_metadata, new_metadata_proof, new_signatures, _, _) =
+        set_root_args_override_root(
+        mcms_address, contract_address_const::<123123>(), signer_metadata, 0, 2,
+    );
+
+    mcms.set_root(new_root, new_valid_until, new_metadata, new_metadata_proof, new_signatures);
+
+    let new_root_metadata = mcms.get_root_metadata();
+    assert(new_root_metadata == new_metadata, 'root metadata not equal');
+    assert(new_root_metadata.override_previous_root, 'override true');
 }
 
 #[test]
@@ -549,7 +592,7 @@ fn test_pending_ops_remain() {
 
     // sign a different set of operations with same signers
     let (_, _, _, _, signer_metadata) = setup_signers();
-    let (root, valid_until, metadata, metadata_proof, signatures, ops, ops_proof) = set_root_args(
+    let (root, valid_until, metadata, metadata_proof, signatures, _, _) = set_root_args(
         mcms_address, contract_address_const::<123123>(), signer_metadata, 0, 2,
     );
 
