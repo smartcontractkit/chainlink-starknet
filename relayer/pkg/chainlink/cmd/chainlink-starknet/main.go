@@ -64,13 +64,21 @@ func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs lo
 	if err := d.Decode(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode config toml: %w:\n\t%s", err, config)
 	}
-
-	opts := starkchain.ChainOpts{
-		Logger:   c.Logger,
-		KeyStore: loopKs,
+	cfg.SetDefaults()
+	if err := cfg.ValidateConfig(); err != nil {
+		return nil, fmt.Errorf("config is invalid: %w", err)
 	}
 
-	chain, err := starkchain.NewChain(&cfg, opts)
+	cfgStr, err := cfg.TOMLString()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize config: %w", err)
+	}
+	c.Logger.Infow("Creating relayer", "config", cfgStr)
+
+	chain, err := starkchain.NewChain(&cfg, starkchain.ChainOpts{
+		Logger:   c.Logger,
+		KeyStore: loopKs,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chain: %w", err)
 	}
