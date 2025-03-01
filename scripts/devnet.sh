@@ -7,7 +7,7 @@ set -euo pipefail
 cpu_struct="linux";
 
 # Clean up first
-bash "$(dirname -- "$0";)/devnet.down.sh"
+bash "$(dirname -- "$0")/devnet.down.sh"
 
 echo "Checking CPU structure..."
 if [[ $cpu_struct == *"arm"* ]]
