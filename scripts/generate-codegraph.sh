@@ -29,18 +29,18 @@ while getopts $options option; do
   esac
 done
 
-if [ ! "$GO_MODULE_PATH" ]; 
+if [ -z "$GO_MODULE_PATH" ]; 
 then
   echo "-p argument must be provided"
   echo "$usage" >&2; exit 1
 fi
 
-if [ ! "$OUTPUT_PNG_PATH" ]; 
+if [ -z "$OUTPUT_PNG_PATH" ]; 
 then
   OUTPUT_PNG_PATH="./godepgraph.png"
 fi
 
-if [ ! "$ALL_DEPENDENCIES" ]; 
+if [ -z "$ALL_DEPENDENCIES" ]; 
 then
   godepgraph -s -o .,github.com/smartcontractkit $GO_MODULE_PATH | dot -Tpng -o $OUTPUT_PNG_PATH
 else 
