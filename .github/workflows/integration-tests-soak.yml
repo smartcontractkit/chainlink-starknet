@@ -84,7 +84,7 @@ jobs:
         uses: smartcontractkit/.github/actions/ctf-run-tests@4229fea727f6eb36b4559c6eefbbf9f3825fa677 # 0.2.1
         with:
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: cd ./integration-tests && go test -timeout 24h -count=1 -run TestOCRBasicSoak/embedded ./soak
+          test_command_to_run: cd ./integration-tests && go test -timeout 24h -count=1 -run TestOCRBasicSoak ./soak
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
           token: ${{ secrets.GITHUB_TOKEN }}

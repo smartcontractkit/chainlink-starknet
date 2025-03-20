@@ -47,6 +47,6 @@ If you want to kick off the test from local:
 - `export ENV_JOB_IMAGE: <internal_repo>/chainlink-solana-tests:<tag>`
 - Base64 the .toml config
 - Run `export BASE64_CONFIG_OVERRIDE="<config>"`
-- `cd integration-tests/soak && go test -timeout 24h -count=1 -run TestOCRBasicSoak/embedded -test.timeout 30m;`
+- `cd integration-tests/soak && go test -timeout 24h -count=1 -run TestOCRBasicSoak -test.timeout 30m;`
 
 

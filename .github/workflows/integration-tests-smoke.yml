@@ -27,7 +27,7 @@ env:
 
 jobs:
   build_chainlink_image:
-    name: Build Chainlink Image ${{matrix.image.name}}
+    name: Build Chainlink Image
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,32 +35,23 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    strategy:
-      matrix:
-        image:
-          - name: ""
-            dockerfile: core/chainlink.Dockerfile
-            tag-suffix: ""
-          - name: (plugins)
-            dockerfile: plugins/chainlink.Dockerfile
-            tag-suffix: -plugins
     steps:
       - name: Collect Metrics
         id: collect-gha-metrics
         uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
         with:
-          id: starknet-e2e-build${{ matrix.image.tag-suffix }}
+          id: starknet-e2e-build
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
           basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          this-job-name: Build Chainlink Image${{matrix.image.name}}
+          this-job-name: Build Chainlink Image
         continue-on-error: true
       - name: Check if chainlink-starknet image exists
         id: check-image
         uses: smartcontractkit/chainlink-github-actions/docker/image-exists@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
         with:
           repository: chainlink
-          tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          tag: starknet.${{ github.sha }}
           AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
       - name: Get core ref from PR body
@@ -79,24 +70,24 @@ jobs:
           echo "CUSTOM_CORE_REF=${CL_REF}" >> "${GITHUB_ENV}"
         env:
           CL_REF: ${{ github.event.inputs.cl_branch_ref }}
-      - name: Build Image ${{ matrix.image.name }}
+      - name: Build Image
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/.github/actions/ctf-build-image@c4705bfdbf6c8e57c080d82a3c4f013aa96a2dfb # v2.3.19
+        uses: smartcontractkit/.github/actions/ctf-build-image@7b28f2c598c26a8a0af8818b64d5344247752c71 # v0.1.3
         with:
           cl_repo: smartcontractkit/chainlink
           cl_ref: ${{ env.CUSTOM_CORE_REF }}
           should_checkout: true
-          cl_dockerfile: ${{ matrix.image.dockerfile }}
+          cl_dockerfile: plugins/chainlink.Dockerfile
           # commit of the caller branch
           dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          push_tag: ${{ env.CL_ECR }}:starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          push_tag: ${{ env.CL_ECR }}:starknet.${{ github.sha }}
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
           QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
       - name: Print Chainlink Image Built
         run: |
           echo "### chainlink image tag used for this test run :link:" >> $GITHUB_STEP_SUMMARY
-          echo "\`starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "\`starknet.${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
 
   build_test_image:
     environment: integration
@@ -137,20 +128,10 @@ jobs:
           GITHUB_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
 
   run_tests:
-    name: Run Smoke Tests ${{matrix.image.name}}
+    name: Run Smoke Tests
     runs-on: ubuntu20.04-16cores-64GB
     needs: [ build_chainlink_image, build_test_image ]
     environment: integration
-    # these values need to match those used to build the chainlink image
-    strategy:
-      matrix:
-        image:
-          - name: ""
-            tag-suffix: ""
-            test-name: embedded
-          - name: plugins
-            tag-suffix: -plugins
-            test-name: plugins
     env:
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
     permissions:
@@ -163,11 +144,11 @@ jobs:
         id: collect-gha-metrics
         uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
         with:
-          id: starknet-e2e-smoke${{ matrix.image.name }}
+          id: starknet-e2e-smoke
           org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
           basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          this-job-name: Run Smoke Tests ${{ matrix.image.name }}
+          this-job-name: Run Smoke Tests
           test-results-file: '{"testType":"go","filePath":"/tmp/gotest.log"}'
         continue-on-error: true
       - name: Checkout the repo
@@ -182,7 +163,7 @@ jobs:
         uses: ./.github/actions/install-cairo
       - name: Setup GitHub Token
         id: setup-github-token
-        uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
+        uses: smartcontractkit/.github/actions/setup-github-token@ef78fa97bf3c77de6563db1175422703e9e6674f # 0.2.1
         with:
           aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
@@ -208,15 +189,15 @@ jobs:
           echo ::add-mask::$BASE64_CONFIG_OVERRIDE
           # shellcheck disable=SC2086
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> $GITHUB_ENV
-      - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/.github/actions/ctf-run-tests@4229fea727f6eb36b4559c6eefbbf9f3825fa677 # 0.2.1
+      - name: Run Tests
+        uses: smartcontractkit/.github/actions/ctf-run-tests@6a6f23140de2d90b020ba3795568d2ed85cb11b9 # 0.7.0
         with:
           cl_internal_docker_repo: ${{ env.INTERNAL_DOCKER_REPO }}
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
-          test_command_to_run: nix develop -c sh -c "make test=${{ matrix.image.test-name }} test-integration-smoke-ci"
+          test_command_to_run: nix develop -c sh -c "make test-integration-smoke-ci"
           test_download_vendor_packages_command: cd integration-tests && nix develop -c go mod download
           cl_repo: ${{ env.CL_ECR }}
-          cl_image_tag: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          cl_image_tag: starknet.${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           go_mod_path: ./integration-tests/go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
@@ -228,8 +209,9 @@ jobs:
           PROD_AWS_ACCOUNT_NUMBER: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}
           gauntlet_plus_plus_image: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
+          enable-gap: false
         env:
           KILLGRAVE_INTERNAL_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/friendsofgo/killgrave
           CHAINLINK_IMAGE: ${{ env.CL_ECR }}
-          CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
+          CHAINLINK_VERSION: starknet.${{ github.sha }}
           CHAINLINK_USER_TEAM: ${{ github.event.inputs.team || 'BIX' }}

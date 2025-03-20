@@ -217,7 +217,7 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -run TestOCRBasic/$(test) -json ./smoke | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
+		go test --timeout=2h -v -count=1 -run TestOCRBasic -json ./smoke | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
