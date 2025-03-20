@@ -209,7 +209,7 @@ jobs:
           # shellcheck disable=SC2086
           echo "BASE64_CONFIG_OVERRIDE=$BASE64_CONFIG_OVERRIDE" >> $GITHUB_ENV
       - name: Run Tests ${{ matrix.image.name }}
-        uses: smartcontractkit/.github/actions/ctf-run-tests@4229fea727f6eb36b4559c6eefbbf9f3825fa677 # 0.2.1
+        uses: smartcontractkit/.github/actions/ctf-run-tests@8a5e92b507824a750d0c8bdfdd98646adc1cd28d # 0.2.1
         with:
           cl_internal_docker_repo: ${{ env.INTERNAL_DOCKER_REPO }}
           aws_registries: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
