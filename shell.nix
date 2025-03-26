@@ -5,7 +5,7 @@
   scriptDir,
 }:
 with pkgs; let
-  go = pkgs.go_1_23;
+  go = pkgs.go_1_24;
 
   mkShell' = mkShell.override {
     # juno requires building with clang, not gcc
