@@ -13,7 +13,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Nix
-        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # nix:2.25.2
+        uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Parse version
@@ -37,7 +37,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Nix
-        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # nix:2.25.2
+        uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint relayer
@@ -76,7 +76,7 @@ jobs:
         with:
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Install Nix
-        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # nix:2.25.2
+        uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint ops
@@ -115,7 +115,7 @@ jobs:
         with:
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Install Nix
-        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # nix:2.25.2
+        uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint integration-tests
