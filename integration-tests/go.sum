@@ -1299,6 +1299,7 @@ github.com/smartcontractkit/chainlink-solana v1.1.1-0.20250117143722-fb6416c087a
 github.com/smartcontractkit/chainlink-solana v1.1.2-0.20250326142747-53b1c4e9ba1d/go.mod h1:3E5nJjLhyDqklMu6hekNj6kAOU9A+fIVh0XOdKd/CDc=
 github.com/smartcontractkit/chainlink-solana v1.1.2-0.20250326144217-1eab2c3bfd32/go.mod h1:3E5nJjLhyDqklMu6hekNj6kAOU9A+fIVh0XOdKd/CDc=
 github.com/smartcontractkit/chainlink-solana v1.1.2-0.20250326152437-2288e8eeff3f/go.mod h1:3E5nJjLhyDqklMu6hekNj6kAOU9A+fIVh0XOdKd/CDc=
+github.com/smartcontractkit/chainlink-solana v1.1.2-0.20250326212409-168555143eb4/go.mod h1:3E5nJjLhyDqklMu6hekNj6kAOU9A+fIVh0XOdKd/CDc=
 github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.19 h1:9PMwKNqFKc5FXf4VchyD3CGzZelnSgi13fgVdT2X7T4=
 github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.19/go.mod h1:ag7LEgejsVtPXaUNkcoFPpAoDkl1J8V2HSbqVUxfEtk=
 github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.9 h1:yB1x5UXvpZNka+5h57yo1/GrKfXKCqMzChCISpldZx4=
@@ -1312,6 +1313,7 @@ github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.202501171858
 github.com/smartcontractkit/chainlink/v2 v2.19.0-ccip1.5.16-alpha.0.0.20250326143931-66b4e1492bd2/go.mod h1:3mjlqw3KjDYlLjujoFMP604tuyNfxkWZXxn9UGWzpEk=
 github.com/smartcontractkit/chainlink/v2 v2.19.0-ccip1.5.16-alpha.0.0.20250326144307-f26e8efac988/go.mod h1:1gLE6qnmT3jjifpKO6d5Cgqx0WAuYQ77dch/vcoQ4nQ=
 github.com/smartcontractkit/chainlink/v2 v2.19.0-ccip1.5.16-alpha.0.0.20250326153051-7738627caddb/go.mod h1:Uecdg7GYtCWD5ntpQsFdkjxgcjk6r0e7TLZ/PB98sJc=
+github.com/smartcontractkit/chainlink/v2 v2.19.0-ccip1.5.16-alpha.0.0.20250326212454-e42b3b6adcf2/go.mod h1:wUyhI1bhPHzJ9uhUr4CRbTTIpUbEDkE+gx/Ku/p9KLE=
 github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet v1.1.3 h1:RIApVijvhHI6iW9pyT35Nk39rPGEC4TwVe/f+YA1G5k=
 github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet v1.1.3/go.mod h1:oiUkQxoi0kZzbW125oIt4lr/pqaRSDol1rWHLCyqmNQ=
 github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 h1:12ijqMM9tvYVEm+nR826WsrNi6zCKpwBhuApq127wHs=
