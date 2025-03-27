@@ -178,7 +178,7 @@ lint-go-relayer:
 
 .PHONY: lint-go-test
 lint-go-test:
-	cd ./integration-tests && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle run > golangci-lint-integration-tests-report.xml
+	cd ./integration-tests && golangci-lint --config ../.golangci.yml --color=always --fast --out-format checkstyle run > golangci-lint-integration-tests-report.xml
 
 .PHONY: test-go
 test-go: test-unit-go test-unit-go-race test-integration-go
