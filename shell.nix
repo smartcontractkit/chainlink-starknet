@@ -28,7 +28,7 @@ let
 in
   mkShell' {
     buildInputs = [
-      zizmor
+      pkgs.zizmor
     ];
 
     nativeBuildInputs = [
