@@ -14,12 +14,10 @@ import (
 
 	"github.com/smartcontractkit/libocr/commontypes"
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
 func TestBuildReportWithNegativeValues(t *testing.T) {
-	ctx := tests.Context(t)
+	ctx := t.Context()
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
 
@@ -66,7 +64,7 @@ func TestBuildReportWithNegativeValues(t *testing.T) {
 }
 
 func TestBuildReportNoObserversOverflow(t *testing.T) {
-	ctx := tests.Context(t)
+	ctx := t.Context()
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
 	fmt.Println("hello")
@@ -102,7 +100,7 @@ func TestBuildReportNoObserversOverflow(t *testing.T) {
 }
 
 func TestBuildReport(t *testing.T) {
-	ctx := tests.Context(t)
+	ctx := t.Context()
 	c := ReportCodec{}
 	oo := []median.ParsedAttributedObservation{}
 
@@ -177,7 +175,7 @@ type medianTest struct {
 }
 
 func TestMedianFromReport(t *testing.T) {
-	ctx := tests.Context(t)
+	ctx := t.Context()
 	cdc := ReportCodec{}
 	// Requires at least one obs
 	_, err := cdc.BuildReport(ctx, nil)
@@ -215,7 +213,7 @@ func TestMedianFromReport(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := tests.Context(t)
+			ctx := t.Context()
 			var pos []median.ParsedAttributedObservation
 			for i := commontypes.OracleID(0); int(i) < len(tc.obs); i++ {
 				obs := tc.obs[i]
