@@ -20,7 +20,7 @@ with pkgs; let
       owner = "golangci";
       repo = "golangci-lint";
       rev = "v${version}";
-      sha256 = "sha256-vPeP6ygU9nVikC2m+MC7OYsYoZ0oUuUHZF5tuKkKHlE=";
+      sha256 = "sha256-8Itq4tWqJa9agGcPoQaJoQOgy/qhhegzPORDztS9T30=";
     };
 
     vendorHash = "sha256-r95N51xgAvMKV2c+Mf9PxdG0EyJPn+Weyk17EqDbTrU=";
