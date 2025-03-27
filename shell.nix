@@ -11,6 +11,22 @@ with pkgs; let
     # juno requires building with clang, not gcc
     stdenv = pkgs.clangStdenv;
   };
+
+  golangci-lint = pkgs.buildGoModule rec {
+    pname = "golangci-lint";
+    version = "1.62.2";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "golangci";
+      repo = "golangci-lint";
+      rev = "v${version}";
+      sha256 = "sha256-vPeP6ygU9nVikC2m+MC7OYsYoZ0oUuUHZF5tuKkKHlE=";
+    };
+
+    vendorHash = "sha256-r95N51xgAvMKV2c+Mf9PxdG0EyJPn+Weyk17EqDbTrU=";
+
+    subPackages = ["cmd/golangci-lint"];
+  };
 in
   mkShell' {
     buildInputs = [
