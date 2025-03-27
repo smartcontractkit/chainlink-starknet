@@ -23,7 +23,7 @@ with pkgs; let
       sha256 = "sha256-8Itq4tWqJa9agGcPoQaJoQOgy/qhhegzPORDztS9T30=";
     };
 
-    vendorHash = "sha256-r95N51xgAvMKV2c+Mf9PxdG0EyJPn+Weyk17EqDbTrU=";
+    vendorHash = "sha256-SEoF+k7MYYq81v9m3eaDbIv1k9Hek5iAZ0TTJEgAsI4=";
 
     subPackages = ["cmd/golangci-lint"];
   };
