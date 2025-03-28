@@ -18,6 +18,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/smartcontractkit/chainlink/integration-tests/types/config/node"
+	"github.com/smartcontractkit/chainlink/v2/core/services/chainlink"
 
 	common_cfg "github.com/smartcontractkit/chainlink-common/pkg/config"
 
@@ -29,7 +30,6 @@ import (
 	"github.com/smartcontractkit/chainlink-testing-framework/seth"
 
 	ocr2_config "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig/ocr2"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
 )
 
 type TestConfig struct {
@@ -134,21 +134,21 @@ func (c TestConfig) GetNodeConfigTOML() (string, error) {
 		RPCL2InternalAPIKey = c.GetRPCL2InternalAPIKey()
 	}
 
-	starkConfig := config.TOMLConfig{
-		Enabled:   ptr.Ptr(true),
-		ChainID:   ptr.Ptr(chainID),
-		FeederURL: common_cfg.MustParseURL(feederURL),
-		Nodes: []*config.Node{
+	starkConfig := chainlink.RawConfig{
+		"Enabled":   true,
+		"ChainID":   chainID,
+		"FeederURL": feederURL,
+		"Nodes": []map[string]any{
 			{
-				Name:   ptr.Ptr("primary"),
-				URL:    common_cfg.MustParseURL(RPCL2Internal),
-				APIKey: ptr.Ptr(RPCL2InternalAPIKey),
+				"Name":   "primary",
+				"URL":    RPCL2Internal,
+				"APIKey": RPCL2InternalAPIKey,
 			},
 		},
 	}
 	baseConfig := node.NewBaseConfig()
-	baseConfig.Starknet = config.TOMLConfigs{
-		&starkConfig,
+	baseConfig.Starknet = chainlink.RawConfigs{
+		starkConfig,
 	}
 	baseConfig.OCR2.Enabled = ptr.Ptr(true)
 	baseConfig.P2P.V2.Enabled = ptr.Ptr(true)
