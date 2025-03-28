@@ -30,13 +30,6 @@ func NilResultError(funcName string) error {
 	return fmt.Errorf("nil result in %s", funcName)
 }
 
-func Min[T cmp.Ordered](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // EncodeFelts takes a byte slice and splits as bunch of felts. First felt indicates the total byte size.
 func EncodeFelts(data []byte) (felts []*big.Int) {
 	// prefix with len
@@ -45,7 +38,7 @@ func EncodeFelts(data []byte) (felts []*big.Int) {
 
 	// chunk every 31 bytes
 	for i := 0; i < len(data); i += chunkSize {
-		chunk := data[i:Min(i+chunkSize, len(data))]
+		chunk := data[i:min(i+chunkSize, len(data))]
 		// cast to int
 		felt := new(big.Int).SetBytes(chunk)
 		felts = append(felts, felt)
@@ -65,7 +58,7 @@ func DecodeFelts(felts []*big.Int) ([]byte, error) {
 	length := felts[0].Uint64()
 
 	for _, felt := range felts[1:] {
-		bytesLen := Min(chunkSize, length)
+		bytesLen := min(chunkSize, length)
 		bytesBuffer := buf[:bytesLen]
 
 		// TODO: this is inefficient because Bytes() and FillBytes() duplicate work
