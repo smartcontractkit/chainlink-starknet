@@ -39,31 +39,17 @@ func (_m *Metrics) SetProxyAnswers(answer float64, proxyContractAddress string, 
 	_m.Called(answer, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName)
 }
 
-// SetProxyAnswersRaw provides a mock function with given fields: answer, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName
-func (_m *Metrics) SetProxyAnswersRaw(answer float64, proxyContractAddress string, feedID string, chainID string, contractStatus string, contractType string, feedName string, feedPath string, networkID string, networkName string) {
-	_m.Called(answer, proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName)
-}
-
-// SetReportObservations provides a mock function with given fields: answer, accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName
-func (_m *Metrics) SetReportObservations(answer float64, accountAddress string, feedID string, chainID string, contractStatus string, contractType string, feedName string, feedPath string, networkID string, networkName string) {
-	_m.Called(answer, accountAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName)
-}
-
-// SetTransmissionGasPrice provides a mock function with given fields: answer, contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName
-func (_m *Metrics) SetTransmissionGasPrice(answer float64, contractAddress string, feedID string, chainID string, contractStatus string, contractType string, feedName string, feedPath string, networkID string, networkName string) {
-	_m.Called(answer, contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName)
-}
-
 // NewMetrics creates a new instance of Metrics. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMetrics(t interface {
 	mock.TestingT
-	Cleanup(func())
 }) *Metrics {
 	mock := &Metrics{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	if tc, ok := t.(interface{ Cleanup(func()) }); ok {
+		tc.Cleanup(func() { mock.AssertExpectations(t) })
+	}
 
 	return mock
 }
