@@ -41,6 +41,8 @@ ifeq ($(OSFLAG),$(OSX))
 	asdf plugin add kubectl || true
 	asdf plugin add k9s || true
 	asdf plugin add helm || true
+	asdf plugin add scarb || true
+	asdf plugin add rust || yes
 	asdf plugin add helmenv https://github.com/smartcontractkit/asdf-helmenv.git || true
 	@echo
 	asdf install
