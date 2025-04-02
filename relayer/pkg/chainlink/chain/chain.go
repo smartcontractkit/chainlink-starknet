@@ -197,6 +197,10 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 	}, err
 }
 
+func (c *chain) GetBalance(ctx context.Context, address string) (types.TokenBalance, error) {
+	return types.TokenBalance{}, nil
+}
+
 // ChainService interface
 func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 	toml, err := c.cfg.TOMLString()
