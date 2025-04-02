@@ -1,12 +1,12 @@
 # Languages
 nodejs 18.6.0
 yarn 1.22.19
-golang 1.23.3
+golang 1.24.1
 python 3.9.13
 
 # Tools
 mockery 2.53.0
-golangci-lint 1.62.2
+golangci-lint 1.64.7
 actionlint 1.6.12
 shellcheck 0.8.0
 scarb 2.9.2

@@ -1,5 +1,5 @@
-//go:build go1.18
-// +build go1.18
+//go:build go1.24
+// +build go1.24
 
 package medianreport
 
@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 )
 
-// go test -tags=go1.18 -fuzz ./...
+// go test  -fuzz ./...
 func FuzzReportCodecMedianFromReport(f *testing.F) {
 	ctx := f.Context()
 	cdc := ReportCodec{}
