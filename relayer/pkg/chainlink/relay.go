@@ -9,6 +9,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
+	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
@@ -81,6 +82,10 @@ func (r *relayer) Transact(ctx context.Context, from, to string, amount *big.Int
 
 func (r *relayer) Replay(ctx context.Context, fromBlock string, args map[string]any) error {
 	return r.chain.Replay(ctx, fromBlock, args)
+}
+
+func (r *relayer) GetBalance(ctx context.Context, address string) (types.TokenBalance, error) {
+	return r.chain.GetBalance(ctx, address)
 }
 
 func (r *relayer) NewConfigProvider(ctx context.Context, args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {

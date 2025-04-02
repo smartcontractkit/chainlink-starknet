@@ -198,7 +198,7 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 }
 
 func (c *chain) GetBalance(ctx context.Context, address string) (types.TokenBalance, error) {
-	return types.TokenBalance{}, nil
+	return types.TokenBalance{}, errors.ErrUnsupported
 }
 
 // ChainService interface
