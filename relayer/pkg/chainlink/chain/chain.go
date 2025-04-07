@@ -185,14 +185,14 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 		return types.Head{}, err
 	}
 
-	block, err := sc.BlockByNumber(ctx, bhAndNum.BlockNumber)
+	block, err := sc.BlockByNumber(ctx, bhAndNum.Number)
 	if err != nil {
 		return types.Head{}, err
 	}
 
 	return types.Head{
-		Height:    strconv.FormatUint(bhAndNum.BlockNumber, 10),
-		Hash:      bhAndNum.BlockHash.Marshal(),
+		Height:    strconv.FormatUint(bhAndNum.Number, 10),
+		Hash:      bhAndNum.Hash.Marshal(),
 		Timestamp: block.Timestamp,
 	}, err
 }

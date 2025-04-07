@@ -101,7 +101,6 @@ type ChainClient interface {
 	LatestBlockHashAndNumber(ctx context.Context) (starknetrpc.BlockHashAndNumberOutput, error)
 	// get block logs, event logs, etc.
 	EventsByFilter(ctx context.Context, f starknetrpc.EventsInput) (starknetrpc.EventChunk, error)
-	// TxReceiptByHash(ctx context.Context, h *felt.Felt) (starknetrpc.TransactionReceipt, error)
 	Batch(ctx context.Context, builder BatchBuilder) ([]gethrpc.BatchElem, error)
 }
 

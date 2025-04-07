@@ -204,7 +204,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	tx := starknetrpc.InvokeTxnV3{
 		Type:          starknetrpc.TransactionType_Invoke,
-		SenderAddress: account.AccountAddress,
+		SenderAddress: account.Address,
 		Version:       starknetrpc.TransactionV3,
 		Signature:     []*felt.Felt{},
 		Nonce:         &felt.Zero, // filled in below

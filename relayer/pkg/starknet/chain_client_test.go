@@ -229,20 +229,20 @@ func TestChainClient(t *testing.T) {
 	t.Run("get BlockByHash", func(t *testing.T) {
 		block, err := client.BlockByHash(context.TODO(), blockHash)
 		require.NoError(t, err)
-		assert.Equal(t, blockHash, block.BlockHash)
+		assert.Equal(t, blockHash, block.Hash)
 	})
 
 	t.Run("get BlockByNumber", func(t *testing.T) {
 		block, err := client.BlockByNumber(context.TODO(), blockNumber)
 		require.NoError(t, err)
-		assert.Equal(t, blockNumber, block.BlockNumber)
+		assert.Equal(t, blockNumber, block.Number)
 	})
 
 	t.Run("get LatestBlockHashAndNumber", func(t *testing.T) {
 		output, err := client.LatestBlockHashAndNumber(context.TODO())
 		require.NoError(t, err)
-		assert.Equal(t, blockHash, output.BlockHash)
-		assert.Equal(t, blockNumber, output.BlockNumber)
+		assert.Equal(t, blockHash, output.Hash)
+		assert.Equal(t, blockNumber, output.Number)
 	})
 
 	t.Run("get ChainID", func(t *testing.T) {
@@ -292,7 +292,7 @@ func TestChainClient(t *testing.T) {
 			assert.Nil(t, results[1].Error)
 			block, ok := results[1].Result.(*FinalizedBlock)
 			assert.True(t, ok)
-			assert.Equal(t, blockHash, block.BlockHash)
+			assert.Equal(t, blockHash, block.Hash)
 		})
 
 		t.Run("gets BlockByNumber in Batch", func(t *testing.T) {
@@ -300,7 +300,7 @@ func TestChainClient(t *testing.T) {
 			assert.Nil(t, results[2].Error)
 			block, ok := results[2].Result.(*FinalizedBlock)
 			assert.True(t, ok)
-			assert.Equal(t, blockNumber, block.BlockNumber)
+			assert.Equal(t, blockNumber, block.Number)
 		})
 
 		t.Run("gets LatestBlockHashAndNumber in Batch", func(t *testing.T) {
@@ -308,8 +308,8 @@ func TestChainClient(t *testing.T) {
 			assert.Nil(t, results[3].Error)
 			info, ok := results[3].Result.(*starknetrpc.BlockHashAndNumberOutput)
 			assert.True(t, ok)
-			assert.Equal(t, blockHash, info.BlockHash)
-			assert.Equal(t, blockNumber, info.BlockNumber)
+			assert.Equal(t, blockHash, info.Hash)
+			assert.Equal(t, blockNumber, info.Number)
 		})
 
 		t.Run("gets EventsByFilter in Batch", func(t *testing.T) {
