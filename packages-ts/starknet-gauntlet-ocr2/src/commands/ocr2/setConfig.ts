@@ -16,7 +16,7 @@ import { SetConfig, encoding, SetConfigInput } from '@chainlink/gauntlet-contrac
 import { decodeOffchainConfigFromEventData } from '../../lib/encoding'
 import assert from 'assert'
 import { getLatestOCRConfigEvent } from './inspection/configEvent'
-import { BigNumberish, GetTransactionReceiptResponse } from 'starknet'
+import { BigNumberish, GetTransactionReceiptResponse, events, CallData } from 'starknet'
 
 type Oracle = {
   signer: string
@@ -148,9 +148,7 @@ const beforeExecute: BeforeExecute<SetConfigInput, ContractInput> = (
     input.user.offchainConfig,
     input.user.secret,
   )
-
   const newOffchainConfig = encoding.deserializeConfig(offchainConfig)
-
   const rawEvents = await getLatestOCRConfigEvent(context.provider, context.contractAddress)
   if (rawEvents.length === 0) {
     // if no config set events found in the given block, throw error
@@ -161,10 +159,15 @@ const beforeExecute: BeforeExecute<SetConfigInput, ContractInput> = (
   }
   // assume last event found is the latest config, in the event that multiple
   // set_config transactions ended up in the same block
-  const events = context.contract.parseEvents({
-    events: rawEvents,
-  } as GetTransactionReceiptResponse)
-  const event = events[events.length - 1]['ConfigSet']
+  const abiEvents = events.getAbiEvents(context.contract.abi)
+  const abiStructs = CallData.getAbiStruct(context.contract.abi)
+  const abiEnums = CallData.getAbiEnum(context.contract.abi)
+  const parsedEvents = events.parseEvents(rawEvents, abiEvents, abiStructs, abiEnums)
+
+  //const events = context.contract.parseEvents({
+  // events: rawEvents,
+  //} as GetTransactionReceiptResponse)
+  const event = parsedEvents[parsedEvents.length - 1]['ConfigSet']
   const currOffchainConfig = decodeOffchainConfigFromEventData(
     event.offchain_config as BigNumberish[],
   )
