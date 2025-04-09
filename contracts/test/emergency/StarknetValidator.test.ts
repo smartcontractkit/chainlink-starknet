@@ -14,6 +14,7 @@ import { expect } from 'chai'
 
 describe('StarknetValidator', () => {
   const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, specVersion: "0.7" })
+
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
@@ -34,6 +35,8 @@ describe('StarknetValidator', () => {
 
   before(async () => {
     // Setup L2 account
+    console.log("GFDGDFGDFGFDG")
+    console.log(await provider.getSpecVersion());
     defaultAccount = await fetchStarknetAccount()
     await funder.fund([{ account: defaultAccount.address, amount: 1e21 }])
 
