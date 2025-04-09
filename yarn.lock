@@ -6629,7 +6629,7 @@ stacktrace-parser@^0.1.10:
   resolved "https://registry.npmjs.org/@starknet-io/types-js/-/types-js-0.8.0-beta.10.tgz"
   integrity sha512-skLpHpBDG6kDdaZrnLE/gZBVY/3Y4F262eDASWM/XMa/zy+0pxLUsKi0rL71LipvwhkR1TtOpdmefIu2KOe96A==
 
-starknet@^7.1.0:
+starknet@7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/starknet/-/starknet-7.0.1.tgz#a2e347d4dc4d87c1d34ecc270af5adcf13eecace"
   integrity sha512-yedqXaqp+JOALWJXIDtbst48f3BPVROXhmVKztTKHR4mTYZ4lJu6hAqug418b3FHI5FlUpTGsUWUUXSmmrBixw==
