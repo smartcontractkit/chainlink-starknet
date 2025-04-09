@@ -13,7 +13,7 @@ import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
 describe('StarknetValidator', () => {
-  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, specVersion: "0.7" })
+  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, specVersion: "0.8" })
 
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)

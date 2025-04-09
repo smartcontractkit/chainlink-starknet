@@ -31,7 +31,7 @@ const UINT128_MAX = BigInt(2) ** BigInt(128) - BigInt(1)
 
 describe('Aggregator', function () {
   this.timeout(TIMEOUT)
-  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, specVersion: "0.7" })
+  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, specVersion: "0.8" })
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
