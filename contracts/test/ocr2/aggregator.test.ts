@@ -31,7 +31,7 @@ const UINT128_MAX = BigInt(2) ** BigInt(128) - BigInt(1)
 
 describe('Aggregator', function () {
   this.timeout(TIMEOUT)
-  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, specVersion: "0.8" })
+  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL })
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
@@ -188,7 +188,12 @@ describe('Aggregator', function () {
     }
 
     // Double checks that the ConfigSet event exists in the decoded event payload
-    assert.isTrue(Object.prototype.hasOwnProperty.call(decodedEvent, 'ConfigSet'))
+    assert.isTrue(
+      Object.prototype.hasOwnProperty.call(
+        decodedEvent,
+        'chainlink::ocr2::aggregator::Aggregator::ConfigSet',
+      ),
+    )
   })
 
   describe('OCR aggregator behavior', function () {
@@ -293,8 +298,14 @@ describe('Aggregator', function () {
       }
 
       // Validates the decoded event
-      const e = decodedEvent['NewTransmission']
-      assert.isTrue(Object.prototype.hasOwnProperty.call(decodedEvent, 'NewTransmission'))
+
+      const e = decodedEvent['chainlink::ocr2::aggregator::Aggregator::NewTransmission']
+      assert.isTrue(
+        Object.prototype.hasOwnProperty.call(
+          decodedEvent,
+          'chainlink::ocr2::aggregator::Aggregator::NewTransmission',
+        ),
+      )
       assert.equal(e.round_id, 1n)
       assert.equal(e.observation_timestamp, 1n)
       assert.equal(e.epoch_and_round, 1n)

@@ -8,6 +8,7 @@ import {
   Account,
   Call,
   constants,
+  UniversalDetails,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
