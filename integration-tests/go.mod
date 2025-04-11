@@ -18,7 +18,7 @@ require (
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.51.0
 	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250410193951-4eb9d872ebb1
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250410193951-4eb9d872ebb1
-	github.com/smartcontractkit/chainlink/v2 v2.19.0-ccip1.5.16-alpha.0.0.20250410193951-4eb9d872ebb1
+	github.com/smartcontractkit/chainlink/v2 v2.22.1-por-beta.5.0.20250410193951-4eb9d872ebb1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	go.uber.org/zap v1.27.0
