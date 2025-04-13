@@ -118,7 +118,7 @@ func (txm *starktxm) broadcastLoop() {
 const FeeMargin uint32 = 115
 const RPCNonceErrMsg = "Invalid transaction nonce"
 
-func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, *felt.Felt, error) {
+func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimation, *felt.Felt, error) {
 	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
 
@@ -156,9 +156,9 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		}
 
 		// track the FRI estimate, but keep looping so we print out all estimates
-		var friEstimate *starknetrpc.FeeEstimate
+		var friEstimate *starknetrpc.FeeEstimation
 		for j, f := range feeEstimate {
-			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.GasConsumed, "GasPrice", f.GasPrice, "DataGasConsumed", f.DataGasConsumed, "DataGasPrice", f.DataGasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.L1GasConsumed, "GasPrice", f.L1GasPrice, "DataGasConsumed", f.L1DataGasConsumed, "DataGasPrice", f.L1DataGasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
 			if f.FeeUnit == "FRI" {
 				friEstimate = &feeEstimate[j]
 			}
@@ -224,6 +224,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		FeeMode:               starknetrpc.DAModeL1,
 	}
 
+	broadcastTx := starknetrpc.BroadcastInvokeTxnV3{
+		InvokeTxnV3: tx,
+	}
+
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
 	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
 	if err != nil {
@@ -250,13 +254,13 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	// TODO: consider making this configurable
 	// pad estimate to 250% (add extra because estimate did not include validation)
-	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
+	gasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
 	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
 	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
 	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
 
 	// pad by 150%
-	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
+	gasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
 	overallFee := friEstimate.OverallFee.BigInt(new(big.Int)) // overallFee = gas_used*gas_price + data_gas_used*data_gas_price
 
 	// TODO: consider making this configurable
@@ -285,12 +289,13 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 	tx.Signature = signature
+	
 
-	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
+  execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 
 	// finally, transmit the invoke
-	res, err := account.AddInvokeTransaction(execCtx, tx)
+	res, err := account.Provider.AddInvokeTransaction(execCtx, &broadcastTx)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		var dataErr *starknetrpc.RPCError
