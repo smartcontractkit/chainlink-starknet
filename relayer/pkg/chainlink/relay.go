@@ -63,6 +63,10 @@ func (r *relayer) NewContractReader(ctx context.Context, _ []byte) (relaytypes.C
 	return nil, errors.New("contract reader is not supported for starknet")
 }
 
+func (r *relayer) NewEVMChain(ctx context.Context) (relaytypes.EVMChain, error) {
+	return nil, errors.New("ev, chain is not supported for starknet")
+}
+
 func (r *relayer) LatestHead(ctx context.Context) (relaytypes.Head, error) {
 	return r.chain.LatestHead(ctx)
 }
