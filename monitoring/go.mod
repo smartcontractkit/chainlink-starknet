@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/NethermindEth/juno v0.12.5
-	github.com/NethermindEth/starknet.go v0.8.0
+	github.com/NethermindEth/starknet.go v0.7.1
 	github.com/prometheus/client_golang v1.22.0
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250417183726-347f43d97832
 	github.com/smartcontractkit/chainlink-common/pkg/monitoring v0.0.0-20250417185646-160c6083ac30

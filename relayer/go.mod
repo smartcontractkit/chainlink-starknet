@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/NethermindEth/juno v0.12.5
-	github.com/NethermindEth/starknet.go v0.8.0
+	github.com/NethermindEth/starknet.go v0.7.1
 	github.com/ethereum/go-ethereum v1.15.3
 	github.com/hashicorp/go-plugin v1.6.3
 	github.com/pelletier/go-toml/v2 v2.2.3
