@@ -44,7 +44,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> {}
+export interface IStarknetProvider extends IProvider<StarknetProvider> { }
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -196,7 +196,7 @@ class Provider implements IStarknetProvider {
   }
 
   signAndSend = async (calls: Call[], wait = false) => {
-    const tx = await this.account.execute(calls)
+    const tx = await this.account.execute(calls, { version: ETransactionVersion.V3 })
     const response = wrapResponse(this, tx)
     if (!wait) return response
 
