@@ -197,24 +197,22 @@ func (_m *Reader) LatestBlockHeight(_a0 context.Context) (uint64, error) {
 }
 
 // TransactionByHash provides a mock function with given fields: _a0, _a1
-func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 *felt.Felt) (rpc.Transaction, error) {
+func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 *felt.Felt) (rpc.BlockTransaction, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TransactionByHash")
 	}
 
-	var r0 rpc.Transaction
+	var r0 rpc.BlockTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (rpc.Transaction, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (rpc.BlockTransaction, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) rpc.Transaction); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) rpc.BlockTransaction); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(rpc.Transaction)
-		}
+		r0 = ret.Get(0).(rpc.BlockTransaction)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *felt.Felt) error); ok {
@@ -227,24 +225,22 @@ func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 *felt.Felt) (rpc.Tr
 }
 
 // TransactionReceipt provides a mock function with given fields: _a0, _a1
-func (_m *Reader) TransactionReceipt(_a0 context.Context, _a1 *felt.Felt) (rpc.TransactionReceipt, error) {
+func (_m *Reader) TransactionReceipt(_a0 context.Context, _a1 *felt.Felt) (rpc.TransactionReceiptWithBlockInfo, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TransactionReceipt")
 	}
 
-	var r0 rpc.TransactionReceipt
+	var r0 rpc.TransactionReceiptWithBlockInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (rpc.TransactionReceipt, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (rpc.TransactionReceiptWithBlockInfo, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) rpc.TransactionReceipt); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) rpc.TransactionReceiptWithBlockInfo); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(rpc.TransactionReceipt)
-		}
+		r0 = ret.Get(0).(rpc.TransactionReceiptWithBlockInfo)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *felt.Felt) error); ok {
