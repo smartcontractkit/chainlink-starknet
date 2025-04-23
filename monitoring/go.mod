@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/NethermindEth/juno v0.12.5
-	github.com/NethermindEth/starknet.go v0.7.1
+	github.com/NethermindEth/starknet.go v0.8.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250423160449-32f25cc04aa3
 	github.com/smartcontractkit/chainlink-common/pkg/monitoring v0.0.0-20250417185646-160c6083ac30
@@ -168,6 +168,7 @@ require (
 )
 
 replace (
+	github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk v0.0.5-0.20250422175525-b7575d96bd4d
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
