@@ -187,7 +187,7 @@ const afterExecute: AfterExecute<SetConfigInput, ContractInput> = (context, inpu
     return { successfulConfiguration: false }
   }
   const events = context.contract.parseEvents(txInfo)
-  const event = events[events.length - 1]['ConfigSet']
+  const event = events[events.length - 1]['chainlink::ocr2::aggregator::Aggregator::ConfigSet']
   const offchainConfig = decodeOffchainConfigFromEventData(event.offchain_config as BigNumberish[])
 
   try {
