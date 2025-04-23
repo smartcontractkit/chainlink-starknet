@@ -113,8 +113,6 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.contractAddress = args[0]
 
       const loadResult = config.loadContract()
-      console.log('load result')
-      console.log(loadResult)
       c.contract = loadResult.contract
       if (loadResult.casm) {
         c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
@@ -183,9 +181,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
           return config.hooks?.beforeExecute == null
             ? c.defaultBeforeExecute(ctx, inpt)
             : config.hooks.beforeExecute(ctx, inpt, {
-                logger: deps.logger,
-                prompt: deps.prompt,
-              })
+              logger: deps.logger,
+              prompt: deps.prompt,
+            })
         })
         for (const func of funcs) {
           await func()
@@ -198,9 +196,9 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
           return config.hooks?.afterExecute == null
             ? c.defaultAfterExecute()
             : config.hooks.afterExecute(ctx, inpt, {
-                logger: deps.logger,
-                prompt: deps.prompt,
-              })
+              logger: deps.logger,
+              prompt: deps.prompt,
+            })
         })
 
         // If there's only one function to call (bc only one address was provided to
