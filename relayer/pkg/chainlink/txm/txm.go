@@ -209,7 +209,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return "", err
 	}
 
-	res, err := account.Provider.AddInvokeTransaction(ctx, broadcastInvokeTxnV3)
+	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
+	defer execCancel()
+
+	res, err := account.Provider.AddInvokeTransaction(execCtx, broadcastInvokeTxnV3)
 
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
