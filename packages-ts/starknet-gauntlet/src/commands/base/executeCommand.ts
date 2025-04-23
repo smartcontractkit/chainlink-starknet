@@ -113,6 +113,8 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
       c.contractAddress = args[0]
 
       const loadResult = config.loadContract()
+      console.log('load result')
+      console.log(loadResult)
       c.contract = loadResult.contract
       if (loadResult.casm) {
         c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)

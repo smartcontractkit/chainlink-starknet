@@ -9,6 +9,7 @@ import {
   Call,
   constants,
   UniversalDetails,
+  ETransactionVersion,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -87,14 +88,14 @@ class Provider implements IStarknetProvider {
   account: Account
 
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
-    this.provider = new StarknetProvider({ nodeUrl })
+    this.provider = new StarknetProvider({ nodeUrl, specVersion: '0.8' })
     if (wallet) {
       this.account = new Account(
         this.provider,
         wallet.getAccountAddress(),
         wallet.signer,
-        /* cairoVersion= */ null, // don't set cairo version so that it's automatically detected from the contract
-        /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
+        undefined,
+        ETransactionVersion.V3,
       )
     }
   }
@@ -104,8 +105,8 @@ class Provider implements IStarknetProvider {
       this.provider,
       wallet.getAccountAddress(),
       wallet.signer,
-      /* cairoVersion= */ null,
-      /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
+      undefined,
+      ETransactionVersion.V3,
     )
   }
 
@@ -126,14 +127,18 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
-    const tx = await this.account.declareAndDeploy({
-      contract,
-      compiledClassHash,
-      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
-      // unique: false,
-      ...(!!input && input.length > 0 && { constructorCalldata: input }),
-    })
-
+    const tx = await this.account.declareAndDeploy(
+      {
+        contract,
+        compiledClassHash,
+        salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+        // unique: false,
+        ...(!!input && input.length > 0 && { constructorCalldata: input }),
+      },
+      {
+        version: ETransactionVersion.V3,
+      },
+    )
     const response = wrapResponse(this, tx.deploy)
 
     if (!wait) return response
