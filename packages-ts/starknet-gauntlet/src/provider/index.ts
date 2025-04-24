@@ -9,6 +9,8 @@ import {
   Call,
   constants,
   UniversalDetails,
+  ResourceBounds,
+  EstimateFeeResponse,
   ETransactionVersion,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
@@ -44,7 +46,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> { }
+export interface IStarknetProvider extends IProvider<StarknetProvider> {}
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -196,11 +198,48 @@ class Provider implements IStarknetProvider {
   }
 
   signAndSend = async (calls: Call[], wait = false) => {
-    const tx = await this.account.execute(calls, { version: ETransactionVersion.V3 })
+    let feeEstimate
+    console.log(calls)
+    try {
+      feeEstimate = await this.account.estimateFee(calls, { version: ETransactionVersion.V3 })
+    } catch (error) {
+      console.error('Failed to estimate fee:', error)
+      throw error // optionally rethrow if you want the function to still fail
+    }
+    const resouceBounds = this.feeEstimateToResourceBoundsMapping(feeEstimate)
+    const tx = await this.account.execute(calls, { resourceBounds: resouceBounds })
     const response = wrapResponse(this, tx)
     if (!wait) return response
 
     await response.wait()
     return response
+  }
+
+  feeEstimateToResourceBoundsMapping = (
+    estimate: EstimateFeeResponse,
+    bufferPercent: number = 20, // optional buffer to avoid underestimation
+  ): ResourceBounds => {
+    const bufferMultiplier = BigInt(100 + bufferPercent)
+
+    const withBuffer = (amount: bigint) => (amount * bufferMultiplier) / 100n
+
+    return {
+      l1_gas: {
+        max_amount: String(withBuffer(estimate.l1_gas_consumed * estimate.l1_gas_price)),
+        max_price_per_unit: String(estimate.l1_gas_price),
+      },
+      l1_data_gas: {
+        max_amount: String(withBuffer(estimate.l1_data_gas_consumed * estimate.l1_data_gas_price)),
+        max_price_per_unit: String(estimate.l1_data_gas_price),
+      },
+      l2_gas: {
+        max_amount: String(
+          estimate.l2_gas_consumed && estimate.l2_gas_price
+            ? withBuffer(estimate.l2_gas_consumed * estimate.l2_gas_price)
+            : 0n,
+        ),
+        max_price_per_unit: String(estimate.l2_gas_price ?? 0n),
+      },
+    }
   }
 }
