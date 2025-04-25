@@ -90,8 +90,8 @@ type ChainlinkClient struct {
 
 type StarknetClusterTestEnv struct {
 	*test_env_integrations.CLClusterTestEnv
-	Starknet  *test_env_starknet.Starknet
-	Parrot *test_env_ctf.Parrot
+	Starknet *test_env_starknet.Starknet
+	Parrot   *test_env_ctf.Parrot
 }
 
 type TestConfig struct {
@@ -194,7 +194,7 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Clients.DockerEnv = &StarknetClusterTestEnv{
 			CLClusterTestEnv: env,
 			Starknet:         stark,
-			Parrot:        env.MockAdapter,
+			Parrot:           env.MockAdapter,
 		}
 
 		// Setting up Mock adapter

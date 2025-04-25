@@ -224,7 +224,7 @@ func (sgpp *StarknetGauntletPlusPlus) TransferToken(tokenAddress string, to stri
 func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2Controllercontract() error {
 	inputMap := make(map[string]interface{})
 	request := Request{
-		Command: "starknet/data-feeds/aggregator@1.0.0:declare",
+		Command: "starknet/data-feeds/aggregator@2.0.0:declare",
 		Input:   inputMap,
 	}
 
@@ -253,7 +253,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmission
 	}
 
 	request := Request{
-		Command: "starknet/data-feeds/aggregator@1.0.0:deploy",
+		Command: "starknet/data-feeds/aggregator@2.0.0:deploy",
 		Input:   inputMap,
 	}
 
@@ -263,7 +263,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerContract(minSubmission
 func (sgpp *StarknetGauntletPlusPlus) DeclareOCR2ControllerProxyContract() error {
 	inputMap := make(map[string]interface{})
 	request := Request{
-		Command: "starknet/data-feeds/aggregator-proxy@1.0.0:declare",
+		Command: "starknet/data-feeds/aggregator-proxy@2.0.0:declare",
 		Input:   inputMap,
 	}
 	return sgpp.execute(&request)
@@ -285,7 +285,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployOCR2ControllerProxyContract(address 
 	}
 
 	request := Request{
-		Command: "starknet/data-feeds/aggregator-proxy@1.0.0:deploy",
+		Command: "starknet/data-feeds/aggregator-proxy@2.0.0:deploy",
 		Input:   inputMap,
 	}
 
@@ -299,7 +299,7 @@ func (sgpp *StarknetGauntletPlusPlus) AddAccess(aggregatorAddress string, grantA
 	}
 
 	request := Request{
-		Command: "starknet/data-feeds/access-controller@1.0.0:add-access",
+		Command: "starknet/data-feeds/access-controller@2.0.0:add-access",
 		Input:   inputMap,
 	}
 
@@ -309,7 +309,7 @@ func (sgpp *StarknetGauntletPlusPlus) AddAccess(aggregatorAddress string, grantA
 func (sgpp *StarknetGauntletPlusPlus) DeclareAccessControllerContract() error {
 	inputMap := make(map[string]interface{})
 	request := Request{
-		Command: "starknet/data-feeds/access-controller@1.0.0:declare",
+		Command: "starknet/data-feeds/access-controller@2.0.0:declare",
 		Input:   inputMap,
 	}
 
@@ -325,7 +325,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address str
 	}
 
 	request := Request{
-		Command: "starknet/data-feeds/access-controller@1.0.0:deploy",
+		Command: "starknet/data-feeds/access-controller@2.0.0:deploy",
 		Input:   inputMap,
 	}
 	return sgpp.executeDeploy(&request)
@@ -334,7 +334,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployAccessControllerContract(address str
 func (sgpp *StarknetGauntletPlusPlus) DeclareLinkTokenContract() error {
 	inputMap := make(map[string]interface{})
 	request := Request{
-		Command: "starknet/token/link:declare",
+		Command: "starknet/token/link@2.0.0:declare",
 		Input:   inputMap,
 	}
 
@@ -350,7 +350,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (s
 	}
 
 	constructorCalldata := map[string]interface{}{
-		"minter": address,
+		"initial_minter": address,
 		"owner":  address,
 	}
 	inputMap := map[string]interface{}{
@@ -358,7 +358,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (s
 	}
 
 	request := Request{
-		Command: "starknet/token/link:deploy",
+		Command: "starknet/token/link@2.0.0:deploy",
 		Input:   inputMap,
 	}
 
@@ -377,7 +377,7 @@ func (sgpp *StarknetGauntletPlusPlus) SetConfigDetails(cfg string, ocrAddress st
 		"txArgs":  &txArgs,
 	}
 	request := Request{
-		Command: "starknet/data-feeds/aggregator@1.0.0:set-config",
+		Command: "starknet/data-feeds/aggregator@2.0.0:set-config",
 		Input:   inputMap,
 	}
 	test, testerr := sgpp.executeReturnsReport(&request)
@@ -397,7 +397,7 @@ func (sgpp *StarknetGauntletPlusPlus) SetOCRBilling(observationPaymentGjuels int
 	}
 
 	request := Request{
-		Command: "starknet/data-feeds/aggregator@1.0.0:set-billing",
+		Command: "starknet/data-feeds/aggregator@2.0.0:set-billing",
 		Input:   inputMap,
 	}
 

@@ -90,26 +90,14 @@ class Provider implements IStarknetProvider {
   account: Account
 
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
-    this.provider = new StarknetProvider({ nodeUrl, specVersion: '0.8' })
+    this.provider = new StarknetProvider({ nodeUrl })
     if (wallet) {
-      this.account = new Account(
-        this.provider,
-        wallet.getAccountAddress(),
-        wallet.signer,
-        undefined,
-        ETransactionVersion.V3,
-      )
+      this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
     }
   }
 
   setAccount(wallet: IStarknetWallet) {
-    this.account = new Account(
-      this.provider,
-      wallet.getAccountAddress(),
-      wallet.signer,
-      undefined,
-      ETransactionVersion.V3,
-    )
+    this.account = new Account(this.provider, wallet.getAccountAddress(), wallet.signer)
   }
 
   send = async () => {
@@ -210,10 +198,7 @@ class Provider implements IStarknetProvider {
     console.log(this.account)
     const rb = this.feeEstimateToResourceBoundsMapping(feeEstimate)
     try {
-      const tx = await this.account.execute(calls, {
-        resourceBounds: rb,
-        version: ETransactionVersion.V3,
-      })
+      const tx = await this.account.execute(calls, {})
       const response = wrapResponse(this, tx)
       if (!wait) return response
 
