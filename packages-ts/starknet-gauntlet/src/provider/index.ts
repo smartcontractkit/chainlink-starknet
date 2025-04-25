@@ -202,44 +202,36 @@ class Provider implements IStarknetProvider {
     console.log(calls)
     try {
       feeEstimate = await this.account.estimateFee(calls, { version: ETransactionVersion.V3 })
+      console.log(feeEstimate)
     } catch (error) {
       console.error('Failed to estimate fee:', error)
       throw error // optionally rethrow if you want the function to still fail
     }
-    const resouceBounds = this.feeEstimateToResourceBoundsMapping(feeEstimate)
-    const tx = await this.account.execute(calls, { resourceBounds: resouceBounds })
-    const response = wrapResponse(this, tx)
-    if (!wait) return response
+    console.log(this.account)
+    const rb = this.feeEstimateToResourceBoundsMapping(feeEstimate)
+    try {
+      const tx = await this.account.execute(calls, {
+        resourceBounds: rb,
+        version: ETransactionVersion.V3,
+      })
+      const response = wrapResponse(this, tx)
+      if (!wait) return response
 
-    await response.wait()
-    return response
+      await response.wait()
+      return response
+    } catch (error) {
+      console.error('Failed to execute fee:', error)
+    }
   }
 
-  feeEstimateToResourceBoundsMapping = (
-    estimate: EstimateFeeResponse,
-    bufferPercent: number = 20, // optional buffer to avoid underestimation
-  ): ResourceBounds => {
-    const bufferMultiplier = BigInt(100 + bufferPercent)
-
-    const withBuffer = (amount: bigint) => (amount * bufferMultiplier) / 100n
-
+  feeEstimateToResourceBoundsMapping = (estimate: EstimateFeeResponse): ResourceBounds => {
     return {
-      l1_gas: {
-        max_amount: String(withBuffer(estimate.l1_gas_consumed * estimate.l1_gas_price)),
-        max_price_per_unit: String(estimate.l1_gas_price),
+      l1_gas: estimate.resourceBounds.l1_gas,
+      l1_data_gas: estimate.resourceBounds.l1_data_gas ?? {
+        max_amount: String('0x0'),
+        max_price_per_unit: String('0x0'),
       },
-      l1_data_gas: {
-        max_amount: String(withBuffer(estimate.l1_data_gas_consumed * estimate.l1_data_gas_price)),
-        max_price_per_unit: String(estimate.l1_data_gas_price),
-      },
-      l2_gas: {
-        max_amount: String(
-          estimate.l2_gas_consumed && estimate.l2_gas_price
-            ? withBuffer(estimate.l2_gas_consumed * estimate.l2_gas_price)
-            : 0n,
-        ),
-        max_price_per_unit: String(estimate.l2_gas_price ?? 0n),
-      },
+      l2_gas: estimate.resourceBounds.l2_gas,
     }
   }
 }
