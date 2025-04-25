@@ -351,7 +351,7 @@ func (sgpp *StarknetGauntletPlusPlus) DeployLinkTokenContract(address string) (s
 
 	constructorCalldata := map[string]interface{}{
 		"initial_minter": address,
-		"owner":  address,
+		"owner":          address,
 	}
 	inputMap := map[string]interface{}{
 		"constructorCalldata": &constructorCalldata,
