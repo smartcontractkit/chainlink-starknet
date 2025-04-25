@@ -186,17 +186,6 @@ class Provider implements IStarknetProvider {
   }
 
   signAndSend = async (calls: Call[], wait = false) => {
-    let feeEstimate
-    console.log(calls)
-    try {
-      feeEstimate = await this.account.estimateFee(calls, { version: ETransactionVersion.V3 })
-      console.log(feeEstimate)
-    } catch (error) {
-      console.error('Failed to estimate fee:', error)
-      throw error // optionally rethrow if you want the function to still fail
-    }
-    console.log(this.account)
-    const rb = this.feeEstimateToResourceBoundsMapping(feeEstimate)
     try {
       const tx = await this.account.execute(calls, {})
       const response = wrapResponse(this, tx)
