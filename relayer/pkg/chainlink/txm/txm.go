@@ -76,36 +76,6 @@ func (txm *starktxm) Name() string {
 	return txm.lggr.Name()
 }
 
-func makeResourceBoundsMapWithZeroValues() starknetrpc.ResourceBoundsMapping {
-	return starknetrpc.ResourceBoundsMapping{
-		L1Gas: starknetrpc.ResourceBounds{
-			MaxAmount:       "0x0",
-			MaxPricePerUnit: "0x0",
-		},
-		L1DataGas: starknetrpc.ResourceBounds{
-			MaxAmount:       "0x0",
-			MaxPricePerUnit: "0x0",
-		},
-		L2Gas: starknetrpc.ResourceBounds{
-			MaxAmount:       "0x0",
-			MaxPricePerUnit: "0x0",
-		},
-	}
-}
-
-func fillEmptyFeeEstimation(ctx context.Context, feeEstimation *starknetrpc.FeeEstimation, provider starknetrpc.RpcProvider) {
-	if feeEstimation.L1DataGasConsumed.IsZero() {
-		// default value for L1DataGasConsumed in most cases
-		feeEstimation.L1DataGasConsumed = new(felt.Felt).SetUint64(224)
-	}
-	if feeEstimation.L1DataGasPrice.IsZero() {
-		// getting the L1DataGasPrice from the latest block as reference
-		result, _ := provider.BlockWithTxHashes(ctx, starknetrpc.WithBlockTag("latest"))
-		block := result.(*starknetrpc.BlockTxHashes)
-		feeEstimation.L1DataGasPrice = block.L1DataGasPrice.PriceInFRI
-	}
-}
-
 func (txm *starktxm) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("Txm", func() error {
 		txm.done.Add(2) // waitgroup: broadcast loop and confirm loop
@@ -148,6 +118,62 @@ func (txm *starktxm) broadcastLoop() {
 const FeeMargin uint32 = 115
 const RPCNonceErrMsg = "Invalid transaction nonce"
 
+func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.BroadcastInvokeTxnV3) (*starknetrpc.FeeEstimation, *felt.Felt, error) {
+	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
+	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
+
+	var largestEstimateNonce *felt.Felt
+
+	for i := 1; i <= 5; i++ {
+		txm.lggr.Infow("attempt to estimate fee", "attempt", i)
+
+		estimateNonce, err := client.AccountNonce(ctx, accountAddress)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to check account nonce: %+w", err)
+		}
+		tx.InvokeTxnV3.Nonce = estimateNonce
+
+		if largestEstimateNonce == nil || estimateNonce.Cmp(largestEstimateNonce) > 0 {
+			largestEstimateNonce = estimateNonce
+		}
+
+		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
+		if err != nil {
+			var dataErr *starknetrpc.RPCError
+			if !errors.As(err, &dataErr) {
+				return nil, nil, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
+			}
+			data := dataErr.Data
+			dataStr := fmt.Sprintf("%+v", data)
+
+			txm.lggr.Errorw("failed to estimate fee", "attempt", i, "error", err, "data", dataStr)
+
+			if strings.Contains(dataStr, RPCNonceErrMsg) {
+				continue
+			}
+
+			return nil, nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
+		}
+
+		// track the FRI estimate, but keep looping so we print out all estimates
+		var friEstimate *starknetrpc.FeeEstimation
+		for j, f := range feeEstimate {
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.L1GasConsumed, "GasPrice", f.L1GasPrice, "DataGasConsumed", f.L1DataGasConsumed, "DataGasPrice", f.L1DataGasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
+			if f.FeeUnit == "FRI" {
+				friEstimate = &feeEstimate[j]
+			}
+		}
+		if friEstimate != nil {
+			return friEstimate, largestEstimateNonce, nil
+		}
+
+		txm.lggr.Errorw("No FRI estimate was returned", "attempt", i)
+	}
+
+	txm.lggr.Errorw("all attempts to estimate fee failed")
+	return nil, nil, fmt.Errorf("all attempts to estimate fee failed")
+}
+
 func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
 	client, err := txm.client.Get()
 	if err != nil {
@@ -175,45 +201,110 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
+	tx := starknetrpc.InvokeTxnV3{
+		Type:          starknetrpc.TransactionType_Invoke,
+		SenderAddress: account.AccountAddress,
+		Version:       starknetrpc.TransactionV3,
+		Signature:     []*felt.Felt{},
+		Nonce:         &felt.Zero, // filled in below
+		ResourceBounds: starknetrpc.ResourceBoundsMapping{
+			L1Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
+			},
+			// New starknet cannot resolve amounts as 0x0. Minimal max price per unit is: 0x3b9aca00
+			L1DataGas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x01",
+				MaxPricePerUnit: "0x01",
+			},
+			L2Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x01",
+				MaxPricePerUnit: "0x01",
+			},
+		},
+		Tip:                   "0x0",
+		PayMasterData:         []*felt.Felt{},
+		AccountDeploymentData: []*felt.Felt{},
+		NonceDataMode:         starknetrpc.DAModeL1,
+		FeeMode:               starknetrpc.DAModeL1,
+	}
+
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
-	callData, err := account.FmtCalldata([]starknetrpc.FunctionCall{call})
+	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
 	if err != nil {
 		return txhash, err
 	}
 
+	broadCastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{tx}
+
+	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadCastTxnV3)
+	if err != nil {
+		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
+	}
+
 	nonce := txStore.GetNextNonce()
-
-	// building and signing the txn, as it needs a signature to estimate the fee
-	broadcastInvokeTxnV3 := starknetutils.BuildInvokeTxn(account.AccountAddress, nonce, callData, makeResourceBoundsMapWithZeroValues())
-	err = account.SignInvokeTransaction(ctx, &broadcastInvokeTxnV3.InvokeTxnV3)
-	if err != nil {
-		return "", err
+	if largestEstimateNonce.Cmp(nonce) > 0 {
+		// The nonce value returned from the node during estimation is greater than our expected next nonce
+		// - which means that we are behind, due to a resync. Fast forward our locally tracked nonce value.
+		// See resyncNonce for a more detailed explanation.
+		staleTxs := txStore.SetNextNonce(largestEstimateNonce)
+		txm.lggr.Infow("fast-forwarding nonce after resync", "previousNonce", nonce, "updatedNonce", largestEstimateNonce, "staleTxs", len(staleTxs))
+		if len(staleTxs) > 0 {
+			txm.lggr.Errorw("unexpected stale transactions after nonce fast-forward", "accountAddress", accountAddress)
+		}
+		nonce = largestEstimateNonce
 	}
 
-	// estimate txn fee
-	estimateFee, err := account.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{broadcastInvokeTxnV3}, []starknetrpc.SimulationFlag{}, starknetrpc.WithBlockTag("pending"))
+	// TODO: consider making this configurable
+	// pad estimate to 250% (add extra because estimate did not include validation)
+	gasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
+	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+
+	L2gasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
+	L2expandedGas := new(big.Int).Mul(L2gasConsumed, big.NewInt(250))
+	L2maxGas := new(big.Int).Div(L2expandedGas, big.NewInt(100))
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(L2maxGas).String())
+
+	// pad by 150%
+	gasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
+	L2gasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
+	overallFee := friEstimate.OverallFee.BigInt(new(big.Int)) // overallFee = gas_used*gas_price + data_gas_used*data_gas_price
+
+	// TODO: consider making this configurable
+	// pad estimate to 150% (add extra because estimate did not include validation)
+	gasUnits := new(big.Int).Div(overallFee, gasPrice)
+	expandedGasUnits := new(big.Int).Mul(gasUnits, big.NewInt(150))
+	maxGasUnits := new(big.Int).Div(expandedGasUnits, big.NewInt(100))
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGasUnits).String())
+
+	// pad by 150%
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
+	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
+
+	L2expandedGasPrice := new(big.Int).Mul(L2gasPrice, big.NewInt(150))
+	L2maxGasPrice := new(big.Int).Div(L2expandedGasPrice, big.NewInt(100))
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(L2maxGasPrice).String())
+
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
+
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = starknetrpc.U64(friEstimate.L1DataGasConsumed.String())
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = starknetrpc.U128(friEstimate.L1DataGasPrice.String())
+
+	broadCastTxnV3.InvokeTxnV3.Nonce = nonce
+
+	err = account.SignInvokeTransaction(ctx, &broadCastTxnV3.InvokeTxnV3)
 	if err != nil {
-		return "", err
-	}
-
-	txnFee := estimateFee[0]
-	fillEmptyFeeEstimation(ctx, &txnFee, account.Provider)
-	// 150% multiplier
-	multiplier, _ := new(big.Float).SetInt(big.NewInt(150)).Float64()
-
-	broadcastInvokeTxnV3.ResourceBounds = starknetutils.FeeEstToResBoundsMap(txnFee, multiplier)
-
-	// signing the txn again with the estimated fee, as the fee value is used in the txn hash calculation
-	err = account.SignInvokeTransaction(ctx, &broadcastInvokeTxnV3.InvokeTxnV3)
-	if err != nil {
-		return "", err
+		return txhash, err
 	}
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 
-	res, err := account.Provider.AddInvokeTransaction(execCtx, broadcastInvokeTxnV3)
-
+	// finally, transmit the invoke
+	res, err := account.Provider.AddInvokeTransaction(execCtx, &broadCastTxnV3)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		var dataErr *starknetrpc.RPCError
@@ -426,4 +517,17 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
 	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
+}
+
+func fillEmptyFeeEstimation(ctx context.Context, feeEstimation *starknetrpc.FeeEstimation, provider starknetrpc.RpcProvider) {
+	if feeEstimation.L1DataGasConsumed.IsZero() {
+		// default value for L1DataGasConsumed in most cases
+		feeEstimation.L1DataGasConsumed = new(felt.Felt).SetUint64(224)
+	}
+	if feeEstimation.L1DataGasPrice.IsZero() {
+		// getting the L1DataGasPrice from the latest block as reference
+		result, _ := provider.BlockWithTxHashes(ctx, starknetrpc.WithBlockTag("latest"))
+		block := result.(*starknetrpc.BlockTxHashes)
+		feeEstimation.L1DataGasPrice = block.L1DataGasPrice.PriceInFRI
+	}
 }
