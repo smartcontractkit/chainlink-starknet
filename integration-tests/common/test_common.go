@@ -18,6 +18,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink-testing-framework/parrot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -60,7 +61,7 @@ type AccountDetails struct {
 type Clients struct {
 	StarknetClient   *starknet.Client
 	DevnetClient     *starknetdevnet.DevNet
-	KillgraveClient  *test_env_ctf.Killgrave
+	ParrotClient     *test_env_ctf.Parrot
 	OCR2Client       *ocr2.Client
 	ChainlinkClient  *ChainlinkClient
 	GauntletClient   *gauntlet.StarknetGauntlet
@@ -89,8 +90,8 @@ type ChainlinkClient struct {
 
 type StarknetClusterTestEnv struct {
 	*test_env_integrations.CLClusterTestEnv
-	Starknet  *test_env_starknet.Starknet
-	Killgrave *test_env_ctf.Killgrave
+	Starknet *test_env_starknet.Starknet
+	Parrot   *test_env_ctf.Parrot
 }
 
 type TestConfig struct {
@@ -193,14 +194,26 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Clients.DockerEnv = &StarknetClusterTestEnv{
 			CLClusterTestEnv: env,
 			Starknet:         stark,
-			Killgrave:        env.MockAdapter,
+			Parrot:           env.MockAdapter,
 		}
 
 		// Setting up Mock adapter
-		m.Clients.KillgraveClient = env.MockAdapter
-		m.Common.RPCDetails.MockServerEndpoint = m.Clients.KillgraveClient.InternalEndpoint
+		m.Clients.ParrotClient = env.MockAdapter
+		m.Common.RPCDetails.MockServerEndpoint = m.Clients.ParrotClient.InternalEndpoint
 		m.Common.RPCDetails.MockServerURL = "mockserver-bridge"
-		err = m.Clients.KillgraveClient.SetAdapterBasedIntValuePath("/mockserver-bridge", []string{http.MethodGet, http.MethodPost}, 10)
+		err = m.Clients.ParrotClient.SetAdapterRoute(&parrot.Route{
+			Path:               "/mockserver-bridge",
+			Method:             http.MethodGet,
+			ResponseBody:       10,
+			ResponseStatusCode: http.StatusOK,
+		})
+		require.NoError(m.TestConfig.T, err, "Failed to set mock adapter value")
+		err = m.Clients.ParrotClient.SetAdapterRoute(&parrot.Route{
+			Path:               "/mockserver-bridge",
+			Method:             http.MethodPost,
+			ResponseBody:       10,
+			ResponseStatusCode: http.StatusOK,
+		})
 		require.NoError(m.TestConfig.T, err, "Failed to set mock adapter value")
 	}
 
