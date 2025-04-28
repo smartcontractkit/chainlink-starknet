@@ -18,9 +18,9 @@ require (
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20250117171710-b6481e9fcb34
 	github.com/smartcontractkit/chainlink-testing-framework/lib v1.52.0
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.51.0
-	github.com/smartcontractkit/chainlink/deployment 90f36ebd3d8d39b98be3e570f3d111fa0fc83039
-	github.com/smartcontractkit/chainlink/integration-tests 90f36ebd3d8d39b98be3e570f3d111fa0fc83039
-	github.com/smartcontractkit/chainlink/v2 90f36ebd3d8d39b98be3e570f3d111fa0fc83039
+	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250327165148-b97c0edb7e64
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250327165148-b97c0edb7e64
+	github.com/smartcontractkit/chainlink/v2 v2.19.0-ccip1.5.16-alpha.0.0.20250327165148-b97c0edb7e64
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	go.uber.org/zap v1.27.0
