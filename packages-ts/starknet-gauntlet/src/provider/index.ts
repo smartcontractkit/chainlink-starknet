@@ -8,6 +8,7 @@ import {
   Account,
   Call,
   constants,
+  ETransactionVersion
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -42,7 +43,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> {}
+export interface IStarknetProvider extends IProvider<StarknetProvider> { }
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -131,7 +132,12 @@ class Provider implements IStarknetProvider {
       salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
       // unique: false,
       ...(!!input && input.length > 0 && { constructorCalldata: input }),
-    })
+
+    },
+      {
+        version: ETransactionVersion.V3,
+      }
+    )
 
     const response = wrapResponse(this, tx.deploy)
 

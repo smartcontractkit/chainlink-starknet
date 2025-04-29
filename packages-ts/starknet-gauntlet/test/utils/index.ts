@@ -8,17 +8,25 @@ import {
   InspectCommandInstance,
   makeProvider,
   makeWallet,
+  LoadContractResult,
 } from '../../src/index'
 
-export const loadContract = (name: string): CompiledContract => {
-  return json.parse(fs.readFileSync(`${__dirname}/../__mocks__/${name}.json`).toString('ascii'))
+export const loadContract = (name: string): LoadContractResult => {
+  return {
+    contract: json.parse(
+      fs.readFileSync(`${__dirname}/../__mocks__/${name}.json`).toString('ascii'),
+    ),
+    casm: json.parse(
+      fs.readFileSync(`${__dirname}/../__mocks__/${name}_compiled.json`).toString('ascii'),
+    ),
+  }
 }
 
 export const loadExampleContract = () => {
-  return { contract: loadContract('example') }
+  return loadContract('example')
 }
 
-export const noop = () => {}
+export const noop = () => { }
 
 export const noopLogger: typeof logger = {
   table: noop,
@@ -34,7 +42,7 @@ export const noopLogger: typeof logger = {
   time: noop,
 }
 
-export const noopPrompt: typeof prompt = async () => {}
+export const noopPrompt: typeof prompt = async () => { }
 
 export const TIMEOUT = 900000
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
