@@ -8,7 +8,7 @@ import {
   Account,
   Call,
   constants,
-  ETransactionVersion
+  ETransactionVersion,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -43,7 +43,7 @@ interface IProvider<P> {
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
 
-export interface IStarknetProvider extends IProvider<StarknetProvider> { }
+export interface IStarknetProvider extends IProvider<StarknetProvider> {}
 export const makeProvider = (
   url: string,
   wallet?: IStarknetWallet,
@@ -126,17 +126,17 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
-    const tx = await this.account.declareAndDeploy({
-      contract,
-      compiledClassHash,
-      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
-      // unique: false,
-      ...(!!input && input.length > 0 && { constructorCalldata: input }),
-
-    },
+    const tx = await this.account.declareAndDeploy(
+      {
+        contract,
+        compiledClassHash,
+        salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+        // unique: false,
+        ...(!!input && input.length > 0 && { constructorCalldata: input }),
+      },
       {
         version: ETransactionVersion.V3,
-      }
+      },
     )
 
     const response = wrapResponse(this, tx.deploy)

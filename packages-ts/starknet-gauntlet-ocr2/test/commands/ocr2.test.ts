@@ -179,7 +179,7 @@ describe('OCR2 Contract', () => {
       const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const receipt = await provider.waitForTransaction(res.tx.hash)
       expect(receipt.isSuccess()).toBeTruthy()
-      const txReceipt = receipt as unknown as InvokeTransactionReceiptResponse
+      const txReceipt = (receipt as unknown) as InvokeTransactionReceiptResponse
 
       // Loads the contract
       const { contract } = loadContract(CONTRACT_LIST.OCR2)
@@ -228,7 +228,7 @@ describe('OCR2 Contract', () => {
       const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const receipt = await provider.waitForTransaction(res.tx.hash)
       expect(receipt.isSuccess()).toBeTruthy()
-      const txReceipt = receipt as unknown as InvokeTransactionReceiptResponse
+      const txReceipt = (receipt as unknown) as InvokeTransactionReceiptResponse
 
       // Loads the contract
       const { contract } = loadContract(CONTRACT_LIST.OCR2)
@@ -276,7 +276,7 @@ describe('OCR2 Contract', () => {
       const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const receipt = await provider.waitForTransaction(res.tx.hash)
       expect(receipt.isSuccess()).toBeTruthy()
-      const txReceipt = receipt as unknown as InvokeTransactionReceiptResponse
+      const txReceipt = (receipt as unknown) as InvokeTransactionReceiptResponse
 
       // Loads the contract
       const { contract } = loadContract(CONTRACT_LIST.OCR2)
@@ -341,7 +341,7 @@ describe('OCR2 Contract', () => {
       const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const receipt = await provider.waitForTransaction(res.tx.hash)
       expect(receipt.isSuccess()).toBeTruthy()
-      const txReceipt = receipt as unknown as InvokeTransactionReceiptResponse
+      const txReceipt = (receipt as unknown) as InvokeTransactionReceiptResponse
 
       // Creates a map where each key is an address and each corresponding value is
       // the number of times the address is seen in the transaction receipt events
@@ -374,7 +374,7 @@ describe('OCR2 Contract', () => {
       const provider: RpcProvider = makeProvider(LOCAL_URL).provider
       const receipt = await provider.waitForTransaction(res.tx.hash)
       expect(receipt.isSuccess()).toBeTruthy()
-      const txReceipt = receipt as unknown as InvokeTransactionReceiptResponse
+      const txReceipt = (receipt as unknown) as InvokeTransactionReceiptResponse
 
       // Creates a map where each key is an address and each corresponding value is
       // the number of times the address is seen in the transaction receipt events

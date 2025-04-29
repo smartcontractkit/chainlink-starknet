@@ -161,9 +161,9 @@ const beforeExecute: BeforeExecute<SetConfigInput, ContractInput> = (
   }
   // assume last event found is the latest config, in the event that multiple
   // set_config transactions ended up in the same block
-  const events = context.contract.parseEvents({
+  const events = context.contract.parseEvents(({
     events: rawEvents,
-  } as unknown as GetTransactionReceiptResponse)
+  } as unknown) as GetTransactionReceiptResponse)
   const event = events[events.length - 1]['chainlink::ocr2::aggregator::Aggregator::ConfigSet']
   const currOffchainConfig = decodeOffchainConfigFromEventData(
     event.offchain_config as BigNumberish[],

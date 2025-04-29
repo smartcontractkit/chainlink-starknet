@@ -188,7 +188,12 @@ describe('Aggregator', function () {
     }
 
     // Double checks that the ConfigSet event exists in the decoded event payload
-    assert.isTrue(Object.prototype.hasOwnProperty.call(decodedEvent, 'chainlink::ocr2::aggregator::Aggregator::ConfigSet'))
+    assert.isTrue(
+      Object.prototype.hasOwnProperty.call(
+        decodedEvent,
+        'chainlink::ocr2::aggregator::Aggregator::ConfigSet',
+      ),
+    )
   })
 
   describe('OCR aggregator behavior', function () {
@@ -294,7 +299,12 @@ describe('Aggregator', function () {
 
       // Validates the decoded event
       const e = decodedEvent['chainlink::ocr2::aggregator::Aggregator::NewTransmission']
-      assert.isTrue(Object.prototype.hasOwnProperty.call(decodedEvent, 'chainlink::ocr2::aggregator::Aggregator::NewTransmission'))
+      assert.isTrue(
+        Object.prototype.hasOwnProperty.call(
+          decodedEvent,
+          'chainlink::ocr2::aggregator::Aggregator::NewTransmission',
+        ),
+      )
       assert.equal(e.round_id, 1n)
       assert.equal(e.observation_timestamp, 1n)
       assert.equal(e.epoch_and_round, 1n)
