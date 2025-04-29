@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
-	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	pkgstarknet "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink"
 	starkchain "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/chain"
 	stkcfg "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/config"
@@ -88,13 +86,5 @@ func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs lo
 
 	c.SubService(r)
 
-	return &relayerAdapter{r}, nil
-}
-
-type relayerAdapter struct {
-	relaytypes.Relayer
-}
-
-func (r *relayerAdapter) AsEVMRelayer() (loop.EVMRelayer, error) {
-	return nil, errors.New("unimplemented")
+	return r, nil
 }

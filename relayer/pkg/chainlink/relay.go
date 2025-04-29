@@ -63,7 +63,7 @@ func (r *relayer) NewContractReader(ctx context.Context, _ []byte) (relaytypes.C
 	return nil, errors.New("contract reader is not supported for starknet")
 }
 
-func (r *relayer) AsEVMRelayer() (relaytypes.EVMRelayer, error) {
+func (r *relayer) EVM() (relaytypes.EVMService, error) {
 	return nil, errors.New("unimplemented")
 }
 

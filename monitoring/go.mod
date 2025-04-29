@@ -8,7 +8,7 @@ require (
 	github.com/NethermindEth/juno v0.12.5
 	github.com/NethermindEth/starknet.go v0.8.0
 	github.com/prometheus/client_golang v1.22.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250423160449-32f25cc04aa3
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250429171621-bc11ba5352d9
 	github.com/smartcontractkit/chainlink-common/pkg/monitoring v0.0.0-20250417185646-160c6083ac30
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.0.0-20230508053614-9f2fd5fd4ff1
 	github.com/smartcontractkit/libocr v0.0.0-20250408131511-c90716988ee0
