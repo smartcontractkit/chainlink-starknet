@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
+	"github.com/NethermindEth/starknet.go/client"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
@@ -23,8 +24,8 @@ type Reader interface {
 	BlockWithTxHashes(ctx context.Context, blockID starknetrpc.BlockID) (*starknetrpc.Block, error)
 	Call(context.Context, starknetrpc.FunctionCall, starknetrpc.BlockID) ([]*felt.Felt, error)
 	Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error)
-	TransactionByHash(context.Context, *felt.Felt) (starknetrpc.Transaction, error)
-	TransactionReceipt(context.Context, *felt.Felt) (starknetrpc.TransactionReceipt, error)
+	TransactionByHash(context.Context, *felt.Felt) (starknetrpc.BlockTransaction, error)
+	TransactionReceipt(context.Context, *felt.Felt) (starknetrpc.TransactionReceiptWithBlockInfo, error)
 	AccountNonce(context.Context, *felt.Felt) (*felt.Felt, error)
 }
 
@@ -51,9 +52,9 @@ type Client struct {
 func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger, timeout *time.Duration) (*Client, error) {
 	// TODO: chainID now unused
 
-	options := []ethrpc.ClientOption{}
+	options := []client.ClientOption{}
 	if strings.TrimSpace(apiKey) != "" {
-		options = append(options, ethrpc.WithHeader("x-apikey", apiKey))
+		options = append(options, client.WithHeader("x-apikey", apiKey))
 	}
 
 	provider, err := starknetrpc.NewProvider(baseURL, options...)
@@ -148,7 +149,7 @@ func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, block
 	return out, nil
 }
 
-func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starknetrpc.Transaction, error) {
+func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starknetrpc.BlockTransaction, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -157,15 +158,18 @@ func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starkn
 
 	out, err := c.Provider.TransactionByHash(ctx, hash)
 	if err != nil {
-		return out, fmt.Errorf("error in client.TransactionByHash: %w", err)
+		// Provider.TransactionByHash returns a pointer, we can't return a nil pointer
+		var empty starknetrpc.BlockTransaction
+		return empty, fmt.Errorf("error in client.TransactionByHash: %w", err)
 	}
 	if out == nil {
-		return out, NilResultError("client.TransactionByHash")
+		var empty starknetrpc.BlockTransaction
+		return empty, NilResultError("client.TransactionByHash")
 	}
-	return out, nil
+	return *out, nil
 }
 
-func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (starknetrpc.TransactionReceipt, error) {
+func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (starknetrpc.TransactionReceiptWithBlockInfo, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -174,12 +178,14 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (stark
 
 	out, err := c.Provider.TransactionReceipt(ctx, hash)
 	if err != nil {
-		return out, fmt.Errorf("error in client.TransactionReceipt: %w", err)
+		var empty starknetrpc.TransactionReceiptWithBlockInfo
+		return empty, fmt.Errorf("error in client.TransactionReceipt: %w", err)
 	}
 	if out == nil {
-		return out, NilResultError("client.TransactionReceipt")
+		var empty starknetrpc.TransactionReceiptWithBlockInfo
+		return empty, NilResultError("client.TransactionReceipt")
 	}
-	return out, nil
+	return *out, nil
 }
 
 func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
