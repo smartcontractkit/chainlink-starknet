@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 
 	ocr2Mocks "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2/mocks"
 )

@@ -160,8 +160,8 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 
 	onchainConfig, err := medianreport.OnchainConfigCodec{}.EncodeFromFelt(
 		big.NewInt(medianreport.OnchainConfigVersion), // version
-		big.NewInt(10),                                // min
-		big.NewInt(1000000000),                        // max
+		big.NewInt(10),         // min
+		big.NewInt(1000000000), // max
 	)
 	assert.NoError(t, err)
 	require.Equal(t, e.OnchainConfig, onchainConfig)

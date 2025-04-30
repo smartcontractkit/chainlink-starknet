@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetclient "github.com/NethermindEth/starknet.go/client"
+	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"

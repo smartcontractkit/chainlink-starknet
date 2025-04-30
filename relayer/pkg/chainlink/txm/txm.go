@@ -235,7 +235,9 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 
-	broadCastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{tx}
+	broadCastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{
+		InvokeTxnV3: tx,
+	}
 
 	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadCastTxnV3)
 	if err != nil {
