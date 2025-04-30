@@ -518,16 +518,3 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
 	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
 }
-
-func fillEmptyFeeEstimation(ctx context.Context, feeEstimation *starknetrpc.FeeEstimation, provider starknetrpc.RpcProvider) {
-	if feeEstimation.L1DataGasConsumed.IsZero() {
-		// default value for L1DataGasConsumed in most cases
-		feeEstimation.L1DataGasConsumed = new(felt.Felt).SetUint64(224)
-	}
-	if feeEstimation.L1DataGasPrice.IsZero() {
-		// getting the L1DataGasPrice from the latest block as reference
-		result, _ := provider.BlockWithTxHashes(ctx, starknetrpc.WithBlockTag("latest"))
-		block := result.(*starknetrpc.BlockTxHashes)
-		feeEstimation.L1DataGasPrice = block.L1DataGasPrice.PriceInFRI
-	}
-}
