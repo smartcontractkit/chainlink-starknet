@@ -1,4 +1,4 @@
-## Integration tests - HOWTO
+## Integration tests - HOWTO g
 
 ### Prerequisites
 1. `cd contracts && scarb --profile release build`
