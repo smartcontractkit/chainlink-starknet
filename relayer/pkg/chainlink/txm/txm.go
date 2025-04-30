@@ -8,7 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"json"
+	"encoding/json"
+
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
