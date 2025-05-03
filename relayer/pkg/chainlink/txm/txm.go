@@ -126,7 +126,7 @@ func (txm *starktxm) printTxDebug(tx any, label string) {
 		fmt.Printf("Failed to marshal %s: %v\n", label, err)
 		return
 	}
-	txm.lggr.Infow("==== %s ====\n%s\n", label, string(jsonBytes))
+	fmt.Printf("==== %s ====\n%s\n", label, string(jsonBytes))
 }
 
 func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.BroadcastInvokeTxnV3) (*starknetrpc.FeeEstimation, *felt.Felt, error) {

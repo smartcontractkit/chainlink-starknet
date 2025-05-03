@@ -149,45 +149,6 @@ func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, block
 	return out, nil
 }
 
-func (c *Client) TransactionByHash(ctx context.Context, hash *felt.Felt) (starknetrpc.BlockTransaction, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
-
-	out, err := c.Provider.TransactionByHash(ctx, hash)
-	if err != nil {
-		// Provider.TransactionByHash returns a pointer, we can't return a nil pointer
-		var empty starknetrpc.BlockTransaction
-		return empty, fmt.Errorf("error in client.TransactionByHash: %w", err)
-	}
-	if out == nil {
-		var empty starknetrpc.BlockTransaction
-		return empty, NilResultError("client.TransactionByHash")
-	}
-	return *out, nil
-}
-
-func (c *Client) TransactionReceipt(ctx context.Context, hash *felt.Felt) (starknetrpc.TransactionReceiptWithBlockInfo, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
-
-	out, err := c.Provider.TransactionReceipt(ctx, hash)
-	if err != nil {
-		var empty starknetrpc.TransactionReceiptWithBlockInfo
-		return empty, fmt.Errorf("error in client.TransactionReceipt: %w", err)
-	}
-	if out == nil {
-		var empty starknetrpc.TransactionReceiptWithBlockInfo
-		return empty, NilResultError("client.TransactionReceipt")
-	}
-	return *out, nil
-}
-
 func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
