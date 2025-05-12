@@ -2,14 +2,13 @@ package txm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
 	"sync"
 	"time"
-	"encoding/json"
-
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
@@ -126,7 +125,7 @@ func (txm *starktxm) printTxDebug(tx any, label string) {
 		fmt.Printf("Failed to marshal %s: %v\n", label, err)
 		return
 	}
-	fmt.Printf("===== %s =====\n%s\n", label, string(jsonBytes))
+	fmt.Printf("====== %s ======\n%s\n", label, string(jsonBytes))
 }
 
 func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.BroadcastInvokeTxnV3) (*starknetrpc.FeeEstimation, *felt.Felt, error) {
@@ -532,17 +531,4 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
 	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
-}
-
-func fillEmptyFeeEstimation(ctx context.Context, feeEstimation *starknetrpc.FeeEstimation, provider starknetrpc.RpcProvider) {
-	if feeEstimation.L1DataGasConsumed.IsZero() {
-		// default value for L1DataGasConsumed in most cases
-		feeEstimation.L1DataGasConsumed = new(felt.Felt).SetUint64(224)
-	}
-	if feeEstimation.L1DataGasPrice.IsZero() {
-		// getting the L1DataGasPrice from the latest block as reference
-		result, _ := provider.BlockWithTxHashes(ctx, starknetrpc.WithBlockTag("latest"))
-		block := result.(*starknetrpc.BlockTxHashes)
-		feeEstimation.L1DataGasPrice = block.L1DataGasPrice.PriceInFRI
-	}
 }
