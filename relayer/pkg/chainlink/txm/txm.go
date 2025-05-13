@@ -2,7 +2,6 @@ package txm
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -119,15 +118,6 @@ func (txm *starktxm) broadcastLoop() {
 const FeeMargin uint32 = 115
 const RPCNonceErrMsg = "Invalid transaction nonce"
 
-func (txm *starktxm) printTxDebug(tx any, label string) {
-	jsonBytes, err := json.MarshalIndent(tx, "", "  ")
-	if err != nil {
-		fmt.Printf("Failed to marshal %s: %v\n", label, err)
-		return
-	}
-	fmt.Printf("====== %s ======\n%s\n", label, string(jsonBytes))
-}
-
 func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.BroadcastInvokeTxnV3) (*starknetrpc.FeeEstimation, *felt.Felt, error) {
 	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
@@ -146,8 +136,6 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		if largestEstimateNonce == nil || estimateNonce.Cmp(largestEstimateNonce) > 0 {
 			largestEstimateNonce = estimateNonce
 		}
-
-		txm.printTxDebug([]starknetrpc.BroadcastTxn{tx}, "Transaction Slice for EstimateFee")
 
 		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
 		if err != nil {
