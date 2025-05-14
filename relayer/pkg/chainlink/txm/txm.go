@@ -258,43 +258,28 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		nonce = largestEstimateNonce
 	}
 
-	// TODO: consider making this configurable
-	// pad estimate to 250% (add extra because estimate did not include validation)
-	gasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
-	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
-	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
-
 	L2gasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
-	L2expandedGas := new(big.Int).Mul(L2gasConsumed, big.NewInt(250))
-	L2maxGas := new(big.Int).Div(L2expandedGas, big.NewInt(100))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(L2maxGas).String())
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2gasConsumed, 150)
 
-	// pad by 150%
-	gasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
+	L1gasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
 	L2gasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
 	overallFee := friEstimate.OverallFee.BigInt(new(big.Int)) // overallFee = gas_used*gas_price + data_gas_used*data_gas_price
 
 	// TODO: consider making this configurable
 	// pad estimate to 150% (add extra because estimate did not include validation)
-	gasUnits := new(big.Int).Div(overallFee, gasPrice)
-	expandedGasUnits := new(big.Int).Mul(gasUnits, big.NewInt(150))
-	maxGasUnits := new(big.Int).Div(expandedGasUnits, big.NewInt(100))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGasUnits).String())
+	gasUnits := new(big.Int).Div(overallFee, L1gasPrice)
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(gasUnits, 150)
 
 	// pad by 150%
-	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
-	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
-
-	L2expandedGasPrice := new(big.Int).Mul(L2gasPrice, big.NewInt(150))
-	L2maxGasPrice := new(big.Int).Div(L2expandedGasPrice, big.NewInt(100))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(L2maxGasPrice).String())
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1gasPrice, 150)
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2gasPrice, 150)
 
 	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = starknetrpc.U64(friEstimate.L1DataGasConsumed.String())
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = starknetrpc.U128(friEstimate.L1DataGasPrice.String())
+	L1dataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
+	L1dataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1dataGasConsumed, 150)
+	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1dataGasPrice, 150)
 
 	broadCastTxnV3.InvokeTxnV3.Nonce = nonce
 
@@ -341,6 +326,20 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
 	}
 	return txhash, nil
+}
+
+func (txm *starktxm) updateMaxAmountBounds(gasConsumed *big.Int, padding int64) starknetrpc.U64 {
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(padding))
+	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+
+	return starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+}
+
+func (txm *starktxm) updateMaxPriceUnitBounds(gasPrice *big.Int, padding int64) starknetrpc.U128 {
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
+	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
+
+	return starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 }
 
 func (txm *starktxm) confirmLoop() {
