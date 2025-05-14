@@ -33,7 +33,6 @@ func TestIntegration_Txm(t *testing.T) {
 	devnet := devnet.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
-	fmt.Println("qqq")
 
 	// parse keys into expected format
 	type Key struct {

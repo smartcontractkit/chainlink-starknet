@@ -158,7 +158,8 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		// track the FRI estimate, but keep looping so we print out all estimates
 		var friEstimate *starknetrpc.FeeEstimation
 		for j, f := range feeEstimate {
-			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.L1GasConsumed, "GasPrice", f.L1GasPrice, "DataGasConsumed", f.L1DataGasConsumed, "DataGasPrice", f.L1DataGasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "L1GasConsumed", f.L1GasConsumed, "L1GasPrice", f.L1GasPrice, "L1DataGasConsumed", f.L1DataGasConsumed, "L1DataGasPrice", f.L1DataGasPrice,
+				"L2GasConsumed", f.L2GasConsumed, "L2GasPrice", f.L2GasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
 			if f.FeeUnit == "FRI" {
 				friEstimate = &feeEstimate[j]
 			}
