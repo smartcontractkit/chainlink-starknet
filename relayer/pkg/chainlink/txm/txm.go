@@ -152,7 +152,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 				continue
 			}
 
-			return nil, nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
+			return nil, nil, fmt.Errorf("Failed to estimate fee: %T %+v", err, err)
 		}
 
 		// track the FRI estimate, but keep looping so we print out all estimates
