@@ -213,10 +213,10 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 				MaxAmount:       "0x0",
 				MaxPricePerUnit: "0x0",
 			},
-			// New starknet cannot resolve amounts as 0x0. Minimal max price per unit is: 0x3b9aca00
+			// New starknet cannot resolve amounts as 0x0
 			L1DataGas: starknetrpc.ResourceBounds{
-				MaxAmount:       "0x01",
-				MaxPricePerUnit: "0x01",
+				MaxAmount:       "0x0",
+				MaxPricePerUnit: "0x0",
 			},
 			L2Gas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x01",
