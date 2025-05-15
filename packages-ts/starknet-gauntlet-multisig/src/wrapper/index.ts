@@ -321,9 +321,9 @@ export const wrapCommand = <UI, CI>(
 
       let proposalId = this.input.user.proposalId
       if (!this.initialState.proposal) {
-        const txInfo = (await this.provider.provider.getTransactionReceipt(
+        const txInfo = ((await this.provider.provider.getTransactionReceipt(
           tx.hash,
-        )) as InvokeTransactionReceiptResponse
+        )) as unknown) as InvokeTransactionReceiptResponse
         // TODO: use contract.parseEvents?
         proposalId = Number(num.hexToDecimalString((txInfo.events[0] as any).keys[2])) // 0 == event_id, 1 == executor, 2 == nonce/proposal_id
       }

@@ -196,66 +196,6 @@ func (_m *Reader) LatestBlockHeight(_a0 context.Context) (uint64, error) {
 	return r0, r1
 }
 
-// TransactionByHash provides a mock function with given fields: _a0, _a1
-func (_m *Reader) TransactionByHash(_a0 context.Context, _a1 *felt.Felt) (rpc.Transaction, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for TransactionByHash")
-	}
-
-	var r0 rpc.Transaction
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (rpc.Transaction, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) rpc.Transaction); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(rpc.Transaction)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *felt.Felt) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// TransactionReceipt provides a mock function with given fields: _a0, _a1
-func (_m *Reader) TransactionReceipt(_a0 context.Context, _a1 *felt.Felt) (rpc.TransactionReceipt, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for TransactionReceipt")
-	}
-
-	var r0 rpc.TransactionReceipt
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) (rpc.TransactionReceipt, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *felt.Felt) rpc.TransactionReceipt); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(rpc.TransactionReceipt)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *felt.Felt) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // NewReader creates a new instance of Reader. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewReader(t interface {

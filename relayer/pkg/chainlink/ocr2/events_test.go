@@ -79,8 +79,10 @@ func TestNewTransmissionEvent_Parse(t *testing.T) {
 
 	event := starknetrpc.EmittedEvent{
 		Event: starknetrpc.Event{
-			Keys: eventKeys,
-			Data: eventData,
+			EventContent: starknetrpc.EventContent{
+				Keys: eventKeys,
+				Data: eventData,
+			},
 		},
 	}
 	e, err := ParseNewTransmissionEvent(event)
@@ -121,8 +123,10 @@ func TestConfigSetEvent_Parse(t *testing.T) {
 
 	event := starknetrpc.EmittedEvent{
 		Event: starknetrpc.Event{
-			Keys: eventKeys,
-			Data: eventData,
+			EventContent: starknetrpc.EventContent{
+				Keys: eventKeys,
+				Data: eventData,
+			},
 		},
 	}
 	e, err := ParseConfigSetEvent(event)
