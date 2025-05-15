@@ -91,7 +91,7 @@ func (d offchainConfigDigester) ConfigDigest(ctx context.Context, cfg types.Cont
 	)
 	msg = append(msg, offchainConfig...) // offchain_config
 
-	digest, err := curve.Curve.ComputeHashOnElements(msg)
+	digest := curve.ComputeHashOnElements(msg)
 	if err != nil {
 		return configDigest, err
 	}

@@ -8,6 +8,7 @@ import {
   Account,
   Call,
   constants,
+  ETransactionVersion,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -125,13 +126,18 @@ class Provider implements IStarknetProvider {
     wait = true,
     salt = undefined,
   ) => {
-    const tx = await this.account.declareAndDeploy({
-      contract,
-      compiledClassHash,
-      salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
-      // unique: false,
-      ...(!!input && input.length > 0 && { constructorCalldata: input }),
-    })
+    const tx = await this.account.declareAndDeploy(
+      {
+        contract,
+        compiledClassHash,
+        salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
+        // unique: false,
+        ...(!!input && input.length > 0 && { constructorCalldata: input }),
+      },
+      {
+        version: ETransactionVersion.V3,
+      },
+    )
 
     const response = wrapResponse(this, tx.deploy)
 
