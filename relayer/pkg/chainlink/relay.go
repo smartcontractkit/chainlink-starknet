@@ -47,6 +47,10 @@ func (r *relayer) Ready() error {
 	return r.chain.Ready()
 }
 
+func (r *relayer) EVM() (relaytypes.EVMService, error) {
+	return nil, errors.New("evm service is not supported for starknet")
+}
+
 func (r *relayer) Healthy() error { return nil }
 
 func (r *relayer) HealthReport() map[string]error {
