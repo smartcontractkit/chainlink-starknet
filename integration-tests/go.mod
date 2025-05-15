@@ -3,22 +3,23 @@ module github.com/smartcontractkit/chainlink-starknet/integration-tests
 go 1.23.3
 
 require (
-	github.com/NethermindEth/juno v0.3.1
-	github.com/NethermindEth/starknet.go v0.7.1-0.20240401080518-34a506f3cfdb
+	github.com/NethermindEth/juno v0.12.5
+	github.com/NethermindEth/starknet.go v0.8.0
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/go-resty/resty/v2 v2.15.3
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/rs/zerolog v1.33.0
-	github.com/smartcontractkit/chainlink-common v0.4.2-0.20250116214855-f49c5c27db51
+	github.com/smartcontractkit/chainlink-common v0.6.1-0.20250401155045-d0dccede284b
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
-	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20250117171710-b6481e9fcb34
-	github.com/smartcontractkit/chainlink-testing-framework/lib v1.50.19
-	github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.9
-	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250117185825-874daef670f3
-	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250117185825-874daef670f3
-	github.com/smartcontractkit/chainlink/v2 v2.14.0-mercury-20240807.0.20250117185825-874daef670f3
+	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20250503140109-10923b47d7c6
+	github.com/smartcontractkit/chainlink-testing-framework/lib v1.53.0
+	github.com/smartcontractkit/chainlink-testing-framework/parrot v0.6.2
+	github.com/smartcontractkit/chainlink-testing-framework/seth v1.51.0
+	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250404115345-659bcd162938
+	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250404115345-659bcd162938
+	github.com/smartcontractkit/chainlink/v2 v2.22.0-test-beta.0.0.20250404115345-659bcd162938
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	go.uber.org/zap v1.27.0
@@ -42,10 +43,8 @@ require (
 	github.com/AlekSi/pointer v1.1.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
-	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
-	github.com/CosmWasm/wasmd v0.40.1 // indirect
-	github.com/CosmWasm/wasmvm v1.2.4 // indirect
-	github.com/DataDog/zstd v1.5.2 // indirect
+	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/DataDog/zstd v1.5.6-0.20230824185856-869dae002e5e // indirect
 	github.com/Khan/genqlient v0.7.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
@@ -58,7 +57,7 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/atombender/go-jsonschema v0.16.1-0.20240916205339-a74cd4e2851c // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
-	github.com/avast/retry-go/v4 v4.6.0 // indirect
+	github.com/avast/retry-go/v4 v4.6.1 // indirect
 	github.com/awalterschulze/gographviz v2.0.3+incompatible // indirect
 	github.com/aws/aws-sdk-go-v2 v1.32.2 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.28.0 // indirect
@@ -312,6 +311,12 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
+	github.com/pierrec/lz4/v4 v4.1.22 // indirect
+	github.com/pion/dtls/v2 v2.2.12 // indirect
+	github.com/pion/logging v0.2.2 // indirect
+	github.com/pion/stun/v2 v2.0.0 // indirect
+	github.com/pion/transport/v2 v2.2.10 // indirect
+	github.com/pion/transport/v3 v3.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
@@ -342,16 +347,22 @@ require (
 	github.com/slack-go/slack v0.15.0 // indirect
 	github.com/smartcontractkit/chain-selectors v1.0.36 // indirect
 	github.com/smartcontractkit/chainlink-automation v0.8.1 // indirect
-	github.com/smartcontractkit/chainlink-ccip v0.0.0-20250117154208-cf4b44591be1 // indirect
-	github.com/smartcontractkit/chainlink-cosmos v0.5.2-0.20241202195413-82468150ac1e // indirect
-	github.com/smartcontractkit/chainlink-data-streams v0.1.1-0.20250115135646-ac859d85e7e3 // indirect
-	github.com/smartcontractkit/chainlink-feeds v0.1.1 // indirect
-	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250115203616-a2ea5e50b260 // indirect
-	github.com/smartcontractkit/chainlink-protos/orchestrator v0.4.0 // indirect
-	github.com/smartcontractkit/chainlink-solana v1.1.1-0.20250117143722-fb6416c087a5 // indirect
+	github.com/smartcontractkit/chainlink-ccip v0.0.0-20250403143043-d2fd3633f485 // indirect
+	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250331140029-aa0756b72e7b // indirect
+	github.com/smartcontractkit/chainlink-data-streams v0.1.1-0.20250325191518-036bb568a69d // indirect
+	github.com/smartcontractkit/chainlink-feeds v0.1.2-0.20250227211209-7cd000095135 // indirect
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250325121830-cfa9bf24c4f5 // indirect
+	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250402142713-6529d36f91f3 // indirect
+	github.com/smartcontractkit/chainlink-integrations/evm v0.0.0-20250402183906-b7e976bc0c24 // indirect
+	github.com/smartcontractkit/chainlink-protos/job-distributor v0.9.0 // indirect
+	github.com/smartcontractkit/chainlink-protos/orchestrator v0.5.0 // indirect
+	github.com/smartcontractkit/chainlink-protos/rmn/v1.6/go v0.0.0-20250131130834-15e0d4cde2a6 // indirect
+	github.com/smartcontractkit/chainlink-protos/svr v1.1.0 // indirect
+	github.com/smartcontractkit/chainlink-solana v1.1.2-0.20250402145836-4234da19fdb3 // indirect
 	github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet v1.1.3 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
-	github.com/smartcontractkit/libocr v0.0.0-20241223215956-e5b78d8e3919 // indirect
+	github.com/smartcontractkit/libocr v0.0.0-20250328171017-609ec10a5510 // indirect
+	github.com/smartcontractkit/mcms v0.14.0 // indirect
 	github.com/smartcontractkit/tdh2/go/ocr2/decryptionplugin v0.0.0-20241009055228-33d0c0bf38de // indirect
 	github.com/smartcontractkit/tdh2/go/tdh2 v0.0.0-20241009055228-33d0c0bf38de // indirect
 	github.com/smartcontractkit/wsrpc v0.8.3 // indirect
@@ -368,7 +379,6 @@ require (
 	github.com/supranational/blst v0.3.13 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/test-go/testify v1.1.4 // indirect
 	github.com/theodesp/go-heaps v0.0.0-20190520121037-88e35354fe0a // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
 	github.com/tidwall/gjson v1.17.0 // indirect
