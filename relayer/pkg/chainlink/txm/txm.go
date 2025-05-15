@@ -236,11 +236,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 
-	broadCastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{
+	broadcastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{
 		InvokeTxnV3: tx,
 	}
 
-	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadCastTxnV3)
+	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadcastTxnV3)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
 	}
@@ -258,32 +258,31 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		nonce = largestEstimateNonce
 	}
 
-	L2gasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2gasConsumed, 150)
+	L2GasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2GasConsumed, 150)
 
-	L1gasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
-	L2gasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
-	overallFee := friEstimate.OverallFee.BigInt(new(big.Int)) // overallFee = gas_used*gas_price + data_gas_used*data_gas_price
+	L1GasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
+	L2GasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
 
+	L1GasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
 	// TODO: consider making this configurable
 	// pad estimate to 150% (add extra because estimate did not include validation)
-	gasUnits := new(big.Int).Div(overallFee, L1gasPrice)
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(gasUnits, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(L1GasConsumed, 150)
 
 	// pad by 150%
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1gasPrice, 150)
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2gasPrice, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150)
 
 	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
-	L1dataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
-	L1dataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1dataGasConsumed, 150)
-	broadCastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1dataGasPrice, 150)
+	L1DataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
+	L1DataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
 
-	broadCastTxnV3.InvokeTxnV3.Nonce = nonce
+	broadcastTxnV3.InvokeTxnV3.Nonce = nonce
 
-	err = account.SignInvokeTransaction(ctx, &broadCastTxnV3.InvokeTxnV3)
+	err = account.SignInvokeTransaction(ctx, &broadcastTxnV3.InvokeTxnV3)
 	if err != nil {
 		return txhash, err
 	}
@@ -292,7 +291,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	defer execCancel()
 
 	// finally, transmit the invoke
-	res, err := account.Provider.AddInvokeTransaction(execCtx, &broadCastTxnV3)
+	res, err := account.Provider.AddInvokeTransaction(execCtx, &broadcastTxnV3)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		var dataErr *starknetrpc.RPCError
@@ -336,7 +335,7 @@ func (txm *starktxm) updateMaxAmountBounds(gasConsumed *big.Int, padding int64) 
 }
 
 func (txm *starktxm) updateMaxPriceUnitBounds(gasPrice *big.Int, padding int64) starknetrpc.U128 {
-	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(padding))
 	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
 
 	return starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
