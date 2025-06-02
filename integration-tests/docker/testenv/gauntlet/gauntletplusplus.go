@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	tc "github.com/testcontainers/testcontainers-go"
+	tclog "github.com/testcontainers/testcontainers-go/log"
 	tcwait "github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
@@ -53,7 +54,7 @@ func (g *GauntletPlusPlus) WithTestLogger(t *testing.T) *GauntletPlusPlus {
 }
 
 func (g *GauntletPlusPlus) StartContainer() (string, error) {
-	l := tc.Logger
+	l := tclog.Default()
 	if g.t != nil {
 		l = logging.CustomT{
 			T: g.t,

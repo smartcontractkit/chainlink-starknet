@@ -55,6 +55,10 @@ func (r *relayer) HealthReport() map[string]error {
 	return hp
 }
 
+func (r *relayer) EVM() (relaytypes.EVMService, error) {
+	return nil, errors.New("this is starknet relayer, evm service is not supported")
+}
+
 func (r *relayer) NewContractWriter(_ context.Context, _ []byte) (relaytypes.ContractWriter, error) {
 	return nil, errors.New("contract writer is not supported for starknet")
 }
