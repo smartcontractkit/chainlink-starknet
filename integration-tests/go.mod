@@ -14,9 +14,9 @@ require (
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250602141924-3c15a42d8266
 	github.com/smartcontractkit/chainlink-starknet/ops v0.0.0-20231205180940-ea2e3e916725
 	github.com/smartcontractkit/chainlink-starknet/relayer v0.1.1-0.20250503140109-10923b47d7c6
-	github.com/smartcontractkit/chainlink-testing-framework/lib v1.53.0
-	github.com/smartcontractkit/chainlink-testing-framework/parrot v0.6.2
-	github.com/smartcontractkit/chainlink-testing-framework/seth v1.51.0
+	github.com/smartcontractkit/chainlink-testing-framework/lib v1.54.2-0.20250602090553-5d91368bcf5d
+	github.com/smartcontractkit/chainlink-testing-framework/parrot v0.6.3-0.20250602090553-5d91368bcf5d
+	github.com/smartcontractkit/chainlink-testing-framework/seth v1.51.3-0.20250602090553-5d91368bcf5d
 	github.com/smartcontractkit/chainlink/deployment v0.0.0-20250602053904-c570f775b7c6
 	github.com/smartcontractkit/chainlink/integration-tests v0.0.0-20250602053904-c570f775b7c6
 	github.com/smartcontractkit/chainlink/v2 v2.23.2-por-beta.1.0.20250602053904-c570f775b7c6
