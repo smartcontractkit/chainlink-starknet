@@ -6,10 +6,10 @@
 * @smartcontractkit/bix-build
 
 # e2e test ownership
-/integration-tests @smartcontractkit/qa @smartcontractkit/bix-build
+/integration-tests @smartcontractkit/devex-tooling @smartcontractkit/bix-build
 
 # monitoring ownership
 /monitoring @smartcontractkit/realtime @smartcontractkit/bix-build
 
 # CI/CD
-/.github/** @smartcontractkit/qa @smartcontractkit/releng @smartcontractkit/bix-build
+/.github/** @smartcontractkit/devex-cicd @smartcontractkit/bix-build
