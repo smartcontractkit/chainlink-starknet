@@ -27,7 +27,6 @@ Set `inside_k8 = true` under `[Common]`.
 
 `cd integration-tests && go test --timeout=2h -v -count=1 -json ./smoke`
 
-
 ### On demand soak test
 
 Navigate to the [workflow](https://github.com/smartcontractkit/chainlink-starknet/actions/workflows/integration-tests-soak.yml). The workflow takes in 3 parameters:
