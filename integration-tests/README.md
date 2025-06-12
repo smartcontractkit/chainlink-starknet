@@ -48,5 +48,3 @@ If you want to kick off the test from local:
 - Base64 the .toml config
 - Run `export BASE64_CONFIG_OVERRIDE="<config>"`
 - `cd integration-tests/soak && go test -timeout 24h -count=1 -run TestOCRBasicSoak -test.timeout 30m;`
-
-
