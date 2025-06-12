@@ -55,6 +55,10 @@ func (r *relayer) HealthReport() map[string]error {
 	return hp
 }
 
+func (r *relayer) EVM() (relaytypes.EVMService, error) {
+	return nil, errors.New("this is starknet relayer, evm service is not supported")
+}
+
 func (r *relayer) NewContractWriter(_ context.Context, _ []byte) (relaytypes.ContractWriter, error) {
 	return nil, errors.New("contract writer is not supported for starknet")
 }
@@ -77,6 +81,10 @@ func (r *relayer) ListNodeStatuses(ctx context.Context, pageSize int32, pageToke
 
 func (r *relayer) Transact(ctx context.Context, from, to string, amount *big.Int, balanceCheck bool) error {
 	return r.chain.Transact(ctx, from, to, amount, balanceCheck)
+}
+
+func (r *relayer) Replay(ctx context.Context, fromBlock string, args map[string]any) error {
+	return r.chain.Replay(ctx, fromBlock, args)
 }
 
 func (r *relayer) NewConfigProvider(ctx context.Context, args relaytypes.RelayArgs) (relaytypes.ConfigProvider, error) {

@@ -20,20 +20,19 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
+
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 func TestIntegration_Txm(t *testing.T) {
-	ctx := tests.Context(t)
+	ctx := t.Context()
 	n := 2 // number of txs per key
 	// url := SetupLocalStarknetNode(t)
 	url := "http://127.0.0.1:5050"
 	devnet := devnet.NewDevNet(url)
 	accounts, err := devnet.Accounts()
 	require.NoError(t, err)
-	fmt.Println("qqq")
 
 	// parse keys into expected format
 	type Key struct {

@@ -7,8 +7,6 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
 func TestOnchainConfigCodec(t *testing.T) {
@@ -48,7 +46,7 @@ func TestOnchainConfigCodec(t *testing.T) {
 
 	for _, p := range params {
 		t.Run(p.name, func(t *testing.T) {
-			ctx := tests.Context(t)
+			ctx := t.Context()
 			cfg := median.OnchainConfig{
 				Min: p.val[0],
 				Max: p.val[1],
@@ -70,14 +68,14 @@ func TestOnchainConfigCodec(t *testing.T) {
 	}
 
 	t.Run("incorrect length", func(t *testing.T) {
-		ctx := tests.Context(t)
+		ctx := t.Context()
 		b := make([]byte, length-1)
 		_, err := codec.Decode(ctx, b)
 		assert.Error(t, err)
 	})
 
 	t.Run("incorrect version", func(t *testing.T) {
-		ctx := tests.Context(t)
+		ctx := t.Context()
 		b := make([]byte, length)
 		b[0] = 1
 		_, err := codec.Decode(ctx, b)

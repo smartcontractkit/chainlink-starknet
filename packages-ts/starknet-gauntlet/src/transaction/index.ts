@@ -2,7 +2,7 @@ import {
   InvokeFunctionResponse,
   DeclareContractResponse,
   DeployContractResponse,
-  RPC,
+  TXN_STATUS,
 } from 'starknet'
 
 export type TransactionResponse = {
@@ -10,7 +10,7 @@ export type TransactionResponse = {
   address?: string
   wait: () => Promise<{ success: boolean }>
   tx?: InvokeFunctionResponse | DeclareContractResponse | DeployContractResponse
-  code?: RPC.SPEC.TXN_STATUS
+  code?: TXN_STATUS
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
   errorMessage?: string
 }

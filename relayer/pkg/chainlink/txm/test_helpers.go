@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"testing"
 	"time"
 
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/smartcontractkit/freeport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/utils"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
 var (
@@ -33,8 +32,8 @@ var (
 
 // SetupLocalStarknetNode sets up a local starknet node via cli, and returns the url
 func SetupLocalStarknetNode(t *testing.T) string {
-	ctx := tests.Context(t)
-	port := utils.MustRandomPort(t)
+	ctx := t.Context()
+	port := strconv.Itoa(freeport.GetOne(t))
 	url := "http://127.0.0.1:" + port
 	cmd := exec.Command("starknet-devnet",
 		"--seed", "0", // use same seed for testing

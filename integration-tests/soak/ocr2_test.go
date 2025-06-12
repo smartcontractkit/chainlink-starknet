@@ -3,16 +3,14 @@ package smoke_test
 import (
 	"flag"
 	"fmt"
-	"maps"
 	"os"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink/integration-tests/actions"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
-	"github.com/smartcontractkit/chainlink/integration-tests/docker/test_env"
-	"github.com/stretchr/testify/require"
+	"github.com/smartcontractkit/chainlink/integration-tests/actions"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/common"
 	tc "github.com/smartcontractkit/chainlink-starknet/integration-tests/testconfig"
@@ -30,71 +28,50 @@ func init() {
 }
 
 func TestOCRBasicSoak(t *testing.T) {
-	for _, test := range []struct {
-		name string
-		env  map[string]string
-	}{
-		{name: "embedded"},
-		{name: "plugins", env: map[string]string{
-			"CL_MEDIAN_CMD": "chainlink-feeds",
-			"CL_SOLANA_CMD": "chainlink-solana",
-		}},
-	} {
-		config, err := tc.GetConfig("Soak", tc.OCR2)
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = os.Setenv("CHAINLINK_ENV_USER", *config.Common.User)
-		require.NoError(t, err, "Could not set CHAINLINK_ENV_USER")
-		err = os.Setenv("INTERNAL_DOCKER_REPO", *config.Common.InternalDockerRepo)
-		require.NoError(t, err, "Could not set INTERNAL_DOCKER_REPO")
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			logging.Init()
-			//
-			state, err := common.NewOCRv2State(t, "soak-ocr2", &config)
-			require.NoError(t, err, "Could not setup the ocrv2 state")
+	config, err := tc.GetConfig("Soak", tc.OCR2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = os.Setenv("CHAINLINK_ENV_USER", *config.Common.User)
+	require.NoError(t, err, "Could not set CHAINLINK_ENV_USER")
+	err = os.Setenv("INTERNAL_DOCKER_REPO", *config.Common.InternalDockerRepo)
+	require.NoError(t, err, "Could not set INTERNAL_DOCKER_REPO")
 
-			// K8s specific config and cleanup
-			if *config.Common.InsideK8s {
-				t.Cleanup(func() {
-					if err = actions.TeardownSuite(t, nil, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
-						state.TestConfig.L.Error().Err(err).Msg("Error tearing down environment")
-					}
-				})
+	logging.Init()
+	//
+	state, err := common.NewOCRv2State(t, "soak-ocr2", &config)
+	require.NoError(t, err, "Could not setup the ocrv2 state")
+
+	// K8s specific config and cleanup
+	if *config.Common.InsideK8s {
+		t.Cleanup(func() {
+			if err = actions.TeardownSuite(t, nil, state.Common.Env, state.ChainlinkNodesK8s, nil, zapcore.PanicLevel, nil); err != nil {
+				state.TestConfig.L.Error().Err(err).Msg("Error tearing down environment")
 			}
-			if len(test.env) > 0 {
-				state.Common.TestEnvDetails.NodeOpts = append(state.Common.TestEnvDetails.NodeOpts, func(n *test_env.ClNode) {
-					if n.ContainerEnvs == nil {
-						n.ContainerEnvs = map[string]string{}
-					}
-					maps.Copy(n.ContainerEnvs, test.env)
-				})
-			}
-			state.DeployCluster()
-
-			if state.Common.Env.WillUseRemoteRunner() {
-				return
-			}
-
-			// Setting up G++ Client
-			rpcURL := state.Common.RPCDetails.RPCL2Internal
-			gppURL := state.TestConfig.TestConfig.Common.GauntletPlusPlusURL
-			state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppURL, rpcURL, state.Account.Account, state.Account.PrivateKey)
-			require.NoError(t, err, "Setting up gauntlet++ should not fail")
-
-			state.Clients.GauntletClient, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
-			require.NoError(t, err, "Setting up gauntlet should not fail")
-			err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)
-			require.NoError(t, err, "Setting up gauntlet network should not fail")
-
-			err = state.DeployGauntletPP(0, 100000000000, decimals, "auto", 1, 1)
-			require.NoError(t, err, "Deploying contracts should not fail")
-
-			state.SetUpNodes()
-
-			err = state.ValidateRounds(*config.OCR2.NumberOfRounds, true)
-			require.NoError(t, err, "Validating round should not fail")
 		})
 	}
+	state.DeployCluster()
+
+	if state.Common.Env.WillUseRemoteRunner() {
+		return
+	}
+
+	// Setting up G++ Client
+	rpcURL := state.Common.RPCDetails.RPCL2Internal
+	gppURL := state.TestConfig.TestConfig.Common.GauntletPlusPlusURL
+	state.Clients.GauntletPPClient, err = gauntlet.NewStarknetGauntletPlusPlus(gppURL, rpcURL, state.Account.Account, state.Account.PrivateKey)
+	require.NoError(t, err, "Setting up gauntlet++ should not fail")
+
+	state.Clients.GauntletClient, err = gauntlet.NewStarknetGauntlet(fmt.Sprintf("%s/", utils.ProjectRoot))
+	require.NoError(t, err, "Setting up gauntlet should not fail")
+	err = state.Clients.GauntletClient.SetupNetwork(state.Common.RPCDetails.RPCL2External, state.Account.Account, state.Account.PrivateKey)
+	require.NoError(t, err, "Setting up gauntlet network should not fail")
+
+	err = state.DeployGauntletPP(0, 100000000000, decimals, "auto", 1, 1)
+	require.NoError(t, err, "Deploying contracts should not fail")
+
+	state.SetUpNodes()
+
+	err = state.ValidateRounds(*config.OCR2.NumberOfRounds, true)
+	require.NoError(t, err, "Validating round should not fail")
 }

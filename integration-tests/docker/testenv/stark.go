@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	tc "github.com/testcontainers/testcontainers-go"
+	tclog "github.com/testcontainers/testcontainers-go/log"
 	tcwait "github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
@@ -51,7 +52,7 @@ func (s *Starknet) WithTestLogger(t *testing.T) *Starknet {
 }
 
 func (s *Starknet) StartContainer() error {
-	l := tc.Logger
+	l := tclog.Default()
 	if s.t != nil {
 		l = logging.CustomT{
 			T: s.t,

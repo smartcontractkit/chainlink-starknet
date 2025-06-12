@@ -218,6 +218,10 @@ func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, 
 	return errors.ErrUnsupported
 }
 
+func (c *chain) Replay(ctx context.Context, fromBlock string, args map[string]any) error {
+	return errors.ErrUnsupported
+}
+
 func (c *chain) SendTx(ctx context.Context, from, to string, amount *big.Int, balanceCheck bool) error {
 	return c.Transact(ctx, from, to, amount, balanceCheck)
 }

@@ -118,7 +118,7 @@ func (txm *starktxm) broadcastLoop() {
 const FeeMargin uint32 = 115
 const RPCNonceErrMsg = "Invalid transaction nonce"
 
-func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.InvokeTxnV3) (*starknetrpc.FeeEstimate, *felt.Felt, error) {
+func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client, accountAddress *felt.Felt, tx starknetrpc.BroadcastInvokeTxnV3) (*starknetrpc.FeeEstimation, *felt.Felt, error) {
 	// skip prevalidation, which is known to overestimate amount of gas needed and error with L1GasBoundsExceedsBalance
 	simFlags := []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE}
 
@@ -131,7 +131,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to check account nonce: %+w", err)
 		}
-		tx.Nonce = estimateNonce
+		tx.InvokeTxnV3.Nonce = estimateNonce
 
 		if largestEstimateNonce == nil || estimateNonce.Cmp(largestEstimateNonce) > 0 {
 			largestEstimateNonce = estimateNonce
@@ -152,13 +152,14 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 				continue
 			}
 
-			return nil, nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
+			return nil, nil, fmt.Errorf("Failed to estimate fee: %T %+v", err, err)
 		}
 
 		// track the FRI estimate, but keep looping so we print out all estimates
-		var friEstimate *starknetrpc.FeeEstimate
+		var friEstimate *starknetrpc.FeeEstimation
 		for j, f := range feeEstimate {
-			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "GasConsumed", f.GasConsumed, "GasPrice", f.GasPrice, "DataGasConsumed", f.DataGasConsumed, "DataGasPrice", f.DataGasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
+			txm.lggr.Infow("Estimated fee", "attempt", i, "index", j, "EstimateNonce", estimateNonce, "L1GasConsumed", f.L1GasConsumed, "L1GasPrice", f.L1GasPrice, "L1DataGasConsumed", f.L1DataGasConsumed, "L1DataGasPrice", f.L1DataGasPrice,
+				"L2GasConsumed", f.L2GasConsumed, "L2GasPrice", f.L2GasPrice, "OverallFee", f.OverallFee, "FeeUnit", string(f.FeeUnit))
 			if f.FeeUnit == "FRI" {
 				friEstimate = &feeEstimate[j]
 			}
@@ -212,9 +213,14 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 				MaxAmount:       "0x0",
 				MaxPricePerUnit: "0x0",
 			},
-			L2Gas: starknetrpc.ResourceBounds{
+			// New starknet cannot resolve amounts as 0x0
+			L1DataGas: starknetrpc.ResourceBounds{
 				MaxAmount:       "0x0",
 				MaxPricePerUnit: "0x0",
+			},
+			L2Gas: starknetrpc.ResourceBounds{
+				MaxAmount:       "0x01",
+				MaxPricePerUnit: "0x01",
 			},
 		},
 		Tip:                   "0x0",
@@ -230,7 +236,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, err
 	}
 
-	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, tx)
+	broadcastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{
+		InvokeTxnV3: tx,
+	}
+
+	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadcastTxnV3)
 	if err != nil {
 		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
 	}
@@ -248,49 +258,40 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		nonce = largestEstimateNonce
 	}
 
-	// TODO: consider making this configurable
-	// pad estimate to 250% (add extra because estimate did not include validation)
-	gasConsumed := friEstimate.GasConsumed.BigInt(new(big.Int))
-	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(250))
-	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
-	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+	L2GasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2GasConsumed, 150)
 
-	// pad by 150%
-	gasPrice := friEstimate.GasPrice.BigInt(new(big.Int))
-	overallFee := friEstimate.OverallFee.BigInt(new(big.Int)) // overallFee = gas_used*gas_price + data_gas_used*data_gas_price
+	L1GasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
+	L2GasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
 
+	L1GasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
 	// TODO: consider making this configurable
 	// pad estimate to 150% (add extra because estimate did not include validation)
-	gasUnits := new(big.Int).Div(overallFee, gasPrice)
-	expandedGasUnits := new(big.Int).Mul(gasUnits, big.NewInt(150))
-	maxGasUnits := new(big.Int).Div(expandedGasUnits, big.NewInt(100))
-	tx.ResourceBounds.L1Gas.MaxAmount = starknetrpc.U64(starknetutils.BigIntToFelt(maxGasUnits).String())
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(L1GasConsumed, 150)
 
 	// pad by 150%
-	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(150))
-	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
-	tx.ResourceBounds.L1Gas.MaxPricePerUnit = starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150)
 
 	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit)
 
-	tx.Nonce = nonce
-	// Re-sign transaction now that we've determined MaxFee
-	// TODO: SignInvokeTransaction for V3 is missing so we do it by hand
-	hash, err := account.TransactionHashInvoke(tx)
+	L1DataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
+	L1DataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
+
+	broadcastTxnV3.InvokeTxnV3.Nonce = nonce
+
+	err = account.SignInvokeTransaction(ctx, &broadcastTxnV3.InvokeTxnV3)
 	if err != nil {
 		return txhash, err
 	}
-	signature, err := account.Sign(ctx, hash)
-	if err != nil {
-		return txhash, err
-	}
-	tx.Signature = signature
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
 	defer execCancel()
 
 	// finally, transmit the invoke
-	res, err := account.AddInvokeTransaction(execCtx, tx)
+	res, err := account.Provider.AddInvokeTransaction(execCtx, &broadcastTxnV3)
 	if err != nil {
 		// TODO: handle initial broadcast errors - what kind of errors occur?
 		var dataErr *starknetrpc.RPCError
@@ -324,6 +325,20 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
 	}
 	return txhash, nil
+}
+
+func (txm *starktxm) updateMaxAmountBounds(gasConsumed *big.Int, padding int64) starknetrpc.U64 {
+	expandedGas := new(big.Int).Mul(gasConsumed, big.NewInt(padding))
+	maxGas := new(big.Int).Div(expandedGas, big.NewInt(100))
+
+	return starknetrpc.U64(starknetutils.BigIntToFelt(maxGas).String())
+}
+
+func (txm *starktxm) updateMaxPriceUnitBounds(gasPrice *big.Int, padding int64) starknetrpc.U128 {
+	expandedGasPrice := new(big.Int).Mul(gasPrice, big.NewInt(padding))
+	maxGasPrice := new(big.Int).Div(expandedGasPrice, big.NewInt(100))
+
+	return starknetrpc.U128(starknetutils.BigIntToFelt(maxGasPrice).String())
 }
 
 func (txm *starktxm) confirmLoop() {

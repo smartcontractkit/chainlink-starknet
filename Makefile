@@ -140,7 +140,7 @@ gomodtidy: gomods
 
 .PHONY: mockery
 mockery: $(mockery) ## Install mockery.
-	go install github.com/vektra/mockery/v2@v2.43.2
+	go install github.com/vektra/mockery/v2@v2.53.0
 
 .PHONY: rm-mocked
 rm-mocked:
@@ -170,15 +170,15 @@ format-ts-check:
 
 .PHONY: lint-go-ops
 lint-go-ops:
-	cd ./ops && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle:golangci-lint-ops-report.xml run
+	cd ./ops && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle run > golangci-lint-ops-report.xml
 
 .PHONY: lint-go-relayer
 lint-go-relayer:
-	cd ./relayer && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle:golangci-lint-relayer-report.xml run
+	cd ./relayer && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle run > golangci-lint-relayer-report.xml
 
 .PHONY: lint-go-test
 lint-go-test:
-	cd ./integration-tests && golangci-lint --config ../.golangci.yml  --color=always --exclude=dot-imports --out-format checkstyle:golangci-lint-integration-tests-report.xml run
+	cd ./integration-tests && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle run > golangci-lint-integration-tests-report.xml
 
 .PHONY: test-go
 test-go: test-unit-go test-unit-go-race test-integration-go
@@ -217,7 +217,7 @@ test-integration-smoke: test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
 	cd integration-tests/ && \
-		go test --timeout=2h -v -count=1 -run TestOCRBasic/$(test) -json ./smoke | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
+		go test --timeout=2h -v -count=1 -run TestOCRBasic -json ./smoke | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
