@@ -17,5 +17,5 @@ starknet-foundry 0.31.0
 k3d 5.4.4
 kubectl 1.25.5
 k9s 0.26.3
-helm 3.9.3
+helm 3.18.4
 helmenv 1.2.7
