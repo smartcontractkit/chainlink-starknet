@@ -48,7 +48,7 @@ jobs:
         continue-on-error: true
       - name: Check if chainlink-starknet image exists
         id: check-image
-        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@fc3e0df622521019f50d772726d6bf8dc919dd38 # v2.3.19
+        uses: smartcontractkit/chainlink-github-actions/docker/image-exists@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           repository: chainlink
           tag: starknet.${{ github.sha }}
