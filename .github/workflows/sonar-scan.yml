@@ -99,7 +99,7 @@ jobs:
         run: sed -i 's+/home/runner/work/feeds-manager/feeds-manager/+/github/workspace/+g' "${ SONAR_ESLINT_REPORT_PATHS }"
 
       - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@86fe81775628f1c6349c28baab87881a2170f495 # v2.1.0
+        uses: sonarsource/sonarqube-scan-action@1a6d90ebcb0e6a6b1d87e37ba693fe453195ae25 # v5.3.1
         with:
           args: >
             -Dsonar.go.tests.reportPaths="${SONAR_TESTS_REPORT_PATHS}"
