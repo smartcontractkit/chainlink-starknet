@@ -49,7 +49,7 @@ export class LedgerSigner extends Signer {
     if (this.publicKey) return this.publicKey
 
     const response = await this.client.getStarkKey(this.path, false)
-    if (response.returnCode != LedgerError.NoErrors) {
+    if (response.returnCode != LedgerError.NoError) {
       throw new Error(`Unable to get public key: ${response.errorMessage}. Is Ledger app active?`)
     }
 
@@ -59,8 +59,8 @@ export class LedgerSigner extends Signer {
   }
 
   async signRaw(hash: string): Promise<Signature> {
-    const response = await this.client.signHash(this.path, hash, false)
-    if (response.returnCode != LedgerError.NoErrors) {
+    const response = await this.client.signHash(this.path, hash)
+    if (response.returnCode != LedgerError.NoError) {
       throw new Error(`Unable to sign the message: ${response.errorMessage}`)
     }
 
