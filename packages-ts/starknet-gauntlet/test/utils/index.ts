@@ -26,7 +26,7 @@ export const loadExampleContract = () => {
   return loadContract('example')
 }
 
-export const noop = () => {}
+export const noop = () => { }
 
 export const noopLogger: typeof logger = {
   table: noop,
@@ -42,9 +42,9 @@ export const noopLogger: typeof logger = {
   time: noop,
 }
 
-export const noopPrompt: typeof prompt = async () => {}
+export const noopPrompt: typeof prompt = async () => { }
 
-export const TIMEOUT = 900000
+export const TIMEOUT = 1800000 // 30 minutes - increased for complex multisig operations
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 export type StarknetAccount = Awaited<ReturnType<typeof fetchAccount>>
