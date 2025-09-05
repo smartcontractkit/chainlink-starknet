@@ -240,22 +240,11 @@ test-examples:
 # cd packages-ts/starknet-gauntlet-example/ && \
 #   yarn test
 test-integration-gauntlet: build-ts env-devnet-hardhat
-	cd packages-ts/starknet-gauntlet/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-argent/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-cli/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-multisig/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-ocr2/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-oz/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-token/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-emergency-protocol/ && \
-		yarn test
+	npx jest --runInBand --config ./jest.config.ts \
+		--selectProjects starknet-gauntlet starknet-gauntlet-argent starknet-gauntlet-cli \
+		starknet-gauntlet-multisig starknet-gauntlet-ocr2 starknet-gauntlet-oz \
+		starknet-gauntlet-token starknet-gauntlet-emergency-protocol \
+		--passWithNoTests
 
 .PHONY: test-ts
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet
