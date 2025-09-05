@@ -86,7 +86,7 @@ build-ts: build-ts-workspace build-cairo-contracts build-sol-contracts
 
 .PHONY: build-ts-workspace
 build-ts-workspace:
-	yarn install --frozen-lockfile
+	yarn install --immutable
 	yarn build
 
 # TODO: use yarn workspaces features instead of managing separately like this
@@ -94,14 +94,14 @@ build-ts-workspace:
 .PHONY: build-sol-contracts
 build-sol-contracts:
 	cd contracts/ && \
-		yarn install --frozen-lockfile && \
+		yarn install --immutable && \
 		yarn compile:solidity
 
 # TODO: this should build cairo contracts when they are rewritten
 .PHONY: build-ts-examples
 build-ts-examples:
 	cd examples/contracts/aggregator-consumer && \
-		yarn install --frozen-lockfile && \
+		yarn install --immutable && \
 		yarn compile:solidity
 
 .PHONY: gowork
