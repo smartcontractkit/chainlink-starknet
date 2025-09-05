@@ -16,3 +16,6 @@ vendor
 # Python virtual env
 .venv
 .direnv
+
+# Yarn v2 files
+.yarn/releases/
