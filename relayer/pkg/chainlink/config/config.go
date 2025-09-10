@@ -3,25 +3,33 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
+	"github.com/smartcontractkit/chainlink-common/pkg/config/configtest"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/db"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
 
-var DefaultConfigSet = ConfigSet{
-	OCR2CachePollPeriod: 5 * time.Second,
-	OCR2CacheTTL:        time.Minute,
-	RequestTimeout:      10 * time.Second,
-	TxTimeout:           10 * time.Second,
-	ConfirmationPoll:    5 * time.Second,
+var defaults TOMLConfig
+
+func init() {
+	if err := configtest.DocDefaultsOnly(strings.NewReader(docsTOML), &defaults, config.DecodeTOML); err != nil {
+		log.Fatalf("Failed to initialize defaults from docs: %v", err)
+	}
+}
+
+func Defaults() (c TOMLConfig) {
+	c.SetFrom(&defaults)
+	return
 }
 
 type ConfigSet struct { //nolint:revive
@@ -52,24 +60,6 @@ type Chain struct {
 	RequestTimeout      *config.Duration
 	TxTimeout           *config.Duration
 	ConfirmationPoll    *config.Duration
-}
-
-func (c *Chain) SetDefaults() {
-	if c.OCR2CachePollPeriod == nil {
-		c.OCR2CachePollPeriod = config.MustNewDuration(DefaultConfigSet.OCR2CachePollPeriod)
-	}
-	if c.OCR2CacheTTL == nil {
-		c.OCR2CacheTTL = config.MustNewDuration(DefaultConfigSet.OCR2CacheTTL)
-	}
-	if c.RequestTimeout == nil {
-		c.RequestTimeout = config.MustNewDuration(DefaultConfigSet.RequestTimeout)
-	}
-	if c.TxTimeout == nil {
-		c.TxTimeout = config.MustNewDuration(DefaultConfigSet.TxTimeout)
-	}
-	if c.ConfirmationPoll == nil {
-		c.ConfirmationPoll = config.MustNewDuration(DefaultConfigSet.ConfirmationPoll)
-	}
 }
 
 type Node struct {
@@ -142,6 +132,12 @@ type TOMLConfig struct {
 	Enabled *bool
 	Chain
 	Nodes Nodes
+}
+
+func (c *TOMLConfig) SetDefaults() {
+	def := Defaults()
+	def.SetFrom(c)
+	*c = def
 }
 
 func (c *TOMLConfig) IsEnabled() bool {

@@ -1,0 +1,6 @@
+ChainID = '<id>'
+
+[[Nodes]]
+Name = 'primary'
+URL = '<http url>'
+APIKey = '<key>'

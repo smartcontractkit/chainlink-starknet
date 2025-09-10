@@ -64,7 +64,6 @@ htmlcov/
 *report.json
 *.out
 *coverage*
-testdata/
 .cache
 nosetests.xml
 *.cover
