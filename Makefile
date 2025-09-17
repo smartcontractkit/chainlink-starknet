@@ -174,7 +174,7 @@ lint-go-ops:
 
 .PHONY: lint-go-relayer
 lint-go-relayer:
-	cd ./relayer && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle run > golangci-lint-relayer-report.xml
+	cd ./relayer && golangci-lint --config ../.golangci.yml --color=always --out-format checkstyle run --fix
 
 .PHONY: lint-go-test
 lint-go-test:

@@ -1,0 +1,13 @@
+ChainID = 'Ibiza-808'
+FeederURL = 'http://feeder.url'
+Enabled = true
+OCR2CachePollPeriod = '6h0m0s'
+OCR2CacheTTL = '3m0s'
+RequestTimeout = '1m3s'
+TxTimeout = '13s'
+ConfirmationPoll = '42s'
+
+[[Nodes]]
+Name = 'primary'
+URL = 'http://stark.node'
+APIKey = 'key'
