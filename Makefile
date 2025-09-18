@@ -86,7 +86,7 @@ build-ts: build-ts-workspace build-cairo-contracts build-sol-contracts
 
 .PHONY: build-ts-workspace
 build-ts-workspace:
-	yarn install --frozen-lockfile
+	yarn install --immutable
 	yarn build
 
 # TODO: use yarn workspaces features instead of managing separately like this
@@ -94,14 +94,14 @@ build-ts-workspace:
 .PHONY: build-sol-contracts
 build-sol-contracts:
 	cd contracts/ && \
-		yarn install --frozen-lockfile && \
+		yarn install --immutable && \
 		yarn compile:solidity
 
 # TODO: this should build cairo contracts when they are rewritten
 .PHONY: build-ts-examples
 build-ts-examples:
 	cd examples/contracts/aggregator-consumer && \
-		yarn install --frozen-lockfile && \
+		yarn install --immutable && \
 		yarn compile:solidity
 
 .PHONY: gowork
@@ -240,22 +240,11 @@ test-examples:
 # cd packages-ts/starknet-gauntlet-example/ && \
 #   yarn test
 test-integration-gauntlet: build-ts env-devnet-hardhat
-	cd packages-ts/starknet-gauntlet/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-argent/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-cli/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-multisig/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-ocr2/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-oz/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-token/ && \
-		yarn test
-	cd packages-ts/starknet-gauntlet-emergency-protocol/ && \
-		yarn test
+	npx jest --runInBand --config ./jest.config.ts \
+		--selectProjects starknet-gauntlet starknet-gauntlet-argent starknet-gauntlet-cli \
+		starknet-gauntlet-multisig starknet-gauntlet-ocr2 starknet-gauntlet-oz \
+		starknet-gauntlet-token starknet-gauntlet-emergency-protocol \
+		--passWithNoTests
 
 .PHONY: test-ts
 test-ts: test-ts-contracts test-integration-contracts test-integration-gauntlet

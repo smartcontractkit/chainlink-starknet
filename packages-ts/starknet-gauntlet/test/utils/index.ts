@@ -44,7 +44,7 @@ export const noopLogger: typeof logger = {
 
 export const noopPrompt: typeof prompt = async () => {}
 
-export const TIMEOUT = 900000
+export const TIMEOUT = 1800000 // 30 minutes - increased for complex multisig operations
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 export type StarknetAccount = Awaited<ReturnType<typeof fetchAccount>>

@@ -3,8 +3,14 @@ import deployCommand from '../../src/commands/multisig/deploy'
 import setSigners from '../../src/commands/multisig/setSigners'
 import setThreshold from '../../src/commands/multisig/setThreshold'
 import { wrapCommand } from '../../src/wrapper'
-import { registerExecuteCommand, TIMEOUT, LOCAL_URL } from '@chainlink/starknet-gauntlet/test/utils'
-import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
+import {
+  registerExecuteCommand,
+  TIMEOUT,
+  LOCAL_URL,
+  noopPrompt,
+  noopLogger,
+} from '@chainlink/starknet-gauntlet/test/utils'
+// import { logger, prompt } from '@chainlink/gauntlet-core/dist/utils'
 import { loadContract } from '@chainlink/starknet-gauntlet'
 import { CONTRACT_LIST } from '../../src/lib/contracts'
 import { Contract } from 'starknet'
@@ -67,9 +73,9 @@ describe('Multisig', () => {
         account: accounts[0],
         multisig: multisigContractAddress,
       }
-      const deps: Dependencies = {
-        logger: logger,
-        prompt: prompt,
+      const depsa: Dependencies = {
+        logger: noopLogger,
+        prompt: noopPrompt,
         makeEnv: (flags) => {
           return myFlags
         },
@@ -78,7 +84,7 @@ describe('Multisig', () => {
       }
 
       // Create Multisig Proposal
-      const command = await wrapCommand(registerExecuteCommand(setThreshold))(deps).create(
+      const command = await wrapCommand(registerExecuteCommand(setThreshold))(depsa).create(
         {
           threshold: 2,
           ...myFlags,
@@ -91,7 +97,7 @@ describe('Multisig', () => {
       const multisigProposalId = report.data.proposalId
 
       // Approve Multisig Proposal
-      const approveCommand = await wrapCommand(registerExecuteCommand(setThreshold))(deps).create(
+      const approveCommand = await wrapCommand(registerExecuteCommand(setThreshold))(depsa).create(
         {
           threshold: 2,
           multisigProposal: multisigProposalId,
@@ -104,7 +110,7 @@ describe('Multisig', () => {
       expect(report.responses[0].tx.status).toEqual('ACCEPTED')
 
       // Execute Multisig Proposal
-      const executeCommand = await wrapCommand(registerExecuteCommand(setThreshold))(deps).create(
+      const executeCommand = await wrapCommand(registerExecuteCommand(setThreshold))(depsa).create(
         {
           threshold: 2,
           multisigProposal: multisigProposalId,
@@ -142,8 +148,8 @@ describe('Multisig', () => {
       }
       const deps = (index: number): Dependencies => {
         return {
-          logger: logger,
-          prompt: prompt,
+          logger: noopLogger,
+          prompt: noopPrompt,
           makeEnv: (flags) => {
             return myFlags(index)
           },

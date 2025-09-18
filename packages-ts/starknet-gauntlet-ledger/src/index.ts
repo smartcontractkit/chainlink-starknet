@@ -59,7 +59,7 @@ export class LedgerSigner extends Signer {
   }
 
   async signRaw(hash: string): Promise<Signature> {
-    const response = await this.client.signHash(this.path, hash, false)
+    const response = await this.client.signHash(this.path, hash)
     if (response.returnCode != LedgerError.NoErrors) {
       throw new Error(`Unable to sign the message: ${response.errorMessage}`)
     }
