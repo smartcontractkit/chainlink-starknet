@@ -491,7 +491,7 @@ require (
 )
 
 replace (
-	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
+	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcec/v2 => github.com/btcsuite/btcd/btcec/v2 v2.3.3
 
 	// gotron-sdk is not longer maintained from chainlink
