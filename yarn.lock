@@ -628,7 +628,7 @@ __metadata:
     axios: "npm:^0.24.0"
     chai: "npm:^4.3.6"
     ethers: "npm:^5.6.8"
-    hardhat: "npm:^2.26.3"
+    hardhat: "npm:^2.16.1"
     solidity-coverage: "npm:^0.8.2"
   languageName: unknown
   linkType: soft
@@ -5887,7 +5887,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat@npm:^2.26.3":
+"hardhat@npm:^2.16.1":
   version: 2.26.3
   resolution: "hardhat@npm:2.26.3"
   dependencies:
