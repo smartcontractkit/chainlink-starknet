@@ -8,6 +8,7 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,14 +27,15 @@ func TestTxStore(t *testing.T) {
 		nonce := new(felt.Felt).SetUint64(3)
 		publicKey := new(felt.Felt).SetUint64(7)
 
-		s := NewTxStore(nonce)
+		s := NewTxStore(nonce, logger.Test(t))
 		assert.True(t, s.GetNextNonce().Cmp(nonce) == 0)
 		assert.Equal(t, 0, s.InflightCount())
 		require.NoError(t, s.AddUnconfirmed(nonce, "0x42", call, publicKey))
 		assert.Equal(t, 1, s.InflightCount())
 		assert.Equal(t, 1, len(s.GetUnconfirmed()))
 		assert.Equal(t, "0x42", s.GetUnconfirmed()[0].Hash)
-		require.NoError(t, s.Confirm(nonce, "0x42"))
+		latestNonce := s.GetNextNonce().Add(nonce, new(felt.Felt).SetUint64(1))
+		s.Confirm(latestNonce)
 		assert.Equal(t, 0, s.InflightCount())
 		assert.Equal(t, 0, len(s.GetUnconfirmed()))
 		assert.True(t, s.GetNextNonce().Cmp(new(felt.Felt).Add(nonce, new(felt.Felt).SetUint64(1))) == 0)
@@ -43,7 +45,7 @@ func TestTxStore(t *testing.T) {
 		t.Parallel()
 
 		// create
-		s := NewTxStore(new(felt.Felt).SetUint64(0))
+		s := NewTxStore(new(felt.Felt).SetUint64(0), logger.Test(t))
 
 		call := starknetrpc.FunctionCall{
 			ContractAddress:    new(felt.Felt).SetUint64(0),
@@ -104,42 +106,38 @@ func TestTxStore(t *testing.T) {
 		publicKey := new(felt.Felt).SetUint64(7)
 
 		// init store
-		s := NewTxStore(new(felt.Felt).SetUint64(0))
+		s := NewTxStore(new(felt.Felt).SetUint64(0), logger.Test(t))
 		for i := uint64(0); i < 6; i++ {
 			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(i), "0x"+fmt.Sprintf("%d", i), call, publicKey))
 		}
 
 		// confirm in order
-		require.NoError(t, s.Confirm(new(felt.Felt).SetUint64(0), "0x0"))
-		require.NoError(t, s.Confirm(new(felt.Felt).SetUint64(1), "0x1"))
+		s.Confirm(new(felt.Felt).SetUint64(1))
+		s.Confirm(new(felt.Felt).SetUint64(2))
 		assert.Equal(t, 4, s.InflightCount())
 
 		// confirm out of order
-		require.NoError(t, s.Confirm(new(felt.Felt).SetUint64(4), "0x4"))
-		require.NoError(t, s.Confirm(new(felt.Felt).SetUint64(3), "0x3"))
-		require.NoError(t, s.Confirm(new(felt.Felt).SetUint64(2), "0x2"))
+		s.Confirm(new(felt.Felt).SetUint64(5))
+		s.Confirm(new(felt.Felt).SetUint64(4))
+		s.Confirm(new(felt.Felt).SetUint64(3))
 		assert.Equal(t, 1, s.InflightCount())
 
-		// confirm unknown/duplicate
-		require.ErrorContains(t, s.Confirm(new(felt.Felt).SetUint64(10), "0x10"), "no such unconfirmed nonce")
-		// confirm with incorrect hash
-		require.ErrorContains(t, s.Confirm(new(felt.Felt).SetUint64(5), "0x99"), "unexpected tx hash")
+		// confirm all previous txs
+		s.Confirm(new(felt.Felt).SetUint64(10))
+		assert.Equal(t, 0, s.InflightCount())
 
 		// race confirm
-		var err0 error
-		var err1 error
 		var wg sync.WaitGroup
 		wg.Add(2)
 		go func() {
-			err0 = s.Confirm(new(felt.Felt).SetUint64(5), "0x5")
+			s.Confirm(new(felt.Felt).SetUint64(5))
 			wg.Done()
 		}()
 		go func() {
-			err1 = s.Confirm(new(felt.Felt).SetUint64(5), "0x5")
+			s.Confirm(new(felt.Felt).SetUint64(5))
 			wg.Done()
 		}()
 		wg.Wait()
-		assert.True(t, !errors.Is(err0, err1) && ((err0 != nil && err1 == nil) || (err0 == nil && err1 != nil)))
 		assert.Equal(t, 0, s.InflightCount())
 	})
 
@@ -155,7 +153,7 @@ func TestTxStore(t *testing.T) {
 		txCount := uint64(6)
 
 		// init store
-		s := NewTxStore(new(felt.Felt).SetUint64(0))
+		s := NewTxStore(new(felt.Felt).SetUint64(0), logger.Test(t))
 		for i := uint64(0); i < txCount; i++ {
 			require.NoError(t, s.AddUnconfirmed(new(felt.Felt).SetUint64(i), "0x"+fmt.Sprintf("%d", i), call, publicKey))
 		}
@@ -192,13 +190,13 @@ func TestAccountStore(t *testing.T) {
 	felt0 := new(felt.Felt).SetUint64(0)
 	felt1 := new(felt.Felt).SetUint64(1)
 
-	store0, err := c.CreateTxStore(felt0, felt0)
+	store0, err := c.CreateTxStore(felt0, felt0, logger.Test(t))
 	require.NoError(t, err)
 
-	store1, err := c.CreateTxStore(felt1, felt1)
+	store1, err := c.CreateTxStore(felt1, felt1, logger.Test(t))
 	require.NoError(t, err)
 
-	_, err = c.CreateTxStore(felt0, felt0)
+	_, err = c.CreateTxStore(felt0, felt0, logger.Test(t))
 	require.ErrorContains(t, err, "TxStore already exists")
 
 	assert.Equal(t, store0, c.GetTxStore(felt0))

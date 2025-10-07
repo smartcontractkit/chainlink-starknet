@@ -188,7 +188,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		if accountNonceErr != nil {
 			return txhash, fmt.Errorf("failed to check account nonce during TxStore creation: %+w", accountNonceErr)
 		}
-		newTxStore, createErr := txm.accountStore.CreateTxStore(accountAddress, initialNonce)
+		newTxStore, createErr := txm.accountStore.CreateTxStore(accountAddress, initialNonce, txm.lggr)
 		if createErr != nil {
 			return txhash, fmt.Errorf("failed to create TxStore: %+w", createErr)
 		}
@@ -362,58 +362,47 @@ func (txm *starktxm) confirmLoop() {
 				break
 			}
 
-			allUnconfirmedTxs := txm.accountStore.GetAllUnconfirmed()
-			for accountAddressStr, unconfirmedTxs := range allUnconfirmedTxs {
+			for _, accountAddressStr := range txm.accountStore.Accounts() {
 				accountAddress, err := new(felt.Felt).SetString(accountAddressStr)
 				// this should never occur because the acccount address string key was created from the account address felt.
 				if err != nil {
 					txm.lggr.Errorw("could not recreate account address felt", "accountAddress", accountAddressStr)
 					continue
 				}
-				for _, unconfirmedTx := range unconfirmedTxs {
-					hash := unconfirmedTx.Hash
-					f, err := starknetutils.HexToFelt(hash)
+				nonce, err := client.AccountNonceLatest(ctx, accountAddress)
+				if err != nil {
+					txm.lggr.Errorf("failed to fetch latest nonce for account %v", accountAddress)
+					continue
+				}
+				// Confirm all transactions with nonce lower than the latest. If it exists, get the unconfirmed transaction
+				// with a nonce equal to the latest and check if it got rejected. If it did, trigger a resyncNode to fill the
+				// nonce gap.
+				txHash := txm.accountStore.GetTxStore(accountAddress).Confirm(nonce)
+				if txHash != nil {
+					f, err := starknetutils.HexToFelt(*txHash)
 					if err != nil {
-						txm.lggr.Errorw("invalid felt value", "hash", hash)
+						txm.lggr.Errorw("invalid felt value", "hash", *txHash)
 						continue
 					}
 					response, err := client.Provider.GetTransactionStatus(ctx, f)
-
-					// tx can be rejected due to a nonce error. but we cannot know from the Starknet RPC directly  so we have to wait for
-					// a broadcasted tx to fail in order to fix the nonce errors
-
 					if err != nil {
-						txm.lggr.Errorw("failed to fetch transaction status", "hash", hash, "nonce", unconfirmedTx.Nonce, "error", err)
+						txm.lggr.Errorw("failed to fetch transaction status", "hash", txHash, "nonce", nonce, "error", err)
 						continue
 					}
-
-					finalityStatus := response.FinalityStatus
-					executionStatus := response.ExecutionStatus
-
-					// any finalityStatus other than received
-					if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 || finalityStatus == starknetrpc.TxnStatus_Rejected {
-						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "nonce", unconfirmedTx.Nonce, "finalityStatus", finalityStatus)
-						if err := txm.accountStore.GetTxStore(accountAddress).Confirm(unconfirmedTx.Nonce, hash); err != nil {
-							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
-						}
-					}
-
 					// currently, feeder client is only way to get rejected reason
-					if finalityStatus == starknetrpc.TxnStatus_Rejected {
+					if response.FinalityStatus == starknetrpc.TxnStatus_Rejected {
 						// we assume that all rejected transactions results in a unused rejected nonce, so
 						// resync. see the comment at resyncNonce for more details.
 						if resyncErr := txm.resyncNonce(ctx, client, accountAddress); resyncErr != nil {
 							txm.lggr.Errorw("resync failed for rejected tx", "error", resyncErr)
 						}
 
-						go txm.logFeederError(ctx, hash, f)
+						go txm.logFeederError(ctx, *txHash, f)
 					}
 
-					if executionStatus == starknetrpc.TxnExecutionStatusREVERTED {
-						// TODO: get revert reason?
-						txm.lggr.Errorw("transaction reverted", "hash", hash)
-					}
 				}
+				txm.lggr.Info()
+
 			}
 		case <-txm.stop:
 			txm.lggr.Debugw("confirmLoop: stopped")
@@ -458,7 +447,7 @@ func (txm *starktxm) resyncNonce(ctx context.Context, client *starknet.Client, a
 	   behind, and we fast forward. this ensures our locally tracked value will also eventually be correct.
 	*/
 
-	rpcNonce, err := client.AccountNonce(ctx, accountAddress)
+	rpcNonce, err := client.AccountNonceLatest(ctx, accountAddress)
 	if err != nil {
 		return fmt.Errorf("failed to check nonce during resync: %+w", err)
 	}
