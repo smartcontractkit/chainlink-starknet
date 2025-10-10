@@ -28,7 +28,7 @@ func TestBackoffCalculation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			// Simulate the backoff calculation from the circuit breaker
-			backoffDuration := time.Duration(tc.failures) * 10 * time.Second
+			backoffDuration := time.Duration(tc.failures) * CircuitBreakerBackoffStep
 			if backoffDuration > MaxBackoffDuration {
 				backoffDuration = MaxBackoffDuration
 			}
@@ -71,7 +71,7 @@ func TestBackoffProgression(t *testing.T) {
 
 	for i, expected := range expectedProgression {
 		failures := i + 5 // Start from 5 failures
-		backoffDuration := time.Duration(failures) * 10 * time.Second
+		backoffDuration := time.Duration(failures) * CircuitBreakerBackoffStep
 		if backoffDuration > MaxBackoffDuration {
 			backoffDuration = MaxBackoffDuration
 		}
@@ -86,7 +86,7 @@ func TestBackoffCapping(t *testing.T) {
 	highFailureCounts := []int{20, 25, 30, 50, 100, 1000}
 
 	for _, failures := range highFailureCounts {
-		backoffDuration := time.Duration(failures) * 10 * time.Second
+		backoffDuration := time.Duration(failures) * CircuitBreakerBackoffStep
 		if backoffDuration > MaxBackoffDuration {
 			backoffDuration = MaxBackoffDuration
 		}
@@ -102,7 +102,7 @@ func TestBackoffFormula(t *testing.T) {
 		failures int
 		expected time.Duration
 	}{
-		{1, 10 * time.Second},
+		{1, CircuitBreakerBackoffStep},
 		{2, 20 * time.Second},
 		{3, 30 * time.Second},
 		{4, 40 * time.Second},
@@ -133,7 +133,7 @@ func TestBackoffThreshold(t *testing.T) {
 
 	// Below threshold - no backoff
 	for failures := 1; failures < threshold; failures++ {
-		backoffDuration := time.Duration(failures) * 10 * time.Second
+		backoffDuration := time.Duration(failures) * CircuitBreakerBackoffStep
 		if backoffDuration > MaxBackoffDuration {
 			backoffDuration = MaxBackoffDuration
 		}
@@ -143,7 +143,7 @@ func TestBackoffThreshold(t *testing.T) {
 	}
 
 	// At threshold - backoff starts
-	backoffDuration := time.Duration(threshold) * 10 * time.Second
+	backoffDuration := time.Duration(threshold) * CircuitBreakerBackoffStep
 	if backoffDuration > MaxBackoffDuration {
 		backoffDuration = MaxBackoffDuration
 	}

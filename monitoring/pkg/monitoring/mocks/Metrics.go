@@ -29,6 +29,21 @@ func (_m *Metrics) CleanupTransmissionGasPrice(contractAddress string, feedID st
 	_m.Called(contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName)
 }
 
+// IncrementFinalizedTransactions provides a mock function with given fields: chainID
+func (_m *Metrics) IncrementFinalizedTransactions(chainID string) {
+	_m.Called(chainID)
+}
+
+// IncrementRevertedTransactions provides a mock function with given fields: chainID
+func (_m *Metrics) IncrementRevertedTransactions(chainID string) {
+	_m.Called(chainID)
+}
+
+// IncrementSuccessfulTransactions provides a mock function with given fields: chainID
+func (_m *Metrics) IncrementSuccessfulTransactions(chainID string) {
+	_m.Called(chainID)
+}
+
 // SetBalance provides a mock function with given fields: answer, contractAddress, alias, networkId, networkName, chainID
 func (_m *Metrics) SetBalance(answer float64, contractAddress string, alias string, networkId string, networkName string, chainID string) {
 	_m.Called(answer, contractAddress, alias, networkId, networkName, chainID)
@@ -52,6 +67,11 @@ func (_m *Metrics) SetReportObservations(answer float64, accountAddress string, 
 // SetTransmissionGasPrice provides a mock function with given fields: answer, contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName
 func (_m *Metrics) SetTransmissionGasPrice(answer float64, contractAddress string, feedID string, chainID string, contractStatus string, contractType string, feedName string, feedPath string, networkID string, networkName string) {
 	_m.Called(answer, contractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName)
+}
+
+// SetTxAttemptCount provides a mock function with given fields: chainID, count
+func (_m *Metrics) SetTxAttemptCount(chainID string, count int) {
+	_m.Called(chainID, count)
 }
 
 // NewMetrics creates a new instance of Metrics. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

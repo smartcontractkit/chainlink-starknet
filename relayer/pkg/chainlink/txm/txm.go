@@ -23,8 +23,11 @@ import (
 )
 
 const (
-	MaxQueueLen        = 1000
-	MaxBackoffDuration = 3 * time.Minute
+	MaxQueueLen               = 1000
+	MaxBackoffDuration        = 3 * time.Minute
+	CircuitBreakerThreshold   = 5                // Number of failures to trigger circuit breaker
+	CircuitBreakerTimeWindow  = 1 * time.Minute  // Time window for counting failures
+	CircuitBreakerBackoffStep = 10 * time.Second // Backoff increment per failure
 )
 
 type TxManager interface {
@@ -407,9 +410,9 @@ func (txm *starktxm) confirmLoop() {
 				lastFailure := txm.lastClientFailure
 				txm.circuitBreakerMu.Unlock()
 
-				// If we've had 5+ failures in the last minute, use exponential backoff
-				if failures >= 5 && time.Since(lastFailure) < time.Minute {
-					backoffDuration := time.Duration(failures) * 10 * time.Second
+				// If we've had enough failures in the time window, use exponential backoff
+				if failures >= CircuitBreakerThreshold && time.Since(lastFailure) < CircuitBreakerTimeWindow {
+					backoffDuration := time.Duration(failures) * CircuitBreakerBackoffStep
 					if backoffDuration > MaxBackoffDuration {
 						backoffDuration = MaxBackoffDuration
 					}

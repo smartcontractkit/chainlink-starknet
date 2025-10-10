@@ -111,7 +111,7 @@ func TestCircuitBreaker_BackoffCalculation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			// Simulate the backoff calculation from the circuit breaker
-			backoffDuration := time.Duration(tc.failures) * 10 * time.Second
+			backoffDuration := time.Duration(tc.failures) * CircuitBreakerBackoffStep
 			if backoffDuration > MaxBackoffDuration {
 				backoffDuration = MaxBackoffDuration
 			}
@@ -124,11 +124,11 @@ func TestCircuitBreaker_BackoffCalculation(t *testing.T) {
 
 func TestCircuitBreaker_ActivationThreshold(t *testing.T) {
 	// Test that circuit breaker activates at the correct threshold
-	threshold := 5
+	threshold := CircuitBreakerThreshold
 
 	// Test below threshold
 	for failures := 1; failures < threshold; failures++ {
-		backoffDuration := time.Duration(failures) * 10 * time.Second
+		backoffDuration := time.Duration(failures) * CircuitBreakerBackoffStep
 		if backoffDuration > MaxBackoffDuration {
 			backoffDuration = MaxBackoffDuration
 		}
@@ -139,7 +139,7 @@ func TestCircuitBreaker_ActivationThreshold(t *testing.T) {
 	}
 
 	// Test at threshold
-	backoffDuration := time.Duration(threshold) * 10 * time.Second
+	backoffDuration := time.Duration(threshold) * CircuitBreakerBackoffStep
 	if backoffDuration > MaxBackoffDuration {
 		backoffDuration = MaxBackoffDuration
 	}
@@ -150,7 +150,7 @@ func TestCircuitBreaker_ActivationThreshold(t *testing.T) {
 
 func TestCircuitBreaker_TimeWindow(t *testing.T) {
 	// Test the 1-minute time window logic
-	timeWindow := 1 * time.Minute
+	timeWindow := CircuitBreakerTimeWindow
 
 	// Test that the time window is reasonable
 	assert.Greater(t, timeWindow, 30*time.Second, "Time window should be at least 30 seconds")
@@ -229,7 +229,7 @@ func TestCircuitBreaker_BackoffProgression(t *testing.T) {
 	}
 
 	for _, tc := range expectedProgression {
-		backoffDuration := time.Duration(tc.failures) * 10 * time.Second
+		backoffDuration := time.Duration(tc.failures) * CircuitBreakerBackoffStep
 		if backoffDuration > MaxBackoffDuration {
 			backoffDuration = MaxBackoffDuration
 		}
