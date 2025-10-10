@@ -145,9 +145,10 @@ func TestNew_DefaultMetrics(t *testing.T) {
 func TestInflightCount_UpdatesMetrics(t *testing.T) {
 	// Test that InflightCount updates the tx attempt count metric
 	mockMetrics := &MockTxMetrics{}
+	logger := &mockLogger{}
 
 	txm, err := NewWithMetrics(
-		nil,       // logger
+		logger,    // logger
 		nil,       // keystore
 		nil,       // config
 		"SN_MAIN", // chainID

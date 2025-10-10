@@ -103,7 +103,7 @@ func TestCircuitBreaker_BackoffCalculation(t *testing.T) {
 		{6, 60 * time.Second, "6 failures should result in 60s backoff"},
 		{10, 100 * time.Second, "10 failures should result in 100s backoff"},
 		{18, 180 * time.Second, "18 failures should result in 180s backoff"},
-		{20, 200 * time.Second, "20 failures should result in 200s backoff"},
+		{20, MaxBackoffDuration, "20 failures should be capped at MaxBackoffDuration"},
 		{25, MaxBackoffDuration, "25 failures should be capped at MaxBackoffDuration"},
 		{30, MaxBackoffDuration, "30 failures should be capped at MaxBackoffDuration"},
 	}
@@ -223,7 +223,7 @@ func TestCircuitBreaker_BackoffProgression(t *testing.T) {
 		{10, 100 * time.Second},
 		{15, 150 * time.Second},
 		{18, 180 * time.Second},
-		{20, 200 * time.Second},
+		{20, MaxBackoffDuration}, // Should be capped
 		{25, MaxBackoffDuration}, // Should be capped
 		{30, MaxBackoffDuration}, // Should be capped
 	}

@@ -19,7 +19,7 @@ func TestBackoffCalculation(t *testing.T) {
 		{10, 100 * time.Second, 100 * time.Second, "10 failures should result in 100s backoff"},
 		{15, 150 * time.Second, 150 * time.Second, "15 failures should result in 150s backoff"},
 		{18, 180 * time.Second, 180 * time.Second, "18 failures should result in 180s backoff"},
-		{20, 200 * time.Second, 200 * time.Second, "20 failures should result in 200s backoff"},
+		{20, MaxBackoffDuration, MaxBackoffDuration, "20 failures should be capped at MaxBackoffDuration"},
 		{25, MaxBackoffDuration, MaxBackoffDuration, "25 failures should be capped at MaxBackoffDuration"},
 		{30, MaxBackoffDuration, MaxBackoffDuration, "30 failures should be capped at MaxBackoffDuration"},
 		{50, MaxBackoffDuration, MaxBackoffDuration, "50 failures should be capped at MaxBackoffDuration"},
@@ -110,7 +110,7 @@ func TestBackoffFormula(t *testing.T) {
 		{10, 100 * time.Second},
 		{15, 150 * time.Second},
 		{18, 180 * time.Second},
-		{20, 200 * time.Second},
+		{20, MaxBackoffDuration}, // Should be capped
 		{25, MaxBackoffDuration}, // Should be capped
 		{30, MaxBackoffDuration}, // Should be capped
 	}
