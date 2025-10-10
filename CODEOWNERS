@@ -9,7 +9,7 @@
 /integration-tests @smartcontractkit/devex-tooling @smartcontractkit/data-growth @smartcontractkit/bix-build
 
 # monitoring ownership
-/monitoring @smartcontractkit/realtime @smartcontractkit/data-growth @smartcontractkit/bix-build
+/monitoring @smartcontractkit/data-growth @smartcontractkit/bix-build
 
 # CI/CD
 /.github/** @smartcontractkit/devex-cicd @smartcontractkit/data-growth @smartcontractkit/bix-build
