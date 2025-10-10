@@ -32,6 +32,21 @@ type TxManager interface {
 	InflightCount() (int, int)
 }
 
+type TxMetrics interface {
+	IncrementSuccessfulTransactions(chainID string)
+	IncrementRevertedTransactions(chainID string)
+	IncrementFinalizedTransactions(chainID string)
+	SetTxAttemptCount(chainID string, count int)
+}
+
+// NoOpTxMetrics is a no-op implementation of TxMetrics for when metrics are not available
+type NoOpTxMetrics struct{}
+
+func (n NoOpTxMetrics) IncrementSuccessfulTransactions(chainID string) {}
+func (n NoOpTxMetrics) IncrementRevertedTransactions(chainID string)   {}
+func (n NoOpTxMetrics) IncrementFinalizedTransactions(chainID string)  {}
+func (n NoOpTxMetrics) SetTxAttemptCount(chainID string, count int)    {}
+
 type Tx struct {
 	publicKey      *felt.Felt
 	accountAddress *felt.Felt
@@ -55,6 +70,8 @@ type starktxm struct {
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
 	accountStore *AccountStore
+	metrics      TxMetrics
+	chainID      string
 
 	// Circuit breaker for client failures
 	clientFailures    int
@@ -62,7 +79,12 @@ type starktxm struct {
 	circuitBreakerMu  sync.RWMutex
 }
 
-func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
+	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
+	return NewWithMetrics(lggr, keystore, cfg, chainID, NoOpTxMetrics{}, getClient, getFeederClient)
+}
+
+func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, metrics TxMetrics, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
 		lggr:         logger.Named(lggr, "Txm"),
@@ -73,6 +95,8 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		ks:           NewKeystoreAdapter(keystore),
 		cfg:          cfg,
 		accountStore: NewAccountStore(),
+		metrics:      metrics,
+		chainID:      chainID,
 	}
 
 	return txm, nil
@@ -114,6 +138,8 @@ func (txm *starktxm) broadcastLoop() {
 			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
+				// Note: We don't increment failed transactions here since this is just a broadcast failure
+				// Failed transactions should be tracked when they're confirmed as failed on-chain
 			} else {
 				txm.lggr.Infow("transaction broadcast", "txhash", hash)
 			}
@@ -330,6 +356,12 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	if err != nil {
 		return txhash, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
 	}
+
+	// Increment successful transaction metric
+	if txm.metrics != nil {
+		txm.metrics.IncrementSuccessfulTransactions(txm.chainID)
+	}
+
 	return txhash, nil
 }
 
@@ -433,6 +465,11 @@ func (txm *starktxm) confirmLoop() {
 						if err := txm.accountStore.GetTxStore(accountAddress).Confirm(unconfirmedTx.Nonce, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
 						}
+
+						// Increment finalized transaction metric
+						if txm.metrics != nil {
+							txm.metrics.IncrementFinalizedTransactions(txm.chainID)
+						}
 					}
 
 					// currently, feeder client is only way to get rejected reason
@@ -449,6 +486,11 @@ func (txm *starktxm) confirmLoop() {
 					if executionStatus == starknetrpc.TxnExecutionStatusREVERTED {
 						// TODO: get revert reason?
 						txm.lggr.Errorw("transaction reverted", "hash", hash)
+
+						// Increment reverted transaction metric
+						if txm.metrics != nil {
+							txm.metrics.IncrementRevertedTransactions(txm.chainID)
+						}
 					}
 				}
 			}
@@ -554,5 +596,14 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 }
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
-	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
+	queueCount := len(txm.queue)
+	unconfirmedCount := txm.accountStore.GetTotalInflightCount()
+
+	// Update tx attempt count metric
+	if txm.metrics != nil {
+		totalAttempts := queueCount + unconfirmedCount
+		txm.metrics.SetTxAttemptCount(txm.chainID, totalAttempts)
+	}
+
+	return queueCount, unconfirmedCount
 }

@@ -20,6 +20,10 @@ type Metrics interface {
 	CleanupProxy(proxyContractAddress, feedID, chainID, contractStatus, contractType, feedName, feedPath, networkID, networkName string)
 	SetBalance(answer float64, contractAddress, alias, networkId, networkName, chainID string)
 	CleanupBalance(contractAddress, alias, networkId, networkName, chainID string)
+	IncrementSuccessfulTransactions(chainID string)
+	IncrementRevertedTransactions(chainID string)
+	IncrementFinalizedTransactions(chainID string)
+	SetTxAttemptCount(chainID string, count int)
 }
 
 var (
@@ -78,6 +82,34 @@ var (
 			Help: "Reports the latest STRK balance of a contract address",
 		},
 		[]string{"contract_address", "alias", "network_id", "network_name", "chain_id"},
+	)
+	successfulTransactions = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "tx_manager_num_successful_transactions",
+			Help: "Total number of successful transactions. Note that this can err to be too high since transactions are counted on each confirmation, which can happen multiple times per transaction in the case of re-orgs",
+		},
+		[]string{"chainID"},
+	)
+	revertedTransactions = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "tx_manager_num_tx_reverted",
+			Help: "Number of times a transaction reverted on-chain. Note that this can err to be too high since transactions are counted on each confirmation, which can happen multiple times per transaction in the case of re-orgs",
+		},
+		[]string{"chainID"},
+	)
+	finalizedTransactions = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "tx_manager_num_finalized_transactions",
+			Help: "Total number of finalized transactions",
+		},
+		[]string{"chainID"},
+	)
+	txAttemptCount = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "tx_manager_tx_attempt_count",
+			Help: "The number of transaction attempts that are currently being processed by the transaction manager",
+		},
+		[]string{"chainID"},
 	)
 )
 
@@ -224,4 +256,28 @@ func (d *defaultMetrics) CleanupProxy(
 	if !proxyAnswers.Delete(labels) {
 		d.log.Errorw("failed to delete metric", "name", "proxy_answers", "labels", labels)
 	}
+}
+
+func (d *defaultMetrics) IncrementSuccessfulTransactions(chainID string) {
+	successfulTransactions.With(prometheus.Labels{
+		"chainID": chainID,
+	}).Inc()
+}
+
+func (d *defaultMetrics) IncrementRevertedTransactions(chainID string) {
+	revertedTransactions.With(prometheus.Labels{
+		"chainID": chainID,
+	}).Inc()
+}
+
+func (d *defaultMetrics) IncrementFinalizedTransactions(chainID string) {
+	finalizedTransactions.With(prometheus.Labels{
+		"chainID": chainID,
+	}).Inc()
+}
+
+func (d *defaultMetrics) SetTxAttemptCount(chainID string, count int) {
+	txAttemptCount.With(prometheus.Labels{
+		"chainID": chainID,
+	}).Set(float64(count))
 }
