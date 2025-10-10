@@ -23,7 +23,8 @@ import (
 )
 
 const (
-	MaxQueueLen = 1000
+	MaxQueueLen        = 1000
+	MaxBackoffDuration = 3 * time.Minute
 )
 
 type TxManager interface {
@@ -54,6 +55,11 @@ type starktxm struct {
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
 	accountStore *AccountStore
+
+	// Circuit breaker for client failures
+	clientFailures    int
+	lastClientFailure time.Time
+	circuitBreakerMu  sync.RWMutex
 }
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
@@ -359,7 +365,38 @@ func (txm *starktxm) confirmLoop() {
 			client, err := txm.client.Get()
 			if err != nil {
 				txm.lggr.Errorw("failed to load client", "error", err)
+				txm.client.Reset()
+
+				// Circuit breaker: if we've had too many failures recently, back off
+				txm.circuitBreakerMu.Lock()
+				txm.clientFailures++
+				txm.lastClientFailure = time.Now()
+				failures := txm.clientFailures
+				lastFailure := txm.lastClientFailure
+				txm.circuitBreakerMu.Unlock()
+
+				// If we've had 5+ failures in the last minute, use exponential backoff
+				if failures >= 5 && time.Since(lastFailure) < time.Minute {
+					backoffDuration := time.Duration(failures) * 10 * time.Second
+					if backoffDuration > MaxBackoffDuration {
+						backoffDuration = MaxBackoffDuration
+					}
+					txm.lggr.Warnw("circuit breaker activated, backing off", "failures", failures, "backoff", backoffDuration)
+					tick = time.After(backoffDuration)
+					continue
+				}
 				break
+			}
+
+			// Reset circuit breaker on successful client connection
+			txm.circuitBreakerMu.Lock()
+			if txm.clientFailures > 0 {
+				previousFailures := txm.clientFailures
+				txm.clientFailures = 0
+				txm.circuitBreakerMu.Unlock()
+				txm.lggr.Infow("client connection restored, resetting circuit breaker", "previousFailures", previousFailures)
+			} else {
+				txm.circuitBreakerMu.Unlock()
 			}
 
 			allUnconfirmedTxs := txm.accountStore.GetAllUnconfirmed()
