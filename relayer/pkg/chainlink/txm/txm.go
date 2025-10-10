@@ -173,7 +173,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		if err != nil {
 			var dataErr *starknetrpc.RPCError
 			if !errors.As(err, &dataErr) {
-				return nil, nil, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
+				return nil, nil, fmt.Errorf("failed to read estimateFee error: %T %+v", err, err)
 			}
 			data := dataErr.Data
 			dataStr := fmt.Sprintf("%+v", data)
@@ -184,7 +184,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 				continue
 			}
 
-			return nil, nil, fmt.Errorf("Failed to estimate fee: %T %+v", err, err)
+			return nil, nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
 		}
 
 		// track the FRI estimate, but keep looping so we print out all estimates
@@ -218,11 +218,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	if txStore == nil {
 		initialNonce, accountNonceErr := client.AccountNonce(ctx, accountAddress)
 		if accountNonceErr != nil {
-			return txhash, fmt.Errorf("failed to check account nonce during TxStore creation: %+w", accountNonceErr)
+			return txhash, fmt.Errorf("failed to check account nonce during txStore creation: %+w", accountNonceErr)
 		}
 		newTxStore, createErr := txm.accountStore.CreateTxStore(accountAddress, initialNonce)
 		if createErr != nil {
-			return txhash, fmt.Errorf("failed to create TxStore: %+w", createErr)
+			return txhash, fmt.Errorf("failed to create txStore: %+w", createErr)
 		}
 		txStore = newTxStore
 	}
@@ -274,7 +274,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadcastTxnV3)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
+		return txhash, fmt.Errorf("failed to get fri estimate: %+w", err)
 	}
 
 	nonce := txStore.GetNextNonce()
@@ -329,7 +329,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		var dataErr *starknetrpc.RPCError
 		var dataStr string
 		if !errors.As(err, &dataErr) {
-			return txhash, fmt.Errorf("failed to read EstimateFee error: %T %+v", err, err)
+			return txhash, fmt.Errorf("failed to read estimateFee error: %T %+v", err, err)
 		}
 		data := dataErr.Data
 		dataStr = fmt.Sprintf("%+v", data)

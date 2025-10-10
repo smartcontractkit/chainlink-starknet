@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 // MockTxMetrics is a mock implementation of TxMetrics for testing
@@ -53,8 +55,11 @@ func TestNewWithMetrics(t *testing.T) {
 	// Test that NewWithMetrics creates a txm with metrics
 	mockMetrics := &MockTxMetrics{}
 
+	// Create a test logger to avoid nil pointer panic
+	logger := &mockLogger{}
+
 	txm, err := NewWithMetrics(
-		nil,       // logger
+		logger,    // logger
 		nil,       // keystore
 		nil,       // config
 		"SN_MAIN", // chainID
@@ -72,10 +77,55 @@ func TestNewWithMetrics(t *testing.T) {
 	assert.Equal(t, mockMetrics, starkTxm.metrics)
 }
 
+// mockLogger is a simple mock logger for testing
+type mockLogger struct{}
+
+func (m *mockLogger) Name() string {
+	return "mockLogger"
+}
+
+func (m *mockLogger) Named(name string, args ...interface{}) logger.Logger {
+	return m
+}
+
+func (m *mockLogger) With(args ...interface{}) logger.Logger {
+	return m
+}
+
+func (m *mockLogger) Trace(args ...interface{}) {}
+func (m *mockLogger) Debug(args ...interface{}) {}
+func (m *mockLogger) Info(args ...interface{})  {}
+func (m *mockLogger) Warn(args ...interface{})  {}
+func (m *mockLogger) Error(args ...interface{}) {}
+func (m *mockLogger) Panic(args ...interface{}) {}
+func (m *mockLogger) Fatal(args ...interface{}) {}
+
+func (m *mockLogger) Tracef(format string, values ...interface{}) {}
+func (m *mockLogger) Debugf(format string, values ...interface{}) {}
+func (m *mockLogger) Infof(format string, values ...interface{})  {}
+func (m *mockLogger) Warnf(format string, values ...interface{})  {}
+func (m *mockLogger) Errorf(format string, values ...interface{}) {}
+func (m *mockLogger) Panicf(format string, values ...interface{}) {}
+func (m *mockLogger) Fatalf(format string, values ...interface{}) {}
+
+func (m *mockLogger) Tracew(msg string, args ...interface{}) {}
+func (m *mockLogger) Debugw(msg string, args ...interface{}) {}
+func (m *mockLogger) Infow(msg string, args ...interface{})  {}
+func (m *mockLogger) Warnw(msg string, args ...interface{})  {}
+func (m *mockLogger) Errorw(msg string, args ...interface{}) {}
+func (m *mockLogger) Panicw(msg string, args ...interface{}) {}
+func (m *mockLogger) Fatalw(msg string, args ...interface{}) {}
+
+func (m *mockLogger) Sync() error {
+	return nil
+}
+
 func TestNew_DefaultMetrics(t *testing.T) {
 	// Test that New creates a txm with NoOpTxMetrics by default
+	logger := &mockLogger{}
+
 	txm, err := New(
-		nil,       // logger
+		logger,    // logger
 		nil,       // keystore
 		nil,       // config
 		"SN_MAIN", // chainID
