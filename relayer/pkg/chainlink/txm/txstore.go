@@ -79,7 +79,7 @@ func (s *TxStore) AddUnconfirmed(nonce *felt.Felt, hash string, call starknetrpc
 
 	nonceStr := nonce.String()
 	if h, exists := s.unconfirmedNonces[nonceStr]; exists {
-		s.lggr.Warnf("nonce used: replacing tx (%s) with nonce (%s) for tx with hash (%s)", h, nonce, hash)
+		s.lggr.Warnf("nonce used: replacing tx (hash: %s) with nonce (%s) for tx with hash (%s)", h.Hash, nonce, hash)
 	}
 
 	s.unconfirmedNonces[nonceStr] = &UnconfirmedTx{
@@ -93,24 +93,24 @@ func (s *TxStore) AddUnconfirmed(nonce *felt.Felt, hash string, call starknetrpc
 	return nil
 }
 
-func (s *TxStore) Confirm(latestNonce *felt.Felt) *string {
+func (s *TxStore) Confirm(latestNonce *felt.Felt) (int, *felt.Felt) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	// confirm all transactions with a nonce lower than the latest nonce
+	confirmed := 0
+	highestUnconfirmed := new(felt.Felt).SetUint64(0)
 	for nonceStr, tx := range s.unconfirmedNonces {
 		if tx.Nonce.Cmp(latestNonce) < 0 {
+			confirmed++
 			delete(s.unconfirmedNonces, nonceStr)
+		}
+		if highestUnconfirmed.Cmp(tx.Nonce) < 0 {
+			highestUnconfirmed = tx.Nonce
 		}
 	}
 
-	// if it exists, fetch transaction with the nonce that is expected to be mined next
-	nonceStr := latestNonce.String()
-	unconfirmed, exists := s.unconfirmedNonces[nonceStr]
-	if exists {
-		return &unconfirmed.Hash
-	}
-	return nil
+	return confirmed, highestUnconfirmed
 }
 
 func (s *TxStore) GetUnconfirmed() []*UnconfirmedTx {

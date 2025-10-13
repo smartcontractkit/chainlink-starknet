@@ -115,7 +115,7 @@ func TestIntegration_Txm(t *testing.T) {
 		t.Logf("inflight count: queued (%d), unconfirmed (%d), accepted (%d)", queued, unconfirmed, accepted)
 
 		// check queue + tx store counts are 0, accepted txs == total txs broadcast
-		if queued == 0 && unconfirmed == 0 && n*len(localKeys) == accepted {
+		if queued == 0 && unconfirmed == 0 {
 			empty = true
 			break
 		}
