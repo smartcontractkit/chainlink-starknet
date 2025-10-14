@@ -13,8 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestTXM_MetricsIntegration tests that metrics are actually registered and work
-func TestTXM_MetricsIntegration(t *testing.T) {
+func TestIntegration_TXM_Metrics(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
@@ -72,8 +71,8 @@ func TestTXM_MetricsIntegration(t *testing.T) {
 	assert.Equal(t, 0.0, getMetricValue(t, "tx_manager_tx_attempt_count", chainID))
 }
 
-// TestTXM_InflightCountMetrics tests that InflightCount properly updates metrics
-func TestTXM_InflightCountMetrics(t *testing.T) {
+// TestIntegration_TXM_InflightCountMetrics tests that InflightCount properly updates metrics
+func TestIntegration_TXM_InflightCountMetrics(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
