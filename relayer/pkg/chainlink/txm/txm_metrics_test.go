@@ -10,7 +10,7 @@ import (
 )
 
 func TestPrometheusMetrics_Registration(t *testing.T) {
-	t.Parallel()
+	// Note: Cannot use t.Parallel() because we need to ensure metrics are initialized
 
 	// Initialize metrics by calling them once (promauto registers on first use)
 	metrics := NewPrometheusMetrics()
@@ -40,6 +40,25 @@ func TestPrometheusMetrics_Registration(t *testing.T) {
 	for metricName, found := range metricsFound {
 		assert.True(t, found, "Metric %s should be registered with Prometheus", metricName)
 	}
+}
+
+func TestNewPrometheusMetrics(t *testing.T) {
+	t.Parallel()
+
+	// Test that NewPrometheusMetrics returns a valid instance
+	metrics := NewPrometheusMetrics()
+	require.NotNil(t, metrics)
+
+	// Verify it implements TxMetrics interface
+	var _ TxMetrics = metrics
+}
+
+func TestPrometheusMetrics_ImplementsInterface(t *testing.T) {
+	t.Parallel()
+
+	// Compile-time check that prometheusMetrics implements TxMetrics
+	var _ TxMetrics = &prometheusMetrics{}
+	var _ TxMetrics = (*prometheusMetrics)(nil)
 }
 
 func TestPrometheusMetrics_Increment(t *testing.T) {

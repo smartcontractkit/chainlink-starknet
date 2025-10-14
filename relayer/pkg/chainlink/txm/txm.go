@@ -38,14 +38,6 @@ type TxMetrics interface {
 	SetTxAttemptCount(chainID string, count int)
 }
 
-// NoOpTxMetrics is a no-op implementation of TxMetrics for when metrics are not available
-type NoOpTxMetrics struct{}
-
-func (n NoOpTxMetrics) IncrementSuccessfulTransactions(chainID string) {}
-func (n NoOpTxMetrics) IncrementRevertedTransactions(chainID string)   {}
-func (n NoOpTxMetrics) IncrementFinalizedTransactions(chainID string)  {}
-func (n NoOpTxMetrics) SetTxAttemptCount(chainID string, count int)    {}
-
 type Tx struct {
 	publicKey      *felt.Felt
 	accountAddress *felt.Felt

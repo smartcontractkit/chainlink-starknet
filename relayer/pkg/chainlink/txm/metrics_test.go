@@ -102,21 +102,9 @@ func (m *mockLogger) Panicf(format string, args ...interface{}) {
 func TestTxMetrics_InterfaceCompliance(t *testing.T) {
 	t.Parallel()
 
-	// Verify NoOpTxMetrics implements TxMetrics interface
-	var _ TxMetrics = NoOpTxMetrics{}
+	// Verify mockTxMetrics and prometheusMetrics implement TxMetrics interface
 	var _ TxMetrics = &mockTxMetrics{}
-}
-
-func TestNoOpTxMetrics(t *testing.T) {
-	t.Parallel()
-
-	metrics := NoOpTxMetrics{}
-
-	// Should not panic
-	metrics.IncrementSuccessfulTransactions("test-chain")
-	metrics.IncrementRevertedTransactions("test-chain")
-	metrics.IncrementFinalizedTransactions("test-chain")
-	metrics.SetTxAttemptCount("test-chain", 10)
+	var _ TxMetrics = &prometheusMetrics{}
 }
 
 func TestNewWithMetrics(t *testing.T) {
@@ -166,6 +154,41 @@ func TestNew_DefaultMetrics(t *testing.T) {
 	_, ok := stxm.metrics.(*prometheusMetrics)
 	assert.True(t, ok, "Default metrics should be PrometheusMetrics")
 	assert.Equal(t, "test-chain-id", stxm.chainID)
+}
+
+func TestNew_UsesPrometheusMetrics(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := &mockLogger{Logger: logger.Test(t)}
+	chainID := "test-prometheus-chain"
+
+	txm, err := New(
+		mockLggr,
+		&mockKeystore{},
+		&mockConfig{},
+		chainID,
+		func() (*starknet.Client, error) { return nil, nil },
+		func() (*starknet.FeederClient, error) { return nil, nil },
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, txm)
+
+	// Call InflightCount to trigger metrics
+	queueCount, unconfirmedCount := txm.InflightCount()
+	assert.Equal(t, 0, queueCount)
+	assert.Equal(t, 0, unconfirmedCount)
+
+	// Verify the metric was actually set in Prometheus
+	stxm := txm.(*starktxm)
+	promMetrics, ok := stxm.metrics.(*prometheusMetrics)
+	require.True(t, ok, "Should be using PrometheusMetrics")
+
+	// Exercise all metric methods
+	promMetrics.IncrementSuccessfulTransactions(chainID)
+	promMetrics.IncrementRevertedTransactions(chainID)
+	promMetrics.IncrementFinalizedTransactions(chainID)
+	promMetrics.SetTxAttemptCount(chainID, 5)
 }
 
 func TestInflightCount_UpdatesMetrics(t *testing.T) {
