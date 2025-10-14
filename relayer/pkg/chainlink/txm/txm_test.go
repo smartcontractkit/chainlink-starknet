@@ -77,7 +77,7 @@ func TestIntegration_Txm(t *testing.T) {
 	cfg.On("TxTimeout").Return(20 * time.Second)
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
 
-	txm, err := New(lggr, ksAdapter.Loopp(), cfg, getClient, getFeederClient)
+	txm, err := New(lggr, ksAdapter.Loopp(), cfg, "test-chain", getClient, getFeederClient)
 	require.NoError(t, err)
 
 	// ready fail if start not called

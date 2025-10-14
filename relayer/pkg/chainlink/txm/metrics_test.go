@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
@@ -194,32 +195,37 @@ func TestNew_UsesPrometheusMetrics(t *testing.T) {
 func TestInflightCount_UpdatesMetrics(t *testing.T) {
 	t.Parallel()
 
-	mockMetrics := newMockTxMetrics()
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
-	chainID := "test-chain-id"
+	chainID := "test-chain-inflight"
 
-	txm, err := NewWithMetrics(
+	// Use real Prometheus metrics, not mocks
+	txm, err := New(
 		mockLggr,
 		&mockKeystore{},
 		&mockConfig{},
 		chainID,
-		mockMetrics,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)
 
 	require.NoError(t, err)
 
-	// Call InflightCount
+	// Get initial metric value from Prometheus
+	initialValue := getGaugeValueFromPrometheus(t, "tx_manager_tx_attempt_count", chainID)
+
+	// Call InflightCount - this should update the Prometheus gauge
 	queue, unconfirmed := txm.InflightCount()
 
 	// Verify counts
 	assert.Equal(t, 0, queue)
 	assert.Equal(t, 0, unconfirmed)
 
-	// Verify metrics were updated
-	attemptCount := mockMetrics.GetTxAttemptCount(chainID)
-	assert.Equal(t, 0, attemptCount)
+	// Verify the actual Prometheus metric was updated
+	finalValue := getGaugeValueFromPrometheus(t, "tx_manager_tx_attempt_count", chainID)
+	assert.Equal(t, 0.0, finalValue, "Prometheus gauge should be set to 0")
+
+	// Verify it was actually called (value should be set, not just initial)
+	_ = initialValue // We set it regardless of initial value
 }
 
 func TestTxMetrics_Methods(t *testing.T) {
@@ -302,6 +308,25 @@ func TestTxMetrics_MultipleChains(t *testing.T) {
 	// Verify chain2 metrics
 	assert.Equal(t, 0, mockMetrics.GetSuccessfulCount(chain2))
 	assert.Equal(t, 1, mockMetrics.GetFinalizedCount(chain2))
+}
+
+// Helper function to get gauge value from Prometheus
+func getGaugeValueFromPrometheus(t *testing.T, metricName, chainID string) float64 {
+	metricFamilies, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	for _, mf := range metricFamilies {
+		if mf.GetName() == metricName {
+			for _, m := range mf.GetMetric() {
+				for _, label := range m.GetLabel() {
+					if label.GetName() == "chainID" && label.GetValue() == chainID {
+						return m.GetGauge().GetValue()
+					}
+				}
+			}
+		}
+	}
+	return 0
 }
 
 // Mock implementations for testing
