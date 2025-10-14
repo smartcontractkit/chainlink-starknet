@@ -13,12 +13,12 @@ func TestPrometheusMetrics_Registration(t *testing.T) {
 	// Note: Cannot use t.Parallel() because we need to ensure metrics are initialized
 
 	// Initialize metrics by calling them once (promauto registers on first use)
-	metrics := NewPrometheusMetrics()
 	testChainID := "test-registration"
-	metrics.IncrementSuccessfulTransactions(testChainID)
-	metrics.IncrementRevertedTransactions(testChainID)
-	metrics.IncrementFinalizedTransactions(testChainID)
-	metrics.SetTxAttemptCount(testChainID, 1)
+	metrics := NewPrometheusMetrics(testChainID)
+	metrics.IncrementNumSuccessfulTxs()
+	metrics.IncrementNumRevertedTxs()
+	metrics.IncrementNumFinalizedTxs()
+	metrics.SetTxAttemptCount(1)
 
 	// Test that all metrics are registered with Prometheus
 	metricFamilies, err := prometheus.DefaultGatherer.Gather()
@@ -46,7 +46,7 @@ func TestNewPrometheusMetrics(t *testing.T) {
 	t.Parallel()
 
 	// Test that NewPrometheusMetrics returns a valid instance
-	metrics := NewPrometheusMetrics()
+	metrics := NewPrometheusMetrics("test-chain")
 	require.NotNil(t, metrics)
 
 	// Verify it implements TxMetrics interface
@@ -57,15 +57,15 @@ func TestPrometheusMetrics_ImplementsInterface(t *testing.T) {
 	t.Parallel()
 
 	// Compile-time check that prometheusMetrics implements TxMetrics
-	var _ TxMetrics = &prometheusMetrics{}
+	var _ TxMetrics = &prometheusMetrics{chainID: "test"}
 	var _ TxMetrics = (*prometheusMetrics)(nil)
 }
 
 func TestPrometheusMetrics_Increment(t *testing.T) {
 	t.Parallel()
 
-	metrics := NewPrometheusMetrics()
 	chainID := "test-chain-increment"
+	metrics := NewPrometheusMetrics(chainID)
 
 	// Get initial values
 	initialSuccessful := getCounterValue(t, "tx_manager_num_successful_transactions", chainID)
@@ -73,12 +73,12 @@ func TestPrometheusMetrics_Increment(t *testing.T) {
 	initialFinalized := getCounterValue(t, "tx_manager_num_finalized_transactions", chainID)
 
 	// Increment metrics
-	metrics.IncrementSuccessfulTransactions(chainID)
-	metrics.IncrementSuccessfulTransactions(chainID)
-	metrics.IncrementRevertedTransactions(chainID)
-	metrics.IncrementFinalizedTransactions(chainID)
-	metrics.IncrementFinalizedTransactions(chainID)
-	metrics.IncrementFinalizedTransactions(chainID)
+	metrics.IncrementNumSuccessfulTxs()
+	metrics.IncrementNumSuccessfulTxs()
+	metrics.IncrementNumRevertedTxs()
+	metrics.IncrementNumFinalizedTxs()
+	metrics.IncrementNumFinalizedTxs()
+	metrics.IncrementNumFinalizedTxs()
 
 	// Verify increments
 	finalSuccessful := getCounterValue(t, "tx_manager_num_successful_transactions", chainID)
@@ -93,16 +93,16 @@ func TestPrometheusMetrics_Increment(t *testing.T) {
 func TestPrometheusMetrics_SetGauge(t *testing.T) {
 	t.Parallel()
 
-	metrics := NewPrometheusMetrics()
 	chainID := "test-chain-gauge"
+	metrics := NewPrometheusMetrics(chainID)
 
 	// Set gauge values
-	metrics.SetTxAttemptCount(chainID, 42)
+	metrics.SetTxAttemptCount(42)
 	value := getGaugeValue(t, "tx_manager_tx_attempt_count", chainID)
 	assert.Equal(t, 42.0, value, "Gauge should be set to 42")
 
 	// Update gauge
-	metrics.SetTxAttemptCount(chainID, 100)
+	metrics.SetTxAttemptCount(100)
 	value = getGaugeValue(t, "tx_manager_tx_attempt_count", chainID)
 	assert.Equal(t, 100.0, value, "Gauge should be updated to 100")
 }
@@ -110,18 +110,20 @@ func TestPrometheusMetrics_SetGauge(t *testing.T) {
 func TestPrometheusMetrics_MultipleChains(t *testing.T) {
 	t.Parallel()
 
-	metrics := NewPrometheusMetrics()
 	chain1 := "chain-1-multi"
 	chain2 := "chain-2-multi"
+
+	metrics1 := NewPrometheusMetrics(chain1)
+	metrics2 := NewPrometheusMetrics(chain2)
 
 	// Get initial values
 	initialChain1 := getCounterValue(t, "tx_manager_num_successful_transactions", chain1)
 	initialChain2 := getCounterValue(t, "tx_manager_num_successful_transactions", chain2)
 
 	// Increment different chains
-	metrics.IncrementSuccessfulTransactions(chain1)
-	metrics.IncrementSuccessfulTransactions(chain1)
-	metrics.IncrementSuccessfulTransactions(chain2)
+	metrics1.IncrementNumSuccessfulTxs()
+	metrics1.IncrementNumSuccessfulTxs()
+	metrics2.IncrementNumSuccessfulTxs()
 
 	// Verify separate tracking
 	finalChain1 := getCounterValue(t, "tx_manager_num_successful_transactions", chain1)

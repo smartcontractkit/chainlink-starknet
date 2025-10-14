@@ -32,10 +32,10 @@ type TxManager interface {
 }
 
 type TxMetrics interface {
-	IncrementSuccessfulTransactions(chainID string)
-	IncrementRevertedTransactions(chainID string)
-	IncrementFinalizedTransactions(chainID string)
-	SetTxAttemptCount(chainID string, count int)
+	IncrementNumSuccessfulTxs()
+	IncrementNumRevertedTxs()
+	IncrementNumFinalizedTxs()
+	SetTxAttemptCount(count int)
 }
 
 type Tx struct {
@@ -67,7 +67,7 @@ type starktxm struct {
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
-	return NewWithMetrics(lggr, keystore, cfg, chainID, NewPrometheusMetrics(), getClient, getFeederClient)
+	return NewWithMetrics(lggr, keystore, cfg, chainID, NewPrometheusMetrics(chainID), getClient, getFeederClient)
 }
 
 func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, metrics TxMetrics, getClient func() (*starknet.Client, error),
@@ -413,12 +413,12 @@ func (txm *starktxm) confirmLoop() {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
 						} else {
 							// Increment successful transactions metric
-							txm.metrics.IncrementSuccessfulTransactions(txm.chainID)
+							txm.metrics.IncrementNumSuccessfulTxs()
 						}
 
 						// Increment finalized transactions metric for L1/L2 acceptance
 						if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 {
-							txm.metrics.IncrementFinalizedTransactions(txm.chainID)
+							txm.metrics.IncrementNumFinalizedTxs()
 						}
 					}
 
@@ -438,7 +438,7 @@ func (txm *starktxm) confirmLoop() {
 						txm.lggr.Errorw("transaction reverted", "hash", hash)
 
 						// Increment reverted transactions metric
-						txm.metrics.IncrementRevertedTransactions(txm.chainID)
+						txm.metrics.IncrementNumRevertedTxs()
 					}
 				}
 			}
@@ -549,7 +549,7 @@ func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
 
 	// Update tx attempt count metric
 	totalAttempts := queueCount + unconfirmedCount
-	txm.metrics.SetTxAttemptCount(txm.chainID, totalAttempts)
+	txm.metrics.SetTxAttemptCount(totalAttempts)
 
 	return queueCount, unconfirmedCount
 }

@@ -33,10 +33,10 @@ func TestIntegration_TXM_Metrics(t *testing.T) {
 
 	// Exercise all metrics to ensure they're registered
 	stxm := txm.(*starktxm)
-	stxm.metrics.IncrementSuccessfulTransactions(chainID)
-	stxm.metrics.IncrementRevertedTransactions(chainID)
-	stxm.metrics.IncrementFinalizedTransactions(chainID)
-	stxm.metrics.SetTxAttemptCount(chainID, 0)
+	stxm.metrics.IncrementNumSuccessfulTxs()
+	stxm.metrics.IncrementNumRevertedTxs()
+	stxm.metrics.IncrementNumFinalizedTxs()
+	stxm.metrics.SetTxAttemptCount(0)
 
 	// Test InflightCount which should also update metrics
 	queue, unconfirmed := txm.InflightCount()

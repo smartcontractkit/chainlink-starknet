@@ -16,67 +16,62 @@ import (
 // mockTxMetrics is a mock implementation of TxMetrics for testing
 type mockTxMetrics struct {
 	mu                     sync.RWMutex
-	successfulTransactions map[string]int
-	revertedTransactions   map[string]int
-	finalizedTransactions  map[string]int
-	txAttemptCounts        map[string]int
+	successfulTransactions int
+	revertedTransactions   int
+	finalizedTransactions  int
+	txAttemptCount         int
 }
 
 func newMockTxMetrics() *mockTxMetrics {
-	return &mockTxMetrics{
-		successfulTransactions: make(map[string]int),
-		revertedTransactions:   make(map[string]int),
-		finalizedTransactions:  make(map[string]int),
-		txAttemptCounts:        make(map[string]int),
-	}
+	return &mockTxMetrics{}
 }
 
-func (m *mockTxMetrics) IncrementSuccessfulTransactions(chainID string) {
+func (m *mockTxMetrics) IncrementNumSuccessfulTxs() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.successfulTransactions[chainID]++
+	m.successfulTransactions++
 }
 
-func (m *mockTxMetrics) IncrementRevertedTransactions(chainID string) {
+func (m *mockTxMetrics) IncrementNumRevertedTxs() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.revertedTransactions[chainID]++
+	m.revertedTransactions++
 }
 
-func (m *mockTxMetrics) IncrementFinalizedTransactions(chainID string) {
+func (m *mockTxMetrics) IncrementNumFinalizedTxs() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.finalizedTransactions[chainID]++
+	m.finalizedTransactions++
 }
 
-func (m *mockTxMetrics) SetTxAttemptCount(chainID string, count int) {
+func (m *mockTxMetrics) SetTxAttemptCount(count int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.txAttemptCounts[chainID] = count
+	m.txAttemptCount = count
 }
 
-func (m *mockTxMetrics) GetSuccessfulCount(chainID string) int {
+func (m *mockTxMetrics) GetSuccessfulCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.successfulTransactions[chainID]
+	return m.successfulTransactions
 }
 
-func (m *mockTxMetrics) GetRevertedCount(chainID string) int {
+func (m *mockTxMetrics) GetRevertedCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.revertedTransactions[chainID]
+	return m.revertedTransactions
 }
 
-func (m *mockTxMetrics) GetFinalizedCount(chainID string) int {
+func (m *mockTxMetrics) GetFinalizedCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.finalizedTransactions[chainID]
+	return m.finalizedTransactions
 }
 
-func (m *mockTxMetrics) GetTxAttemptCount(chainID string) int {
+func (m *mockTxMetrics) GetTxAttemptCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.txAttemptCounts[chainID]
+	return m.txAttemptCount
 }
 
 // mockLogger implements logger.Logger interface for testing
@@ -186,10 +181,10 @@ func TestNew_UsesPrometheusMetrics(t *testing.T) {
 	require.True(t, ok, "Should be using PrometheusMetrics")
 
 	// Exercise all metric methods
-	promMetrics.IncrementSuccessfulTransactions(chainID)
-	promMetrics.IncrementRevertedTransactions(chainID)
-	promMetrics.IncrementFinalizedTransactions(chainID)
-	promMetrics.SetTxAttemptCount(chainID, 5)
+	promMetrics.IncrementNumSuccessfulTxs()
+	promMetrics.IncrementNumRevertedTxs()
+	promMetrics.IncrementNumFinalizedTxs()
+	promMetrics.SetTxAttemptCount(5)
 }
 
 func TestInflightCount_UpdatesMetrics(t *testing.T) {
@@ -232,50 +227,48 @@ func TestTxMetrics_Methods(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
-	chainID := "test-chain-id"
 
-	// Test IncrementSuccessfulTransactions
-	mockMetrics.IncrementSuccessfulTransactions(chainID)
-	mockMetrics.IncrementSuccessfulTransactions(chainID)
-	assert.Equal(t, 2, mockMetrics.GetSuccessfulCount(chainID))
+	// Test IncrementNumSuccessfulTxs
+	mockMetrics.IncrementNumSuccessfulTxs()
+	mockMetrics.IncrementNumSuccessfulTxs()
+	assert.Equal(t, 2, mockMetrics.GetSuccessfulCount())
 
-	// Test IncrementRevertedTransactions
-	mockMetrics.IncrementRevertedTransactions(chainID)
-	assert.Equal(t, 1, mockMetrics.GetRevertedCount(chainID))
+	// Test IncrementNumRevertedTxs
+	mockMetrics.IncrementNumRevertedTxs()
+	assert.Equal(t, 1, mockMetrics.GetRevertedCount())
 
-	// Test IncrementFinalizedTransactions
-	mockMetrics.IncrementFinalizedTransactions(chainID)
-	mockMetrics.IncrementFinalizedTransactions(chainID)
-	mockMetrics.IncrementFinalizedTransactions(chainID)
-	assert.Equal(t, 3, mockMetrics.GetFinalizedCount(chainID))
+	// Test IncrementNumFinalizedTxs
+	mockMetrics.IncrementNumFinalizedTxs()
+	mockMetrics.IncrementNumFinalizedTxs()
+	mockMetrics.IncrementNumFinalizedTxs()
+	assert.Equal(t, 3, mockMetrics.GetFinalizedCount())
 
 	// Test SetTxAttemptCount
-	mockMetrics.SetTxAttemptCount(chainID, 42)
-	assert.Equal(t, 42, mockMetrics.GetTxAttemptCount(chainID))
+	mockMetrics.SetTxAttemptCount(42)
+	assert.Equal(t, 42, mockMetrics.GetTxAttemptCount())
 
 	// Update with new value
-	mockMetrics.SetTxAttemptCount(chainID, 100)
-	assert.Equal(t, 100, mockMetrics.GetTxAttemptCount(chainID))
+	mockMetrics.SetTxAttemptCount(100)
+	assert.Equal(t, 100, mockMetrics.GetTxAttemptCount())
 }
 
 func TestTxMetrics_MultipleCalls(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
-	chainID := "test-chain-id"
 
 	// Multiple concurrent calls
 	var wg sync.WaitGroup
 	numGoroutines := 10
 	incrementsPerGoroutine := 10
 
-	// Test concurrent IncrementSuccessfulTransactions
+	// Test concurrent IncrementNumSuccessfulTxs
 	for i := 0; i < numGoroutines; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for j := 0; j < incrementsPerGoroutine; j++ {
-				mockMetrics.IncrementSuccessfulTransactions(chainID)
+				mockMetrics.IncrementNumSuccessfulTxs()
 			}
 		}()
 	}
@@ -284,30 +277,30 @@ func TestTxMetrics_MultipleCalls(t *testing.T) {
 
 	// Should have exactly numGoroutines * incrementsPerGoroutine
 	expected := numGoroutines * incrementsPerGoroutine
-	assert.Equal(t, expected, mockMetrics.GetSuccessfulCount(chainID))
+	assert.Equal(t, expected, mockMetrics.GetSuccessfulCount())
 }
 
-func TestTxMetrics_MultipleChains(t *testing.T) {
+func TestTxMetrics_Isolation(t *testing.T) {
 	t.Parallel()
 
-	mockMetrics := newMockTxMetrics()
-	chain1 := "chain-1"
-	chain2 := "chain-2"
+	// Test that two separate metric instances are independent
+	metrics1 := newMockTxMetrics()
+	metrics2 := newMockTxMetrics()
 
-	// Increment metrics for chain1
-	mockMetrics.IncrementSuccessfulTransactions(chain1)
-	mockMetrics.IncrementSuccessfulTransactions(chain1)
+	// Increment metrics1
+	metrics1.IncrementNumSuccessfulTxs()
+	metrics1.IncrementNumSuccessfulTxs()
 
-	// Increment metrics for chain2
-	mockMetrics.IncrementFinalizedTransactions(chain2)
+	// Increment metrics2
+	metrics2.IncrementNumFinalizedTxs()
 
-	// Verify chain1 metrics
-	assert.Equal(t, 2, mockMetrics.GetSuccessfulCount(chain1))
-	assert.Equal(t, 0, mockMetrics.GetFinalizedCount(chain1))
+	// Verify metrics1
+	assert.Equal(t, 2, metrics1.GetSuccessfulCount())
+	assert.Equal(t, 0, metrics1.GetFinalizedCount())
 
-	// Verify chain2 metrics
-	assert.Equal(t, 0, mockMetrics.GetSuccessfulCount(chain2))
-	assert.Equal(t, 1, mockMetrics.GetFinalizedCount(chain2))
+	// Verify metrics2
+	assert.Equal(t, 0, metrics2.GetSuccessfulCount())
+	assert.Equal(t, 1, metrics2.GetFinalizedCount())
 }
 
 // Helper function to get gauge value from Prometheus

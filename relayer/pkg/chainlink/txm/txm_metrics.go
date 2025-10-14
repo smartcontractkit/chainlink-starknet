@@ -40,29 +40,31 @@ func initMetrics() {
 }
 
 // prometheusMetrics implements TxMetrics using Prometheus
-type prometheusMetrics struct{}
-
-func NewPrometheusMetrics() TxMetrics {
-	initMetrics()
-	return &prometheusMetrics{}
+type prometheusMetrics struct {
+	chainID string
 }
 
-func (m *prometheusMetrics) IncrementSuccessfulTransactions(chainID string) {
+func NewPrometheusMetrics(chainID string) TxMetrics {
 	initMetrics()
-	promNumSuccessfulTxs.WithLabelValues(chainID).Inc()
+	return &prometheusMetrics{chainID: chainID}
 }
 
-func (m *prometheusMetrics) IncrementRevertedTransactions(chainID string) {
+func (m *prometheusMetrics) IncrementNumSuccessfulTxs() {
 	initMetrics()
-	promRevertedTxCount.WithLabelValues(chainID).Inc()
+	promNumSuccessfulTxs.WithLabelValues(m.chainID).Inc()
 }
 
-func (m *prometheusMetrics) IncrementFinalizedTransactions(chainID string) {
+func (m *prometheusMetrics) IncrementNumRevertedTxs() {
 	initMetrics()
-	promNumFinalizedTxs.WithLabelValues(chainID).Inc()
+	promRevertedTxCount.WithLabelValues(m.chainID).Inc()
 }
 
-func (m *prometheusMetrics) SetTxAttemptCount(chainID string, count int) {
+func (m *prometheusMetrics) IncrementNumFinalizedTxs() {
 	initMetrics()
-	promTxAttemptCount.WithLabelValues(chainID).Set(float64(count))
+	promNumFinalizedTxs.WithLabelValues(m.chainID).Inc()
+}
+
+func (m *prometheusMetrics) SetTxAttemptCount(count int) {
+	initMetrics()
+	promTxAttemptCount.WithLabelValues(m.chainID).Set(float64(count))
 }
