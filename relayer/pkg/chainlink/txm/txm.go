@@ -31,6 +31,21 @@ type TxManager interface {
 	InflightCount() (int, int)
 }
 
+type TxMetrics interface {
+	IncrementSuccessfulTransactions(chainID string)
+	IncrementRevertedTransactions(chainID string)
+	IncrementFinalizedTransactions(chainID string)
+	SetTxAttemptCount(chainID string, count int)
+}
+
+// NoOpTxMetrics is a no-op implementation of TxMetrics for when metrics are not available
+type NoOpTxMetrics struct{}
+
+func (n NoOpTxMetrics) IncrementSuccessfulTransactions(chainID string) {}
+func (n NoOpTxMetrics) IncrementRevertedTransactions(chainID string)   {}
+func (n NoOpTxMetrics) IncrementFinalizedTransactions(chainID string)  {}
+func (n NoOpTxMetrics) SetTxAttemptCount(chainID string, count int)    {}
+
 type Tx struct {
 	publicKey      *felt.Felt
 	accountAddress *felt.Felt
@@ -54,9 +69,16 @@ type starktxm struct {
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
 	accountStore *AccountStore
+	metrics      TxMetrics
+	chainID      string
 }
 
-func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
+	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
+	return NewWithMetrics(lggr, keystore, cfg, chainID, NewPrometheusMetrics(), getClient, getFeederClient)
+}
+
+func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, metrics TxMetrics, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
 		lggr:         logger.Named(lggr, "Txm"),
@@ -67,6 +89,8 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		ks:           NewKeystoreAdapter(keystore),
 		cfg:          cfg,
 		accountStore: NewAccountStore(),
+		metrics:      metrics,
+		chainID:      chainID,
 	}
 
 	return txm, nil
@@ -152,7 +176,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 				continue
 			}
 
-			return nil, nil, fmt.Errorf("Failed to estimate fee: %T %+v", err, err)
+			return nil, nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
 		}
 
 		// track the FRI estimate, but keep looping so we print out all estimates
@@ -395,6 +419,14 @@ func (txm *starktxm) confirmLoop() {
 						txm.lggr.Debugw(fmt.Sprintf("tx confirmed: %s", finalityStatus), "hash", hash, "nonce", unconfirmedTx.Nonce, "finalityStatus", finalityStatus)
 						if err := txm.accountStore.GetTxStore(accountAddress).Confirm(unconfirmedTx.Nonce, hash); err != nil {
 							txm.lggr.Errorw("failed to confirm tx in TxStore", "hash", hash, "accountAddress", accountAddress, "error", err)
+						} else {
+							// Increment successful transactions metric
+							txm.metrics.IncrementSuccessfulTransactions(txm.chainID)
+						}
+
+						// Increment finalized transactions metric for L1/L2 acceptance
+						if finalityStatus == starknetrpc.TxnStatus_Accepted_On_L1 || finalityStatus == starknetrpc.TxnStatus_Accepted_On_L2 {
+							txm.metrics.IncrementFinalizedTransactions(txm.chainID)
 						}
 					}
 
@@ -412,6 +444,9 @@ func (txm *starktxm) confirmLoop() {
 					if executionStatus == starknetrpc.TxnExecutionStatusREVERTED {
 						// TODO: get revert reason?
 						txm.lggr.Errorw("transaction reverted", "hash", hash)
+
+						// Increment reverted transactions metric
+						txm.metrics.IncrementRevertedTransactions(txm.chainID)
 					}
 				}
 			}
@@ -517,5 +552,12 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 }
 
 func (txm *starktxm) InflightCount() (queue int, unconfirmed int) {
-	return len(txm.queue), txm.accountStore.GetTotalInflightCount()
+	queueCount := len(txm.queue)
+	unconfirmedCount := txm.accountStore.GetTotalInflightCount()
+
+	// Update tx attempt count metric
+	totalAttempts := queueCount + unconfirmedCount
+	txm.metrics.SetTxAttemptCount(txm.chainID, totalAttempts)
+
+	return queueCount, unconfirmedCount
 }
