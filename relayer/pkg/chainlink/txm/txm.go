@@ -363,12 +363,13 @@ func (txm *starktxm) confirmLoop() {
 				}
 				nonce, err := client.AccountNonceLatest(ctx, accountAddress)
 				if err != nil {
-					txm.lggr.Errorf("failed to fetch latest nonce for account %v", accountAddress)
+					txm.lggr.Errorf("failed to fetch latest nonce for account %v, err: %v", accountAddress, err)
 					continue
 				}
 				// Confirm all transactions with nonce lower than the latest.
 				confirmed, highestUnconfirmed := txm.accountStore.GetTxStore(accountAddress).Confirm(nonce)
-				txm.lggr.Infow("Confirmation loop", "latestNonce", nonce, "transactionsConfirmed", confirmed, "highestUnconfirmed", highestUnconfirmed)
+				txm.lggr.Infow("Confirmation loop", "accountAddress", accountAddress, "latestNonce", nonce,
+					"transactionsConfirmed", confirmed, "highestUnconfirmed", highestUnconfirmed)
 
 				// We add a maximum threshold between latest nonce and highest unconfirmed. This prevents the TXM from sending a very large
 				// number of unconfirmed transactions in the mempool and triggers a resync to prevent nonce gaps since the RPC responses are unreliable.
