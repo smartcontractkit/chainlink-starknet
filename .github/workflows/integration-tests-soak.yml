@@ -28,7 +28,7 @@ env:
 jobs:
   run_tests:
     name: Run soak Tests
-    runs-on: ubuntu20.04-16cores-64GB
+    runs-on: ubuntu24.04-16cores-64GB
     environment: integration
     env:
       TEST_SUITE: soak
