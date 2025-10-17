@@ -22,17 +22,6 @@ jobs:
           - name: test-integration-go
             id: integration
     steps:
-      - name: Collect Metrics
-        if: matrix.test-type.id != 'race'
-        id: collect-gha-metrics
-        uses: smartcontractkit/push-gha-metrics-action@d9da21a2747016b3e13de58c7d4115a3d5c97935 # v3.0.1
-        with:
-          id: starknet-relay-unit-${{ matrix.test-type.id }}
-          org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
-          basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          this-job-name: Run Unit Tests ${{ matrix.test-type.name }}
-          test-results-file: '{"testType":"go","filePath":"/tmp/gotest.log"}'
       - name: Checkout sources
         uses: actions/checkout@v5
         with:
