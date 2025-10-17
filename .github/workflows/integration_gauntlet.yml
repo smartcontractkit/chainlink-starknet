@@ -14,7 +14,7 @@ jobs:
       CI: true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Install Nix
@@ -26,7 +26,7 @@ jobs:
         uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc
         with:
           name: chainlink-cosmos
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix develop -c yarn install --frozen-lockfile
       - run: nix develop -c yarn eslint
       - name: Upload eslint report
@@ -50,7 +50,7 @@ jobs:
           hostname: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           this-job-name: Run Integration Gauntlet Tests
       - name: Checkout sources
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
