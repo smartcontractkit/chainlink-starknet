@@ -12,7 +12,7 @@ on:
       team:
         description: Team to run the tests for (e.g. BIX, CCIP)
         required: true
-        type: string          
+        type: string
 
 # Only run 1 of this workflow at a time per PR
 concurrency:
@@ -111,7 +111,7 @@ jobs:
         id: setup-github-token
         uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
         with:
-          aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
+          aws-role-arn: ${{ secrets.AWS_OIDC_CHAINLINK_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Checkout the repo
@@ -130,7 +130,7 @@ jobs:
   run_tests:
     name: Run Smoke Tests
     runs-on: ubuntu20.04-16cores-64GB
-    needs: [ build_chainlink_image, build_test_image ]
+    needs: [build_chainlink_image, build_test_image]
     environment: integration
     env:
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
@@ -165,7 +165,7 @@ jobs:
         id: setup-github-token
         uses: smartcontractkit/.github/actions/setup-github-token@ef78fa97bf3c77de6563db1175422703e9e6674f # 0.2.1
         with:
-          aws-role-arn: ${{ secrets.AWS_OIDC_GLOBAL_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
+          aws-role-arn: ${{ secrets.AWS_OIDC_CHAINLINK_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Build contracts
@@ -175,7 +175,8 @@ jobs:
         run: |
           yarn install && yarn build
       - name: Generate config overrides
-        run: | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
+        run:
+          | # https://github.com/smartcontractkit/chainlink-testing-framework/blob/main/config/README.md
           cat << EOF > config.toml
           [Network]
           selected_networks=["SIMULATED"]
