@@ -29,6 +29,10 @@ var (
 		Name: "txm_time_until_tx_confirmed",
 		Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
 	}, []string{"chainID"})
+	promQueueFullEvents = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "txm_queue_full_events",
+		Help: "Total number of times the transaction queue was full and transactions were rejected.",
+	}, []string{"chainID"})
 	metricsOnce sync.Once
 )
 
@@ -76,4 +80,9 @@ func (m *prometheusMetrics) ReachedMaxAttempts(ctx context.Context, reached bool
 func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
 	initMetrics()
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID).Observe(duration)
+}
+
+func (m *prometheusMetrics) IncrementQueueFullEvents(ctx context.Context) {
+	initMetrics()
+	promQueueFullEvents.WithLabelValues(m.chainID).Inc()
 }

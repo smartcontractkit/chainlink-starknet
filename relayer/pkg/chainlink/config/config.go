@@ -42,6 +42,7 @@ type ConfigSet struct { //nolint:revive
 	// txm config
 	TxTimeout        time.Duration
 	ConfirmationPoll time.Duration
+	MaxAttempts      int
 }
 
 type Config interface {
@@ -60,6 +61,7 @@ type Chain struct {
 	RequestTimeout      *config.Duration
 	TxTimeout           *config.Duration
 	ConfirmationPoll    *config.Duration
+	MaxAttempts         *int
 }
 
 type Node struct {
@@ -174,6 +176,9 @@ func setFromChain(c, f *Chain) {
 	if f.ConfirmationPoll != nil {
 		c.ConfirmationPoll = f.ConfirmationPoll
 	}
+	if f.MaxAttempts != nil {
+		c.MaxAttempts = f.MaxAttempts
+	}
 }
 
 func (c *TOMLConfig) ValidateConfig() (err error) {
@@ -246,6 +251,13 @@ func (c *TOMLConfig) TxTimeout() time.Duration {
 
 func (c *TOMLConfig) ConfirmationPoll() time.Duration {
 	return c.Chain.ConfirmationPoll.Duration()
+}
+
+func (c *TOMLConfig) MaxAttempts() int {
+	if c.Chain.MaxAttempts == nil {
+		return 10 // Default value
+	}
+	return *c.Chain.MaxAttempts
 }
 
 func (c *TOMLConfig) OCR2CachePollPeriod() time.Duration {

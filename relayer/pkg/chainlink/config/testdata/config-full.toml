@@ -6,6 +6,7 @@ OCR2CacheTTL = '3m0s'
 RequestTimeout = '1m3s'
 TxTimeout = '13s'
 ConfirmationPoll = '42s'
+MaxAttempts = 15
 
 [[Nodes]]
 Name = 'primary'

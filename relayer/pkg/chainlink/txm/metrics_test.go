@@ -21,6 +21,7 @@ type mockTxMetrics struct {
 	numNonceGaps         int
 	reachedMaxAttempts   bool
 	timeUntilTxConfirmed []float64
+	queueFullEvents      int
 }
 
 func newMockTxMetrics() *mockTxMetrics {
@@ -59,6 +60,12 @@ func (m *mockTxMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration
 	m.timeUntilTxConfirmed = append(m.timeUntilTxConfirmed, duration)
 }
 
+func (m *mockTxMetrics) IncrementQueueFullEvents(ctx context.Context) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.queueFullEvents++
+}
+
 func (m *mockTxMetrics) GetBroadcastedCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -87,6 +94,12 @@ func (m *mockTxMetrics) GetTimeUntilTxConfirmed() []float64 {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return append([]float64{}, m.timeUntilTxConfirmed...)
+}
+
+func (m *mockTxMetrics) GetQueueFullEventsCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.queueFullEvents
 }
 
 // mockLogger implements logger.Logger interface for testing
@@ -120,11 +133,26 @@ func (m *mockConfig) TxTimeout() time.Duration {
 	return 30 * time.Second
 }
 
-func TestTxMetrics_InterfaceCompliance(t *testing.T) {
+func (m *mockConfig) MaxAttempts() int {
+	return 5
+}
+
+func TestTxMetrics_QueueFullEvents(t *testing.T) {
 	t.Parallel()
 
-	// Test that prometheusMetrics implements TxMetrics interface
-	var _ TxMetrics = (*prometheusMetrics)(nil)
+	mockMetrics := newMockTxMetrics()
+	ctx := context.Background()
+
+	// Test initial state
+	assert.Equal(t, 0, mockMetrics.GetQueueFullEventsCount())
+
+	// Test incrementing queue full events
+	mockMetrics.IncrementQueueFullEvents(ctx)
+	assert.Equal(t, 1, mockMetrics.GetQueueFullEventsCount())
+
+	mockMetrics.IncrementQueueFullEvents(ctx)
+	mockMetrics.IncrementQueueFullEvents(ctx)
+	assert.Equal(t, 3, mockMetrics.GetQueueFullEventsCount())
 }
 
 func TestNewWithMetrics(t *testing.T) {

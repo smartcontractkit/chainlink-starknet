@@ -39,6 +39,7 @@ type TxMetrics interface {
 	IncrementNumNonceGaps(ctx context.Context)
 	ReachedMaxAttempts(ctx context.Context, reached bool)
 	RecordTimeUntilTxConfirmed(ctx context.Context, duration float64)
+	IncrementQueueFullEvents(ctx context.Context)
 }
 
 type Tx struct {
@@ -93,7 +94,7 @@ func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chai
 		accountStore: NewAccountStore(),
 		metrics:      metrics,
 		chainID:      chainID,
-		maxAttempts:  3, // Default max attempts
+		maxAttempts:  cfg.MaxAttempts(),
 	}
 
 	return txm, nil
@@ -159,7 +160,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 
 	var largestEstimateNonce *felt.Felt
 
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= txm.maxAttempts; i++ {
 		txm.lggr.Infow("attempt to estimate fee", "attempt", i)
 
 		estimateNonce, err := client.AccountNonce(ctx, accountAddress)
@@ -540,7 +541,7 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
 		// Queue is full - this could indicate high load or processing issues
-		// We could add a metric here to track queue full events
+		txm.metrics.IncrementQueueFullEvents(ctx)
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 

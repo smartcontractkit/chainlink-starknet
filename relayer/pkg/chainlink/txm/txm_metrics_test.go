@@ -175,3 +175,22 @@ func getGaugeValue(t *testing.T, metricName, chainID string) float64 {
 	}
 	return 0
 }
+
+func TestPrometheusMetrics_QueueFullEvents(t *testing.T) {
+	t.Parallel()
+
+	// Create metrics with test chain ID
+	chainID := "test-chain-queue"
+	metrics := NewPrometheusMetrics(chainID)
+
+	ctx := context.Background()
+
+	// Test incrementing queue full events
+	metrics.IncrementQueueFullEvents(ctx)
+	metrics.IncrementQueueFullEvents(ctx)
+	metrics.IncrementQueueFullEvents(ctx)
+
+	// Verify the metric was incremented by checking the counter value
+	finalValue := getCounterValue(t, "txm_queue_full_events", chainID)
+	assert.Equal(t, 3.0, finalValue)
+}

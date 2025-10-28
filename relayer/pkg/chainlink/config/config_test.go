@@ -35,6 +35,7 @@ func TestTOMLConfig_FullMarshal(t *testing.T) {
 			RequestTimeout:      config.MustNewDuration(1*time.Minute + 3*time.Second),
 			TxTimeout:           config.MustNewDuration(13 * time.Second),
 			ConfirmationPoll:    config.MustNewDuration(42 * time.Second),
+			MaxAttempts:         ptr(15),
 		},
 		Nodes: []*Node{
 			{
