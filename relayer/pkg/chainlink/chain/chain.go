@@ -86,7 +86,7 @@ func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logg
 	}
 
 	var err error
-	ch.txm, err = txm.New(lggr, loopKs, cfg, ch.getClient, ch.getFeederClient)
+	ch.txm, err = txm.New(lggr, loopKs, cfg, ch.ChainID(), ch.getClient, ch.getFeederClient)
 	if err != nil {
 		return nil, err
 	}

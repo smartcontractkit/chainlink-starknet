@@ -32,6 +32,15 @@ type TxManager interface {
 	InflightCount() (int, int)
 }
 
+// TxMetrics interface for v2 TXM metrics
+type TxMetrics interface {
+	IncrementNumBroadcastedTxs(ctx context.Context)
+	IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int)
+	IncrementNumNonceGaps(ctx context.Context)
+	ReachedMaxAttempts(ctx context.Context, reached bool)
+	RecordTimeUntilTxConfirmed(ctx context.Context, duration float64)
+}
+
 type Tx struct {
 	publicKey      *felt.Felt
 	accountAddress *felt.Felt
@@ -55,9 +64,16 @@ type starktxm struct {
 	client       *utils.LazyLoad[*starknet.Client]
 	feederClient *utils.LazyLoad[*starknet.FeederClient]
 	accountStore *AccountStore
+	metrics      TxMetrics
+	chainID      string
 }
 
-func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func() (*starknet.Client, error),
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
+	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
+	return NewWithMetrics(lggr, keystore, cfg, chainID, NewPrometheusMetrics(chainID), getClient, getFeederClient)
+}
+
+func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, metrics TxMetrics, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
 	txm := &starktxm{
 		lggr:         logger.Named(lggr, "Txm"),
@@ -68,6 +84,8 @@ func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, getClient func(
 		ks:           NewKeystoreAdapter(keystore),
 		cfg:          cfg,
 		accountStore: NewAccountStore(),
+		metrics:      metrics,
+		chainID:      chainID,
 	}
 
 	return txm, nil
@@ -111,6 +129,8 @@ func (txm *starktxm) broadcastLoop() {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
 			} else {
 				txm.lggr.Infow("transaction broadcast", "txhash", hash)
+				// Increment broadcasted transactions metric
+				txm.metrics.IncrementNumBroadcastedTxs(ctx)
 			}
 		}
 	}
@@ -371,6 +391,11 @@ func (txm *starktxm) confirmLoop() {
 				txm.lggr.Infow("Confirmation loop", "accountAddress", accountAddress, "latestNonce", nonce,
 					"transactionsConfirmed", confirmed, "highestUnconfirmed", highestUnconfirmed)
 
+				// Increment confirmed transactions metric
+				if confirmed > 0 {
+					txm.metrics.IncrementNumConfirmedTxs(ctx, confirmed)
+				}
+
 				// We add a maximum threshold between latest nonce and highest unconfirmed. This prevents the TXM from sending a very large
 				// number of unconfirmed transactions in the mempool and triggers a resync to prevent nonce gaps since the RPC responses are unreliable.
 				// The nonce stored here won't necessarily be picked up by the next transaction since there is a fast-forward functionality in broadcasting.
@@ -428,6 +453,11 @@ func (txm *starktxm) resyncNonce(ctx context.Context, client *starknet.Client, a
 	staleTxs := txStore.SetNextNonce(rpcNonce)
 
 	txm.lggr.Infow("resynced nonce", "accountAddress", "accountAddress", "previousNonce", currentNonce, "updatedNonce", rpcNonce, "staleTxCount", len(staleTxs))
+
+	// Increment nonce gaps metric when stale transactions are found
+	if len(staleTxs) > 0 {
+		txm.metrics.IncrementNumNonceGaps(ctx)
+	}
 
 	return nil
 }
