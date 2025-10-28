@@ -226,7 +226,7 @@ func TestTxMetrics_EnqueueMethodCoverage(t *testing.T) {
 		metrics: mockMetrics,
 		chainID: chainID,
 		cfg:     &mockConfigCoverage{},
-		queue:   make(chan Tx, 0), // No buffer to force queue full
+		queue:   make(chan Tx), // No buffer to force queue full
 	}
 
 	ctx := context.Background()
@@ -341,7 +341,7 @@ func TestTxMetrics_EnqueueMethod(t *testing.T) {
 		chainID:      chainID,
 		cfg:          &mockConfigCoverage{},
 		ks:           keystoreAdapter,
-		queue:        make(chan Tx, 0), // No buffer to force queue full scenario
+		queue:        make(chan Tx), // No buffer to force queue full scenario
 		accountStore: NewAccountStore(),
 	}
 
