@@ -10,7 +10,7 @@ jobs:
     steps:
       # Checkout this repository
       - name: Checkout Repo
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       # Store starknet version
