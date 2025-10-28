@@ -7,6 +7,7 @@ RequestTimeout = '1m3s'
 TxTimeout = '13s'
 ConfirmationPoll = '42s'
 MaxAttempts = 15
+FeeEstimationMaxAttempts = 8
 
 [[Nodes]]
 Name = 'primary'

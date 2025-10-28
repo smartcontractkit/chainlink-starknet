@@ -40,9 +40,10 @@ type ConfigSet struct { //nolint:revive
 	RequestTimeout time.Duration
 
 	// txm config
-	TxTimeout        time.Duration
-	ConfirmationPoll time.Duration
-	MaxAttempts      int
+	TxTimeout                time.Duration
+	ConfirmationPoll         time.Duration
+	MaxAttempts              int
+	FeeEstimationMaxAttempts int
 }
 
 type Config interface {
@@ -56,12 +57,13 @@ type Config interface {
 }
 
 type Chain struct {
-	OCR2CachePollPeriod *config.Duration
-	OCR2CacheTTL        *config.Duration
-	RequestTimeout      *config.Duration
-	TxTimeout           *config.Duration
-	ConfirmationPoll    *config.Duration
-	MaxAttempts         *int
+	OCR2CachePollPeriod      *config.Duration
+	OCR2CacheTTL             *config.Duration
+	RequestTimeout           *config.Duration
+	TxTimeout                *config.Duration
+	ConfirmationPoll         *config.Duration
+	MaxAttempts              *int
+	FeeEstimationMaxAttempts *int
 }
 
 type Node struct {
@@ -179,6 +181,9 @@ func setFromChain(c, f *Chain) {
 	if f.MaxAttempts != nil {
 		c.MaxAttempts = f.MaxAttempts
 	}
+	if f.FeeEstimationMaxAttempts != nil {
+		c.FeeEstimationMaxAttempts = f.FeeEstimationMaxAttempts
+	}
 }
 
 func (c *TOMLConfig) ValidateConfig() (err error) {
@@ -258,6 +263,13 @@ func (c *TOMLConfig) MaxAttempts() int {
 		return 10 // Default value
 	}
 	return *c.Chain.MaxAttempts
+}
+
+func (c *TOMLConfig) FeeEstimationMaxAttempts() int {
+	if c.Chain.FeeEstimationMaxAttempts == nil {
+		return 5 // Default value for fee estimation
+	}
+	return *c.Chain.FeeEstimationMaxAttempts
 }
 
 func (c *TOMLConfig) OCR2CachePollPeriod() time.Duration {

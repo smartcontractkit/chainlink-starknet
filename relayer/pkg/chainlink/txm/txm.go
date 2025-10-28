@@ -160,7 +160,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 
 	var largestEstimateNonce *felt.Felt
 
-	for i := 1; i <= txm.maxAttempts; i++ {
+	for i := 1; i <= txm.cfg.FeeEstimationMaxAttempts(); i++ {
 		txm.lggr.Infow("attempt to estimate fee", "attempt", i)
 
 		estimateNonce, err := client.AccountNonce(ctx, accountAddress)

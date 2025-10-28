@@ -16,6 +16,8 @@ TxTimeout = '10s' # Default
 ConfirmationPoll = '5s' # Default
 # MaxAttempts is the maximum number of retry attempts before marking a transaction as failed.
 MaxAttempts = 10 # Default
+# FeeEstimationMaxAttempts is the maximum number of retry attempts for fee estimation.
+FeeEstimationMaxAttempts = 5 # Default
 
 [[Nodes]]
 # Name is a unique (per-chain) identifier for this node.

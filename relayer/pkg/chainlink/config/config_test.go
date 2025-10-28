@@ -30,12 +30,13 @@ func TestTOMLConfig_FullMarshal(t *testing.T) {
 		Enabled:   ptr(true),
 		FeederURL: config.MustParseURL("http://feeder.url"),
 		Chain: Chain{
-			OCR2CachePollPeriod: config.MustNewDuration(6 * time.Hour),
-			OCR2CacheTTL:        config.MustNewDuration(3 * time.Minute),
-			RequestTimeout:      config.MustNewDuration(1*time.Minute + 3*time.Second),
-			TxTimeout:           config.MustNewDuration(13 * time.Second),
-			ConfirmationPoll:    config.MustNewDuration(42 * time.Second),
-			MaxAttempts:         ptr(15),
+			OCR2CachePollPeriod:      config.MustNewDuration(6 * time.Hour),
+			OCR2CacheTTL:             config.MustNewDuration(3 * time.Minute),
+			RequestTimeout:           config.MustNewDuration(1*time.Minute + 3*time.Second),
+			TxTimeout:                config.MustNewDuration(13 * time.Second),
+			ConfirmationPoll:         config.MustNewDuration(42 * time.Second),
+			MaxAttempts:              ptr(15),
+			FeeEstimationMaxAttempts: ptr(8),
 		},
 		Nodes: []*Node{
 			{

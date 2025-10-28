@@ -137,6 +137,10 @@ func (m *mockConfig) MaxAttempts() int {
 	return 5
 }
 
+func (m *mockConfig) FeeEstimationMaxAttempts() int {
+	return 3
+}
+
 func TestTxMetrics_QueueFullEvents(t *testing.T) {
 	t.Parallel()
 
