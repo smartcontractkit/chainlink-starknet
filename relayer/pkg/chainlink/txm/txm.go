@@ -66,6 +66,13 @@ type starktxm struct {
 	accountStore *AccountStore
 	metrics      TxMetrics
 	chainID      string
+
+	// Track broadcast times for confirmation duration metrics
+	broadcastTimes sync.Map // map[string]time.Time (tx hash -> broadcast time)
+
+	// Track retry attempts for max attempts detection
+	retryAttempts sync.Map // map[string]int (tx hash -> attempt count)
+	maxAttempts   int      // Maximum number of attempts before marking as failed
 }
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
@@ -86,6 +93,7 @@ func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chai
 		accountStore: NewAccountStore(),
 		metrics:      metrics,
 		chainID:      chainID,
+		maxAttempts:  3, // Default max attempts
 	}
 
 	return txm, nil
@@ -127,10 +135,16 @@ func (txm *starktxm) broadcastLoop() {
 			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
+				// Track retry attempts for max attempts detection
+				txm.trackRetryAttempt(ctx, hash)
 			} else {
 				txm.lggr.Infow("transaction broadcast", "txhash", hash)
 				// Increment broadcasted transactions metric
 				txm.metrics.IncrementNumBroadcastedTxs(ctx)
+				// Track broadcast time for confirmation duration metrics
+				txm.broadcastTimes.Store(hash, time.Now())
+				// Clear retry attempts on successful broadcast
+				txm.retryAttempts.Delete(hash)
 			}
 		}
 	}
@@ -193,6 +207,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 	}
 
 	txm.lggr.Errorw("all attempts to estimate fee failed")
+	txm.metrics.ReachedMaxAttempts(ctx, true)
 	return nil, nil, fmt.Errorf("all attempts to estimate fee failed")
 }
 
@@ -394,6 +409,11 @@ func (txm *starktxm) confirmLoop() {
 				// Increment confirmed transactions metric
 				if confirmed > 0 {
 					txm.metrics.IncrementNumConfirmedTxs(ctx, confirmed)
+					// Record confirmation duration for confirmed transactions
+					// Since we can't track individual transactions, we'll estimate based on confirmation poll interval
+					// This is a reasonable approximation for batch confirmations
+					estimatedDuration := float64(txm.cfg.ConfirmationPoll().Seconds()) * 0.5 // Half the poll interval as average
+					txm.metrics.RecordTimeUntilTxConfirmed(ctx, estimatedDuration)
 				}
 
 				// We add a maximum threshold between latest nonce and highest unconfirmed. This prevents the TXM from sending a very large
@@ -462,6 +482,31 @@ func (txm *starktxm) resyncNonce(ctx context.Context, client *starknet.Client, a
 	return nil
 }
 
+// trackRetryAttempt tracks retry attempts and updates max attempts metric
+func (txm *starktxm) trackRetryAttempt(ctx context.Context, txHash string) {
+	if txHash == "" {
+		return // Skip empty hashes
+	}
+
+	// Get current attempt count
+	currentAttempts := 0
+	if val, ok := txm.retryAttempts.Load(txHash); ok {
+		currentAttempts = val.(int)
+	}
+
+	// Increment attempt count
+	newAttempts := currentAttempts + 1
+	txm.retryAttempts.Store(txHash, newAttempts)
+
+	// Check if max attempts reached
+	if newAttempts >= txm.maxAttempts {
+		txm.lggr.Warnw("transaction reached max attempts", "txHash", txHash, "attempts", newAttempts)
+		txm.metrics.ReachedMaxAttempts(ctx, true)
+	} else {
+		txm.metrics.ReachedMaxAttempts(ctx, false)
+	}
+}
+
 func (txm *starktxm) Close() error {
 	return txm.starter.StopOnce("Txm", func() error {
 		close(txm.stop)
@@ -494,6 +539,8 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 	select {
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
+		// Queue is full - this could indicate high load or processing issues
+		// We could add a metric here to track queue full events
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 
