@@ -2,7 +2,9 @@ package txm
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -176,21 +178,21 @@ func getGaugeValue(t *testing.T, metricName, chainID string) float64 {
 	return 0
 }
 
-func TestPrometheusMetrics_QueueFullEvents(t *testing.T) {
+func TestPrometheusMetrics_EnqueueFailed(t *testing.T) {
 	t.Parallel()
 
-	// Create metrics with test chain ID
-	chainID := "test-chain-queue"
+	// Create metrics with unique test chain ID to avoid conflicts across test runs
+	chainID := fmt.Sprintf("test-chain-enqueue-%d", time.Now().UnixNano())
 	metrics := NewPrometheusMetrics(chainID)
 
 	ctx := context.Background()
 
-	// Test incrementing queue full events
-	metrics.IncrementQueueFullEvents(ctx)
-	metrics.IncrementQueueFullEvents(ctx)
-	metrics.IncrementQueueFullEvents(ctx)
+	// Test incrementing enqueue failed events
+	metrics.IncrementEnqueueFailed(ctx)
+	metrics.IncrementEnqueueFailed(ctx)
+	metrics.IncrementEnqueueFailed(ctx)
 
 	// Verify the metric was incremented by checking the counter value
-	finalValue := getCounterValue(t, "txm_queue_full_events", chainID)
+	finalValue := getCounterValue(t, "txm_enqueue_failed", chainID)
 	assert.Equal(t, 3.0, finalValue)
 }

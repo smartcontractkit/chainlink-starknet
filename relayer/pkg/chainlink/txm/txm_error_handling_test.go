@@ -2,6 +2,7 @@ package txm
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -20,11 +21,11 @@ func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
 			name: "NilContext",
 			testFunc: func(t *testing.T, metrics TxMetrics) {
 				// Test that metrics handle nil context gracefully
-				metrics.IncrementNumBroadcastedTxs(nil)
-				metrics.IncrementNumConfirmedTxs(nil, 1)
-				metrics.IncrementNumNonceGaps(nil)
-				metrics.ReachedMaxAttempts(nil, true)
-				metrics.RecordTimeUntilTxConfirmed(nil, 1.0)
+				metrics.IncrementNumBroadcastedTxs(context.TODO())
+				metrics.IncrementNumConfirmedTxs(context.TODO(), 1)
+				metrics.IncrementNumNonceGaps(context.TODO())
+				metrics.ReachedMaxAttempts(context.TODO(), true)
+				metrics.RecordTimeUntilTxConfirmed(context.TODO(), 1.0)
 			},
 		},
 		{
@@ -113,7 +114,8 @@ func TestTxMetrics_ConcurrentAccess(t *testing.T) {
 func TestTxMetrics_PrometheusConcurrentAccess(t *testing.T) {
 	t.Parallel()
 
-	chainID := "concurrent-test-chain"
+	// Create metrics with unique test chain ID to avoid conflicts across test runs
+	chainID := fmt.Sprintf("concurrent-test-chain-%d", time.Now().UnixNano())
 	promMetrics := NewPrometheusMetrics(chainID)
 	ctx := context.Background()
 

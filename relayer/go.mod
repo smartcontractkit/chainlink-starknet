@@ -8,6 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.15.0
 	github.com/hashicorp/go-plugin v1.6.2
 	github.com/pelletier/go-toml/v2 v2.2.3
+	github.com/prometheus/client_golang v1.21.1
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250602141924-3c15a42d8266
 	github.com/smartcontractkit/freeport v0.1.0
 	github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298
@@ -98,7 +99,6 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.16.0 // indirect

@@ -29,9 +29,9 @@ var (
 		Name: "txm_time_until_tx_confirmed",
 		Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
 	}, []string{"chainID"})
-	promQueueFullEvents = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "txm_queue_full_events",
-		Help: "Total number of times the transaction queue was full and transactions were rejected.",
+	promEnqueueFailed = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "txm_enqueue_failed",
+		Help: "Total number of times transaction enqueue failed due to queue being full or other issues.",
 	}, []string{"chainID"})
 	metricsOnce sync.Once
 )
@@ -82,7 +82,7 @@ func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, dura
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID).Observe(duration)
 }
 
-func (m *prometheusMetrics) IncrementQueueFullEvents(ctx context.Context) {
+func (m *prometheusMetrics) IncrementEnqueueFailed(ctx context.Context) {
 	initMetrics()
-	promQueueFullEvents.WithLabelValues(m.chainID).Inc()
+	promEnqueueFailed.WithLabelValues(m.chainID).Inc()
 }

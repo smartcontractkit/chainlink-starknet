@@ -39,7 +39,7 @@ type TxMetrics interface {
 	IncrementNumNonceGaps(ctx context.Context)
 	ReachedMaxAttempts(ctx context.Context, reached bool)
 	RecordTimeUntilTxConfirmed(ctx context.Context, duration float64)
-	IncrementQueueFullEvents(ctx context.Context)
+	IncrementEnqueueFailed(ctx context.Context)
 }
 
 type Tx struct {
@@ -540,8 +540,8 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 	select {
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
-		// Queue is full - this could indicate high load or processing issues
-		txm.metrics.IncrementQueueFullEvents(ctx)
+		// Enqueue failed - this could indicate high load, slow processing, or other issues
+		txm.metrics.IncrementEnqueueFailed(ctx)
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 

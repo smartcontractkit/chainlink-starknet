@@ -21,7 +21,7 @@ type mockTxMetrics struct {
 	numNonceGaps         int
 	reachedMaxAttempts   bool
 	timeUntilTxConfirmed []float64
-	queueFullEvents      int
+	enqueueFailed        int
 }
 
 func newMockTxMetrics() *mockTxMetrics {
@@ -60,10 +60,10 @@ func (m *mockTxMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration
 	m.timeUntilTxConfirmed = append(m.timeUntilTxConfirmed, duration)
 }
 
-func (m *mockTxMetrics) IncrementQueueFullEvents(ctx context.Context) {
+func (m *mockTxMetrics) IncrementEnqueueFailed(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.queueFullEvents++
+	m.enqueueFailed++
 }
 
 func (m *mockTxMetrics) GetBroadcastedCount() int {
@@ -96,10 +96,10 @@ func (m *mockTxMetrics) GetTimeUntilTxConfirmed() []float64 {
 	return append([]float64{}, m.timeUntilTxConfirmed...)
 }
 
-func (m *mockTxMetrics) GetQueueFullEventsCount() int {
+func (m *mockTxMetrics) GetEnqueueFailedCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.queueFullEvents
+	return m.enqueueFailed
 }
 
 // mockLogger implements logger.Logger interface for testing
@@ -141,22 +141,22 @@ func (m *mockConfig) FeeEstimationMaxAttempts() int {
 	return 3
 }
 
-func TestTxMetrics_QueueFullEvents(t *testing.T) {
+func TestTxMetrics_EnqueueFailed(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
 	ctx := context.Background()
 
 	// Test initial state
-	assert.Equal(t, 0, mockMetrics.GetQueueFullEventsCount())
+	assert.Equal(t, 0, mockMetrics.GetEnqueueFailedCount())
 
-	// Test incrementing queue full events
-	mockMetrics.IncrementQueueFullEvents(ctx)
-	assert.Equal(t, 1, mockMetrics.GetQueueFullEventsCount())
+	// Test incrementing enqueue failed events
+	mockMetrics.IncrementEnqueueFailed(ctx)
+	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 
-	mockMetrics.IncrementQueueFullEvents(ctx)
-	mockMetrics.IncrementQueueFullEvents(ctx)
-	assert.Equal(t, 3, mockMetrics.GetQueueFullEventsCount())
+	mockMetrics.IncrementEnqueueFailed(ctx)
+	mockMetrics.IncrementEnqueueFailed(ctx)
+	assert.Equal(t, 3, mockMetrics.GetEnqueueFailedCount())
 }
 
 func TestNewWithMetrics(t *testing.T) {
