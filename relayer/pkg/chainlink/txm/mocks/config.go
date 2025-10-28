@@ -31,6 +31,42 @@ func (_m *Config) ConfirmationPoll() time.Duration {
 	return r0
 }
 
+// FeeEstimationMaxAttempts provides a mock function with no fields
+func (_m *Config) FeeEstimationMaxAttempts() int {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for FeeEstimationMaxAttempts")
+	}
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func() int); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	return r0
+}
+
+// MaxAttempts provides a mock function with no fields
+func (_m *Config) MaxAttempts() int {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for MaxAttempts")
+	}
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func() int); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	return r0
+}
+
 // TxTimeout provides a mock function with no fields
 func (_m *Config) TxTimeout() time.Duration {
 	ret := _m.Called()
