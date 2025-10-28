@@ -31,7 +31,7 @@ jobs:
       - run: nix develop -c yarn eslint
       - name: Upload eslint report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gauntlet-eslint-report
           path: ./eslint-report.json
