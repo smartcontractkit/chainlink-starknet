@@ -9,37 +9,46 @@ import (
 )
 
 var (
-	promNumBroadcastedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "txm_num_broadcasted_transactions",
-		Help: "Total number of successful broadcasted transactions.",
-	}, []string{"chainID"})
-	promNumConfirmedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "txm_num_confirmed_transactions",
-		Help: "Total number of confirmed transactions. Note that this can happen multiple times per transaction in the case of re-orgs or when filling the nonce for untracked transactions.",
-	}, []string{"chainID"})
-	promNumNonceGaps = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "txm_num_nonce_gaps",
-		Help: "Total number of nonce gaps created that the transaction manager had to fill.",
-	}, []string{"chainID"})
-	promReachedMaxAttempts = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "txm_reached_max_attempts",
-		Help: "A gauge that is treated as boolean; 1 if the condition is true, 0 otherwise. Controls whether the TXM has reached max attempts threshold or not.",
-	}, []string{"chainID"})
-	promTimeUntilTxConfirmed = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "txm_time_until_tx_confirmed",
-		Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
-	}, []string{"chainID"})
-	promEnqueueFailed = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "txm_enqueue_failed",
-		Help: "Total number of times transaction enqueue failed due to queue being full or other issues.",
-	}, []string{"chainID"})
-	metricsOnce sync.Once
+	promNumBroadcastedTxs    *prometheus.CounterVec
+	promNumConfirmedTxs      *prometheus.CounterVec
+	promNumNonceGaps         *prometheus.CounterVec
+	promReachedMaxAttempts   *prometheus.GaugeVec
+	promTimeUntilTxConfirmed *prometheus.HistogramVec
+	promEnqueueFailed        *prometheus.CounterVec
+	metricsOnce              sync.Once
 )
 
 func initMetrics() {
 	metricsOnce.Do(func() {
-		// Metrics are already initialized via promauto.NewCounterVec above
-		// This function exists for consistency with the pattern
+		promNumBroadcastedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "txm_num_broadcasted_transactions",
+			Help: "Total number of successful broadcasted transactions.",
+		}, []string{"chainID"})
+
+		promNumConfirmedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "txm_num_confirmed_transactions",
+			Help: "Total number of confirmed transactions. Note that this can happen multiple times per transaction in the case of re-orgs or when filling the nonce for untracked transactions.",
+		}, []string{"chainID"})
+
+		promNumNonceGaps = promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "txm_num_nonce_gaps",
+			Help: "Total number of nonce gaps created that the transaction manager had to fill.",
+		}, []string{"chainID"})
+
+		promReachedMaxAttempts = promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "txm_reached_max_attempts",
+			Help: "A gauge that is treated as boolean; 1 if the condition is true, 0 otherwise. Controls whether the TXM has reached max attempts threshold or not.",
+		}, []string{"chainID"})
+
+		promTimeUntilTxConfirmed = promauto.NewHistogramVec(prometheus.HistogramOpts{
+			Name: "txm_time_until_tx_confirmed",
+			Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
+		}, []string{"chainID"})
+
+		promEnqueueFailed = promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "txm_enqueue_failed",
+			Help: "Total number of times transaction enqueue failed due to queue being full or other issues.",
+		}, []string{"chainID"})
 	})
 }
 
