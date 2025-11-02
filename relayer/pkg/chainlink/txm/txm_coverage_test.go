@@ -14,58 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestMetrics_RecordsAllTransactionEvents tests that all metric recording methods work correctly
-func TestMetrics_RecordsAllTransactionEvents(t *testing.T) {
-	t.Parallel()
-
-	mockLggr := logger.Test(t)
-	chainID := fmt.Sprintf("coverage-test-chain-%d", time.Now().UnixNano())
-
-	// Create TXM with mock metrics to track calls
-	mockMetrics := newMockTxMetrics()
-
-	txm := &starktxm{
-		lggr:    mockLggr,
-		metrics: mockMetrics,
-		chainID: chainID,
-		cfg:     &mockConfig{},
-	}
-
-	ctx := context.Background()
-
-	// Test IncrementNumBroadcastedTxs
-	testAccount := "0x123"
-	txm.metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
-	assert.Equal(t, 1, mockMetrics.GetBroadcastedCount())
-
-	// Test IncrementNumConfirmedTxs
-	txm.metrics.IncrementNumConfirmedTxs(ctx, testAccount, 3)
-	assert.Equal(t, 3, mockMetrics.GetConfirmedCount())
-
-	// Test IncrementNumNonceGaps
-	txm.metrics.IncrementNumNonceGaps(ctx, testAccount)
-	assert.Equal(t, 1, mockMetrics.GetNonceGapsCount())
-
-	// Test IncrementNonceRebroadcast
-	txm.metrics.IncrementNonceRebroadcast(ctx, testAccount)
-	assert.Equal(t, 1, mockMetrics.GetNonceRebroadcastCount())
-
-	// Test UpdateNextNonceMetric
-	testNonce := new(felt.Felt).SetUint64(42)
-	txm.metrics.UpdateNextNonceMetric(ctx, testAccount, testNonce)
-	assert.Equal(t, int64(42), mockMetrics.GetNextNonce(testAccount))
-
-	// Test RecordTimeUntilTxConfirmed
-	txm.metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.5)
-	times := mockMetrics.GetTimeUntilTxConfirmed()
-	assert.Len(t, times, 1)
-	assert.Equal(t, 1.5, times[0])
-
-	// Test IncrementEnqueueFailed
-	txm.metrics.IncrementEnqueueFailed(ctx, testAccount)
-	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
-}
-
 // TestMetrics_IncrementsNonceGapsMetric tests that nonce gap metric is incremented correctly
 func TestMetrics_IncrementsNonceGapsMetric(t *testing.T) {
 	t.Parallel()
@@ -184,60 +132,6 @@ func TestMetrics_RecordsConfirmedTransactions(t *testing.T) {
 	times := mockMetrics.GetTimeUntilTxConfirmed()
 	assert.Len(t, times, 1)
 	assert.Equal(t, 2.5, times[0])
-}
-
-// TestMetrics_RecordsNonceGapsDuringResync tests nonce gap metric during resync (duplicate test for coverage)
-func TestMetrics_RecordsNonceGapsDuringResync(t *testing.T) {
-	t.Parallel()
-
-	mockLggr := logger.Test(t)
-	chainID := fmt.Sprintf("resync-method-test-chain-%d", time.Now().UnixNano())
-
-	// Create TXM with mock metrics
-	mockMetrics := newMockTxMetrics()
-
-	txm := &starktxm{
-		lggr:         mockLggr,
-		metrics:      mockMetrics,
-		chainID:      chainID,
-		cfg:          &mockConfigCoverage{},
-		accountStore: NewAccountStore(),
-	}
-
-	ctx := context.Background()
-
-	// Test the metrics call that would be made in resyncNonce
-	testAccount := "0x123"
-	// IncrementNumNonceGaps
-	txm.metrics.IncrementNumNonceGaps(ctx, testAccount)
-	assert.Equal(t, 1, mockMetrics.GetNonceGapsCount())
-}
-
-// TestMetrics_RecordsEnqueueFailedWhenQueueFull tests enqueue failed metric when queue is full (duplicate for coverage)
-func TestMetrics_RecordsEnqueueFailedWhenQueueFull(t *testing.T) {
-	t.Parallel()
-
-	mockLggr := logger.Test(t)
-	chainID := fmt.Sprintf("enqueue-method-test-chain-%d", time.Now().UnixNano())
-
-	// Create TXM with mock metrics
-	mockMetrics := newMockTxMetrics()
-
-	txm := &starktxm{
-		lggr:    mockLggr,
-		metrics: mockMetrics,
-		chainID: chainID,
-		cfg:     &mockConfigCoverage{},
-		queue:   make(chan Tx), // No buffer to force queue full
-	}
-
-	ctx := context.Background()
-
-	// Test the metrics call that would be made in Enqueue when queue is full
-	testAccount := "0x123"
-	// IncrementEnqueueFailed
-	txm.metrics.IncrementEnqueueFailed(ctx, testAccount)
-	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 }
 
 // TestInflightCount_ReturnsZeroForEmptyTXM tests that InflightCount returns zeros when TXM is empty

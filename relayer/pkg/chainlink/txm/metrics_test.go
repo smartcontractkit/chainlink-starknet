@@ -219,31 +219,6 @@ func TestNew_DefaultMetrics(t *testing.T) {
 	assert.Equal(t, "test-chain-id", stxm.chainID)
 }
 
-func TestNew_CreatesTXMWithPrometheusMetricsByDefault(t *testing.T) {
-	t.Parallel()
-
-	mockLggr := &mockLogger{Logger: logger.Test(t)}
-	chainID := "test-prometheus-chain"
-
-	txm, err := New(
-		mockLggr,
-		&mockKeystore{},
-		&mockConfig{},
-		chainID,
-		func() (*starknet.Client, error) { return nil, nil },
-		func() (*starknet.FeederClient, error) { return nil, nil },
-	)
-
-	require.NoError(t, err)
-	require.NotNil(t, txm)
-
-	// Verify PrometheusMetrics is used by default
-	stxm := txm.(*starktxm)
-	_, ok := stxm.metrics.(*prometheusMetrics)
-	assert.True(t, ok, "Default metrics should be PrometheusMetrics")
-	assert.Equal(t, chainID, stxm.chainID)
-}
-
 func TestInflightCount_ReturnsQueueAndUnconfirmedCounts(t *testing.T) {
 	t.Parallel()
 
@@ -307,35 +282,6 @@ func TestMetrics_AllMethodsWorkCorrectly(t *testing.T) {
 	assert.Equal(t, 2, len(times))
 	assert.Equal(t, 1.5, times[0])
 	assert.Equal(t, 2.3, times[1])
-}
-
-func TestMetrics_HandlesConcurrentIncrementCalls(t *testing.T) {
-	t.Parallel()
-
-	mockMetrics := newMockTxMetrics()
-	ctx := context.Background()
-
-	// Multiple concurrent calls
-	var wg sync.WaitGroup
-	numGoroutines := 10
-	incrementsPerGoroutine := 10
-
-	// Test concurrent IncrementNumBroadcastedTxs
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < incrementsPerGoroutine; j++ {
-				mockMetrics.IncrementNumBroadcastedTxs(ctx, "0x123")
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	// Should have exactly numGoroutines * incrementsPerGoroutine
-	expected := numGoroutines * incrementsPerGoroutine
-	assert.Equal(t, expected, mockMetrics.GetBroadcastedCount())
 }
 
 func TestTxMetrics_Isolation(t *testing.T) {
