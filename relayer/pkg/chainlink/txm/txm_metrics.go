@@ -94,6 +94,14 @@ type prometheusMetrics struct {
 	nextNonce            metric.Int64Gauge
 }
 
+// Helper to create consistent metric attributes
+func (m *prometheusMetrics) attributes(accountAddress string) metric.MeasurementOption {
+	return metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	)
+}
+
 func NewTxmMetrics(chainID string) TxMetrics {
 	initMetrics()
 
@@ -111,50 +119,32 @@ func NewTxmMetrics(chainID string) TxMetrics {
 
 func (m *prometheusMetrics) IncrementNumBroadcastedTxs(ctx context.Context, accountAddress string) {
 	promNumBroadcastedTxs.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.numBroadcastedTxs.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainID", m.chainID),
-		attribute.String("accountAddress", accountAddress),
-	))
+	m.numBroadcastedTxs.Add(ctx, 1, m.attributes(accountAddress))
 }
 
 func (m *prometheusMetrics) IncrementNumConfirmedTxs(ctx context.Context, accountAddress string, confirmedTransactions int) {
 	promNumConfirmedTxs.WithLabelValues(m.chainID, accountAddress).Add(float64(confirmedTransactions))
-	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions), metric.WithAttributes(
-		attribute.String("chainID", m.chainID),
-		attribute.String("accountAddress", accountAddress),
-	))
+	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions), m.attributes(accountAddress))
 }
 
 func (m *prometheusMetrics) IncrementNumNonceGaps(ctx context.Context, accountAddress string) {
 	promNumNonceGaps.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.numNonceGaps.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainID", m.chainID),
-		attribute.String("accountAddress", accountAddress),
-	))
+	m.numNonceGaps.Add(ctx, 1, m.attributes(accountAddress))
 }
 
 func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, accountAddress string, duration float64) {
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID, accountAddress).Observe(duration)
-	m.timeUntilTxConfirmed.Record(ctx, duration, metric.WithAttributes(
-		attribute.String("chainID", m.chainID),
-		attribute.String("accountAddress", accountAddress),
-	))
+	m.timeUntilTxConfirmed.Record(ctx, duration, m.attributes(accountAddress))
 }
 
 func (m *prometheusMetrics) IncrementEnqueueFailed(ctx context.Context, accountAddress string) {
 	promEnqueueFailed.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.enqueueFailed.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainID", m.chainID),
-		attribute.String("accountAddress", accountAddress),
-	))
+	m.enqueueFailed.Add(ctx, 1, m.attributes(accountAddress))
 }
 
 func (m *prometheusMetrics) IncrementNonceRebroadcast(ctx context.Context, accountAddress string) {
 	promNonceRebroadcast.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.nonceRebroadcast.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainID", m.chainID),
-		attribute.String("accountAddress", accountAddress),
-	))
+	m.nonceRebroadcast.Add(ctx, 1, m.attributes(accountAddress))
 }
 
 func (m *prometheusMetrics) UpdateNextNonceMetric(ctx context.Context, accountAddress string, nonce *felt.Felt) {
@@ -166,10 +156,6 @@ func (m *prometheusMetrics) UpdateNextNonceMetric(ctx context.Context, accountAd
 
 	// Beholder uses Int64Gauge with attributes for per-account tracking
 	if m.nextNonce != nil {
-		m.nextNonce.Record(ctx, nonceBigInt.Int64(),
-			metric.WithAttributes(
-				attribute.String("chainID", m.chainID),
-				attribute.String("accountAddress", accountAddress),
-			))
+		m.nextNonce.Record(ctx, nonceBigInt.Int64(), m.attributes(accountAddress))
 	}
 }

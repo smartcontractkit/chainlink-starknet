@@ -146,10 +146,10 @@ func (txm *starktxm) broadcastLoop() {
 
 				// Track nonce broadcast count (increment count for this nonce)
 				count := 1
-				if val, ok := txm.nonceBroadcastCounts.Load(nonceStr); ok {
+				if val, ok := txm.nonceBroadcastCounts.LoadOrStore(nonceStr, 1); ok {
 					count = val.(int) + 1
+					txm.nonceBroadcastCounts.Store(nonceStr, count)
 				}
-				txm.nonceBroadcastCounts.Store(nonceStr, count)
 
 				// Increment rebroadcast metric if this nonce has been broadcasted before
 				if count > 1 {
@@ -197,7 +197,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 				continue
 			}
 
-			return nil, nil, fmt.Errorf("Failed to estimate fee: %T %+v", err, err)
+			return nil, nil, fmt.Errorf("failed to estimate fee: %T %+v", err, err)
 		}
 
 		// track the FRI estimate, but keep looping so we print out all estimates
@@ -221,8 +221,6 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 }
 
 func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, nonce *felt.Felt, err error) {
-	var nonceVar *felt.Felt
-
 	client, err := txm.client.Get()
 	if err != nil {
 		txm.client.Reset()
@@ -292,13 +290,13 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, nil, fmt.Errorf("failed to get FRI estimate: %+w", err)
 	}
 
-	nonceVar = txStore.GetNextNonce()
-	if largestEstimateNonce.Cmp(nonceVar) > 0 {
+	nonce = txStore.GetNextNonce()
+	if largestEstimateNonce.Cmp(nonce) > 0 {
 		// The nonce value returned from the node during estimation is greater than our expected next nonce
 		// - which means that we are behind, due to a resync. Fast forward our locally tracked nonce value.
 		// See resyncNonce for a more detailed explanation.
 		staleTxs := txStore.SetNextNonce(largestEstimateNonce)
-		txm.lggr.Infow("fast-forwarding nonce after resync", "previousNonce", nonceVar, "updatedNonce", largestEstimateNonce, "staleTxs", len(staleTxs))
+		txm.lggr.Infow("fast-forwarding nonce after resync", "previousNonce", nonce, "updatedNonce", largestEstimateNonce, "staleTxs", len(staleTxs))
 		// Clean up metrics tracking for stale transactions
 		for _, staleTx := range staleTxs {
 			nonceStr := staleTx.Nonce.String()
@@ -308,9 +306,9 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		if len(staleTxs) > 0 {
 			txm.lggr.Errorw("unexpected stale transactions after nonce fast-forward", "accountAddress", accountAddress)
 		}
-		nonceVar = largestEstimateNonce
+		nonce = largestEstimateNonce
 		// Update next nonce metric after fast-forward
-		txm.metrics.UpdateNextNonceMetric(ctx, accountAddress.String(), nonceVar)
+		txm.metrics.UpdateNextNonceMetric(ctx, accountAddress.String(), nonce)
 	}
 
 	L2GasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
@@ -328,14 +326,14 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150)
 	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150)
 
-	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit, "FinalNonce", nonce)
-
 	L1DataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
 	L1DataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
 	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
 	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
 
-	broadcastTxnV3.InvokeTxnV3.Nonce = nonceVar
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit, "FinalNonce", nonce)
+
+	broadcastTxnV3.InvokeTxnV3.Nonce = nonce
 
 	err = account.SignInvokeTransaction(ctx, &broadcastTxnV3.InvokeTxnV3)
 	if err != nil {
@@ -366,7 +364,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	// update nonce if transaction is successful
 	txhash = res.TransactionHash.String()
-	err = txStore.AddUnconfirmed(nonceVar, txhash, call, publicKey)
+	err = txStore.AddUnconfirmed(nonce, txhash, call, publicKey)
 	if err != nil {
 		return txhash, nil, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
 	}
@@ -375,7 +373,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	nextNonce := txStore.GetNextNonce()
 	txm.metrics.UpdateNextNonceMetric(ctx, accountAddress.String(), nextNonce)
 
-	return txhash, nonceVar, nil
+	return txhash, nonce, nil
 }
 
 func (txm *starktxm) updateMaxAmountBounds(gasConsumed *big.Int, padding int64) starknetrpc.U64 {

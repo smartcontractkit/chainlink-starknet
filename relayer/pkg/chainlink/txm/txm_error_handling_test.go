@@ -21,12 +21,13 @@ func TestMetrics_HandlesEdgeCaseInputs(t *testing.T) {
 			name: "NilContext",
 			testFunc: func(t *testing.T, metrics TxMetrics) {
 				// Test that metrics handle nil context gracefully
+				ctx := context.Background()
 				testAccount := "0x123"
-				metrics.IncrementNumBroadcastedTxs(context.TODO(), testAccount)
-				metrics.IncrementNumConfirmedTxs(context.TODO(), testAccount, 1)
-				metrics.IncrementNumNonceGaps(context.TODO(), testAccount)
-				metrics.IncrementNonceRebroadcast(context.TODO(), testAccount)
-				metrics.RecordTimeUntilTxConfirmed(context.TODO(), testAccount, 1.0)
+				metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+				metrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+				metrics.IncrementNumNonceGaps(ctx, testAccount)
+				metrics.IncrementNonceRebroadcast(ctx, testAccount)
+				metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.0)
 			},
 		},
 		{
