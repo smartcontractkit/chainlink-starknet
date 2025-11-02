@@ -482,10 +482,10 @@ func TestTxMetrics_ExtendedIntegration(t *testing.T) {
 
 	// Enqueue multiple transactions to exercise more code paths
 	for i := 0; i < 5; i++ {
-		publicKey, err := new(felt.Felt).SetString(fmt.Sprintf("0x%x", i+100))
-		assert.NoError(t, err)
-		accountAddress, err := new(felt.Felt).SetString(fmt.Sprintf("0x%x", i+200))
-		assert.NoError(t, err)
+		publicKey, setErr := new(felt.Felt).SetString(fmt.Sprintf("0x%x", i+100))
+		assert.NoError(t, setErr)
+		accountAddress, setErr := new(felt.Felt).SetString(fmt.Sprintf("0x%x", i+200))
+		assert.NoError(t, setErr)
 
 		call := rpc.FunctionCall{
 			ContractAddress:    accountAddress,

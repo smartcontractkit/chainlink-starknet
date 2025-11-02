@@ -74,12 +74,13 @@ func TestPrometheusMetrics_ImplementsInterface(t *testing.T) {
 func TestPrometheusMetrics_Increment(t *testing.T) {
 	t.Parallel()
 
-	chainID := "test-chain-increment"
+	// Use unique chainID and accountAddress to avoid interference from other test runs
+	chainID := fmt.Sprintf("test-chain-increment-%d", time.Now().UnixNano())
 	metrics := NewTxmMetrics(chainID)
 	ctx := context.Background()
 
 	// Get initial values
-	testAccount := "0x123"
+	testAccount := fmt.Sprintf("0x%x", time.Now().UnixNano())
 	initialBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID, testAccount)
 	initialConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID, testAccount)
 	initialNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID, testAccount)
@@ -105,34 +106,39 @@ func TestPrometheusMetrics_Increment(t *testing.T) {
 func TestPrometheusMetrics_SetGauge(t *testing.T) {
 	t.Parallel()
 
-	chainID := "test-chain-gauge"
+	// Use unique chainID and accountAddress to avoid interference from other test runs
+	chainID := fmt.Sprintf("test-chain-gauge-%d", time.Now().UnixNano())
 	metrics := NewTxmMetrics(chainID)
 	ctx := context.Background()
 
 	// Test IncrementNonceRebroadcast
-	testAccount := "0x123"
+	testAccount := fmt.Sprintf("0x%x", time.Now().UnixNano())
+	initialValue := getCounterValue(t, "txm_nonce_rebroadcast", chainID, testAccount)
+
 	metrics.IncrementNonceRebroadcast(ctx, testAccount)
 	value := getCounterValue(t, "txm_nonce_rebroadcast", chainID, testAccount)
-	assert.Equal(t, 1.0, value, "Nonce rebroadcast should increment by 1")
+	assert.Equal(t, initialValue+1.0, value, "Nonce rebroadcast should increment by 1")
 
 	// Test IncrementNonceRebroadcast again
 	metrics.IncrementNonceRebroadcast(ctx, testAccount)
 	value = getCounterValue(t, "txm_nonce_rebroadcast", chainID, testAccount)
-	assert.Equal(t, 2.0, value, "Nonce rebroadcast should increment to 2")
+	assert.Equal(t, initialValue+2.0, value, "Nonce rebroadcast should increment to 2")
 }
 
 func TestPrometheusMetrics_MultipleChains(t *testing.T) {
 	t.Parallel()
 
-	chain1 := "chain-1-multi"
-	chain2 := "chain-2-multi"
+	// Use unique chainIDs and accountAddress to avoid interference from other test runs
+	baseID := time.Now().UnixNano()
+	chain1 := fmt.Sprintf("chain-1-multi-%d", baseID)
+	chain2 := fmt.Sprintf("chain-2-multi-%d", baseID+1)
 
 	metrics1 := NewTxmMetrics(chain1)
 	metrics2 := NewTxmMetrics(chain2)
 	ctx := context.Background()
 
 	// Get initial values
-	testAccount := "0x123"
+	testAccount := fmt.Sprintf("0x%x", baseID)
 	initialChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1, testAccount)
 	initialChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2, testAccount)
 
@@ -176,25 +182,6 @@ func getCounterValue(t *testing.T, metricName, chainID, accountAddress string) f
 	return 0
 }
 
-// Helper function to get gauge value from Prometheus
-func getGaugeValue(t *testing.T, metricName, chainID string) float64 {
-	metricFamilies, err := prometheus.DefaultGatherer.Gather()
-	require.NoError(t, err)
-
-	for _, mf := range metricFamilies {
-		if mf.GetName() == metricName {
-			for _, metric := range mf.GetMetric() {
-				for _, labelPair := range metric.GetLabel() {
-					if labelPair.GetName() == "chainID" && labelPair.GetValue() == chainID {
-						return metric.GetGauge().GetValue()
-					}
-				}
-			}
-		}
-	}
-	return 0
-}
-
 func TestPrometheusMetrics_EnqueueFailed(t *testing.T) {
 	t.Parallel()
 
@@ -205,14 +192,16 @@ func TestPrometheusMetrics_EnqueueFailed(t *testing.T) {
 	ctx := context.Background()
 
 	// Test incrementing enqueue failed events
-	testAccount := "0x123"
+	testAccount := fmt.Sprintf("0x%x", time.Now().UnixNano())
+	initialValue := getCounterValue(t, "txm_enqueue_failed", chainID, testAccount)
+
 	metrics.IncrementEnqueueFailed(ctx, testAccount)
 	metrics.IncrementEnqueueFailed(ctx, testAccount)
 	metrics.IncrementEnqueueFailed(ctx, testAccount)
 
 	// Verify the metric was incremented by checking the counter value
 	finalValue := getCounterValue(t, "txm_enqueue_failed", chainID, testAccount)
-	assert.Equal(t, 3.0, finalValue)
+	assert.Equal(t, initialValue+3.0, finalValue)
 }
 
 func TestPrometheusMetrics_BeholderMetricsInitialized(t *testing.T) {

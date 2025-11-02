@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
@@ -361,23 +360,4 @@ func TestTxMetrics_Isolation(t *testing.T) {
 	// Verify metrics2
 	assert.Equal(t, 0, metrics2.GetBroadcastedCount())
 	assert.Equal(t, 1, metrics2.GetConfirmedCount())
-}
-
-// Helper function to get gauge value from Prometheus
-func getGaugeValueFromPrometheus(t *testing.T, metricName, chainID string) float64 {
-	metricFamilies, err := prometheus.DefaultGatherer.Gather()
-	require.NoError(t, err)
-
-	for _, mf := range metricFamilies {
-		if mf.GetName() == metricName {
-			for _, metric := range mf.GetMetric() {
-				for _, labelPair := range metric.GetLabel() {
-					if labelPair.GetName() == "chainID" && labelPair.GetValue() == chainID {
-						return metric.GetGauge().GetValue()
-					}
-				}
-			}
-		}
-	}
-	return 0
 }
