@@ -6,6 +6,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	"go.opentelemetry.io/otel/metric"
 )
 
 var (
@@ -15,11 +17,20 @@ var (
 	promReachedMaxAttempts   *prometheus.GaugeVec
 	promTimeUntilTxConfirmed *prometheus.HistogramVec
 	promEnqueueFailed        *prometheus.CounterVec
-	metricsOnce              sync.Once
+
+	beholderNumBroadcastedTxs    metric.Int64Counter
+	beholderNumConfirmedTxs      metric.Int64Counter
+	beholderNumNonceGaps         metric.Int64Counter
+	beholderReachedMaxAttempts   metric.Int64Gauge
+	beholderTimeUntilTxConfirmed metric.Float64Histogram
+	beholderEnqueueFailed        metric.Int64Counter
+
+	metricsOnce sync.Once
 )
 
 func initMetrics() {
 	metricsOnce.Do(func() {
+		// Initialize Prometheus metrics
 		promNumBroadcastedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
 			Name: "txm_num_broadcasted_transactions",
 			Help: "Total number of successful broadcasted transactions.",
@@ -49,49 +60,72 @@ func initMetrics() {
 			Name: "txm_enqueue_failed",
 			Help: "Total number of times transaction enqueue failed due to queue being full or other issues.",
 		}, []string{"chainID"})
+
+		// Initialize beholder metrics
+		beholderNumBroadcastedTxs, _ = beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
+		beholderNumConfirmedTxs, _ = beholder.GetMeter().Int64Counter("txm_num_confirmed_transactions")
+		beholderNumNonceGaps, _ = beholder.GetMeter().Int64Counter("txm_num_nonce_gaps")
+		beholderTimeUntilTxConfirmed, _ = beholder.GetMeter().Float64Histogram("txm_time_until_tx_confirmed")
+		beholderReachedMaxAttempts, _ = beholder.GetMeter().Int64Gauge("txm_reached_max_attempts")
+		beholderEnqueueFailed, _ = beholder.GetMeter().Int64Counter("txm_enqueue_failed")
 	})
 }
 
 // prometheusMetrics implements TxMetrics using Prometheus
 type prometheusMetrics struct {
-	chainID string
+	chainID              string
+	numBroadcastedTxs    metric.Int64Counter
+	numConfirmedTxs      metric.Int64Counter
+	numNonceGaps         metric.Int64Counter
+	reachedMaxAttempts   metric.Int64Gauge
+	timeUntilTxConfirmed metric.Float64Histogram
+	enqueueFailed        metric.Int64Counter
 }
 
 func NewPrometheusMetrics(chainID string) TxMetrics {
 	initMetrics()
-	return &prometheusMetrics{chainID: chainID}
+
+	return &prometheusMetrics{
+		chainID:              chainID,
+		numBroadcastedTxs:    beholderNumBroadcastedTxs,
+		numConfirmedTxs:      beholderNumConfirmedTxs,
+		numNonceGaps:         beholderNumNonceGaps,
+		reachedMaxAttempts:   beholderReachedMaxAttempts,
+		timeUntilTxConfirmed: beholderTimeUntilTxConfirmed,
+		enqueueFailed:        beholderEnqueueFailed,
+	}
 }
 
 func (m *prometheusMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
-	initMetrics()
 	promNumBroadcastedTxs.WithLabelValues(m.chainID).Inc()
+	m.numBroadcastedTxs.Add(ctx, 1)
 }
 
 func (m *prometheusMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
-	initMetrics()
 	promNumConfirmedTxs.WithLabelValues(m.chainID).Add(float64(confirmedTransactions))
+	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions))
 }
 
 func (m *prometheusMetrics) IncrementNumNonceGaps(ctx context.Context) {
-	initMetrics()
 	promNumNonceGaps.WithLabelValues(m.chainID).Inc()
+	m.numNonceGaps.Add(ctx, 1)
 }
 
 func (m *prometheusMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
-	initMetrics()
 	var value float64
 	if reached {
 		value = 1
 	}
 	promReachedMaxAttempts.WithLabelValues(m.chainID).Set(value)
+	m.reachedMaxAttempts.Record(ctx, int64(value))
 }
 
 func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
-	initMetrics()
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID).Observe(duration)
+	m.timeUntilTxConfirmed.Record(ctx, duration)
 }
 
 func (m *prometheusMetrics) IncrementEnqueueFailed(ctx context.Context) {
-	initMetrics()
 	promEnqueueFailed.WithLabelValues(m.chainID).Inc()
+	m.enqueueFailed.Add(ctx, 1)
 }
