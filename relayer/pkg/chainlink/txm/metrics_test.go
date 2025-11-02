@@ -219,7 +219,7 @@ func TestNew_DefaultMetrics(t *testing.T) {
 	assert.Equal(t, "test-chain-id", stxm.chainID)
 }
 
-func TestNew_UsesPrometheusMetrics(t *testing.T) {
+func TestNew_CreatesTXMWithPrometheusMetricsByDefault(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
@@ -244,7 +244,7 @@ func TestNew_UsesPrometheusMetrics(t *testing.T) {
 	assert.Equal(t, chainID, stxm.chainID)
 }
 
-func TestInflightCount_UpdatesMetrics(t *testing.T) {
+func TestInflightCount_ReturnsQueueAndUnconfirmedCounts(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
@@ -268,7 +268,7 @@ func TestInflightCount_UpdatesMetrics(t *testing.T) {
 	assert.Equal(t, 0, unconfirmedCount)
 }
 
-func TestTxMetrics_Methods(t *testing.T) {
+func TestMetrics_AllMethodsWorkCorrectly(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
@@ -309,7 +309,7 @@ func TestTxMetrics_Methods(t *testing.T) {
 	assert.Equal(t, 2.3, times[1])
 }
 
-func TestTxMetrics_MultipleCalls(t *testing.T) {
+func TestMetrics_HandlesConcurrentIncrementCalls(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()

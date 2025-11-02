@@ -71,7 +71,7 @@ func TestPrometheusMetrics_ImplementsInterface(t *testing.T) {
 	var _ TxMetrics = (*prometheusMetrics)(nil)
 }
 
-func TestPrometheusMetrics_Increment(t *testing.T) {
+func TestPrometheusMetrics_IncrementsCounterMetrics(t *testing.T) {
 	t.Parallel()
 
 	// Use unique chainID and accountAddress to avoid interference from other test runs
@@ -103,7 +103,7 @@ func TestPrometheusMetrics_Increment(t *testing.T) {
 	assert.Equal(t, initialNonceGaps+3, finalNonceGaps, "Nonce gaps should increment by 3")
 }
 
-func TestPrometheusMetrics_SetGauge(t *testing.T) {
+func TestPrometheusMetrics_IncrementsNonceRebroadcastCounter(t *testing.T) {
 	t.Parallel()
 
 	// Use unique chainID and accountAddress to avoid interference from other test runs

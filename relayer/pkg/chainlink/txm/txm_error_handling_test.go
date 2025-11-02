@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
+func TestMetrics_HandlesEdgeCaseInputs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -163,7 +163,7 @@ func TestTxMetrics_PrometheusConcurrentAccess(t *testing.T) {
 	assert.Equal(t, float64(expectedCalls), finalNonceGaps)
 }
 
-func TestTxMetrics_Performance(t *testing.T) {
+func TestMetrics_CompletesManyCallsQuickly(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
@@ -198,7 +198,7 @@ func TestTxMetrics_Performance(t *testing.T) {
 	t.Logf("Processed %d metric calls in %v", numCalls*4+numCalls/2, duration)
 }
 
-func TestTxMetrics_MemoryUsage(t *testing.T) {
+func TestMetrics_StoresManyDurationRecordings(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
@@ -221,7 +221,7 @@ func TestTxMetrics_MemoryUsage(t *testing.T) {
 	}
 }
 
-func TestTxMetrics_EdgeCases(t *testing.T) {
+func TestMetrics_HandlesZeroAndLargeValues(t *testing.T) {
 	t.Parallel()
 
 	mockMetrics := newMockTxMetrics()
@@ -248,7 +248,7 @@ func TestTxMetrics_EdgeCases(t *testing.T) {
 	})
 }
 
-func TestTxMetrics_InterfaceComplianceAdvanced(t *testing.T) {
+func TestMetrics_AllImplementationsSatisfyInterface(t *testing.T) {
 	t.Parallel()
 
 	// Test that all implementations properly implement the interface

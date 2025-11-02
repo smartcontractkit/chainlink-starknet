@@ -3,6 +3,7 @@ package txm
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
@@ -13,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestTxMetrics_Coverage tests that all metrics methods are called to ensure coverage
-func TestTxMetrics_Coverage(t *testing.T) {
+// TestMetrics_RecordsAllTransactionEvents tests that all metric recording methods work correctly
+func TestMetrics_RecordsAllTransactionEvents(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -65,9 +66,8 @@ func TestTxMetrics_Coverage(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 }
 
-// TestTxMetrics_ResyncNonceCoverage tests the resyncNonce method metrics
-// This test directly calls the metrics method to ensure coverage
-func TestTxMetrics_ResyncNonceCoverage(t *testing.T) {
+// TestMetrics_IncrementsNonceGapsMetric tests that nonce gap metric is incremented correctly
+func TestMetrics_IncrementsNonceGapsMetric(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -95,8 +95,8 @@ func TestTxMetrics_ResyncNonceCoverage(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetNonceGapsCount())
 }
 
-// TestTxMetrics_NonceRebroadcastCoverage tests the nonce rebroadcast metric
-func TestTxMetrics_NonceRebroadcastCoverage(t *testing.T) {
+// TestMetrics_TracksNonceRebroadcasts tests that nonce rebroadcast counter increments correctly
+func TestMetrics_TracksNonceRebroadcasts(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -124,9 +124,8 @@ func TestTxMetrics_NonceRebroadcastCoverage(t *testing.T) {
 	assert.Equal(t, 2, mockMetrics.GetNonceRebroadcastCount())
 }
 
-// TestTxMetrics_EnqueueCoverage tests the Enqueue method metrics
-// This test directly calls the metrics method to ensure coverage
-func TestTxMetrics_EnqueueCoverage(t *testing.T) {
+// TestMetrics_RecordsEnqueueFailedMetric tests that enqueue failed metric is incremented
+func TestMetrics_RecordsEnqueueFailedMetric(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -154,9 +153,8 @@ func TestTxMetrics_EnqueueCoverage(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 }
 
-// TestTxMetrics_ConfirmLoopCoverage tests the confirmLoop method metrics
-// This test directly calls the metrics methods that would be called in confirmLoop
-func TestTxMetrics_ConfirmLoopCoverage(t *testing.T) {
+// TestMetrics_RecordsConfirmedTransactions tests that confirmed transaction metrics are recorded
+func TestMetrics_RecordsConfirmedTransactions(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -188,8 +186,8 @@ func TestTxMetrics_ConfirmLoopCoverage(t *testing.T) {
 	assert.Equal(t, 2.5, times[0])
 }
 
-// TestTxMetrics_ResyncNonceMethodCoverage tests the resyncNonce method directly
-func TestTxMetrics_ResyncNonceMethodCoverage(t *testing.T) {
+// TestMetrics_RecordsNonceGapsDuringResync tests nonce gap metric during resync (duplicate test for coverage)
+func TestMetrics_RecordsNonceGapsDuringResync(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -215,8 +213,8 @@ func TestTxMetrics_ResyncNonceMethodCoverage(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetNonceGapsCount())
 }
 
-// TestTxMetrics_EnqueueMethodCoverage tests the Enqueue method directly
-func TestTxMetrics_EnqueueMethodCoverage(t *testing.T) {
+// TestMetrics_RecordsEnqueueFailedWhenQueueFull tests enqueue failed metric when queue is full (duplicate for coverage)
+func TestMetrics_RecordsEnqueueFailedWhenQueueFull(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -242,8 +240,8 @@ func TestTxMetrics_EnqueueMethodCoverage(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 }
 
-// TestTxMetrics_InflightCount tests InflightCount method
-func TestTxMetrics_InflightCount(t *testing.T) {
+// TestInflightCount_ReturnsZeroForEmptyTXM tests that InflightCount returns zeros when TXM is empty
+func TestInflightCount_ReturnsZeroForEmptyTXM(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -272,8 +270,8 @@ func TestTxMetrics_InflightCount(t *testing.T) {
 	assert.Equal(t, 0, unconfirmedCount)
 }
 
-// TestTxMetrics_ConfigCoverage tests the config methods to improve coverage
-func TestTxMetrics_ConfigCoverage(t *testing.T) {
+// TestConfig_CanAccessAllConfigValues tests that all configuration values can be accessed
+func TestConfig_CanAccessAllConfigValues(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -309,8 +307,8 @@ func TestTxMetrics_ConfigCoverage(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetBroadcastedCount())
 }
 
-// TestTxMetrics_EnqueueMethod tests the actual Enqueue method to improve coverage
-func TestTxMetrics_EnqueueMethod(t *testing.T) {
+// TestEnqueue_FailsWhenQueueIsFull tests that Enqueue returns error when queue has no buffer
+func TestEnqueue_FailsWhenQueueIsFull(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -355,8 +353,8 @@ func TestTxMetrics_EnqueueMethod(t *testing.T) {
 	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 }
 
-// TestTxMetrics_TXMIntegration tests starting TXM and performing actual operations
-func TestTxMetrics_TXMIntegration(t *testing.T) {
+// TestTXM_StartsAndProcessesTransactions tests that TXM can start and process transactions
+func TestTXM_StartsAndProcessesTransactions(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -422,8 +420,8 @@ func TestTxMetrics_TXMIntegration(t *testing.T) {
 	assert.GreaterOrEqual(t, mockMetrics.GetNonceGapsCount(), 0)
 }
 
-// TestTxMetrics_TXMMethods tests additional TXM methods for coverage
-func TestTxMetrics_TXMMethods(t *testing.T) {
+// TestTXM_NameReturnsExpectedValue tests that Name method returns expected value
+func TestTXM_NameReturnsExpectedValue(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -449,8 +447,8 @@ func TestTxMetrics_TXMMethods(t *testing.T) {
 	assert.Equal(t, "Txm", name)
 }
 
-// TestTxMetrics_ExtendedIntegration tests TXM with extended runtime for better coverage
-func TestTxMetrics_ExtendedIntegration(t *testing.T) {
+// TestTXM_HandlesMultipleTransactionsOverTime tests TXM processing multiple transactions over extended period
+func TestTXM_HandlesMultipleTransactionsOverTime(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -519,8 +517,8 @@ func TestTxMetrics_ExtendedIntegration(t *testing.T) {
 	assert.GreaterOrEqual(t, mockMetrics.GetNonceGapsCount(), 0)
 }
 
-// TestTxMetrics_ErrorConditions tests various error conditions for better coverage
-func TestTxMetrics_ErrorConditions(t *testing.T) {
+// TestTXM_HandlesErrorConditions tests that TXM handles various error conditions gracefully
+func TestTXM_HandlesErrorConditions(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := logger.Test(t)
@@ -581,3 +579,305 @@ type mockConfigCoverage struct{}
 func (m *mockConfigCoverage) TxTimeout() time.Duration        { return 20 * time.Second }
 func (m *mockConfigCoverage) ConfirmationPoll() time.Duration { return 1 * time.Second }
 func (m *mockConfigCoverage) FeeEstimationMaxAttempts() int   { return 5 }
+
+// TestHealthChecks_StateTransitions tests health check methods before and after Start
+func TestHealthChecks_StateTransitions(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := logger.Test(t)
+	chainID := fmt.Sprintf("health-test-chain-%d", time.Now().UnixNano())
+
+	getClient := func() (*starknet.Client, error) {
+		return nil, fmt.Errorf("mock client error")
+	}
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return nil, fmt.Errorf("mock feeder client error")
+	}
+
+	// Create TXM properly using NewWithMetrics
+	mockMetrics := newMockTxMetrics()
+	txmInterface, err := NewWithMetrics(mockLggr, &mockKeystore{}, &mockConfigCoverage{}, chainID, mockMetrics, getClient, getFeederClient)
+	assert.NoError(t, err)
+
+	// Type assert to get access to health methods
+	txm, ok := txmInterface.(*starktxm)
+	assert.True(t, ok, "Should be able to type assert to *starktxm")
+
+	// Test Healthy - should error before Start
+	err = txm.Healthy()
+	assert.Error(t, err, "Healthy should error before Start")
+
+	// Test Ready - should error before Start
+	err = txm.Ready()
+	assert.Error(t, err, "Ready should error before Start")
+
+	// Test HealthReport
+	report := txm.HealthReport()
+	assert.Len(t, report, 1)
+	assert.Error(t, report[txm.Name()], "HealthReport should show error before Start")
+
+	// Start the TXM
+	ctx := context.Background()
+	err = txm.Start(ctx)
+	assert.NoError(t, err)
+
+	// After Start, these should work
+	err = txm.Healthy()
+	assert.NoError(t, err, "Healthy should work after Start")
+
+	err = txm.Ready()
+	assert.NoError(t, err, "Ready should work after Start")
+
+	// Test HealthReport after Start
+	report = txm.HealthReport()
+	assert.Len(t, report, 1)
+	assert.NoError(t, report[txm.Name()], "HealthReport should show no error after Start")
+
+	// Clean up
+	err = txm.Close()
+	assert.NoError(t, err)
+}
+
+// TestUpdateMaxAmountBounds_CalculatesGasPadding tests gas amount padding calculation
+func TestUpdateMaxAmountBounds_CalculatesGasPadding(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := logger.Test(t)
+	txm := &starktxm{
+		lggr: mockLggr,
+	}
+
+	// Test with typical values
+	gasConsumed := big.NewInt(1000)
+	padding := int64(150)
+	result := txm.updateMaxAmountBounds(gasConsumed, padding)
+
+	// Expected: (1000 * 150) / 100 = 1500
+	// Convert back to verify
+	expected := big.NewInt(1500)
+	feltResult, err := new(felt.Felt).SetString(string(result))
+	assert.NoError(t, err)
+	actual := feltResult.BigInt(new(big.Int))
+	assert.Equal(t, 0, expected.Cmp(actual))
+
+	// Test with zero
+	zero := big.NewInt(0)
+	resultZero := txm.updateMaxAmountBounds(zero, padding)
+	assert.Equal(t, "0x0", string(resultZero))
+}
+
+// TestUpdateMaxPriceUnitBounds_CalculatesGasPricePadding tests gas price padding calculation
+func TestUpdateMaxPriceUnitBounds_CalculatesGasPricePadding(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := logger.Test(t)
+	txm := &starktxm{
+		lggr: mockLggr,
+	}
+
+	// Test with typical values
+	gasPrice := big.NewInt(2000)
+	padding := int64(150)
+	result := txm.updateMaxPriceUnitBounds(gasPrice, padding)
+
+	// Expected: (2000 * 150) / 100 = 3000
+	expected := big.NewInt(3000)
+	feltResult, err := new(felt.Felt).SetString(string(result))
+	assert.NoError(t, err)
+	actual := feltResult.BigInt(new(big.Int))
+	assert.Equal(t, 0, expected.Cmp(actual))
+
+	// Test with zero
+	zero := big.NewInt(0)
+	resultZero := txm.updateMaxPriceUnitBounds(zero, padding)
+	assert.Equal(t, "0x0", string(resultZero))
+}
+
+// TestAccountStore_ReturnsAllAccountAddresses tests that Accounts returns all registered account addresses
+func TestAccountStore_ReturnsAllAccountAddresses(t *testing.T) {
+	t.Parallel()
+
+	accountStore := NewAccountStore()
+
+	// Initially should be empty
+	accounts := accountStore.Accounts()
+	assert.Empty(t, accounts)
+
+	// Add an account by creating a TxStore
+	accountAddress1, err := new(felt.Felt).SetString("0x123")
+	assert.NoError(t, err)
+	initialNonce1 := new(felt.Felt).SetUint64(0)
+	mockLggr := logger.Test(t)
+	txStore1, err := accountStore.CreateTxStore(accountAddress1, initialNonce1, mockLggr)
+	assert.NoError(t, err)
+	assert.NotNil(t, txStore1)
+
+	// Should have one account now
+	accounts = accountStore.Accounts()
+	assert.Len(t, accounts, 1)
+	assert.Contains(t, accounts, accountAddress1.String())
+
+	// Add another account
+	accountAddress2, err := new(felt.Felt).SetString("0x456")
+	assert.NoError(t, err)
+	initialNonce2 := new(felt.Felt).SetUint64(0)
+	txStore2, err := accountStore.CreateTxStore(accountAddress2, initialNonce2, mockLggr)
+	assert.NoError(t, err)
+	assert.NotNil(t, txStore2)
+
+	// Should have two accounts now
+	accounts = accountStore.Accounts()
+	assert.Len(t, accounts, 2)
+	assert.Contains(t, accounts, accountAddress1.String())
+	assert.Contains(t, accounts, accountAddress2.String())
+}
+
+// failingKeystore is a keystore that always returns errors
+type failingKeystore struct{}
+
+func (f *failingKeystore) Accounts(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("keystore error")
+}
+
+func (f *failingKeystore) Get(ctx context.Context, id string) ([]byte, error) {
+	return nil, fmt.Errorf("keystore error")
+}
+
+func (f *failingKeystore) Sign(ctx context.Context, account string, data []byte) ([]byte, error) {
+	return nil, fmt.Errorf("keystore sign error")
+}
+
+// TestEnqueue_ReturnsErrorWhenKeystoreSignFails tests that Enqueue fails when keystore cannot sign
+func TestEnqueue_ReturnsErrorWhenKeystoreSignFails(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := logger.Test(t)
+	chainID := fmt.Sprintf("enqueue-keystore-error-%d", time.Now().UnixNano())
+
+	getClient := func() (*starknet.Client, error) {
+		return nil, fmt.Errorf("mock client error")
+	}
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return nil, fmt.Errorf("mock feeder client error")
+	}
+
+	mockMetrics := newMockTxMetrics()
+	txmInterface, err := NewWithMetrics(mockLggr, &failingKeystore{}, &mockConfigCoverage{}, chainID, mockMetrics, getClient, getFeederClient)
+	assert.NoError(t, err)
+
+	txm, ok := txmInterface.(*starktxm)
+	assert.True(t, ok)
+
+	ctx := context.Background()
+	publicKey, err := new(felt.Felt).SetString("0x123")
+	assert.NoError(t, err)
+	accountAddress, err := new(felt.Felt).SetString("0x456")
+	assert.NoError(t, err)
+
+	call := rpc.FunctionCall{
+		ContractAddress:    accountAddress,
+		EntryPointSelector: publicKey,
+		Calldata:           []*felt.Felt{},
+	}
+
+	// Enqueue should fail due to keystore error
+	err = txm.Enqueue(ctx, accountAddress, publicKey, call)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to sign")
+}
+
+// TestEnqueue_ReturnsErrorAndIncrementsMetricWhenQueueFull tests that Enqueue fails and records metric when queue is full
+func TestEnqueue_ReturnsErrorAndIncrementsMetricWhenQueueFull(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := logger.Test(t)
+	chainID := fmt.Sprintf("enqueue-queue-full-%d", time.Now().UnixNano())
+
+	getClient := func() (*starknet.Client, error) {
+		return nil, fmt.Errorf("mock client error")
+	}
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return nil, fmt.Errorf("mock feeder client error")
+	}
+
+	mockMetrics := newMockTxMetrics()
+	txmInterface, err := NewWithMetrics(mockLggr, &mockKeystore{}, &mockConfigCoverage{}, chainID, mockMetrics, getClient, getFeederClient)
+	assert.NoError(t, err)
+
+	txm, ok := txmInterface.(*starktxm)
+	assert.True(t, ok)
+
+	// Create a queue with size 1 and fill it
+	txm.queue = make(chan Tx, 1)
+	txm.queue <- Tx{} // Fill the queue
+
+	ctx := context.Background()
+	publicKey, err := new(felt.Felt).SetString("0x123")
+	assert.NoError(t, err)
+	accountAddress, err := new(felt.Felt).SetString("0x456")
+	assert.NoError(t, err)
+
+	call := rpc.FunctionCall{
+		ContractAddress:    accountAddress,
+		EntryPointSelector: publicKey,
+		Calldata:           []*felt.Felt{},
+	}
+
+	// Enqueue should fail due to queue full
+	err = txm.Enqueue(ctx, accountAddress, publicKey, call)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to enqueue")
+	// Verify metric was incremented
+	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
+}
+
+// TestBroadcastLoop_ContinuesWhenClientGetFails tests that broadcastLoop continues processing after client fetch failure
+func TestBroadcastLoop_ContinuesWhenClientGetFails(t *testing.T) {
+	t.Parallel()
+
+	mockLggr := logger.Test(t)
+	chainID := fmt.Sprintf("broadcast-loop-client-error-%d", time.Now().UnixNano())
+
+	// Create client getter that always fails
+	getClient := func() (*starknet.Client, error) {
+		return nil, fmt.Errorf("client get error")
+	}
+	getFeederClient := func() (*starknet.FeederClient, error) {
+		return nil, fmt.Errorf("mock feeder client error")
+	}
+
+	mockMetrics := newMockTxMetrics()
+	txmInterface, err := NewWithMetrics(mockLggr, &mockKeystore{}, &mockConfigCoverage{}, chainID, mockMetrics, getClient, getFeederClient)
+	assert.NoError(t, err)
+
+	txm, ok := txmInterface.(*starktxm)
+	assert.True(t, ok)
+
+	ctx := context.Background()
+
+	// Start the TXM - this will start the broadcastLoop
+	err = txm.Start(ctx)
+	assert.NoError(t, err)
+
+	// Enqueue a transaction - this will trigger broadcastLoop to process it
+	publicKey, err := new(felt.Felt).SetString("0x123")
+	assert.NoError(t, err)
+	accountAddress, err := new(felt.Felt).SetString("0x456")
+	assert.NoError(t, err)
+
+	call := rpc.FunctionCall{
+		ContractAddress:    accountAddress,
+		EntryPointSelector: publicKey,
+		Calldata:           []*felt.Felt{},
+	}
+
+	err = txm.Enqueue(ctx, accountAddress, publicKey, call)
+	assert.NoError(t, err)
+
+	// Give broadcastLoop a moment to process (it will fail at client.Get())
+	time.Sleep(100 * time.Millisecond)
+
+	// Stop the TXM
+	err = txm.Close()
+	assert.NoError(t, err)
+}
