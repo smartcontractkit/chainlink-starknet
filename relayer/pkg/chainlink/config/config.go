@@ -42,7 +42,6 @@ type ConfigSet struct { //nolint:revive
 	// txm config
 	TxTimeout                time.Duration
 	ConfirmationPoll         time.Duration
-	MaxAttempts              int
 	FeeEstimationMaxAttempts int
 }
 
@@ -62,7 +61,6 @@ type Chain struct {
 	RequestTimeout           *config.Duration
 	TxTimeout                *config.Duration
 	ConfirmationPoll         *config.Duration
-	MaxAttempts              *int
 	FeeEstimationMaxAttempts *int
 }
 
@@ -178,9 +176,6 @@ func setFromChain(c, f *Chain) {
 	if f.ConfirmationPoll != nil {
 		c.ConfirmationPoll = f.ConfirmationPoll
 	}
-	if f.MaxAttempts != nil {
-		c.MaxAttempts = f.MaxAttempts
-	}
 	if f.FeeEstimationMaxAttempts != nil {
 		c.FeeEstimationMaxAttempts = f.FeeEstimationMaxAttempts
 	}
@@ -256,13 +251,6 @@ func (c *TOMLConfig) TxTimeout() time.Duration {
 
 func (c *TOMLConfig) ConfirmationPoll() time.Duration {
 	return c.Chain.ConfirmationPoll.Duration()
-}
-
-func (c *TOMLConfig) MaxAttempts() int {
-	if c.Chain.MaxAttempts == nil {
-		return 10 // Default value
-	}
-	return *c.Chain.MaxAttempts
 }
 
 func (c *TOMLConfig) FeeEstimationMaxAttempts() int {

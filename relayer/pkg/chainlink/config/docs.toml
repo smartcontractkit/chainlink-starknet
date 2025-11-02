@@ -14,8 +14,6 @@ RequestTimeout = '10s' # Default
 TxTimeout = '10s' # Default
 # ConfirmationPoll is how often to confirmer checks for tx inclusion on chain.
 ConfirmationPoll = '5s' # Default
-# MaxAttempts is the maximum number of retry attempts before marking a transaction as failed.
-MaxAttempts = 10 # Default
 # FeeEstimationMaxAttempts is the maximum number of retry attempts for fee estimation.
 FeeEstimationMaxAttempts = 5 # Default
 
