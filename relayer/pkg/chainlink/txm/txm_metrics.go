@@ -2,11 +2,14 @@ package txm
 
 import (
 	"context"
+	"math/big"
 	"sync"
 
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -14,16 +17,18 @@ var (
 	promNumBroadcastedTxs    *prometheus.CounterVec
 	promNumConfirmedTxs      *prometheus.CounterVec
 	promNumNonceGaps         *prometheus.CounterVec
-	promReachedMaxAttempts   *prometheus.GaugeVec
 	promTimeUntilTxConfirmed *prometheus.HistogramVec
 	promEnqueueFailed        *prometheus.CounterVec
+	promNonceRebroadcast     *prometheus.CounterVec
+	promNextNonce            *prometheus.GaugeVec
 
 	beholderNumBroadcastedTxs    metric.Int64Counter
 	beholderNumConfirmedTxs      metric.Int64Counter
 	beholderNumNonceGaps         metric.Int64Counter
-	beholderReachedMaxAttempts   metric.Int64Gauge
 	beholderTimeUntilTxConfirmed metric.Float64Histogram
 	beholderEnqueueFailed        metric.Int64Counter
+	beholderNonceRebroadcast     metric.Int64Counter
+	beholderNextNonce            metric.Int64Gauge
 
 	metricsOnce sync.Once
 )
@@ -34,40 +39,46 @@ func initMetrics() {
 		promNumBroadcastedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
 			Name: "txm_num_broadcasted_transactions",
 			Help: "Total number of successful broadcasted transactions.",
-		}, []string{"chainID"})
+		}, []string{"chainID", "accountAddress"})
 
 		promNumConfirmedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
 			Name: "txm_num_confirmed_transactions",
 			Help: "Total number of confirmed transactions. Note that this can happen multiple times per transaction in the case of re-orgs or when filling the nonce for untracked transactions.",
-		}, []string{"chainID"})
+		}, []string{"chainID", "accountAddress"})
 
 		promNumNonceGaps = promauto.NewCounterVec(prometheus.CounterOpts{
 			Name: "txm_num_nonce_gaps",
 			Help: "Total number of nonce gaps created that the transaction manager had to fill.",
-		}, []string{"chainID"})
-
-		promReachedMaxAttempts = promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "txm_reached_max_attempts",
-			Help: "A gauge that is treated as boolean; 1 if the condition is true, 0 otherwise. Controls whether the TXM has reached max attempts threshold or not.",
-		}, []string{"chainID"})
+		}, []string{"chainID", "accountAddress"})
 
 		promTimeUntilTxConfirmed = promauto.NewHistogramVec(prometheus.HistogramOpts{
 			Name: "txm_time_until_tx_confirmed",
 			Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
-		}, []string{"chainID"})
+		}, []string{"chainID", "accountAddress"})
 
 		promEnqueueFailed = promauto.NewCounterVec(prometheus.CounterOpts{
 			Name: "txm_enqueue_failed",
 			Help: "Total number of times transaction enqueue failed due to queue being full or other issues.",
-		}, []string{"chainID"})
+		}, []string{"chainID", "accountAddress"})
+
+		promNonceRebroadcast = promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "txm_nonce_rebroadcast",
+			Help: "Total number of times a nonce was rebroadcasted. This indicates resyncs or nonce gaps. Increments each time a nonce is broadcasted more than once.",
+		}, []string{"chainID", "accountAddress"})
+
+		promNextNonce = promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "txm_next_nonce",
+			Help: "The next nonce that will be used for the account. Updated when transactions are broadcasted or nonce is resynced.",
+		}, []string{"chainID", "accountAddress"})
 
 		// Initialize beholder metrics
 		beholderNumBroadcastedTxs, _ = beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
 		beholderNumConfirmedTxs, _ = beholder.GetMeter().Int64Counter("txm_num_confirmed_transactions")
 		beholderNumNonceGaps, _ = beholder.GetMeter().Int64Counter("txm_num_nonce_gaps")
 		beholderTimeUntilTxConfirmed, _ = beholder.GetMeter().Float64Histogram("txm_time_until_tx_confirmed")
-		beholderReachedMaxAttempts, _ = beholder.GetMeter().Int64Gauge("txm_reached_max_attempts")
 		beholderEnqueueFailed, _ = beholder.GetMeter().Int64Counter("txm_enqueue_failed")
+		beholderNonceRebroadcast, _ = beholder.GetMeter().Int64Counter("txm_nonce_rebroadcast")
+		beholderNextNonce, _ = beholder.GetMeter().Int64Gauge("txm_next_nonce")
 	})
 }
 
@@ -77,12 +88,13 @@ type prometheusMetrics struct {
 	numBroadcastedTxs    metric.Int64Counter
 	numConfirmedTxs      metric.Int64Counter
 	numNonceGaps         metric.Int64Counter
-	reachedMaxAttempts   metric.Int64Gauge
 	timeUntilTxConfirmed metric.Float64Histogram
 	enqueueFailed        metric.Int64Counter
+	nonceRebroadcast     metric.Int64Counter
+	nextNonce            metric.Int64Gauge
 }
 
-func NewPrometheusMetrics(chainID string) TxMetrics {
+func NewTxmMetrics(chainID string) TxMetrics {
 	initMetrics()
 
 	return &prometheusMetrics{
@@ -90,42 +102,74 @@ func NewPrometheusMetrics(chainID string) TxMetrics {
 		numBroadcastedTxs:    beholderNumBroadcastedTxs,
 		numConfirmedTxs:      beholderNumConfirmedTxs,
 		numNonceGaps:         beholderNumNonceGaps,
-		reachedMaxAttempts:   beholderReachedMaxAttempts,
 		timeUntilTxConfirmed: beholderTimeUntilTxConfirmed,
 		enqueueFailed:        beholderEnqueueFailed,
+		nonceRebroadcast:     beholderNonceRebroadcast,
+		nextNonce:            beholderNextNonce,
 	}
 }
 
-func (m *prometheusMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
-	promNumBroadcastedTxs.WithLabelValues(m.chainID).Inc()
-	m.numBroadcastedTxs.Add(ctx, 1)
+func (m *prometheusMetrics) IncrementNumBroadcastedTxs(ctx context.Context, accountAddress string) {
+	promNumBroadcastedTxs.WithLabelValues(m.chainID, accountAddress).Inc()
+	m.numBroadcastedTxs.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	))
 }
 
-func (m *prometheusMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
-	promNumConfirmedTxs.WithLabelValues(m.chainID).Add(float64(confirmedTransactions))
-	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions))
+func (m *prometheusMetrics) IncrementNumConfirmedTxs(ctx context.Context, accountAddress string, confirmedTransactions int) {
+	promNumConfirmedTxs.WithLabelValues(m.chainID, accountAddress).Add(float64(confirmedTransactions))
+	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions), metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	))
 }
 
-func (m *prometheusMetrics) IncrementNumNonceGaps(ctx context.Context) {
-	promNumNonceGaps.WithLabelValues(m.chainID).Inc()
-	m.numNonceGaps.Add(ctx, 1)
+func (m *prometheusMetrics) IncrementNumNonceGaps(ctx context.Context, accountAddress string) {
+	promNumNonceGaps.WithLabelValues(m.chainID, accountAddress).Inc()
+	m.numNonceGaps.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	))
 }
 
-func (m *prometheusMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
-	var value float64
-	if reached {
-		value = 1
+func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, accountAddress string, duration float64) {
+	promTimeUntilTxConfirmed.WithLabelValues(m.chainID, accountAddress).Observe(duration)
+	m.timeUntilTxConfirmed.Record(ctx, duration, metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	))
+}
+
+func (m *prometheusMetrics) IncrementEnqueueFailed(ctx context.Context, accountAddress string) {
+	promEnqueueFailed.WithLabelValues(m.chainID, accountAddress).Inc()
+	m.enqueueFailed.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	))
+}
+
+func (m *prometheusMetrics) IncrementNonceRebroadcast(ctx context.Context, accountAddress string) {
+	promNonceRebroadcast.WithLabelValues(m.chainID, accountAddress).Inc()
+	m.nonceRebroadcast.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("chainID", m.chainID),
+		attribute.String("accountAddress", accountAddress),
+	))
+}
+
+func (m *prometheusMetrics) UpdateNextNonceMetric(ctx context.Context, accountAddress string, nonce *felt.Felt) {
+	// Convert felt.Felt to float64 for Prometheus (it's a big.Int internally)
+	nonceBigInt := nonce.BigInt(new(big.Int))
+	nonceFloat := float64(nonceBigInt.Int64())
+
+	promNextNonce.WithLabelValues(m.chainID, accountAddress).Set(nonceFloat)
+
+	// Beholder uses Int64Gauge with attributes for per-account tracking
+	if m.nextNonce != nil {
+		m.nextNonce.Record(ctx, nonceBigInt.Int64(),
+			metric.WithAttributes(
+				attribute.String("chainID", m.chainID),
+				attribute.String("accountAddress", accountAddress),
+			))
 	}
-	promReachedMaxAttempts.WithLabelValues(m.chainID).Set(value)
-	m.reachedMaxAttempts.Record(ctx, int64(value))
-}
-
-func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
-	promTimeUntilTxConfirmed.WithLabelValues(m.chainID).Observe(duration)
-	m.timeUntilTxConfirmed.Record(ctx, duration)
-}
-
-func (m *prometheusMetrics) IncrementEnqueueFailed(ctx context.Context) {
-	promEnqueueFailed.WithLabelValues(m.chainID).Inc()
-	m.enqueueFailed.Add(ctx, 1)
 }

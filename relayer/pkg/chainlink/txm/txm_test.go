@@ -77,7 +77,6 @@ func TestIntegration_Txm(t *testing.T) {
 	cfg := mocks.NewConfig(t)
 	cfg.On("TxTimeout").Return(20 * time.Second)
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
-	cfg.On("MaxAttempts").Return(10)
 	cfg.On("FeeEstimationMaxAttempts").Return(5)
 
 	txm, err := New(lggr, ksAdapter.Loopp(), cfg, "test-chain", getClient, getFeederClient)

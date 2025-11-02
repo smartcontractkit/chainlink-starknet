@@ -34,12 +34,13 @@ type TxManager interface {
 
 // TxMetrics interface for v2 TXM metrics
 type TxMetrics interface {
-	IncrementNumBroadcastedTxs(ctx context.Context)
-	IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int)
-	IncrementNumNonceGaps(ctx context.Context)
-	ReachedMaxAttempts(ctx context.Context, reached bool)
-	RecordTimeUntilTxConfirmed(ctx context.Context, duration float64)
-	IncrementEnqueueFailed(ctx context.Context)
+	IncrementNumBroadcastedTxs(ctx context.Context, accountAddress string)
+	IncrementNumConfirmedTxs(ctx context.Context, accountAddress string, confirmedTransactions int)
+	IncrementNumNonceGaps(ctx context.Context, accountAddress string)
+	RecordTimeUntilTxConfirmed(ctx context.Context, accountAddress string, duration float64)
+	IncrementEnqueueFailed(ctx context.Context, accountAddress string)
+	IncrementNonceRebroadcast(ctx context.Context, accountAddress string)
+	UpdateNextNonceMetric(ctx context.Context, accountAddress string, nonce *felt.Felt)
 }
 
 type Tx struct {
@@ -68,17 +69,16 @@ type starktxm struct {
 	metrics      TxMetrics
 	chainID      string
 
-	// Track broadcast times for confirmation duration metrics
-	broadcastTimes sync.Map // map[string]time.Time (tx hash -> broadcast time)
+	// Track broadcast times for confirmation duration metrics (keyed by nonce string)
+	broadcastTimes sync.Map // map[string]time.Time (nonce -> broadcast time)
 
-	// Track retry attempts for max attempts detection
-	retryAttempts sync.Map // map[string]int (tx hash -> attempt count)
-	maxAttempts   int      // Maximum number of attempts before marking as failed
+	// Track nonce broadcast counts (how many times each nonce is broadcasted)
+	nonceBroadcastCounts sync.Map // map[string]int (nonce -> count)
 }
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
-	return NewWithMetrics(lggr, keystore, cfg, chainID, NewPrometheusMetrics(chainID), getClient, getFeederClient)
+	return NewWithMetrics(lggr, keystore, cfg, chainID, NewTxmMetrics(chainID), getClient, getFeederClient)
 }
 
 func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, metrics TxMetrics, getClient func() (*starknet.Client, error),
@@ -94,7 +94,6 @@ func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chai
 		accountStore: NewAccountStore(),
 		metrics:      metrics,
 		chainID:      chainID,
-		maxAttempts:  cfg.MaxAttempts(),
 	}
 
 	return txm, nil
@@ -133,19 +132,29 @@ func (txm *starktxm) broadcastLoop() {
 			}
 
 			// broadcast tx serially - wait until accepted by mempool before processing next
-			hash, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
+			hash, nonce, err := txm.broadcast(ctx, tx.publicKey, tx.accountAddress, tx.call)
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
-				// Track retry attempts for max attempts detection
-				txm.trackRetryAttempt(ctx, hash)
 			} else {
-				txm.lggr.Infow("transaction broadcast", "txhash", hash)
+				txm.lggr.Infow("transaction broadcast", "txhash", hash, "nonce", nonce)
 				// Increment broadcasted transactions metric
-				txm.metrics.IncrementNumBroadcastedTxs(ctx)
-				// Track broadcast time for confirmation duration metrics
-				txm.broadcastTimes.Store(hash, time.Now())
-				// Clear retry attempts on successful broadcast
-				txm.retryAttempts.Delete(hash)
+				txm.metrics.IncrementNumBroadcastedTxs(ctx, tx.accountAddress.String())
+
+				// Track broadcast time for confirmation duration metrics (keyed by nonce)
+				nonceStr := nonce.String()
+				txm.broadcastTimes.Store(nonceStr, time.Now())
+
+				// Track nonce broadcast count (increment count for this nonce)
+				count := 1
+				if val, ok := txm.nonceBroadcastCounts.Load(nonceStr); ok {
+					count = val.(int) + 1
+				}
+				txm.nonceBroadcastCounts.Store(nonceStr, count)
+
+				// Increment rebroadcast metric if this nonce has been broadcasted before
+				if count > 1 {
+					txm.metrics.IncrementNonceRebroadcast(ctx, tx.accountAddress.String())
+				}
 			}
 		}
 	}
@@ -208,26 +217,27 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 	}
 
 	txm.lggr.Errorw("all attempts to estimate fee failed")
-	txm.metrics.ReachedMaxAttempts(ctx, true)
 	return nil, nil, fmt.Errorf("all attempts to estimate fee failed")
 }
 
-func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, err error) {
+func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accountAddress *felt.Felt, call starknetrpc.FunctionCall) (txhash string, nonce *felt.Felt, err error) {
+	var nonceVar *felt.Felt
+
 	client, err := txm.client.Get()
 	if err != nil {
 		txm.client.Reset()
-		return txhash, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
+		return txhash, nil, fmt.Errorf("broadcast: failed to fetch client: %+w", err)
 	}
 
 	txStore := txm.accountStore.GetTxStore(accountAddress)
 	if txStore == nil {
 		initialNonce, accountNonceErr := client.AccountNonce(ctx, accountAddress)
 		if accountNonceErr != nil {
-			return txhash, fmt.Errorf("failed to check account nonce during TxStore creation: %+w", accountNonceErr)
+			return txhash, nil, fmt.Errorf("failed to check account nonce during TxStore creation: %+w", accountNonceErr)
 		}
 		newTxStore, createErr := txm.accountStore.CreateTxStore(accountAddress, initialNonce, txm.lggr)
 		if createErr != nil {
-			return txhash, fmt.Errorf("failed to create TxStore: %+w", createErr)
+			return txhash, nil, fmt.Errorf("failed to create TxStore: %+w", createErr)
 		}
 		txStore = newTxStore
 	}
@@ -236,7 +246,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	cairoVersion := 2
 	account, err := starknetaccount.NewAccount(client.Provider, accountAddress, publicKey.String(), txm.ks, cairoVersion)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to create new account: %+w", err)
+		return txhash, nil, fmt.Errorf("failed to create new account: %+w", err)
 	}
 
 	tx := starknetrpc.InvokeTxnV3{
@@ -270,7 +280,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	// Building the Calldata with the help of FmtCalldata where we pass in the FnCall struct along with the Cairo version
 	tx.Calldata, err = account.FmtCalldata([]starknetrpc.FunctionCall{call})
 	if err != nil {
-		return txhash, err
+		return txhash, nil, err
 	}
 
 	broadcastTxnV3 := starknetrpc.BroadcastInvokeTxnV3{
@@ -279,20 +289,28 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 
 	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadcastTxnV3)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to get FRI estimate: %+w", err)
+		return txhash, nil, fmt.Errorf("failed to get FRI estimate: %+w", err)
 	}
 
-	nonce := txStore.GetNextNonce()
-	if largestEstimateNonce.Cmp(nonce) > 0 {
+	nonceVar = txStore.GetNextNonce()
+	if largestEstimateNonce.Cmp(nonceVar) > 0 {
 		// The nonce value returned from the node during estimation is greater than our expected next nonce
 		// - which means that we are behind, due to a resync. Fast forward our locally tracked nonce value.
 		// See resyncNonce for a more detailed explanation.
 		staleTxs := txStore.SetNextNonce(largestEstimateNonce)
-		txm.lggr.Infow("fast-forwarding nonce after resync", "previousNonce", nonce, "updatedNonce", largestEstimateNonce, "staleTxs", len(staleTxs))
+		txm.lggr.Infow("fast-forwarding nonce after resync", "previousNonce", nonceVar, "updatedNonce", largestEstimateNonce, "staleTxs", len(staleTxs))
+		// Clean up metrics tracking for stale transactions
+		for _, staleTx := range staleTxs {
+			nonceStr := staleTx.Nonce.String()
+			txm.broadcastTimes.Delete(nonceStr)
+			txm.nonceBroadcastCounts.Delete(nonceStr)
+		}
 		if len(staleTxs) > 0 {
 			txm.lggr.Errorw("unexpected stale transactions after nonce fast-forward", "accountAddress", accountAddress)
 		}
-		nonce = largestEstimateNonce
+		nonceVar = largestEstimateNonce
+		// Update next nonce metric after fast-forward
+		txm.metrics.UpdateNextNonceMetric(ctx, accountAddress.String(), nonceVar)
 	}
 
 	L2GasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
@@ -317,11 +335,11 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
 	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
 
-	broadcastTxnV3.InvokeTxnV3.Nonce = nonce
+	broadcastTxnV3.InvokeTxnV3.Nonce = nonceVar
 
 	err = account.SignInvokeTransaction(ctx, &broadcastTxnV3.InvokeTxnV3)
 	if err != nil {
-		return txhash, err
+		return txhash, nil, err
 	}
 
 	execCtx, execCancel := context.WithTimeout(ctx, txm.cfg.TxTimeout())
@@ -336,23 +354,28 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 			// see the comment at resyncNonce for more details.
 			if resyncErr := txm.resyncNonce(ctx, client, accountAddress); resyncErr != nil {
 				txm.lggr.Errorw("failed to resync nonce after unsuccessful invoke", "error", err, "resyncError", resyncErr)
-				return txhash, fmt.Errorf("failed to resync after bad invoke: %+w", err)
+				return txhash, nil, fmt.Errorf("failed to resync after bad invoke: %+w", err)
 			}
 		}
-		return txhash, fmt.Errorf("failed to invoke tx: %+w", err)
+		return txhash, nil, fmt.Errorf("failed to invoke tx: %+w", err)
 	}
 	// handle nil pointer
 	if res == nil {
-		return txhash, errors.New("execute response and error are nil")
+		return txhash, nil, errors.New("execute response and error are nil")
 	}
 
 	// update nonce if transaction is successful
 	txhash = res.TransactionHash.String()
-	err = txStore.AddUnconfirmed(nonce, txhash, call, publicKey)
+	err = txStore.AddUnconfirmed(nonceVar, txhash, call, publicKey)
 	if err != nil {
-		return txhash, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
+		return txhash, nil, fmt.Errorf("failed to add unconfirmed tx: %+w", err)
 	}
-	return txhash, nil
+
+	// Update next nonce metric (after AddUnconfirmed which increments the next nonce)
+	nextNonce := txStore.GetNextNonce()
+	txm.metrics.UpdateNextNonceMetric(ctx, accountAddress.String(), nextNonce)
+
+	return txhash, nonceVar, nil
 }
 
 func (txm *starktxm) updateMaxAmountBounds(gasConsumed *big.Int, padding int64) starknetrpc.U64 {
@@ -403,18 +426,24 @@ func (txm *starktxm) confirmLoop() {
 					continue
 				}
 				// Confirm all transactions with nonce lower than the latest.
-				confirmed, highestUnconfirmed := txm.accountStore.GetTxStore(accountAddress).Confirm(nonce)
+				confirmedTxs, highestUnconfirmed := txm.accountStore.GetTxStore(accountAddress).Confirm(nonce)
 				txm.lggr.Infow("Confirmation loop", "accountAddress", accountAddress, "latestNonce", nonce,
-					"transactionsConfirmed", confirmed, "highestUnconfirmed", highestUnconfirmed)
+					"transactionsConfirmed", len(confirmedTxs), "highestUnconfirmed", highestUnconfirmed)
 
-				// Increment confirmed transactions metric
-				if confirmed > 0 {
-					txm.metrics.IncrementNumConfirmedTxs(ctx, confirmed)
-					// Record confirmation duration for confirmed transactions
-					// Since we can't track individual transactions, we'll estimate based on confirmation poll interval
-					// This is a reasonable approximation for batch confirmations
-					estimatedDuration := float64(txm.cfg.ConfirmationPoll().Seconds()) * 0.5 // Half the poll interval as average
-					txm.metrics.RecordTimeUntilTxConfirmed(ctx, estimatedDuration)
+				// Increment confirmed transactions metric and record actual confirmation durations
+				if len(confirmedTxs) > 0 {
+					txm.metrics.IncrementNumConfirmedTxs(ctx, accountAddress.String(), len(confirmedTxs))
+					// Record actual confirmation duration for each confirmed transaction
+					now := time.Now()
+					for _, confirmedTx := range confirmedTxs {
+						nonceStr := confirmedTx.Nonce.String()
+						if broadcastTime, ok := txm.broadcastTimes.Load(nonceStr); ok {
+							duration := now.Sub(broadcastTime.(time.Time)).Seconds()
+							txm.metrics.RecordTimeUntilTxConfirmed(ctx, accountAddress.String(), duration)
+							// Clean up the broadcast time entry
+							txm.broadcastTimes.Delete(nonceStr)
+						}
+					}
 				}
 
 				// We add a maximum threshold between latest nonce and highest unconfirmed. This prevents the TXM from sending a very large
@@ -475,37 +504,22 @@ func (txm *starktxm) resyncNonce(ctx context.Context, client *starknet.Client, a
 
 	txm.lggr.Infow("resynced nonce", "accountAddress", "accountAddress", "previousNonce", currentNonce, "updatedNonce", rpcNonce, "staleTxCount", len(staleTxs))
 
+	// Clean up metrics tracking for stale transactions
+	for _, staleTx := range staleTxs {
+		nonceStr := staleTx.Nonce.String()
+		txm.broadcastTimes.Delete(nonceStr)
+		txm.nonceBroadcastCounts.Delete(nonceStr)
+	}
+
+	// Update next nonce metric after resync
+	txm.metrics.UpdateNextNonceMetric(ctx, accountAddress.String(), rpcNonce)
+
 	// Increment nonce gaps metric when stale transactions are found
 	if len(staleTxs) > 0 {
-		txm.metrics.IncrementNumNonceGaps(ctx)
+		txm.metrics.IncrementNumNonceGaps(ctx, accountAddress.String())
 	}
 
 	return nil
-}
-
-// trackRetryAttempt tracks retry attempts and updates max attempts metric
-func (txm *starktxm) trackRetryAttempt(ctx context.Context, txHash string) {
-	if txHash == "" {
-		return // Skip empty hashes
-	}
-
-	// Get current attempt count
-	currentAttempts := 0
-	if val, ok := txm.retryAttempts.Load(txHash); ok {
-		currentAttempts = val.(int)
-	}
-
-	// Increment attempt count
-	newAttempts := currentAttempts + 1
-	txm.retryAttempts.Store(txHash, newAttempts)
-
-	// Check if max attempts reached
-	if newAttempts >= txm.maxAttempts {
-		txm.lggr.Warnw("transaction reached max attempts", "txHash", txHash, "attempts", newAttempts)
-		txm.metrics.ReachedMaxAttempts(ctx, true)
-	} else {
-		txm.metrics.ReachedMaxAttempts(ctx, false)
-	}
 }
 
 func (txm *starktxm) Close() error {
@@ -541,7 +555,7 @@ func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *fel
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
 	default:
 		// Enqueue failed - this could indicate high load, slow processing, or other issues
-		txm.metrics.IncrementEnqueueFailed(ctx)
+		txm.metrics.IncrementEnqueueFailed(ctx, accountAddress.String())
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 

@@ -21,11 +21,12 @@ func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
 			name: "NilContext",
 			testFunc: func(t *testing.T, metrics TxMetrics) {
 				// Test that metrics handle nil context gracefully
-				metrics.IncrementNumBroadcastedTxs(context.TODO())
-				metrics.IncrementNumConfirmedTxs(context.TODO(), 1)
-				metrics.IncrementNumNonceGaps(context.TODO())
-				metrics.ReachedMaxAttempts(context.TODO(), true)
-				metrics.RecordTimeUntilTxConfirmed(context.TODO(), 1.0)
+				testAccount := "0x123"
+				metrics.IncrementNumBroadcastedTxs(context.TODO(), testAccount)
+				metrics.IncrementNumConfirmedTxs(context.TODO(), testAccount, 1)
+				metrics.IncrementNumNonceGaps(context.TODO(), testAccount)
+				metrics.IncrementNonceRebroadcast(context.TODO(), testAccount)
+				metrics.RecordTimeUntilTxConfirmed(context.TODO(), testAccount, 1.0)
 			},
 		},
 		{
@@ -33,13 +34,14 @@ func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
 			testFunc: func(t *testing.T, metrics TxMetrics) {
 				// Test that metrics handle negative confirmed count
 				ctx := context.Background()
+				testAccount := "0x123"
 				// Note: Prometheus counters cannot decrease, so we test with 0 and positive values
-				metrics.IncrementNumConfirmedTxs(ctx, 0)
-				metrics.IncrementNumConfirmedTxs(ctx, 1)
+				metrics.IncrementNumConfirmedTxs(ctx, testAccount, 0)
+				metrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
 
 				// For mock metrics, we can test negative values
 				if mockMetrics, ok := metrics.(*mockTxMetrics); ok {
-					mockMetrics.IncrementNumConfirmedTxs(ctx, -1)
+					mockMetrics.IncrementNumConfirmedTxs(ctx, testAccount, -1)
 				}
 			},
 		},
@@ -48,9 +50,10 @@ func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
 			testFunc: func(t *testing.T, metrics TxMetrics) {
 				// Test that metrics handle negative duration
 				ctx := context.Background()
-				metrics.RecordTimeUntilTxConfirmed(ctx, -1.0)
-				metrics.RecordTimeUntilTxConfirmed(ctx, 0.0)
-				metrics.RecordTimeUntilTxConfirmed(ctx, 1.0)
+				testAccount := "0x123"
+				metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, -1.0)
+				metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 0.0)
+				metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.0)
 			},
 		},
 		{
@@ -58,8 +61,9 @@ func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
 			testFunc: func(t *testing.T, metrics TxMetrics) {
 				// Test that metrics handle large values
 				ctx := context.Background()
-				metrics.IncrementNumConfirmedTxs(ctx, 1000000)
-				metrics.RecordTimeUntilTxConfirmed(ctx, 999999.99)
+				testAccount := "0x123"
+				metrics.IncrementNumConfirmedTxs(ctx, testAccount, 1000000)
+				metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 999999.99)
 			},
 		},
 	}
@@ -67,7 +71,7 @@ func TestTxMetrics_ErrorHandlingAdvanced(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test with Prometheus metrics
-			promMetrics := NewPrometheusMetrics("error-test-chain")
+			promMetrics := NewTxmMetrics("error-test-chain")
 			tt.testFunc(t, promMetrics)
 
 			// Test with mock metrics
@@ -93,12 +97,15 @@ func TestTxMetrics_ConcurrentAccess(t *testing.T) {
 			defer wg.Done()
 
 			// Mix of different metric calls
+			testAccount := "0x123"
 			for j := 0; j < 10; j++ {
-				mockMetrics.IncrementNumBroadcastedTxs(ctx)
-				mockMetrics.IncrementNumConfirmedTxs(ctx, goroutineID%3+1)
-				mockMetrics.IncrementNumNonceGaps(ctx)
-				mockMetrics.ReachedMaxAttempts(ctx, j%2 == 0)
-				mockMetrics.RecordTimeUntilTxConfirmed(ctx, float64(j))
+				mockMetrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+				mockMetrics.IncrementNumConfirmedTxs(ctx, testAccount, goroutineID%3+1)
+				mockMetrics.IncrementNumNonceGaps(ctx, testAccount)
+				if j%2 == 0 {
+					mockMetrics.IncrementNonceRebroadcast(ctx, testAccount)
+				}
+				mockMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, float64(j))
 			}
 		}(i)
 	}
@@ -116,7 +123,7 @@ func TestTxMetrics_PrometheusConcurrentAccess(t *testing.T) {
 
 	// Create metrics with unique test chain ID to avoid conflicts across test runs
 	chainID := fmt.Sprintf("concurrent-test-chain-%d", time.Now().UnixNano())
-	promMetrics := NewPrometheusMetrics(chainID)
+	promMetrics := NewTxmMetrics(chainID)
 	ctx := context.Background()
 
 	// Test concurrent access to Prometheus metrics
@@ -129,12 +136,15 @@ func TestTxMetrics_PrometheusConcurrentAccess(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
+			testAccount := "0x123"
 			for j := 0; j < callsPerGoroutine; j++ {
-				promMetrics.IncrementNumBroadcastedTxs(ctx)
-				promMetrics.IncrementNumConfirmedTxs(ctx, 1)
-				promMetrics.IncrementNumNonceGaps(ctx)
-				promMetrics.ReachedMaxAttempts(ctx, j%2 == 0)
-				promMetrics.RecordTimeUntilTxConfirmed(ctx, float64(j))
+				promMetrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+				promMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+				promMetrics.IncrementNumNonceGaps(ctx, testAccount)
+				if j%2 == 0 {
+					promMetrics.IncrementNonceRebroadcast(ctx, testAccount)
+				}
+				promMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, float64(j))
 			}
 		}()
 	}
@@ -143,9 +153,10 @@ func TestTxMetrics_PrometheusConcurrentAccess(t *testing.T) {
 
 	// Verify metrics were updated correctly
 	expectedCalls := numGoroutines * callsPerGoroutine
-	finalBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID)
-	finalConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID)
-	finalNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID)
+	testAccount := "0x123"
+	finalBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID, testAccount)
+	finalConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID, testAccount)
+	finalNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID, testAccount)
 
 	assert.Equal(t, float64(expectedCalls), finalBroadcasted)
 	assert.Equal(t, float64(expectedCalls), finalConfirmed)
@@ -161,13 +172,16 @@ func TestTxMetrics_Performance(t *testing.T) {
 	// Performance test - measure time for many metric calls
 	numCalls := 10000
 	start := time.Now()
+	testAccount := "0x123"
 
 	for i := 0; i < numCalls; i++ {
-		mockMetrics.IncrementNumBroadcastedTxs(ctx)
-		mockMetrics.IncrementNumConfirmedTxs(ctx, 1)
-		mockMetrics.IncrementNumNonceGaps(ctx)
-		mockMetrics.ReachedMaxAttempts(ctx, i%2 == 0)
-		mockMetrics.RecordTimeUntilTxConfirmed(ctx, float64(i))
+		mockMetrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+		mockMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+		mockMetrics.IncrementNumNonceGaps(ctx, testAccount)
+		if i%2 == 0 {
+			mockMetrics.IncrementNonceRebroadcast(ctx, testAccount)
+		}
+		mockMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, float64(i))
 	}
 
 	duration := time.Since(start)
@@ -176,11 +190,12 @@ func TestTxMetrics_Performance(t *testing.T) {
 	assert.Equal(t, numCalls, mockMetrics.GetBroadcastedCount())
 	assert.Equal(t, numCalls, mockMetrics.GetConfirmedCount())
 	assert.Equal(t, numCalls, mockMetrics.GetNonceGapsCount())
+	assert.Equal(t, numCalls/2+numCalls%2, mockMetrics.GetNonceRebroadcastCount()) // Half the calls
 	assert.Equal(t, numCalls, len(mockMetrics.GetTimeUntilTxConfirmed()))
 
 	// Performance should be reasonable (less than 1 second for 10k calls)
 	assert.Less(t, duration, time.Second, "Metrics should be fast")
-	t.Logf("Processed %d metric calls in %v", numCalls*5, duration)
+	t.Logf("Processed %d metric calls in %v", numCalls*4+numCalls/2, duration)
 }
 
 func TestTxMetrics_MemoryUsage(t *testing.T) {
@@ -191,8 +206,9 @@ func TestTxMetrics_MemoryUsage(t *testing.T) {
 
 	// Test memory usage with many duration recordings
 	numRecordings := 1000
+	testAccount := "0x123"
 	for i := 0; i < numRecordings; i++ {
-		mockMetrics.RecordTimeUntilTxConfirmed(ctx, float64(i))
+		mockMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, float64(i))
 	}
 
 	// Verify all recordings were stored
@@ -212,24 +228,23 @@ func TestTxMetrics_EdgeCases(t *testing.T) {
 	ctx := context.Background()
 
 	// Test edge cases
+	testAccount := "0x123"
 	t.Run("ZeroValues", func(t *testing.T) {
-		mockMetrics.IncrementNumConfirmedTxs(ctx, 0)
-		mockMetrics.RecordTimeUntilTxConfirmed(ctx, 0.0)
+		mockMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 0)
+		mockMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 0.0)
 		assert.Equal(t, 0, mockMetrics.GetConfirmedCount())
 	})
 
 	t.Run("VeryLargeValues", func(t *testing.T) {
-		mockMetrics.IncrementNumConfirmedTxs(ctx, 1000000)
-		mockMetrics.RecordTimeUntilTxConfirmed(ctx, 999999.99)
+		mockMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 1000000)
+		mockMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 999999.99)
 		assert.Equal(t, 1000000, mockMetrics.GetConfirmedCount())
 	})
 
-	t.Run("BooleanToggle", func(t *testing.T) {
-		mockMetrics.ReachedMaxAttempts(ctx, true)
-		assert.True(t, mockMetrics.GetReachedMaxAttempts())
-
-		mockMetrics.ReachedMaxAttempts(ctx, false)
-		assert.False(t, mockMetrics.GetReachedMaxAttempts())
+	t.Run("NonceRebroadcast", func(t *testing.T) {
+		initialCount := mockMetrics.GetNonceRebroadcastCount()
+		mockMetrics.IncrementNonceRebroadcast(ctx, testAccount)
+		assert.Equal(t, initialCount+1, mockMetrics.GetNonceRebroadcastCount())
 	})
 }
 
@@ -242,18 +257,19 @@ func TestTxMetrics_InterfaceComplianceAdvanced(t *testing.T) {
 
 	// Test that interface methods can be called
 	ctx := context.Background()
+	testAccount := "0x123"
 
-	promMetrics := NewPrometheusMetrics("compliance-test")
-	promMetrics.IncrementNumBroadcastedTxs(ctx)
-	promMetrics.IncrementNumConfirmedTxs(ctx, 1)
-	promMetrics.IncrementNumNonceGaps(ctx)
-	promMetrics.ReachedMaxAttempts(ctx, true)
-	promMetrics.RecordTimeUntilTxConfirmed(ctx, 1.0)
+	promMetrics := NewTxmMetrics("compliance-test")
+	promMetrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	promMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+	promMetrics.IncrementNumNonceGaps(ctx, testAccount)
+	promMetrics.IncrementNonceRebroadcast(ctx, testAccount)
+	promMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.0)
 
 	mockMetrics := newMockTxMetrics()
-	mockMetrics.IncrementNumBroadcastedTxs(ctx)
-	mockMetrics.IncrementNumConfirmedTxs(ctx, 1)
-	mockMetrics.IncrementNumNonceGaps(ctx)
-	mockMetrics.ReachedMaxAttempts(ctx, true)
-	mockMetrics.RecordTimeUntilTxConfirmed(ctx, 1.0)
+	mockMetrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	mockMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+	mockMetrics.IncrementNonceRebroadcast(ctx, testAccount)
+	mockMetrics.IncrementNumNonceGaps(ctx, testAccount)
+	mockMetrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.0)
 }

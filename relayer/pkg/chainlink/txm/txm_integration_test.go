@@ -37,9 +37,10 @@ func TestTXM_Integration_Metrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get initial metric values
-	initialBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID)
-	initialConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID)
-	initialNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID)
+	testAccount := "0x123"
+	initialBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID, testAccount)
+	initialConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID, testAccount)
+	initialNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID, testAccount)
 
 	// Test that metrics are properly initialized
 	assert.GreaterOrEqual(t, initialBroadcasted, 0.0)
@@ -89,12 +90,15 @@ func TestTXM_Integration_MetricsUnderLoad(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			testAccount := "0x123"
 			for j := 0; j < callsPerGoroutine; j++ {
-				metrics.IncrementNumBroadcastedTxs(ctx)
-				metrics.IncrementNumConfirmedTxs(ctx, 1)
-				metrics.IncrementNumNonceGaps(ctx)
-				metrics.ReachedMaxAttempts(ctx, j%2 == 0)
-				metrics.RecordTimeUntilTxConfirmed(ctx, float64(j))
+				metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+				metrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+				metrics.IncrementNumNonceGaps(ctx, testAccount)
+				if j%2 == 0 {
+					metrics.IncrementNonceRebroadcast(ctx, testAccount)
+				}
+				metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, float64(j))
 			}
 		}()
 	}
@@ -102,9 +106,10 @@ func TestTXM_Integration_MetricsUnderLoad(t *testing.T) {
 	wg.Wait()
 
 	// Verify metrics were updated
-	finalBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID)
-	finalConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID)
-	finalNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID)
+	testAccount := "0x123"
+	finalBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID, testAccount)
+	finalConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID, testAccount)
+	finalNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID, testAccount)
 
 	expectedCalls := numGoroutines * callsPerGoroutine
 	assert.Equal(t, float64(expectedCalls), finalBroadcasted)
@@ -156,13 +161,14 @@ func TestTXM_Integration_MultipleChains(t *testing.T) {
 	stxm2 := txm2.(*starktxm)
 
 	// Update metrics for each chain
-	stxm1.metrics.IncrementNumBroadcastedTxs(ctx)
-	stxm1.metrics.IncrementNumBroadcastedTxs(ctx)
-	stxm2.metrics.IncrementNumBroadcastedTxs(ctx)
+	testAccount := "0x123"
+	stxm1.metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	stxm1.metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	stxm2.metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
 
 	// Verify separate tracking
-	finalChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1)
-	finalChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2)
+	finalChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1, testAccount)
+	finalChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2, testAccount)
 
 	assert.Equal(t, 2.0, finalChain1, "Chain 1 should have 2 broadcasted transactions")
 	assert.Equal(t, 1.0, finalChain2, "Chain 2 should have 1 broadcasted transaction")

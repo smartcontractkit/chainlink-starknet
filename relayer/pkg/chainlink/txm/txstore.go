@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
-type UnconfirmedTx struct {
+type TxAttempt struct {
 	Hash      string
 	PublicKey *felt.Felt
 	Nonce     *felt.Felt
@@ -25,22 +25,22 @@ type TxStore struct {
 	lggr logger.Logger
 
 	nextNonce         *felt.Felt
-	unconfirmedNonces map[string]*UnconfirmedTx
+	unconfirmedNonces map[string]*TxAttempt
 }
 
 func NewTxStore(initialNonce *felt.Felt, lggr logger.Logger) *TxStore {
 	return &TxStore{
 		nextNonce:         new(felt.Felt).Set(initialNonce),
-		unconfirmedNonces: map[string]*UnconfirmedTx{},
+		unconfirmedNonces: map[string]*TxAttempt{},
 		lggr:              lggr,
 	}
 }
 
-func (s *TxStore) SetNextNonce(newNextNonce *felt.Felt) []*UnconfirmedTx {
+func (s *TxStore) SetNextNonce(newNextNonce *felt.Felt) []*TxAttempt {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	staleTxs := []*UnconfirmedTx{}
+	staleTxs := []*TxAttempt{}
 	s.nextNonce = new(felt.Felt).Set(newNextNonce)
 
 	// Remove any stale transactions with nonces greater than the new next nonce.
@@ -82,7 +82,7 @@ func (s *TxStore) AddUnconfirmed(nonce *felt.Felt, hash string, call starknetrpc
 		s.lggr.Warnf("nonce used: replacing tx (hash: %s) with nonce (%s) for tx with hash (%s)", h.Hash, nonce, hash)
 	}
 
-	s.unconfirmedNonces[nonceStr] = &UnconfirmedTx{
+	s.unconfirmedNonces[nonceStr] = &TxAttempt{
 		Nonce:     new(felt.Felt).Set(nonce),
 		PublicKey: new(felt.Felt).Set(publicKey),
 		Hash:      hash,
@@ -93,16 +93,23 @@ func (s *TxStore) AddUnconfirmed(nonce *felt.Felt, hash string, call starknetrpc
 	return nil
 }
 
-func (s *TxStore) Confirm(latestNonce *felt.Felt) (int, *felt.Felt) {
+func (s *TxStore) Confirm(latestNonce *felt.Felt) ([]*TxAttempt, *felt.Felt) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	// confirm all transactions with a nonce lower than the latest nonce
-	confirmed := 0
+	confirmed := []*TxAttempt{}
 	highestUnconfirmed := new(felt.Felt).SetUint64(0)
 	for nonceStr, tx := range s.unconfirmedNonces {
 		if tx.Nonce.Cmp(latestNonce) < 0 {
-			confirmed++
+			// Create a copy of the transaction before deleting
+			confirmedTx := &TxAttempt{
+				Hash:      tx.Hash,
+				PublicKey: new(felt.Felt).Set(tx.PublicKey),
+				Nonce:     new(felt.Felt).Set(tx.Nonce),
+				Call:      tx.Call,
+			}
+			confirmed = append(confirmed, confirmedTx)
 			delete(s.unconfirmedNonces, nonceStr)
 		}
 		if highestUnconfirmed.Cmp(tx.Nonce) < 0 {
@@ -113,7 +120,7 @@ func (s *TxStore) Confirm(latestNonce *felt.Felt) (int, *felt.Felt) {
 	return confirmed, highestUnconfirmed
 }
 
-func (s *TxStore) GetUnconfirmed() []*UnconfirmedTx {
+func (s *TxStore) GetUnconfirmed() []*TxAttempt {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -188,12 +195,12 @@ func (c *AccountStore) GetTotalInflightCount() int {
 	return count
 }
 
-func (c *AccountStore) GetAllUnconfirmed() map[string][]*UnconfirmedTx {
+func (c *AccountStore) GetAllUnconfirmed() map[string][]*TxAttempt {
 	// use read lock for methods that read underlying data
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	allUnconfirmed := map[string][]*UnconfirmedTx{}
+	allUnconfirmed := map[string][]*TxAttempt{}
 	for accountAddressStr, store := range c.store {
 		allUnconfirmed[accountAddressStr] = store.GetUnconfirmed()
 	}

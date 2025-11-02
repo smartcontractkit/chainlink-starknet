@@ -2,10 +2,12 @@ package txm
 
 import (
 	"context"
+	"math/big"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -19,48 +21,56 @@ type mockTxMetrics struct {
 	numBroadcastedTxs    int
 	numConfirmedTxs      int
 	numNonceGaps         int
-	reachedMaxAttempts   bool
 	timeUntilTxConfirmed []float64
 	enqueueFailed        int
+	nonceRebroadcast     int
+	nextNonce            map[string]int64 // accountAddress -> nonce
 }
 
 func newMockTxMetrics() *mockTxMetrics {
 	return &mockTxMetrics{
 		timeUntilTxConfirmed: make([]float64, 0),
+		nextNonce:            make(map[string]int64),
 	}
 }
 
-func (m *mockTxMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
+func (m *mockTxMetrics) IncrementNumBroadcastedTxs(ctx context.Context, accountAddress string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.numBroadcastedTxs++
 }
 
-func (m *mockTxMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
+func (m *mockTxMetrics) IncrementNumConfirmedTxs(ctx context.Context, accountAddress string, confirmedTransactions int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.numConfirmedTxs += confirmedTransactions
 }
 
-func (m *mockTxMetrics) IncrementNumNonceGaps(ctx context.Context) {
+func (m *mockTxMetrics) IncrementNumNonceGaps(ctx context.Context, accountAddress string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.numNonceGaps++
 }
 
-func (m *mockTxMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
+func (m *mockTxMetrics) IncrementNonceRebroadcast(ctx context.Context, accountAddress string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.reachedMaxAttempts = reached
+	m.nonceRebroadcast++
 }
 
-func (m *mockTxMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
+func (m *mockTxMetrics) UpdateNextNonceMetric(ctx context.Context, accountAddress string, nonce *felt.Felt) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.nextNonce[accountAddress] = nonce.BigInt(new(big.Int)).Int64()
+}
+
+func (m *mockTxMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, accountAddress string, duration float64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.timeUntilTxConfirmed = append(m.timeUntilTxConfirmed, duration)
 }
 
-func (m *mockTxMetrics) IncrementEnqueueFailed(ctx context.Context) {
+func (m *mockTxMetrics) IncrementEnqueueFailed(ctx context.Context, accountAddress string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.enqueueFailed++
@@ -84,10 +94,16 @@ func (m *mockTxMetrics) GetNonceGapsCount() int {
 	return m.numNonceGaps
 }
 
-func (m *mockTxMetrics) GetReachedMaxAttempts() bool {
+func (m *mockTxMetrics) GetNonceRebroadcastCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.reachedMaxAttempts
+	return m.nonceRebroadcast
+}
+
+func (m *mockTxMetrics) GetNextNonce(accountAddress string) int64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.nextNonce[accountAddress]
 }
 
 func (m *mockTxMetrics) GetTimeUntilTxConfirmed() []float64 {
@@ -133,10 +149,6 @@ func (m *mockConfig) TxTimeout() time.Duration {
 	return 30 * time.Second
 }
 
-func (m *mockConfig) MaxAttempts() int {
-	return 5
-}
-
 func (m *mockConfig) FeeEstimationMaxAttempts() int {
 	return 3
 }
@@ -151,11 +163,11 @@ func TestTxMetrics_EnqueueFailed(t *testing.T) {
 	assert.Equal(t, 0, mockMetrics.GetEnqueueFailedCount())
 
 	// Test incrementing enqueue failed events
-	mockMetrics.IncrementEnqueueFailed(ctx)
+	mockMetrics.IncrementEnqueueFailed(ctx, "0x123")
 	assert.Equal(t, 1, mockMetrics.GetEnqueueFailedCount())
 
-	mockMetrics.IncrementEnqueueFailed(ctx)
-	mockMetrics.IncrementEnqueueFailed(ctx)
+	mockMetrics.IncrementEnqueueFailed(ctx, "0x123")
+	mockMetrics.IncrementEnqueueFailed(ctx, "0x456")
 	assert.Equal(t, 3, mockMetrics.GetEnqueueFailedCount())
 }
 
@@ -251,16 +263,10 @@ func TestInflightCount_UpdatesMetrics(t *testing.T) {
 
 	require.NoError(t, err)
 
-	// Get initial metric value from Prometheus
-	initialValue := getGaugeValueFromPrometheus(t, "txm_reached_max_attempts", chainID)
-
 	// Call InflightCount (this doesn't update metrics in v2, but we can verify the method works)
 	queueCount, unconfirmedCount := txm.InflightCount()
 	assert.Equal(t, 0, queueCount)
 	assert.Equal(t, 0, unconfirmedCount)
-
-	// Verify it was actually called (value should be set, not just initial)
-	_ = initialValue // We set it regardless of initial value
 }
 
 func TestTxMetrics_Methods(t *testing.T) {
@@ -270,31 +276,34 @@ func TestTxMetrics_Methods(t *testing.T) {
 	ctx := context.Background()
 
 	// Test IncrementNumBroadcastedTxs
-	mockMetrics.IncrementNumBroadcastedTxs(ctx)
-	mockMetrics.IncrementNumBroadcastedTxs(ctx)
+	mockMetrics.IncrementNumBroadcastedTxs(ctx, "0x123")
+	mockMetrics.IncrementNumBroadcastedTxs(ctx, "0x123")
 	assert.Equal(t, 2, mockMetrics.GetBroadcastedCount())
 
 	// Test IncrementNumConfirmedTxs
-	mockMetrics.IncrementNumConfirmedTxs(ctx, 1)
+	mockMetrics.IncrementNumConfirmedTxs(ctx, "0x123", 1)
 	assert.Equal(t, 1, mockMetrics.GetConfirmedCount())
 
 	// Test IncrementNumNonceGaps
-	mockMetrics.IncrementNumNonceGaps(ctx)
-	mockMetrics.IncrementNumNonceGaps(ctx)
-	mockMetrics.IncrementNumNonceGaps(ctx)
+	mockMetrics.IncrementNumNonceGaps(ctx, "0x123")
+	mockMetrics.IncrementNumNonceGaps(ctx, "0x123")
+	mockMetrics.IncrementNumNonceGaps(ctx, "0x456")
 	assert.Equal(t, 3, mockMetrics.GetNonceGapsCount())
 
-	// Test ReachedMaxAttempts
-	mockMetrics.ReachedMaxAttempts(ctx, true)
-	assert.Equal(t, true, mockMetrics.GetReachedMaxAttempts())
+	// Test IncrementNonceRebroadcast
+	mockMetrics.IncrementNonceRebroadcast(ctx, "0x123")
+	mockMetrics.IncrementNonceRebroadcast(ctx, "0x123")
+	assert.Equal(t, 2, mockMetrics.GetNonceRebroadcastCount())
 
-	// Update with new value
-	mockMetrics.ReachedMaxAttempts(ctx, false)
-	assert.Equal(t, false, mockMetrics.GetReachedMaxAttempts())
+	// Test UpdateNextNonceMetric
+	testAccount := "0x123"
+	testNonce := new(felt.Felt).SetUint64(42)
+	mockMetrics.UpdateNextNonceMetric(ctx, testAccount, testNonce)
+	assert.Equal(t, int64(42), mockMetrics.GetNextNonce(testAccount))
 
 	// Test RecordTimeUntilTxConfirmed
-	mockMetrics.RecordTimeUntilTxConfirmed(ctx, 1.5)
-	mockMetrics.RecordTimeUntilTxConfirmed(ctx, 2.3)
+	mockMetrics.RecordTimeUntilTxConfirmed(ctx, "0x123", 1.5)
+	mockMetrics.RecordTimeUntilTxConfirmed(ctx, "0x123", 2.3)
 	times := mockMetrics.GetTimeUntilTxConfirmed()
 	assert.Equal(t, 2, len(times))
 	assert.Equal(t, 1.5, times[0])
@@ -318,7 +327,7 @@ func TestTxMetrics_MultipleCalls(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < incrementsPerGoroutine; j++ {
-				mockMetrics.IncrementNumBroadcastedTxs(ctx)
+				mockMetrics.IncrementNumBroadcastedTxs(ctx, "0x123")
 			}
 		}()
 	}
@@ -339,11 +348,11 @@ func TestTxMetrics_Isolation(t *testing.T) {
 	ctx := context.Background()
 
 	// Increment metrics1
-	metrics1.IncrementNumBroadcastedTxs(ctx)
-	metrics1.IncrementNumBroadcastedTxs(ctx)
+	metrics1.IncrementNumBroadcastedTxs(ctx, "0x123")
+	metrics1.IncrementNumBroadcastedTxs(ctx, "0x123")
 
 	// Increment metrics2
-	metrics2.IncrementNumConfirmedTxs(ctx, 1)
+	metrics2.IncrementNumConfirmedTxs(ctx, "0x456", 1)
 
 	// Verify metrics1
 	assert.Equal(t, 2, metrics1.GetBroadcastedCount())

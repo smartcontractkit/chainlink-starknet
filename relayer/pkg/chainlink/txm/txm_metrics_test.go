@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,13 +17,17 @@ func TestPrometheusMetrics_Registration(t *testing.T) {
 
 	// Initialize metrics by calling them once (promauto registers on first use)
 	testChainID := "test-registration"
-	metrics := NewPrometheusMetrics(testChainID)
+	metrics := NewTxmMetrics(testChainID)
 	ctx := context.Background()
-	metrics.IncrementNumBroadcastedTxs(ctx)
-	metrics.IncrementNumConfirmedTxs(ctx, 1)
-	metrics.IncrementNumNonceGaps(ctx)
-	metrics.ReachedMaxAttempts(ctx, true)
-	metrics.RecordTimeUntilTxConfirmed(ctx, 1.5)
+	testAccount := "0x123"
+	metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	metrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+	metrics.IncrementNumNonceGaps(ctx, testAccount)
+	metrics.IncrementNonceRebroadcast(ctx, testAccount)
+	metrics.IncrementEnqueueFailed(ctx, testAccount)
+	metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.5)
+	testNonce := new(felt.Felt).SetUint64(42)
+	metrics.UpdateNextNonceMetric(ctx, testAccount, testNonce)
 
 	// Test that all metrics are registered with Prometheus
 	metricFamilies, err := prometheus.DefaultGatherer.Gather()
@@ -32,8 +37,9 @@ func TestPrometheusMetrics_Registration(t *testing.T) {
 		"txm_num_broadcasted_transactions": false,
 		"txm_num_confirmed_transactions":   false,
 		"txm_num_nonce_gaps":               false,
-		"txm_reached_max_attempts":         false,
 		"txm_time_until_tx_confirmed":      false,
+		"txm_enqueue_failed":               false,
+		"txm_nonce_rebroadcast":            false,
 	}
 
 	for _, mf := range metricFamilies {
@@ -47,11 +53,11 @@ func TestPrometheusMetrics_Registration(t *testing.T) {
 	}
 }
 
-func TestNewPrometheusMetrics(t *testing.T) {
+func TestNewTxmMetrics(t *testing.T) {
 	t.Parallel()
 
 	chainID := "test-chain-prometheus"
-	metrics := NewPrometheusMetrics(chainID)
+	metrics := NewTxmMetrics(chainID)
 
 	// Verify it returns the correct type
 	_, ok := metrics.(*prometheusMetrics)
@@ -69,26 +75,27 @@ func TestPrometheusMetrics_Increment(t *testing.T) {
 	t.Parallel()
 
 	chainID := "test-chain-increment"
-	metrics := NewPrometheusMetrics(chainID)
+	metrics := NewTxmMetrics(chainID)
 	ctx := context.Background()
 
 	// Get initial values
-	initialBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID)
-	initialConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID)
-	initialNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID)
+	testAccount := "0x123"
+	initialBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID, testAccount)
+	initialConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID, testAccount)
+	initialNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID, testAccount)
 
 	// Increment metrics
-	metrics.IncrementNumBroadcastedTxs(ctx)
-	metrics.IncrementNumBroadcastedTxs(ctx)
-	metrics.IncrementNumConfirmedTxs(ctx, 1)
-	metrics.IncrementNumNonceGaps(ctx)
-	metrics.IncrementNumNonceGaps(ctx)
-	metrics.IncrementNumNonceGaps(ctx)
+	metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+	metrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
+	metrics.IncrementNumNonceGaps(ctx, testAccount)
+	metrics.IncrementNumNonceGaps(ctx, testAccount)
+	metrics.IncrementNumNonceGaps(ctx, testAccount)
 
 	// Verify increments
-	finalBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID)
-	finalConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID)
-	finalNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID)
+	finalBroadcasted := getCounterValue(t, "txm_num_broadcasted_transactions", chainID, testAccount)
+	finalConfirmed := getCounterValue(t, "txm_num_confirmed_transactions", chainID, testAccount)
+	finalNonceGaps := getCounterValue(t, "txm_num_nonce_gaps", chainID, testAccount)
 
 	assert.Equal(t, initialBroadcasted+2, finalBroadcasted, "Broadcasted transactions should increment by 2")
 	assert.Equal(t, initialConfirmed+1, finalConfirmed, "Confirmed transactions should increment by 1")
@@ -99,18 +106,19 @@ func TestPrometheusMetrics_SetGauge(t *testing.T) {
 	t.Parallel()
 
 	chainID := "test-chain-gauge"
-	metrics := NewPrometheusMetrics(chainID)
+	metrics := NewTxmMetrics(chainID)
 	ctx := context.Background()
 
-	// Set gauge values
-	metrics.ReachedMaxAttempts(ctx, true)
-	value := getGaugeValue(t, "txm_reached_max_attempts", chainID)
-	assert.Equal(t, 1.0, value, "Gauge should be set to 1 (true)")
+	// Test IncrementNonceRebroadcast
+	testAccount := "0x123"
+	metrics.IncrementNonceRebroadcast(ctx, testAccount)
+	value := getCounterValue(t, "txm_nonce_rebroadcast", chainID, testAccount)
+	assert.Equal(t, 1.0, value, "Nonce rebroadcast should increment by 1")
 
-	// Update gauge
-	metrics.ReachedMaxAttempts(ctx, false)
-	value = getGaugeValue(t, "txm_reached_max_attempts", chainID)
-	assert.Equal(t, 0.0, value, "Gauge should be updated to 0 (false)")
+	// Test IncrementNonceRebroadcast again
+	metrics.IncrementNonceRebroadcast(ctx, testAccount)
+	value = getCounterValue(t, "txm_nonce_rebroadcast", chainID, testAccount)
+	assert.Equal(t, 2.0, value, "Nonce rebroadcast should increment to 2")
 }
 
 func TestPrometheusMetrics_MultipleChains(t *testing.T) {
@@ -119,39 +127,48 @@ func TestPrometheusMetrics_MultipleChains(t *testing.T) {
 	chain1 := "chain-1-multi"
 	chain2 := "chain-2-multi"
 
-	metrics1 := NewPrometheusMetrics(chain1)
-	metrics2 := NewPrometheusMetrics(chain2)
+	metrics1 := NewTxmMetrics(chain1)
+	metrics2 := NewTxmMetrics(chain2)
 	ctx := context.Background()
 
 	// Get initial values
-	initialChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1)
-	initialChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2)
+	testAccount := "0x123"
+	initialChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1, testAccount)
+	initialChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2, testAccount)
 
 	// Increment different chains
-	metrics1.IncrementNumBroadcastedTxs(ctx)
-	metrics1.IncrementNumBroadcastedTxs(ctx)
-	metrics2.IncrementNumBroadcastedTxs(ctx)
+	metrics1.IncrementNumBroadcastedTxs(ctx, testAccount)
+	metrics1.IncrementNumBroadcastedTxs(ctx, testAccount)
+	metrics2.IncrementNumBroadcastedTxs(ctx, testAccount)
 
 	// Verify separate tracking
-	finalChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1)
-	finalChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2)
+	finalChain1 := getCounterValue(t, "txm_num_broadcasted_transactions", chain1, testAccount)
+	finalChain2 := getCounterValue(t, "txm_num_broadcasted_transactions", chain2, testAccount)
 
 	assert.Equal(t, initialChain1+2, finalChain1, "Chain 1 should increment by 2")
 	assert.Equal(t, initialChain2+1, finalChain2, "Chain 2 should increment by 1")
 }
 
 // Helper function to get counter value from Prometheus
-func getCounterValue(t *testing.T, metricName, chainID string) float64 {
+func getCounterValue(t *testing.T, metricName, chainID, accountAddress string) float64 {
 	metricFamilies, err := prometheus.DefaultGatherer.Gather()
 	require.NoError(t, err)
 
 	for _, mf := range metricFamilies {
 		if mf.GetName() == metricName {
 			for _, metric := range mf.GetMetric() {
+				chainMatch := false
+				accountMatch := false
 				for _, labelPair := range metric.GetLabel() {
 					if labelPair.GetName() == "chainID" && labelPair.GetValue() == chainID {
-						return metric.GetCounter().GetValue()
+						chainMatch = true
 					}
+					if labelPair.GetName() == "accountAddress" && labelPair.GetValue() == accountAddress {
+						accountMatch = true
+					}
+				}
+				if chainMatch && accountMatch {
+					return metric.GetCounter().GetValue()
 				}
 			}
 		}
@@ -183,16 +200,60 @@ func TestPrometheusMetrics_EnqueueFailed(t *testing.T) {
 
 	// Create metrics with unique test chain ID to avoid conflicts across test runs
 	chainID := fmt.Sprintf("test-chain-enqueue-%d", time.Now().UnixNano())
-	metrics := NewPrometheusMetrics(chainID)
+	metrics := NewTxmMetrics(chainID)
 
 	ctx := context.Background()
 
 	// Test incrementing enqueue failed events
-	metrics.IncrementEnqueueFailed(ctx)
-	metrics.IncrementEnqueueFailed(ctx)
-	metrics.IncrementEnqueueFailed(ctx)
+	testAccount := "0x123"
+	metrics.IncrementEnqueueFailed(ctx, testAccount)
+	metrics.IncrementEnqueueFailed(ctx, testAccount)
+	metrics.IncrementEnqueueFailed(ctx, testAccount)
 
 	// Verify the metric was incremented by checking the counter value
-	finalValue := getCounterValue(t, "txm_enqueue_failed", chainID)
+	finalValue := getCounterValue(t, "txm_enqueue_failed", chainID, testAccount)
 	assert.Equal(t, 3.0, finalValue)
+}
+
+func TestPrometheusMetrics_BeholderMetricsInitialized(t *testing.T) {
+	t.Parallel()
+
+	chainID := "test-beholder-init"
+	metrics := NewTxmMetrics(chainID)
+
+	// Verify that the metrics struct has beholder metrics initialized
+	pm, ok := metrics.(*prometheusMetrics)
+	require.True(t, ok, "Should be prometheusMetrics type")
+
+	// Verify beholder metrics are not nil (they should be initialized)
+	// Note: Even if beholder is not configured, they might be noop metrics, not nil
+	assert.NotNil(t, pm.numBroadcastedTxs)
+	assert.NotNil(t, pm.numConfirmedTxs)
+	assert.NotNil(t, pm.numNonceGaps)
+	assert.NotNil(t, pm.timeUntilTxConfirmed)
+	assert.NotNil(t, pm.enqueueFailed)
+	assert.NotNil(t, pm.nonceRebroadcast)
+	assert.NotNil(t, pm.nextNonce)
+}
+
+func TestPrometheusMetrics_BeholderMetricsCanBeCalled(t *testing.T) {
+	t.Parallel()
+
+	chainID := "test-beholder-call"
+	metrics := NewTxmMetrics(chainID)
+	ctx := context.Background()
+
+	// Verify all beholder metrics can be called without panicking
+	// This ensures they're properly initialized and can handle method calls
+	testAccount := "0x123"
+	assert.NotPanics(t, func() {
+		metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
+		metrics.IncrementNumConfirmedTxs(ctx, testAccount, 5)
+		metrics.IncrementNumNonceGaps(ctx, testAccount)
+		metrics.IncrementNonceRebroadcast(ctx, testAccount)
+		metrics.RecordTimeUntilTxConfirmed(ctx, testAccount, 1.5)
+		metrics.IncrementEnqueueFailed(ctx, testAccount)
+		testNonce := new(felt.Felt).SetUint64(42)
+		metrics.UpdateNextNonceMetric(ctx, testAccount, testNonce)
+	})
 }

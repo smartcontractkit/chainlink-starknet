@@ -8,6 +8,5 @@ import "time"
 type Config interface {
 	ConfirmationPoll() time.Duration
 	TxTimeout() time.Duration
-	MaxAttempts() int
 	FeeEstimationMaxAttempts() int
 }
