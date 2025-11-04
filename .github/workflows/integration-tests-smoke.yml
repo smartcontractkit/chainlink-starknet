@@ -21,7 +21,7 @@ concurrency:
 
 env:
   TEST_LOG_LEVEL: debug
-  CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink
+  CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
   ENV_JOB_IMAGE: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:${{ github.sha }}
   GAUNTLET_PP_IMAGE: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.0
 
@@ -60,20 +60,28 @@ jobs:
           echo "CUSTOM_CORE_REF=${CL_REF}" >> "${GITHUB_ENV}"
         env:
           CL_REF: ${{ github.event.inputs.cl_branch_ref }}
+      - name: Checkout the repo
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/checkout@v5
+        with:
+          repository: smartcontractkit/chainlink
+          ref: ${{ env.CUSTOM_CORE_REF }}
+          persist-credentials: false
       - name: Build Image
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/.github/actions/ctf-build-image@7b28f2c598c26a8a0af8818b64d5344247752c71 # v0.1.3
+        uses: smartcontractkit/.github/actions/ctf-build-image@1d86ef6568d0830d212fc0091d352170dae07dc7 # v1.2.0
         with:
-          cl_repo: smartcontractkit/chainlink
-          cl_ref: ${{ env.CUSTOM_CORE_REF }}
-          should_checkout: true
-          cl_dockerfile: plugins/chainlink.Dockerfile
-          # commit of the caller branch
-          dep_starknet_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          push_tag: ${{ env.CL_ECR }}:starknet.${{ github.sha }}
-          QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
-          QA_AWS_ROLE_TO_ASSUME: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
-          QA_PRIVATE_GHA_PULL: ${{ secrets.QA_PRIVATE_GHA_PULL }}
+          platform: "linux/arm64"
+          dockerfile: plugins/chainlink.Dockerfile
+          plugin-manifest-overrides: |
+            starknet=${{ github.event.pull_request.head.sha || github.sha }}
+          # registry info
+          docker-registry-url: ${{ env.CL_ECR }}
+          docker-repository-name: chainlink
+          image-tag: starknet.${{ github.sha }}
+          aws-region: ${{ secrets.QA_AWS_REGION }}
+          aws-role-arn: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+          aws-account-number: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
       - name: Print Chainlink Image Built
         run: |
           echo "### chainlink image tag used for this test run :link:" >> $GITHUB_STEP_SUMMARY
