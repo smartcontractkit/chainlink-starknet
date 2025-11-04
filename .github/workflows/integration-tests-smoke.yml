@@ -28,7 +28,7 @@ env:
 jobs:
   build_chainlink_image:
     name: Build Chainlink Image
-    runs-on: ubuntu-latest-arm64
+    runs-on: ubuntu-24.04-arm
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     environment: integration
