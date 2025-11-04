@@ -69,23 +69,26 @@ jobs:
           persist-credentials: false
       - name: Build Image
         if: steps.check-image.outputs.exists == 'false'
+        env:
+          # for PR builds, ${{ github.sha }} is the temporary merge commit, we want the head commit instead
+          SN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         uses: smartcontractkit/.github/actions/ctf-build-image@1d86ef6568d0830d212fc0091d352170dae07dc7 # v1.2.0
         with:
           platform: "linux/arm64"
           dockerfile: plugins/chainlink.Dockerfile
           plugin-manifest-overrides: |
-            starknet=${{ github.event.pull_request.head.sha || github.sha }}
+            starknet=${{ env.SN_SHA }}
           # registry info
           docker-registry-url: ${{ env.CL_ECR }}
           docker-repository-name: chainlink
-          image-tag: starknet.${{ github.sha }}
+          image-tag: starknet.${{ env.SN_SHA }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
           aws-role-arn: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           aws-account-number: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
       - name: Print Chainlink Image Built
         run: |
           echo "### chainlink image tag used for this test run :link:" >> $GITHUB_STEP_SUMMARY
-          echo "\`starknet.${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "\`starknet.${{ env.SN_SHA }}\`" >> $GITHUB_STEP_SUMMARY
 
   build_test_image:
     environment: integration
