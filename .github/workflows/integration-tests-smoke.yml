@@ -26,15 +26,29 @@ env:
   CL_ECR: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
 
 jobs:
-  build_chainlink_image:
+  build_chainlink_images:
     name: Build Chainlink Image
-    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        include:
+          - platform: "linux/arm64"
+            runner: ubuntu-24.04-arm
+            arch: arm64
+          - platform: "linux/amd64"
+            runner: ubuntu-24.04
+            arch: amd64
+    runs-on: ${{ matrix.runner }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     environment: integration
     permissions:
       id-token: write
       contents: read
+    outputs:
+      docker-image-sha-digest-arm64:
+        ${{ steps.build-core.outputs.docker-image-sha-digest-arm64 }}
+      docker-image-sha-digest-amd64:
+        ${{ steps.build-core.outputs.docker-image-sha-digest-amd64 }}
     steps:
       - name: Check if chainlink-starknet image exists
         id: check-image
@@ -68,24 +82,55 @@ jobs:
           ref: ${{ env.CUSTOM_CORE_REF }}
           persist-credentials: false
       - name: Build Image
+        id: build-core
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/.github/actions/ctf-build-image@1d86ef6568d0830d212fc0091d352170dae07dc7 # v1.2.0
+        uses: smartcontractkit/.github/actions/ctf-build-image@888ae94cccb075c19526aa9ccd9b1d0a4a52b62b # v1.3.0
         with:
-          platform: "linux/arm64"
+          platform: ${{ matrix.platform }}
           dockerfile: plugins/chainlink.Dockerfile
           plugin-manifest-overrides: |
             starknet=${{ env.SN_SHA }}
           # registry info
           docker-registry-url: ${{ env.CL_ECR }}
           docker-repository-name: chainlink
-          image-tag: starknet.${{ env.SN_SHA }}
+          image-tag: starknet.${{ env.SN_SHA }}-${{ matrix.arch }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
           aws-role-arn: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           aws-account-number: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
       - name: Print Chainlink Image Built
         run: |
           echo "### chainlink image tag used for this test run :link:" >> $GITHUB_STEP_SUMMARY
-          echo "\`starknet.${{ env.SN_SHA }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "\`starknet.${{ env.SN_SHA }}-${{ matrix.arch }}\`" >> $GITHUB_STEP_SUMMARY
+ 
+  build_multiplatform_image:
+    name: Build Multi-Platform Chainlink Image
+    needs: build_chainlink_images
+    environment: integration
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: smartcontractkit/.github/actions/build-push-docker-manifest@ce87497eb287565c796a8a781508be949f3ed1e2 # build-push-docker@1.0.0
+        with:
+          # Used for verifying the image signed with cosign.
+          cosign-oidc-identity-regexp: "^https://github.com/smartcontractkit/.*$"
+          docker-registry-url: ${{ env.CL_ECR }}
+          docker-repository-name: chainlink
+          docker-manifest-sign: true
+          docker-manifest-tag: starknet.${{ env.SN_SHA }}
+          docker-image-name-digests: >-
+            ${{
+              format(
+                '{0},{1}',
+                needs.build_chainlink_images.outputs.docker-image-sha-digest-amd64,
+                needs.build_chainlink_images.outputs.docker-image-sha-digest-arm64
+              )
+            }}
+          aws-region: ${{ secrets.QA_AWS_REGION }}
+          aws-role-arn: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
+          aws-account-number: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
+
 
   build_test_image:
     environment: integration
@@ -118,7 +163,7 @@ jobs:
   run_tests:
     name: Run Smoke Tests
     runs-on: ubuntu24.04-16cores-64GB
-    needs: [build_chainlink_image, build_test_image]
+    needs: [build_multiplatform_image, build_test_image]
     environment: integration
     env:
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com
