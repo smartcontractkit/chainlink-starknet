@@ -84,7 +84,7 @@ jobs:
       - name: Build Image
         id: build-core
         if: steps.check-image.outputs.exists == 'false'
-        uses: smartcontractkit/.github/actions/ctf-build-image@888ae94cccb075c19526aa9ccd9b1d0a4a52b62b # v1.3.0
+        uses: smartcontractkit/.github/actions/ctf-build-image@61c6a8d174fcae10d436cc38c577f962396babbe # v1.3.0
         with:
           platform: ${{ matrix.platform }}
           dockerfile: plugins/chainlink.Dockerfile
