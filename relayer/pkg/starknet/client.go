@@ -173,3 +173,13 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 
 	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, accountAddress)
 }
+
+func (c *Client) AccountNonceLatest(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, accountAddress)
+}

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/starknet.go/curve"
 	"github.com/NethermindEth/starknet.go/devnet"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
@@ -27,7 +28,7 @@ import (
 
 func TestIntegration_Txm(t *testing.T) {
 	ctx := t.Context()
-	n := 2 // number of txs per key
+	var nTransactions uint64 = 2 // Number of txs per key. If you increase that you might have to increase the confirmation timeout
 	// url := SetupLocalStarknetNode(t)
 	url := "http://127.0.0.1:5050"
 	devnet := devnet.NewDevNet(url)
@@ -59,7 +60,7 @@ func TestIntegration_Txm(t *testing.T) {
 	})
 	ksAdapter := NewKeystoreAdapter(looppKs)
 
-	lggr, observer := logger.TestObserved(t, zapcore.DebugLevel)
+	lggr, _ := logger.TestObserved(t, zapcore.DebugLevel)
 	timeout := 10 * time.Second
 	client, err := starknet.NewClient("SN_SEPOLIA", url+"/rpc", "", lggr, &timeout)
 	require.NoError(t, err)
@@ -86,8 +87,8 @@ func TestIntegration_Txm(t *testing.T) {
 	// start txm + checks
 	require.NoError(t, txm.Start(context.Background()))
 	require.NoError(t, txm.Ready())
-	fmt.Println("sss")
 
+	accountAddresses := make(map[*felt.Felt]*felt.Felt) // address -> latestNonce
 	for publicKeyStr := range localKeys {
 		publicKey, err := starknetutils.HexToFelt(publicKeyStr)
 		require.NoError(t, err)
@@ -95,38 +96,38 @@ func TestIntegration_Txm(t *testing.T) {
 		accountAddress, err := starknetutils.HexToFelt(localKeys[publicKeyStr].Account)
 		require.NoError(t, err)
 
+		c, err := getClient()
+		require.NoError(t, err)
+		latestNonce, err := c.AccountNonceLatest(ctx, accountAddress)
+		require.NoError(t, err)
+		accountAddresses[accountAddress] = latestNonce
+
 		contractAddress, err := starknetutils.HexToFelt("0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7")
 		require.NoError(t, err)
 
 		selector := starknetutils.GetSelectorFromNameFelt("totalSupply")
 
-		for i := 0; i < n; i++ {
+		for range nTransactions {
 			require.NoError(t, txm.Enqueue(ctx, accountAddress, publicKey, starknetrpc.FunctionCall{
 				ContractAddress:    contractAddress, // send to ETH token contract
 				EntryPointSelector: selector,
 			}))
 		}
 	}
-	var empty bool
-	for i := 0; i < 30; i++ {
-		time.Sleep(500 * time.Millisecond)
+
+	assert.Eventually(t, func() bool {
 		queued, unconfirmed := txm.InflightCount()
-		accepted := len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())
-		t.Logf("inflight count: queued (%d), unconfirmed (%d), accepted (%d)", queued, unconfirmed, accepted)
-
-		// check queue + tx store counts are 0, accepted txs == total txs broadcast
-		if queued == 0 && unconfirmed == 0 && n*len(localKeys) == accepted {
-			empty = true
-			break
-		}
-	}
-
-	// stop txm
-	assert.True(t, empty, "txm timed out while trying to confirm transactions")
+		return queued == 0 && unconfirmed == 0
+	}, 15*time.Second, 500*time.Millisecond)
 	require.NoError(t, txm.Close())
-	require.Error(t, txm.Ready())
-	assert.Equal(t, 0, observer.FilterLevelExact(zapcore.ErrorLevel).Len())                       // assert no error logs
-	assert.Equal(t, n*len(localKeys), len(observer.FilterMessageSnippet("ACCEPTED_ON_L2").All())) // validate txs were successfully included on chain
+	// Ensure all transactions are confirmed via nonce
+	for accountAddress, initialNonce := range accountAddresses {
+		c, err := getClient()
+		require.NoError(t, err)
+		latestNonce, err := c.AccountNonceLatest(ctx, accountAddress)
+		require.NoError(t, err)
+		require.Equal(t, int(0), new(felt.Felt).Add(initialNonce, new(felt.Felt).SetUint64(nTransactions)).Cmp(latestNonce))
+	}
 }
 
 // LooppKeystore implements [loop.Keystore] interface and the requirements

@@ -8,6 +8,8 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	"golang.org/x/exp/maps"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 type UnconfirmedTx struct {
@@ -20,15 +22,17 @@ type UnconfirmedTx struct {
 // TxStore tracks broadcast & unconfirmed txs per account address per chain id
 type TxStore struct {
 	lock sync.RWMutex
+	lggr logger.Logger
 
 	nextNonce         *felt.Felt
 	unconfirmedNonces map[string]*UnconfirmedTx
 }
 
-func NewTxStore(initialNonce *felt.Felt) *TxStore {
+func NewTxStore(initialNonce *felt.Felt, lggr logger.Logger) *TxStore {
 	return &TxStore{
 		nextNonce:         new(felt.Felt).Set(initialNonce),
 		unconfirmedNonces: map[string]*UnconfirmedTx{},
+		lggr:              lggr,
 	}
 }
 
@@ -75,7 +79,7 @@ func (s *TxStore) AddUnconfirmed(nonce *felt.Felt, hash string, call starknetrpc
 
 	nonceStr := nonce.String()
 	if h, exists := s.unconfirmedNonces[nonceStr]; exists {
-		return fmt.Errorf("nonce used: tried to use nonce (%s) for tx (%s), already used by (%s)", nonce, h.Hash, h)
+		s.lggr.Warnf("nonce used: replacing tx (hash: %s) with nonce (%s) for tx with hash (%s)", h.Hash, nonce, hash)
 	}
 
 	s.unconfirmedNonces[nonceStr] = &UnconfirmedTx{
@@ -89,21 +93,24 @@ func (s *TxStore) AddUnconfirmed(nonce *felt.Felt, hash string, call starknetrpc
 	return nil
 }
 
-func (s *TxStore) Confirm(nonce *felt.Felt, hash string) error {
+func (s *TxStore) Confirm(latestNonce *felt.Felt) (int, *felt.Felt) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	nonceStr := nonce.String()
-	unconfirmed, exists := s.unconfirmedNonces[nonceStr]
-	if !exists {
-		return fmt.Errorf("no such unconfirmed nonce: %s", nonce)
+	// confirm all transactions with a nonce lower than the latest nonce
+	confirmed := 0
+	highestUnconfirmed := new(felt.Felt).SetUint64(0)
+	for nonceStr, tx := range s.unconfirmedNonces {
+		if tx.Nonce.Cmp(latestNonce) < 0 {
+			confirmed++
+			delete(s.unconfirmedNonces, nonceStr)
+		}
+		if highestUnconfirmed.Cmp(tx.Nonce) < 0 {
+			highestUnconfirmed = tx.Nonce
+		}
 	}
-	// sanity check that the hash matches
-	if unconfirmed.Hash != hash {
-		return fmt.Errorf("unexpected tx hash: expected %s, got %s", unconfirmed.Hash, hash)
-	}
-	delete(s.unconfirmedNonces, nonceStr)
-	return nil
+
+	return confirmed, highestUnconfirmed
 }
 
 func (s *TxStore) GetUnconfirmed() []*UnconfirmedTx {
@@ -137,7 +144,14 @@ func NewAccountStore() *AccountStore {
 	}
 }
 
-func (c *AccountStore) CreateTxStore(accountAddress *felt.Felt, initialNonce *felt.Felt) (*TxStore, error) {
+func (c *AccountStore) Accounts() []string {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	return maps.Keys(c.store)
+}
+
+func (c *AccountStore) CreateTxStore(accountAddress *felt.Felt, initialNonce *felt.Felt, lggr logger.Logger) (*TxStore, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	addressStr := accountAddress.String()
@@ -145,7 +159,7 @@ func (c *AccountStore) CreateTxStore(accountAddress *felt.Felt, initialNonce *fe
 	if ok {
 		return nil, fmt.Errorf("TxStore already exists: %s", accountAddress)
 	}
-	store := NewTxStore(initialNonce)
+	store := NewTxStore(initialNonce, logger.Named(lggr, "TxStore"))
 	c.store[addressStr] = store
 	return store, nil
 }
