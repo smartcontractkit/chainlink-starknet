@@ -10,7 +10,7 @@ jobs:
     if: always()
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           persist-credentials: false
@@ -29,12 +29,12 @@ jobs:
 
   sonarqube:
     name: SonarQube Scan
-    needs: [ wait_for_workflows ]
+    needs: [wait_for_workflows]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # fetches all history for all tags and branches to provide more metadata for sonar reports
           persist-credentials: false
@@ -46,7 +46,7 @@ jobs:
           name_is_regexp: true
           name: go-unit-tests-results
           if_no_artifact_found: warn
-     
+
       - name: Download Golangci Relayer report
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # v6
         with:
@@ -64,7 +64,7 @@ jobs:
           name_is_regexp: true
           name: golangci-lint-ops-report
           if_no_artifact_found: warn
-      
+
       - name: Download Golangci-lint Integration tests report
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # v6
         with:

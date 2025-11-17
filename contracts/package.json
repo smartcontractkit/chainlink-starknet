@@ -17,7 +17,7 @@
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",
-    "ethers": "^5.6.8",
+    "ethers": "^5.7.2",
     "hardhat": "^2.16.1",
     "solidity-coverage": "^0.8.2"
   },
