@@ -105,6 +105,9 @@ func (txm *starktxm) Name() string {
 
 func (txm *starktxm) Start(ctx context.Context) error {
 	return txm.starter.StartOnce("Txm", func() error {
+		accounts := txm.accountStore.Accounts()
+		txm.lggr.Infow("TXM starting", "chainID", txm.chainID, "accounts", accounts, "queueCapacity", cap(txm.queue))
+
 		txm.done.Add(2) // waitgroup: broadcast loop and confirm loop
 		go txm.broadcastLoop()
 		go txm.confirmLoop()
@@ -119,13 +122,14 @@ func (txm *starktxm) broadcastLoop() {
 	ctx, cancel := utils.ContextFromChan(txm.stop)
 	defer cancel()
 
-	txm.lggr.Debugw("broadcastLoop: started")
+	txm.lggr.Infow("broadcastLoop: started")
 	for {
 		select {
 		case <-txm.stop:
-			txm.lggr.Debugw("broadcastLoop: stopped")
+			txm.lggr.Infow("broadcastLoop: stopped")
 			return
 		case tx := <-txm.queue:
+			txm.lggr.Infow("broadcastLoop: received transaction from queue", "accountAddress", tx.accountAddress)
 			if _, err := txm.client.Get(); err != nil {
 				txm.lggr.Errorw("failed to fetch client: skipping processing tx", "error", err)
 				continue
@@ -136,7 +140,7 @@ func (txm *starktxm) broadcastLoop() {
 			if err != nil {
 				txm.lggr.Errorw("transaction failed to broadcast", "error", err, "tx", tx.call)
 			} else {
-				txm.lggr.Infow("transaction broadcast", "txhash", hash, "nonce", nonce)
+				txm.lggr.Infow("transaction broadcast", "txhash", hash, "nonce", nonce, "accountAddress", tx.accountAddress)
 				// Increment broadcasted transactions metric
 				txm.metrics.IncrementNumBroadcastedTxs(ctx, tx.accountAddress.String())
 
@@ -398,7 +402,7 @@ func (txm *starktxm) confirmLoop() {
 
 	tick := time.After(txm.cfg.ConfirmationPoll())
 
-	txm.lggr.Debugw("confirmLoop: started")
+	txm.lggr.Infow("confirmLoop: started")
 
 	for {
 		var start time.Time
@@ -543,19 +547,24 @@ func (txm *starktxm) HealthReport() map[string]error {
 }
 
 func (txm *starktxm) Enqueue(ctx context.Context, accountAddress, publicKey *felt.Felt, tx starknetrpc.FunctionCall) error {
+	txm.lggr.Infow("Enqueue: attempting to enqueue transaction", "accountAddress", accountAddress, "contractAddress", tx.ContractAddress)
+
 	// validate key exists for sender
 	// use the embedded Loopp Keystore to do this; the spec and design
 	// encourage passing nil data to the loop.Keystore.Sign as way to test
 	// existence of a key
 	if _, err := txm.ks.Loopp().Sign(ctx, publicKey.String(), nil); err != nil {
+		txm.lggr.Errorw("Enqueue: failed to sign", "error", err, "publicKey", publicKey)
 		return fmt.Errorf("enqueue: failed to sign: %+w", err)
 	}
 
 	select {
 	case txm.queue <- Tx{publicKey: publicKey, accountAddress: accountAddress, call: tx}: // TODO fix naming here
+		txm.lggr.Infow("Enqueue: transaction successfully enqueued", "accountAddress", accountAddress, "queueLength", len(txm.queue))
 	default:
 		// Enqueue failed - this could indicate high load, slow processing, or other issues
 		txm.metrics.IncrementEnqueueFailed(ctx, accountAddress.String())
+		txm.lggr.Errorw("Enqueue: queue full, transaction rejected", "accountAddress", accountAddress, "queueLength", len(txm.queue))
 		return fmt.Errorf("failed to enqueue transaction: %+v", tx)
 	}
 

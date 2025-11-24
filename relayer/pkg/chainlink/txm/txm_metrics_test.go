@@ -64,6 +64,46 @@ func TestNewTxmMetrics(t *testing.T) {
 	assert.True(t, ok, "Should return prometheusMetrics instance")
 }
 
+func TestPrometheusMetrics_VisibleImmediatelyAfterInit(t *testing.T) {
+	// Test that metrics are visible on the metrics endpoint immediately after initialization,
+	// even before any transactions are processed. This is important for monitoring and alerting.
+
+	// Note: Cannot use t.Parallel() because we're checking the global Prometheus registry
+	testChainID := fmt.Sprintf("test-visible-%d", time.Now().UnixNano())
+
+	// Create metrics (should initialize with placeholder labels)
+	_ = NewTxmMetrics(testChainID)
+
+	// Verify metrics appear in Prometheus output immediately
+	metricFamilies, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	metricsFound := map[string]bool{
+		"txm_num_broadcasted_transactions": false,
+		"txm_num_confirmed_transactions":   false,
+		"txm_num_nonce_gaps":               false,
+		"txm_time_until_tx_confirmed":      false,
+		"txm_enqueue_failed":               false,
+		"txm_nonce_rebroadcast":            false,
+		"txm_next_nonce":                   false,
+	}
+
+	for _, mf := range metricFamilies {
+		if _, exists := metricsFound[mf.GetName()]; exists {
+			metricsFound[mf.GetName()] = true
+
+			// Verify the metric has at least one label combination (the placeholder)
+			metrics := mf.GetMetric()
+			assert.NotEmpty(t, metrics, "Metric %s should have at least one label combination", mf.GetName())
+		}
+	}
+
+	// All metrics should be found
+	for metricName, found := range metricsFound {
+		assert.True(t, found, "Metric %s should be visible immediately after init", metricName)
+	}
+}
+
 func TestPrometheusMetrics_ImplementsInterface(t *testing.T) {
 	t.Parallel()
 
