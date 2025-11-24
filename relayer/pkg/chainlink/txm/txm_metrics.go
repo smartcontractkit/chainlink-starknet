@@ -71,14 +71,16 @@ func initMetrics() {
 			Help: "The next nonce that will be used for the account. Updated when transactions are broadcasted or nonce is resynced.",
 		}, []string{"chainID", "accountAddress"})
 
-		// Initialize beholder metrics
-		beholderNumBroadcastedTxs, _ = beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
-		beholderNumConfirmedTxs, _ = beholder.GetMeter().Int64Counter("txm_num_confirmed_transactions")
-		beholderNumNonceGaps, _ = beholder.GetMeter().Int64Counter("txm_num_nonce_gaps")
-		beholderTimeUntilTxConfirmed, _ = beholder.GetMeter().Float64Histogram("txm_time_until_tx_confirmed")
-		beholderEnqueueFailed, _ = beholder.GetMeter().Int64Counter("txm_enqueue_failed")
-		beholderNonceRebroadcast, _ = beholder.GetMeter().Int64Counter("txm_nonce_rebroadcast")
-		beholderNextNonce, _ = beholder.GetMeter().Int64Gauge("txm_next_nonce")
+		// Initialize beholder metrics - these are optional and may not be available in all environments
+		// Errors are ignored as beholder may not be initialized yet or may not be available
+		meter := beholder.GetMeter()
+		beholderNumBroadcastedTxs, _ = meter.Int64Counter("txm_num_broadcasted_transactions")
+		beholderNumConfirmedTxs, _ = meter.Int64Counter("txm_num_confirmed_transactions")
+		beholderNumNonceGaps, _ = meter.Int64Counter("txm_num_nonce_gaps")
+		beholderTimeUntilTxConfirmed, _ = meter.Float64Histogram("txm_time_until_tx_confirmed")
+		beholderEnqueueFailed, _ = meter.Int64Counter("txm_enqueue_failed")
+		beholderNonceRebroadcast, _ = meter.Int64Counter("txm_nonce_rebroadcast")
+		beholderNextNonce, _ = meter.Int64Gauge("txm_next_nonce")
 	})
 }
 
@@ -119,32 +121,44 @@ func NewTxmMetrics(chainID string) TxMetrics {
 
 func (m *prometheusMetrics) IncrementNumBroadcastedTxs(ctx context.Context, accountAddress string) {
 	promNumBroadcastedTxs.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.numBroadcastedTxs.Add(ctx, 1, m.attributes(accountAddress))
+	if m.numBroadcastedTxs != nil {
+		m.numBroadcastedTxs.Add(ctx, 1, m.attributes(accountAddress))
+	}
 }
 
 func (m *prometheusMetrics) IncrementNumConfirmedTxs(ctx context.Context, accountAddress string, confirmedTransactions int) {
 	promNumConfirmedTxs.WithLabelValues(m.chainID, accountAddress).Add(float64(confirmedTransactions))
-	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions), m.attributes(accountAddress))
+	if m.numConfirmedTxs != nil {
+		m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions), m.attributes(accountAddress))
+	}
 }
 
 func (m *prometheusMetrics) IncrementNumNonceGaps(ctx context.Context, accountAddress string) {
 	promNumNonceGaps.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.numNonceGaps.Add(ctx, 1, m.attributes(accountAddress))
+	if m.numNonceGaps != nil {
+		m.numNonceGaps.Add(ctx, 1, m.attributes(accountAddress))
+	}
 }
 
 func (m *prometheusMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, accountAddress string, duration float64) {
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID, accountAddress).Observe(duration)
-	m.timeUntilTxConfirmed.Record(ctx, duration, m.attributes(accountAddress))
+	if m.timeUntilTxConfirmed != nil {
+		m.timeUntilTxConfirmed.Record(ctx, duration, m.attributes(accountAddress))
+	}
 }
 
 func (m *prometheusMetrics) IncrementEnqueueFailed(ctx context.Context, accountAddress string) {
 	promEnqueueFailed.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.enqueueFailed.Add(ctx, 1, m.attributes(accountAddress))
+	if m.enqueueFailed != nil {
+		m.enqueueFailed.Add(ctx, 1, m.attributes(accountAddress))
+	}
 }
 
 func (m *prometheusMetrics) IncrementNonceRebroadcast(ctx context.Context, accountAddress string) {
 	promNonceRebroadcast.WithLabelValues(m.chainID, accountAddress).Inc()
-	m.nonceRebroadcast.Add(ctx, 1, m.attributes(accountAddress))
+	if m.nonceRebroadcast != nil {
+		m.nonceRebroadcast.Add(ctx, 1, m.attributes(accountAddress))
+	}
 }
 
 func (m *prometheusMetrics) UpdateNextNonceMetric(ctx context.Context, accountAddress string, nonce *felt.Felt) {

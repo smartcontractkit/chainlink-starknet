@@ -440,6 +440,8 @@ func (txm *starktxm) confirmLoop() {
 							txm.metrics.RecordTimeUntilTxConfirmed(ctx, accountAddress.String(), duration)
 							// Clean up the broadcast time entry
 							txm.broadcastTimes.Delete(nonceStr)
+						} else {
+							txm.lggr.Warnw("No broadcast time found for confirmed transaction", "accountAddress", accountAddress, "nonce", nonceStr)
 						}
 					}
 				}
