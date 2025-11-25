@@ -122,11 +122,11 @@ func (txm *starktxm) broadcastLoop() {
 	ctx, cancel := utils.ContextFromChan(txm.stop)
 	defer cancel()
 
-	txm.lggr.Infow("broadcastLoop: started")
+	txm.lggr.Debugw("broadcastLoop: started")
 	for {
 		select {
 		case <-txm.stop:
-			txm.lggr.Infow("broadcastLoop: stopped")
+			txm.lggr.Debugw("broadcastLoop: stopped")
 			return
 		case tx := <-txm.queue:
 			txm.lggr.Infow("broadcastLoop: received transaction from queue", "accountAddress", tx.accountAddress)
@@ -402,7 +402,7 @@ func (txm *starktxm) confirmLoop() {
 
 	tick := time.After(txm.cfg.ConfirmationPoll())
 
-	txm.lggr.Infow("confirmLoop: started")
+	txm.lggr.Debugw("confirmLoop: started")
 
 	for {
 		var start time.Time
