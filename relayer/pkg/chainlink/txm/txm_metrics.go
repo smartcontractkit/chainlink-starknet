@@ -8,7 +8,6 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -33,7 +32,7 @@ var (
 	metricsOnce sync.Once
 )
 
-func initMetrics() {
+func initPrometheusMetrics() {
 	metricsOnce.Do(func() {
 		// Initialize Prometheus metrics
 		promNumBroadcastedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -70,18 +69,41 @@ func initMetrics() {
 			Name: "txm_next_nonce",
 			Help: "The next nonce that will be used for the account. Updated when transactions are broadcasted or nonce is resynced.",
 		}, []string{"chainID", "accountAddress"})
-
-		// Initialize beholder metrics - these are optional and may not be available in all environments
-		// Errors are ignored as beholder may not be initialized yet or may not be available
-		meter := beholder.GetMeter()
-		beholderNumBroadcastedTxs, _ = meter.Int64Counter("txm_num_broadcasted_transactions")
-		beholderNumConfirmedTxs, _ = meter.Int64Counter("txm_num_confirmed_transactions")
-		beholderNumNonceGaps, _ = meter.Int64Counter("txm_num_nonce_gaps")
-		beholderTimeUntilTxConfirmed, _ = meter.Float64Histogram("txm_time_until_tx_confirmed")
-		beholderEnqueueFailed, _ = meter.Int64Counter("txm_enqueue_failed")
-		beholderNonceRebroadcast, _ = meter.Int64Counter("txm_nonce_rebroadcast")
-		beholderNextNonce, _ = meter.Int64Gauge("txm_next_nonce")
 	})
+}
+
+// initBeholderMetrics initializes beholder metrics from the provided meter
+func initBeholderMetrics(meter metric.Meter) error {
+	var err error
+	beholderNumBroadcastedTxs, err = meter.Int64Counter("txm_num_broadcasted_transactions")
+	if err != nil {
+		return err
+	}
+	beholderNumConfirmedTxs, err = meter.Int64Counter("txm_num_confirmed_transactions")
+	if err != nil {
+		return err
+	}
+	beholderNumNonceGaps, err = meter.Int64Counter("txm_num_nonce_gaps")
+	if err != nil {
+		return err
+	}
+	beholderTimeUntilTxConfirmed, err = meter.Float64Histogram("txm_time_until_tx_confirmed")
+	if err != nil {
+		return err
+	}
+	beholderEnqueueFailed, err = meter.Int64Counter("txm_enqueue_failed")
+	if err != nil {
+		return err
+	}
+	beholderNonceRebroadcast, err = meter.Int64Counter("txm_nonce_rebroadcast")
+	if err != nil {
+		return err
+	}
+	beholderNextNonce, err = meter.Int64Gauge("txm_next_nonce")
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // prometheusMetrics implements TxMetrics using Prometheus
@@ -104,8 +126,15 @@ func (m *prometheusMetrics) attributes(accountAddress string) metric.Measurement
 	)
 }
 
-func NewTxmMetrics(chainID string) TxMetrics {
-	initMetrics()
+// NewTxmMetrics creates a new TxMetrics instance with Prometheus and Beholder metrics
+// meter is the OpenTelemetry meter to use for beholder metrics
+func NewTxmMetrics(chainID string, meter metric.Meter) (TxMetrics, error) {
+	initPrometheusMetrics()
+
+	// Initialize beholder metrics with the provided meter
+	if err := initBeholderMetrics(meter); err != nil {
+		return nil, err
+	}
 
 	return &prometheusMetrics{
 		chainID:              chainID,
@@ -116,7 +145,7 @@ func NewTxmMetrics(chainID string) TxMetrics {
 		enqueueFailed:        beholderEnqueueFailed,
 		nonceRebroadcast:     beholderNonceRebroadcast,
 		nextNonce:            beholderNextNonce,
-	}
+	}, nil
 }
 
 func (m *prometheusMetrics) IncrementNumBroadcastedTxs(ctx context.Context, accountAddress string) {

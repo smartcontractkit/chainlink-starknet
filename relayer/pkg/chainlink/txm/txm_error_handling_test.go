@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 )
 
 func TestMetrics_HandlesEdgeCaseInputs(t *testing.T) {
@@ -72,7 +74,9 @@ func TestMetrics_HandlesEdgeCaseInputs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test with Prometheus metrics
-			promMetrics := NewTxmMetrics("error-test-chain")
+			noopMeter := noop.NewMeterProvider().Meter("test")
+			promMetrics, err := NewTxmMetrics("error-test-chain", noopMeter)
+			require.NoError(t, err)
 			tt.testFunc(t, promMetrics)
 
 			// Test with mock metrics
@@ -124,7 +128,9 @@ func TestTxMetrics_PrometheusConcurrentAccess(t *testing.T) {
 
 	// Create metrics with unique test chain ID to avoid conflicts across test runs
 	chainID := fmt.Sprintf("concurrent-test-chain-%d", time.Now().UnixNano())
-	promMetrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	promMetrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	// Test concurrent access to Prometheus metrics
@@ -260,7 +266,9 @@ func TestMetrics_AllImplementationsSatisfyInterface(t *testing.T) {
 	ctx := context.Background()
 	testAccount := "0x123"
 
-	promMetrics := NewTxmMetrics("compliance-test")
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	promMetrics, err := NewTxmMetrics("compliance-test", noopMeter)
+	require.NoError(t, err)
 	promMetrics.IncrementNumBroadcastedTxs(ctx, testAccount)
 	promMetrics.IncrementNumConfirmedTxs(ctx, testAccount, 1)
 	promMetrics.IncrementNumNonceGaps(ctx, testAccount)

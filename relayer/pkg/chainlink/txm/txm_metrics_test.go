@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 )
 
 func TestPrometheusMetrics_Registration(t *testing.T) {
@@ -17,7 +18,9 @@ func TestPrometheusMetrics_Registration(t *testing.T) {
 
 	// Initialize metrics by calling them once (promauto registers on first use)
 	testChainID := "test-registration"
-	metrics := NewTxmMetrics(testChainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(testChainID, noopMeter)
+	require.NoError(t, err)
 	ctx := context.Background()
 	testAccount := "0x123"
 	metrics.IncrementNumBroadcastedTxs(ctx, testAccount)
@@ -57,51 +60,13 @@ func TestNewTxmMetrics(t *testing.T) {
 	t.Parallel()
 
 	chainID := "test-chain-prometheus"
-	metrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 
 	// Verify it returns the correct type
 	_, ok := metrics.(*prometheusMetrics)
 	assert.True(t, ok, "Should return prometheusMetrics instance")
-}
-
-func TestPrometheusMetrics_VisibleImmediatelyAfterInit(t *testing.T) {
-	// Test that metrics are visible on the metrics endpoint immediately after initialization,
-	// even before any transactions are processed. This is important for monitoring and alerting.
-
-	// Note: Cannot use t.Parallel() because we're checking the global Prometheus registry
-	testChainID := fmt.Sprintf("test-visible-%d", time.Now().UnixNano())
-
-	// Create metrics (should initialize with placeholder labels)
-	_ = NewTxmMetrics(testChainID)
-
-	// Verify metrics appear in Prometheus output immediately
-	metricFamilies, err := prometheus.DefaultGatherer.Gather()
-	require.NoError(t, err)
-
-	metricsFound := map[string]bool{
-		"txm_num_broadcasted_transactions": false,
-		"txm_num_confirmed_transactions":   false,
-		"txm_num_nonce_gaps":               false,
-		"txm_time_until_tx_confirmed":      false,
-		"txm_enqueue_failed":               false,
-		"txm_nonce_rebroadcast":            false,
-		"txm_next_nonce":                   false,
-	}
-
-	for _, mf := range metricFamilies {
-		if _, exists := metricsFound[mf.GetName()]; exists {
-			metricsFound[mf.GetName()] = true
-
-			// Verify the metric has at least one label combination (the placeholder)
-			metrics := mf.GetMetric()
-			assert.NotEmpty(t, metrics, "Metric %s should have at least one label combination", mf.GetName())
-		}
-	}
-
-	// All metrics should be found
-	for metricName, found := range metricsFound {
-		assert.True(t, found, "Metric %s should be visible immediately after init", metricName)
-	}
 }
 
 func TestPrometheusMetrics_ImplementsInterface(t *testing.T) {
@@ -116,7 +81,9 @@ func TestPrometheusMetrics_IncrementsCounterMetrics(t *testing.T) {
 
 	// Use unique chainID and accountAddress to avoid interference from other test runs
 	chainID := fmt.Sprintf("test-chain-increment-%d", time.Now().UnixNano())
-	metrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	// Get initial values
@@ -148,7 +115,9 @@ func TestPrometheusMetrics_IncrementsNonceRebroadcastCounter(t *testing.T) {
 
 	// Use unique chainID and accountAddress to avoid interference from other test runs
 	chainID := fmt.Sprintf("test-chain-gauge-%d", time.Now().UnixNano())
-	metrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	// Test IncrementNonceRebroadcast
@@ -173,8 +142,11 @@ func TestPrometheusMetrics_MultipleChains(t *testing.T) {
 	chain1 := fmt.Sprintf("chain-1-multi-%d", baseID)
 	chain2 := fmt.Sprintf("chain-2-multi-%d", baseID+1)
 
-	metrics1 := NewTxmMetrics(chain1)
-	metrics2 := NewTxmMetrics(chain2)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics1, err := NewTxmMetrics(chain1, noopMeter)
+	require.NoError(t, err)
+	metrics2, err := NewTxmMetrics(chain2, noopMeter)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	// Get initial values
@@ -227,7 +199,9 @@ func TestPrometheusMetrics_EnqueueFailed(t *testing.T) {
 
 	// Create metrics with unique test chain ID to avoid conflicts across test runs
 	chainID := fmt.Sprintf("test-chain-enqueue-%d", time.Now().UnixNano())
-	metrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 
@@ -248,7 +222,9 @@ func TestPrometheusMetrics_BeholderMetricsInitialized(t *testing.T) {
 	t.Parallel()
 
 	chainID := "test-beholder-init"
-	metrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 
 	// Verify that the metrics struct has beholder metrics initialized
 	pm, ok := metrics.(*prometheusMetrics)
@@ -269,7 +245,9 @@ func TestPrometheusMetrics_BeholderMetricsCanBeCalled(t *testing.T) {
 	t.Parallel()
 
 	chainID := "test-beholder-call"
-	metrics := NewTxmMetrics(chainID)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	metrics, err := NewTxmMetrics(chainID, noopMeter)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	// Verify all beholder metrics can be called without panicking

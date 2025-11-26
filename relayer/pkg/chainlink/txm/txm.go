@@ -14,6 +14,7 @@ import (
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -78,7 +79,12 @@ type starktxm struct {
 
 func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
-	return NewWithMetrics(lggr, keystore, cfg, chainID, NewTxmMetrics(chainID), getClient, getFeederClient)
+	meter := beholder.GetMeter()
+	metrics, err := NewTxmMetrics(chainID, meter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize txm metrics: %w", err)
+	}
+	return NewWithMetrics(lggr, keystore, cfg, chainID, metrics, getClient, getFeederClient)
 }
 
 func NewWithMetrics(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, metrics TxMetrics, getClient func() (*starknet.Client, error),
