@@ -29,11 +29,13 @@ var (
 	beholderNonceRebroadcast     metric.Int64Counter
 	beholderNextNonce            metric.Int64Gauge
 
-	metricsOnce sync.Once
+	prometheusMetricsOnce sync.Once
+	beholderMetricsOnce   sync.Once
+	beholderInitError     error
 )
 
 func initPrometheusMetrics() {
-	metricsOnce.Do(func() {
+	prometheusMetricsOnce.Do(func() {
 		// Initialize Prometheus metrics
 		promNumBroadcastedTxs = promauto.NewCounterVec(prometheus.CounterOpts{
 			Name: "txm_num_broadcasted_transactions",
@@ -73,37 +75,47 @@ func initPrometheusMetrics() {
 }
 
 // initBeholderMetrics initializes beholder metrics from the provided meter
+// This function is thread-safe and will only initialize once per meter
 func initBeholderMetrics(meter metric.Meter) error {
-	var err error
-	beholderNumBroadcastedTxs, err = meter.Int64Counter("txm_num_broadcasted_transactions")
-	if err != nil {
-		return err
-	}
-	beholderNumConfirmedTxs, err = meter.Int64Counter("txm_num_confirmed_transactions")
-	if err != nil {
-		return err
-	}
-	beholderNumNonceGaps, err = meter.Int64Counter("txm_num_nonce_gaps")
-	if err != nil {
-		return err
-	}
-	beholderTimeUntilTxConfirmed, err = meter.Float64Histogram("txm_time_until_tx_confirmed")
-	if err != nil {
-		return err
-	}
-	beholderEnqueueFailed, err = meter.Int64Counter("txm_enqueue_failed")
-	if err != nil {
-		return err
-	}
-	beholderNonceRebroadcast, err = meter.Int64Counter("txm_nonce_rebroadcast")
-	if err != nil {
-		return err
-	}
-	beholderNextNonce, err = meter.Int64Gauge("txm_next_nonce")
-	if err != nil {
-		return err
-	}
-	return nil
+	beholderMetricsOnce.Do(func() {
+		var err error
+		beholderNumBroadcastedTxs, err = meter.Int64Counter("txm_num_broadcasted_transactions")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+		beholderNumConfirmedTxs, err = meter.Int64Counter("txm_num_confirmed_transactions")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+		beholderNumNonceGaps, err = meter.Int64Counter("txm_num_nonce_gaps")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+		beholderTimeUntilTxConfirmed, err = meter.Float64Histogram("txm_time_until_tx_confirmed")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+		beholderEnqueueFailed, err = meter.Int64Counter("txm_enqueue_failed")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+		beholderNonceRebroadcast, err = meter.Int64Counter("txm_nonce_rebroadcast")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+		beholderNextNonce, err = meter.Int64Gauge("txm_next_nonce")
+		if err != nil {
+			beholderInitError = err
+			return
+		}
+	})
+	return beholderInitError
 }
 
 // prometheusMetrics implements TxMetrics using Prometheus
