@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 )
 
 func TestTXM_Integration_Metrics(t *testing.T) {
@@ -19,6 +20,7 @@ func TestTXM_Integration_Metrics(t *testing.T) {
 
 	mockLggr := logger.Test(t)
 	chainID := "integration-test-chain"
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
 	// Create TXM with real Prometheus metrics
 	txm, err := New(
@@ -26,6 +28,7 @@ func TestTXM_Integration_Metrics(t *testing.T) {
 		&mockKeystore{},
 		&mockConfig{},
 		chainID,
+		noopMeter,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)
@@ -61,12 +64,14 @@ func TestTXM_Integration_MetricsUnderLoad(t *testing.T) {
 	// Test metrics behavior under concurrent load
 	mockLggr := logger.Test(t)
 	chainID := "load-test-chain"
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
 	txm, err := New(
 		mockLggr,
 		&mockKeystore{},
 		&mockConfig{},
 		chainID,
+		noopMeter,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)
@@ -127,6 +132,7 @@ func TestTXM_Integration_MultipleChains(t *testing.T) {
 	chain2 := "chain-2-integration"
 
 	mockLggr := logger.Test(t)
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
 	// Create two TXM instances with different chain IDs
 	txm1, err := New(
@@ -134,6 +140,7 @@ func TestTXM_Integration_MultipleChains(t *testing.T) {
 		&mockKeystore{},
 		&mockConfig{},
 		chain1,
+		noopMeter,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)
@@ -144,6 +151,7 @@ func TestTXM_Integration_MultipleChains(t *testing.T) {
 		&mockKeystore{},
 		&mockConfig{},
 		chain2,
+		noopMeter,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)
