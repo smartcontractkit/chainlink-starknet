@@ -21,17 +21,7 @@ var (
 	promNonceRebroadcast     *prometheus.CounterVec
 	promNextNonce            *prometheus.GaugeVec
 
-	beholderNumBroadcastedTxs    metric.Int64Counter
-	beholderNumConfirmedTxs      metric.Int64Counter
-	beholderNumNonceGaps         metric.Int64Counter
-	beholderTimeUntilTxConfirmed metric.Float64Histogram
-	beholderEnqueueFailed        metric.Int64Counter
-	beholderNonceRebroadcast     metric.Int64Counter
-	beholderNextNonce            metric.Int64Gauge
-
 	prometheusMetricsOnce sync.Once
-	beholderMetricsOnce   sync.Once
-	beholderInitError     error
 )
 
 func initPrometheusMetrics() {
@@ -74,49 +64,6 @@ func initPrometheusMetrics() {
 	})
 }
 
-// initBeholderMetrics initializes beholder metrics from the provided meter
-// This function is thread-safe and will only initialize once per meter
-func initBeholderMetrics(meter metric.Meter) error {
-	beholderMetricsOnce.Do(func() {
-		var err error
-		beholderNumBroadcastedTxs, err = meter.Int64Counter("txm_num_broadcasted_transactions")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-		beholderNumConfirmedTxs, err = meter.Int64Counter("txm_num_confirmed_transactions")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-		beholderNumNonceGaps, err = meter.Int64Counter("txm_num_nonce_gaps")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-		beholderTimeUntilTxConfirmed, err = meter.Float64Histogram("txm_time_until_tx_confirmed")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-		beholderEnqueueFailed, err = meter.Int64Counter("txm_enqueue_failed")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-		beholderNonceRebroadcast, err = meter.Int64Counter("txm_nonce_rebroadcast")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-		beholderNextNonce, err = meter.Int64Gauge("txm_next_nonce")
-		if err != nil {
-			beholderInitError = err
-			return
-		}
-	})
-	return beholderInitError
-}
 
 // prometheusMetrics implements TxMetrics using Prometheus
 type prometheusMetrics struct {
@@ -143,20 +90,45 @@ func (m *prometheusMetrics) attributes(accountAddress string) metric.Measurement
 func NewTxmMetrics(chainID string, meter metric.Meter) (TxMetrics, error) {
 	initPrometheusMetrics()
 
-	// Initialize beholder metrics with the provided meter
-	if err := initBeholderMetrics(meter); err != nil {
+	// Create beholder metrics directly from the provided meter (no globals)
+	numBroadcastedTxs, err := meter.Int64Counter("txm_num_broadcasted_transactions")
+	if err != nil {
+		return nil, err
+	}
+	numConfirmedTxs, err := meter.Int64Counter("txm_num_confirmed_transactions")
+	if err != nil {
+		return nil, err
+	}
+	numNonceGaps, err := meter.Int64Counter("txm_num_nonce_gaps")
+	if err != nil {
+		return nil, err
+	}
+	timeUntilTxConfirmed, err := meter.Float64Histogram("txm_time_until_tx_confirmed")
+	if err != nil {
+		return nil, err
+	}
+	enqueueFailed, err := meter.Int64Counter("txm_enqueue_failed")
+	if err != nil {
+		return nil, err
+	}
+	nonceRebroadcast, err := meter.Int64Counter("txm_nonce_rebroadcast")
+	if err != nil {
+		return nil, err
+	}
+	nextNonce, err := meter.Int64Gauge("txm_next_nonce")
+	if err != nil {
 		return nil, err
 	}
 
 	return &prometheusMetrics{
 		chainID:              chainID,
-		numBroadcastedTxs:    beholderNumBroadcastedTxs,
-		numConfirmedTxs:      beholderNumConfirmedTxs,
-		numNonceGaps:         beholderNumNonceGaps,
-		timeUntilTxConfirmed: beholderTimeUntilTxConfirmed,
-		enqueueFailed:        beholderEnqueueFailed,
-		nonceRebroadcast:     beholderNonceRebroadcast,
-		nextNonce:            beholderNextNonce,
+		numBroadcastedTxs:    numBroadcastedTxs,
+		numConfirmedTxs:      numConfirmedTxs,
+		numNonceGaps:         numNonceGaps,
+		timeUntilTxConfirmed: timeUntilTxConfirmed,
+		enqueueFailed:        enqueueFailed,
+		nonceRebroadcast:     nonceRebroadcast,
+		nextNonce:            nextNonce,
 	}, nil
 }
 
