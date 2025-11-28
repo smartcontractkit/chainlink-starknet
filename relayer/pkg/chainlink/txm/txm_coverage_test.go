@@ -12,6 +12,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel/metric/noop"
 )
 
 // TestMetrics_IncrementsNonceGapsMetric tests that nonce gap metric is incremented correctly
@@ -268,8 +269,9 @@ func TestTXM_StartsAndProcessesTransactions(t *testing.T) {
 	getFeederClient := func() (*starknet.FeederClient, error) {
 		return nil, fmt.Errorf("mock feeder client error")
 	}
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
-	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, getClient, getFeederClient)
+	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, noopMeter, getClient, getFeederClient)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
@@ -332,8 +334,9 @@ func TestTXM_NameReturnsExpectedValue(t *testing.T) {
 	getFeederClient := func() (*starknet.FeederClient, error) {
 		return nil, fmt.Errorf("mock feeder client error")
 	}
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
-	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, getClient, getFeederClient)
+	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, noopMeter, getClient, getFeederClient)
 	assert.NoError(t, err)
 
 	// Test Name method
@@ -362,8 +365,9 @@ func TestTXM_HandlesMultipleTransactionsOverTime(t *testing.T) {
 	getFeederClient := func() (*starknet.FeederClient, error) {
 		return nil, fmt.Errorf("mock feeder client error")
 	}
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
-	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, getClient, getFeederClient)
+	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, noopMeter, getClient, getFeederClient)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
@@ -429,8 +433,9 @@ func TestTXM_HandlesErrorConditions(t *testing.T) {
 	getFeederClient := func() (*starknet.FeederClient, error) {
 		return nil, fmt.Errorf("mock feeder client error")
 	}
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
-	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, getClient, getFeederClient)
+	txm, err := New(mockLggr, keystoreAdapter.Loopp(), &mockConfigCoverage{}, chainID, noopMeter, getClient, getFeederClient)
 	assert.NoError(t, err)
 
 	ctx := context.Background()

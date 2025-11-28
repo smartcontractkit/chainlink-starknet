@@ -12,6 +12,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 )
 
 // mockTxMetrics is a mock implementation of TxMetrics for testing
@@ -199,12 +200,14 @@ func TestNew_DefaultMetrics(t *testing.T) {
 	t.Parallel()
 
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
 	txm, err := New(
 		mockLggr,
 		&mockKeystore{},
 		&mockConfig{},
 		"test-chain-id",
+		noopMeter,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)
@@ -224,6 +227,7 @@ func TestInflightCount_ReturnsQueueAndUnconfirmedCounts(t *testing.T) {
 
 	mockLggr := &mockLogger{Logger: logger.Test(t)}
 	chainID := "test-chain-inflight"
+	noopMeter := noop.NewMeterProvider().Meter("test")
 
 	// Use real Prometheus metrics, not mocks
 	txm, err := New(
@@ -231,6 +235,7 @@ func TestInflightCount_ReturnsQueueAndUnconfirmedCounts(t *testing.T) {
 		&mockKeystore{},
 		&mockConfig{},
 		chainID,
+		noopMeter,
 		func() (*starknet.Client, error) { return nil, nil },
 		func() (*starknet.FeederClient, error) { return nil, nil },
 	)

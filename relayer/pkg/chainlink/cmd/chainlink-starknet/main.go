@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/pelletier/go-toml/v2"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
@@ -75,9 +76,13 @@ func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs lo
 	}
 	c.Logger.Infow("Creating relayer", "config", cfgStr)
 
+	// Get beholder meter for injection into chain/txm
+	meter := beholder.GetMeter()
+
 	chain, err := starkchain.NewChain(&cfg, starkchain.ChainOpts{
 		Logger:   c.Logger,
 		KeyStore: loopKs,
+		Meter:    meter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chain: %w", err)

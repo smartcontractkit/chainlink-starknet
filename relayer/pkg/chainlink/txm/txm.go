@@ -13,8 +13,8 @@ import (
 	starknetaccount "github.com/NethermindEth/starknet.go/account"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"go.opentelemetry.io/otel/metric"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -77,9 +77,8 @@ type starktxm struct {
 	nonceBroadcastCounts sync.Map // map[string]int (nonce -> count)
 }
 
-func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, getClient func() (*starknet.Client, error),
+func New(lggr logger.Logger, keystore loop.Keystore, cfg Config, chainID string, meter metric.Meter, getClient func() (*starknet.Client, error),
 	getFeederClient func() (*starknet.FeederClient, error)) (StarkTXM, error) {
-	meter := beholder.GetMeter()
 	metrics, err := NewTxmMetrics(chainID, meter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize txm metrics: %w", err)
