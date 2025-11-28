@@ -64,7 +64,6 @@ func initPrometheusMetrics() {
 	})
 }
 
-
 // prometheusMetrics implements TxMetrics using Prometheus
 type prometheusMetrics struct {
 	chainID              string
@@ -87,37 +86,49 @@ func (m *prometheusMetrics) attributes(accountAddress string) metric.Measurement
 
 // NewTxmMetrics creates a new TxMetrics instance with Prometheus and Beholder metrics
 // meter is the OpenTelemetry meter to use for beholder metrics
+// Prometheus metrics are always created; beholder metrics are optional and will be nil if creation fails
 func NewTxmMetrics(chainID string, meter metric.Meter) (TxMetrics, error) {
 	initPrometheusMetrics()
 
 	// Create beholder metrics directly from the provided meter (no globals)
+	// These are optional - if any fail, we set them to nil and Prometheus metrics still work
+	var numBroadcastedTxs metric.Int64Counter
+	var numConfirmedTxs metric.Int64Counter
+	var numNonceGaps metric.Int64Counter
+	var timeUntilTxConfirmed metric.Float64Histogram
+	var enqueueFailed metric.Int64Counter
+	var nonceRebroadcast metric.Int64Counter
+	var nextNonce metric.Int64Gauge
+
+	// Try to create all beholder metrics, but if any fail, explicitly set them to nil
+	// This ensures Prometheus metrics still work even if beholder is unavailable
 	numBroadcastedTxs, err := meter.Int64Counter("txm_num_broadcasted_transactions")
 	if err != nil {
-		return nil, err
+		numBroadcastedTxs = nil
 	}
-	numConfirmedTxs, err := meter.Int64Counter("txm_num_confirmed_transactions")
+	numConfirmedTxs, err = meter.Int64Counter("txm_num_confirmed_transactions")
 	if err != nil {
-		return nil, err
+		numConfirmedTxs = nil
 	}
-	numNonceGaps, err := meter.Int64Counter("txm_num_nonce_gaps")
+	numNonceGaps, err = meter.Int64Counter("txm_num_nonce_gaps")
 	if err != nil {
-		return nil, err
+		numNonceGaps = nil
 	}
-	timeUntilTxConfirmed, err := meter.Float64Histogram("txm_time_until_tx_confirmed")
+	timeUntilTxConfirmed, err = meter.Float64Histogram("txm_time_until_tx_confirmed")
 	if err != nil {
-		return nil, err
+		timeUntilTxConfirmed = nil
 	}
-	enqueueFailed, err := meter.Int64Counter("txm_enqueue_failed")
+	enqueueFailed, err = meter.Int64Counter("txm_enqueue_failed")
 	if err != nil {
-		return nil, err
+		enqueueFailed = nil
 	}
-	nonceRebroadcast, err := meter.Int64Counter("txm_nonce_rebroadcast")
+	nonceRebroadcast, err = meter.Int64Counter("txm_nonce_rebroadcast")
 	if err != nil {
-		return nil, err
+		nonceRebroadcast = nil
 	}
-	nextNonce, err := meter.Int64Gauge("txm_next_nonce")
+	nextNonce, err = meter.Int64Gauge("txm_next_nonce")
 	if err != nil {
-		return nil, err
+		nextNonce = nil
 	}
 
 	return &prometheusMetrics{
