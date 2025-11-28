@@ -1,3 +1,4 @@
+// Package txm provides transaction manager functionality with metrics support
 package txm
 
 import (
