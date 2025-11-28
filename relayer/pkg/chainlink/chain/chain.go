@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/pelletier/go-toml/v2"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/chains"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -33,9 +34,9 @@ type Chain interface {
 }
 
 type ChainOpts struct {
-	Logger logger.Logger
-	// the implementation used here needs to be co-ordinated with the starknet transaction manager keystore adapter
-	KeyStore loop.Keystore
+	Logger   logger.Logger
+	KeyStore loop.Keystore // the implementation used here needs to be co-ordinated with the starknet transaction manager keystore adapter
+	Meter    metric.Meter  // OpenTelemetry meter for beholder metrics
 }
 
 func (o *ChainOpts) Name() string {
@@ -69,14 +70,14 @@ func NewChain(cfg *config.TOMLConfig, opts ChainOpts) (Chain, error) {
 	if !cfg.IsEnabled() {
 		return nil, fmt.Errorf("cannot create new chain with ID %s: chain is disabled", *cfg.ChainID)
 	}
-	c, err := newChain(*cfg.ChainID, cfg, opts.KeyStore, opts.Logger)
+	c, err := newChain(*cfg.ChainID, cfg, opts.KeyStore, opts.Logger, opts.Meter)
 	if err != nil {
 		return nil, err
 	}
 	return c, nil
 }
 
-func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logger.Logger) (*chain, error) {
+func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logger.Logger, meter metric.Meter) (*chain, error) {
 	lggr = logger.Named(lggr, "Chain")
 	lggr = logger.With(lggr, "starknetChainID", id)
 	ch := &chain{
@@ -86,7 +87,7 @@ func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logg
 	}
 
 	var err error
-	ch.txm, err = txm.New(lggr, loopKs, cfg, ch.getClient, ch.getFeederClient)
+	ch.txm, err = txm.New(lggr, loopKs, cfg, ch.ChainID(), meter, ch.getClient, ch.getFeederClient)
 	if err != nil {
 		return nil, err
 	}

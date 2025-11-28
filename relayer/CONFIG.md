@@ -21,6 +21,7 @@ OCR2CacheTTL = '1m' # Default
 RequestTimeout = '10s' # Default
 TxTimeout = '10s' # Default
 ConfirmationPoll = '5s' # Default
+FeeEstimationMaxAttempts = 5 # Default
 ```
 
 
@@ -71,6 +72,12 @@ TxTimeout is the timeout for sending txes to an RPC endpoint.
 ConfirmationPoll = '5s' # Default
 ```
 ConfirmationPoll is how often to confirmer checks for tx inclusion on chain.
+
+### FeeEstimationMaxAttempts
+```toml
+FeeEstimationMaxAttempts = 5 # Default
+```
+FeeEstimationMaxAttempts is the maximum number of retry attempts for fee estimation.
 
 ## Nodes
 ```toml

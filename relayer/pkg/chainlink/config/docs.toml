@@ -14,6 +14,8 @@ RequestTimeout = '10s' # Default
 TxTimeout = '10s' # Default
 # ConfirmationPoll is how often to confirmer checks for tx inclusion on chain.
 ConfirmationPoll = '5s' # Default
+# FeeEstimationMaxAttempts is the maximum number of retry attempts for fee estimation.
+FeeEstimationMaxAttempts = 5 # Default
 
 [[Nodes]]
 # Name is a unique (per-chain) identifier for this node.

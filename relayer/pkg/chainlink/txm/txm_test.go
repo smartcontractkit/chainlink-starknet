@@ -16,6 +16,7 @@ import (
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -77,8 +78,10 @@ func TestIntegration_Txm(t *testing.T) {
 	cfg := mocks.NewConfig(t)
 	cfg.On("TxTimeout").Return(20 * time.Second)
 	cfg.On("ConfirmationPoll").Return(1 * time.Second)
+	cfg.On("FeeEstimationMaxAttempts").Return(5)
 
-	txm, err := New(lggr, ksAdapter.Loopp(), cfg, getClient, getFeederClient)
+	noopMeter := noop.NewMeterProvider().Meter("test")
+	txm, err := New(lggr, ksAdapter.Loopp(), cfg, "test-chain", noopMeter, getClient, getFeederClient)
 	require.NoError(t, err)
 
 	// ready fail if start not called
