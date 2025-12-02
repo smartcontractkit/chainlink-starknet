@@ -176,7 +176,7 @@ format-ts-check:
 
 .PHONY: lint-go-ops
 lint-go-ops:
-	cd ./ops && golangci-lint --config ../.golangci.yml --color=always --output.checkstyle.path golangci-lint-ops-report.xml run
+	cd ./ops && golangci-lint --config ../.golangci.yml --color=always --output.checkstyle.path ./ops/golangci-lint-ops-report.xml run
 
 .PHONY: lint-go-relayer
 lint-go-relayer:
@@ -184,7 +184,7 @@ lint-go-relayer:
 
 .PHONY: lint-go-test
 lint-go-test:
-	cd ./integration-tests && golangci-lint --config ../.golangci.yml --color=always --output.checkstyle.path golangci-lint-integration-tests-report.xml run
+	cd ./integration-tests && golangci-lint --config ../.golangci.yml --color=always --output.checkstyle.path ./ops/golangci-lint-integration-tests-report.xml run
 
 .PHONY: test-go
 test-go: test-unit-go test-unit-go-race test-integration-go
