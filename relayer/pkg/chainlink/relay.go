@@ -24,6 +24,21 @@ type relayer struct {
 	lggr logger.Logger
 }
 
+func (r *relayer) TON() (relaytypes.TONService, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *relayer) Solana() (relaytypes.SolanaService, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *relayer) NewCCIPProvider(ctx context.Context, cargs relaytypes.CCIPProviderArgs) (relaytypes.CCIPProvider, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *relayer) GetChainInfo(ctx context.Context) (relaytypes.ChainInfo, error) {
 	return r.chain.GetChainInfo(ctx)
 }
