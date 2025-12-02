@@ -102,6 +102,9 @@ func (c *chain) GetChainInfo(ctx context.Context) (types.ChainInfo, error) {
 		return types.ChainInfo{}, err
 	}
 	name, err := chain_selectors.ExtractNetworkEnvName(nameFull)
+	if err != nil {
+		return types.ChainInfo{}, err
+	}
 	return types.ChainInfo{
 		FamilyName:      chain_selectors.FamilyStarknet,
 		ChainID:         c.ChainID(),

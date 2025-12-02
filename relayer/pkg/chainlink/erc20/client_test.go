@@ -31,8 +31,8 @@ func TestERC20Client(t *testing.T) {
 
 		var out []byte
 
-		switch {
-		case r.RequestURI == "/":
+		switch r.RequestURI {
+		case "/":
 			type Request struct {
 				Selector string `json:"entry_point_selector"`
 			}

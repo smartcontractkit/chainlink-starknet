@@ -9,9 +9,11 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	"go.opentelemetry.io/otel/metric/noop"
 )
 

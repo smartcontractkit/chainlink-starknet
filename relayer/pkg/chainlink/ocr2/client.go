@@ -206,7 +206,7 @@ func (c *Client) collectAllEvents(ctx context.Context, block starknetrpc.BlockID
 	events = chunk.Events
 
 	for chunk.ContinuationToken != "" {
-		input.ResultPageRequest.ContinuationToken = chunk.ContinuationToken
+		input.ResultPageRequest.ContinuationToken = chunk.ContinuationToken // nolint:staticcheck
 
 		chunk, err = c.r.Events(ctx, input)
 
