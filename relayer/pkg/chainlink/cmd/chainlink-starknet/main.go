@@ -57,7 +57,7 @@ type pluginRelayer struct {
 // [github.com/smartcontractkit/chainlink-common/pkg/loop.PluginRelayer]
 // loopKs must be an implementation that can construct a starknet keystore adapter
 // [github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm.NewKeystoreAdapter]
-func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs loop.Keystore, capRegistry core.CapabilitiesRegistry) (loop.Relayer, error) {
+func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs, csaKS loop.Keystore, capRegistry core.CapabilitiesRegistry) (loop.Relayer, error) {
 	d := toml.NewDecoder(strings.NewReader(config))
 	d.DisallowUnknownFields()
 
