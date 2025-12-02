@@ -20,8 +20,8 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -136,6 +136,7 @@ func TestIntegration_Txm(t *testing.T) {
 // LooppKeystore implements [loop.Keystore] interface and the requirements
 // of signature d/encoding of the [KeystoreAdapter]
 type LooppKeystore struct {
+	core.UnimplementedKeystore
 	Get func(id string) (*big.Int, error)
 }
 
@@ -145,7 +146,7 @@ func NewLooppKeystore(get func(id string) (*big.Int, error)) *LooppKeystore {
 	}
 }
 
-var _ loop.Keystore = &LooppKeystore{}
+var _ core.Keystore = &LooppKeystore{}
 
 // Sign implements [loop.Keystore]
 // hash is expected to be the byte representation of big.Int
@@ -172,9 +173,4 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 		return nil, err
 	}
 	return sig.Bytes()
-}
-
-// TODO what is this supposed to return for starknet?
-func (lk *LooppKeystore) Accounts(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("unimplemented")
 }
