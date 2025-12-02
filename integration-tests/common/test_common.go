@@ -1,4 +1,4 @@
-package common
+package common // nolint:revive
 
 import (
 	"context"
@@ -226,8 +226,8 @@ func (m *OCRv2TestState) DeployCluster() {
 		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.ChainlinkClient.ChainlinkNodes)
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	} else {
-		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs()
-		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs())
+		m.Clients.ChainlinkClient.ChainlinkNodes = m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs()                                         //nolint:staticcheck
+		m.Clients.ChainlinkClient.NKeys, m.TestConfig.err = m.Common.CreateNodeKeysBundle(m.Clients.DockerEnv.CLClusterTestEnv.ClCluster.NodeAPIs()) //nolint:staticcheck
 		require.NoError(m.TestConfig.T, m.TestConfig.err)
 	}
 

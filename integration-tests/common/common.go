@@ -162,17 +162,17 @@ func (c *Common) Default(t *testing.T, namespacePrefix string) (*Common, error) 
 func (c *Common) SetLocalEnvironment(t *testing.T) {
 	// Run scripts to set up local test environment
 	log.Info().Msg("Starting starknet-devnet container...")
-	err := exec.Command("../../scripts/devnet.sh").Run()
+	err := exec.Command("../../scripts/devnet.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not start devnet container")
 	// TODO: add hardhat too
 	log.Info().Msg("Starting postgres container...")
-	err = exec.Command("../../scripts/postgres.sh").Run()
+	err = exec.Command("../../scripts/postgres.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not start postgres container")
 	log.Info().Msg("Starting mock adapter...")
-	err = exec.Command("../../scripts/mock-adapter.sh").Run()
+	err = exec.Command("../../scripts/mock-adapter.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not start mock adapter")
 	log.Info().Msg("Starting core nodes...")
-	cmd := exec.Command("../../scripts/core.sh")
+	cmd := exec.Command("../../scripts/core.sh") // nolint:noctx
 	cmd.Env = append(os.Environ(), fmt.Sprintf("CL_CONFIG=%s", c.ChainlinkConfig))
 	err = cmd.Run()
 	require.NoError(t, err, "Could not start core nodes")
@@ -197,16 +197,16 @@ func (c *Common) SetLocalEnvironment(t *testing.T) {
 
 func (c *Common) TearDownLocalEnvironment(t *testing.T) {
 	log.Info().Msg("Tearing down core nodes...")
-	err := exec.Command("../../scripts/core.down.sh").Run()
+	err := exec.Command("../../scripts/core.down.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not tear down core nodes")
 	log.Info().Msg("Tearing down mock adapter...")
-	err = exec.Command("../../scripts/mock-adapter.down.sh").Run()
+	err = exec.Command("../../scripts/mock-adapter.down.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not tear down mock adapter")
 	log.Info().Msg("Tearing down postgres container...")
-	err = exec.Command("../../scripts/postgres.down.sh").Run()
+	err = exec.Command("../../scripts/postgres.down.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not tear down postgres container")
 	log.Info().Msg("Tearing down devnet container...")
-	err = exec.Command("../../scripts/devnet.down.sh").Run()
+	err = exec.Command("../../scripts/devnet.down.sh").Run() // nolint:noctx
 	require.NoError(t, err, "Could not tear down devnet container")
 	log.Info().Msg("Tear down local stack complete.")
 }

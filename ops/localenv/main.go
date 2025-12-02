@@ -77,7 +77,7 @@ func setEnvIfNotExists(key, defaultValue string) {
 
 func run(name string, f string, args ...string) {
 	fmt.Printf("\n-- %s --\n", strings.ToUpper(name))
-	cmd := exec.Command(f, args...)
+	cmd := exec.Command(f, args...) // nolint:noctx
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)

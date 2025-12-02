@@ -24,6 +24,10 @@ type relayer struct {
 	lggr logger.Logger
 }
 
+func (r *relayer) GetChainInfo(ctx context.Context) (relaytypes.ChainInfo, error) {
+	return r.chain.GetChainInfo(ctx)
+}
+
 func NewRelayer(lggr logger.Logger, chain starkchain.Chain, capRegistry core.CapabilitiesRegistry) *relayer {
 	return &relayer{
 		chain: chain,
