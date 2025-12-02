@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	adapters "github.com/smartcontractkit/chainlink-common/pkg/loop/adapters/starknet"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm"
 )
@@ -37,10 +37,11 @@ func TestKeystoreAdapterImpl(t *testing.T) {
 }
 
 type testLoopKeystore struct {
+	core.UnimplementedKeystore
 	signFn func(ctx context.Context, account string, data []byte) (signed []byte, err error)
 }
 
-var _ loop.Keystore = &testLoopKeystore{}
+var _ core.Keystore = &testLoopKeystore{}
 
 func (lk *testLoopKeystore) Sign(ctx context.Context, account string, data []byte) (signed []byte, err error) {
 	return lk.signFn(ctx, account, data)
