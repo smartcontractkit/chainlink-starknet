@@ -126,6 +126,10 @@ type mockLogger struct {
 // mockKeystore implements loop.Keystore interface for testing
 type mockKeystore struct{}
 
+func (m *mockKeystore) Decrypt(ctx context.Context, account string, encrypted []byte) (decrypted []byte, err error) {
+	return []byte("decrypted-data"), nil
+}
+
 func (m *mockKeystore) Accounts(ctx context.Context) ([]string, error) {
 	return []string{"test-account"}, nil
 }

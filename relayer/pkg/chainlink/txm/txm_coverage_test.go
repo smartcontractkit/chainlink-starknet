@@ -634,6 +634,10 @@ func TestAccountStore_ReturnsAllAccountAddresses(t *testing.T) {
 // failingKeystore is a keystore that always returns errors
 type failingKeystore struct{}
 
+func (m *failingKeystore) Decrypt(ctx context.Context, account string, encrypted []byte) (decrypted []byte, err error) {
+	return []byte("decrypted-data"), nil
+}
+
 func (f *failingKeystore) Accounts(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("keystore error")
 }

@@ -180,7 +180,7 @@ lint-go-ops:
 
 .PHONY: lint-go-relayer
 lint-go-relayer:
-	cd ./relayer && golangci-lint --config ../.golangci.yml --color=always --output.checkstyle.path stdout run --fix
+	cd ./relayer && golangci-lint --config ../.golangci.yml --color=always --output.checkstyle.path ./relayer/golangci-lint-relayer-report.xml run
 
 .PHONY: lint-go-test
 lint-go-test:

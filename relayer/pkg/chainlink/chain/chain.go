@@ -95,6 +95,34 @@ func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logg
 	return ch, nil
 }
 
+func (c *chain) GetChainInfo(ctx context.Context) (types.ChainInfo, error) {
+	return types.ChainInfo{}, nil
+	//chainID := c.cfg.ChainID
+	//
+	//chainSelector := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	//chainFamily, err := chainselectors.GetSelectorFamily(chainSelector)
+	//if err != nil {
+	//	return types.ChainInfo{}, fmt.Errorf("failed to get chain family for selector %d: %w", chainSelector, err)
+	//}
+	//
+	//chainDetails, err := chainselectors.GetChainDetailsByChainIDAndFamily(chainID.String(), chainFamily)
+	//if err != nil {
+	//	return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
+	//}
+	//
+	//envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
+	//if err != nil {
+	//	return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
+	//}
+	//
+	//return types.ChainInfo{
+	//	FamilyName:      chainFamily,
+	//	ChainID:         chainID.String(),
+	//	NetworkName:     envName,
+	//	NetworkNameFull: chainDetails.ChainName,
+	//}, nil
+}
+
 func (c *chain) Name() string {
 	return c.lggr.Name()
 }
