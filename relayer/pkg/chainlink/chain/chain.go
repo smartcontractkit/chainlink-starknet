@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/pelletier/go-toml/v2"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"go.opentelemetry.io/otel/metric"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/chains"
@@ -96,8 +97,17 @@ func newChain(id string, cfg *config.TOMLConfig, loopKs loop.Keystore, lggr logg
 }
 
 func (c *chain) GetChainInfo(ctx context.Context) (types.ChainInfo, error) {
-	// TODO: need to implement
-	return types.ChainInfo{}, nil
+	nameFull, err := chain_selectors.StarknetNameFromChainId(c.ChainID())
+	if err != nil {
+		return types.ChainInfo{}, err
+	}
+	name, err := chain_selectors.ExtractNetworkEnvName(nameFull)
+	return types.ChainInfo{
+		FamilyName:      chain_selectors.FamilyStarknet,
+		ChainID:         c.ChainID(),
+		NetworkName:     name,
+		NetworkNameFull: nameFull,
+	}, nil
 }
 
 func (c *chain) Name() string {
