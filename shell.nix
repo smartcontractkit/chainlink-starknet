@@ -5,7 +5,7 @@
   scriptDir,
 }:
 let
-  go = pkgs.go_1_24;
+  go = pkgs.go_1_25;
 
   mkShell' = pkgs.mkShell.override {
     stdenv = pkgs.clangStdenv;
@@ -13,7 +13,7 @@ let
 
   custom-golangci-lint = pkgs.buildGoModule rec {
     pname = "golangci-lint";
-    version = "1.62.2";
+    version = "2.6.2";
 
     src = pkgs.fetchFromGitHub {
       owner = "golangci";

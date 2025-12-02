@@ -6,7 +6,7 @@ python 3.9.13
 
 # Tools
 mockery 2.53.0
-golangci-lint 1.62.2
+golangci-lint 2.6.2
 actionlint 1.6.12
 shellcheck 0.8.0
 scarb 2.9.2
