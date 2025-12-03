@@ -185,7 +185,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to check account nonce: %+w", err)
 		}
-		tx.InvokeTxnV3.Nonce = estimateNonce
+		tx.InvokeTxnV3.Nonce = estimateNonce // nolint:staticcheck
 
 		if largestEstimateNonce == nil || estimateNonce.Cmp(largestEstimateNonce) > 0 {
 			largestEstimateNonce = estimateNonce
@@ -321,7 +321,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 
 	L2GasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
-	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2GasConsumed, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2GasConsumed, 150) // nolint:staticcheck
 
 	L1GasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
 	L2GasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
@@ -329,20 +329,20 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	L1GasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
 	// TODO: consider making this configurable
 	// pad estimate to 150% (add extra because estimate did not include validation)
-	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(L1GasConsumed, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(L1GasConsumed, 150) // nolint:staticcheck
 
 	// pad by 150%
-	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150)
-	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150) // nolint:staticcheck
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150) // nolint:staticcheck
 
 	L1DataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
 	L1DataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
-	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
-	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)       // nolint:staticcheck
+	broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150) // nolint:staticcheck
 
-	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit, "FinalNonce", nonce)
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", broadcastTxnV3.InvokeTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit, "FinalNonce", nonce) // nolint:staticcheck
 
-	broadcastTxnV3.InvokeTxnV3.Nonce = nonce
+	broadcastTxnV3.InvokeTxnV3.Nonce = nonce // nolint:staticcheck
 
 	err = account.SignInvokeTransaction(ctx, &broadcastTxnV3.InvokeTxnV3)
 	if err != nil {

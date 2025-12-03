@@ -1,5 +1,4 @@
 //go:build go1.18
-// +build go1.18
 
 package medianreport
 
@@ -16,7 +15,7 @@ import (
 
 // go test -tags=go1.18 -fuzz ./...
 func FuzzReportCodecMedianFromReport(f *testing.F) {
-	ctx := f.Context()
+	ctx := f.Context() //nolint:govet
 	cdc := ReportCodec{}
 	now := time.Now().Unix()
 	if now > math.MaxUint32 || now < 0 {
@@ -33,7 +32,7 @@ func FuzzReportCodecMedianFromReport(f *testing.F) {
 	// Seed with valid report
 	f.Add([]byte(report))
 	f.Fuzz(func(t *testing.T, report []byte) {
-		ctx := t.Context()
+		ctx := t.Context() //nolint:govet
 		med, err := cdc.MedianFromReport(ctx, report)
 		if err == nil {
 			// Should always be able to build a report from the medians extracted

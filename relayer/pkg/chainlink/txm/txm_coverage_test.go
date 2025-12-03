@@ -10,9 +10,10 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/starknet.go/rpc"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/metric/noop"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 )
 
 // TestMetrics_IncrementsNonceGapsMetric tests that nonce gap metric is incremented correctly
@@ -634,15 +635,19 @@ func TestAccountStore_ReturnsAllAccountAddresses(t *testing.T) {
 // failingKeystore is a keystore that always returns errors
 type failingKeystore struct{}
 
-func (f *failingKeystore) Accounts(ctx context.Context) ([]string, error) {
+func (m *failingKeystore) Decrypt(ctx context.Context, account string, encrypted []byte) (decrypted []byte, err error) {
+	return []byte("decrypted-data"), nil
+}
+
+func (m *failingKeystore) Accounts(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("keystore error")
 }
 
-func (f *failingKeystore) Get(ctx context.Context, id string) ([]byte, error) {
+func (m *failingKeystore) Get(ctx context.Context, id string) ([]byte, error) {
 	return nil, fmt.Errorf("keystore error")
 }
 
-func (f *failingKeystore) Sign(ctx context.Context, account string, data []byte) ([]byte, error) {
+func (m *failingKeystore) Sign(ctx context.Context, account string, data []byte) ([]byte, error) {
 	return nil, fmt.Errorf("keystore sign error")
 }
 

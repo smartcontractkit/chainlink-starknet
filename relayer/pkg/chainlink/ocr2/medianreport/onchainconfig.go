@@ -52,7 +52,7 @@ func (codec OnchainConfigCodec) Decode(ctx context.Context, b []byte) (median.On
 	minVal := felts[1]
 	maxVal := felts[2]
 
-	if !(minVal.Cmp(maxVal) <= 0) {
+	if !(minVal.Cmp(maxVal) <= 0) { // nolint:staticcheck
 		return median.OnchainConfig{}, fmt.Errorf("OnchainConfig min (%v) should not be greater than max(%v)", minVal, maxVal)
 	}
 

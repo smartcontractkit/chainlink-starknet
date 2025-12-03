@@ -1,4 +1,4 @@
-package common
+package common // nolint:revive
 
 import (
 	"encoding/json"

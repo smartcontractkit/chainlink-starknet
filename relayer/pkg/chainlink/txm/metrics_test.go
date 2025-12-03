@@ -9,9 +9,11 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+
 	"go.opentelemetry.io/otel/metric/noop"
 )
 
@@ -125,6 +127,10 @@ type mockLogger struct {
 
 // mockKeystore implements loop.Keystore interface for testing
 type mockKeystore struct{}
+
+func (m *mockKeystore) Decrypt(ctx context.Context, account string, encrypted []byte) (decrypted []byte, err error) {
+	return []byte("decrypted-data"), nil
+}
 
 func (m *mockKeystore) Accounts(ctx context.Context) ([]string, error) {
 	return []string{"test-account"}, nil

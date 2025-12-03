@@ -490,7 +490,7 @@ func checkExecutionStatus(receiptMap map[string]interface{}) error {
 	}
 
 	if strExecutionStatus != "SUCCEEDED" {
-		return fmt.Errorf("Op was not successful")
+		return fmt.Errorf("op was not successful")
 	}
 
 	return nil

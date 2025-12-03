@@ -113,7 +113,7 @@ func (p *medianProvider) Start(context.Context) error {
 		p.lggr.Debugf("Median provider starting")
 		// starting both cache services here
 		// todo: find a better way
-		if err := p.configProvider.contractCache.Start(); err != nil {
+		if err := p.configProvider.contractCache.Start(); err != nil { // nolint:staticcheck
 			return fmt.Errorf("couldn't start contractCache: %w", err)
 		}
 		return p.transmissionsCache.Start()
@@ -125,7 +125,7 @@ func (p *medianProvider) Close() error {
 		p.lggr.Debugf("Median provider stopping")
 		// stopping both cache services here
 		// todo: find a better way
-		if err := p.configProvider.contractCache.Close(); err != nil {
+		if err := p.configProvider.contractCache.Close(); err != nil { // nolint:staticcheck
 			return fmt.Errorf("coulnd't stop contractCache: %w", err)
 		}
 		return p.transmissionsCache.Close()

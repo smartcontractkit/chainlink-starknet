@@ -99,6 +99,8 @@ jobs:
       contents: read
     needs: [golangci-lint-version]
     steps:
+      - name: Free Disk Space
+        uses: smartcontractkit/.github/actions/free-disk-space@free-disk-space/v1
       - name: Checkout sources
         uses: actions/checkout@v5
         with:

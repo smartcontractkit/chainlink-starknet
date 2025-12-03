@@ -35,7 +35,7 @@ func SetupLocalStarknetNode(t *testing.T) string {
 	ctx := t.Context()
 	port := strconv.Itoa(freeport.GetOne(t))
 	url := "http://127.0.0.1:" + port
-	cmd := exec.Command("starknet-devnet",
+	cmd := exec.Command("starknet-devnet", // nolint:noctx
 		"--seed", "0", // use same seed for testing
 		"--port", port,
 	)
