@@ -76,7 +76,7 @@ jobs:
           CL_REF: ${{ github.event.inputs.cl_branch_ref }}
       - name: Checkout the repo
         if: steps.check-image.outputs.exists == 'false'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: smartcontractkit/chainlink
           ref: ${{ env.CUSTOM_CORE_REF }}
@@ -148,7 +148,7 @@ jobs:
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
       - name: Checkout the repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
@@ -174,7 +174,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Install Nix
