@@ -408,6 +408,7 @@ require (
 	github.com/smartcontractkit/chainlink-ton v0.0.0-20260209205928-e7e034ed7976 // indirect
 	github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20251014143056-a0c6328c91e9 // indirect
 	github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e // indirect
+	github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet v1.1.3 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20260130195252-6e18e2a30acc // indirect
 	github.com/smartcontractkit/mcms v0.35.1-0.20260209175626-b68b54b6e8d0 // indirect
@@ -536,4 +537,5 @@ replace (
 	// Make sure we're working with the latest ops
 	github.com/smartcontractkit/chainlink-starknet/ops => ../ops
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
+	github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet => ../ops/third_party/go-gauntlet
 )
