@@ -124,7 +124,12 @@ jobs:
         run: nix develop -c make lint-go-test
       - name: Print Report
         if: failure()
-        run: cat ./integration-tests/golangci-lint-integration-tests-report.xml
+        run: |
+          if [ -f ./integration-tests/golangci-lint-integration-tests-report.xml ]; then
+            cat ./integration-tests/golangci-lint-integration-tests-report.xml
+          else
+            echo "golangci-lint report not generated"
+          fi
       - name: Store Golangci lint integration tests report artifact
         if: always()
         uses: actions/upload-artifact@v4
