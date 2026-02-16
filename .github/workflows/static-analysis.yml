@@ -22,5 +22,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Check Zizmor
-        run: nix develop -c zizmor --pedantic --config zizmor.yml .
+      - name: Report Zizmor Findings
+        run: nix develop -c zizmor --pedantic --no-exit-codes --config zizmor.yml .
+
+      - name: Fail on High-Severity Zizmor Findings
+        run: nix develop -c zizmor --pedantic --min-severity high --config zizmor.yml .

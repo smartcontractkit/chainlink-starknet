@@ -66,7 +66,7 @@ jobs:
           persist-credentials: false
       - name: Setup GitHub Token
         id: setup-github-token
-        uses: smartcontractkit/.github/actions/setup-github-token@setup-github-token/v1
+        uses: smartcontractkit/.github/actions/setup-github-token@744f70475fb76191f29debf2d581ffc095a650a4 # setup-github-token/v1
         with:
           aws-role-arn: ${{ secrets.AWS_OIDC_CHAINLINK_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
@@ -100,14 +100,14 @@ jobs:
     needs: [golangci-lint-version]
     steps:
       - name: Free Disk Space
-        uses: smartcontractkit/.github/actions/free-disk-space@free-disk-space/v1
+        uses: smartcontractkit/.github/actions/free-disk-space@ca71236c9f9e1358597795ef7d433dd3d3df8dfb # free-disk-space/v1
       - name: Checkout sources
         uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup GitHub Token
         id: setup-github-token
-        uses: smartcontractkit/.github/actions/setup-github-token@setup-github-token/v1
+        uses: smartcontractkit/.github/actions/setup-github-token@744f70475fb76191f29debf2d581ffc095a650a4 # setup-github-token/v1
         with:
           aws-role-arn: ${{ secrets.AWS_OIDC_CHAINLINK_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
