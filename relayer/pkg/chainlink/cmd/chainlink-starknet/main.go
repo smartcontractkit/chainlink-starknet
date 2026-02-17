@@ -76,6 +76,29 @@ func (c *pluginRelayer) NewRelayer(ctx context.Context, config string, loopKs, c
 	}
 	c.Logger.Infow("Creating relayer", "config", cfgStr)
 
+	rawNodes := make([]map[string]string, 0, len(cfg.Nodes))
+	for _, n := range cfg.Nodes {
+		if n == nil || n.URL == nil {
+			continue
+		}
+		rawNodes = append(rawNodes, map[string]string{"URL": n.URL.String()})
+	}
+	chainID := ""
+	if cfg.ChainID != nil {
+		chainID = *cfg.ChainID
+	}
+	emitter := loop.NewPluginRelayerConfigEmitter(
+		c.Logger,
+		beholder.GetClient().Config.AuthPublicKeyHex,
+		chainID,
+		rawNodes,
+	)
+	startErr := emitter.Start(ctx)
+	if startErr != nil {
+		return nil, fmt.Errorf("failed to start plugin relayer config emitter: %w", startErr)
+	}
+	c.SubService(emitter)
+
 	// Get beholder meter for injection into chain/txm
 	meter := beholder.GetMeter()
 

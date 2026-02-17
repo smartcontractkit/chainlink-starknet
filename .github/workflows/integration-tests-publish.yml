@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - name: Setup GitHub Token
         id: setup-github-token
-        uses: smartcontractkit/.github/actions/setup-github-token@setup-github-token/v1
+        uses: smartcontractkit/.github/actions/setup-github-token@744f70475fb76191f29debf2d581ffc095a650a4 # setup-github-token/v1
         with:
           aws-role-arn: ${{ secrets.AWS_OIDC_CHAINLINK_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
