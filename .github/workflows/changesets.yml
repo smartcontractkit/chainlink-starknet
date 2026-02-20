@@ -6,14 +6,16 @@ on:
       - main
 
 permissions:
-  contents: write
-  pull-requests: write
-  actions: write
+  contents: read
 
 jobs:
   changesets:
     name: Changesets
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
     steps:
       # Checkout this repository
       - name: Checkout Repo
