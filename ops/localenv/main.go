@@ -66,6 +66,14 @@ func main() {
 	}
 }
 
+// sanitizeForOutput escapes newlines/carriage returns to prevent log injection (CWE-117).
+func sanitizeForOutput(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\r", "\\r")
+	s = strings.ReplaceAll(s, "\n", "\\n")
+	return s
+}
+
 func setEnvIfNotExists(key, defaultValue string) {
 	value := os.Getenv(key)
 	if value == "" {
@@ -98,7 +106,7 @@ func run(name string, f string, args ...string) {
 				wg.Done()
 				break
 			}
-			fmt.Print(string(p[:n]))
+			fmt.Print(sanitizeForOutput(string(p[:n])))
 		}
 	}()
 	go func() {
@@ -109,7 +117,7 @@ func run(name string, f string, args ...string) {
 				wg.Done()
 				break
 			}
-			fmt.Print(string(p[:n]))
+			fmt.Print(sanitizeForOutput(string(p[:n])))
 		}
 	}()
 
