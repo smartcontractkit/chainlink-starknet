@@ -6,6 +6,9 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: read
+
 env:
   ECR_TAG: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/chainlink-starknet-tests:develop
 

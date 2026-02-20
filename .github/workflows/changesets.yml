@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
 jobs:
   changesets:
     name: Changesets

@@ -3,10 +3,15 @@ name: Starknet Relayer Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   starknet-relayer-release:
     name: Release Starknet Relayer
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # Checkout this repository
       - name: Checkout Repo

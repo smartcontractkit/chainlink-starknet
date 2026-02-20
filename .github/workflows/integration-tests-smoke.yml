@@ -19,6 +19,9 @@ concurrency:
   group: integration-tests-starknet-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   # for PR builds, ${{ github.sha }} is the temporary merge commit, we want the head commit instead
   SN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

@@ -3,6 +3,9 @@ name: golangci_lint
 on:
   push:
 
+permissions:
+  contents: read
+
 jobs:
   golangci-lint-version:
     name: Get golangci-lint version to from nix

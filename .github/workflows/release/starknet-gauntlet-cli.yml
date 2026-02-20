@@ -3,10 +3,15 @@ name: Starknet Gauntlet CLI Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   starknet-gauntlet-cli-release:
     name: Starknet Gauntlet CLI Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # Checkout this repository
       - name: Checkout Repo

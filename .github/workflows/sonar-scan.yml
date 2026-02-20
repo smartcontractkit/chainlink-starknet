@@ -3,6 +3,9 @@ name: SonarQube Scan
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   wait_for_workflows:
     name: Wait for workflows

@@ -7,6 +7,9 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   relayer_run_unit_tests:
     name: Run Unit Tests ${{ matrix.test-type.name }}

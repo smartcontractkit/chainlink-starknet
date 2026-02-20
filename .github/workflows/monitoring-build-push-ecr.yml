@@ -8,6 +8,9 @@ on:
       - monitoring/**
       - relayer/**
 
+permissions:
+  contents: read
+
 jobs:
   build-and-publish-monitoring:
     runs-on: ubuntu-latest

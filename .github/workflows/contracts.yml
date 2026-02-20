@@ -7,6 +7,9 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   contracts_run_ts_tests:
     name: Run Typescript Tests
