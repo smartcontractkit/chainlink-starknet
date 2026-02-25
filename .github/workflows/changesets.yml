@@ -9,6 +9,8 @@ jobs:
   changesets:
     name: Changesets
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # Checkout this repository
       - name: Checkout Repo

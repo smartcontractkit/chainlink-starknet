@@ -11,6 +11,8 @@ jobs:
   contracts_run_ts_tests:
     name: Run Typescript Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
@@ -31,6 +33,8 @@ jobs:
   contracts_run_cairo_tests:
     name: Run Cairo Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5

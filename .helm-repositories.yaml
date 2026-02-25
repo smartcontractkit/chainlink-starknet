@@ -1,3 +1,5 @@
+# Helm repository config for public charts. Empty password/username fields are intentional -
+# these are public chart repositories (bitnami, chainlink-qa, grafana) that do not require authentication.
 apiVersion: ''
 generated: '0001-01-01T00:00:00Z'
 repositories:

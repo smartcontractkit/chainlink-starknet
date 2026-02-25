@@ -62,7 +62,13 @@
   },
   "resolutions": {
     "protobufjs": "6.11.4",
-    "elliptic": "6.6.1"
+    "elliptic": "6.6.1",
+    "minimatch": "5.1.7",
+    "axios": "1.13.5",
+    "bn.js": "5.2.3",
+    "undici": "6.23.0",
+    "tmp": "0.2.4",
+    "cookie": "0.7.0"
   },
   "packageManager": "yarn@4.5.3"
 }

@@ -11,6 +11,8 @@ jobs:
   zizmor_analyzer:
     name: Zizmor
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5

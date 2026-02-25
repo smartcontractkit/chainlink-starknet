@@ -11,6 +11,8 @@ jobs:
   relayer_run_unit_tests:
     name: Run Unit Tests ${{ matrix.test-type.name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:

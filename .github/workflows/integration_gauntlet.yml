@@ -13,6 +13,8 @@ jobs:
     env:
       CI: true
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
         with:
@@ -39,6 +41,8 @@ jobs:
   integration_gauntlet_run_tests:
     name: Run Integration Gauntlet Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5

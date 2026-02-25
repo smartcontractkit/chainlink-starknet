@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/smartcontractkit/chainlink-starknet/ops/utils"
 )
@@ -87,7 +88,7 @@ func run(name string, f string, args ...string) {
 		panic(err)
 	}
 
-	// stream output to cmd line
+	// stream output to cmd line (sanitized to prevent log injection)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -98,7 +99,7 @@ func run(name string, f string, args ...string) {
 				wg.Done()
 				break
 			}
-			fmt.Print(string(p[:n]))
+			fmt.Print(sanitizeForLog(string(p[:n])))
 		}
 	}()
 	go func() {
@@ -109,7 +110,7 @@ func run(name string, f string, args ...string) {
 				wg.Done()
 				break
 			}
-			fmt.Print(string(p[:n]))
+			fmt.Print(sanitizeForLog(string(p[:n])))
 		}
 	}()
 
@@ -121,4 +122,20 @@ func run(name string, f string, args ...string) {
 	if err := cmd.Wait(); err != nil {
 		panic(err)
 	}
+}
+
+// sanitizeForLog replaces control characters to prevent log injection from subprocess output.
+func sanitizeForLog(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r == '\n', r == '\r':
+			b.WriteString(" ")
+		case unicode.IsControl(r):
+			b.WriteString(" ")
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }

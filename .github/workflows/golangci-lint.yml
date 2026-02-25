@@ -7,6 +7,8 @@ jobs:
   golangci-lint-version:
     name: Get golangci-lint version to from nix
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
@@ -30,6 +32,8 @@ jobs:
   golang_lint_relayer:
     name: Golang Lint Relayer
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [golangci-lint-version]
     steps:
       - name: Checkout sources
