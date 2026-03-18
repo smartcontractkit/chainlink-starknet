@@ -216,6 +216,10 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 	}, err
 }
 
+func (c *chain) FinalizedHead(ctx context.Context) (types.Head, error) {
+	return c.LatestHead(ctx)
+}
+
 // ChainService interface
 func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 	toml, err := c.cfg.TOMLString()
