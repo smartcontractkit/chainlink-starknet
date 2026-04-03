@@ -87,7 +87,7 @@ class Provider implements IStarknetProvider {
   account: Account
 
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
-    this.provider = new StarknetProvider({ nodeUrl })
+    this.provider = new StarknetProvider({ nodeUrl, specVersion: '0.7' })
     if (wallet) {
       this.account = new Account(
         this.provider,
