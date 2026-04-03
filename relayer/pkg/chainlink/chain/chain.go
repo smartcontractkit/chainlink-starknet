@@ -60,6 +60,7 @@ func (o *ChainOpts) Validate() (err error) {
 var _ Chain = (*chain)(nil)
 
 type chain struct {
+	types.UnimplementedChainService
 	services.StateMachine
 	id   string
 	cfg  *config.TOMLConfig
