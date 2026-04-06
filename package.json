@@ -20,12 +20,12 @@
     "test:coverage": "yarn test --collectCoverage",
     "test:ci": "yarn test --ci",
     "eslint": "eslint -f json -o eslint-report.json ./packages-ts || true",
-    "lint": "tsc -b ./tsconfig.json",
+    "lint": "node ./node_modules/typescript/bin/tsc -b ./tsconfig.json",
     "format": "yarn prettier --write .",
     "format:check": "yarn prettier --check .",
-    "clean": "tsc -b --clean ./tsconfig.json",
+    "clean": "node ./node_modules/typescript/bin/tsc -b --clean ./tsconfig.json",
     "postinstall": "bash scripts/postinstall.sh",
-    "build": "yarn clean && tsc -b ./tsconfig.json",
+    "build": "yarn clean && node ./node_modules/typescript/bin/tsc -b ./tsconfig.json",
     "bundle": "yarn build && pkg . --no-native-build",
     "release": "yarn changeset publish"
   },
@@ -59,11 +59,12 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "starknet": "7.0.1"
+    "starknet": "patch:starknet@npm%3A7.0.1#./.yarn/patches/starknet-npm-7.0.1-89bc8c73a3.patch"
   },
   "resolutions": {
     "protobufjs": "6.11.4",
-    "elliptic": "6.6.1"
+    "elliptic": "6.6.1",
+    "starknet": "patch:starknet@npm%3A7.0.1#./.yarn/patches/starknet-npm-7.0.1-89bc8c73a3.patch"
   },
   "packageManager": "yarn@4.5.3"
 }

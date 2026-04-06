@@ -1,0 +1,75 @@
+diff --git a/dist/index.global.js b/dist/index.global.js
+index ba6de970f1397b589a1746e751a3ef1e86c91072..314e9b624569fe58eb56790429118f679c4f36ae 100644
+--- a/dist/index.global.js
++++ b/dist/index.global.js
+@@ -11622,7 +11622,8 @@ ${indent}}` : "}";
+     const maxUnitPrice = toHex(addPercent(estimate.gas_price, overhead.l1_gas.max_price_per_unit));
+     return {
+       l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+-      l1_gas: { max_amount: maxUnits, max_price_per_unit: maxUnitPrice }
++      l1_gas: { max_amount: maxUnits, max_price_per_unit: maxUnitPrice },
++      l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+     };
+   }
+ 
+@@ -11734,9 +11735,7 @@ ${indent}}` : "}";
+       return {
+         l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+         l1_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+-        ...specVersion === "0.8" && {
+-          l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+-        }
++        l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+       };
+     }
+     if (isRPC08_FeeEstimate(estimate)) {
+diff --git a/dist/index.js b/dist/index.js
+index b0240d473fb715b40959ab02bb7c381cec6ba91f..759cbc966d743ea2cf41c58b18827ed9d312a042 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -3563,7 +3563,8 @@ function estimateFeeToBounds(estimate, overhead) {
+   const maxUnitPrice = toHex(addPercent(estimate.gas_price, overhead.l1_gas.max_price_per_unit));
+   return {
+     l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+-    l1_gas: { max_amount: maxUnits, max_price_per_unit: maxUnitPrice }
++    l1_gas: { max_amount: maxUnits, max_price_per_unit: maxUnitPrice },
++    l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+   };
+ }
+ 
+@@ -3675,9 +3676,7 @@ function estimateFeeToBounds3(estimate, overhead = config.get("feeMarginPercenta
+     return {
+       l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+       l1_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+-      ...specVersion === "0.8" && {
+-        l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+-      }
++      l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+     };
+   }
+   if (isRPC08_FeeEstimate(estimate)) {
+diff --git a/dist/index.mjs b/dist/index.mjs
+index fa15ab8be19e4e0e121ba459c3d558e2eb701ee3..ba2e934c464127070261786b11e951f429d62380 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -3433,7 +3433,8 @@ function estimateFeeToBounds(estimate, overhead) {
+   const maxUnitPrice = toHex(addPercent(estimate.gas_price, overhead.l1_gas.max_price_per_unit));
+   return {
+     l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+-    l1_gas: { max_amount: maxUnits, max_price_per_unit: maxUnitPrice }
++    l1_gas: { max_amount: maxUnits, max_price_per_unit: maxUnitPrice },
++    l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+   };
+ }
+ 
+@@ -3545,9 +3546,7 @@ function estimateFeeToBounds3(estimate, overhead = config.get("feeMarginPercenta
+     return {
+       l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+       l1_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+-      ...specVersion === "0.8" && {
+-        l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+-      }
++      l1_data_gas: { max_amount: "0x0", max_price_per_unit: "0x0" }
+     };
+   }
+   if (isRPC08_FeeEstimate(estimate)) {

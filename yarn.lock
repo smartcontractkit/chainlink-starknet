@@ -3819,7 +3819,7 @@ __metadata:
     jest: "npm:^30.0.0"
     pkg: "npm:^5.2.1"
     prettier: "npm:2.1.1"
-    starknet: "npm:7.0.1"
+    starknet: "patch:starknet@npm%3A7.0.1#./.yarn/patches/starknet-npm-7.0.1-89bc8c73a3.patch"
     ts-jest: "npm:^29.0.0"
     ts-node: "npm:^10.8.0"
     typescript: "npm:^5.4.5"
@@ -8353,6 +8353,26 @@ __metadata:
     ts-mixer: "npm:^6.0.3"
     ws: "npm:^8.18.0"
   checksum: 10c0/d3274dbdeae0c23828bd4aa81f3627f75d1b90b346f7a30c3be5eef6343a0e466462398a02648ddf3154d0aa8444d3d2af8b60832ac3d834609560bf873a014a
+  languageName: node
+  linkType: hard
+
+"starknet@patch:starknet@npm%3A7.0.1#./.yarn/patches/starknet-npm-7.0.1-89bc8c73a3.patch::locator=chainlink-starknet%40workspace%3A.":
+  version: 7.0.1
+  resolution: "starknet@patch:starknet@npm%3A7.0.1#./.yarn/patches/starknet-npm-7.0.1-89bc8c73a3.patch::version=7.0.1&hash=6f2c0f&locator=chainlink-starknet%40workspace%3A."
+  dependencies:
+    "@noble/curves": "npm:1.7.0"
+    "@noble/hashes": "npm:1.6.0"
+    "@scure/base": "npm:1.2.1"
+    "@scure/starknet": "npm:1.1.0"
+    abi-wan-kanabi: "npm:2.2.4"
+    isows: "npm:^1.0.6"
+    lossless-json: "npm:^4.0.1"
+    pako: "npm:^2.0.4"
+    starknet-types-07: "npm:@starknet-io/types-js@^0.7.10"
+    starknet-types-08: "npm:@starknet-io/types-js@0.8.0-beta.10"
+    ts-mixer: "npm:^6.0.3"
+    ws: "npm:^8.18.0"
+  checksum: 10c0/d50f060b64099a05aaf2fc33c77ccac00c25570f6329d07b628d88d5ceda7ae76d2244e2067052d82c8054b4ab5b75bbc9400a6cb087811c2aab340190cf5728
   languageName: node
   linkType: hard
 
