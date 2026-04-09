@@ -3,13 +3,13 @@
 # Please define less specific codeowner paths before more specific codeowner paths in order for the more specific rule to have priority
 
 # global ownership
-* @smartcontractkit/data-feeds @smartcontractkit/bix-build
+* @smartcontractkit/data-feeds-engineers
 
 # e2e test ownership
-/integration-tests @smartcontractkit/devex-tooling @smartcontractkit/data-feeds @smartcontractkit/bix-build
+/integration-tests @smartcontractkit/devex-tooling @smartcontractkit/data-feeds-engineers
 
 # monitoring ownership
-/monitoring @smartcontractkit/data-feeds @smartcontractkit/bix-build
+/monitoring @smartcontractkit/data-feeds-engineers
 
 # CI/CD
-/.github/** @smartcontractkit/devex-cicd @smartcontractkit/data-feeds @smartcontractkit/bix-build
+/.github/** @smartcontractkit/devex-cicd @smartcontractkit/data-feeds-engineers
