@@ -246,10 +246,10 @@ describe('OCR2 Contract', () => {
       await Promise.all(
         feedAddresses.map(async (feedAddress, i) => {
           const ocr2Contract = new Contract({
-          abi: contract.abi,
-          address: feedAddress,
-          providerOrAccount: provider,
-        })
+            abi: contract.abi,
+            address: feedAddress,
+            providerOrAccount: provider,
+          })
           const billing = await ocr2Contract.billing()
           expect(billing.observation_payment_gjuels).toEqual(BigInt(i))
           expect(billing.transmission_payment_gjuels).toEqual(BigInt(i))

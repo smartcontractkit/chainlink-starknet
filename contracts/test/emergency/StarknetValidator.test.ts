@@ -2,7 +2,14 @@ import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-li
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { fetchStarknetAccount, getStarknetContractArtifacts, waitForTransactions } from '../utils'
-import { Contract as StarknetContract, RpcProvider, CallData, Account, hash, BlockTag } from 'starknet'
+import {
+  Contract as StarknetContract,
+  RpcProvider,
+  CallData,
+  Account,
+  hash,
+  BlockTag,
+} from 'starknet'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { BigNumber, Contract as EthersContract, ContractFactory } from 'ethers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
@@ -13,7 +20,10 @@ import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
 describe('StarknetValidator', () => {
-  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, blockIdentifier: BlockTag.LATEST })
+  const provider = new RpcProvider({
+    nodeUrl: STARKNET_DEVNET_URL,
+    blockIdentifier: BlockTag.LATEST,
+  })
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
@@ -48,7 +58,11 @@ describe('StarknetValidator', () => {
 
     // Creates a starknet contract instance for the l2 feed
     const { abi: l2FeedAbi } = await provider.getClassByHash(ddL2Contract.declare.class_hash)
-    l2Contract = new StarknetContract(l2FeedAbi, ddL2Contract.deploy.address, provider)
+    l2Contract = new StarknetContract({
+      abi: l2FeedAbi,
+      address: ddL2Contract.deploy.address,
+      providerOrAccount: provider,
+    })
 
     // Fetch predefined L1 EOA accounts
     const accounts = await ethers.getSigners()
