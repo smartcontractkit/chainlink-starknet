@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -174,8 +173,8 @@ func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.
 		log.Error().Err(err).Msg("Failed to marshal response body")
 		return g.Report{}, err
 	}
-	if response.JSON200 == nil || response.JSON200.Id == "" || response == nil {
-		time.Sleep(20 * time.Minute)
+	if response.JSON200 == nil || response.JSON200.Id == "" {
+		return g.Report{}, fmt.Errorf("gauntlet++ execute returned empty report")
 	}
 
 	// Log the full response JSON
@@ -198,7 +197,8 @@ func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, e
 	}
 
 	if contractAddress == "" {
-		log.Err(err).Str("G++ Deploy Requets returned with empty contractAddress", err.Error()).Msg("Gauntlet++")
+		err := fmt.Errorf("G++ deploy request returned with empty contractAddress")
+		log.Error().Err(err).Msg("Gauntlet++")
 		return "", err
 	}
 
