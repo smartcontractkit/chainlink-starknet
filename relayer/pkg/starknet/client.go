@@ -196,7 +196,7 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 		defer cancel()
 	}
 
-	return c.nonceAtBlock(ctx, PreConfirmedBlockID(), accountAddress)
+	return c.nonceAtPreConfirmed(ctx, accountAddress)
 }
 
 func (c *Client) AccountNonceLatest(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {

@@ -8,12 +8,12 @@ import (
 
 func TestLatestBlockID(t *testing.T) {
 	blockID := LatestBlockID()
-	assert.Equal(t, BlockTagLatest, string(blockID.Tag))
+	assert.Equal(t, BlockTagLatest, blockID.Tag)
 }
 
 func TestPreConfirmedBlockID(t *testing.T) {
 	blockID := PreConfirmedBlockID()
-	assert.Equal(t, BlockTagPreConfirmed, string(blockID.Tag))
+	assert.Equal(t, BlockTagPreConfirmed, blockID.Tag)
 
 	raw, err := blockIDFromJSON(BlockTagPreConfirmed)
 	assert.NoError(t, err)
