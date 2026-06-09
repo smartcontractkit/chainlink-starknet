@@ -197,7 +197,7 @@ func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, e
 	}
 
 	if contractAddress == "" {
-		err := fmt.Errorf("G++ deploy request returned with empty contractAddress")
+		err := fmt.Errorf("g++ deploy request returned with empty contractAddress")
 		log.Error().Err(err).Msg("Gauntlet++")
 		return "", err
 	}

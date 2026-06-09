@@ -75,6 +75,45 @@ func TestPostExecuteWithResponsePollsUntilOutput(t *testing.T) {
 	}
 }
 
+func TestPostExecuteWithResponseReturnsImmediateReportError(t *testing.T) {
+	t.Parallel()
+
+	reportID := "failed-report-id"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/execute" {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(Report{
+			Id: reportID,
+			Error: &Error{
+				Code:    "OPERATION_ERROR",
+				Message: "Invalid block ID",
+			},
+		})
+	}))
+	defer server.Close()
+
+	client, err := NewClientWithResponses(server.URL)
+	if err != nil {
+		t.Fatalf("NewClientWithResponses: %v", err)
+	}
+
+	args := any(map[string]any{})
+	_, err = client.PostExecuteWithResponse(context.Background(), &PostExecuteParams{}, PostExecuteJSONRequestBody{
+		Config: &Config{},
+		Operation: Operation{
+			Args: &args,
+			Name: "starknet/chain/open-zeppelin:declare",
+		},
+	})
+	if err == nil {
+		t.Fatal("expected error from immediate failed report")
+	}
+}
+
 func TestPostExecuteWithResponseReturnsReportError(t *testing.T) {
 	t.Parallel()
 

@@ -93,8 +93,12 @@ func (c *ClientWithResponses) PostExecuteWithResponse(ctx context.Context, _ *Po
 		return &PostExecuteResponse{JSON200: report}, nil
 	}
 
-	if report.Output != nil || report.Error != nil {
+	if report.Output != nil {
 		return &PostExecuteResponse{JSON200: report}, nil
+	}
+
+	if err := reportError(report); err != nil {
+		return nil, err
 	}
 
 	polled, err := c.pollReport(ctx, report.Id, reqEditors...)
@@ -103,6 +107,19 @@ func (c *ClientWithResponses) PostExecuteWithResponse(ctx context.Context, _ *Po
 	}
 
 	return &PostExecuteResponse{JSON200: polled}, nil
+}
+
+func reportError(report *Report) error {
+	if report == nil || report.Error == nil {
+		return nil
+	}
+
+	reportID := report.Id
+	if reportID == "" {
+		reportID = "unknown"
+	}
+
+	return fmt.Errorf("gauntlet++ report %s failed: %s (%s)", reportID, report.Error.Message, report.Error.Code)
 }
 
 func (c *ClientWithResponses) PostReportsWithResponse(ctx context.Context, body PostReportsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostReportsResponse, error) {
@@ -139,8 +156,8 @@ func (c *ClientWithResponses) pollReport(ctx context.Context, reportID string, r
 			continue
 		}
 
-		if report.Error != nil {
-			return nil, fmt.Errorf("gauntlet++ report %s failed: %s (%s)", reportID, report.Error.Message, report.Error.Code)
+		if err := reportError(&report); err != nil {
+			return nil, err
 		}
 
 		if report.Output != nil {
