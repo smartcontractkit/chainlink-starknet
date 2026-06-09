@@ -11,7 +11,6 @@ import (
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/starknet.go/curve"
-	"github.com/NethermindEth/starknet.go/devnet"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
@@ -32,8 +31,7 @@ func TestIntegration_Txm(t *testing.T) {
 	var nTransactions uint64 = 2 // Number of txs per key. If you increase that you might have to increase the confirmation timeout
 	// url := SetupLocalStarknetNode(t)
 	url := "http://127.0.0.1:5050"
-	devnet := devnet.NewDevNet(url)
-	accounts, err := devnet.Accounts()
+	accounts, err := FetchDevnetAccounts(url)
 	require.NoError(t, err)
 
 	// parse keys into expected format
