@@ -2,6 +2,7 @@ package txm
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -29,7 +30,13 @@ type DevnetAccount struct {
 func FetchDevnetAccounts(baseURL string) ([]DevnetAccount, error) {
 	baseURL = strings.TrimSuffix(baseURL, "/")
 	payload := []byte(`{"jsonrpc":"2.0","id":1,"method":"devnet_getPredeployedAccounts","params":{}}`)
-	resp, err := http.Post(baseURL+"/rpc", "application/json", bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, baseURL+"/rpc", bytes.NewReader(payload))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

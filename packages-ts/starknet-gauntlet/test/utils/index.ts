@@ -48,9 +48,39 @@ export const TIMEOUT = 1800000 // 30 minutes - increased for complex multisig op
 export const LOCAL_URL = 'http://127.0.0.1:5050/'
 
 export type StarknetAccount = Awaited<ReturnType<typeof fetchAccount>>
+
+type PredeployedAccount = {
+  address: string
+  private_key: string
+  initial_balance: string
+}
+
+const fetchPredeployedAccounts = async (): Promise<PredeployedAccount[]> => {
+  const response = await fetch(`${LOCAL_URL}rpc`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'devnet_getPredeployedAccounts',
+      params: {},
+    }),
+  })
+  const data = (await response.json()) as {
+    result?: PredeployedAccount[]
+    error?: { message: string }
+  }
+  if (data.error) {
+    throw new Error(data.error.message)
+  }
+  if (!data.result) {
+    throw new Error('devnet_getPredeployedAccounts returned no accounts')
+  }
+  return data.result
+}
+
 export const fetchAccount = async (accountIndex = 0) => {
-  const response = await fetch(`${LOCAL_URL}predeployed_accounts`)
-  const accounts = await response.json()
+  const accounts = await fetchPredeployedAccounts()
 
   const account = accounts.at(accountIndex)
   if (account == null) {

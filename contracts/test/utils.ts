@@ -10,9 +10,37 @@ export type FetchStarknetAccountParams = Readonly<{
   accountIndex?: number
 }>
 
+type PredeployedAccount = {
+  address: string
+  private_key: string
+}
+
+const fetchPredeployedAccounts = async (): Promise<PredeployedAccount[]> => {
+  const response = await fetch(`${STARKNET_DEVNET_URL}/rpc`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'devnet_getPredeployedAccounts',
+      params: {},
+    }),
+  })
+  const data = (await response.json()) as {
+    result?: PredeployedAccount[]
+    error?: { message: string }
+  }
+  if (data.error) {
+    throw new Error(data.error.message)
+  }
+  if (!data.result) {
+    throw new Error('devnet_getPredeployedAccounts returned no accounts')
+  }
+  return data.result
+}
+
 export const fetchStarknetAccount = async (params?: FetchStarknetAccountParams) => {
-  const response = await fetch(`${STARKNET_DEVNET_URL}/predeployed_accounts`)
-  const accounts = await response.json()
+  const accounts = await fetchPredeployedAccounts()
   const accIndex = params?.accountIndex ?? 0
 
   const account = accounts.at(accIndex)
