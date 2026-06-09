@@ -29,7 +29,7 @@ spec:
 {{- if eq .Values.real_node true }}
         image: "{{ .Values.repository | default "eqlabs/pathfinder"}}:{{ .Values.tag | default "v0.22.4"}}"
 {{- else }}
-        image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "a7e193d41833d221550e8ba7246566f50f507e27"}}"
+        image: "{{ .Values.repository | default "shardlabs/starknet-devnet-rs"}}:{{ .Values.tag | default "0.8.2"}}"
         args: ["--port", {{ .Values.service.internalPort | quote}}, "--seed", {{ .Values.seed | quote}}, "--account-class", "cairo1", "--gas-price", "1", "--data-gas-price", "1"]
 {{- end }}
         imagePullPolicy: IfNotPresent

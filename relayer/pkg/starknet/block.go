@@ -11,10 +11,6 @@ const BlockTagLatest = "latest"
 // Used for TXM nonce and fee estimation where in-flight state matters.
 const BlockTagPreConfirmed = "pre_confirmed"
 
-// BlockTagPending is the legacy RPC block tag for in-flight state. Used as a
-// fallback on nodes that do not yet support pre_confirmed (e.g. starknet-devnet-rs).
-const BlockTagPending = "pending"
-
 // LatestBlockID returns a block ID for the latest finalized block tag.
 func LatestBlockID() starknetrpc.BlockID {
 	return starknetrpc.WithBlockTag(BlockTagLatest)

@@ -1,6 +1,5 @@
-# The starknet-devnet-rs container version - this version 
-# supports rpc v0.7 which is needed for snfoundry v0.20.1
-CONTAINER_VERSION="7743a089a33beb75d7012e4aa24745bee8ae0d71"
+# The starknet-devnet-rs container version - RPC 0.10.x / Starknet 0.14.x
+CONTAINER_VERSION="0.8.2"
 
 export TESTNET_ACCOUNTS_FILE=~/.starknet_accounts/starknet_open_zeppelin_accounts.json
 export TESTNET_ACCOUNT_NAME=testnet-account

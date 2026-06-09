@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/NethermindEth/juno/core/felt"
 	starknetrpc "github.com/NethermindEth/starknet.go/rpc"
@@ -16,7 +15,7 @@ import (
 // v0.9.0 only marshals "pending" and "latest"; pre_confirmed requires a raw call.
 func blockTagParam(blockID starknetrpc.BlockID) (interface{}, error) {
 	switch blockID.Tag {
-	case BlockTagPreConfirmed, BlockTagLatest, BlockTagPending:
+	case BlockTagPreConfirmed, BlockTagLatest:
 		return blockID.Tag, nil
 	case "":
 		if blockID.Number != nil {
@@ -31,17 +30,6 @@ func blockTagParam(blockID starknetrpc.BlockID) (interface{}, error) {
 
 func isPreConfirmedBlock(blockID starknetrpc.BlockID) bool {
 	return blockID.Tag == BlockTagPreConfirmed
-}
-
-// isUnsupportedPreConfirmedBlockTagErr reports whether an RPC node rejected
-// pre_confirmed (legacy RPC 0.8 / starknet-devnet-rs still expect "pending").
-func isUnsupportedPreConfirmedBlockTagErr(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := err.Error()
-	return strings.Contains(msg, "pre_confirmed") &&
-		(strings.Contains(msg, "unknown variant") || strings.Contains(msg, "Invalid block ID"))
 }
 
 func (c *Client) rawRPC(ctx context.Context, method string, params []interface{}, result interface{}) error {
@@ -97,30 +85,7 @@ func (c *Client) nonceAtBlock(ctx context.Context, blockID starknetrpc.BlockID, 
 	return starknetutils.HexToFelt(nonceHex)
 }
 
-func (c *Client) nonceAtPreConfirmed(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
-	nonce, err := c.nonceAtBlock(ctx, PreConfirmedBlockID(), accountAddress)
-	if err != nil && isUnsupportedPreConfirmedBlockTagErr(err) {
-		return c.nonceAtBlock(ctx, starknetrpc.WithBlockTag(BlockTagPending), accountAddress)
-	}
-	return nonce, err
-}
-
 func (c *Client) eventsAtBlock(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
-	chunk, err := c.eventsAtBlockOnce(ctx, input)
-	if err != nil && isUnsupportedPreConfirmedBlockTagErr(err) && eventsInputUsesPreConfirmed(input) {
-		fallback := input
-		if isPreConfirmedBlock(fallback.FromBlock) {
-			fallback.FromBlock = starknetrpc.WithBlockTag(BlockTagPending)
-		}
-		if isPreConfirmedBlock(fallback.ToBlock) {
-			fallback.ToBlock = starknetrpc.WithBlockTag(BlockTagPending)
-		}
-		return c.eventsAtBlockOnce(ctx, fallback)
-	}
-	return chunk, err
-}
-
-func (c *Client) eventsAtBlockOnce(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
 	fromParam, err := blockTagParam(input.FromBlock)
 	if err != nil {
 		return nil, err
@@ -152,31 +117,18 @@ func (c *Client) eventsAtBlockOnce(ctx context.Context, input starknetrpc.Events
 	return &chunk, nil
 }
 
-func (c *Client) estimateFeeAtBlock(
-	ctx context.Context,
-	txns []starknetrpc.BroadcastTxn,
-	flags []starknetrpc.SimulationFlag,
-	blockTag string,
-) ([]starknetrpc.FeeEstimation, error) {
-	params := []interface{}{txns, flags, blockTag}
-	var estimates []starknetrpc.FeeEstimation
-	if err := c.rawRPC(ctx, "starknet_estimateFee", params, &estimates); err != nil {
-		return nil, err
-	}
-	return estimates, nil
-}
-
 // EstimateFeeAtPreConfirmed estimates fees against the pre_confirmed block state.
 func (c *Client) EstimateFeeAtPreConfirmed(
 	ctx context.Context,
 	txns []starknetrpc.BroadcastTxn,
 	flags []starknetrpc.SimulationFlag,
 ) ([]starknetrpc.FeeEstimation, error) {
-	estimates, err := c.estimateFeeAtBlock(ctx, txns, flags, BlockTagPreConfirmed)
-	if err != nil && isUnsupportedPreConfirmedBlockTagErr(err) {
-		return c.estimateFeeAtBlock(ctx, txns, flags, BlockTagPending)
+	params := []interface{}{txns, flags, BlockTagPreConfirmed}
+	var estimates []starknetrpc.FeeEstimation
+	if err := c.rawRPC(ctx, "starknet_estimateFee", params, &estimates); err != nil {
+		return nil, err
 	}
-	return estimates, err
+	return estimates, nil
 }
 
 // eventsInputUsesPreConfirmed reports whether an events query targets pre_confirmed.

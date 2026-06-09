@@ -3,7 +3,6 @@ package starknet
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -42,11 +41,6 @@ func TestBlockTagParam(t *testing.T) {
 			name:    "latest tag",
 			blockID: starknetrpc.WithBlockTag("latest"),
 			want:    "latest",
-		},
-		{
-			name:    "pending tag",
-			blockID: starknetrpc.WithBlockTag(BlockTagPending),
-			want:    BlockTagPending,
 		},
 		{
 			name:    "block number",
@@ -93,16 +87,6 @@ func TestEventsInputUsesPreConfirmed(t *testing.T) {
 	input.FromBlock = starknetrpc.WithBlockNumber(1)
 	input.ToBlock = starknetrpc.WithBlockNumber(2)
 	assert.False(t, eventsInputUsesPreConfirmed(input))
-}
-
-func TestIsUnsupportedPreConfirmedBlockTagErr(t *testing.T) {
-	t.Parallel()
-
-	assert.False(t, isUnsupportedPreConfirmedBlockTagErr(nil))
-	assert.True(t, isUnsupportedPreConfirmedBlockTagErr(
-		fmt.Errorf("Invalid block ID: unknown variant `pre_confirmed`, expected `latest` or `pending`"),
-	))
-	assert.False(t, isUnsupportedPreConfirmedBlockTagErr(fmt.Errorf("connection reset")))
 }
 
 func TestHexStringsToFelts(t *testing.T) {
@@ -219,7 +203,7 @@ func TestEventsAtBlockContinuationToken(t *testing.T) {
 	contractAddress, err := starknetutils.HexToFelt("0x517567ac7026ce129c950e6e113e437aa3c83716cd61481c6bb8c5057e6923e")
 	require.NoError(t, err)
 
-	chunk, err := client.eventsAtBlockOnce(context.Background(), starknetrpc.EventsInput{
+	chunk, err := client.eventsAtBlock(context.Background(), starknetrpc.EventsInput{
 		EventFilter: starknetrpc.EventFilter{
 			FromBlock: PreConfirmedBlockID(),
 			ToBlock:   PreConfirmedBlockID(),
@@ -228,81 +212,6 @@ func TestEventsAtBlockContinuationToken(t *testing.T) {
 		ResultPageRequest: starknetrpc.ResultPageRequest{
 			ChunkSize:         1,
 			ContinuationToken: "next-page",
-		},
-	})
-	require.NoError(t, err)
-	require.NotNil(t, chunk)
-}
-
-func TestPreConfirmedFallbackToPending(t *testing.T) {
-	accountAddress, err := starknetutils.HexToFelt("0x42db30408353b25c5a0b3dd798bfe98eba08956786374e961cc5dbb9811ec6e")
-	require.NoError(t, err)
-
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		req, _ := io.ReadAll(r.Body)
-		switch {
-		case strings.Contains(string(req), "starknet_getNonce") && strings.Contains(string(req), `"pre_confirmed"`):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"error":{"code":24,"message":"Invalid block ID: unknown variant pre_confirmed, expected latest or pending"}}`))
-		case strings.Contains(string(req), "starknet_getNonce") && strings.Contains(string(req), `"pending"`):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x3"}`))
-		case strings.Contains(string(req), "starknet_estimateFee") && strings.Contains(string(req), `"pre_confirmed"`):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"error":{"code":24,"message":"Invalid block ID: unknown variant pre_confirmed, expected latest or pending"}}`))
-		case strings.Contains(string(req), "starknet_estimateFee") && strings.Contains(string(req), `"pending"`):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":[{"l1_gas_consumed":"0x1","l1_gas_price":"0x1","l2_gas_consumed":"0x1","l2_gas_price":"0x1","l1_data_gas_consumed":"0x1","l1_data_gas_price":"0x1","overall_fee":"0x1","unit":"FRI"}]}`))
-		case strings.Contains(string(req), "starknet_chainId"):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x534e5f5345504f4c4941"}`))
-		default:
-			t.Fatalf("unexpected request: %s", string(req))
-		}
-	}))
-	defer mockServer.Close()
-
-	timeout := 5 * time.Second
-	client, err := NewClient("SN_SEPOLIA", mockServer.URL, "", logger.Test(t), &timeout)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-
-	nonce, err := client.AccountNonce(ctx, accountAddress)
-	require.NoError(t, err)
-	assert.Equal(t, "0x3", nonce.String())
-
-	estimates, err := client.EstimateFeeAtPreConfirmed(ctx, []starknetrpc.BroadcastTxn{}, []starknetrpc.SimulationFlag{starknetrpc.SKIP_VALIDATE})
-	require.NoError(t, err)
-	require.Len(t, estimates, 1)
-}
-
-func TestEventsFallbackToPending(t *testing.T) {
-	contractAddress, err := starknetutils.HexToFelt("0x517567ac7026ce129c950e6e113e437aa3c83716cd61481c6bb8c5057e6923e")
-	require.NoError(t, err)
-
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		req, _ := io.ReadAll(r.Body)
-		switch {
-		case strings.Contains(string(req), "starknet_getEvents") && strings.Contains(string(req), `"pre_confirmed"`):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"error":{"code":24,"message":"Invalid block ID: unknown variant pre_confirmed, expected latest or pending"}}`))
-		case strings.Contains(string(req), "starknet_getEvents") && strings.Contains(string(req), `"pending"`):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"events":[],"continuation_token":""}}`))
-		case strings.Contains(string(req), "starknet_chainId"):
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x534e5f5345504f4c4941"}`))
-		default:
-			t.Fatalf("unexpected request: %s", string(req))
-		}
-	}))
-	defer mockServer.Close()
-
-	timeout := 5 * time.Second
-	client, err := NewClient("SN_SEPOLIA", mockServer.URL, "", logger.Test(t), &timeout)
-	require.NoError(t, err)
-
-	chunk, err := client.Events(context.Background(), starknetrpc.EventsInput{
-		EventFilter: starknetrpc.EventFilter{
-			FromBlock: PreConfirmedBlockID(),
-			ToBlock:   PreConfirmedBlockID(),
-			Address:   contractAddress,
-		},
-		ResultPageRequest: starknetrpc.ResultPageRequest{
-			ChunkSize: 10,
 		},
 	})
 	require.NoError(t, err)
