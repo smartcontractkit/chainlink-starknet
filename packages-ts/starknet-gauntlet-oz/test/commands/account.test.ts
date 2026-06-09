@@ -20,7 +20,11 @@ describe('OZ Account Contract', () => {
       publicKey = report.data.publicKey
 
       const { contract: oz } = accountContractLoader()
-      const ozContract = new Contract(oz.abi, contractAddress, makeProvider(LOCAL_URL).provider)
+      const ozContract = new Contract({
+        abi: oz.abi,
+        address: contractAddress,
+        providerOrAccount: makeProvider(LOCAL_URL).provider,
+      })
       const onChainPubKey = await ozContract.getPublicKey()
       expect(onChainPubKey).toEqual(BigInt(publicKey))
     },

@@ -16,6 +16,7 @@ import {
   hash,
   num,
   ec,
+  BlockTag,
 } from 'starknet'
 
 type Oracle = Readonly<{
@@ -31,7 +32,7 @@ const UINT128_MAX = BigInt(2) ** BigInt(128) - BigInt(1)
 
 describe('Aggregator', function () {
   this.timeout(TIMEOUT)
-  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL })
+  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, blockIdentifier: BlockTag.LATEST })
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 
@@ -64,7 +65,11 @@ describe('Aggregator', function () {
 
     // Creates a starknet contract instance for token
     const { abi: tokenAbi } = await provider.getClassByHash(ddToken.declare.class_hash)
-    token = new Contract(tokenAbi, ddToken.deploy.address, provider)
+    token = new Contract({
+      abi: tokenAbi,
+      address: ddToken.deploy.address,
+      providerOrAccount: provider,
+    })
 
     // Funds the owner account with some LINK
     await owner.execute(
@@ -109,7 +114,11 @@ describe('Aggregator', function () {
 
     // Creates a starknet contract instance for aggregator
     const { abi: aggregatorAbi } = await provider.getClassByHash(ddAggregator.declare.class_hash)
-    aggregator = new Contract(aggregatorAbi, ddAggregator.deploy.address, provider)
+    aggregator = new Contract({
+      abi: aggregatorAbi,
+      address: ddAggregator.deploy.address,
+      providerOrAccount: provider,
+    })
 
     // Defines the offchain config
     const onchain_config = new Array<number>()

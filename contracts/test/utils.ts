@@ -1,6 +1,6 @@
 import { STARKNET_DEVNET_URL } from './constants'
 import { execSync } from 'node:child_process'
-import { Account } from 'starknet'
+import { Account, BlockTag } from 'starknet'
 import * as path from 'node:path'
 import { ethers } from 'hardhat'
 import { json } from 'starknet'
@@ -48,13 +48,14 @@ export const fetchStarknetAccount = async (params?: FetchStarknetAccountParams) 
     throw new Error(`no account available at index ${accIndex}`)
   }
 
-  return new Account(
-    {
+  return new Account({
+    provider: {
       nodeUrl: STARKNET_DEVNET_URL,
+      blockIdentifier: BlockTag.LATEST,
     },
-    account.address,
-    account.private_key,
-  )
+    address: account.address,
+    signer: account.private_key,
+  })
 }
 
 export const getStarknetContractArtifacts = (name: string) => {

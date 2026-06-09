@@ -2,7 +2,7 @@ import { abi as starknetMessagingAbi } from '../../artifacts/vendor/starkware-li
 import { abi as accessControllerAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AccessControllerInterface.sol/AccessControllerInterface.json'
 import { abi as aggregatorAbi } from '../../artifacts/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol/AggregatorV3Interface.json'
 import { fetchStarknetAccount, getStarknetContractArtifacts, waitForTransactions } from '../utils'
-import { Contract as StarknetContract, RpcProvider, CallData, Account, hash } from 'starknet'
+import { Contract as StarknetContract, RpcProvider, CallData, Account, hash, BlockTag } from 'starknet'
 import { deployMockContract, MockContract } from '@ethereum-waffle/mock-contract'
 import { BigNumber, Contract as EthersContract, ContractFactory } from 'ethers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
@@ -13,7 +13,7 @@ import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
 describe('StarknetValidator', () => {
-  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL })
+  const provider = new RpcProvider({ nodeUrl: STARKNET_DEVNET_URL, blockIdentifier: BlockTag.LATEST })
   const opts = account.makeFunderOptsFromEnv()
   const funder = new account.Funder(opts)
 

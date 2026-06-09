@@ -1998,7 +1998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/curves@npm:1.7.0, @noble/curves@npm:~1.7.0":
+"@noble/curves@npm:~1.7.0":
   version: 1.7.0
   resolution: "@noble/curves@npm:1.7.0"
   dependencies:
@@ -2386,13 +2386,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/base@npm:1.2.1":
-  version: 1.2.1
-  resolution: "@scure/base@npm:1.2.1"
-  checksum: 10c0/e61068854370855b89c50c28fa4092ea6780f1e0db64ea94075ab574ebcc964f719a3120dc708db324991f4b3e652d92ebda03fce2bf6a4900ceeacf9c0ff933
-  languageName: node
-  linkType: hard
-
 "@scure/base@npm:~1.1.0, @scure/base@npm:~1.1.6":
   version: 1.1.9
   resolution: "@scure/base@npm:1.1.9"
@@ -2400,7 +2393,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/base@npm:~1.2.5":
+"@scure/base@npm:~1.2.1, @scure/base@npm:~1.2.5":
   version: 1.2.6
   resolution: "@scure/base@npm:1.2.6"
   checksum: 10c0/49bd5293371c4e062cb6ba689c8fe3ea3981b7bb9c000400dc4eafa29f56814cdcdd27c04311c2fec34de26bc373c593a1d6ca6d754398a488d587943b7c128a
@@ -2570,6 +2563,20 @@ __metadata:
   version: 0.20.2
   resolution: "@solidity-parser/parser@npm:0.20.2"
   checksum: 10c0/23b0b7ed343a4fa55cb8621cf4fc81b0bdd791a4ee7e96ced7778db07de66d4e418db2c2dc1525b1f82fc0310ac829c78382327292b37e35cb30a19961fcb429
+  languageName: node
+  linkType: hard
+
+"@starknet-io/starknet-types-08@npm:@starknet-io/types-js@~0.8.4":
+  version: 0.8.4
+  resolution: "@starknet-io/types-js@npm:0.8.4"
+  checksum: 10c0/afdd9deec1a881de85aea576dfc6b8827557a3257330c31abed91b3f33b96806da1f7bfb53f14cbf8250e530e6f21e93a8d2a283b2d84685e712fcc92d822d5d
+  languageName: node
+  linkType: hard
+
+"@starknet-io/starknet-types-09@npm:@starknet-io/types-js@~0.9.1":
+  version: 0.9.2
+  resolution: "@starknet-io/types-js@npm:0.9.2"
+  checksum: 10c0/cfac3277dd360584a4a59dd14b6d93921c5aeb3af85dea65e36f76565e123b99b3f500ae170efc043edca34ebbfa88f0ab4a955306fa5b07568ecd664ded441e
   languageName: node
   linkType: hard
 
@@ -3793,7 +3800,7 @@ __metadata:
     jest: "npm:^30.0.0"
     pkg: "npm:^5.2.1"
     prettier: "npm:2.1.1"
-    starknet: "npm:7.0.1"
+    starknet: "npm:8.9.2"
     ts-jest: "npm:^29.0.0"
     ts-node: "npm:^10.8.0"
     typescript: "npm:^5.4.5"
@@ -5771,15 +5778,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isows@npm:^1.0.6":
-  version: 1.0.7
-  resolution: "isows@npm:1.0.7"
-  peerDependencies:
-    ws: "*"
-  checksum: 10c0/43c41fe89c7c07258d0be3825f87e12da8ac9023c5b5ae6741ec00b2b8169675c04331ea73ef8c172d37a6747066f4dc93947b17cd369f92828a3b3e741afbda
-  languageName: node
-  linkType: hard
-
 "istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.0":
   version: 3.2.2
   resolution: "istanbul-lib-coverage@npm:3.2.2"
@@ -6539,7 +6537,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lossless-json@npm:^4.0.1":
+"lossless-json@npm:^4.2.0":
   version: 4.3.0
   resolution: "lossless-json@npm:4.3.0"
   checksum: 10c0/b561eb7f77ef99dbaa0df32fa2407ddcc2c61a0d53297240f0fdd6c2e5f2e0f7d224fb055f84e76467f5ec65547540662c265fcf7a1705497a2d44e323c517df
@@ -8253,37 +8251,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"starknet-types-07@npm:@starknet-io/types-js@^0.7.10":
-  version: 0.7.10
-  resolution: "@starknet-io/types-js@npm:0.7.10"
-  checksum: 10c0/ca114d740198be3738dddd2e452bd9e51fe68c482925d3f6455e3b2c73f330bd5440e7ab1b3a6899022c24362367413fe8b8b2ecfde9fe28eed2dcaccd3b1362
-  languageName: node
-  linkType: hard
-
-"starknet-types-08@npm:@starknet-io/types-js@0.8.0-beta.10":
-  version: 0.8.0-beta.10
-  resolution: "@starknet-io/types-js@npm:0.8.0-beta.10"
-  checksum: 10c0/f7423ff49049ae3b7f0a6f7093d4c17e7982abdea10b239e7e09acd79cc212a6cb3946e619030dcd660255b790161ca2d78338ebd371b12e43bf29849ea761c9
-  languageName: node
-  linkType: hard
-
-"starknet@npm:7.0.1":
-  version: 7.0.1
-  resolution: "starknet@npm:7.0.1"
+"starknet@npm:8.9.2":
+  version: 8.9.2
+  resolution: "starknet@npm:8.9.2"
   dependencies:
-    "@noble/curves": "npm:1.7.0"
-    "@noble/hashes": "npm:1.6.0"
-    "@scure/base": "npm:1.2.1"
+    "@noble/curves": "npm:~1.7.0"
+    "@noble/hashes": "npm:~1.6.0"
+    "@scure/base": "npm:~1.2.1"
     "@scure/starknet": "npm:1.1.0"
+    "@starknet-io/starknet-types-08": "npm:@starknet-io/types-js@~0.8.4"
+    "@starknet-io/starknet-types-09": "npm:@starknet-io/types-js@~0.9.1"
     abi-wan-kanabi: "npm:2.2.4"
-    isows: "npm:^1.0.6"
-    lossless-json: "npm:^4.0.1"
+    lossless-json: "npm:^4.2.0"
     pako: "npm:^2.0.4"
-    starknet-types-07: "npm:@starknet-io/types-js@^0.7.10"
-    starknet-types-08: "npm:@starknet-io/types-js@0.8.0-beta.10"
     ts-mixer: "npm:^6.0.3"
-    ws: "npm:^8.18.0"
-  checksum: 10c0/d3274dbdeae0c23828bd4aa81f3627f75d1b90b346f7a30c3be5eef6343a0e466462398a02648ddf3154d0aa8444d3d2af8b60832ac3d834609560bf873a014a
+  checksum: 10c0/02d9b7f283e1579d3b65a332ea1ccd7f12ad4c451e530f65e5c3fa68a9802ee6870e267e96c54e8fe47a877b97cf4025c2623d8e19055b1bac4a297421733312
   languageName: node
   linkType: hard
 
@@ -9184,21 +9166,6 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 10c0/bd7d5f4aaf04fae7960c23dcb6c6375d525e00f795dd20b9385902bd008c40a94d3db3ce97d878acc7573df852056ca546328b27b39f47609f80fb22a0a9b61d
-  languageName: node
-  linkType: hard
-
-"ws@npm:^8.18.0":
-  version: 8.19.0
-  resolution: "ws@npm:8.19.0"
-  peerDependencies:
-    bufferutil: ^4.0.1
-    utf-8-validate: ">=5.0.2"
-  peerDependenciesMeta:
-    bufferutil:
-      optional: true
-    utf-8-validate:
-      optional: true
-  checksum: 10c0/4741d9b9bc3f9c791880882414f96e36b8b254e34d4b503279d6400d9a4b87a033834856dbdd94ee4b637944df17ea8afc4bce0ff4a1560d2166be8855da5b04
   languageName: node
   linkType: hard
 

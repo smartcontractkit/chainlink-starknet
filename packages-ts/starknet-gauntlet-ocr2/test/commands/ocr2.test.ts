@@ -191,7 +191,11 @@ describe('OCR2 Contract', () => {
       // Iterate over the feeds
       for (const feedAddress of feedAddresses) {
         // Checks that the feed was updated
-        const ocr2Contract = new Contract(contract.abi, feedAddress, provider)
+        const ocr2Contract = new Contract({
+          abi: contract.abi,
+          address: feedAddress,
+          providerOrAccount: provider,
+        })
         const billing = await ocr2Contract.billing()
         expect(billing.observation_payment_gjuels).toEqual(BigInt(1))
         expect(billing.transmission_payment_gjuels).toEqual(BigInt(1))
@@ -241,7 +245,11 @@ describe('OCR2 Contract', () => {
       // number of batch calls is correct
       await Promise.all(
         feedAddresses.map(async (feedAddress, i) => {
-          const ocr2Contract = new Contract(contract.abi, feedAddress, provider)
+          const ocr2Contract = new Contract({
+          abi: contract.abi,
+          address: feedAddress,
+          providerOrAccount: provider,
+        })
           const billing = await ocr2Contract.billing()
           expect(billing.observation_payment_gjuels).toEqual(BigInt(i))
           expect(billing.transmission_payment_gjuels).toEqual(BigInt(i))
@@ -288,7 +296,11 @@ describe('OCR2 Contract', () => {
       // Iterate over the feeds
       for (const feedAddress of feedAddresses) {
         // Get a reference to the contract
-        const ocr2Contract = new Contract(contract.abi, feedAddress, provider)
+        const ocr2Contract = new Contract({
+          abi: contract.abi,
+          address: feedAddress,
+          providerOrAccount: provider,
+        })
         const resultTransmitters = await ocr2Contract.transmitters()
 
         // retrieve signer keys from transaction event
