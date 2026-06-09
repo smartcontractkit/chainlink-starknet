@@ -95,7 +95,7 @@ type ChainClient interface {
 	// only finalized blocks have numbers
 	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
 	ChainID(ctx context.Context) (string, error)
-	// only way to get the latest pending block (only 1 pending block exists at a time)
+	// only way to get the latest pre_confirmed block (only 1 pre_confirmed block exists at a time)
 	// LatestPendingBlock(ctx context.Context) (starknetrpc.PendingBlock, error)
 	// returns block number and block has of latest finalized block
 	LatestBlockHashAndNumber(ctx context.Context) (starknetrpc.BlockHashAndNumberOutput, error)

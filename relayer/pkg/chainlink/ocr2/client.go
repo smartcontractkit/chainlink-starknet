@@ -227,9 +227,9 @@ func (c *Client) fetchEventsFromBlock(ctx context.Context, address *felt.Felt, e
 	}
 
 	var block starknetrpc.BlockID
-	// "blockNum" may be available on-chain, but unqueryable via the RPC because the block is pending
+	// "blockNum" may be available on-chain, but unqueryable via the RPC because the block is pre_confirmed
 	if blockNum > latestBlockHeight {
-		block = starknetrpc.WithBlockTag("pending")
+		block = starknet.PreConfirmedBlockID()
 	} else {
 		block = starknetrpc.WithBlockNumber(blockNum)
 	}

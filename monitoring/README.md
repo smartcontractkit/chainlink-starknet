@@ -45,7 +45,7 @@ One option is to create a folder `/tmp/configs` and add two files `feeds.json` a
 python3 -m http.server 4000
 ```
 
-- Start STOM locally. You will need and RPC endpoint and the address of the LINK token. Make sure you `cd ./monitoring`.
+- Start STOM locally. You will need an RPC 0.9 or 0.10.x endpoint (e.g. `.../rpc/v0_10`) and the address of the LINK token. Make sure you `cd ./monitoring`.
 
 ```bash
 STARKNET_RPC_ENDPOINT="<RPC_ENDPOINT>" \

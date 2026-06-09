@@ -191,7 +191,7 @@ func (txm *starktxm) estimateFriFee(ctx context.Context, client *starknet.Client
 			largestEstimateNonce = estimateNonce
 		}
 
-		feeEstimate, err := client.Provider.EstimateFee(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags, starknetrpc.BlockID{Tag: "pending"})
+		feeEstimate, err := client.EstimateFeeAtPreConfirmed(ctx, []starknetrpc.BroadcastTxn{tx}, simFlags)
 		if err != nil {
 			var dataErr *starknetrpc.RPCError
 			if !errors.As(err, &dataErr) {

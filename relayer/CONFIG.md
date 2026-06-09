@@ -98,7 +98,8 @@ Name is a unique (per-chain) identifier for this node.
 ```toml
 URL = 'http://stark.node' # Example
 ```
-URL is the base HTTP(S) endpoint for this node.
+URL is the base HTTP(S) endpoint for this node. Use an RPC 0.9 or 0.10.x URL
+(e.g. .../rpc/v0_10). RPC 0.8 is deprecated as of Starknet v0.14.3.
 
 ### APIKey
 ```toml

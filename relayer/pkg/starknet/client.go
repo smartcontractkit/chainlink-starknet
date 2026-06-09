@@ -91,7 +91,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 		Calldata:           ops.Calldata,
 	}
 
-	res, err := c.Call(ctx, tx, starknetrpc.WithBlockTag("pending"))
+	res, err := c.Call(ctx, tx, PreConfirmedBlockID())
 	if err != nil {
 		return nil, fmt.Errorf("error in client.CallContract: %w", err)
 	}
@@ -131,6 +131,17 @@ func (c *Client) BlockWithTxHashes(ctx context.Context, blockID starknetrpc.Bloc
 }
 
 func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, blockHashOrTag starknetrpc.BlockID) ([]*felt.Felt, error) {
+	if isPreConfirmedBlock(blockHashOrTag) {
+		out, err := c.callAtBlock(ctx, calls, blockHashOrTag)
+		if err != nil {
+			return out, fmt.Errorf("error in client.Call: %w", err)
+		}
+		if out == nil {
+			return out, NilResultError("client.Call")
+		}
+		return out, nil
+	}
+
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -148,6 +159,17 @@ func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, block
 }
 
 func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
+	if eventsInputUsesPreConfirmed(input) {
+		out, err := c.eventsAtBlock(ctx, input)
+		if err != nil {
+			return out, fmt.Errorf("error in client.Events: %w", err)
+		}
+		if out == nil {
+			return out, NilResultError("client.Events")
+		}
+		return out, nil
+	}
+
 	if c.defaultTimeout != 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
@@ -171,7 +193,7 @@ func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*
 		defer cancel()
 	}
 
-	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, accountAddress)
+	return c.nonceAtBlock(ctx, PreConfirmedBlockID(), accountAddress)
 }
 
 func (c *Client) AccountNonceLatest(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
@@ -181,5 +203,5 @@ func (c *Client) AccountNonceLatest(ctx context.Context, accountAddress *felt.Fe
 		defer cancel()
 	}
 
-	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, accountAddress)
+	return c.Provider.Nonce(ctx, starknetrpc.WithBlockTag("latest"), accountAddress)
 }

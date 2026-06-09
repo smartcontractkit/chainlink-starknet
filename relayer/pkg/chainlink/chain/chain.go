@@ -205,7 +205,7 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 		return types.Head{}, err
 	}
 
-	block, err := sc.BlockByNumber(ctx, bhAndNum.Number)
+	block, err := sc.BlockByHash(ctx, bhAndNum.Hash)
 	if err != nil {
 		return types.Head{}, err
 	}
