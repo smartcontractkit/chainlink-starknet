@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLatestBlockID(t *testing.T) {
+	blockID := LatestBlockID()
+	assert.Equal(t, BlockTagLatest, string(blockID.Tag))
+}
+
 func TestPreConfirmedBlockID(t *testing.T) {
 	blockID := PreConfirmedBlockID()
 	assert.Equal(t, BlockTagPreConfirmed, string(blockID.Tag))

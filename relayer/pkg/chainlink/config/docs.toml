@@ -22,6 +22,8 @@ FeeEstimationMaxAttempts = 5 # Default
 Name = 'primary' # Example
 # URL is the base HTTP(S) endpoint for this node. Use an RPC 0.9 or 0.10.x URL
 # (e.g. .../rpc/v0_10). RPC 0.8 is deprecated as of Starknet v0.14.3.
+# Read-only contract calls use the "latest" block tag; TXM nonce/fee paths use
+# "pre_confirmed" (the RPC 0.9+ replacement for deprecated "pending").
 URL = 'http://stark.node' # Example
 # APIKey Header is optional and only required for Nethermind RPCs
 APIKey = 'key' # Example

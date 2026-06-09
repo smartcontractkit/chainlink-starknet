@@ -91,7 +91,10 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 		Calldata:           ops.Calldata,
 	}
 
-	res, err := c.Call(ctx, tx, PreConfirmedBlockID())
+	// Read-only contract calls use "latest" (finalized L2 state). TXM paths that
+	// need in-flight nonces or fee state use pre_confirmed via AccountNonce and
+	// EstimateFeeAtPreConfirmed instead.
+	res, err := c.Call(ctx, tx, LatestBlockID())
 	if err != nil {
 		return nil, fmt.Errorf("error in client.CallContract: %w", err)
 	}

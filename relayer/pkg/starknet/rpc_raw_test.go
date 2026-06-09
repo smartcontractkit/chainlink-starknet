@@ -122,7 +122,8 @@ func TestPreConfirmedRPCCalls(t *testing.T) {
 
 		switch call.Method {
 		case "starknet_call":
-			assert.Contains(t, string(req), `"pre_confirmed"`)
+			assert.Contains(t, string(req), `"latest"`)
+			assert.NotContains(t, string(req), `"pre_confirmed"`)
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":["0x1","0x2"]}`))
 		case "starknet_getNonce":
 			assert.Contains(t, string(req), `"pre_confirmed"`)
@@ -147,7 +148,7 @@ func TestPreConfirmedRPCCalls(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("CallContract uses pre_confirmed", func(t *testing.T) {
+	t.Run("CallContract uses latest", func(t *testing.T) {
 		results, err := client.CallContract(ctx, CallOps{
 			ContractAddress: contractAddress,
 			Selector:        starknetutils.GetSelectorFromNameFelt("latest_round_data"),
