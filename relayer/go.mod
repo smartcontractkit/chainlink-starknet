@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	github.com/NethermindEth/juno v0.15.11
 	github.com/NethermindEth/starknet.go v0.17.1
+	github.com/consensys/gnark-crypto v0.19.2
 	github.com/ethereum/go-ethereum v1.17.0
 	github.com/hashicorp/go-plugin v1.7.0
 	github.com/pelletier/go-toml/v2 v2.2.4
@@ -40,7 +41,6 @@ require (
 	github.com/cockroachdb/pebble v1.1.5 // indirect
 	github.com/cockroachdb/redact v1.1.6 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20250429170803-42689b6311bb // indirect
-	github.com/consensys/gnark-crypto v0.19.2 // indirect
 	github.com/crate-crypto/go-eth-kzg v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.8.0 // indirect

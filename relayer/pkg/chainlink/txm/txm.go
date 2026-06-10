@@ -288,9 +288,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 		return txhash, nil, err
 	}
 
-	broadcastTxnV3 := starknetrpc.BroadcastInvokeTxnV3(tx)
-
-	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, broadcastTxnV3)
+	friEstimate, largestEstimateNonce, err := txm.estimateFriFee(ctx, client, accountAddress, tx)
 	if err != nil {
 		return txhash, nil, fmt.Errorf("failed to get FRI estimate: %+w", err)
 	}
@@ -317,7 +315,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	}
 
 	L2GasConsumed := friEstimate.L2GasConsumed.BigInt(new(big.Int))
-	broadcastTxnV3.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2GasConsumed, 150)
+	tx.ResourceBounds.L2Gas.MaxAmount = txm.updateMaxAmountBounds(L2GasConsumed, 150)
 
 	L1GasPrice := friEstimate.L1GasPrice.BigInt(new(big.Int))
 	L2GasPrice := friEstimate.L2GasPrice.BigInt(new(big.Int))
@@ -325,22 +323,22 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	L1GasConsumed := friEstimate.L1GasConsumed.BigInt(new(big.Int))
 	// TODO: consider making this configurable
 	// pad estimate to 150% (add extra because estimate did not include validation)
-	broadcastTxnV3.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(L1GasConsumed, 150)
+	tx.ResourceBounds.L1Gas.MaxAmount = txm.updateMaxAmountBounds(L1GasConsumed, 150)
 
 	// pad by 150%
-	broadcastTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150)
-	broadcastTxnV3.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150)
+	tx.ResourceBounds.L1Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1GasPrice, 150)
+	tx.ResourceBounds.L2Gas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L2GasPrice, 150)
 
 	L1DataGasConsumed := friEstimate.L1DataGasConsumed.BigInt(new(big.Int))
 	L1DataGasPrice := friEstimate.L1DataGasPrice.BigInt(new(big.Int))
-	broadcastTxnV3.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
-	broadcastTxnV3.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
+	tx.ResourceBounds.L1DataGas.MaxAmount = txm.updateMaxAmountBounds(L1DataGasConsumed, 150)
+	tx.ResourceBounds.L1DataGas.MaxPricePerUnit = txm.updateMaxPriceUnitBounds(L1DataGasPrice, 150)
 
-	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", broadcastTxnV3.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", broadcastTxnV3.ResourceBounds.L1Gas.MaxPricePerUnit, "FinalNonce", nonce)
+	txm.lggr.Infow("Set resource bounds", "L1MaxAmount", tx.ResourceBounds.L1Gas.MaxAmount, "L1MaxPricePerUnit", tx.ResourceBounds.L1Gas.MaxPricePerUnit, "FinalNonce", nonce)
 
-	broadcastTxnV3.Nonce = nonce
+	tx.Nonce = nonce
 
-	err = account.SignInvokeTransaction(ctx, &broadcastTxnV3)
+	err = account.SignInvokeTransaction(ctx, &tx)
 	if err != nil {
 		return txhash, nil, err
 	}
@@ -349,7 +347,7 @@ func (txm *starktxm) broadcast(ctx context.Context, publicKey *felt.Felt, accoun
 	defer execCancel()
 
 	// finally, transmit the invoke
-	res, err := account.Provider.AddInvokeTransaction(execCtx, &broadcastTxnV3)
+	res, err := account.Provider.AddInvokeTransaction(execCtx, &tx)
 	if err != nil {
 		txm.lggr.Errorw("failed to invoke tx", "accountAddress", accountAddress, "error", err)
 		if strings.Contains(err.Error(), RPCNonceErrMsg) {

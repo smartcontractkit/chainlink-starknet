@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/consensys/gnark-crypto/ecc/stark-curve/fp"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/consensys/gnark-crypto/ecc/stark-curve/fp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
