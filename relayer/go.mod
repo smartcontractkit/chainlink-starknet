@@ -3,8 +3,8 @@ module github.com/smartcontractkit/chainlink-starknet/relayer
 go 1.25.3
 
 require (
-	github.com/NethermindEth/juno v0.14.0
-	github.com/NethermindEth/starknet.go v0.9.0
+	github.com/NethermindEth/juno v0.15.11
+	github.com/NethermindEth/starknet.go v0.17.1
 	github.com/ethereum/go-ethereum v1.17.0
 	github.com/hashicorp/go-plugin v1.7.0
 	github.com/pelletier/go-toml/v2 v2.2.4

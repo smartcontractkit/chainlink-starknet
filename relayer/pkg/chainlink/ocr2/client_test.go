@@ -443,6 +443,8 @@ func TestOCR2Client(t *testing.T) {
 			require.NoError(t, json.Unmarshal(req, &call))
 
 			switch call.Method {
+			case "starknet_specVersion":
+				out = []byte(`{"jsonrpc":"2.0","id":1,"result":"0.9.0"}`)
 			case "starknet_blockNumber":
 				out = []byte(`{"result":777}`)
 			case "starknet_chainId":

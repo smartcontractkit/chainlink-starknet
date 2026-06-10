@@ -161,7 +161,7 @@ func (lk *LooppKeystore) Sign(ctx context.Context, id string, hash []byte) ([]by
 	}
 
 	starkHash := new(big.Int).SetBytes(hash)
-	x, y, err := curve.Curve.Sign(starkHash, k)
+	x, y, err := curve.Sign(starkHash, k)
 	if err != nil {
 		return nil, fmt.Errorf("error signing data with curve: %w", err)
 	}

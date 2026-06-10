@@ -38,6 +38,8 @@ func TestRPCClient(t *testing.T) {
 		require.NoError(t, json.Unmarshal(req, &call))
 
 		switch call.Method {
+		case "starknet_specVersion":
+			out = []byte(`{"jsonrpc":"2.0","id":1,"result":"0.9.0"}`)
 		case "starknet_chainId":
 			id := starknetutils.BigToHex(starknetutils.UTF8StrToBig(chainID))
 			out = []byte(fmt.Sprintf(`{"result": "%s"}`, id))

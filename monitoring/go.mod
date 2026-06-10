@@ -3,8 +3,8 @@ module github.com/smartcontractkit/chainlink-starknet/monitoring
 go 1.25.3
 
 require (
-	github.com/NethermindEth/juno v0.14.0
-	github.com/NethermindEth/starknet.go v0.9.0
+	github.com/NethermindEth/juno v0.15.11
+	github.com/NethermindEth/starknet.go v0.17.1
 	github.com/prometheus/client_golang v1.23.0
 	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260406055916-9aa6b6c0ae81
 	github.com/smartcontractkit/chainlink-common/pkg/monitoring v0.0.0-20250602141924-3c15a42d8266

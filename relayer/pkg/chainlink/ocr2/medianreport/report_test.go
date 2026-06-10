@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/starknet.go/curve"
+	"github.com/consensys/gnark-crypto/ecc/stark-curve/fp"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,7 +96,7 @@ func TestBuildReportNoObserversOverflow(t *testing.T) {
 	observersBig := starknetutils.BytesToBig(observersBytes)
 
 	// encoded observers felt is less than max felt
-	assert.Equal(t, -1, observersBig.Cmp(curve.Curve.P), "observers should be less than max felt")
+	assert.Equal(t, -1, observersBig.Cmp(fp.Modulus()), "observers should be less than max felt")
 }
 
 func TestBuildReport(t *testing.T) {
