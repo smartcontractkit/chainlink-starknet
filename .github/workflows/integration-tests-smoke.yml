@@ -230,7 +230,7 @@ jobs:
           artifacts_location: /home/runner/work/chainlink-starknet/chainlink-starknet/integration-tests/smoke/logs
           PROD_AWS_REGION: ${{ secrets.PROD_AWS_REGION}}
           PROD_AWS_ACCOUNT_NUMBER: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}
-          gauntlet_plus_plus_image: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.5.21
+          gauntlet_plus_plus_image: ${{ secrets.PROD_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.PROD_AWS_REGION }}.amazonaws.com/gauntlet-plus-plus:v2.6.5
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
           enable-gap: false
         env:
