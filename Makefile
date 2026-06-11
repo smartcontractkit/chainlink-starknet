@@ -214,25 +214,33 @@ test-integration-prep:
 .PHONY: test-integration
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
 
+.PHONY: download-gauntlet-plus-plus
+download-gauntlet-plus-plus:
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)"
+
 .PHONY: test-integration-smoke
 test-integration-smoke: test-integration-prep
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=2h -v ./smoke
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=2h -v -count=1 -run TestOCRBasic -json ./smoke | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=1h -v -json ./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
 test-integration-soak-ci:
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=1h -v -count=1 -json ./soak
 

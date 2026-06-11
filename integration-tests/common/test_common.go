@@ -252,7 +252,7 @@ func (m *OCRv2TestState) DeployCluster() {
 
 // Starts GauntletPP Without a network
 func (m *OCRv2TestState) StartGppDefaultNetwork() {
-	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusVersion)
 	url, err := gpp.StartContainer()
 	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
 	require.NoError(m.TestConfig.T, err)
@@ -260,7 +260,7 @@ func (m *OCRv2TestState) StartGppDefaultNetwork() {
 
 // Starts GauntletPP with a network
 func (m *OCRv2TestState) StartGppWithNetwork(networkName string) {
-	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusVersion)
 	url, err := gpp.StartContainer()
 	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
 	require.NoError(m.TestConfig.T, err)

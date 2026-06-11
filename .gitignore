@@ -168,3 +168,4 @@ eslint-report.json
 .run.id
 .local-mock-server
 override*.toml
+.cache/

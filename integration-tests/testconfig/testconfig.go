@@ -190,7 +190,7 @@ type Common struct {
 	Stateful              *bool   `toml:"stateful_db"`
 	InternalDockerRepo    *string `toml:"internal_docker_repo"`
 	DevnetImage           *string `toml:"devnet_image"`
-	GauntletPlusPlusImage *string `toml:"gauntlet_plus_plus_image"`
+	GauntletPlusPlusVersion *string `toml:"gauntlet_plus_plus_version"`
 	PostgresVersion       *string `toml:"postgres_version"`
 	GauntletPlusPlusURL   string
 }
@@ -205,8 +205,8 @@ func (c *Common) Validate() error {
 		if c.DevnetImage == nil {
 			return fmt.Errorf("devnet_image must be set")
 		}
-		if c.GauntletPlusPlusImage == nil {
-			return fmt.Errorf("gauntlet_plus_plus_image must be set")
+		if c.GauntletPlusPlusVersion == nil {
+			return fmt.Errorf("gauntlet_plus_plus_version must be set")
 		}
 	case "testnet":
 		if c.PrivateKey == nil {

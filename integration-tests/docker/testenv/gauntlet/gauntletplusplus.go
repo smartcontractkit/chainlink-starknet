@@ -1,14 +1,16 @@
-package testenv
+package gauntlet
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	tc "github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go"
 	tclog "github.com/testcontainers/testcontainers-go/log"
 	tcwait "github.com/testcontainers/testcontainers-go/wait"
 
@@ -17,9 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/utils/testcontext"
 )
 
-const (
-	GauntletPlusPlusPort = "4444"
-)
+const GauntletPlusPlusPort = "4444"
 
 type GauntletPlusPlus struct {
 	test_env.EnvComponent
@@ -27,17 +27,17 @@ type GauntletPlusPlus struct {
 	InternalHTTPURL string
 	t               *testing.T
 	l               zerolog.Logger
-	Image           string
+	Version         string
+	installDir      string
 }
 
-func NewGauntletPlusPlus(networks []string, image string, opts ...test_env.EnvComponentOption) *GauntletPlusPlus {
+func NewGauntletPlusPlus(networks []string, version string, opts ...test_env.EnvComponentOption) *GauntletPlusPlus {
 	ms := &GauntletPlusPlus{
-		Image: image,
+		Version: version,
 		EnvComponent: test_env.EnvComponent{
 			ContainerName: "gauntlet-plus-plus",
 			Networks:      networks,
 		},
-
 		l: log.Logger,
 	}
 
@@ -54,6 +54,12 @@ func (g *GauntletPlusPlus) WithTestLogger(t *testing.T) *GauntletPlusPlus {
 }
 
 func (g *GauntletPlusPlus) StartContainer() (string, error) {
+	installDir, err := gauntletPlusPlusInstallDir()
+	if err != nil {
+		return "", fmt.Errorf("prepare gauntlet++ release v%s: %w", g.Version, err)
+	}
+	g.installDir = installDir
+
 	l := tclog.Default()
 	if g.t != nil {
 		l = logging.CustomT{
@@ -61,11 +67,13 @@ func (g *GauntletPlusPlus) StartContainer() (string, error) {
 			L: g.l,
 		}
 	}
-	cReq, err := g.getContainerRequest()
+
+	cReq, err := g.getContainerRequest(installDir)
 	if err != nil {
 		return "", err
 	}
-	c, err := tc.GenericContainer(testcontext.Get(g.t), tc.GenericContainerRequest{
+
+	c, err := testcontainers.GenericContainer(testcontext.Get(g.t), testcontainers.GenericContainerRequest{
 		ContainerRequest: *cReq,
 		Reuse:            true,
 		Started:          true,
@@ -90,22 +98,51 @@ func (g *GauntletPlusPlus) StartContainer() (string, error) {
 	g.InternalHTTPURL = fmt.Sprintf("http://%s:%s", g.ContainerName, GauntletPlusPlusPort)
 
 	g.l.Info().
+		Str("version", g.Version).
+		Str("installDir", installDir).
 		Any("ExternalHTTPURL", g.ExternalHTTPURL).
 		Any("InternalHTTPURL", g.InternalHTTPURL).
 		Str("containerName", g.ContainerName).
-		Msgf("Started Gauntlet Plus Plus container")
+		Msg("Started Gauntlet Plus Plus from release tarball")
 
 	return g.ExternalHTTPURL, nil
 }
 
-func (g *GauntletPlusPlus) getContainerRequest() (*tc.ContainerRequest, error) {
-	return &tc.ContainerRequest{
+func gauntletPlusPlusInstallDir() (string, error) {
+	installDir := os.Getenv("GAUNTLET_PLUS_PLUS_DIR")
+	if installDir == "" {
+		return "", fmt.Errorf(
+			"GAUNTLET_PLUS_PLUS_DIR is not set; run integration-tests/scripts/download-gauntlet-plus-plus.sh before tests",
+		)
+	}
+
+	gauntletBin := filepath.Join(installDir, "bin", "gauntlet")
+	if _, err := os.Stat(gauntletBin); err != nil {
+		return "", fmt.Errorf("GAUNTLET_PLUS_PLUS_DIR=%s missing bin/gauntlet: %w", installDir, err)
+	}
+
+	return installDir, nil
+}
+
+func (g *GauntletPlusPlus) getContainerRequest(installDir string) (*testcontainers.ContainerRequest, error) {
+	mount := fmt.Sprintf("%s:/gauntlet:rw", installDir)
+
+	return &testcontainers.ContainerRequest{
 		Name:         g.ContainerName,
-		Image:        g.Image,
+		Image:        "ubuntu:24.04",
 		ExposedPorts: []string{test_env.NatPortFormat(GauntletPlusPlusPort)},
 		Networks:     g.Networks,
+		Cmd: []string{
+			"/gauntlet/bin/gauntlet",
+			"serve",
+			"-h", "0.0.0.0",
+			"-p", GauntletPlusPlusPort,
+		},
 		WaitingFor: tcwait.ForLog("Server listening at ").
-			WithStartupTimeout(30 * time.Second).
+			WithStartupTimeout(2 * time.Minute).
 			WithPollInterval(100 * time.Millisecond),
+		HostConfigModifier: func(hc *container.HostConfig) {
+			hc.Binds = append(hc.Binds, mount)
+		},
 	}, nil
 }
