@@ -1,4 +1,4 @@
-package gauntlet
+package testenv
 
 import (
 	"fmt"

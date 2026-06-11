@@ -183,16 +183,16 @@ type Common struct {
 	InsideK8s *bool   `toml:"inside_k8"`
 	User      *string `toml:"user"`
 	// if rpc requires api key to be passed as an HTTP header
-	L2RPCApiKey           *string `toml:"l2_rpc_url_api_key"`
-	L2RPCUrl              *string `toml:"l2_rpc_url"`
-	PrivateKey            *string `toml:"private_key"`
-	Account               *string `toml:"account"`
-	Stateful              *bool   `toml:"stateful_db"`
-	InternalDockerRepo    *string `toml:"internal_docker_repo"`
-	DevnetImage           *string `toml:"devnet_image"`
+	L2RPCApiKey             *string `toml:"l2_rpc_url_api_key"`
+	L2RPCUrl                *string `toml:"l2_rpc_url"`
+	PrivateKey              *string `toml:"private_key"`
+	Account                 *string `toml:"account"`
+	Stateful                *bool   `toml:"stateful_db"`
+	InternalDockerRepo      *string `toml:"internal_docker_repo"`
+	DevnetImage             *string `toml:"devnet_image"`
 	GauntletPlusPlusVersion *string `toml:"gauntlet_plus_plus_version"`
-	PostgresVersion       *string `toml:"postgres_version"`
-	GauntletPlusPlusURL   string
+	PostgresVersion         *string `toml:"postgres_version"`
+	GauntletPlusPlusURL     string
 }
 
 func (c *Common) Validate() error {
