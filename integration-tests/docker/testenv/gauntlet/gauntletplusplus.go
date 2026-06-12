@@ -75,7 +75,7 @@ func (g *GauntletPlusPlus) StartContainer() (string, error) {
 
 	c, err := testcontainers.GenericContainer(testcontext.Get(g.t), testcontainers.GenericContainerRequest{
 		ContainerRequest: *cReq,
-		Reuse:            true,
+		Reuse:            false,
 		Started:          true,
 		Logger:           l,
 	})
@@ -128,9 +128,10 @@ func (g *GauntletPlusPlus) getContainerRequest(installDir string) (*testcontaine
 	mount := fmt.Sprintf("%s:/gauntlet:rw", installDir)
 
 	return &testcontainers.ContainerRequest{
-		Name:         g.ContainerName,
-		Image:        "ubuntu:24.04",
-		ExposedPorts: []string{test_env.NatPortFormat(GauntletPlusPlusPort)},
+		Name:          g.ContainerName,
+		Image:         "ubuntu:24.04",
+		ImagePlatform: "linux/amd64", // GAUNTLET_PLUS_PLUS_DIR tarballs are linux-x64
+		ExposedPorts:  []string{test_env.NatPortFormat(GauntletPlusPlusPort)},
 		Networks:     g.Networks,
 		Cmd: []string{
 			"/gauntlet/bin/gauntlet",

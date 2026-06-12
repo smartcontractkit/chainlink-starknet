@@ -27,7 +27,7 @@ simulated = [
 ] # Not needed for Starknet but mandatory from CTF (do not change)
 
 [Common]
-internal_docker_repo = "public.ecr.aws/chainlink"
+internal_docker_repo = ""
 inside_k8 = false
 network = "localnet"
 user = "satoshi"

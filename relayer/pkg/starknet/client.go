@@ -59,8 +59,12 @@ func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger
 		return nil, err
 	}
 	if err != nil {
-		// starknet.go v0.17.x targets RPC 0.9.0; production nodes on 0.10.x still work.
-		lggr.Warnw("starknet RPC spec version mismatch", "error", err)
+		// starknet.go v0.17.x targets RPC spec 0.9.0; devnet-rs 0.8.x and many nodes report 0.10.x.
+		// The provider is still usable — see relayer/CONFIG.md (Nodes.URL).
+		lggr.Warnw("starknet RPC spec version mismatch; continuing with node provider",
+			"sdkSpecVersion", "0.9.0",
+			"details", err.Error(),
+		)
 	}
 
 	c, err := ethrpc.DialContext(context.Background(), baseURL)
@@ -123,7 +127,7 @@ func (c *Client) BlockWithTxHashes(ctx context.Context, blockID starknetrpc.Bloc
 
 	out, err := c.Provider.BlockWithTxHashes(ctx, blockID)
 	if err != nil {
-		return out.(*starknetrpc.Block), fmt.Errorf("error in client.BlockWithTxHashes: %w", err)
+		return nil, fmt.Errorf("error in client.BlockWithTxHashes: %w", err)
 	}
 	return out.(*starknetrpc.Block), nil
 }

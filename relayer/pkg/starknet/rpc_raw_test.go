@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -98,7 +97,25 @@ func TestPreConfirmedRPCCalls(t *testing.T) {
 			ResultPageRequest: starknetrpc.ResultPageRequest{ChunkSize: 10},
 		})
 		require.NoError(t, err)
-		assert.True(t, strings.Contains(lastBody, `"pre_confirmed"`) || strings.Contains(lastBody, `"latest"`))
+		assert.Contains(t, lastBody, `"pre_confirmed"`)
+	})
+
+	t.Run("Events forwards continuation token", func(t *testing.T) {
+		lastBody = ""
+		token := "page-2"
+		_, err := client.Events(ctx, starknetrpc.EventsInput{
+			EventFilter: starknetrpc.EventFilter{
+				FromBlock: PreConfirmedBlockID(),
+				ToBlock:   LatestBlockID(),
+				Address:   account,
+			},
+			ResultPageRequest: starknetrpc.ResultPageRequest{
+				ChunkSize:         10,
+				ContinuationToken: token,
+			},
+		})
+		require.NoError(t, err)
+		assert.Contains(t, lastBody, token)
 	})
 }
 

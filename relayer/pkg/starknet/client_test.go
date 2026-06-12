@@ -71,3 +71,33 @@ func TestRPCClient(t *testing.T) {
 		assert.Equal(t, uint64(1), blockNum)
 	})
 }
+
+func TestNewClientIncompatibleSpecVersion(t *testing.T) {
+	t.Parallel()
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		req, _ := io.ReadAll(r.Body)
+
+		type Call struct {
+			Method string `json:"method"`
+		}
+		call := Call{}
+		require.NoError(t, json.Unmarshal(req, &call))
+
+		var out []byte
+		switch call.Method {
+		case "starknet_specVersion":
+			out = []byte(`{"jsonrpc":"2.0","id":1,"result":"0.10.0"}`)
+		default:
+			t.Fatalf("unexpected RPC method %s", call.Method)
+		}
+		_, err := w.Write(out)
+		require.NoError(t, err)
+	}))
+	defer mockServer.Close()
+
+	client, err := NewClient(chainID, mockServer.URL, "", logger.Test(t), &timeout)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	require.NotNil(t, client.Provider)
+}

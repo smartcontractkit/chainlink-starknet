@@ -65,7 +65,7 @@ func (s *Starknet) StartContainer() error {
 	}
 	c, err := tc.GenericContainer(testcontext.Get(s.t), tc.GenericContainerRequest{
 		ContainerRequest: *cReq,
-		Reuse:            true,
+		Reuse:            false,
 		Started:          true,
 		Logger:           l,
 	})
