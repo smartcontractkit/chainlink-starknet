@@ -190,6 +190,10 @@ jobs:
           aws-role-arn: ${{ secrets.AWS_OIDC_CHAINLINK_READ_ONLY_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_RELENG_LAMBDA_URL }}
           aws-region: ${{ secrets.QA_AWS_REGION }}
+      - name: Setup GitHub private repo access
+        uses: ./.github/actions/setup-github-private-access
+        with:
+          gati_token: ${{ steps.setup-github-token.outputs.access-token }}
       - name: Build contracts
         run: |
           cd contracts && scarb --profile release build

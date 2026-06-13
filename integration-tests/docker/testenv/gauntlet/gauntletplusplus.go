@@ -132,7 +132,7 @@ func (g *GauntletPlusPlus) getContainerRequest(installDir string) (*testcontaine
 		Image:         "ubuntu:24.04",
 		ImagePlatform: "linux/amd64", // GAUNTLET_PLUS_PLUS_DIR tarballs are linux-x64
 		ExposedPorts:  []string{test_env.NatPortFormat(GauntletPlusPlusPort)},
-		Networks:     g.Networks,
+		Networks:      g.Networks,
 		Cmd: []string{
 			"/gauntlet/bin/gauntlet",
 			"serve",
