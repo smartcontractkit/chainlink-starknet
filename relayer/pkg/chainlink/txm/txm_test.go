@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -24,14 +25,17 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet"
 )
 
 func TestIntegration_Txm(t *testing.T) {
 	ctx := t.Context()
 	var nTransactions uint64 = 2 // Number of txs per key. If you increase that you might have to increase the confirmation timeout
-	// url := SetupLocalStarknetNode(t)
-	url := "http://127.0.0.1:5050"
-	accounts, err := FetchDevnetAccounts(url)
+	url := os.Getenv("STARKNET_DEVNET_URL")
+	if url == "" {
+		url = "http://127.0.0.1:5050"
+	}
+	accounts, err := devnet.FetchDevnetAccounts(url)
 	require.NoError(t, err)
 
 	// parse keys into expected format
@@ -42,7 +46,6 @@ func TestIntegration_Txm(t *testing.T) {
 	localKeys := map[string]Key{}
 	for i := range accounts {
 		publicKey := accounts[i].PublicKey
-		fmt.Printf("account %v pubkey %v\n", accounts[i].Address, publicKey)
 		localKeys[publicKey] = Key{
 			PrivateKey: starknetutils.HexToBN(accounts[i].PrivateKey),
 			Account:    accounts[i].Address,
