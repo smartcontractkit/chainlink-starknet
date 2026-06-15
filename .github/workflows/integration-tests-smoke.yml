@@ -242,4 +242,4 @@ jobs:
           CHAINLINK_VERSION: starknet.${{ env.SN_SHA }}
           CHAINLINK_USER_TEAM: ${{ github.event.inputs.team || 'DF' }}
           GATI_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
-          GAUNTLET_PLUS_PLUS_VERSION: "2.6.5"
+          GAUNTLET_PLUS_PLUS_VERSION: "2.6.6"

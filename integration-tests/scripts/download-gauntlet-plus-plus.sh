@@ -3,7 +3,7 @@
 # Prints: export GAUNTLET_PLUS_PLUS_DIR=<install-dir>
 set -euo pipefail
 
-VERSION="${GAUNTLET_PLUS_PLUS_VERSION:-2.6.5}"
+VERSION="${GAUNTLET_PLUS_PLUS_VERSION:-2.6.6}"
 TAG="@chainlink/gauntlet-bundle/v${VERSION}"
 REPO="smartcontractkit/gauntlet-plus-plus"
 CACHE_ROOT="${GAUNTLET_PLUS_PLUS_CACHE:-${PWD}/.cache/gauntlet-plus-plus/v${VERSION}}"

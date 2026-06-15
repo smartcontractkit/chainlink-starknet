@@ -95,4 +95,4 @@ jobs:
           CHAINLINK_VERSION: starknet.${{ github.sha }}${{ matrix.image.tag-suffix }}
           CHAINLINK_USER_TEAM: ${{ github.event.inputs.team || 'BIX' }}
           GATI_TOKEN: ${{ steps.setup-github-token.outputs.access-token }}
-          GAUNTLET_PLUS_PLUS_VERSION: "2.6.5"
+          GAUNTLET_PLUS_PLUS_VERSION: "2.6.6"
