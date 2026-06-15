@@ -129,10 +129,16 @@ func (g *GauntletPlusPlus) getContainerRequest(installDir string) (*testcontaine
 
 	return &testcontainers.ContainerRequest{
 		Name:          g.ContainerName,
-		Image:         "ubuntu:24.04",
-		ImagePlatform: "linux/amd64", // GAUNTLET_PLUS_PLUS_DIR tarballs are linux-x64
+		Image:         "node:18-bookworm",
+		ImagePlatform: "linux/amd64",
 		ExposedPorts:  []string{test_env.NatPortFormat(GauntletPlusPlusPort)},
 		Networks:      g.Networks,
+		WorkingDir:    "/gauntlet",
+		Env: map[string]string{
+			"GAUNTLET_DATA_DIR":   "/gauntlet/data",
+			"GAUNTLET_CONFIG_DIR": "/gauntlet/config",
+			"GAUNTLET_CACHE_DIR":  "/gauntlet/cache",
+		},
 		Cmd: []string{
 			"/gauntlet/bin/gauntlet",
 			"serve",
@@ -140,7 +146,7 @@ func (g *GauntletPlusPlus) getContainerRequest(installDir string) (*testcontaine
 			"-p", GauntletPlusPlusPort,
 		},
 		WaitingFor: tcwait.ForLog("Server listening at ").
-			WithStartupTimeout(2 * time.Minute).
+			WithStartupTimeout(5 * time.Minute).
 			WithPollInterval(100 * time.Millisecond),
 		HostConfigModifier: func(hc *container.HostConfig) {
 			hc.Binds = append(hc.Binds, mount)
