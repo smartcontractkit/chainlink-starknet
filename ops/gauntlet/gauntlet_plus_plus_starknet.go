@@ -5,10 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
+)
+
+const (
+	gauntletPollInterval = 2 * time.Second
+	gauntletPollTimeout  = 5 * time.Minute
 )
 
 var (
@@ -148,6 +154,58 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 	return nil
 }
 
+func gauntletReportError(report g.Report) error {
+	if report.Error == nil {
+		return nil
+	}
+
+	reportID := report.Id
+	if reportID == "" {
+		reportID = "unknown"
+	}
+
+	return fmt.Errorf("gauntlet++ report %s failed: %s (%s)", reportID, report.Error.Message, report.Error.Code)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) pollGauntletReport(ctx context.Context, reportID string) (g.Report, error) {
+	deadline := time.Now().Add(gauntletPollTimeout)
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return g.Report{}, ctx.Err()
+		default:
+		}
+
+		reportsResp, err := sgpp.client.PostReportsWithResponse(ctx, g.PostReportsJSONRequestBody{Ids: []string{reportID}})
+		if err != nil {
+			return g.Report{}, err
+		}
+
+		if reportsResp.JSON200 == nil {
+			time.Sleep(gauntletPollInterval)
+			continue
+		}
+
+		report, ok := (*reportsResp.JSON200)[reportID]
+		if !ok {
+			time.Sleep(gauntletPollInterval)
+			continue
+		}
+
+		if err := gauntletReportError(report); err != nil {
+			return g.Report{}, err
+		}
+
+		if report.Output != nil {
+			return report, nil
+		}
+
+		time.Sleep(gauntletPollInterval)
+	}
+
+	return g.Report{}, fmt.Errorf("timed out waiting for gauntlet++ report %s after %s", reportID, gauntletPollTimeout)
+}
+
 func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.Report, error) {
 	body := sgpp.BuildRequestBody(*request)
 
@@ -180,7 +238,16 @@ func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.
 	// Log the full response JSON
 	log.Info().Str("Response Body:", string(responseJSON)).Msg("Gauntlet++")
 
-	return *response.JSON200, nil
+	report := *response.JSON200
+	if report.Output != nil {
+		return report, nil
+	}
+
+	if err := gauntletReportError(report); err != nil {
+		return g.Report{}, err
+	}
+
+	return sgpp.pollGauntletReport(context.Background(), report.Id)
 }
 
 func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, error) {

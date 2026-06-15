@@ -1,4 +1,4 @@
-package devnet
+package utils
 
 import (
 	"bytes"
@@ -16,8 +16,8 @@ type DevnetAccount struct {
 	Address    string `json:"address"`
 }
 
-// FetchDevnetAccounts returns predeployed accounts via devnet_getPredeployedAccounts.
-// starknet-devnet-rs 0.8+ removed the legacy HTTP /predeployed_accounts endpoint.
+// FetchDevnetAccounts returns predeployed accounts via devnet_getPredeployedAccounts JSON-RPC.
+// starknet-devnet-rs 0.8+ removed the legacy HTTP GET /predeployed_accounts endpoint.
 func FetchDevnetAccounts(baseURL string) ([]DevnetAccount, error) {
 	baseURL = strings.TrimSuffix(baseURL, "/")
 	payload := []byte(`{"jsonrpc":"2.0","id":1,"method":"devnet_getPredeployedAccounts","params":{}}`)

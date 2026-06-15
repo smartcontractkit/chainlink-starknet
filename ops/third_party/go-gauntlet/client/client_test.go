@@ -5,38 +5,24 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 )
 
-func TestPostExecuteWithResponsePollsUntilOutput(t *testing.T) {
+func TestPostExecuteWithResponseReturnsReport(t *testing.T) {
 	t.Parallel()
 
-	var pollCount atomic.Int32
 	reportID := "test-report-id"
 	output := map[string]any{"contractAddress": "0x123"}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/execute":
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(Report{Id: reportID})
-		case "/reports":
-			count := pollCount.Add(1)
-			w.Header().Set("Content-Type", "application/json")
-			if count < 2 {
-				_ = json.NewEncoder(w).Encode(map[string]Report{
-					reportID: {Id: reportID},
-				})
-				return
-			}
-			out := any(output)
-			_ = json.NewEncoder(w).Encode(map[string]Report{
-				reportID: {Id: reportID, Output: &out},
-			})
-		default:
+		if r.URL.Path != "/execute" {
 			http.NotFound(w, r)
+			return
 		}
+
+		w.Header().Set("Content-Type", "application/json")
+		out := any(output)
+		_ = json.NewEncoder(w).Encode(Report{Id: reportID, Output: &out})
 	}))
 	defer server.Close()
 
@@ -58,40 +44,26 @@ func TestPostExecuteWithResponsePollsUntilOutput(t *testing.T) {
 	}
 
 	if response.JSON200 == nil || response.JSON200.Output == nil {
-		t.Fatal("expected polled report output")
-	}
-
-	outputMap, ok := (*response.JSON200.Output).(map[string]any)
-	if !ok {
-		t.Fatalf("expected map output, got %T", *response.JSON200.Output)
-	}
-
-	if outputMap["contractAddress"] != "0x123" {
-		t.Fatalf("unexpected contractAddress: %v", outputMap["contractAddress"])
-	}
-
-	if pollCount.Load() < 2 {
-		t.Fatalf("expected at least 2 poll attempts, got %d", pollCount.Load())
+		t.Fatal("expected report output")
 	}
 }
 
-func TestPostExecuteWithResponseReturnsImmediateReportError(t *testing.T) {
+func TestPostReportsWithResponseReturnsReports(t *testing.T) {
 	t.Parallel()
 
-	reportID := "failed-report-id"
+	reportID := "test-report-id"
+	output := map[string]any{"contractAddress": "0x123"}
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/execute" {
+		if r.URL.Path != "/reports" {
 			http.NotFound(w, r)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(Report{
-			Id: reportID,
-			Error: &Error{
-				Code:    "OPERATION_ERROR",
-				Message: "Invalid block ID",
-			},
+		out := any(output)
+		_ = json.NewEncoder(w).Encode(map[string]Report{
+			reportID: {Id: reportID, Output: &out},
 		})
 	}))
 	defer server.Close()
@@ -101,59 +73,19 @@ func TestPostExecuteWithResponseReturnsImmediateReportError(t *testing.T) {
 		t.Fatalf("NewClientWithResponses: %v", err)
 	}
 
-	args := any(map[string]any{})
-	_, err = client.PostExecuteWithResponse(context.Background(), &PostExecuteParams{}, PostExecuteJSONRequestBody{
-		Config: &Config{},
-		Operation: Operation{
-			Args: &args,
-			Name: "starknet/chain/open-zeppelin:declare",
-		},
+	response, err := client.PostReportsWithResponse(context.Background(), PostReportsJSONRequestBody{
+		Ids: []string{reportID},
 	})
-	if err == nil {
-		t.Fatal("expected error from immediate failed report")
-	}
-}
-
-func TestPostExecuteWithResponseReturnsReportError(t *testing.T) {
-	t.Parallel()
-
-	reportID := "failed-report-id"
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/execute":
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(Report{Id: reportID})
-		case "/reports":
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(map[string]Report{
-				reportID: {
-					Id: reportID,
-					Error: &Error{
-						Code:    "EXECUTION_FAILED",
-						Message: "declare failed",
-					},
-				},
-			})
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer server.Close()
-
-	client, err := NewClientWithResponses(server.URL)
 	if err != nil {
-		t.Fatalf("NewClientWithResponses: %v", err)
+		t.Fatalf("PostReportsWithResponse: %v", err)
 	}
 
-	args := any(map[string]any{})
-	_, err = client.PostExecuteWithResponse(context.Background(), &PostExecuteParams{}, PostExecuteJSONRequestBody{
-		Config: &Config{},
-		Operation: Operation{
-			Args: &args,
-			Name: "starknet/chain/open-zeppelin:declare",
-		},
-	})
-	if err == nil {
-		t.Fatal("expected error from failed report")
+	if response.JSON200 == nil {
+		t.Fatal("expected reports map")
+	}
+
+	report, ok := (*response.JSON200)[reportID]
+	if !ok || report.Output == nil {
+		t.Fatal("expected report with output")
 	}
 }

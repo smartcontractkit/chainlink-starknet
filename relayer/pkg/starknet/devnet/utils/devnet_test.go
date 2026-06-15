@@ -1,4 +1,4 @@
-package devnet
+package utils
 
 import (
 	"net/http"

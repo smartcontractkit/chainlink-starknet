@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet"
+	devnetutils "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet/utils"
 )
 
 func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
@@ -40,12 +40,12 @@ func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 	} else {
 		const fundAmount = uint64(900_000_000_000_000_000)
 		for _, key := range nAccounts {
-			res, err := devnet.DevnetMint(m.Common.RPCDetails.RPCL2External, key, fundAmount, "WEI")
+			res, err := devnetutils.DevnetMint(m.Common.RPCDetails.RPCL2External, key, fundAmount, "WEI")
 			if err != nil {
 				return nil, err
 			}
 			l.Info().Msg(fmt.Sprintf("Funding account (WEI): %s", res))
-			res, err = devnet.DevnetMint(m.Common.RPCDetails.RPCL2External, key, fundAmount, m.Common.ChainDetails.TokenName)
+			res, err = devnetutils.DevnetMint(m.Common.RPCDetails.RPCL2External, key, fundAmount, m.Common.ChainDetails.TokenName)
 			if err != nil {
 				return nil, err
 			}

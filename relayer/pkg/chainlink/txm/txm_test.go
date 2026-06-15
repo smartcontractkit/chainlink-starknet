@@ -25,7 +25,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/txm/mocks"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet"
+	devnetutils "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet/utils"
 )
 
 func TestIntegration_Txm(t *testing.T) {
@@ -35,7 +35,7 @@ func TestIntegration_Txm(t *testing.T) {
 	if url == "" {
 		url = "http://127.0.0.1:5050"
 	}
-	accounts, err := devnet.FetchDevnetAccounts(url)
+	accounts, err := devnetutils.FetchDevnetAccounts(url)
 	require.NoError(t, err)
 
 	// parse keys into expected format

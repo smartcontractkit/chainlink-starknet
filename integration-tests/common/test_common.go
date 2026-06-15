@@ -34,7 +34,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
-	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet"
+	devnetutils "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet/utils"
 )
 
 var (
@@ -239,7 +239,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	// If we are using devnet fetch the default keys
 	if *m.Common.TestConfig.Common.Network == "localnet" {
 		// fetch predeployed account 0 to use as funder
-		accounts, err := devnet.FetchDevnetAccounts(m.Common.RPCDetails.RPCL2External)
+		accounts, err := devnetutils.FetchDevnetAccounts(m.Common.RPCDetails.RPCL2External)
 		require.NoError(m.TestConfig.T, err)
 		account := accounts[0]
 		m.Account.Account = account.Address

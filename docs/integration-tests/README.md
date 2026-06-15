@@ -83,7 +83,7 @@ error appears, but instead log it.
 [Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch
 client details
 
-[Devnet helpers](../../relayer/pkg/starknet/devnet/devnet.go) - devnet-rs JSON-RPC helpers (mint, predeployed accounts)
+[Devnet helpers](../../relayer/pkg/starknet/devnet/utils/devnet.go) - devnet-rs JSON-RPC helpers (mint, predeployed accounts)
 
 [Gauntlet wrapper](../../relayer/pkg/starknet/gauntlet_starknet.go) - Wrapper for Starknet gauntlet
 
