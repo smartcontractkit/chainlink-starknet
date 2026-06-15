@@ -18,13 +18,13 @@ make download-gauntlet-plus-plus
 # or: eval "$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)"
 ```
 
-This downloads the full release tarball and installs all bundle plugins. Env vars:
+This downloads the release tarball and installs **Starknet + core plugins only** (not the full cross-chain bundle). Env vars:
 
 - `GAUNTLET_PLUS_PLUS_VERSION` — default `2.6.6` (matches `integration-tests/testconfig/default.toml`)
 - `GITHUB_TOKEN`, `GH_TOKEN`, or `GATI_TOKEN` — required to download releases
 - `GAUNTLET_PLUS_PLUS_DIR` — set by the script; required by the testenv container
 
-Uses the **full tarball** (not nops) until [gauntlet-plus-plus #1708](https://github.com/smartcontractkit/gauntlet-plus-plus/pull/1708) adds missing Starknet ops plugins to nops builds.
+Uses the **full tarball** with a filtered `dependencies.txt` at install time. A **nops tarball** (e.g. G++ 2.6.7+) will skip runtime install entirely once [gauntlet-plus-plus #1708](https://github.com/smartcontractkit/gauntlet-plus-plus/pull/1708) lands.
 
 **Chainlink image (local only)** — when the public Hub image does not include your relayer branch:
 

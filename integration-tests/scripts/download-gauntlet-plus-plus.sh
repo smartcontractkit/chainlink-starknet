@@ -2,14 +2,55 @@
 # Downloads and extracts a gauntlet-plus-plus release tarball and installs plugins.
 # Prints: export GAUNTLET_PLUS_PLUS_DIR=<install-dir>
 #
-# Uses the full release tarball (all bundle plugins), matching the old ECR image
-# built via gauntlet-plugins-install. Nops tarballs omit Starknet ops plugins.
+# Uses the full release tarball but installs only Starknet (+ core) plugins needed for
+# smoke/soak OCR tests. Switch to a nops tarball once G++ ships Starknet ops in nops.
 set -euo pipefail
 
 VERSION="${GAUNTLET_PLUS_PLUS_VERSION:-2.6.6}"
 TAG="@chainlink/gauntlet-bundle/v${VERSION}"
 REPO="smartcontractkit/gauntlet-plus-plus"
 CACHE_ROOT="${GAUNTLET_PLUS_PLUS_CACHE:-${PWD}/.cache/gauntlet-plus-plus/v${VERSION}}"
+
+# Plugins required for TestOCRBasic / DeployGauntletPP (see ops/gauntlet/gauntlet_plus_plus_starknet.go).
+# Order here does not matter; install order comes from dependencies.txt in the tarball.
+gpp_plugin_allowed() {
+  case "$1" in
+    chainlink-gauntlet-core-sequences-v*) return 0 ;;
+    chainlink-gauntlet-environment-v*) return 0 ;;
+    chainlink-gauntlet-core-v*) return 0 ;;
+    chainlink-gauntlet-starknet-data-feeds-v*) return 0 ;;
+    chainlink-gauntlet-starknet-token-v*) return 0 ;;
+    chainlink-gauntlet-starknet-ownable-v*) return 0 ;;
+    chainlink-gauntlet-starknet-storage-v*) return 0 ;;
+    chainlink-gauntlet-starknet-v*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+filter_dependencies_txt() {
+  local deps_file=$1
+  if [[ ! -f "${deps_file}" ]]; then
+    echo "dependencies.txt missing in gauntlet++ tarball" >&2
+    exit 1
+  fi
+
+  local dep total=0 kept=0 filtered=""
+  for dep in $(cat "${deps_file}"); do
+    total=$((total + 1))
+    if gpp_plugin_allowed "${dep}"; then
+      filtered+="${dep} "
+      kept=$((kept + 1))
+    fi
+  done
+
+  if [[ "${kept}" -eq 0 ]]; then
+    echo "no allowed plugins matched dependencies.txt (total ${total})" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "${filtered}" > "${deps_file}"
+  echo "Filtered gauntlet++ plugins: ${kept}/${total} (Starknet + core only)" >&2
+}
 
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64 | Linux-amd64) TARBALL="gauntlet-v${VERSION}-ubuntu-24.04.tar.gz" ;;
@@ -24,7 +65,7 @@ esac
 
 PREFIX="${TARBALL%.tar.gz}"
 INSTALL_DIR="${CACHE_ROOT}/${PREFIX}"
-PLUGINS_INSTALLED_MARKER="${INSTALL_DIR}/.plugins-installed"
+PLUGINS_INSTALLED_MARKER="${INSTALL_DIR}/.plugins-installed-starknet-filtered"
 
 if [[ -x "${INSTALL_DIR}/bin/gauntlet" && -f "${PLUGINS_INSTALLED_MARKER}" ]]; then
   echo "export GAUNTLET_PLUS_PLUS_DIR=${INSTALL_DIR}"
@@ -78,12 +119,13 @@ if [[ ! -x "${INSTALL_DIR}/bin/gauntlet" ]]; then
 fi
 
 if [[ ! -f "${PLUGINS_INSTALLED_MARKER}" ]]; then
-  echo "Installing gauntlet++ plugins from full release tarball (this may take several minutes)..." >&2
+  echo "Installing Starknet gauntlet++ plugins from release tarball..." >&2
   (
     cd "${INSTALL_DIR}"
     export GAUNTLET_DATA_DIR="${INSTALL_DIR}/data"
     export GAUNTLET_CONFIG_DIR="${INSTALL_DIR}/config"
     export GAUNTLET_CACHE_DIR="${INSTALL_DIR}/cache"
+    filter_dependencies_txt ./dependencies.txt
     bash ./install-plugins.sh
   ) >&2
   touch "${PLUGINS_INSTALLED_MARKER}"

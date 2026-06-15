@@ -8,6 +8,6 @@ ENV PATH="/repo/cairo-build/bin:/repo/scarb-build/bin:${PATH}"
 
 COPY . /repo/
 WORKDIR /repo
-RUN nix develop -c helm repo update
-RUN nix develop -c /repo/integration-tests/scripts/buildTests "${SUITES}" "${GITHUB_TOKEN}"
+RUN nix develop .#ci --command helm repo update
+RUN nix develop .#ci --command /repo/integration-tests/scripts/buildTests "${SUITES}" "${GITHUB_TOKEN}"
 ENTRYPOINT ["/repo/integration-tests/scripts/entrypoint"]
