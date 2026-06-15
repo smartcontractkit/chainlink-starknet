@@ -209,6 +209,11 @@ test-integration-go: env-devnet-hardhat
 .PHONY: test-integration-prep
 test-integration-prep: build-go-relayer build-cairo-contracts
 
+# Used by integration-tests/test.Dockerfile: Cairo is built on the CI runner before
+# docker build (see build-test-image action); the minimal .#ci shell only compiles Go.
+.PHONY: test-integration-docker-prep
+test-integration-docker-prep: build-go-relayer
+
 .PHONY: test-integration
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
 
