@@ -131,7 +131,8 @@ jobs:
           aws-role-arn: ${{ secrets.QA_AWS_ROLE_TO_ASSUME }}
           aws-account-number: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}
 
-
+  # Validates chainlink-starknet-tests Docker build (smoke + soak compile). Runs in
+  # parallel with Chainlink image builds; does not gate Run Smoke Tests.
   build_test_image:
     environment: integration
     permissions:
@@ -163,7 +164,7 @@ jobs:
   run_tests:
     name: Run Smoke Tests
     runs-on: ubuntu24.04-16cores-64GB
-    needs: [build_multiplatform_image, build_test_image]
+    needs: [build_multiplatform_image]
     environment: integration
     env:
       INTERNAL_DOCKER_REPO: ${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com

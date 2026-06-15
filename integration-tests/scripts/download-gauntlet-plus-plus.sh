@@ -78,14 +78,14 @@ if [[ ! -x "${INSTALL_DIR}/bin/gauntlet" ]]; then
 fi
 
 if [[ ! -f "${PLUGINS_INSTALLED_MARKER}" ]]; then
-  echo "Installing gauntlet++ plugins from full release tarball (this may take several minutes)..."
+  echo "Installing gauntlet++ plugins from full release tarball (this may take several minutes)..." >&2
   (
     cd "${INSTALL_DIR}"
     export GAUNTLET_DATA_DIR="${INSTALL_DIR}/data"
     export GAUNTLET_CONFIG_DIR="${INSTALL_DIR}/config"
     export GAUNTLET_CACHE_DIR="${INSTALL_DIR}/cache"
     bash ./install-plugins.sh
-  )
+  ) >&2
   touch "${PLUGINS_INSTALLED_MARKER}"
 fi
 
