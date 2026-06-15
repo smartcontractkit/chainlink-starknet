@@ -9,7 +9,7 @@
 
 #### Local smoke (TestOCRBasic)
 
-CI builds Chainlink and test images automatically. For local smoke you also need Docker, the `gh` CLI (private module access and G++ release download), and Node.js (the G++ download script runs `install-plugins.sh`).
+CI builds Chainlink and test images automatically. For local smoke you also need Docker and the `gh` CLI (private module access and G++ release download).
 
 **Gauntlet++ (required)** — smoke no longer uses ECR G++ images. From the repo root:
 
@@ -18,13 +18,11 @@ make download-gauntlet-plus-plus
 # or: eval "$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)"
 ```
 
-This downloads the release tarball and installs **Starknet + core plugins only** (not the full cross-chain bundle). Env vars:
+This downloads the **nops** release tarball (`gauntlet-nops-v2.6.6-*`), which includes pre-built Starknet ops plugins ([gauntlet-plus-plus #1708](https://github.com/smartcontractkit/gauntlet-plus-plus/pull/1708)). Env vars:
 
 - `GAUNTLET_PLUS_PLUS_VERSION` — default `2.6.6` (matches `integration-tests/testconfig/default.toml`)
 - `GITHUB_TOKEN`, `GH_TOKEN`, or `GATI_TOKEN` — required to download releases
 - `GAUNTLET_PLUS_PLUS_DIR` — set by the script; required by the testenv container
-
-Uses the **full tarball** with a filtered `dependencies.txt` at install time. A **nops tarball** (e.g. G++ 2.6.7+) will skip runtime install entirely once [gauntlet-plus-plus #1708](https://github.com/smartcontractkit/gauntlet-plus-plus/pull/1708) lands.
 
 **Chainlink image (local only)** — when the public Hub image does not include your relayer branch:
 

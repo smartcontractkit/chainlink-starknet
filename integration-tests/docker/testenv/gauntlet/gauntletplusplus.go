@@ -104,7 +104,7 @@ func (g *GauntletPlusPlus) StartContainer() (string, error) {
 		Any("ExternalHTTPURL", g.ExternalHTTPURL).
 		Any("InternalHTTPURL", g.InternalHTTPURL).
 		Str("containerName", g.ContainerName).
-		Msg("Started Gauntlet Plus Plus from release tarball")
+		Msg("Started Gauntlet Plus Plus from nops tarball")
 
 	return g.ExternalHTTPURL, nil
 }
