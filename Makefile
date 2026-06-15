@@ -207,9 +207,7 @@ test-integration-go: env-devnet-hardhat
 	cd ./relayer && go test -json ./... -run TestIntegration -tags integration 2>&1 | tee $(LOG_PATH) | gotestloghelper -ci
 
 .PHONY: test-integration-prep
-test-integration-prep:
-	cd ./contracts
-	make build
+test-integration-prep: build-go-relayer build-cairo-contracts
 
 .PHONY: test-integration
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
