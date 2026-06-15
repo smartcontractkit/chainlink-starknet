@@ -66,9 +66,9 @@ func (s *Starknet) StartContainer() error {
 	c, err := tc.GenericContainer(testcontext.Get(s.t), tc.GenericContainerRequest{
 		ContainerRequest: *cReq,
 		// Fresh devnet each run; reuse caused stale chain state after devnet-rs 0.8.x migration.
-		Reuse:            false,
-		Started:          true,
-		Logger:           l,
+		Reuse:   false,
+		Started: true,
+		Logger:  l,
 	})
 	if err != nil {
 		return fmt.Errorf("cannot start Starknet container: %w", err)

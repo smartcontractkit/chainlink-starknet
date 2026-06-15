@@ -76,9 +76,9 @@ func (g *GauntletPlusPlus) StartContainer() (string, error) {
 	c, err := testcontainers.GenericContainer(testcontext.Get(g.t), testcontainers.GenericContainerRequest{
 		ContainerRequest: *cReq,
 		// Fresh G++ install each run; reuse caused stale plugin state across smoke runs.
-		Reuse:            false,
-		Started:          true,
-		Logger:           l,
+		Reuse:   false,
+		Started: true,
+		Logger:  l,
 	})
 	if err != nil {
 		return "", fmt.Errorf("cannot start GauntletPlusPlus container: %w", err)
