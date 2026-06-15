@@ -116,15 +116,12 @@ jobs:
         uses: ./.github/actions/setup-github-private-access
         with:
           gati_token: ${{ steps.setup-github-token.outputs.access-token }}
-      - name: Setup Go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - name: Install Nix
+        uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # nix:v2.24.6
         with:
-          go-version-file: integration-tests/go.mod
-          cache-dependency-path: integration-tests/go.sum
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6.2
+          nix_path: nixpkgs=channel:nixos-unstable
       - name: Lint integration-tests
-        run: make lint-go-test
+        run: nix develop -c make lint-go-test
       - name: Print Report
         if: failure()
         run: |

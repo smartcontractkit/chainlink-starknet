@@ -20,6 +20,7 @@
         config = {
           permittedInsecurePackages = [
             "python3.11-ecdsa-0.19.1"
+            "python3.11-ecdsa-0.19.2"
           ];
         };
         overlays = [rust-overlay.overlays.default];

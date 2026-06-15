@@ -4,7 +4,11 @@
   lib,
   scriptDir,
 }: let
-  go = pkgs.go_1_25;
+  go = pkgs.go_1_26;
+
+  helm = pkgs.kubernetes-helm.overrideAttrs (_old: {
+    doCheck = false;
+  });
 
   mkShell' = pkgs.mkShell.override {
     stdenv = pkgs.clangStdenv;
@@ -13,6 +17,8 @@
   custom-golangci-lint = pkgs.buildGoModule rec {
     pname = "golangci-lint";
     version = "2.6.2";
+
+    inherit go;
 
     src = pkgs.fetchFromGitHub {
       owner = "golangci";
@@ -34,11 +40,10 @@ in
       [
         stdenv.cc.cc.lib
         (pkgs.rust-bin.stable.latest.default.override {extensions = ["rust-src"];})
-        pkgs.nodejs_20
-        (pkgs.yarn.override {nodejs = pkgs.nodejs_20;})
-        pkgs.nodePackages.typescript
-        pkgs.nodePackages.typescript-language-server
-        pkgs.nodePackages.npm
+        pkgs.nodejs_22
+        (pkgs.yarn.override {nodejs = pkgs.nodejs_22;})
+        pkgs.typescript
+        pkgs.typescript-language-server
         pkgs.python3
         pkgs.python311Packages.ledgerwallet
         go
@@ -47,7 +52,7 @@ in
         custom-golangci-lint
         pkgs.gotools
         pkgs.kubectl
-        pkgs.kubernetes-helm
+        helm
         pkgs.postgresql_15
       ]
       ++ pkgs.lib.optionals pkgs.stdenv.isLinux [

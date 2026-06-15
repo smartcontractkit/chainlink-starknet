@@ -538,7 +538,7 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// starknet.go v0.17 starkkey support: https://github.com/smartcontractkit/chainlink-common/pull/2154
 	// Remove after chainlink-common/keystore v1.0.3 is tagged.
-	github.com/smartcontractkit/chainlink-common/keystore => github.com/smartcontractkit/chainlink-common/keystore v0.0.0-20260615164219-62611db3caaa
+	github.com/smartcontractkit/chainlink-common/keystore => github.com/smartcontractkit/chainlink-common/keystore v0.0.0-20260615172104-c4c0d51d7337
 	// Make sure we're working with the latest ops
 	github.com/smartcontractkit/chainlink-starknet/ops => ../ops
 	github.com/smartcontractkit/chainlink-starknet/relayer => ../relayer
