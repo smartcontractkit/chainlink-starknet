@@ -207,32 +207,43 @@ test-integration-go: env-devnet-hardhat
 	cd ./relayer && go test -json ./... -run TestIntegration -tags integration 2>&1 | tee $(LOG_PATH) | gotestloghelper -ci
 
 .PHONY: test-integration-prep
-test-integration-prep:
-	cd ./contracts
-	make build
+test-integration-prep: build-go-relayer build-cairo-contracts
+
+# Used by integration-tests/test.Dockerfile: Cairo is built on the CI runner before
+# docker build (see build-test-image action); the minimal .#ci shell only compiles Go.
+.PHONY: test-integration-docker-prep
+test-integration-docker-prep: build-go-relayer
 
 .PHONY: test-integration
 test-integration: test-integration-smoke test-integration-contracts test-integration-gauntlet
 
+.PHONY: download-gauntlet-plus-plus
+download-gauntlet-plus-plus:
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)"
+
 .PHONY: test-integration-smoke
 test-integration-smoke: test-integration-prep
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=2h -v ./smoke
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-smoke-ci
 test-integration-smoke-ci:
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=2h -v -count=1 -run TestOCRBasic -json ./smoke | tee /tmp/gotest.log | gotestloghelper -ci -singlepackage
 
 .PHONY: test-integration-soak
 test-integration-soak: test-integration-prep
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=1h -v -json ./soak
 
 # CI Already has already ran test-integration-prep
 .PHONY: test-integration-soak-ci
 test-integration-soak-ci:
+	@eval "$$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)" && \
 	cd integration-tests/ && \
 		go test --timeout=1h -v -count=1 -json ./soak
 

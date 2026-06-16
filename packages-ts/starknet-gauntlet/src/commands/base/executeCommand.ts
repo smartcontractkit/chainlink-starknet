@@ -63,6 +63,7 @@ export interface ExecuteCommandInstance<UI, CI> {
   executionContext: ExecutionContext
   contract: CompiledContract
   compiledContractHash?: string
+  casm?: CompiledSierraCasm
   input: Input<UI, CI>
   batchInput?: Array<[string, Input<UI, CI>]>
 
@@ -87,6 +88,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     executionContext: ExecutionContext
     contract: CompiledContract
     compiledContractHash?: string
+    casm?: CompiledSierraCasm
     input: Input<UI, CI>
     batchInput?: Array<[string, Input<UI, CI>]>
 
@@ -114,6 +116,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
 
       const loadResult = config.loadContract()
       c.contract = loadResult.contract
+      c.casm = loadResult.casm
       if (loadResult.casm) {
         c.compiledContractHash = hash.computeCompiledClassHash(loadResult.casm)
       }
@@ -126,13 +129,21 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         id: makeCommandId(config.category, config.action, config.suffixes),
         contractAddress: c.contractAddress,
         flags: flags,
-        contract: new Contract(c.contract.abi, c.contractAddress ?? '', c.provider.provider),
+        contract: new Contract({
+          abi: c.contract.abi,
+          address: c.contractAddress ?? '',
+          providerOrAccount: c.provider.provider,
+        }),
       }
 
       const overrideExecutionContext = (contractAddress: string): ExecutionContext => {
         return {
           ...c.executionContext,
-          contract: new Contract(c.contract.abi, contractAddress, c.provider.provider),
+          contract: new Contract({
+            abi: c.contract.abi,
+            address: contractAddress,
+            providerOrAccount: c.provider.provider,
+          }),
           contractAddress,
         }
       }
@@ -262,7 +273,11 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
     // TODO: This will be required for Multisig
     makeMessage = async (): Promise<Call[]> => {
       const makeInvocation = (addr: string, input: any) => {
-        const contract = new Contract(this.contract.abi, addr, this.provider.provider)
+        const contract = new Contract({
+          abi: this.contract.abi,
+          address: addr,
+          providerOrAccount: this.provider.provider,
+        })
         return contract.populate(config.internalFunction || config.action, input)
       }
 
@@ -304,6 +319,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
           this.input.contract,
           false,
           this.input?.user?.['salt'],
+          this.casm,
         )
       } else {
         tx = await this.provider.deployContract(
@@ -341,6 +357,7 @@ export const makeExecuteCommand = <UI, CI>(config: ExecuteCommandConfig<UI, CI>)
         this.contract,
         this.compiledContractHash,
         false,
+        this.casm,
       )
 
       deps.logger.loading(`Waiting for tx confirmation at ${tx.hash}...`)

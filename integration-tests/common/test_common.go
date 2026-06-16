@@ -13,7 +13,6 @@ import (
 	test_env_ctf "github.com/smartcontractkit/chainlink-testing-framework/lib/docker/test_env"
 
 	"github.com/NethermindEth/juno/core/felt"
-	starknetdevnet "github.com/NethermindEth/starknet.go/devnet"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
@@ -35,6 +34,7 @@ import (
 	"github.com/smartcontractkit/chainlink-starknet/ops/gauntlet"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/chainlink/ocr2"
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
+	devnetutils "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet/utils"
 )
 
 var (
@@ -60,7 +60,6 @@ type AccountDetails struct {
 // Clients to access internal methods
 type Clients struct {
 	StarknetClient   *starknet.Client
-	DevnetClient     *starknetdevnet.DevNet
 	ParrotClient     *test_env_ctf.Parrot
 	OCR2Client       *ocr2.Client
 	ChainlinkClient  *ChainlinkClient
@@ -240,8 +239,7 @@ func (m *OCRv2TestState) DeployCluster() {
 	// If we are using devnet fetch the default keys
 	if *m.Common.TestConfig.Common.Network == "localnet" {
 		// fetch predeployed account 0 to use as funder
-		m.Clients.DevnetClient = starknetdevnet.NewDevNet(m.Common.RPCDetails.RPCL2External)
-		accounts, err := m.Clients.DevnetClient.Accounts()
+		accounts, err := devnetutils.FetchDevnetAccounts(m.Common.RPCDetails.RPCL2External)
 		require.NoError(m.TestConfig.T, err)
 		account := accounts[0]
 		m.Account.Account = account.Address
@@ -254,7 +252,7 @@ func (m *OCRv2TestState) DeployCluster() {
 
 // Starts GauntletPP Without a network
 func (m *OCRv2TestState) StartGppDefaultNetwork() {
-	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{}, *m.Common.TestConfig.Common.GauntletPlusPlusVersion)
 	url, err := gpp.StartContainer()
 	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
 	require.NoError(m.TestConfig.T, err)
@@ -262,7 +260,7 @@ func (m *OCRv2TestState) StartGppDefaultNetwork() {
 
 // Starts GauntletPP with a network
 func (m *OCRv2TestState) StartGppWithNetwork(networkName string) {
-	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusImage)
+	gpp := test_env_gauntlet.NewGauntletPlusPlus([]string{networkName}, *m.Common.TestConfig.Common.GauntletPlusPlusVersion)
 	url, err := gpp.StartContainer()
 	m.TestConfig.TestConfig.Common.GauntletPlusPlusURL = url
 	require.NoError(m.TestConfig.T, err)

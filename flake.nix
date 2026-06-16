@@ -20,14 +20,21 @@
         config = {
           permittedInsecurePackages = [
             "python3.11-ecdsa-0.19.1"
+            "python3.11-ecdsa-0.19.2"
           ];
         };
         overlays = [rust-overlay.overlays.default];
       };
     in {
-      devShell = pkgs.callPackage ./shell.nix {
-        inherit pkgs;
-        scriptDir = toString ./.; # This converts the flake's root directory to a string
+      devShells = {
+        default = pkgs.callPackage ./shell.nix {
+          inherit pkgs;
+          scriptDir = toString ./.;
+        };
+        ci = pkgs.callPackage ./shell-ci.nix {
+          inherit pkgs;
+          scriptDir = toString ./.;
+        };
       };
 
       packages = {

@@ -7,6 +7,43 @@
 1. `yarn install`
 2. `yarn build`
 
+#### Local smoke (TestOCRBasic)
+
+CI builds Chainlink and test images automatically. For local smoke you also need Docker and the `gh` CLI (private module access and G++ release download).
+
+**Gauntlet++ (required)** — smoke no longer uses ECR G++ images. From the repo root:
+
+```bash
+make download-gauntlet-plus-plus
+# or: eval "$(./integration-tests/scripts/download-gauntlet-plus-plus.sh)"
+```
+
+This downloads the **nops** release tarball (`gauntlet-nops-v2.6.6-*`), which includes pre-built Starknet ops plugins ([gauntlet-plus-plus #1708](https://github.com/smartcontractkit/gauntlet-plus-plus/pull/1708)). Env vars:
+
+- `GAUNTLET_PLUS_PLUS_VERSION` — default `2.6.6` (matches `integration-tests/testconfig/default.toml`)
+- `GITHUB_TOKEN`, `GH_TOKEN`, or `GATI_TOKEN` — required to download releases
+- `GAUNTLET_PLUS_PLUS_DIR` — set by the script; required by the testenv container
+
+**Chainlink image (local only)** — when the public Hub image does not include your relayer branch:
+
+```bash
+./integration-tests/scripts/build-chainlink-image.sh
+export CHAINLINK_IMAGE=chainlink
+export CHAINLINK_VERSION=starknet.$(git rev-parse HEAD)
+```
+
+Requires a sibling [chainlink](https://github.com/smartcontractkit/chainlink) checkout. The script overlays a locally built `chainlink-starknet` plugin via `integration-tests/docker/chainlink-starknet-plugin.Dockerfile`.
+
+**Run smoke:**
+
+```bash
+make test-integration-smoke
+# or:
+cd integration-tests/smoke && go test -v -count=1 -timeout 45m -run TestOCRBasic
+```
+
+See also `integration-tests/.sample.env` for env var examples.
+
 #### Smoke
 
 `cd integration-tests/smoke/ && go test --timeout=2h -v` (from core of repo)
@@ -44,7 +81,7 @@ error appears, but instead log it.
 [Test Commons](../../integration-tests/common/test_common.go) - Test methods to deploy env, configure clients, fetch
 client details
 
-[Starknet Commons](../../ops/devnet/devnet.go) - Methods related to starknet and L2 actions such as minting, L1<>L2 sync
+[Devnet helpers](../../relayer/pkg/starknet/devnet/utils/devnet.go) - devnet-rs JSON-RPC helpers (mint, predeployed accounts)
 
 [Gauntlet wrapper](../../relayer/pkg/starknet/gauntlet_starknet.go) - Wrapper for Starknet gauntlet
 

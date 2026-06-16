@@ -122,7 +122,11 @@ export const makeInspectionCommand = <UI, CI, CompareInput, QueryResult>(
 
     runQueries = async (functions: string[], contractInputs: CI | CI[]): Promise<any[]> => {
       const inputs = Array.isArray(contractInputs) ? contractInputs : [contractInputs]
-      const contract = new Contract(this.contract.abi, this.contractAddress, this.provider.provider)
+      const contract = new Contract({
+        abi: this.contract.abi,
+        address: this.contractAddress,
+        providerOrAccount: this.provider.provider,
+      })
       const results = await Promise.all(
         functions.map((func, i) => {
           deps.logger.loading(`Fetching ${func} of contract ${this.contractAddress}...`)

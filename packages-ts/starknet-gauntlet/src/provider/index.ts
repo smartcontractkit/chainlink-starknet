@@ -5,10 +5,11 @@ import {
   InvokeFunctionResponse,
   DeployContractResponse,
   CompiledContract,
+  CompiledSierraCasm,
   Account,
   Call,
-  constants,
   ETransactionVersion,
+  BlockTag,
 } from 'starknet'
 import { IStarknetWallet } from '../wallet'
 
@@ -18,10 +19,11 @@ interface IProvider<P> {
   send: () => Promise<TransactionResponse>
   declareAndDeployContract: (
     contract: CompiledContract,
-    compiledClassHash: string,
+    compiledClassHash: string | undefined,
     input: any,
     wait?: boolean,
     salt?: number,
+    casm?: CompiledSierraCasm,
   ) => Promise<TransactionResponse>
   deployContract: (
     classHash: string,
@@ -39,6 +41,7 @@ interface IProvider<P> {
     contract: CompiledContract,
     compiledClassHash?: string,
     wait?: boolean,
+    casm?: CompiledSierraCasm,
   ) => Promise<TransactionResponse>
   signAndSend: (calls: Call[], wait?: boolean) => Promise<TransactionResponse>
 }
@@ -87,26 +90,25 @@ class Provider implements IStarknetProvider {
   account: Account
 
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
-    this.provider = new StarknetProvider({ nodeUrl })
+    // RPC 0.9+ removed the "pending" block tag; starknet.js defaults to pending.
+    this.provider = new StarknetProvider({ nodeUrl, blockIdentifier: BlockTag.LATEST })
     if (wallet) {
-      this.account = new Account(
-        this.provider,
-        wallet.getAccountAddress(),
-        wallet.signer,
-        /* cairoVersion= */ null, // don't set cairo version so that it's automatically detected from the contract
-        /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
-      )
+      this.account = new Account({
+        provider: this.provider,
+        address: wallet.getAccountAddress(),
+        signer: wallet.signer,
+        transactionVersion: ETransactionVersion.V3,
+      })
     }
   }
 
   setAccount(wallet: IStarknetWallet) {
-    this.account = new Account(
-      this.provider,
-      wallet.getAccountAddress(),
-      wallet.signer,
-      /* cairoVersion= */ null,
-      /* transactionVersion= */ constants.TRANSACTION_VERSION.V3,
-    )
+    this.account = new Account({
+      provider: this.provider,
+      address: wallet.getAccountAddress(),
+      signer: wallet.signer,
+      transactionVersion: ETransactionVersion.V3,
+    })
   }
 
   send = async () => {
@@ -125,11 +127,12 @@ class Provider implements IStarknetProvider {
     input: any = [],
     wait = true,
     salt = undefined,
+    casm?: CompiledSierraCasm,
   ) => {
     const tx = await this.account.declareAndDeploy(
       {
         contract,
-        compiledClassHash,
+        ...(casm ? { casm } : { compiledClassHash }),
         salt: !isNaN(salt) ? '0x' + salt.toString(16) : salt, // convert number to hex or leave undefined
         // unique: false,
         ...(!!input && input.length > 0 && { constructorCalldata: input }),
@@ -149,10 +152,15 @@ class Provider implements IStarknetProvider {
   /**
    * Compiles the contract and declares it using the generated ABI.
    */
-  declareContract = async (contract: CompiledContract, compiledClassHash?: string, wait = true) => {
+  declareContract = async (
+    contract: CompiledContract,
+    compiledClassHash?: string,
+    wait = true,
+    casm?: CompiledSierraCasm,
+  ) => {
     const tx = await this.account.declare({
       contract,
-      compiledClassHash,
+      ...(casm ? { casm } : { compiledClassHash }),
     })
 
     const response = wrapResponse(this, tx, 'not applicable for declares')

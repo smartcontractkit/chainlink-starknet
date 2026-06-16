@@ -51,7 +51,7 @@ ocr2:
 
 ## Selecting an RPC URL
 
-Before executing a Gauntlet command, you'll need a Starknet RPC v7 URL. You can find a list of common ones [here](https://www.starknetjs.com/docs/next/guides/connect_network/). Take note of one of these URLs and save it for later - we'll need it when we move onto configuring environment variables for Gauntlet.
+Before executing a Gauntlet command, you'll need a Starknet RPC 0.9 or 0.10.x URL (e.g. `.../rpc/v0_10`). RPC 0.8 is deprecated as of Starknet v0.14.3. You can find a list of common endpoints [here](https://www.starknetjs.com/docs/next/guides/connect_network/). Take note of one of these URLs and save it for later - we'll need it when we move onto configuring environment variables for Gauntlet.
 
 ## Setting up a Wallet
 
@@ -73,7 +73,7 @@ If you're using a docker container hosting a local Starknet node (i.e. see `./sc
 
 ## Populating Environment Variables
 
-Now that we have an RPC v7 URL and a funded Starknet account, we'll need to provide them to Gauntlet via environment variables. Let's create a `.env` file in the repo's root directory:
+Now that we have an RPC 0.10.x URL and a funded Starknet account, we'll need to provide them to Gauntlet via environment variables. Let's create a `.env` file in the repo's root directory:
 
 ```sh
 touch .env

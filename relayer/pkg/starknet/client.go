@@ -2,6 +2,7 @@ package starknet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -37,10 +38,8 @@ type ReaderWriter interface {
 
 var _ ReaderWriter = (*Client)(nil)
 
-// var _ starknettypes.Provider = (*Client)(nil)
-
 type Client struct {
-	Provider       starknetrpc.RpcProvider
+	Provider       starknetrpc.RPCProvider
 	EthClient      *ethrpc.Client
 	lggr           logger.Logger
 	defaultTimeout time.Duration
@@ -55,9 +54,17 @@ func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger
 		options = append(options, client.WithHeader("x-apikey", apiKey))
 	}
 
-	provider, err := starknetrpc.NewProvider(baseURL, options...)
-	if err != nil {
+	provider, err := starknetrpc.NewProvider(context.Background(), baseURL, options...)
+	if err != nil && !errors.Is(err, starknetrpc.ErrIncompatibleVersion) {
 		return nil, err
+	}
+	if err != nil {
+		// starknet.go v0.17.x targets RPC spec 0.9.0; devnet-rs 0.8.x and many nodes report 0.10.x.
+		// The provider is still usable — see relayer/CONFIG.md (Nodes.URL).
+		lggr.Warnw("starknet RPC spec version mismatch; continuing with node provider",
+			"sdkSpecVersion", "0.9.0",
+			"details", err.Error(),
+		)
 	}
 
 	c, err := ethrpc.DialContext(context.Background(), baseURL)
@@ -71,8 +78,6 @@ func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger
 		lggr:      lggr,
 	}
 
-	// make copy to preserve value
-	// defensive in case the timeout reference is ever garbage collected or removed
 	if timeout == nil {
 		client.defaultTimeout = 0
 	} else {
@@ -82,7 +87,12 @@ func NewClient(chainID string, baseURL string, apiKey string, lggr logger.Logger
 	return client, nil
 }
 
-// -- Custom Wrapped Func --
+func (c *Client) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	if c.defaultTimeout == 0 {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, c.defaultTimeout)
+}
 
 func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Felt, err error) {
 	tx := starknetrpc.FunctionCall{
@@ -91,7 +101,7 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 		Calldata:           ops.Calldata,
 	}
 
-	res, err := c.Call(ctx, tx, starknetrpc.WithBlockTag("pending"))
+	res, err := c.Call(ctx, tx, LatestBlockID())
 	if err != nil {
 		return nil, fmt.Errorf("error in client.CallContract: %w", err)
 	}
@@ -100,11 +110,8 @@ func (c *Client) CallContract(ctx context.Context, ops CallOps) (data []*felt.Fe
 }
 
 func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	blockNum, err := c.Provider.BlockNumber(ctx)
 	if err != nil {
@@ -114,28 +121,20 @@ func (c *Client) LatestBlockHeight(ctx context.Context) (uint64, error) {
 	return blockNum, nil
 }
 
-// -- caigo.Provider interface --
-
 func (c *Client) BlockWithTxHashes(ctx context.Context, blockID starknetrpc.BlockID) (*starknetrpc.Block, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	out, err := c.Provider.BlockWithTxHashes(ctx, blockID)
 	if err != nil {
-		return out.(*starknetrpc.Block), fmt.Errorf("error in client.BlockWithTxHashes: %w", err)
+		return nil, fmt.Errorf("error in client.BlockWithTxHashes: %w", err)
 	}
 	return out.(*starknetrpc.Block), nil
 }
 
 func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, blockHashOrTag starknetrpc.BlockID) ([]*felt.Felt, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	out, err := c.Provider.Call(ctx, calls, blockHashOrTag)
 	if err != nil {
@@ -148,11 +147,8 @@ func (c *Client) Call(ctx context.Context, calls starknetrpc.FunctionCall, block
 }
 
 func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*starknetrpc.EventChunk, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	out, err := c.Provider.Events(ctx, input)
 	if err != nil {
@@ -165,21 +161,27 @@ func (c *Client) Events(ctx context.Context, input starknetrpc.EventsInput) (*st
 }
 
 func (c *Client) AccountNonce(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
-	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "pending"}, accountAddress)
+	return c.Provider.Nonce(ctx, PreConfirmedBlockID(), accountAddress)
 }
 
 func (c *Client) AccountNonceLatest(ctx context.Context, accountAddress *felt.Felt) (*felt.Felt, error) {
-	if c.defaultTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
-		defer cancel()
-	}
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
-	return c.Provider.Nonce(ctx, starknetrpc.BlockID{Tag: "latest"}, accountAddress)
+	return c.Provider.Nonce(ctx, LatestBlockID(), accountAddress)
+}
+
+// EstimateFeeAtPreConfirmed estimates fees against the pre_confirmed block state.
+func (c *Client) EstimateFeeAtPreConfirmed(
+	ctx context.Context,
+	txns []starknetrpc.BroadcastTxn,
+	flags []starknetrpc.SimulationFlag,
+) ([]starknetrpc.FeeEstimation, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+
+	return c.Provider.EstimateFee(ctx, txns, flags, PreConfirmedBlockID())
 }

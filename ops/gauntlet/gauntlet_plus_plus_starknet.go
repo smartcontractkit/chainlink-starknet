@@ -12,6 +12,11 @@ import (
 	g "github.com/smartcontractkit/gauntlet-plus-plus/sdks/go-gauntlet/client"
 )
 
+const (
+	gauntletPollInterval = 2 * time.Second
+	gauntletPollTimeout  = 5 * time.Minute
+)
+
 var (
 	sgpp *StarknetGauntletPlusPlus
 )
@@ -149,6 +154,58 @@ func (sgpp *StarknetGauntletPlusPlus) execute(request *Request) error {
 	return nil
 }
 
+func gauntletReportError(report g.Report) error {
+	if report.Error == nil {
+		return nil
+	}
+
+	reportID := report.Id
+	if reportID == "" {
+		reportID = "unknown"
+	}
+
+	return fmt.Errorf("gauntlet++ report %s failed: %s (%s)", reportID, report.Error.Message, report.Error.Code)
+}
+
+func (sgpp *StarknetGauntletPlusPlus) pollGauntletReport(ctx context.Context, reportID string) (g.Report, error) {
+	deadline := time.Now().Add(gauntletPollTimeout)
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return g.Report{}, ctx.Err()
+		default:
+		}
+
+		reportsResp, err := sgpp.client.PostReportsWithResponse(ctx, g.PostReportsJSONRequestBody{Ids: []string{reportID}})
+		if err != nil {
+			return g.Report{}, err
+		}
+
+		if reportsResp.JSON200 == nil {
+			time.Sleep(gauntletPollInterval)
+			continue
+		}
+
+		report, ok := (*reportsResp.JSON200)[reportID]
+		if !ok {
+			time.Sleep(gauntletPollInterval)
+			continue
+		}
+
+		if err := gauntletReportError(report); err != nil {
+			return g.Report{}, err
+		}
+
+		if report.Output != nil {
+			return report, nil
+		}
+
+		time.Sleep(gauntletPollInterval)
+	}
+
+	return g.Report{}, fmt.Errorf("timed out waiting for gauntlet++ report %s after %s", reportID, gauntletPollTimeout)
+}
+
 func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.Report, error) {
 	body := sgpp.BuildRequestBody(*request)
 
@@ -174,14 +231,23 @@ func (sgpp *StarknetGauntletPlusPlus) executeReturnsReport(request *Request) (g.
 		log.Error().Err(err).Msg("Failed to marshal response body")
 		return g.Report{}, err
 	}
-	if response.JSON200 == nil || response.JSON200.Id == "" || response == nil {
-		time.Sleep(20 * time.Minute)
+	if response.JSON200 == nil || response.JSON200.Id == "" {
+		return g.Report{}, fmt.Errorf("gauntlet++ execute returned empty report")
 	}
 
 	// Log the full response JSON
 	log.Info().Str("Response Body:", string(responseJSON)).Msg("Gauntlet++")
 
-	return *response.JSON200, nil
+	report := *response.JSON200
+	if report.Output != nil {
+		return report, nil
+	}
+
+	if err := gauntletReportError(report); err != nil {
+		return g.Report{}, err
+	}
+
+	return sgpp.pollGauntletReport(context.Background(), report.Id)
 }
 
 func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, error) {
@@ -198,7 +264,8 @@ func (sgpp *StarknetGauntletPlusPlus) executeDeploy(request *Request) (string, e
 	}
 
 	if contractAddress == "" {
-		log.Err(err).Str("G++ Deploy Requets returned with empty contractAddress", err.Error()).Msg("Gauntlet++")
+		err := fmt.Errorf("g++ deploy request returned with empty contractAddress")
+		log.Error().Err(err).Msg("Gauntlet++")
 		return "", err
 	}
 

@@ -20,8 +20,8 @@ go env -w GOPRIVATE=github.com/smartcontractkit/*
 
 cd "$SCRIPT_DIR"/../../ || exit 1
 
-# integration prep
-make test-integration-prep
+# integration prep (relayer build; cairo built on runner before docker — see build-test-image)
+make test-integration-docker-prep
 
 cd "$SCRIPT_DIR"/../ || exit 1
 

@@ -98,7 +98,13 @@ Name is a unique (per-chain) identifier for this node.
 ```toml
 URL = 'http://stark.node' # Example
 ```
-URL is the base HTTP(S) endpoint for this node.
+URL is the base HTTP(S) endpoint for this node. Use an RPC 0.9 or 0.10.x URL
+(e.g. .../rpc/v0_10). RPC 0.8 is deprecated as of Starknet v0.14.3.
+Read-only contract calls use the "latest" block tag; TXM nonce/fee paths use
+"pre_confirmed" (the RPC 0.9+ replacement for deprecated "pending").
+starknet.go v0.17.x implements JSON-RPC spec 0.9.0. Nodes reporting 0.10.x
+(including devnet-rs 0.8.x) log a version mismatch warning at connect time but
+remain usable; response-shape drift is only detected at runtime on affected RPC calls.
 
 ### APIKey
 ```toml

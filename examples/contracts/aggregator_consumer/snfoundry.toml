@@ -9,7 +9,7 @@ account = "$DEVNET_ACCOUNT_NAME"
 hex-format = true
 
 [sncast.testnet]
-url = "https://starknet-sepolia.public.blastapi.io/rpc/v0_7"
+url = "https://starknet-sepolia.public.blastapi.io/rpc/v0_10"
 accounts-file = "$TESTNET_ACCOUNTS_FILE"
 account = "$TESTNET_ACCOUNT_NAME"
 hex-format = true

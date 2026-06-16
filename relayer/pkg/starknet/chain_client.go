@@ -94,8 +94,10 @@ type ChainClient interface {
 	BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error)
 	// only finalized blocks have numbers
 	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
+	// Single starknet_getBlockWithTxs with BlockTagLatest; see LatestHead in chain/chain.go.
+	BlockByLatest(ctx context.Context) (FinalizedBlock, error)
 	ChainID(ctx context.Context) (string, error)
-	// only way to get the latest pending block (only 1 pending block exists at a time)
+	// only way to get the latest pre_confirmed block (only 1 pre_confirmed block exists at a time)
 	// LatestPendingBlock(ctx context.Context) (starknetrpc.PendingBlock, error)
 	// returns block number and block has of latest finalized block
 	LatestBlockHashAndNumber(ctx context.Context) (starknetrpc.BlockHashAndNumberOutput, error)
@@ -170,6 +172,26 @@ func (c *Client) BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, 
 
 	finalizedBlock, ok := block.(*FinalizedBlock)
 
+	if !ok {
+		return FinalizedBlock{}, fmt.Errorf("expected type Finalized block but found: %T", block)
+	}
+
+	return *finalizedBlock, nil
+}
+
+func (c *Client) BlockByLatest(ctx context.Context) (FinalizedBlock, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	block, err := c.Provider.BlockWithTxs(ctx, LatestBlockID())
+	if err != nil {
+		return FinalizedBlock{}, fmt.Errorf("error in BlockByLatest: %w", err)
+	}
+
+	finalizedBlock, ok := block.(*FinalizedBlock)
 	if !ok {
 		return FinalizedBlock{}, fmt.Errorf("expected type Finalized block but found: %T", block)
 	}

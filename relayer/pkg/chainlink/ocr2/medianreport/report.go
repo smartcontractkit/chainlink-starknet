@@ -9,8 +9,8 @@ import (
 	"sort"
 
 	"github.com/NethermindEth/juno/core/felt"
-	"github.com/NethermindEth/starknet.go/curve"
 	starknetutils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/consensys/gnark-crypto/ecc/stark-curve/fp"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2/reportingplugin/median"
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
@@ -90,7 +90,7 @@ func (c ReportCodec) BuildReport(ctx context.Context, oo []median.ParsedAttribut
 	}
 
 	observersBig := starknetutils.BytesToBig(observers)
-	if observersBig.Cmp(curve.Curve.P) != -1 {
+	if observersBig.Cmp(fp.Modulus()) >= 0 {
 		return nil, fmt.Errorf("invalid observers value: %v is larger than size of finite field", observersBig)
 	}
 

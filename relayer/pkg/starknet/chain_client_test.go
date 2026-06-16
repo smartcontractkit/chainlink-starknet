@@ -149,6 +149,8 @@ func TestChainClient(t *testing.T) {
 		errMarshal := json.Unmarshal(req, &call)
 		if errMarshal == nil {
 			switch call.Method {
+			case "starknet_specVersion":
+				out = []byte(`{"jsonrpc":"2.0","id":1,"result":"0.9.0"}`)
 			case "starknet_getBlockWithTxs":
 				out = []byte(fmt.Sprintf(`{ %s }`, blockResponse))
 			case "starknet_blockNumber":
@@ -236,6 +238,13 @@ func TestChainClient(t *testing.T) {
 		block, err := client.BlockByNumber(context.TODO(), blockNumber)
 		require.NoError(t, err)
 		assert.Equal(t, blockNumber, block.Number)
+	})
+
+	t.Run("get BlockByLatest", func(t *testing.T) {
+		block, err := client.BlockByLatest(context.TODO())
+		require.NoError(t, err)
+		assert.Equal(t, blockNumber, block.Number)
+		assert.Equal(t, blockHash, block.Hash)
 	})
 
 	t.Run("get LatestBlockHashAndNumber", func(t *testing.T) {

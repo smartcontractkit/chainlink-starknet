@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/smartcontractkit/chainlink-starknet/integration-tests/utils"
+	devnetutils "github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet/devnet/utils"
 )
 
 func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
@@ -37,25 +38,18 @@ func (m *OCRv2TestState) fundNodesWithGPP() ([]string, error) {
 			}
 		}
 	} else {
-		// The starknet provided mint method does not work so we send a req directly
+		const fundAmount = uint64(900_000_000_000_000_000)
 		for _, key := range nAccounts {
-			res, err := m.TestConfig.Resty.R().SetBody(map[string]any{
-				"address": key,
-				"amount":  900000000000000000,
-			}).Post("/mint")
+			res, err := devnetutils.DevnetMint(m.Common.RPCDetails.RPCL2External, key, fundAmount, "WEI")
 			if err != nil {
 				return nil, err
 			}
-			l.Info().Msg(fmt.Sprintf("Funding account (WEI): %s", string(res.Body())))
-			res, err = m.TestConfig.Resty.R().SetBody(map[string]any{
-				"address": key,
-				"amount":  900000000000000000,
-				"unit":    m.Common.ChainDetails.TokenName,
-			}).Post("/mint")
+			l.Info().Msg(fmt.Sprintf("Funding account (WEI): %s", res))
+			res, err = devnetutils.DevnetMint(m.Common.RPCDetails.RPCL2External, key, fundAmount, m.Common.ChainDetails.TokenName)
 			if err != nil {
 				return nil, err
 			}
-			l.Info().Msg(fmt.Sprintf("Funding account (FRI): %s", string(res.Body())))
+			l.Info().Msg(fmt.Sprintf("Funding account (FRI): %s", res))
 		}
 	}
 

@@ -34,15 +34,29 @@ type PostExecuteJSONRequestBody struct {
 	Operation Operation `json:"operation"`
 }
 
+type Error struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 type Report struct {
 	Id     string `json:"id"`
 	Output *any   `json:"output,omitempty"`
+	Error  *Error `json:"error,omitempty"`
+}
+
+type PostReportsJSONRequestBody struct {
+	Ids []string `json:"ids"`
 }
 
 type PostExecuteParams struct{}
 
 type PostExecuteResponse struct {
 	JSON200 *Report
+}
+
+type PostReportsResponse struct {
+	JSON200 *map[string]Report
 }
 
 type RequestEditorFn func(*http.Request) error
@@ -108,4 +122,50 @@ func (c *ClientWithResponses) PostExecuteWithResponse(ctx context.Context, _ *Po
 	}
 
 	return &PostExecuteResponse{JSON200: report}, nil
+}
+
+func (c *ClientWithResponses) PostReportsWithResponse(ctx context.Context, body PostReportsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostReportsResponse, error) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("marshal reports request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/reports", bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("build reports request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	for _, editor := range reqEditors {
+		if editor == nil {
+			continue
+		}
+		if err = editor(req); err != nil {
+			return nil, fmt.Errorf("apply request editor: %w", err)
+		}
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("reports request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read reports response: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	reports := make(map[string]Report)
+	if len(respBody) > 0 {
+		if err = json.Unmarshal(respBody, &reports); err != nil {
+			return nil, fmt.Errorf("decode reports response: %w", err)
+		}
+	}
+
+	return &PostReportsResponse{JSON200: &reports}, nil
 }

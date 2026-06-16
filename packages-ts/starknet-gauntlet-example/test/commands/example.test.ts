@@ -12,11 +12,11 @@ import {
 import { loadExampleContract } from '../utils'
 
 const getBalance = async (address: string) => {
-  const contract = new Contract(
-    loadExampleContract().abi,
+  const contract = new Contract({
+    abi: loadExampleContract().abi,
     address,
-    makeProvider(LOCAL_URL).provider,
-  )
+    providerOrAccount: makeProvider(LOCAL_URL).provider,
+  })
   const balance = await contract.get_balance()
 
   return BigInt(balance.res).toString()

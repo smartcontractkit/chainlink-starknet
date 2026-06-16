@@ -108,7 +108,11 @@ export const wrapCommand = <UI, CI>(
         id,
         contractAddress: c.contractAddress,
         flags: flags,
-        contract: new Contract(c.contract.abi, c.multisigAddress, c.provider.provider),
+        contract: new Contract({
+          abi: c.contract.abi,
+          address: c.multisigAddress,
+          providerOrAccount: c.provider.provider,
+        }),
       }
 
       c.input = {

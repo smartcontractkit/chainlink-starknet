@@ -76,7 +76,11 @@ class AllowanceFundingStrategy implements IFundingStrategy {
       nodeUrl: constants.NetworkName.SN_SEPOLIA,
     })
 
-    const operator = new Account(provider, opts.accountAddr, opts.keyPair)
+    const operator = new Account({
+      provider,
+      address: opts.accountAddr,
+      signer: opts.keyPair,
+    })
 
     for (const account of accounts) {
       const data = [
