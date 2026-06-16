@@ -94,6 +94,8 @@ type ChainClient interface {
 	BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error)
 	// only finalized blocks have numbers
 	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
+	// BlockByLatest returns the latest finalized block via the "latest" tag in one RPC call.
+	BlockByLatest(ctx context.Context) (FinalizedBlock, error)
 	ChainID(ctx context.Context) (string, error)
 	// only way to get the latest pre_confirmed block (only 1 pre_confirmed block exists at a time)
 	// LatestPendingBlock(ctx context.Context) (starknetrpc.PendingBlock, error)
@@ -170,6 +172,26 @@ func (c *Client) BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, 
 
 	finalizedBlock, ok := block.(*FinalizedBlock)
 
+	if !ok {
+		return FinalizedBlock{}, fmt.Errorf("expected type Finalized block but found: %T", block)
+	}
+
+	return *finalizedBlock, nil
+}
+
+func (c *Client) BlockByLatest(ctx context.Context) (FinalizedBlock, error) {
+	if c.defaultTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.defaultTimeout)
+		defer cancel()
+	}
+
+	block, err := c.Provider.BlockWithTxs(ctx, LatestBlockID())
+	if err != nil {
+		return FinalizedBlock{}, fmt.Errorf("error in BlockByLatest: %w", err)
+	}
+
+	finalizedBlock, ok := block.(*FinalizedBlock)
 	if !ok {
 		return FinalizedBlock{}, fmt.Errorf("expected type Finalized block but found: %T", block)
 	}

@@ -240,6 +240,13 @@ func TestChainClient(t *testing.T) {
 		assert.Equal(t, blockNumber, block.Number)
 	})
 
+	t.Run("get BlockByLatest", func(t *testing.T) {
+		block, err := client.BlockByLatest(context.TODO())
+		require.NoError(t, err)
+		assert.Equal(t, blockNumber, block.Number)
+		assert.Equal(t, blockHash, block.Hash)
+	})
+
 	t.Run("get LatestBlockHashAndNumber", func(t *testing.T) {
 		output, err := client.LatestBlockHashAndNumber(context.TODO())
 		require.NoError(t, err)

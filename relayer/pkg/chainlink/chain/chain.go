@@ -200,20 +200,15 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 		return types.Head{}, err
 	}
 
-	bhAndNum, err := sc.LatestBlockHashAndNumber(ctx)
-	if err != nil {
-		return types.Head{}, err
-	}
-
-	// Fetch by number, not hash: blockHashAndNumber returns the chain tip and the hash
-	// can race out from under a follow-up getBlockWithTxs by hash (RPC code 24).
-	block, err := sc.BlockByNumber(ctx, bhAndNum.Number)
+	// Single "latest" fetch: blockHashAndNumber plus a follow-up getBlockWithTxs by hash
+	// or number races whenever the tip moves between calls (HeadReporter hits RPC code 24).
+	block, err := sc.BlockByLatest(ctx)
 	if err != nil {
 		return types.Head{}, err
 	}
 
 	return types.Head{
-		Height:    strconv.FormatUint(bhAndNum.Number, 10),
+		Height:    strconv.FormatUint(block.Number, 10),
 		Hash:      block.Hash.Marshal(),
 		Timestamp: block.Timestamp,
 	}, nil
