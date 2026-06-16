@@ -18,7 +18,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
-	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
 	"github.com/smartcontractkit/chainlink-starknet/relayer/pkg/starknet"
@@ -469,7 +468,7 @@ func (txm *starktxm) confirmLoop() {
 			return
 		}
 		t := txm.cfg.ConfirmationPoll() - time.Since(start)
-		tick = time.After(timeutil.JitterPct(0.1).Apply(t.Abs()))
+		tick = time.After(services.DefaultJitter.Apply(t.Abs()))
 	}
 }
 

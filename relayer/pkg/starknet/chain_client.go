@@ -94,7 +94,7 @@ type ChainClient interface {
 	BlockByHash(ctx context.Context, h *felt.Felt) (FinalizedBlock, error)
 	// only finalized blocks have numbers
 	BlockByNumber(ctx context.Context, id uint64) (FinalizedBlock, error)
-	// BlockByLatest returns the latest finalized block via the "latest" tag in one RPC call.
+	// Single starknet_getBlockWithTxs with BlockTagLatest; see LatestHead in chain/chain.go.
 	BlockByLatest(ctx context.Context) (FinalizedBlock, error)
 	ChainID(ctx context.Context) (string, error)
 	// only way to get the latest pre_confirmed block (only 1 pre_confirmed block exists at a time)

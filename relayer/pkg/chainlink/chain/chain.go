@@ -194,22 +194,40 @@ func (c *chain) ID() string {
 	return c.id
 }
 
+// LatestHead implements types.Relayer/ChainService for core HeadReporter telemetry
+// (chainlink/v2/core/services/headreporter/reportLatestHead). It maps block_number,
+// block_hash, and timestamp into types.Head for telem.HeadReportRequest.Latest;
+// only Height is required downstream, Hash may be empty.
+//
+// Data comes from one starknet_getBlockWithTxs with BlockTagLatest ("latest"):
+// the L2-finalized tip per Starknet RPC 0.9+ (starknet.go rpc.BlockTagLatest).
+// Same tag as other read-only relayer paths (LatestBlockID; relayer/CONFIG.md).
+// pre_confirmed is not used here — that tag has no block_hash and is for TXM
+// nonce/fees only (PreConfirmedBlockID).
+//
+// Do not use blockHashAndNumber plus a follow-up getBlockWithTxs by hash/number;
+// the tip can move between calls and HeadReporter hits RPC code 24.
 func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 	sc, err := c.getClient()
 	if err != nil {
 		return types.Head{}, err
 	}
 
-	// Single "latest" fetch: blockHashAndNumber plus a follow-up getBlockWithTxs by hash
-	// or number races whenever the tip moves between calls (HeadReporter hits RPC code 24).
+	// Single "latest" fetch — see LatestHead doc in pkg/chainlink/chain/chain.go.
 	block, err := sc.BlockByLatest(ctx)
 	if err != nil {
 		return types.Head{}, err
 	}
 
+	// block_hash is absent on pre_confirmed blocks; omit rather than fail HeadReporter.
+	var hash []byte
+	if block.Hash != nil {
+		hash = block.Hash.Marshal()
+	}
+
 	return types.Head{
 		Height:    strconv.FormatUint(block.Number, 10),
-		Hash:      block.Hash.Marshal(),
+		Hash:      hash,
 		Timestamp: block.Timestamp,
 	}, nil
 }
