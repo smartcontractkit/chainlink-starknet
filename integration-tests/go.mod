@@ -536,8 +536,7 @@ replace (
 	github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk v0.0.5-0.20251014124537-af6b1684fe15
 
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	// starknet.go v0.17 starkkey support: https://github.com/smartcontractkit/chainlink-common/pull/2154
-	// Remove after chainlink-common/keystore v1.0.3 is tagged.
+	// starknet.go v0.17 starkkey: chainlink-common #2154 (ad4255ca). Drop replace after keystore/v1.2.1 tag.
 	github.com/smartcontractkit/chainlink-common/keystore => github.com/smartcontractkit/chainlink-common/keystore v0.0.0-20260615174008-ad4255cae51c
 	// Make sure we're working with the latest ops
 	github.com/smartcontractkit/chainlink-starknet/ops => ../ops
