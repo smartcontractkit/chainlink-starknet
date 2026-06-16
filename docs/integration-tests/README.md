@@ -34,8 +34,6 @@ export CHAINLINK_VERSION=starknet.$(git rev-parse HEAD)
 
 Requires a sibling [chainlink](https://github.com/smartcontractkit/chainlink) checkout. The script overlays a locally built `chainlink-starknet` plugin via `integration-tests/docker/chainlink-starknet-plugin.Dockerfile`.
 
-**Keystore** — `integration-tests/go.mod` uses a `replace` pin on `chainlink-common/keystore` from [chainlink-common #2154](https://github.com/smartcontractkit/chainlink-common/pull/2154) (`ad4255ca`) until `keystore/v1.2.1` is tagged on that commit (required to beat transitive `v1.0.2` under MVS). Tagging the PR commit does not require merging #2154.
-
 **Run smoke:**
 
 ```bash
