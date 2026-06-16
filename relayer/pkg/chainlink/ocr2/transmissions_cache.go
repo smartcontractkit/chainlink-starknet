@@ -12,6 +12,7 @@ import (
 	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 )
 
@@ -95,7 +96,7 @@ func (c *transmissionsCache) poll() {
 			}
 			cancel()
 
-			tick = time.After(utils.WithJitter(c.cfg.OCR2CachePollPeriod()))
+			tick = time.After(timeutil.JitterPct(0.1).Apply(c.cfg.OCR2CachePollPeriod()))
 		}
 	}
 }
