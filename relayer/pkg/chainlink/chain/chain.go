@@ -205,16 +205,18 @@ func (c *chain) LatestHead(ctx context.Context) (types.Head, error) {
 		return types.Head{}, err
 	}
 
-	block, err := sc.BlockByHash(ctx, bhAndNum.Hash)
+	// Fetch by number, not hash: blockHashAndNumber returns the chain tip and the hash
+	// can race out from under a follow-up getBlockWithTxs by hash (RPC code 24).
+	block, err := sc.BlockByNumber(ctx, bhAndNum.Number)
 	if err != nil {
 		return types.Head{}, err
 	}
 
 	return types.Head{
 		Height:    strconv.FormatUint(bhAndNum.Number, 10),
-		Hash:      bhAndNum.Hash.Marshal(),
+		Hash:      block.Hash.Marshal(),
 		Timestamp: block.Timestamp,
-	}, err
+	}, nil
 }
 
 // ChainService interface
