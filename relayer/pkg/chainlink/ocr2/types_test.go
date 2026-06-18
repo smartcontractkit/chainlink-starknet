@@ -78,21 +78,6 @@ func TestNewRoundData_ProxyPhasePrefixedRoundID(t *testing.T) {
 	}
 }
 
-func TestRoundIDFromFelt(t *testing.T) {
-	t.Parallel()
-
-	f, err := starknetutils.HexToFelt("0x100000000000000000000000000010c80")
-	require.NoError(t, err)
-
-	high, low := splitFelt(f)
-	require.Equal(t, uint64(1), high.Uint64())
-	require.Equal(t, uint64(0x10c80), low.Uint64())
-
-	roundID, err := roundIDFromFelt(f)
-	require.NoError(t, err)
-	require.Equal(t, uint32(0x10c80), roundID)
-}
-
 // Helpers
 
 func bigIntFromString(s string) *big.Int {

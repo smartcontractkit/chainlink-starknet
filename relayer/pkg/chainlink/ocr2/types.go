@@ -55,36 +55,15 @@ type RoundData struct {
 	UpdatedAt   time.Time
 }
 
-var feltLowU128Mask = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))
-
-// splitFelt mirrors chainlink::utils::split_felt (u128s_from_felt252).
-func splitFelt(f *felt.Felt) (high, low *big.Int) {
-	n := f.BigInt(new(big.Int))
-	low = new(big.Int).And(n, feltLowU128Mask)
-	high = new(big.Int).Rsh(new(big.Int).Set(n), 128)
-	return high, low
-}
-
-func roundIDFromFelt(f *felt.Felt) (uint32, error) {
-	_, low := splitFelt(f)
-	if !low.IsUint64() {
-		return 0, fmt.Errorf("aggregator round id does not fit in a uint64 '%s'", f.String())
-	}
-	roundID64 := low.Uint64()
-	if roundID64 > math.MaxUint32 {
-		return 0, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", f.String())
-	}
-	return uint32(roundID64), nil
-}
-
 func NewRoundData(felts []*felt.Felt) (data RoundData, err error) {
 	if len(felts) != 5 {
 		return data, fmt.Errorf("expected number of felts to be 5 but got %d", len(felts))
 	}
-	data.RoundID, err = roundIDFromFelt(felts[0])
-	if err != nil {
-		return data, err
+	roundID := felts[0].BigInt(big.NewInt(0))
+	if !roundID.IsUint64() && roundID.Uint64() > math.MaxUint32 {
+		return data, fmt.Errorf("aggregator round id does not fit in a uint32 '%s'", felts[0].String())
 	}
+	data.RoundID = uint32(roundID.Uint64())
 	data.Answer = felts[1].BigInt(big.NewInt(0))
 	blockNumber := felts[2].BigInt(big.NewInt(0))
 	if !blockNumber.IsUint64() {
