@@ -87,7 +87,13 @@ class Provider implements IStarknetProvider {
   account: Account
 
   constructor(nodeUrl: string, wallet?: IStarknetWallet) {
-    this.provider = new StarknetProvider({ nodeUrl, specVersion: '0.8.1' })
+    // starknet.js 7.x defaults every block_id to the 'pending' tag, which RPC >= 0.9 renamed to
+// 'pre_confirmed' and no longer accepts. Until we move to starknet.js 8.x, default to 'latest'.
+    this.provider = new StarknetProvider({
+      nodeUrl,
+      specVersion: '0.8.1',
+      blockIdentifier: 'latest',
+    })
     if (wallet) {
       this.account = new Account(
         this.provider,
