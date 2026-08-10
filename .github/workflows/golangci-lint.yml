@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Install Nix
@@ -33,7 +33,7 @@ jobs:
     needs: [golangci-lint-version]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Install Nix
@@ -61,7 +61,7 @@ jobs:
     needs: [golangci-lint-version]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Setup GitHub Token
@@ -102,7 +102,7 @@ jobs:
       - name: Free Disk Space
         uses: smartcontractkit/.github/actions/free-disk-space@ca71236c9f9e1358597795ef7d433dd3d3df8dfb # free-disk-space/v1
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Setup GitHub Token
