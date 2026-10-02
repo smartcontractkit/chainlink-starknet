@@ -132,7 +132,7 @@ format-go-fmt:
 
 .PHONY: gomods
 gomods: ## Install gomods
-	go install github.com/jmank88/gomods@v0.1.6
+	go install github.com/jmank88/gomods@v0.1.7
 
 .PHONY: gomodtidy
 gomodtidy: gomods
@@ -149,7 +149,7 @@ rm-mocked:
 
 .PHONY: modgraph
 modgraph: gomods
-	go install github.com/jmank88/modgraph@v0.1.1
+	go install github.com/jmank88/modgraph@v0.1.4
 	./scripts/modgraph.sh > go.md
 
 .PHONY: generate
