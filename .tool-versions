@@ -5,7 +5,7 @@ golang 1.23.3
 python 3.9.13
 
 # Tools
-mockery 2.53.0
+mockery 2.53.7
 golangci-lint 2.6.2
 actionlint 1.6.12
 shellcheck 0.8.0
