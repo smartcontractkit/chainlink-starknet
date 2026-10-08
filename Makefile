@@ -132,7 +132,7 @@ format-go-fmt:
 
 .PHONY: gomods
 gomods: ## Install gomods
-	go install github.com/jmank88/gomods@v0.1.6
+	go install github.com/jmank88/gomods@v0.1.7
 
 .PHONY: gomodtidy
 gomodtidy: gomods
@@ -140,7 +140,7 @@ gomodtidy: gomods
 
 .PHONY: mockery
 mockery: $(mockery) ## Install mockery.
-	go install github.com/vektra/mockery/v2@v2.53.0
+	go install github.com/vektra/mockery/v2@v2.53.7
 
 .PHONY: rm-mocked
 rm-mocked:
@@ -149,7 +149,7 @@ rm-mocked:
 
 .PHONY: modgraph
 modgraph: gomods
-	go install github.com/jmank88/modgraph@v0.1.1
+	go install github.com/jmank88/modgraph@v0.1.4
 	./scripts/modgraph.sh > go.md
 
 .PHONY: generate
