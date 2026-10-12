@@ -63,7 +63,8 @@
   "resolutions": {
     "protobufjs": "6.11.4",
     "elliptic": "6.6.1",
-    "minimatch": "^10.2.1"
+    "minimatch": "^10.2.1",
+    "axios@^0.24.0": "0.34.0"
   },
   "packageManager": "yarn@4.5.3"
 }
