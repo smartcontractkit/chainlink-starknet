@@ -2,9 +2,6 @@
 [ChainlinkImage]
 image = "public.ecr.aws/chainlink/chainlink"
 version = "2.9.0"
-# The docker test environment reads the node database version from this key,
-# not from [Common] postgres_version. The default (12.0) is below the minimum
-# version (15) that the Chainlink node accepts.
 postgres_version = "15.7"
 
 [Logging]
