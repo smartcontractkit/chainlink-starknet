@@ -25,15 +25,17 @@
         };
         overlays = [rust-overlay.overlays.default];
       };
+      # Use interpolation, not toString. Newer Nix versions (for example 2.36) do
+      # not copy the flake source to the store, and only interpolation forces the
+      # copy. Without the copy, HELM_REPOSITORY_CONFIG points to a missing file.
+      scriptDir = "${./.}";
     in {
       devShells = {
         default = pkgs.callPackage ./shell.nix {
-          inherit pkgs;
-          scriptDir = toString ./.;
+          inherit pkgs scriptDir;
         };
         ci = pkgs.callPackage ./shell-ci.nix {
-          inherit pkgs;
-          scriptDir = toString ./.;
+          inherit pkgs scriptDir;
         };
       };
 

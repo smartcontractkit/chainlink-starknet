@@ -2,6 +2,7 @@
 [ChainlinkImage]
 image = "public.ecr.aws/chainlink/chainlink"
 version = "2.9.0"
+postgres_version = "15.7"
 
 [Logging]
 test_log_collect = false
